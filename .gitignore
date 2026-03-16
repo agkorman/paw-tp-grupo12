@@ -1,0 +1,22 @@
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts
+target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# OS generated files
+.DS_Store
+Thumbs.db
