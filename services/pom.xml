@@ -29,7 +29,7 @@
   <dependencies>
     <dependency>
         <groupId>ar.edu.itba.paw</groupId>
-        <artifactId>service-contracts</artifactId>
+        <artifactId>interfaces</artifactId>
         <version>${project.version}</version>
     </dependency>
 
