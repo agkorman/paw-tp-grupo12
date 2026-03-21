@@ -21,3 +21,5 @@ mvnw.cmd
 .DS_Store
 Thumbs.db
 target/
+
+CLAUDE.md
