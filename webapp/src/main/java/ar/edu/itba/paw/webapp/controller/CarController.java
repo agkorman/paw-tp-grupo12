@@ -19,7 +19,7 @@ public class CarController {
 
     @RequestMapping(value = "/cars", method = RequestMethod.GET)
     public ModelAndView listCars() {
-        final ModelAndView mav = new ModelAndView("cars.jsp");
+        final ModelAndView mav = new ModelAndView("cars");
         mav.addObject("cars", carService.getAllCars());
         return mav;
     }
