@@ -39,10 +39,9 @@
       <artifactId>spring-webmvc</artifactId>
     </dependency>
 
-    <!-- si lse saco esta dependencia, se me rompe todo. Noc qué hizo juan --> 
     <dependency>
       <groupId>ar.edu.itba.paw</groupId>
-      <artifactId>service-contracts</artifactId>
+      <artifactId>interfaces</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -51,6 +50,29 @@
       <artifactId>services</artifactId>
       <version>${project.version}</version>
       <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>ar.edu.itba.paw</groupId>
+      <artifactId>persistence</artifactId>
+      <version>${project.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-jdbc</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jstl</artifactId>
     </dependency>
   </dependencies>
 
