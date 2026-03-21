@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.web.servlet.ViewResolver;
@@ -37,11 +37,17 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Bean
     public DataSource dataSource() {
-        final DriverManagerDataSource ds = new DriverManagerDataSource();
-        ds.setDriverClassName("org.postgresql.Driver");
-        ds.setUrl(System.getenv("DB_URL"));
-        ds.setUsername(System.getenv("DB_USERNAME"));
-        ds.setPassword(System.getenv("DB_PASSWORD"));
+        final String url = System.getenv("DB_URL");
+        final String username = System.getenv("DB_USERNAME");
+        final String password = System.getenv("DB_PASSWORD");
+        if (url == null || username == null || password == null) {
+            throw new IllegalStateException("DB_URL, DB_USERNAME and DB_PASSWORD environment variables must be set");
+        }
+        final SimpleDriverDataSource ds = new SimpleDriverDataSource();
+        ds.setDriverClass(org.postgresql.Driver.class);
+        ds.setUrl(url);
+        ds.setUsername(username);
+        ds.setPassword(password);
         return ds;
     }
 
