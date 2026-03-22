@@ -3,13 +3,14 @@
 <%@ attribute name="generation" required="false" %>
 <%@ attribute name="bodyType"   required="false" %>
 <%@ attribute name="imageUrl"   required="false" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <div class="car-card">
     <div class="card-image-wrap">
         <c:choose>
             <c:when test="${not empty imageUrl}">
-                <img src="${imageUrl}" alt="${model}" loading="lazy">
+                <img src="${fn:escapeXml(imageUrl)}" alt="${fn:escapeXml(model)}" loading="lazy">
             </c:when>
             <c:otherwise>
                 <div class="img-placeholder">

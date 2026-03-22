@@ -1,8 +1,3 @@
-DROP TABLE IF EXISTS reviews CASCADE;
-DROP TABLE IF EXISTS cars CASCADE;
-DROP TABLE IF EXISTS brands CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-
 CREATE TABLE IF NOT EXISTS users (
     user_id    SERIAL PRIMARY KEY,
     username   VARCHAR(50)  NOT NULL UNIQUE,
@@ -107,7 +102,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     review_id        SERIAL PRIMARY KEY,
     user_id          INT          NOT NULL REFERENCES users(user_id),
     car_id           INT          NOT NULL REFERENCES cars(car_id),
-    rating           NUMERIC(2,1) NOT NULL,
+    rating           NUMERIC(3,1) NOT NULL CHECK (rating >= 0.0 AND rating <= 10.0),
     title            VARCHAR(200) NOT NULL,
     body             TEXT         NOT NULL,
     ownership_status VARCHAR(20),

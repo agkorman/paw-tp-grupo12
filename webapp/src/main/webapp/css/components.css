@@ -1,7 +1,7 @@
 /* ── BUTTONS ── */
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-container), var(--primary));
-    color: #fff;
+    color: var(--on-primary-fixed);
     font-family: var(--font-body);
     font-size: 0.6875rem;
     font-weight: 700;
@@ -41,6 +41,8 @@
 
 /* ── FILTER CHIP ── */
 .filter-chip {
+    appearance: none;
+    border: none;
     display: flex;
     align-items: center;
     gap: 0.375rem;
