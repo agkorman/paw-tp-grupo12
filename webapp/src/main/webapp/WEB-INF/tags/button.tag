@@ -1,21 +1,21 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
-<%@ attribute name="text" required="true" %>
-<%@ attribute name="size" required="false" %>
-<%@ attribute name="cssClass" required="false" %>
-<%@ attribute name="disabled" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="text"    required="true" %>
+<%@ attribute name="variant" required="false" %>
+<%@ attribute name="icon"    required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<c:set var="btnSize" value="${not empty size ? size : 'md'}" />
-<c:set var="btnCssClass" value="${not empty cssClass ? cssClass : ''}" />
-<c:set var="btnDisabled" value="${disabled ne null ? disabled : false}" />
+<c:set var="v" value="${not empty variant ? variant : 'primary'}"/>
 
-<c:set var="classes" value="btn btn-${btnSize} ${btnCssClass}" />
-
-<c:choose>
-    <c:when test="${btnDisabled}">
-        <button type="button" class="${classes}" disabled>${text}</button>
-    </c:when>
-    <c:otherwise>
-        <button type="button" class="${classes}">${text}</button>
-    </c:otherwise>
-</c:choose>
+<button type="button" class="btn-${v}">
+    <c:out value="${text}"/>
+    <c:if test="${icon eq 'chevron-down'}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"/>
+        </svg>
+    </c:if>
+    <c:if test="${icon eq 'arrow-right'}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+    </c:if>
+</button>

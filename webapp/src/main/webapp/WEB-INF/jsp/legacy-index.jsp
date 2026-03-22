@@ -4,6 +4,7 @@
 <html>
 <head>
     <title>PAW Webapp 2026 - Component Gallery</title>
+    <link rel="stylesheet" href="<c:url value='/css/legacy-components.css'/>">
     <style>
         .toast {
             border: 1px solid #ccc;
@@ -33,22 +34,22 @@
 
     <h2>Buttons</h2>
     <div>
-        <pa:button text="Small Button" size="sm" />
-        <pa:button text="Default Button" />
-        <pa:button text="Large Button" size="lg" />
-        <pa:button text="Secondary Button" cssClass="btn-secondary" />
-        <pa:button text="Disabled Button" disabled="${true}" />
+        <pa:legacy-button text="Small Button" size="sm" />
+        <pa:legacy-button text="Default Button" />
+        <pa:legacy-button text="Large Button" size="lg" />
+        <pa:legacy-button text="Secondary Button" cssClass="btn-secondary" />
+        <pa:legacy-button text="Disabled Button" disabled="${true}" />
     </div>
 
     <hr/>
 
     <h2>Toasts</h2>
     <div>
-        <pa:toast title="Success Notification"
+        <pa:legacy-toast title="Success Notification"
                   message="The user was created successfully."
                   state="success" />
 
-        <pa:toast title="Error Occurred"
+        <pa:legacy-toast title="Error Occurred"
                   message="Something went wrong while processing your request."
                   state="error" />
     </div>
@@ -57,11 +58,10 @@
 
     <h2>Car Cards</h2>
     <div>
-        <c:url var="broncoImg" value="/images/Bronco_Sport.jpg"/>
-        <pa:car-card
+        <pa:legacy-car-card
             name="Ford Bronco Sport"
             category="Compact SUV"
-            imageUrl="${broncoImg}"
+            imageUrl="https://upload.wikimedia.org/wikipedia/commons/7/71/2021_Ford_Bronco_Sport.jpg"
             rating="4.5"
         />
     </div>
