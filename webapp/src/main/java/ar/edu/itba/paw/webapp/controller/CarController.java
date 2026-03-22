@@ -17,6 +17,11 @@ public class CarController {
         this.carService = carService;
     }
 
+    @RequestMapping(value = "/", method = RequestMethod.GET)
+    public ModelAndView home() {
+        return new ModelAndView("redirect:/cars");
+    }
+
     @RequestMapping(value = "/cars", method = RequestMethod.GET)
     public ModelAndView listCars() {
         final ModelAndView mav = new ModelAndView("cars.jsp");
