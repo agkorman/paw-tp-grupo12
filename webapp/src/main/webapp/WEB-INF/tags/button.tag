@@ -4,7 +4,10 @@
 <%@ attribute name="icon"    required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<c:set var="v" value="${not empty variant ? variant : 'primary'}"/>
+<c:choose>
+    <c:when test="${variant eq 'secondary'}"><c:set var="v" value="secondary"/></c:when>
+    <c:otherwise><c:set var="v" value="primary"/></c:otherwise>
+</c:choose>
 
 <button type="button" class="btn-${v}">
     <c:out value="${text}"/>
