@@ -1,49 +1,71 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Cars</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Posta Autos</title>
+    <link rel="icon" href="<c:url value='/favicon.ico'/>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
-    <style>
-        body { font-family: sans-serif; margin: 2rem; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
-        th { background-color: #f4f4f4; }
-        tr:nth-child(even) { background-color: #fafafa; }
-    </style>
+    <link rel="stylesheet" href="<c:url value='/css/cars.css'/>">
 </head>
 <body>
-    <h1>Cars</h1>
 
-    <c:choose>
-        <c:when test="${empty cars}">
-            <p>No cars found.</p>
-        </c:when>
-        <c:otherwise>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Brand</th>
-                        <th>Model</th>
-                        <th>Generation</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
+    <pa:nav activePage="explore"/>
+
+    <div class="filter-bar">
+        <div class="filters">
+            <pa:filter-chip label="Brand: All"/>
+            <pa:filter-chip label="Body: All"/>
+            <pa:filter-chip label="Generation: All"/>
+        </div>
+        <div class="filter-meta">
+            <c:if test="${not empty cars}">
+                <span class="count-label">${fn:length(cars)} vehicles found</span>
+            </c:if>
+            <pa:button text="Apply Focus" variant="primary"/>
+        </div>
+    </div>
+
+    <section class="catalog-section">
+        <c:choose>
+            <c:when test="${empty cars}">
+                <div class="empty-state">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c4c6cc" stroke-width="1.5">
+                        <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                    </svg>
+                    <p>No vehicles found in the gallery.</p>
+                </div>
+            </c:when>
+            <c:otherwise>
+                <div class="cars-grid">
                     <c:forEach var="car" items="${cars}">
-                        <tr>
-                            <td><c:out value="${car.brand}"/></td>
-                            <td><c:out value="${car.model}"/></td>
-                            <td><c:out value="${car.generation}"/></td>
-                            <td><c:out value="${car.description}"/></td>
-                        </tr>
+                        <pa:car-card
+                            model="${car.model}"
+                            generation="${car.generation}"
+                            bodyType="${car.bodyType}"
+                            imageUrl="${car.imageUrl}"/>
                     </c:forEach>
-                </tbody>
-            </table>
-        </c:otherwise>
-    </c:choose>
+                </div>
+            </c:otherwise>
+        </c:choose>
+    </section>
 
-    <p><a href="<c:url value='/'/>">Back to home</a></p>
+    <c:if test="${not empty cars}">
+        <div class="discover-wrap">
+            <pa:button text="Discover More" variant="secondary" icon="chevron-down"/>
+        </div>
+    </c:if>
+
+    <pa:footer/>
+
 </body>
 </html>
