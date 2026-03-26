@@ -40,6 +40,8 @@ public class ReviewJdbcDao implements ReviewDao {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("reviews")
+                .usingColumns("user_id", "car_id", "rating", "title", "body",
+                        "ownership_status", "model_year", "mileage_km", "would_recommend")
                 .usingGeneratedKeyColumns("review_id");
     }
 
@@ -49,6 +51,14 @@ public class ReviewJdbcDao implements ReviewDao {
                 "SELECT review_id, user_id, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews WHERE review_id = ?",
                 ROW_MAPPER, id
         ).stream().findFirst();
+    }
+
+    @Override
+    public List<Review> findAll() {
+        return jdbcTemplate.query(
+                "SELECT review_id, user_id, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews ORDER BY created_at DESC",
+                ROW_MAPPER
+        );
     }
 
     @Override

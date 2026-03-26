@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     review_id        SERIAL PRIMARY KEY,
     user_id          INT          NOT NULL REFERENCES users(user_id),
     car_id           INT          NOT NULL REFERENCES cars(car_id),
-    rating           NUMERIC(3,1) NOT NULL CHECK (rating >= 0.0 AND rating <= 10.0),
+    rating           NUMERIC(3,1) NOT NULL CHECK (rating >= 0.0 AND rating <= 5.0),
     title            VARCHAR(200) NOT NULL,
     body             TEXT         NOT NULL,
     ownership_status VARCHAR(20),
@@ -112,3 +112,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Users
+INSERT INTO users (username, email, password, role, created_at)
+SELECT 'rocco', 'john@example.com', 'hola', 'SUPER', CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'john@example.com');

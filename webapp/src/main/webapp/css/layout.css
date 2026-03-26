@@ -39,13 +39,8 @@ nav {
     transition: color 0.2s;
 }
 
-.nav-links a.active,
 .nav-links a:hover {
     color: var(--on-surface);
-}
-
-.nav-links a.active {
-    border-bottom: 2px solid var(--primary-container);
 }
 
 .nav-right {
