@@ -112,8 +112,3 @@ CREATE TABLE IF NOT EXISTS reviews (
     created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
--- Users
-INSERT INTO users (username, email, password, role, created_at)
-SELECT 'rocco', 'john@example.com', 'hola', 'SUPER', CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'john@example.com');
