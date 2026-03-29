@@ -12,7 +12,7 @@ import org.springframework.web.servlet.ModelAndView;
 import java.math.BigDecimal;
 
 @Controller
-public class ReviewController{
+public class ReviewController {
 
     private final CarService carService;
     private final ReviewService reviewService;
