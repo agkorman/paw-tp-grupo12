@@ -16,6 +16,13 @@ import java.util.Optional;
 @Repository
 public class CarJdbcDao implements CarDao {
 
+    private static final String FROM_JOIN =
+            "FROM cars c JOIN body_types bt ON c.body_type_id = bt.body_type_id ";
+
+    private static final String SELECT_COLUMNS =
+            "SELECT c.car_id, c.brand_id, c.model, c.body_type_id, bt.name AS body_type, "
+                    + "c.description, c.image_url, c.created_at ";
+
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
 
@@ -23,7 +30,7 @@ public class CarJdbcDao implements CarDao {
             rs.getLong("car_id"),
             rs.getLong("brand_id"),
             rs.getString("model"),
-            rs.getString("generation"),
+            rs.getLong("body_type_id"),
             rs.getString("body_type"),
             rs.getString("description"),
             rs.getString("image_url"),
@@ -41,38 +48,54 @@ public class CarJdbcDao implements CarDao {
     @Override
     public List<Car> findAll() {
         return jdbcTemplate.query(
-                "SELECT car_id, brand_id, model, generation, body_type, description, image_url, created_at FROM cars ORDER BY car_id",
+                SELECT_COLUMNS + FROM_JOIN + "ORDER BY c.car_id",
                 ROW_MAPPER
         );
     }
 
     @Override
-    public Optional<Car> findById(long id) {
+    public Optional<Car> findById(final long id) {
         return jdbcTemplate.query(
-                "SELECT car_id, brand_id, model, generation, body_type, description, image_url, created_at FROM cars WHERE car_id = ?",
+                SELECT_COLUMNS + FROM_JOIN + "WHERE c.car_id = ?",
                 ROW_MAPPER, id
         ).stream().findFirst();
     }
 
     @Override
-    public List<Car> findByBrandId(long brandId) {
+    public List<Car> findByBrandId(final long brandId) {
         return jdbcTemplate.query(
-                "SELECT car_id, brand_id, model, generation, body_type, description, image_url, created_at FROM cars WHERE brand_id = ? ORDER BY model",
+                SELECT_COLUMNS + FROM_JOIN + "WHERE c.brand_id = ? ORDER BY c.model",
                 ROW_MAPPER, brandId
         );
     }
 
     @Override
-    public Car create(long brandId, String model, String generation, String bodyType, String description, String imageUrl) {
-        Map<String, Object> params = new HashMap<>();
+    public Car create(final long brandId, final String model, final long bodyTypeId,
+                      final String description, final String imageUrl) {
+        final Map<String, Object> params = new HashMap<>();
         params.put("brand_id", brandId);
         params.put("model", model);
-        params.put("generation", generation);
-        params.put("body_type", bodyType);
+        params.put("body_type_id", bodyTypeId);
         params.put("description", description);
         params.put("image_url", imageUrl);
 
-        long id = jdbcInsert.executeAndReturnKey(params).longValue();
+        final long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();
+    }
+
+    @Override
+    public List<Car> findByBodyTypeId(final long bodyTypeId) {
+        return jdbcTemplate.query(
+                SELECT_COLUMNS + FROM_JOIN + "WHERE c.body_type_id = ? ORDER BY c.model",
+                ROW_MAPPER, bodyTypeId
+        );
+    }
+
+    @Override
+    public List<Car> findByBrandIdAndBodyTypeId(final long brandId, final long bodyTypeId) {
+        return jdbcTemplate.query(
+                SELECT_COLUMNS + FROM_JOIN + "WHERE c.brand_id = ? AND c.body_type_id = ? ORDER BY c.model",
+                ROW_MAPPER, brandId, bodyTypeId
+        );
     }
 }

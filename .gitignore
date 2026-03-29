@@ -23,6 +23,7 @@ Thumbs.db
 target/
 
 CLAUDE.md
+AGENT.MD
 
 # Environment
 .env

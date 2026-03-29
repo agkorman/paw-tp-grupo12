@@ -45,7 +45,7 @@
                                         class="car-option ${status.first ? 'selected' : ''}"
                                         data-car-id="${car.id}">
                                     <span class="car-option-model"><c:out value="${car.model}"/></span>
-                                    <span class="car-option-meta"><c:out value="${car.generation}"/></span>
+                                    <span class="car-option-meta"><c:out value="${car.bodyType}"/></span>
                                 </button>
                             </c:forEach>
                         </div>
@@ -102,7 +102,6 @@
                                 <div class="selected-card ${status.first ? 'active' : ''}" data-preview-id="${car.id}">
                                     <pa:car-card
                                             model="${car.model}"
-                                            generation="${car.generation}"
                                             bodyType="${car.bodyType}"
                                             imageUrl="${car.imageUrl}"/>
                                 </div>
