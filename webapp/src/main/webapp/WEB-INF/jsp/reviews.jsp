@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
 </head>
-<body>
+<body data-selection-locked="${selectionLocked}">
     <pa:nav activePage="explore"/>
 
     <main class="reviews-page">
@@ -38,12 +38,14 @@
                 </c:when>
                 <c:otherwise>
                     <div class="review-form-panel">
+                        <c:set var="effectiveCarId" value="${empty selectedCarId ? cars[0].id : selectedCarId}"/>
                         <h2>Select a car</h2>
                         <div class="car-picker">
                             <c:forEach var="car" items="${cars}" varStatus="status">
                                 <button type="button"
-                                        class="car-option ${status.first ? 'selected' : ''}"
-                                        data-car-id="${car.id}">
+                                        class="car-option ${car.id == effectiveCarId ? 'selected' : ''}"
+                                        data-car-id="${car.id}"
+                                        <c:if test="${selectionLocked}">disabled</c:if>>
                                     <span class="car-option-model"><c:out value="${car.model}"/></span>
                                     <span class="car-option-meta"><c:out value="${car.generation}"/></span>
                                 </button>
@@ -51,7 +53,7 @@
                         </div>
 
                         <form action="<c:url value='/reviews'/>" method="post" class="review-form">
-                            <input id="carId" name="carId" type="hidden" value="${cars[0].id}">
+                            <input id="carId" name="carId" type="hidden" value="${effectiveCarId}">
 
                             <div class="form-grid">
                                 <div class="field">
@@ -99,7 +101,7 @@
                         <h2>Selected car card</h2>
                         <div class="selected-card-stack">
                             <c:forEach var="car" items="${cars}" varStatus="status">
-                                <div class="selected-card ${status.first ? 'active' : ''}" data-preview-id="${car.id}">
+                                <div class="selected-card ${car.id == effectiveCarId ? 'active' : ''}" data-preview-id="${car.id}">
                                     <pa:car-card
                                             model="${car.model}"
                                             generation="${car.generation}"
@@ -153,6 +155,7 @@
             const hiddenCarIdInput = document.getElementById('carId');
             const options = Array.from(document.querySelectorAll('.car-option'));
             const previews = Array.from(document.querySelectorAll('.selected-card'));
+            const selectionLocked = document.body.dataset.selectionLocked === 'true';
             if (!hiddenCarIdInput || options.length === 0 || previews.length === 0) {
                 return;
             }
@@ -169,11 +172,13 @@
                 });
             };
 
-            options.forEach(function (option) {
-                option.addEventListener('click', function () {
-                    setSelected(option.dataset.carId);
+            if (!selectionLocked) {
+                options.forEach(function (option) {
+                    option.addEventListener('click', function () {
+                        setSelected(option.dataset.carId);
+                    });
                 });
-            });
+            }
 
             setSelected(hiddenCarIdInput.value);
         })();
