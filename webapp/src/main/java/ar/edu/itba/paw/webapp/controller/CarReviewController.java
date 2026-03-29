@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,38 +12,61 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Controller
-public class ReviewController {
+public class CarReviewController {
 
     private final CarService carService;
     private final ReviewService reviewService;
 
     @Autowired
-    public ReviewController(final CarService carService, final ReviewService reviewService) {
+    public CarReviewController(final CarService carService, final ReviewService reviewService) {
         this.carService = carService;
         this.reviewService = reviewService;
     }
 
     @RequestMapping(value = "/reviews", method = RequestMethod.GET)
     public ModelAndView reviewForm(@RequestParam(value = "carId", required = false) final Long carId) {
-        final ModelAndView mav = new ModelAndView("reviews.jsp");
+        if (carId == null) {
+            return new ModelAndView("redirect:/cars");
+        }
+
         final List<Car> cars = carService.getAllCars();
-        Long selectedCarId = null;
-        if (carId != null) {
-            for (Car car : cars) {
-                if (car.getId() == carId) {
-                    selectedCarId = carId;
-                    break;
-                }
+        Car selectedCar = null;
+        for (Car car : cars) {
+            if (car.getId() == carId.longValue()) {
+                selectedCar = car;
+                break;
             }
         }
-        mav.addObject("cars", cars);
-        mav.addObject("selectedCarId", selectedCarId);
-        mav.addObject("selectionLocked", selectedCarId != null);
-        mav.addObject("reviews", reviewService.getAllReviews());
+
+        if (selectedCar == null) {
+            return new ModelAndView("redirect:/cars");
+        }
+
+        final List<Review> reviews = reviewService.getReviewsByCar(selectedCar.getId());
+        final ModelAndView mav = new ModelAndView("car-review.jsp");
+        mav.addObject("selectedCar", selectedCar);
+        mav.addObject("reviews", reviews);
+        mav.addObject("averageRating", calculateAverageRating(reviews));
         return mav;
+    }
+
+    private BigDecimal calculateAverageRating(final List<Review> reviews) {
+        if (reviews.isEmpty()) {
+            return null;
+        }
+
+        BigDecimal sum = BigDecimal.ZERO;
+        for (Review review : reviews) {
+            if (review.getRating() != null) {
+                sum = sum.add(review.getRating());
+            }
+        }
+
+        return sum.divide(BigDecimal.valueOf(reviews.size()), 1, RoundingMode.HALF_UP);
     }
 
     @RequestMapping(value = "/reviews", method = RequestMethod.POST)
@@ -56,6 +80,6 @@ public class ReviewController {
                                      @RequestParam(value = "mileageKm", required = false) final Integer mileageKm,
                                      @RequestParam(value = "wouldRecommend", required = false) final Boolean wouldRecommend) {
         reviewService.createReview(userId, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
-        return new ModelAndView("redirect:/reviews");
+        return new ModelAndView("redirect:/reviews?carId=" + carId);
     }
 }
