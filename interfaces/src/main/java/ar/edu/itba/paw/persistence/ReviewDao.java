@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface ReviewDao {
     Optional<Review> findById(long id);
+    List<Review> findAll();
     List<Review> findByCarId(long carId);
     List<Review> findByUserId(long userId);
     Review create(long userId, long carId, BigDecimal rating, String title, String body,

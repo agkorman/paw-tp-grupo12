@@ -10,4 +10,10 @@ public class UserServiceImpl implements UserService{
   public Object createUser(final String email) {
     return email;
   }
+
+  @Override
+  public long getUserId() {
+    // Temporary hardcoded super user id until auth/session is wired.
+    return 1L;
+  }
 }
