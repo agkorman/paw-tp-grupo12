@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Controller
 public class ReviewController {
@@ -24,9 +26,21 @@ public class ReviewController {
     }
 
     @RequestMapping(value = "/reviews", method = RequestMethod.GET)
-    public ModelAndView reviewForm() {
+    public ModelAndView reviewForm(@RequestParam(value = "carId", required = false) final Long carId) {
         final ModelAndView mav = new ModelAndView("reviews.jsp");
-        mav.addObject("cars", carService.getAllCars());
+        final List<Car> cars = carService.getAllCars();
+        Long selectedCarId = null;
+        if (carId != null) {
+            for (Car car : cars) {
+                if (car.getId() == carId) {
+                    selectedCarId = carId;
+                    break;
+                }
+            }
+        }
+        mav.addObject("cars", cars);
+        mav.addObject("selectedCarId", selectedCarId);
+        mav.addObject("selectionLocked", selectedCarId != null);
         mav.addObject("reviews", reviewService.getAllReviews());
         return mav;
     }

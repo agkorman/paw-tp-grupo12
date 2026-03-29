@@ -48,11 +48,15 @@
             <c:otherwise>
                 <div class="cars-grid">
                     <c:forEach var="car" items="${cars}">
+                        <c:url var="reviewUrl" value="/reviews">
+                            <c:param name="carId" value="${car.id}"/>
+                        </c:url>
                         <pa:car-card
                             model="${car.model}"
                             generation="${car.generation}"
                             bodyType="${car.bodyType}"
-                            imageUrl="${car.imageUrl}"/>
+                            imageUrl="${car.imageUrl}"
+                            linkUrl="${reviewUrl}"/>
                     </c:forEach>
                 </div>
             </c:otherwise>
