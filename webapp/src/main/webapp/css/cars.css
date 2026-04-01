@@ -4,11 +4,62 @@
     align-items: center;
     justify-content: space-between;
     padding: 1.5rem var(--spacing-12);
+    margin: 0;
+    border: none;
+    background: transparent;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .filters {
     display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
     gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.filter-row-label {
+    flex: 0 0 auto;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    min-width: 3.25rem;
+    cursor: pointer;
+}
+
+.filter-select {
+    appearance: none;
+    min-width: 11rem;
+    max-width: 100%;
+    padding: 0.5rem 2rem 0.5rem 0.875rem;
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--on-surface);
+    background: var(--surface-container-high);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.65rem center;
+}
+
+.filter-select:hover,
+.filter-select:focus {
+    background-color: var(--surface-container-highest);
+    outline: none;
+    border-color: var(--primary);
 }
 
 .filter-meta {
