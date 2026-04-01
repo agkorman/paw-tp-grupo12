@@ -1,12 +1,16 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
@@ -32,5 +36,18 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public List<Review> getAllReviews() {
         return reviewDao.findAll();
+    }
+
+    @Override
+    public Optional<ReviewStats> getReviewStatsByCar(final long carId) {
+        return reviewDao.findStatsByCarId(carId);
+    }
+
+    @Override
+    public List<ReviewStats> getReviewStatsByCarIds(final Collection<Long> carIds) {
+        if (carIds == null || carIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return reviewDao.findStatsByCarIds(carIds);
     }
 }

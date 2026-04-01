@@ -20,6 +20,9 @@
     <pa:nav activePage="reviews"/>
 
     <main class="reviews-page">
+        <c:if test="${not empty error}">
+            <div class="alert alert-error" role="alert"><c:out value="${error}"/></div>
+        </c:if>
         <section class="review-hero">
             <div>
                 <h1><c:out value="${selectedCar.model}"/></h1>

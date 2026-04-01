@@ -21,19 +21,40 @@
 
     <pa:nav activePage="explore"/>
 
-    <div class="filter-bar">
+    <form class="filter-bar" method="get" action="<c:url value='/cars'/>" id="car-filter-form">
         <div class="filters">
-            <pa:filter-chip label="Brand: All"/>
-            <pa:filter-chip label="Body: All"/>
-            <pa:filter-chip label="Generation: All"/>
+            <div class="filter-row">
+                <label class="filter-row-label" for="filter-brand">Brand</label>
+                <select class="filter-select" id="filter-brand" name="brand"
+                        onchange="document.getElementById('car-filter-form').submit()">
+                    <option value="" <c:if test="${empty selectedBrand}">selected</c:if>>All brands</option>
+                    <c:forEach items="${brands}" var="b">
+                        <option value="<c:out value='${b.name}'/>" <c:if test="${selectedBrand eq b.name}">selected</c:if>>
+                            <c:out value="${b.name}"/>
+                        </option>
+                    </c:forEach>
+                </select>
+            </div>
+            <div class="filter-row">
+                <label class="filter-row-label" for="filter-body">Body</label>
+                <select class="filter-select" id="filter-body" name="bodyType"
+                        onchange="document.getElementById('car-filter-form').submit()">
+                    <option value="" <c:if test="${empty selectedBodyType}">selected</c:if>>All body types</option>
+                    <c:forEach items="${bodyTypes}" var="bt">
+                        <option value="<c:out value='${bt.name}'/>" <c:if test="${selectedBodyType eq bt.name}">selected</c:if>>
+                            <c:out value="${bt.name}"/>
+                        </option>
+                    </c:forEach>
+                </select>
+            </div>
         </div>
         <div class="filter-meta">
             <c:if test="${not empty cars}">
                 <span class="count-label">${fn:length(cars)} vehicles found</span>
             </c:if>
-            <pa:button text="Apply Focus" variant="primary"/>
+            <button type="submit" class="btn-primary">Apply filters</button>
         </div>
-    </div>
+    </form>
 
     <section class="catalog-section">
         <c:choose>
@@ -53,10 +74,11 @@
                         </c:url>
                         <pa:car-card
                             model="${car.model}"
-                            generation="${car.generation}"
                             bodyType="${car.bodyType}"
                             imageUrl="${car.imageUrl}"
-                            linkUrl="${reviewUrl}"/>
+                            href="${reviewUrl}"
+                            averageRating="${reviewStatsByCarId[car.id].averageRating}"
+                            reviewCount="${reviewStatsByCarId[car.id].reviewCount}"/>
                     </c:forEach>
                 </div>
             </c:otherwise>

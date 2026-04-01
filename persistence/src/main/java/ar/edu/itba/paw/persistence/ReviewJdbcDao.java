@@ -1,14 +1,18 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewStats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +21,12 @@ import java.util.Optional;
 @Repository
 public class ReviewJdbcDao implements ReviewDao {
 
+    private static final String REVIEW_STATS_SELECT =
+            "SELECT c.car_id, COUNT(r.review_id) AS review_count, ROUND(AVG(r.rating), 1) AS average_rating "
+                    + "FROM cars c LEFT JOIN reviews r ON r.car_id = c.car_id ";
+
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
 
     private static final RowMapper<Review> ROW_MAPPER = (rs, rowNum) -> new Review(
@@ -35,9 +44,16 @@ public class ReviewJdbcDao implements ReviewDao {
             rs.getTimestamp("updated_at").toLocalDateTime()
     );
 
+    private static final RowMapper<ReviewStats> REVIEW_STATS_ROW_MAPPER = (rs, rowNum) -> new ReviewStats(
+            rs.getLong("car_id"),
+            rs.getLong("review_count"),
+            rs.getBigDecimal("average_rating")
+    );
+
     @Autowired
     public ReviewJdbcDao(final DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("reviews")
                 .usingColumns("user_id", "car_id", "rating", "title", "body",
@@ -74,6 +90,28 @@ public class ReviewJdbcDao implements ReviewDao {
         return jdbcTemplate.query(
                 "SELECT review_id, user_id, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews WHERE user_id = ? ORDER BY created_at DESC",
                 ROW_MAPPER, userId
+        );
+    }
+
+    @Override
+    public Optional<ReviewStats> findStatsByCarId(final long carId) {
+        return jdbcTemplate.query(
+                REVIEW_STATS_SELECT + "WHERE c.car_id = ? GROUP BY c.car_id",
+                REVIEW_STATS_ROW_MAPPER,
+                carId
+        ).stream().findFirst();
+    }
+
+    @Override
+    public List<ReviewStats> findStatsByCarIds(final Collection<Long> carIds) {
+        if (carIds == null || carIds.isEmpty()) {
+            return List.of();
+        }
+
+        return namedParameterJdbcTemplate.query(
+                REVIEW_STATS_SELECT + "WHERE c.car_id IN (:carIds) GROUP BY c.car_id ORDER BY c.car_id",
+                new MapSqlParameterSource("carIds", carIds),
+                REVIEW_STATS_ROW_MAPPER
         );
     }
 
