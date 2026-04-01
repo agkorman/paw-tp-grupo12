@@ -7,7 +7,14 @@ import java.util.Optional;
 
 public interface CarDao {
     List<Car> findAll();
+
     Optional<Car> findById(long id);
+
     List<Car> findByBrandId(long brandId);
-    Car create(long brandId, String model, String generation, String bodyType, String description, String imageUrl);
+
+    List<Car> findByBodyTypeId(long bodyTypeId);
+
+    List<Car> findByBrandIdAndBodyTypeId(long brandId, long bodyTypeId);
+
+    Car create(long brandId, String model, long bodyTypeId, String description, String imageUrl);
 }
