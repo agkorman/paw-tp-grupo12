@@ -79,6 +79,25 @@ public class CarReviewController {
                                      @RequestParam(value = "modelYear", required = false) final Integer modelYear,
                                      @RequestParam(value = "mileageKm", required = false) final Integer mileageKm,
                                      @RequestParam(value = "wouldRecommend", required = false) final Boolean wouldRecommend) {
+
+        // Server-side validation to prevent DB constraint violations
+        // Validate rating: must be between 0 and 5 inclusive
+        if (rating == null || rating.compareTo(BigDecimal.ZERO) < 0 || rating.compareTo(BigDecimal.valueOf(5)) > 0) {
+            final ModelAndView mav = new ModelAndView("reviews.jsp");
+            mav.addObject("cars", carService.getAllCars());
+            mav.addObject("reviews", reviewService.getAllReviews());
+            mav.addObject("error", "Rating must be between 0 and 5.");
+            return mav;
+        }
+
+        // Validate ownershipStatus length according to DB schema (e.g., VARCHAR(20))
+        if (ownershipStatus != null && ownershipStatus.length() > 20) {
+            final ModelAndView mav = new ModelAndView("reviews.jsp");
+            mav.addObject("cars", carService.getAllCars());
+            mav.addObject("reviews", reviewService.getAllReviews());
+            mav.addObject("error", "Ownership status must be at most 20 characters long.");
+            return mav;
+        }
         reviewService.createReview(userId, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
         return new ModelAndView("redirect:/reviews?carId=" + carId);
     }
