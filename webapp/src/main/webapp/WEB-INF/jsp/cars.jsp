@@ -76,6 +76,7 @@
                             model="${car.model}"
                             bodyType="${car.bodyType}"
                             imageUrl="${car.imageUrl}"
+                            href="${reviewUrl}"
                             averageRating="${reviewStatsByCarId[car.id].averageRating}"
                             reviewCount="${reviewStatsByCarId[car.id].reviewCount}"/>
                     </c:forEach>
