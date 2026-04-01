@@ -32,11 +32,14 @@ public class CarReviewController {
         if (carId == null) {
             return new ModelAndView("redirect:/cars");
         }
+        return carReviewForCarId(carId, null);
+    }
 
+    private ModelAndView carReviewForCarId(final long carId, final String error) {
         final List<Car> cars = carService.getAllCars();
         Car selectedCar = null;
         for (Car car : cars) {
-            if (car.getId() == carId.longValue()) {
+            if (car.getId() == carId) {
                 selectedCar = car;
                 break;
             }
@@ -51,6 +54,9 @@ public class CarReviewController {
         mav.addObject("selectedCar", selectedCar);
         mav.addObject("reviews", reviews);
         mav.addObject("averageRating", calculateAverageRating(reviews));
+        if (error != null) {
+            mav.addObject("error", error);
+        }
         return mav;
     }
 
@@ -83,20 +89,12 @@ public class CarReviewController {
         // Server-side validation to prevent DB constraint violations
         // Validate rating: must be between 0 and 5 inclusive
         if (rating == null || rating.compareTo(BigDecimal.ZERO) < 0 || rating.compareTo(BigDecimal.valueOf(5)) > 0) {
-            final ModelAndView mav = new ModelAndView("reviews.jsp");
-            mav.addObject("cars", carService.getAllCars());
-            mav.addObject("reviews", reviewService.getAllReviews());
-            mav.addObject("error", "Rating must be between 0 and 5.");
-            return mav;
+            return carReviewForCarId(carId, "Rating must be between 0 and 5.");
         }
 
         // Validate ownershipStatus length according to DB schema (e.g., VARCHAR(20))
         if (ownershipStatus != null && ownershipStatus.length() > 20) {
-            final ModelAndView mav = new ModelAndView("reviews.jsp");
-            mav.addObject("cars", carService.getAllCars());
-            mav.addObject("reviews", reviewService.getAllReviews());
-            mav.addObject("error", "Ownership status must be at most 20 characters long.");
-            return mav;
+            return carReviewForCarId(carId, "Ownership status must be at most 20 characters long.");
         }
         reviewService.createReview(userId, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
         return new ModelAndView("redirect:/reviews?carId=" + carId);
