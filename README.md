@@ -27,6 +27,15 @@ export DB_USERNAME=pawuser
 export DB_PASSWORD=yourpassword
 ```
 
+If your deploy target does not let you configure Tomcat environment variables, you can instead
+package a `db.properties` file inside the WAR at `webapp/src/main/resources/db.properties`:
+
+```properties
+db.url=jdbc:postgresql://localhost/pawdb
+db.username=pawuser
+db.password=yourpassword
+```
+
 ## Running locally
 
 ```bash
