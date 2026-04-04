@@ -19,10 +19,26 @@
 </head>
 <body>
 
-    <pa:nav activePage="explore"/>
+    <pa:nav activePage="reviews"/>
 
     <form class="filter-bar" method="get" action="<c:url value='/cars'/>" id="car-filter-form">
         <div class="filters">
+            <div class="filter-row filter-row-search">
+                <label class="filter-row-label" for="filter-query">Search</label>
+                <div class="filter-search-wrap">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7"></circle>
+                        <path d="m20 20-3.5-3.5"></path>
+                    </svg>
+                    <input
+                            class="filter-search-input"
+                            id="filter-query"
+                            type="search"
+                            name="q"
+                            value="<c:out value='${searchQuery}'/>"
+                            placeholder="Buscar marcas, modelos o carrocerías...">
+                </div>
+            </div>
             <div class="filter-row">
                 <label class="filter-row-label" for="filter-brand">Brand</label>
                 <select class="filter-select" id="filter-brand" name="brand"
@@ -49,9 +65,7 @@
             </div>
         </div>
         <div class="filter-meta">
-            <c:if test="${not empty cars}">
-                <span class="count-label">${fn:length(cars)} vehicles found</span>
-            </c:if>
+            <span class="count-label">${fn:length(cars)} vehicles found</span>
             <button type="submit" class="btn-primary">Apply filters</button>
         </div>
     </form>
