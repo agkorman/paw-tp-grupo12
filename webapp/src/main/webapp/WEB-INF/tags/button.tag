@@ -3,7 +3,8 @@
 <%@ attribute name="variant" required="false" %>
 <%@ attribute name="icon"    required="false" %>
 <%@ attribute name="href"    required="false" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <c:choose>
     <c:when test="${variant eq 'secondary'}"><c:set var="v" value="secondary"/></c:when>
@@ -12,7 +13,7 @@
 
 <c:choose>
     <c:when test="${not empty href}">
-        <a href="${href}" class="btn-${v}">
+        <a href="${fn:escapeXml(href)}" class="btn-${v}">
             <c:out value="${text}"/>
             <c:if test="${icon eq 'chevron-down'}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
