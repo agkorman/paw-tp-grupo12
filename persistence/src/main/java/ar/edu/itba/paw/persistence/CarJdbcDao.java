@@ -17,10 +17,12 @@ import java.util.Optional;
 public class CarJdbcDao implements CarDao {
 
     private static final String FROM_JOIN =
-            "FROM cars c JOIN body_types bt ON c.body_type_id = bt.body_type_id ";
+            "FROM cars c "
+                    + "JOIN brands b ON c.brand_id = b.brand_id "
+                    + "JOIN body_types bt ON c.body_type_id = bt.body_type_id ";
 
     private static final String SELECT_COLUMNS =
-            "SELECT c.car_id, c.brand_id, c.model, c.body_type_id, bt.name AS body_type, "
+            "SELECT c.car_id, c.brand_id, b.name AS brand_name, c.model, c.body_type_id, bt.name AS body_type, "
                     + "c.description, c.image_url, c.created_at ";
 
     private final JdbcTemplate jdbcTemplate;
@@ -29,6 +31,7 @@ public class CarJdbcDao implements CarDao {
     private static final RowMapper<Car> ROW_MAPPER = (rs, rowNum) -> new Car(
             rs.getLong("car_id"),
             rs.getLong("brand_id"),
+            rs.getString("brand_name"),
             rs.getString("model"),
             rs.getLong("body_type_id"),
             rs.getString("body_type"),
@@ -96,6 +99,21 @@ public class CarJdbcDao implements CarDao {
         return jdbcTemplate.query(
                 SELECT_COLUMNS + FROM_JOIN + "WHERE c.brand_id = ? AND c.body_type_id = ? ORDER BY c.model",
                 ROW_MAPPER, brandId, bodyTypeId
+        );
+    }
+
+    @Override
+    public List<Car> search(final String query) {
+        final String normalizedQuery = "%" + query.trim().toLowerCase() + "%";
+        return jdbcTemplate.query(
+                SELECT_COLUMNS + FROM_JOIN
+                        + "WHERE LOWER(b.name) LIKE ? "
+                        + "OR LOWER(c.model) LIKE ? "
+                        + "OR LOWER(bt.name) LIKE ? "
+                        + "OR LOWER(COALESCE(c.description, '')) LIKE ? "
+                        + "ORDER BY c.car_id",
+                ROW_MAPPER,
+                normalizedQuery, normalizedQuery, normalizedQuery, normalizedQuery
         );
     }
 }

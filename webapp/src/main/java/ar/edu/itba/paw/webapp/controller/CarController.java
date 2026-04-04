@@ -13,14 +13,21 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Controller
 public class CarController {
+
+    private static final int FEATURED_REVIEW_COUNT = 3;
 
     private final CarService carService;
     private final BrandDao brandDao;
@@ -38,19 +45,31 @@ public class CarController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public ModelAndView home() {
-        return new ModelAndView("redirect:/cars");
+        final List<Car> allCars = carService.getAllCars();
+        final Map<Long, ReviewStats> reviewStatsByCarId = getReviewStatsByCarId(allCars);
+        final List<Car> featuredCars = selectFeaturedCars(allCars, reviewStatsByCarId);
+
+        final ModelAndView mav = new ModelAndView("landing.jsp");
+        mav.addObject("featuredCars", featuredCars);
+        mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
+        mav.addObject("heroCar", featuredCars.isEmpty() ? getFallbackHeroCar(allCars) : featuredCars.get(0));
+        return mav;
     }
 
     @RequestMapping(value = "/cars", method = RequestMethod.GET)
     public ModelAndView listCars(
+            @RequestParam(value = "q", required = false) final String q,
             @RequestParam(value = "brand", required = false) final String brand,
             @RequestParam(value = "bodyType", required = false) final String bodyType) {
 
+        final String searchQuery = blankToNull(q);
         final String brandFilter = blankToNull(brand);
         final String bodyTypeFilter = blankToNull(bodyType);
 
         final List<Car> cars;
-        if (brandFilter != null && bodyTypeFilter != null) {
+        if (searchQuery != null) {
+            cars = filterCars(carService.searchCars(searchQuery), brandFilter, bodyTypeFilter);
+        } else if (brandFilter != null && bodyTypeFilter != null) {
             cars = carService.getCarsByBrandAndBodyType(brandFilter, bodyTypeFilter);
         } else if (brandFilter != null) {
             cars = carService.getCarsByBrand(brandFilter);
@@ -60,24 +79,77 @@ public class CarController {
             cars = carService.getAllCars();
         }
 
-        final Map<Long, ReviewStats> reviewStatsByCarId;
-        if (cars.isEmpty()) {
-            reviewStatsByCarId = Collections.emptyMap();
-        } else {
-            reviewStatsByCarId = reviewService.getReviewStatsByCarIds(
-                            cars.stream().map(Car::getId).collect(Collectors.toList()))
-                    .stream()
-                    .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
-        }
-
         final ModelAndView mav = new ModelAndView("cars.jsp");
         mav.addObject("cars", cars);
-        mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
+        mav.addObject("reviewStatsByCarId", getReviewStatsByCarId(cars));
         mav.addObject("brands", brandDao.findAll());
         mav.addObject("bodyTypes", bodyTypeDao.findAll());
         mav.addObject("selectedBrand", brandFilter);
         mav.addObject("selectedBodyType", bodyTypeFilter);
+        mav.addObject("searchQuery", searchQuery);
         return mav;
+    }
+
+    private Map<Long, ReviewStats> getReviewStatsByCarId(final List<Car> cars) {
+        if (cars.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return reviewService.getReviewStatsByCarIds(cars.stream().map(Car::getId).collect(Collectors.toList()))
+                .stream()
+                .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
+    }
+
+    private List<Car> filterCars(final List<Car> cars, final String brandFilter, final String bodyTypeFilter) {
+        return cars.stream()
+                .filter(car -> brandFilter == null || brandFilter.equalsIgnoreCase(car.getBrandName()))
+                .filter(car -> bodyTypeFilter == null || bodyTypeFilter.equalsIgnoreCase(car.getBodyType()))
+                .collect(Collectors.toList());
+    }
+
+    private List<Car> selectFeaturedCars(final List<Car> allCars, final Map<Long, ReviewStats> reviewStatsByCarId) {
+        if (allCars.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        final Comparator<Car> featuredComparator = Comparator
+                .comparing((Car car) -> getAverageRating(reviewStatsByCarId.get(car.getId())), Comparator.reverseOrder())
+                .thenComparing((Car car) -> getReviewCount(reviewStatsByCarId.get(car.getId())), Comparator.reverseOrder())
+                .thenComparingLong(Car::getId);
+
+        final List<Car> featuredCars = allCars.stream()
+                .filter(car -> getReviewCount(reviewStatsByCarId.get(car.getId())) > 0)
+                .sorted(featuredComparator)
+                .limit(FEATURED_REVIEW_COUNT)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        if (featuredCars.size() == FEATURED_REVIEW_COUNT) {
+            return featuredCars;
+        }
+
+        final Set<Long> selectedIds = featuredCars.stream()
+                .map(Car::getId)
+                .collect(Collectors.toCollection(HashSet::new));
+
+        allCars.stream()
+                .filter(car -> !selectedIds.contains(car.getId()))
+                .sorted(Comparator.comparing(Car::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparingLong(Car::getId))
+                .limit(FEATURED_REVIEW_COUNT - featuredCars.size())
+                .forEach(featuredCars::add);
+
+        return featuredCars;
+    }
+
+    private Car getFallbackHeroCar(final List<Car> allCars) {
+        return allCars.isEmpty() ? null : allCars.get(0);
+    }
+
+    private BigDecimal getAverageRating(final ReviewStats stats) {
+        return stats == null || stats.getAverageRating() == null ? BigDecimal.ZERO : stats.getAverageRating();
+    }
+
+    private long getReviewCount(final ReviewStats stats) {
+        return stats == null ? 0 : stats.getReviewCount();
     }
 
     private static String blankToNull(final String s) {

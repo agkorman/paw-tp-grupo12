@@ -13,4 +13,6 @@ public interface CarService {
     List<Car> getCarsByBrand(String brand);
 
     List<Car> getCarsByBrandAndBodyType(String brand, String bodyType);
+
+    List<Car> searchCars(String query);
 }
