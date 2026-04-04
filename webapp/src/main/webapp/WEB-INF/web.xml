@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <web-app
-    version="2.4"
     id="PAW"
-    xmlns="http://java.sun.com/xml/ns/j2ee"
+    version="3.1"
+    xmlns="http://xmlns.jcp.org/xml/ns/javaee"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
 >
  <display-name>PAW webapp 2026</display-name>
 
@@ -33,6 +33,11 @@
     <param-value
             >org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
   </init-param>
+  <multipart-config>
+    <max-file-size>5242880</max-file-size>
+    <max-request-size>5242880</max-request-size>
+    <file-size-threshold>0</file-size-threshold>
+  </multipart-config>
  </servlet>
 
  <servlet-mapping>

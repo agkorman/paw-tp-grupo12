@@ -1,0 +1,11 @@
+car_id	brand	body_type	model	image_url	file_path
+1	Toyota	Coupe	GR Supra	https://upload.wikimedia.org/wikipedia/commons/a/ac/2020_Toyota_GR_Supra_3.0.jpg	./tmp/my-car-images/1-toyota-gr-supra.jpg
+2	Ford	Coupe	Mustang	https://upload.wikimedia.org/wikipedia/commons/7/73/2018_Ford_Mustang_5.0_coupe.jpg	./tmp/my-car-images/2-ford-mustang.jpg
+3	Mazda	Roadster	MX-5 Miata	https://upload.wikimedia.org/wikipedia/commons/a/a5/20_Mazda_MX-5_Miata_Club.jpg	./tmp/my-car-images/3-mazda-mx-5-miata.jpg
+4	BMW	Sedan	M3	https://upload.wikimedia.org/wikipedia/commons/3/36/BMW_M3_%28G80%2C_2022%29_%2852227837026%29_%28cropped%29.jpg	./tmp/my-car-images/4-bmw-m3.jpg
+5	Porsche	Coupe	911	https://upload.wikimedia.org/wikipedia/commons/b/b4/Porsche_911_992_2.jpg	./tmp/my-car-images/5-porsche-911.jpg
+6	Honda	Hatchback	Civic Type R	https://upload.wikimedia.org/wikipedia/commons/4/4c/2022_Honda_Civic_Type_R_1.jpg	./tmp/my-car-images/6-honda-civic-type-r.jpg
+7	Subaru	Sedan	WRX STI	https://upload.wikimedia.org/wikipedia/commons/c/c0/%2715_Subaru_WRX_STI_%28MIAS_%2715%29.jpg	./tmp/my-car-images/7-subaru-wrx-sti.jpg
+8	Nissan	Coupe	GT-R	https://upload.wikimedia.org/wikipedia/commons/9/91/2009_Nissan_GT-R_Black_Edition_1.jpg	./tmp/my-car-images/8-nissan-gt-r.jpg
+9	Chevrolet	Coupe	Camaro	https://upload.wikimedia.org/wikipedia/commons/4/41/2016-18_Chevrolet_Camaro_VI_rear%2C_7.20.19.jpg	./tmp/my-car-images/9-chevrolet-camaro.jpg
+10	Audi	Estate	RS6 Avant	https://upload.wikimedia.org/wikipedia/commons/0/00/Audi_RS6_Avant_C8_1X7A0305.jpg	./tmp/my-car-images/10-audi-rs6-avant.jpg
