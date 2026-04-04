@@ -14,8 +14,8 @@
         </div>
 
         <form id="createReviewForm" class="review-modal-form">
-            <input id="modalCarId" name="carId" type="hidden" value="${carId}">
-            <input id="modalUserId" name="userId" type="hidden" value="${resolvedUserId}">
+            <input id="modalCarId" name="carId" type="hidden" value="<c:out value='${carId}'/>">
+            <input id="modalUserId" name="userId" type="hidden" value="<c:out value='${resolvedUserId}'/>">
 
             <p class="review-modal-subtitle">Completa los campos de la reseña. Este formulario es solo visual por ahora.</p>
 

@@ -19,7 +19,7 @@
 </head>
 <body>
 
-    <pa:nav activePage="explore"/>
+    <pa:nav activePage="explore" actionText="Agregar auto" actionId="openCreateCarModalBtn" actionDialogId="createCarModal"/>
 
     <main class="landing-page">
         <section class="landing-hero">
@@ -126,7 +126,66 @@
         </section>
     </main>
 
+    <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}"/>
+
     <pa:footer/>
+
+    <script>
+        (function () {
+            var openButton = document.getElementById('openCreateCarModalBtn');
+            var modal = document.getElementById('createCarModal');
+            var form = document.getElementById('createCarForm');
+
+            if (!openButton || !modal || !form) {
+                return;
+            }
+
+            var closeElements = Array.prototype.slice.call(modal.querySelectorAll('[data-close-car-modal]'));
+
+            var resetModalState = function () {
+                form.reset();
+            };
+
+            var closeModal = function () {
+                modal.setAttribute('hidden', 'hidden');
+                document.body.classList.remove('modal-open');
+                resetModalState();
+                openButton.focus();
+            };
+
+            var openModal = function () {
+                resetModalState();
+                modal.removeAttribute('hidden');
+                document.body.classList.add('modal-open');
+                var firstInput = modal.querySelector('#modalCarBrand');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            };
+
+            openButton.addEventListener('click', openModal);
+
+            closeElements.forEach(function (element) {
+                element.addEventListener('click', closeModal);
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
+                    closeModal();
+                }
+            });
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                if (!form.reportValidity()) {
+                    return;
+                }
+
+                closeModal();
+            });
+        })();
+    </script>
 
 </body>
 </html>
