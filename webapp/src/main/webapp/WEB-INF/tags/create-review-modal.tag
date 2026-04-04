@@ -1,9 +1,6 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="carId" required="true" %>
-<%@ attribute name="userId" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-
-<c:set var="resolvedUserId" value="${empty userId ? 1 : userId}"/>
 
 <div id="createReviewModal" class="review-modal" hidden>
     <div class="review-modal-overlay" data-close-modal></div>
@@ -13,13 +10,16 @@
             <button type="button" class="review-modal-close" data-close-modal aria-label="Cerrar modal">x</button>
         </div>
 
-        <form id="createReviewForm" class="review-modal-form">
-            <input id="modalCarId" name="carId" type="hidden" value="<c:out value='${carId}'/>">
-            <input id="modalUserId" name="userId" type="hidden" value="<c:out value='${resolvedUserId}'/>">
+        <form id="createReviewForm" class="review-modal-form" method="post" action="<c:url value='/reviews'/>">
+            <input id="modalCarId" name="carId" type="hidden" value="${carId}">
 
-            <p class="review-modal-subtitle">Completa los campos de la reseña. Este formulario es solo visual por ahora.</p>
+            <p class="review-modal-subtitle">Completa los campos de la reseña. Tu email se guardara para poder vincular esta resena a una cuenta mas adelante.</p>
 
             <div class="review-modal-grid">
+                <div class="review-modal-field review-modal-field-wide">
+                    <label for="modalReviewerEmail">Email</label>
+                    <input id="modalReviewerEmail" name="reviewerEmail" type="email" maxlength="100" required placeholder="tu@email.com">
+                </div>
                 <div class="review-modal-field">
                     <label for="modalRating">Puntuacion (0.0 - 5.0)</label>
                     <input id="modalRating" name="rating" type="number" min="0" max="5" step="0.5" required>

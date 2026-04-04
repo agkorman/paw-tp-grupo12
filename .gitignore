@@ -24,7 +24,16 @@ target/
 
 CLAUDE.md
 AGENTS.md
+perso.md
 AGENT.MD
+
+# scripts 
+*scripts
+
+*tmp/
 
 # Environment
 .env
+
+# Generated downloads
+tmp/seeded-car-images/
