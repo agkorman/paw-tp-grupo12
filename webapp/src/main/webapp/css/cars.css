@@ -19,6 +19,10 @@
     min-width: 0;
 }
 
+.filter-row-search {
+    align-items: stretch;
+}
+
 .filter-row {
     display: flex;
     align-items: center;
@@ -60,6 +64,45 @@
     background-color: var(--surface-container-highest);
     outline: none;
     border-color: var(--primary);
+}
+
+.filter-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: min(32rem, 100%);
+    max-width: 100%;
+    padding: 0.5rem 0.875rem;
+    background: var(--surface-container-high);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.filter-search-wrap:hover,
+.filter-search-wrap:focus-within {
+    background: var(--surface-container-highest);
+    border-color: var(--primary);
+}
+
+.filter-search-wrap svg {
+    color: var(--secondary);
+    flex: 0 0 auto;
+}
+
+.filter-search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--on-surface);
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+}
+
+.filter-search-input::placeholder {
+    color: var(--secondary);
 }
 
 .filter-meta {
@@ -112,8 +155,38 @@
         padding-left: 1.5rem;
         padding-right: 1.5rem;
     }
+
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .filter-meta {
+        justify-content: space-between;
+    }
 }
 
 @media (max-width: 560px) {
     .cars-grid { grid-template-columns: 1fr; }
+
+    .filter-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .filter-row-label {
+        min-width: 0;
+    }
+
+    .filter-select,
+    .filter-search-wrap {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .filter-meta {
+        align-items: stretch;
+        flex-direction: column;
+    }
 }

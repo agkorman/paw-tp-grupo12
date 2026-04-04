@@ -50,4 +50,12 @@ public class CarServiceImpl implements CarService {
                         .map(bt -> carDao.findByBrandIdAndBodyTypeId(b.getId(), bt.getId())))
                 .orElse(Collections.emptyList());
     }
+
+    @Override
+    public List<Car> searchCars(final String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return getAllCars();
+        }
+        return carDao.search(query);
+    }
 }
