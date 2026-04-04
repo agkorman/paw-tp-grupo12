@@ -201,6 +201,11 @@
     gap: 1rem;
 }
 
+.reviews-feed.is-loading {
+    opacity: 0.65;
+    transition: opacity 0.18s ease;
+}
+
 .feed-header {
     display: flex;
     justify-content: space-between;
@@ -211,11 +216,29 @@
     display: inline-flex;
     align-items: center;
     gap: 0.625rem;
+    flex-wrap: wrap;
 }
 
-.review-filter-btn {
-    text-transform: none;
-    letter-spacing: 0.02em;
+.review-sort-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.review-sort-label {
+    color: var(--secondary);
+    font-size: 0.875rem;
+}
+
+.review-sort-select {
+    min-height: 40px;
+    padding: 0.55rem 0.8rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--outline-variant);
+    background: var(--surface-container);
+    color: var(--on-surface);
+    font: inherit;
 }
 
 .count-label {

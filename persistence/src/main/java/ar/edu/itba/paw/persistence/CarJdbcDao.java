@@ -23,7 +23,8 @@ public class CarJdbcDao implements CarDao {
 
     private static final String SELECT_COLUMNS =
             "SELECT c.car_id, c.brand_id, b.name AS brand_name, c.model, c.body_type_id, bt.name AS body_type, "
-                    + "c.description, c.image_url, c.created_at ";
+                    + "c.description, c.image_url, c.created_at, "
+                    + "EXISTS (SELECT 1 FROM car_images ci WHERE ci.car_id = c.car_id) AS has_image ";
 
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
@@ -37,7 +38,8 @@ public class CarJdbcDao implements CarDao {
             rs.getString("body_type"),
             rs.getString("description"),
             rs.getString("image_url"),
-            rs.getTimestamp("created_at").toLocalDateTime()
+            rs.getTimestamp("created_at").toLocalDateTime(),
+            rs.getBoolean("has_image")
     );
 
     @Autowired

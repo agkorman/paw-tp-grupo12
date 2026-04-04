@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 public class Review implements Serializable {
 
     private long id;
-    private long userId;
+    private Long userId;
+    private String reviewerEmail;
     private long carId;
     private BigDecimal rating;
     private String title;
@@ -21,11 +22,12 @@ public class Review implements Serializable {
 
     public Review() {}
 
-    public Review(long id, long userId, long carId, BigDecimal rating, String title, String body,
+    public Review(long id, Long userId, String reviewerEmail, long carId, BigDecimal rating, String title, String body,
                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                   LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.userId = userId;
+        this.reviewerEmail = reviewerEmail;
         this.carId = carId;
         this.rating = rating;
         this.title = title;
@@ -41,8 +43,11 @@ public class Review implements Serializable {
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 
-    public long getUserId() { return userId; }
-    public void setUserId(long userId) { this.userId = userId; }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    public String getReviewerEmail() { return reviewerEmail; }
+    public void setReviewerEmail(String reviewerEmail) { this.reviewerEmail = reviewerEmail; }
 
     public long getCarId() { return carId; }
     public void setCarId(long carId) { this.carId = carId; }

@@ -14,11 +14,18 @@ public class Car implements Serializable {
     private String description;
     private String imageUrl;
     private LocalDateTime createdAt;
+    private boolean hasImage;
 
     public Car() {}
 
     public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
                final String bodyType, final String description, final String imageUrl, final LocalDateTime createdAt) {
+        this(id, brandId, brandName, model, bodyTypeId, bodyType, description, imageUrl, createdAt, false);
+    }
+
+    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
+               final String bodyType, final String description, final String imageUrl,
+               final LocalDateTime createdAt, final boolean hasImage) {
         this.id = id;
         this.brandId = brandId;
         this.brandName = brandName;
@@ -28,6 +35,7 @@ public class Car implements Serializable {
         this.description = description;
         this.imageUrl = imageUrl;
         this.createdAt = createdAt;
+        this.hasImage = hasImage;
     }
 
     public long getId() {
@@ -100,5 +108,13 @@ public class Car implements Serializable {
 
     public void setCreatedAt(final LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public boolean getHasImage() {
+        return hasImage;
+    }
+
+    public void setHasImage(final boolean hasImage) {
+        this.hasImage = hasImage;
     }
 }

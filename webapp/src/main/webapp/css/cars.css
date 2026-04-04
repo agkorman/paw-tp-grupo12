@@ -72,6 +72,17 @@
     flex: 0 0 auto;
 }
 
+.catalog-content {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.catalog-meta {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 var(--spacing-12);
+}
+
 .count-label {
     font-size: 0.9rem;
     color: rgba(196, 198, 204, 0.6);
@@ -84,6 +95,11 @@
     min-width: 11.5rem;
     min-height: 3rem;
     font-size: 0.8rem;
+}
+
+.catalog-content.is-loading {
+    opacity: 0.65;
+    transition: opacity 0.18s ease;
 }
 
 /* ── CATALOG GRID ── */
@@ -119,7 +135,7 @@
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
     .cars-grid { grid-template-columns: repeat(2, 1fr); }
-    .filter-bar, .catalog-section {
+    .filter-bar, .catalog-section, .catalog-meta {
         padding-left: 1.5rem;
         padding-right: 1.5rem;
     }

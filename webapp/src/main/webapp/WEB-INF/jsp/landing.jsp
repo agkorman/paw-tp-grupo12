@@ -115,7 +115,8 @@
                             <pa:car-card
                                 model="${car.brandName} ${car.model}"
                                 bodyType="${car.bodyType}"
-                                imageUrl="${car.imageUrl}"
+                                carId="${car.id}"
+                                hasImage="${car.hasImage}"
                                 href="${reviewUrl}"
                                 averageRating="${reviewStatsByCarId[car.id].averageRating}"
                                 reviewCount="${reviewStatsByCarId[car.id].reviewCount}"/>

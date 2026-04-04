@@ -1,17 +1,16 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
-<%@ attribute name="reviews" required="true" type="java.util.List" %>
+<%@ attribute name="latestReview" required="false" type="ar.edu.itba.paw.model.Review" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <section class="latest-review-section" aria-label="Ultima review">
     <h2>Ultima review</h2>
     <c:choose>
-        <c:when test="${empty reviews}">
+        <c:when test="${empty latestReview}">
             <div class="last-review-empty">
                 Todavia no hay reviews para este auto.
             </div>
         </c:when>
         <c:otherwise>
-            <c:set var="latestReview" value="${reviews[0]}"/>
             <article class="last-review-item">
                 <div class="last-review-top">
                     <strong><c:out value="${latestReview.title}"/></strong>
@@ -19,7 +18,19 @@
                 </div>
                 <p class="last-review-body"><c:out value="${latestReview.body}"/></p>
                 <div class="review-meta last-review-meta">
-                    <span>Usuario #<c:out value="${latestReview.userId}"/></span>
+                    <span>
+                        <c:choose>
+                            <c:when test="${not empty latestReview.reviewerEmail}">
+                                anon
+                            </c:when>
+                            <c:when test="${not empty latestReview.userId}">
+                                Usuario #<c:out value="${latestReview.userId}"/>
+                            </c:when>
+                            <c:otherwise>
+                                Usuario sin identificar
+                            </c:otherwise>
+                        </c:choose>
+                    </span>
                     <span><c:out value="${latestReview.createdAt}"/></span>
                 </div>
             </article>

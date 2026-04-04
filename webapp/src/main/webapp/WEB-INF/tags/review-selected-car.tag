@@ -7,8 +7,11 @@
     <h2>Imagen del auto</h2>
     <div class="selected-car-image">
         <c:choose>
-            <c:when test="${not empty selectedCar.imageUrl}">
-                <img src="${fn:escapeXml(selectedCar.imageUrl)}" alt="${fn:escapeXml(selectedCar.model)}" loading="lazy">
+            <c:when test="${selectedCar.hasImage}">
+                <c:url var="selectedCarImageUrl" value="/car-image">
+                    <c:param name="carId" value="${selectedCar.id}"/>
+                </c:url>
+                <img src="${selectedCarImageUrl}" alt="${fn:escapeXml(selectedCar.model)}" loading="eager">
             </c:when>
             <c:otherwise>
                 <div class="img-placeholder">
