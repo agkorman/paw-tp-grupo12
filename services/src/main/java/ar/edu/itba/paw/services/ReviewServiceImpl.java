@@ -23,14 +23,29 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
+    public Review createReview(Long userId, String reviewerEmail, long carId, BigDecimal rating, String title, String body,
                                String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend) {
-        return reviewDao.create(userId, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
+        return reviewDao.create(userId, reviewerEmail, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
     }
 
     @Override
     public List<Review> getReviewsByCar(long carId) {
         return reviewDao.findByCarId(carId);
+    }
+
+    @Override
+    public Optional<Review> getLatestReviewByCar(final long carId) {
+        return reviewDao.findLatestByCarId(carId);
+    }
+
+    @Override
+    public List<Review> getReviewsByCarOrderByRatingAsc(final long carId) {
+        return reviewDao.findByCarIdOrderByRatingAsc(carId);
+    }
+
+    @Override
+    public List<Review> getReviewsByCarOrderByRatingDesc(final long carId) {
+        return reviewDao.findByCarIdOrderByRatingDesc(carId);
     }
 
     @Override

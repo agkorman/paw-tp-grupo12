@@ -1,7 +1,8 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="model"      required="true" %>
 <%@ attribute name="bodyType"   required="false" %>
-<%@ attribute name="imageUrl"   required="false" %>
+<%@ attribute name="carId"      required="true" %>
+<%@ attribute name="hasImage"   required="true" %>
 <%@ attribute name="href"       required="true" %>
 <%@ attribute name="averageRating" required="false" %>
 <%@ attribute name="reviewCount" required="false" %>
@@ -12,8 +13,11 @@
     <div class="car-card">
         <div class="card-image-wrap">
             <c:choose>
-                <c:when test="${not empty imageUrl}">
-                    <img src="${fn:escapeXml(imageUrl)}" alt="${fn:escapeXml(model)}" loading="lazy">
+                <c:when test="${hasImage}">
+                    <c:url var="carImageUrl" value="/car-image">
+                        <c:param name="carId" value="${carId}"/>
+                    </c:url>
+                    <img src="${carImageUrl}" alt="${fn:escapeXml(model)}" loading="lazy">
                 </c:when>
                 <c:otherwise>
                     <div class="img-placeholder">

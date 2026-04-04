@@ -44,6 +44,14 @@ CREATE INDEX IF NOT EXISTS idx_cars_body_type_id
 CREATE INDEX IF NOT EXISTS idx_cars_brand_body_type
     ON cars (brand_id, body_type_id);
 
+CREATE TABLE IF NOT EXISTS car_images (
+    car_id       BIGINT PRIMARY KEY
+                 REFERENCES cars(car_id) ON DELETE CASCADE,
+    content_type VARCHAR(100) NOT NULL,
+    image_data   BYTEA NOT NULL,
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Brands
 INSERT INTO brands (name, image_url) SELECT 'Toyota',    NULL WHERE NOT EXISTS (SELECT 1 FROM brands WHERE name = 'Toyota');
 INSERT INTO brands (name, image_url) SELECT 'Ford',      NULL WHERE NOT EXISTS (SELECT 1 FROM brands WHERE name = 'Ford');
@@ -186,7 +194,8 @@ WHERE b.name = 'Audi'
 
 CREATE TABLE IF NOT EXISTS reviews (
     review_id        SERIAL PRIMARY KEY,
-    user_id          INT          NOT NULL REFERENCES users(user_id),
+    user_id          INT          REFERENCES users(user_id),
+    reviewer_email   VARCHAR(100),
     car_id           BIGINT       NOT NULL REFERENCES cars(car_id),
     rating           NUMERIC(3,1) NOT NULL CHECK (rating >= 0.0 AND rating <= 5.0),
     title            VARCHAR(200) NOT NULL,
@@ -196,8 +205,26 @@ CREATE TABLE IF NOT EXISTS reviews (
     mileage_km       INT,
     would_recommend  BOOLEAN,
     created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_reviews_reviewer_identity
+        CHECK (user_id IS NOT NULL OR reviewer_email IS NOT NULL)
 );
 
-CREATE INDEX IF NOT EXISTS idx_reviews_car_id
-    ON reviews (car_id);
+-- EJECUTEN ESTO UNA VEZ , Y DESPUES COMENTENLO. ES PARA APLUICAR LOS CHANEGS DEl schema.
+--
+-- ALTER TABLE reviews
+--     ALTER COLUMN user_id DROP NOT NULL;
+
+-- ALTER TABLE reviews
+--     ADD COLUMN IF NOT EXISTS reviewer_email VARCHAR(100);
+
+-- ALTER TABLE reviews
+--     DROP CONSTRAINT IF EXISTS chk_reviews_reviewer_identity;
+
+-- ALTER TABLE reviews
+--     ADD CONSTRAINT chk_reviews_reviewer_identity
+--         CHECK (user_id IS NOT NULL OR reviewer_email IS NOT NULL);
+
+-- CREATE INDEX IF NOT EXISTS idx_reviews_car_id
+--     ON reviews (car_id);
