@@ -29,9 +29,15 @@ public class ReviewJdbcDao implements ReviewDao {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
 
+    private static Long getNullableLong(final java.sql.ResultSet rs, final String columnName) throws java.sql.SQLException {
+        final Number value = (Number) rs.getObject(columnName);
+        return value == null ? null : value.longValue();
+    }
+
     private static final RowMapper<Review> ROW_MAPPER = (rs, rowNum) -> new Review(
             rs.getLong("review_id"),
-            rs.getLong("user_id"),
+            getNullableLong(rs, "user_id"),
+            rs.getString("reviewer_email"),
             rs.getLong("car_id"),
             rs.getBigDecimal("rating"),
             rs.getString("title"),
@@ -56,7 +62,7 @@ public class ReviewJdbcDao implements ReviewDao {
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("reviews")
-                .usingColumns("user_id", "car_id", "rating", "title", "body",
+                .usingColumns("user_id", "reviewer_email", "car_id", "rating", "title", "body",
                         "ownership_status", "model_year", "mileage_km", "would_recommend")
                 .usingGeneratedKeyColumns("review_id");
     }
@@ -64,7 +70,7 @@ public class ReviewJdbcDao implements ReviewDao {
     @Override
     public Optional<Review> findById(long id) {
         return jdbcTemplate.query(
-                "SELECT review_id, user_id, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews WHERE review_id = ?",
+                "SELECT review_id, user_id, reviewer_email, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews WHERE review_id = ?",
                 ROW_MAPPER, id
         ).stream().findFirst();
     }
@@ -72,15 +78,37 @@ public class ReviewJdbcDao implements ReviewDao {
     @Override
     public List<Review> findAll() {
         return jdbcTemplate.query(
-                "SELECT review_id, user_id, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews ORDER BY created_at DESC",
+                "SELECT review_id, user_id, reviewer_email, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews ORDER BY created_at DESC",
                 ROW_MAPPER
         );
     }
 
     @Override
     public List<Review> findByCarId(long carId) {
+        return findByCarIdOrdered(carId, "created_at DESC");
+    }
+
+    @Override
+    public Optional<Review> findLatestByCarId(final long carId) {
         return jdbcTemplate.query(
-                "SELECT review_id, user_id, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews WHERE car_id = ? ORDER BY created_at DESC",
+                "SELECT review_id, user_id, reviewer_email, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews WHERE car_id = ? ORDER BY created_at DESC LIMIT 1",
+                ROW_MAPPER, carId
+        ).stream().findFirst();
+    }
+
+    @Override
+    public List<Review> findByCarIdOrderByRatingAsc(final long carId) {
+        return findByCarIdOrdered(carId, "rating ASC, created_at DESC");
+    }
+
+    @Override
+    public List<Review> findByCarIdOrderByRatingDesc(final long carId) {
+        return findByCarIdOrdered(carId, "rating DESC, created_at DESC");
+    }
+
+    private List<Review> findByCarIdOrdered(final long carId, final String orderByClause) {
+        return jdbcTemplate.query(
+                "SELECT review_id, user_id, reviewer_email, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews WHERE car_id = ? ORDER BY " + orderByClause,
                 ROW_MAPPER, carId
         );
     }
@@ -88,7 +116,7 @@ public class ReviewJdbcDao implements ReviewDao {
     @Override
     public List<Review> findByUserId(long userId) {
         return jdbcTemplate.query(
-                "SELECT review_id, user_id, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews WHERE user_id = ? ORDER BY created_at DESC",
+                "SELECT review_id, user_id, reviewer_email, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews WHERE user_id = ? ORDER BY created_at DESC",
                 ROW_MAPPER, userId
         );
     }
@@ -116,10 +144,11 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
-    public Review create(long userId, long carId, BigDecimal rating, String title, String body,
+    public Review create(Long userId, String reviewerEmail, long carId, BigDecimal rating, String title, String body,
                          String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend) {
         Map<String, Object> params = new HashMap<>();
         params.put("user_id", userId);
+        params.put("reviewer_email", reviewerEmail);
         params.put("car_id", carId);
         params.put("rating", rating);
         params.put("title", title);

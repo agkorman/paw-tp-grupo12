@@ -1,0 +1,480 @@
+.landing-page {
+    background:
+        radial-gradient(circle at top right, rgba(255, 87, 25, 0.14), transparent 28rem),
+        radial-gradient(circle at 20% 10%, rgba(94, 212, 255, 0.08), transparent 22rem),
+        var(--surface);
+}
+
+.landing-hero {
+    min-height: calc(100vh - 56px);
+    padding: 2.5rem var(--spacing-12) 4.5rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+    align-items: center;
+    gap: 2rem;
+    overflow: hidden;
+    position: relative;
+}
+
+.landing-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(90deg, rgba(19, 19, 19, 0.92) 0%, rgba(19, 19, 19, 0.74) 48%, rgba(19, 19, 19, 0.28) 100%),
+        linear-gradient(180deg, rgba(13, 13, 13, 0.22) 0%, rgba(19, 19, 19, 0) 24%, rgba(13, 13, 13, 0.52) 100%);
+    pointer-events: none;
+}
+
+.hero-copy,
+.hero-media {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 42rem;
+}
+
+.hero-kicker,
+.section-kicker,
+.hero-spotlight-label {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0.4rem 0.7rem;
+    border-radius: var(--radius-md);
+    background: rgba(255, 87, 25, 0.14);
+    color: var(--primary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.hero-copy h1,
+.section-heading h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 0.94;
+    text-transform: uppercase;
+}
+
+.hero-copy h1 {
+    max-width: 12ch;
+    font-size: clamp(3.4rem, 8vw, 6.75rem);
+}
+
+.hero-text {
+    max-width: 34rem;
+    color: var(--secondary);
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+.hero-search {
+    display: flex;
+    align-items: stretch;
+    gap: 0.875rem;
+    max-width: 38rem;
+}
+
+.hero-search-field {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    min-height: 4.25rem;
+    padding: 0 1.25rem;
+    background: rgba(13, 13, 13, 0.92);
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-float);
+}
+
+.hero-search-field svg {
+    color: var(--secondary);
+    flex: 0 0 auto;
+}
+
+.hero-search-field input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--on-surface);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+}
+
+.hero-search-field input::placeholder {
+    color: rgba(196, 198, 204, 0.72);
+}
+
+.hero-search .btn-primary {
+    min-width: 9rem;
+    justify-content: center;
+    font-size: 0.78rem;
+}
+
+.hero-spotlight {
+    display: grid;
+    gap: 0.85rem;
+    width: min(100%, 31rem);
+    padding: 1.25rem 1.4rem;
+    border-radius: var(--radius-lg);
+    background: rgba(26, 26, 26, 0.82);
+    border: 1px solid var(--outline-variant);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.hero-spotlight-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.hero-spotlight-rating {
+    color: var(--secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hero-spotlight h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    line-height: 1.05;
+}
+
+.hero-spotlight p {
+    color: var(--secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.hero-media {
+    min-height: 34rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-glow {
+    position: absolute;
+    inset: auto 8% 18% auto;
+    width: min(28rem, 56vw);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 181, 158, 0.26) 0%, rgba(255, 87, 25, 0.12) 34%, transparent 72%);
+    filter: blur(26px);
+}
+
+.hero-car-image {
+    position: relative;
+    width: min(56rem, 100%);
+    object-fit: contain;
+    filter: drop-shadow(0 2rem 4rem rgba(0, 0, 0, 0.55));
+    transform: translateX(10%) scale(1.08);
+}
+
+.hero-placeholder {
+    width: 100%;
+    height: 24rem;
+    border-radius: 50% 50% 0 0;
+    background: linear-gradient(180deg, rgba(46, 46, 46, 0.42), rgba(19, 19, 19, 0));
+}
+
+.featured-section {
+    padding: 0 var(--spacing-12) var(--spacing-16);
+    display: grid;
+    gap: 2rem;
+}
+
+.section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.section-heading > div {
+    display: grid;
+    gap: 0.9rem;
+    max-width: 36rem;
+}
+
+.section-heading h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.section-heading p {
+    color: var(--secondary);
+    line-height: 1.7;
+}
+
+.featured-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.landing-empty-state {
+    padding: 4rem 0 5rem;
+    text-align: center;
+    color: var(--secondary);
+}
+
+.car-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 220;
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+}
+
+.car-modal[hidden] {
+    display: none;
+}
+
+.car-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.68);
+    backdrop-filter: blur(4px);
+}
+
+.car-modal-dialog {
+    position: relative;
+    width: min(760px, 100%);
+    max-height: calc(100vh - 3rem);
+    overflow: auto;
+    padding: var(--spacing-6);
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-lg);
+    background:
+        radial-gradient(circle at top right, rgba(255, 87, 25, 0.12), transparent 18rem),
+        var(--surface-container-low);
+    box-shadow: var(--shadow-float);
+}
+
+.car-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.car-modal-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.65rem, 3vw, 2.2rem);
+    margin-top: 0.35rem;
+}
+
+.car-modal-kicker {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0.35rem 0.7rem;
+    border-radius: var(--radius-full);
+    background: rgba(255, 87, 25, 0.14);
+    color: var(--primary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.car-modal-close {
+    border: 1px solid var(--outline-variant);
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+    border-radius: var(--radius-md);
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.car-modal-close:hover {
+    background: var(--surface-container-highest);
+    border-color: rgba(255, 181, 158, 0.28);
+}
+
+.car-modal-form {
+    margin-top: 1.25rem;
+    display: grid;
+    gap: 1rem;
+}
+
+.car-modal-subtitle {
+    color: var(--secondary);
+    line-height: 1.65;
+}
+
+.car-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.875rem;
+}
+
+.car-modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.car-modal-field-wide {
+    grid-column: 1 / -1;
+}
+
+.car-modal-field label {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--secondary);
+}
+
+.car-modal-field input,
+.car-modal-field textarea,
+.car-modal-field select {
+    border: 1px solid var(--outline-variant);
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 0.85rem;
+    font: inherit;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.car-modal-field textarea {
+    resize: vertical;
+    min-height: 8.5rem;
+}
+
+.car-modal-field input::placeholder,
+.car-modal-field textarea::placeholder {
+    color: rgba(196, 198, 204, 0.72);
+}
+
+.car-modal-field input:focus,
+.car-modal-field textarea:focus,
+.car-modal-field select:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--surface-container-highest);
+}
+
+.car-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 1080px) {
+    .landing-hero {
+        grid-template-columns: 1fr;
+        padding-top: 1.5rem;
+        gap: 0.5rem;
+    }
+
+    .hero-media {
+        order: -1;
+        min-height: 20rem;
+    }
+
+    .hero-car-image {
+        transform: none;
+        width: min(46rem, 100%);
+    }
+}
+
+@media (max-width: 900px) {
+    .landing-hero,
+    .featured-section {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .landing-hero {
+        min-height: auto;
+        padding-bottom: 3rem;
+    }
+
+    .hero-copy {
+        gap: 1.25rem;
+    }
+
+    .hero-search {
+        flex-direction: column;
+    }
+
+    .hero-search .btn-primary {
+        width: 100%;
+        min-height: 3.5rem;
+    }
+
+    .hero-media {
+        min-height: 14rem;
+    }
+
+    .featured-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .car-modal {
+        padding: 1rem;
+    }
+
+    .car-modal-dialog {
+        padding: 1.25rem;
+    }
+
+    .car-modal-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .car-modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .car-modal-actions .btn-primary,
+    .car-modal-actions .btn-secondary {
+        width: 100%;
+    }
+}

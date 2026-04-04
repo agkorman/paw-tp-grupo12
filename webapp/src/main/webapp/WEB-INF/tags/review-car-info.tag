@@ -12,7 +12,12 @@
         </div>
         <div class="car-info-row">
             <span class="car-info-label">Marca</span>
-            <span class="car-info-value">Marca #<c:out value="${selectedCar.brandId}"/></span>
+            <span class="car-info-value">
+                <c:choose>
+                    <c:when test="${not empty selectedCar.brandName}"><c:out value="${selectedCar.brandName}"/></c:when>
+                    <c:otherwise>N/A</c:otherwise>
+                </c:choose>
+            </span>
         </div>
         <div class="car-info-row">
             <span class="car-info-label">Tipo</span>

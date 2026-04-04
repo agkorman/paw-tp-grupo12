@@ -35,16 +35,17 @@
 
             <div class="review-side-column">
                 <pa:review-car-info selectedCar="${selectedCar}" averageRating="${averageRating}"/>
-                <pa:latest-review reviews="${reviews}"/>
+                <pa:latest-review latestReview="${latestReview}"/>
             </div>
         </section>
 
-        <pa:reviews-feed reviews="${reviews}"/>
+        <pa:reviews-feed reviews="${reviews}" carId="${selectedCar.id}" currentSort="${currentSort}"/>
     </main>
 
-    <pa:create-review-modal carId="${selectedCar.id}" userId="1"/>
+    <pa:create-review-modal carId="${selectedCar.id}"/>
 
     <pa:footer/>
+    <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
 
     <script>
         (function () {
@@ -154,12 +155,10 @@
             }
 
             form.addEventListener('submit', function (event) {
-                event.preventDefault();
                 if (!validateOptionalNumericFields()) {
+                    event.preventDefault();
                     form.reportValidity();
-                    return;
                 }
-                closeModal();
             });
         })();
     </script>

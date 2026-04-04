@@ -1,25 +1,31 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
+import ar.edu.itba.paw.persistence.CarImageDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CarServiceImpl implements CarService {
 
     private final CarDao carDao;
+    private final CarImageDao carImageDao;
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
 
     @Autowired
-    public CarServiceImpl(final CarDao carDao, final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
+    public CarServiceImpl(final CarDao carDao, final CarImageDao carImageDao,
+                          final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
         this.carDao = carDao;
+        this.carImageDao = carImageDao;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
     }
@@ -27,6 +33,11 @@ public class CarServiceImpl implements CarService {
     @Override
     public List<Car> getAllCars() {
         return carDao.findAll();
+    }
+
+    @Override
+    public Optional<Car> getCarById(final long id) {
+        return carDao.findById(id);
     }
 
     @Override
@@ -49,5 +60,23 @@ public class CarServiceImpl implements CarService {
                 .flatMap(b -> bodyTypeDao.findByName(bodyType)
                         .map(bt -> carDao.findByBrandIdAndBodyTypeId(b.getId(), bt.getId())))
                 .orElse(Collections.emptyList());
+    }
+
+    @Override
+    public List<Car> searchCars(final String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return getAllCars();
+        }
+        return carDao.search(query);
+    }
+
+    @Override
+    public Optional<CarImage> getCarImageByCarId(final long carId) {
+        return carImageDao.findByCarId(carId);
+    }
+
+    @Override
+    public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
+        carImageDao.saveOrReplace(carId, contentType, imageData);
     }
 }

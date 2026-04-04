@@ -7,25 +7,35 @@ public class Car implements Serializable {
 
     private long id;
     private long brandId;
+    private String brandName;
     private String model;
     private long bodyTypeId;
     private String bodyType;
     private String description;
     private String imageUrl;
     private LocalDateTime createdAt;
+    private boolean hasImage;
 
     public Car() {}
 
-    public Car(final long id, final long brandId, final String model, final long bodyTypeId,
+    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
                final String bodyType, final String description, final String imageUrl, final LocalDateTime createdAt) {
+        this(id, brandId, brandName, model, bodyTypeId, bodyType, description, imageUrl, createdAt, false);
+    }
+
+    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
+               final String bodyType, final String description, final String imageUrl,
+               final LocalDateTime createdAt, final boolean hasImage) {
         this.id = id;
         this.brandId = brandId;
+        this.brandName = brandName;
         this.model = model;
         this.bodyTypeId = bodyTypeId;
         this.bodyType = bodyType;
         this.description = description;
         this.imageUrl = imageUrl;
         this.createdAt = createdAt;
+        this.hasImage = hasImage;
     }
 
     public long getId() {
@@ -42,6 +52,14 @@ public class Car implements Serializable {
 
     public void setBrandId(final long brandId) {
         this.brandId = brandId;
+    }
+
+    public String getBrandName() {
+        return brandName;
+    }
+
+    public void setBrandName(final String brandName) {
+        this.brandName = brandName;
     }
 
     public String getModel() {
@@ -90,5 +108,13 @@ public class Car implements Serializable {
 
     public void setCreatedAt(final LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public boolean getHasImage() {
+        return hasImage;
+    }
+
+    public void setHasImage(final boolean hasImage) {
+        this.hasImage = hasImage;
     }
 }
