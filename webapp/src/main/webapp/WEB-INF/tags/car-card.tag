@@ -8,7 +8,7 @@
 <%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
-<a href="${fn:escapeXml(href)}" class="car-card-link" aria-label="View reviews for ${fn:escapeXml(model)}">
+<a href="${fn:escapeXml(href)}" class="car-card-link" aria-label="Ver reseñas de ${fn:escapeXml(model)}">
     <div class="car-card">
         <div class="card-image-wrap">
             <c:choose>
@@ -28,7 +28,7 @@
             <span class="card-category">
                 <c:choose>
                     <c:when test="${not empty bodyType}"><c:out value="${bodyType}"/></c:when>
-                    <c:otherwise>Vehicle</c:otherwise>
+                    <c:otherwise>Vehículo</c:otherwise>
                 </c:choose>
             </span>
             <div class="card-title-row">
@@ -46,25 +46,25 @@
                         <span class="card-rating-count">
                             <c:out value="${reviewCount}"/>
                             <c:choose>
-                                <c:when test="${reviewCount eq 1}">review</c:when>
-                                <c:otherwise>reviews</c:otherwise>
+                                <c:when test="${reviewCount eq 1}">reseña</c:when>
+                                <c:otherwise>reseñas</c:otherwise>
                             </c:choose>
                         </span>
                     </c:when>
                     <c:otherwise>
-                        <span class="card-rating-empty">No reviews yet</span>
+                        <span class="card-rating-empty">Sin reseñas todavía</span>
                     </c:otherwise>
                 </c:choose>
             </div>
             <div class="card-footer">
                 <span class="card-meta">
                     <c:choose>
-                        <c:when test="${reviewCount gt 0}">Community score out of 5</c:when>
-                        <c:otherwise>Share the first impression</c:otherwise>
+                        <c:when test="${reviewCount gt 0}">Puntaje de la comunidad sobre 5</c:when>
+                        <c:otherwise>Comparte la primera impresión</c:otherwise>
                     </c:choose>
                 </span>
                 <span class="card-specs-link">
-                    View reviews
+                    Ver reseñas
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M5 12h14M12 5l7 7-7 7"/>
                     </svg>
