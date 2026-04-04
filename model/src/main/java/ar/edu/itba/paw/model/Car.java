@@ -7,6 +7,7 @@ public class Car implements Serializable {
 
     private long id;
     private long brandId;
+    private String brandName;
     private String model;
     private long bodyTypeId;
     private String bodyType;
@@ -16,10 +17,11 @@ public class Car implements Serializable {
 
     public Car() {}
 
-    public Car(final long id, final long brandId, final String model, final long bodyTypeId,
+    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
                final String bodyType, final String description, final String imageUrl, final LocalDateTime createdAt) {
         this.id = id;
         this.brandId = brandId;
+        this.brandName = brandName;
         this.model = model;
         this.bodyTypeId = bodyTypeId;
         this.bodyType = bodyType;
@@ -42,6 +44,14 @@ public class Car implements Serializable {
 
     public void setBrandId(final long brandId) {
         this.brandId = brandId;
+    }
+
+    public String getBrandName() {
+        return brandName;
+    }
+
+    public void setBrandName(final String brandName) {
+        this.brandName = brandName;
     }
 
     public String getModel() {
