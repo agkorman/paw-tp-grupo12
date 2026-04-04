@@ -53,6 +53,8 @@ public class CarController {
         mav.addObject("featuredCars", featuredCars);
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
         mav.addObject("heroCar", featuredCars.isEmpty() ? getFallbackHeroCar(allCars) : featuredCars.get(0));
+        mav.addObject("brands", brandDao.findAll());
+        mav.addObject("bodyTypes", bodyTypeDao.findAll());
         return mav;
     }
 

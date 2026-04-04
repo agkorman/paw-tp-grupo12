@@ -4,6 +4,7 @@
 <%@ attribute name="imageUrl"    required="true" %>
 <%@ attribute name="rating"      required="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <style>
     .car-card {
@@ -103,7 +104,7 @@
 
     <div class="car-card__image-wrapper">
         <h2 class="car-card__name"><c:out value="${name}" /></h2>
-        <img class="car-card__image" src="${imageUrl}" alt="${name}" />
+        <img class="car-card__image" src="${fn:escapeXml(imageUrl)}" alt="${fn:escapeXml(name)}" />
     </div>
 
     <div class="car-card__footer">

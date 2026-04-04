@@ -13,9 +13,9 @@
 
 <c:choose>
     <c:when test="${btnDisabled}">
-        <button type="button" class="${classes}" disabled>${text}</button>
+        <button type="button" class="${classes}" disabled><c:out value="${text}"/></button>
     </c:when>
     <c:otherwise>
-        <button type="button" class="${classes}">${text}</button>
+        <button type="button" class="${classes}"><c:out value="${text}"/></button>
     </c:otherwise>
 </c:choose>
