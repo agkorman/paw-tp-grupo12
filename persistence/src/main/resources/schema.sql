@@ -211,20 +211,5 @@ CREATE TABLE IF NOT EXISTS reviews (
         CHECK (user_id IS NOT NULL OR reviewer_email IS NOT NULL)
 );
 
--- EJECUTEN ESTO UNA VEZ , Y DESPUES COMENTENLO. ES PARA APLUICAR LOS CHANEGS DEl schema.
---
--- ALTER TABLE reviews
---     ALTER COLUMN user_id DROP NOT NULL;
-
--- ALTER TABLE reviews
---     ADD COLUMN IF NOT EXISTS reviewer_email VARCHAR(100);
-
--- ALTER TABLE reviews
---     DROP CONSTRAINT IF EXISTS chk_reviews_reviewer_identity;
-
--- ALTER TABLE reviews
---     ADD CONSTRAINT chk_reviews_reviewer_identity
---         CHECK (user_id IS NOT NULL OR reviewer_email IS NOT NULL);
-
--- CREATE INDEX IF NOT EXISTS idx_reviews_car_id
---     ON reviews (car_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_car_id
+    ON reviews (car_id);
