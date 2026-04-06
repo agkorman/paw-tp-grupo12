@@ -13,12 +13,12 @@
             <button type="button" class="car-modal-close" data-close-car-modal aria-label="Cerrar modal">x</button>
         </div>
 
-        <form id="createCarForm" class="car-modal-form" method="post" action="<c:url value='/cars'/>" novalidate>
+        <form id="createCarForm" class="car-modal-form" method="post" action="<c:url value='/cars'/>" enctype="multipart/form-data" novalidate>
             <c:if test="${not empty carFormError}">
                 <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
             </c:if>
             <p class="car-modal-subtitle">
-                Completa todos los campos para publicar el auto.
+                Completa los datos del auto y, si querés, sumá una imagen.
             </p>
 
             <div class="car-modal-grid car-modal-fields">
@@ -58,13 +58,12 @@
                 </div>
 
                 <div class="car-modal-field car-modal-field-wide">
-                    <label for="modalCarImageUrl">URL de imagen</label>
+                    <label for="modalCarFile">Imagen</label>
                     <input
-                            id="modalCarImageUrl"
-                            name="imageUrl"
-                            type="url"
-                            maxlength="500"
-                            placeholder="https://ejemplo.com/auto.jpg">
+                            id="modalCarFile"
+                            name="file"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp">
                 </div>
             </div>
 

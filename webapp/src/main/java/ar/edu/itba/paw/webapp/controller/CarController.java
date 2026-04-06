@@ -38,6 +38,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.concurrent.TimeUnit;
@@ -122,18 +123,17 @@ public class CarController {
         return mav;
     }
 
-    @RequestMapping(value = "/cars", method = RequestMethod.POST)
+    @RequestMapping(value = "/cars", method = RequestMethod.POST, consumes = "multipart/form-data")
     public ModelAndView createCar(@RequestParam("brand") final String brand,
                                   @RequestParam("bodyType") final String bodyType,
                                   @RequestParam("model") final String model,
                                   @RequestParam(value = "description", required = false) final String description,
-                                  @RequestParam(value = "imageUrl", required = false) final String imageUrl) {
+                                  @RequestParam(value = "file", required = false) final MultipartFile file) {
 
         final String trimmedBrand = brand.trim();
         final String trimmedBodyType = bodyType.trim();
         final String trimmedModel = model.trim();
         final String trimmedDescription = description == null ? null : description.trim();
-        final String trimmedImageUrl = imageUrl == null ? null : imageUrl.trim();
 
         if (trimmedBrand.isEmpty() || trimmedBodyType.isEmpty()) {
             return landingPage("Marca y tipo de carrocería son obligatorios.");
@@ -141,8 +141,10 @@ public class CarController {
         if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
             return landingPage("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
         }
-        if (trimmedImageUrl != null && trimmedImageUrl.length() > 500) {
-            return landingPage("La URL de imagen debe tener como máximo 500 caracteres.");
+
+        final String imageValidationError = validateUploadedImage(file, false);
+        if (imageValidationError != null) {
+            return landingPage(imageValidationError);
         }
 
         final Brand resolvedBrand = brandDao.findByName(trimmedBrand).orElse(null);
@@ -151,8 +153,28 @@ public class CarController {
             return landingPage("Marca o tipo de carrocería no válidos.");
         }
 
-        carService.createCar(resolvedBrand.getId(), trimmedModel, resolvedBodyType.getId(),
-                trimmedDescription, trimmedImageUrl);
+        final Optional<String> imageContentType;
+        final Optional<byte[]> imageData;
+        if (file == null || file.isEmpty()) {
+            imageContentType = Optional.empty();
+            imageData = Optional.empty();
+        } else {
+            imageContentType = Optional.ofNullable(resolveImageContentType(file));
+            try {
+                imageData = Optional.of(file.getBytes());
+            } catch (final IOException e) {
+                throw new IllegalStateException("Failed to read uploaded image.", e);
+            }
+        }
+
+        carService.createCar(
+                resolvedBrand.getId(),
+                trimmedModel,
+                resolvedBodyType.getId(),
+                Optional.ofNullable(trimmedDescription).filter(value -> !value.isEmpty()),
+                imageContentType,
+                imageData
+        );
 
         return new ModelAndView("redirect:/cars");
     }
@@ -217,18 +239,12 @@ public class CarController {
         if (carService.getCarById(carId).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Car not found.");
         }
-        if (file == null || file.isEmpty()) {
-            return ResponseEntity.badRequest().body("Image file is required.");
-        }
-        if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-            return ResponseEntity.badRequest().body("Image exceeds the 5 MB limit.");
+        final String imageValidationError = validateUploadedImage(file, true);
+        if (imageValidationError != null) {
+            return ResponseEntity.badRequest().body(imageValidationError);
         }
 
-        final String contentType = normalizeContentType(file.getContentType());
-        if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
-            return ResponseEntity.badRequest().body("Unsupported image type. Use JPEG, PNG, or WEBP.");
-        }
-
+        final String contentType = resolveImageContentType(file);
         try {
             carService.saveCarImage(carId, contentType, file.getBytes());
         } catch (final IOException e) {
@@ -241,6 +257,24 @@ public class CarController {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<String> handleMaxUploadSizeExceeded(final MaxUploadSizeExceededException ignored) {
         return ResponseEntity.badRequest().body("Image exceeds the 5 MB limit.");
+    }
+
+    private String validateUploadedImage(final MultipartFile file, final boolean required) {
+        if (file == null || file.isEmpty()) {
+            return required ? "Image file is required." : null;
+        }
+        if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
+            return "Image exceeds the 5 MB limit.";
+        }
+        final String contentType = resolveImageContentType(file);
+        if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
+            return "Unsupported image type. Use JPEG, PNG, or WEBP.";
+        }
+        return null;
+    }
+
+    private String resolveImageContentType(final MultipartFile file) {
+        return normalizeContentType(file == null ? null : file.getContentType());
     }
 
     private CarCatalogData resolveCatalogData(final String searchQuery, final String brand, final String bodyType) {

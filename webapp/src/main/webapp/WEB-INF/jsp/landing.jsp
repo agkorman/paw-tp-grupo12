@@ -79,6 +79,12 @@
             <div class="hero-media" aria-hidden="true">
                 <div class="hero-glow"></div>
                 <c:choose>
+                    <c:when test="${not empty heroCar and heroCar.hasImage}">
+                        <c:url var="heroCarImageUrl" value="/car-image">
+                            <c:param name="carId" value="${heroCar.id}"/>
+                        </c:url>
+                        <img src="${heroCarImageUrl}" alt="" class="hero-car-image">
+                    </c:when>
                     <c:when test="${not empty heroCar and not empty heroCar.imageUrl}">
                         <img src="<c:out value='${heroCar.imageUrl}'/>" alt="" class="hero-car-image">
                     </c:when>

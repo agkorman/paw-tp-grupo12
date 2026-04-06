@@ -8,6 +8,7 @@ import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -81,7 +82,27 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public Car createCar(final long brandId, final String model, final long bodyTypeId, final String description, final String imageUrl) {
-        return carDao.create(brandId, model, bodyTypeId, description, imageUrl);
+    @Transactional
+    public Car createCar(final long brandId, final String model, final long bodyTypeId,
+                         final Optional<String> description, final Optional<String> imageContentType,
+                         final Optional<byte[]> imageData) {
+        final Car createdCar = carDao.create(
+                brandId,
+                model,
+                bodyTypeId,
+                description.orElse(null),
+                null
+        );
+
+        final boolean hasImageContentType = imageContentType.isPresent();
+        final boolean hasImageData = imageData.isPresent();
+        if (hasImageContentType != hasImageData) {
+            throw new IllegalArgumentException("Image metadata and payload must be provided together.");
+        }
+        if (hasImageContentType) {
+            carImageDao.saveOrReplace(createdCar.getId(), imageContentType.orElseThrow(), imageData.orElseThrow());
+        }
+
+        return createdCar;
     }
 }
