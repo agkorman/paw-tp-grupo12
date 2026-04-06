@@ -259,19 +259,19 @@ public class CarController {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<String> handleMaxUploadSizeExceeded(final MaxUploadSizeExceededException ignored) {
-        return ResponseEntity.badRequest().body("Image exceeds the 5 MB limit.");
+        return ResponseEntity.badRequest().body("La imagen no debe superar los 5 MB.");
     }
 
     private String validateUploadedImage(final MultipartFile file, final boolean required) {
         if (file == null || file.isEmpty()) {
-            return required ? "Image file is required." : null;
+            return required ? "La imagen es obligatoria." : null;
         }
         if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-            return "Image exceeds the 5 MB limit.";
+            return "La imagen no debe superar los 5 MB.";
         }
         final String contentType = resolveImageContentType(file);
         if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
-            return "Unsupported image type. Use JPEG, PNG, or WEBP.";
+            return "Tipo de imagen no soportado. Use JPEG, PNG o WEBP.";
         }
         return null;
     }
