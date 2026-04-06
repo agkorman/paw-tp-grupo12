@@ -39,11 +39,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
@@ -51,7 +49,6 @@ public class CarController {
 
     private static final int FEATURED_REVIEW_COUNT = 3;
     private static final long MAX_IMAGE_SIZE_BYTES = 5L * 1024 * 1024;
-    private static final Pattern IMAGE_URL_PATTERN = Pattern.compile("^https?://.*");
     private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
             MediaType.IMAGE_JPEG_VALUE,
             MediaType.IMAGE_PNG_VALUE,
@@ -143,6 +140,9 @@ public class CarController {
         }
         if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
             return landingPage("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
+        }
+        if (trimmedDescription != null && trimmedDescription.length() > 1500) {
+            return landingPage("La descripción debe tener como máximo 1500 caracteres.");
         }
 
         final String imageValidationError = validateUploadedImage(file, false);
