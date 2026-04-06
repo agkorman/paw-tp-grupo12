@@ -54,8 +54,7 @@
                             name="description"
                             rows="5"
                             maxlength="1500"
-                            placeholder="Describe el auto, su propuesta y cualquier detalle relevante."
-                            required></textarea>
+                            placeholder="Describe el auto, su propuesta y cualquier detalle relevante."></textarea>
                 </div>
 
                 <div class="car-modal-field car-modal-field-wide">
@@ -65,8 +64,7 @@
                             name="imageUrl"
                             type="url"
                             maxlength="500"
-                            placeholder="https://ejemplo.com/auto.jpg"
-                            required>
+                            placeholder="https://ejemplo.com/auto.jpg">
                 </div>
             </div>
 
