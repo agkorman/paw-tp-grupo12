@@ -129,9 +129,9 @@ public class CarController {
                                   @RequestParam(value = "description", required = false) final String description,
                                   @RequestParam(value = "imageUrl", required = false) final String imageUrl) {
 
-        final String trimmedBrand = brand == null ? "" : brand.trim();
-        final String trimmedBodyType = bodyType == null ? "" : bodyType.trim();
-        final String trimmedModel = model == null ? "" : model.trim();
+        final String trimmedBrand = brand.trim();
+        final String trimmedBodyType = bodyType.trim();
+        final String trimmedModel = model.trim();
         final String trimmedDescription = description == null ? null : description.trim();
         final String trimmedImageUrl = imageUrl == null ? null : imageUrl.trim();
 
