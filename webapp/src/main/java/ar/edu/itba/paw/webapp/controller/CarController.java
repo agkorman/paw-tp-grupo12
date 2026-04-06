@@ -10,6 +10,8 @@ import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
+import org.springframework.mail.MailException;
+import java.util.logging.Logger;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -48,6 +50,7 @@ import java.util.stream.Collectors;
 @Controller
 public class CarController {
 
+    private static final Logger LOGGER = Logger.getLogger(CarController.class.getName());
     private static final int FEATURED_REVIEW_COUNT = 3;
     private static final long MAX_IMAGE_SIZE_BYTES = 5L * 1024 * 1024;
     private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
@@ -182,7 +185,11 @@ public class CarController {
                 imageData
         );
 
-        emailService.sendCarCreatedNotification(createdCar);
+        try {
+            emailService.sendCarCreatedNotification(createdCar);
+        } catch (final MailException e) {
+            LOGGER.warning("Failed to send car creation notification for car " + createdCar.getId() + ": " + e.getMessage());
+        }
 
         return new ModelAndView("redirect:/cars");
     }

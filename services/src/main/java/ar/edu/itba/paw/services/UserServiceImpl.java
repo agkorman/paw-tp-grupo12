@@ -20,6 +20,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<String> getModeratorsEmails() {
-        return Collections.singletonList("jnolascodecarles@itba.edu.ar");
+        return Collections.singletonList("example@itba.edu.ar");
     }
 }
