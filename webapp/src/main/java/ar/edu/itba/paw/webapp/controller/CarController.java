@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.BodyType;
+import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.ReviewStats;
@@ -68,6 +70,10 @@ public class CarController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public ModelAndView home() {
+        return landingPage(null);
+    }
+
+    private ModelAndView landingPage(final String error) {
         final List<Car> allCars = carService.getAllCars();
         final Map<Long, ReviewStats> reviewStatsByCarId = getReviewStatsByCarId(allCars);
         final List<Car> featuredCars = selectFeaturedCars(allCars, reviewStatsByCarId);
@@ -78,6 +84,9 @@ public class CarController {
         mav.addObject("heroCar", featuredCars.isEmpty() ? getFallbackHeroCar(allCars) : featuredCars.get(0));
         mav.addObject("brands", brandDao.findAll());
         mav.addObject("bodyTypes", bodyTypeDao.findAll());
+        if (error != null) {
+            mav.addObject("carFormError", error);
+        }
         return mav;
     }
 
@@ -111,6 +120,41 @@ public class CarController {
         mav.addObject("cars", catalogData.cars);
         mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
         return mav;
+    }
+
+    @RequestMapping(value = "/cars", method = RequestMethod.POST)
+    public ModelAndView createCar(@RequestParam("brand") final String brand,
+                                  @RequestParam("bodyType") final String bodyType,
+                                  @RequestParam("model") final String model,
+                                  @RequestParam(value = "description", required = false) final String description,
+                                  @RequestParam(value = "imageUrl", required = false) final String imageUrl) {
+
+        final String trimmedBrand = brand == null ? "" : brand.trim();
+        final String trimmedBodyType = bodyType == null ? "" : bodyType.trim();
+        final String trimmedModel = model == null ? "" : model.trim();
+        final String trimmedDescription = description == null ? null : description.trim();
+        final String trimmedImageUrl = imageUrl == null ? null : imageUrl.trim();
+
+        if (trimmedBrand.isEmpty() || trimmedBodyType.isEmpty()) {
+            return landingPage("Marca y tipo de carrocería son obligatorios.");
+        }
+        if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
+            return landingPage("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
+        }
+        if (trimmedImageUrl != null && trimmedImageUrl.length() > 500) {
+            return landingPage("La URL de imagen debe tener como máximo 500 caracteres.");
+        }
+
+        final Brand resolvedBrand = brandDao.findByName(trimmedBrand).orElse(null);
+        final BodyType resolvedBodyType = bodyTypeDao.findByName(trimmedBodyType).orElse(null);
+        if (resolvedBrand == null || resolvedBodyType == null) {
+            return landingPage("Marca o tipo de carrocería no válidos.");
+        }
+
+        carService.createCar(resolvedBrand.getId(), trimmedModel, resolvedBodyType.getId(),
+                trimmedDescription, trimmedImageUrl);
+
+        return new ModelAndView("redirect:/cars");
     }
 
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.GET)

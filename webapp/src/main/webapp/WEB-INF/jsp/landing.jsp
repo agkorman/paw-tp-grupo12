@@ -177,14 +177,14 @@
             });
 
             form.addEventListener('submit', function (event) {
-                event.preventDefault();
-
                 if (!form.reportValidity()) {
-                    return;
+                    event.preventDefault();
                 }
-
-                closeModal();
             });
+
+            <c:if test="${not empty carFormError}">
+                openModal();
+            </c:if>
         })();
     </script>
 

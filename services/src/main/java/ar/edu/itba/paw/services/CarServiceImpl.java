@@ -79,4 +79,9 @@ public class CarServiceImpl implements CarService {
     public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
         carImageDao.saveOrReplace(carId, contentType, imageData);
     }
+
+    @Override
+    public Car createCar(final long brandId, final String model, final long bodyTypeId, final String description, final String imageUrl) {
+        return carDao.create(brandId, model, bodyTypeId, description, imageUrl);
+    }
 }

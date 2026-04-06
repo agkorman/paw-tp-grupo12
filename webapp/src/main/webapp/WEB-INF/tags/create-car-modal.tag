@@ -13,9 +13,12 @@
             <button type="button" class="car-modal-close" data-close-car-modal aria-label="Cerrar modal">x</button>
         </div>
 
-        <form id="createCarForm" class="car-modal-form" novalidate>
+        <form id="createCarForm" class="car-modal-form" method="post" action="<c:url value='/cars'/>" novalidate>
+            <c:if test="${not empty carFormError}">
+                <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
+            </c:if>
             <p class="car-modal-subtitle">
-                Completa todos los campos para preparar la publicación. Este formulario es una demo visual y no guarda datos todavía.
+                Completa todos los campos para publicar el auto.
             </p>
 
             <div class="car-modal-grid car-modal-fields">

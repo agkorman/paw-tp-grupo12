@@ -47,7 +47,8 @@ public class CarJdbcDao implements CarDao {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("cars")
-                .usingGeneratedKeyColumns("car_id");
+                .usingGeneratedKeyColumns("car_id")
+                .usingColumns("brand_id", "model", "body_type_id", "description", "image_url");
     }
 
     @Override
