@@ -8,6 +8,8 @@ import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -29,6 +31,7 @@ import java.util.Properties;
 public class WebConfig implements WebMvcConfigurer {
 
     private static final String DB_PROPERTIES_RESOURCE = "db.properties";
+    private static final String MAIL_PROPERTIES_RESOURCE = "mail.properties";
 
     @Override
     public void addResourceHandlers(final ResourceHandlerRegistry registry) {
@@ -132,6 +135,52 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
+    public JavaMailSender mailSender() {
+        final MailConfig config = resolveMailConfig();
+        final JavaMailSenderImpl sender = new JavaMailSenderImpl();
+        sender.setHost(config.getHost());
+        sender.setPort(config.getPort());
+        sender.setUsername(config.getUsername());
+        sender.setPassword(config.getPassword());
+        final Properties props = sender.getJavaMailProperties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        return sender;
+    }
+
+    private MailConfig resolveMailConfig() {
+        final String host = normalize(System.getenv("MAIL_HOST"));
+        final String portStr = normalize(System.getenv("MAIL_PORT"));
+        final String username = normalize(System.getenv("MAIL_USERNAME"));
+        final String password = normalize(System.getenv("MAIL_PASSWORD"));
+        if (host != null && portStr != null && username != null && password != null) {
+            return new MailConfig(host, Integer.parseInt(portStr), username, password);
+        }
+
+        final ClassPathResource resource = new ClassPathResource(MAIL_PROPERTIES_RESOURCE);
+        if (resource.exists()) {
+            final Properties properties = new Properties();
+            try (InputStream is = resource.getInputStream()) {
+                properties.load(is);
+            } catch (final IOException e) {
+                throw new IllegalStateException("Failed to load " + MAIL_PROPERTIES_RESOURCE, e);
+            }
+            return new MailConfig(
+                    properties.getProperty("mail.host"),
+                    Integer.parseInt(properties.getProperty("mail.port", "587")),
+                    properties.getProperty("mail.username"),
+                    properties.getProperty("mail.password")
+            );
+        }
+
+        throw new IllegalStateException(
+                "Mail configuration not found. Set MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD "
+                        + "or provide a classpath mail.properties file."
+        );
+    }
+
+    @Bean
     public DataSourceInitializer dataSourceInitializer(final DataSource dataSource) {
         final DataSourceInitializer initializer = new DataSourceInitializer();
         initializer.setDataSource(dataSource);
@@ -139,6 +188,25 @@ public class WebConfig implements WebMvcConfigurer {
         populator.addScript(new ClassPathResource("schema.sql"));
         initializer.setDatabasePopulator(populator);
         return initializer;
+    }
+
+    private static final class MailConfig {
+        private final String host;
+        private final int port;
+        private final String username;
+        private final String password;
+
+        private MailConfig(final String host, final int port, final String username, final String password) {
+            this.host = host;
+            this.port = port;
+            this.username = username;
+            this.password = password;
+        }
+
+        private String getHost() { return host; }
+        private int getPort() { return port; }
+        private String getUsername() { return username; }
+        private String getPassword() { return password; }
     }
 
     private static final class DbConfig {

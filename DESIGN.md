@@ -1,7 +1,7 @@
-# Design System Document: The Kinetic Gallery
+# Design System Document: La Posta Autos
 
-## 1. Overview & Creative North Star: "The Kinetic Gallery"
-Automotive design is a study of aerodynamics, tension, and light. This design system moves away from the static, boxy constraints of traditional review sites like IMDb and toward a "Kinetic Gallery" experience. Our North Star is the feeling of a high-end, darkened showroom where the vehicles are the heroes, and the UI serves as the precision-engineered lighting and technical documentation.
+## 1. Overview & Creative North Star: "La Posta Autos"
+Automotive design is a study of aerodynamics, tension, and light. This design system moves away from the static, boxy constraints of traditional review sites like IMDb and toward a "La Posta Autos" experience. Our North Star is the feeling of a high-end, darkened showroom where the vehicles are the heroes, and the UI serves as the precision-engineered lighting and technical documentation.
 
 We break the "template" look through **Intentional Asymmetry**. Hero images should bleed off-edge or overlap with display typography to create a sense of forward momentum. We favor tonal depth over structural lines, treating the screen as a three-dimensional space where content sits on layered plates of charcoal and silver.
 
