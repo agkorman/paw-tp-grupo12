@@ -49,116 +49,210 @@
 
     <script>
         (function () {
-            var openButton = document.getElementById('openReviewModalBtn');
-            var modal = document.getElementById('createReviewModal');
-            var form = document.getElementById('createReviewForm');
-            var modelYearInput = document.getElementById('modalModelYear');
-            var mileageInput = document.getElementById('modalMileageKm');
+            function $(id) { return document.getElementById(id); }
+            function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
 
-            if (!openButton || !modal || !form) {
-                return;
+            var openButton = $('openReviewModalBtn');
+            var modal      = $('createReviewModal');
+            var form       = $('createReviewForm');
+            if (!openButton || !modal || !form) return;
+
+            /* ================================================================
+               STAR RATING — Interactive half-star (0.5 step) rating widget.
+               Each star SVG uses a <linearGradient> with two <stop> elements.
+               To show a half star we set stop 1 = filled at 50%, stop 2 = empty
+               at 50%. Full star = both stops filled. Empty = both stops empty.
+               Click the left half of a star for N-0.5, right half for N.
+               Clicking the same value again resets to 0.
+               ================================================================ */
+
+            /* -- Star colors ------------------------------------------------ */
+            var STAR_FILLED = '#ff5719';
+            var STAR_EMPTY  = '#2e2e2e';
+
+            /* -- Star label lookup ------------------------------------------ */
+            function starTextFor(v) {
+                if (v === 0) return 'Sin puntuación';
+                if (v <= 1)  return 'Malo';
+                if (v <= 2)  return 'Regular';
+                if (v <= 3)  return 'Bueno';
+                if (v <= 4)  return 'Muy bueno';
+                return 'Excelente';
             }
 
-            var closeElements = Array.prototype.slice.call(modal.querySelectorAll('[data-close-modal]'));
+            /* -- Paint a single star's gradient to reflect the rating ------- */
+            function paintStar(slot, starNum, rating) {
+                var stops = slot.querySelector('linearGradient').querySelectorAll('stop');
 
-            var closeModal = function () {
+                if (rating >= starNum) {
+                    /* Full star */
+                    stops[0].setAttribute('stop-color', STAR_FILLED);
+                    stops[0].setAttribute('offset', '100%');
+                    stops[1].setAttribute('stop-color', STAR_FILLED);
+                    stops[1].setAttribute('offset', '100%');
+                } else if (rating >= starNum - 0.5) {
+                    /* Half star — left half filled, right half empty */
+                    stops[0].setAttribute('stop-color', STAR_FILLED);
+                    stops[0].setAttribute('offset', '50%');
+                    stops[1].setAttribute('stop-color', STAR_EMPTY);
+                    stops[1].setAttribute('offset', '50%');
+                } else {
+                    /* Empty star */
+                    stops[0].setAttribute('stop-color', STAR_EMPTY);
+                    stops[0].setAttribute('offset', '0%');
+                    stops[1].setAttribute('stop-color', STAR_EMPTY);
+                    stops[1].setAttribute('offset', '100%');
+                }
+            }
+
+            /* -- Render all 5 stars for a given rating ---------------------- */
+            var starSlots = $$('.star-slot', modal);
+
+            function renderStars(rating) {
+                starSlots.forEach(function (slot, i) { paintStar(slot, i + 1, rating); });
+            }
+
+            /* -- Set / reset the rating value ------------------------------- */
+            var starInput   = $('modalRating');
+            var starWrap    = modal.querySelector('.star-rating');
+            var starLabel   = modal.querySelector('.star-rating-value');
+            var currentRating = 0;
+
+            function setRating(value) {
+                currentRating = value;
+                starInput.value = value;
+                starLabel.textContent = value + '/5 — ' + starTextFor(value);
+                starLabel.style.color = '';
+                starWrap.setAttribute('aria-valuenow', value);
+                renderStars(value);
+            }
+
+            function resetRating() {
+                currentRating = 0;
+                starInput.value = '';
+                starLabel.textContent = starTextFor(0);
+                starLabel.style.color = '';
+                starWrap.setAttribute('aria-valuenow', 0);
+                renderStars(0);
+            }
+
+            /* -- Click: left half = N-0.5, right half = N. Toggle off on re-click */
+            $$('.star-hit', modal).forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var star   = parseInt(btn.getAttribute('data-star'), 10);
+                    var isHalf = btn.getAttribute('data-half') === 'true';
+                    var value  = isHalf ? star - 0.5 : star;
+                    if (value === currentRating) resetRating(); else setRating(value);
+                });
+            });
+
+            /* -- Keyboard: arrows step by 0.5 ------------------------------- */
+            starWrap.addEventListener('keydown', function (e) {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setRating(Math.min(5, currentRating + 0.5));
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (currentRating <= 0.5) resetRating(); else setRating(currentRating - 0.5);
+                }
+            });
+
+            /* -- Validate: requires a rating before submit ------------------ */
+            function validateRating() {
+                if (!starInput.value) {
+                    starLabel.textContent = 'Seleccioná una puntuación';
+                    starLabel.style.color = '#ef9a9a';
+                    starWrap.focus();
+                    return false;
+                }
+                return true;
+            }
+
+            renderStars(0);
+
+            /* ================================================================
+               MODAL OPEN / CLOSE
+               ================================================================ */
+            var closeEls = $$('[data-close-modal]', modal);
+
+            function closeModal() {
                 modal.setAttribute('hidden', 'hidden');
                 document.body.classList.remove('modal-open');
                 openButton.focus();
-            };
+            }
 
-            var openModal = function () {
+            function openModal() {
                 modal.removeAttribute('hidden');
                 document.body.classList.add('modal-open');
-                var firstInput = modal.querySelector('#modalRating');
-                if (firstInput) {
-                    firstInput.focus();
-                }
-            };
+                var first = $('modalReviewerEmail');
+                if (first) first.focus();
+            }
 
             openButton.addEventListener('click', openModal);
-
-            closeElements.forEach(function (element) {
-                element.addEventListener('click', closeModal);
+            closeEls.forEach(function (el) { el.addEventListener('click', closeModal); });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && !modal.hasAttribute('hidden')) closeModal();
             });
 
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
-                    closeModal();
-                }
-            });
+            /* ================================================================
+               NUMERIC FIELD VALIDATION (model year & mileage)
+               ================================================================ */
+            var modelYearInput = $('modalModelYear');
+            var mileageInput   = $('modalMileageKm');
 
-            var isIntegerString = function (value) {
-                return /^\d+$/.test(value);
-            };
+            function isInt(s) { return /^\d+$/.test(s); }
+            function clearV(inp) { if (inp) inp.setCustomValidity(''); }
 
-            var clearValidation = function (input) {
-                if (input) {
-                    input.setCustomValidity('');
-                }
-            };
-
-            var validateOptionalNumericFields = function () {
+            function validateNumerics() {
                 var maxYear = new Date().getFullYear() + 1;
-                var isValid = true;
-
-                clearValidation(modelYearInput);
-                clearValidation(mileageInput);
+                var ok = true;
+                clearV(modelYearInput);
+                clearV(mileageInput);
 
                 if (modelYearInput) {
-                    var rawYear = modelYearInput.value.trim();
-                    modelYearInput.value = rawYear;
-                    if (rawYear.length > 0) {
-                        if (!isIntegerString(rawYear)) {
-                            modelYearInput.setCustomValidity('El ano del modelo debe ser numerico.');
-                            isValid = false;
+                    var y = modelYearInput.value.trim();
+                    modelYearInput.value = y;
+                    if (y.length > 0) {
+                        if (!isInt(y)) {
+                            modelYearInput.setCustomValidity('El año del modelo debe ser numérico.');
+                            ok = false;
                         } else {
-                            var parsedYear = Number(rawYear);
-                            if (parsedYear < 1886 || parsedYear > maxYear) {
-                                modelYearInput.setCustomValidity('Ingresa un ano del modelo entre 1886 y ' + maxYear + '.');
-                                isValid = false;
+                            var py = Number(y);
+                            if (py < 1886 || py > maxYear) {
+                                modelYearInput.setCustomValidity('Ingresá un año entre 1886 y ' + maxYear + '.');
+                                ok = false;
                             }
                         }
                     }
                 }
-
                 if (mileageInput) {
-                    var rawMileage = mileageInput.value.trim();
-                    mileageInput.value = rawMileage;
-                    if (rawMileage.length > 0) {
-                        if (!isIntegerString(rawMileage)) {
-                            mileageInput.setCustomValidity('El kilometraje debe ser numerico.');
-                            isValid = false;
+                    var m = mileageInput.value.trim();
+                    mileageInput.value = m;
+                    if (m.length > 0) {
+                        if (!isInt(m)) {
+                            mileageInput.setCustomValidity('El kilometraje debe ser numérico.');
+                            ok = false;
                         } else {
-                            var parsedMileage = Number(rawMileage);
-                            if (parsedMileage < 0 || parsedMileage > 2000000) {
-                                mileageInput.setCustomValidity('Ingresa un kilometraje entre 0 y 2000000 km.');
-                                isValid = false;
+                            var pm = Number(m);
+                            if (pm < 0 || pm > 2000000) {
+                                mileageInput.setCustomValidity('Ingresá un kilometraje entre 0 y 2.000.000 km.');
+                                ok = false;
                             }
                         }
                     }
                 }
-
-                return isValid;
-            };
-
-            if (modelYearInput) {
-                modelYearInput.addEventListener('input', function () {
-                    clearValidation(modelYearInput);
-                });
+                return ok;
             }
 
-            if (mileageInput) {
-                mileageInput.addEventListener('input', function () {
-                    clearValidation(mileageInput);
-                });
-            }
+            if (modelYearInput) modelYearInput.addEventListener('input', function () { clearV(modelYearInput); });
+            if (mileageInput)   mileageInput.addEventListener('input', function () { clearV(mileageInput); });
 
-            form.addEventListener('submit', function (event) {
-                if (!validateOptionalNumericFields()) {
-                    event.preventDefault();
-                    form.reportValidity();
-                }
+            /* ================================================================
+               FORM SUBMIT — chain all validations
+               ================================================================ */
+            form.addEventListener('submit', function (e) {
+                if (!validateRating()) { e.preventDefault(); return; }
+                if (!validateNumerics()) { e.preventDefault(); form.reportValidity(); }
             });
         })();
     </script>
