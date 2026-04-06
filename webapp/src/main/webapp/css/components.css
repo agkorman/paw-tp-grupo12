@@ -22,14 +22,14 @@
 .btn-primary:hover { opacity: 0.85; }
 
 .btn-secondary {
-    background: var(--surface-container-high);
+    background: transparent;
     color: var(--on-surface);
     font-family: var(--font-body);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    border: none;
+    border: 1px solid rgba(229, 226, 225, 0.20);
     border-radius: var(--radius-md);
     padding: 0.75rem 2rem;
     cursor: pointer;
@@ -38,10 +38,13 @@
     justify-content: center;
     gap: 0.5rem;
     text-decoration: none;
-    transition: background 0.2s;
+    transition: background 0.2s, border-color 0.2s;
 }
 
-.btn-secondary:hover { background: var(--surface-container-highest); }
+.btn-secondary:hover {
+    background: var(--surface-container-high);
+    border-color: rgba(229, 226, 225, 0.30);
+}
 
 /* ── FILTER CHIP ── */
 .filter-chip {

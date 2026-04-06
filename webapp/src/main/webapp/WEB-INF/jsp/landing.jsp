@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/landing.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
 </head>
 <body>
 
