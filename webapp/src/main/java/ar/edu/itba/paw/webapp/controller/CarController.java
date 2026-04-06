@@ -8,6 +8,7 @@ import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarService;
+import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -59,14 +60,16 @@ public class CarController {
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
     private final ReviewService reviewService;
+    private final EmailService emailService;
 
     @Autowired
     public CarController(final CarService carService, final BrandDao brandDao, final BodyTypeDao bodyTypeDao,
-                         final ReviewService reviewService) {
+                         final ReviewService reviewService, final EmailService emailService) {
         this.carService = carService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
         this.reviewService = reviewService;
+        this.emailService = emailService;
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
@@ -170,7 +173,7 @@ public class CarController {
             }
         }
 
-        carService.createCar(
+        final Car createdCar = carService.createCar(
                 resolvedBrand.getId(),
                 trimmedModel,
                 resolvedBodyType.getId(),
@@ -178,6 +181,8 @@ public class CarController {
                 imageContentType,
                 imageData
         );
+
+        emailService.sendCarCreatedNotification(createdCar);
 
         return new ModelAndView("redirect:/cars");
     }

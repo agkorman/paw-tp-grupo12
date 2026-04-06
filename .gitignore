@@ -35,5 +35,9 @@ AGENT.MD
 # Environment
 .env
 
+# Local secrets
+**/db.properties
+**/mail.properties
+
 # Generated downloads
 tmp/seeded-car-images/
