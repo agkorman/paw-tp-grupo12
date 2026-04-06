@@ -143,15 +143,30 @@
             var openButton = document.getElementById('openCreateCarModalBtn');
             var modal = document.getElementById('createCarModal');
             var form = document.getElementById('createCarForm');
+            var fileInput = document.getElementById('modalCarFile');
+            var fileName = document.getElementById('modalCarFileName');
+            var fileUpload = fileInput ? fileInput.closest('.car-image-upload') : null;
 
             if (!openButton || !modal || !form) {
                 return;
             }
 
             var closeElements = Array.prototype.slice.call(modal.querySelectorAll('[data-close-car-modal]'));
+            var emptyFileLabel = 'Ningún archivo seleccionado';
+
+            var updateFileState = function () {
+                if (!fileInput || !fileName || !fileUpload) {
+                    return;
+                }
+
+                var selectedFile = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
+                fileName.textContent = selectedFile ? selectedFile.name : emptyFileLabel;
+                fileUpload.classList.toggle('has-file', !!selectedFile);
+            };
 
             var resetModalState = function () {
                 form.reset();
+                updateFileState();
             };
 
             var closeModal = function () {
@@ -176,6 +191,10 @@
             closeElements.forEach(function (element) {
                 element.addEventListener('click', closeModal);
             });
+
+            if (fileInput) {
+                fileInput.addEventListener('change', updateFileState);
+            }
 
             document.addEventListener('keydown', function (event) {
                 if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {

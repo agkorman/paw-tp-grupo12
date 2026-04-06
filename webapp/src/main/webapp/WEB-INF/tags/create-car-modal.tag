@@ -20,11 +20,11 @@
             <c:if test="${not empty carFormError}">
                 <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
             </c:if>
-            <p class="car-modal-subtitle">
-                Completa los datos del auto y, si querés, sumá una imagen.
+            <p class="car-modal-subtitle" style="padding-bottom: 1rem;">
+                Completa los datos del auto.
             </p>
 
-            <div class="review-modal-grid">
+            <div class="review-modal-grid" style="padding-bottom: 1rem;">
                 <div class="review-modal-field">
                     <label for="modalCarBrand">Marca</label>
                     <select id="modalCarBrand" name="brand" required>
@@ -60,13 +60,32 @@
                             placeholder="Describe el auto, su propuesta y cualquier detalle relevante."></textarea>
                 </div>
 
-                <div class="car-modal-field car-modal-field-wide">
-                    <label for="modalCarFile">Imagen</label>
-                    <input
-                            id="modalCarFile"
-                            name="file"
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp">
+                <div class="review-modal-field review-modal-field-wide car-image-field">
+                    <span class="car-image-label">Imagen</span>
+                    <div class="car-image-upload">
+                        <input
+                                id="modalCarFile"
+                                class="car-image-upload-input"
+                                name="file"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                aria-describedby="modalCarFileHelp modalCarFileName">
+                        <label class="car-image-upload-card" for="modalCarFile">
+                            <span class="car-image-upload-icon" aria-hidden="true">
+                                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5.25 19.25L9.8 14.7a2 2 0 0 1 2.8 0l1.05 1.05 2.9-2.9a2 2 0 0 1 2.8 0L22.75 16.25"/>
+                                    <rect x="4.5" y="5.25" width="19" height="17.5" rx="3"/>
+                                    <circle cx="18.75" cy="9.75" r="1.75"/>
+                                </svg>
+                            </span>
+                            <span class="car-image-upload-copy">
+                                <strong>Arrastrá o elegí una imagen del auto</strong>
+                                <span id="modalCarFileHelp">JPEG, PNG o WEBP. Máximo 5 MB.</span>
+                                <span id="modalCarFileName" class="car-image-upload-filename">Ningún archivo seleccionado</span>
+                            </span>
+                            <span class="car-image-upload-action">Buscar</span>
+                        </label>
+                    </div>
                 </div>
             </div>
 

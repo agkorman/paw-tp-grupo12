@@ -448,6 +448,132 @@
     opacity: 0.75;
 }
 
+.car-image-field {
+    gap: 0.6rem;
+}
+
+.car-image-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--secondary);
+}
+
+.car-image-upload {
+    position: relative;
+}
+
+.car-image-upload-input {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.car-image-upload-card {
+    min-height: 8.5rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px dashed rgba(94, 212, 255, 0.44);
+    border-radius: var(--radius-lg);
+    background:
+        linear-gradient(135deg, rgba(94, 212, 255, 0.12), transparent 42%),
+        linear-gradient(315deg, rgba(255, 87, 25, 0.10), transparent 52%),
+        var(--surface-container-lowest);
+    box-shadow: inset 0 0 0 1px rgba(229, 226, 225, 0.04);
+    color: var(--on-surface);
+    font-size: 1rem;
+    letter-spacing: normal;
+    text-transform: none;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.car-image-upload:hover .car-image-upload-card,
+.car-image-upload-input:focus-visible + .car-image-upload-card {
+    border-color: var(--tertiary);
+    background:
+        linear-gradient(135deg, rgba(94, 212, 255, 0.18), transparent 42%),
+        linear-gradient(315deg, rgba(255, 87, 25, 0.14), transparent 52%),
+        var(--surface-container);
+    box-shadow:
+        inset 0 0 0 1px rgba(94, 212, 255, 0.18),
+        0 16px 38px rgba(0, 0, 0, 0.22);
+    transform: translateY(-1px);
+}
+
+.car-image-upload-input:focus-visible + .car-image-upload-card {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+}
+
+.car-image-upload.has-file .car-image-upload-card {
+    border-style: solid;
+    border-color: rgba(255, 181, 158, 0.7);
+}
+
+.car-image-upload-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: rgba(94, 212, 255, 0.14);
+    color: var(--tertiary);
+    flex: 0 0 auto;
+}
+
+.car-image-upload-copy {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.car-image-upload-copy strong {
+    font-family: var(--font-display);
+    font-size: 1rem;
+}
+
+.car-image-upload-copy span {
+    color: var(--secondary);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.car-image-upload-filename {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--primary) !important;
+    font-weight: 700;
+}
+
+.car-image-upload-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.7rem 0.85rem;
+    border-radius: var(--radius-md);
+    background: rgba(255, 181, 158, 0.12);
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
 /* ── Star Rating (half-star via linearGradient) ── */
 .star-rating {
     display: flex;
@@ -588,6 +714,15 @@ body.modal-open {
 
     .review-modal-grid {
         grid-template-columns: 1fr;
+    }
+
+    .car-image-upload-card {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+    }
+
+    .car-image-upload-action {
+        width: 100%;
     }
 
     .review-modal-actions {
