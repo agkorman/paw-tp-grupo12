@@ -81,7 +81,7 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public Car createCar(final long brandId, final String model, final long bodyTypeId, final String description, final String imageUrl) {
-        return carDao.create(brandId, model, bodyTypeId, description, imageUrl);
+    public Car createCar(final long brandId, final String model, final long bodyTypeId, final Optional<String> description, final Optional<String> imageUrl) {
+        return carDao.create(brandId, model, bodyTypeId, description.orElse(null), imageUrl.orElse(null));
     }
 }

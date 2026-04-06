@@ -38,9 +38,11 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
@@ -48,6 +50,7 @@ public class CarController {
 
     private static final int FEATURED_REVIEW_COUNT = 3;
     private static final long MAX_IMAGE_SIZE_BYTES = 5L * 1024 * 1024;
+    private static final Pattern IMAGE_URL_PATTERN = Pattern.compile("^https?://.*");
     private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
             MediaType.IMAGE_JPEG_VALUE,
             MediaType.IMAGE_PNG_VALUE,
@@ -134,6 +137,8 @@ public class CarController {
         final String trimmedModel = model.trim();
         final String trimmedDescription = description == null ? null : description.trim();
         final String trimmedImageUrl = imageUrl == null ? null : imageUrl.trim();
+        final String normalizedDescription = (trimmedDescription == null || trimmedDescription.isEmpty()) ? null : trimmedDescription;
+        final String normalizedImageUrl = (trimmedImageUrl == null || trimmedImageUrl.isEmpty()) ? null : trimmedImageUrl;
 
         if (trimmedBrand.isEmpty() || trimmedBodyType.isEmpty()) {
             return landingPage("Marca y tipo de carrocería son obligatorios.");
@@ -141,8 +146,16 @@ public class CarController {
         if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
             return landingPage("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
         }
-        if (trimmedImageUrl != null && trimmedImageUrl.length() > 500) {
-            return landingPage("La URL de imagen debe tener como máximo 500 caracteres.");
+        if (normalizedDescription != null && normalizedDescription.length() > 1500) {
+            return landingPage("La descripción debe tener como máximo 1500 caracteres.");
+        }
+        if (normalizedImageUrl != null) {
+            if (normalizedImageUrl.length() > 500) {
+                return landingPage("La URL de imagen debe tener como máximo 500 caracteres.");
+            }
+            if (!IMAGE_URL_PATTERN.matcher(normalizedImageUrl).matches()) {
+                return landingPage("La URL de imagen debe comenzar con http:// o https://.");
+            }
         }
 
         final Brand resolvedBrand = brandDao.findByName(trimmedBrand).orElse(null);
@@ -152,7 +165,7 @@ public class CarController {
         }
 
         carService.createCar(resolvedBrand.getId(), trimmedModel, resolvedBodyType.getId(),
-                trimmedDescription, trimmedImageUrl);
+                Optional.ofNullable(normalizedDescription), Optional.ofNullable(normalizedImageUrl));
 
         return new ModelAndView("redirect:/cars");
     }
