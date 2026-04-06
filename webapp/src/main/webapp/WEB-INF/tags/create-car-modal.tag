@@ -16,9 +16,12 @@
             </button>
         </div>
 
-        <form id="createCarForm" class="review-modal-form" novalidate>
-            <p class="review-modal-subtitle">
-                Completá todos los campos para preparar la publicación. Este formulario es una demo visual y no guarda datos todavía.
+        <form id="createCarForm" class="car-modal-form" method="post" action="<c:url value='/cars'/>" enctype="multipart/form-data" novalidate>
+            <c:if test="${not empty carFormError}">
+                <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
+            </c:if>
+            <p class="car-modal-subtitle">
+                Completa los datos del auto y, si querés, sumá una imagen.
             </p>
 
             <div class="review-modal-grid">
@@ -54,19 +57,16 @@
                             name="description"
                             rows="4"
                             maxlength="1500"
-                            placeholder="Describí el auto, su propuesta y cualquier detalle relevante."
-                            required></textarea>
+                            placeholder="Describe el auto, su propuesta y cualquier detalle relevante."></textarea>
                 </div>
 
-                <div class="review-modal-field review-modal-field-wide">
-                    <label for="modalCarImageUrl">URL de imagen</label>
+                <div class="car-modal-field car-modal-field-wide">
+                    <label for="modalCarFile">Imagen</label>
                     <input
-                            id="modalCarImageUrl"
-                            name="imageUrl"
-                            type="url"
-                            maxlength="500"
-                            placeholder="https://ejemplo.com/auto.jpg"
-                            required>
+                            id="modalCarFile"
+                            name="file"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp">
                 </div>
             </div>
 
