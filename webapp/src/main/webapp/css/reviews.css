@@ -16,7 +16,6 @@
 
 .review-hero {
     background: var(--surface-container-low);
-    border: 1px solid var(--outline-variant);
     border-radius: var(--radius-lg);
     padding: var(--spacing-6);
 }
@@ -61,7 +60,6 @@
 .selected-car-panel,
 .reviews-feed {
     background: var(--surface-container-low);
-    border: 1px solid var(--outline-variant);
     border-radius: var(--radius-lg);
     padding: var(--spacing-6);
 }
@@ -76,7 +74,6 @@
 .selected-car-image {
     width: 100%;
     aspect-ratio: 16 / 10;
-    border: 1px solid var(--outline-variant);
     border-radius: var(--radius-md);
     overflow: hidden;
     background: var(--surface-container);
@@ -164,8 +161,7 @@
 }
 
 .last-review-item {
-    border: 1px solid var(--outline-variant);
-    background: var(--surface-container);
+    background: var(--surface-container-high);
     border-radius: var(--radius-md);
     padding: 0.875rem;
     display: grid;
@@ -189,9 +185,7 @@
 }
 
 .last-review-empty {
-    border: 1px dashed var(--outline-variant);
-    border-radius: var(--radius-md);
-    padding: 0.875rem;
+    padding: 0.875rem 0;
     color: var(--secondary);
     font-size: 0.875rem;
 }
@@ -239,6 +233,7 @@
     background: var(--surface-container);
     color: var(--on-surface);
     font: inherit;
+    font-size: 0.875rem;
 }
 
 .count-label {
@@ -252,8 +247,7 @@
 }
 
 .review-item {
-    border: 1px solid var(--outline-variant);
-    background: var(--surface-container);
+    background: var(--surface-container-high);
     border-radius: var(--radius-md);
     padding: 1rem;
 }
@@ -266,12 +260,56 @@
 }
 
 .rating-pill {
-    background: var(--tertiary-fixed);
-    color: var(--on-tertiary-fixed);
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 87, 25, 0.14);
+    color: var(--primary);
+    border: 1px solid rgba(255, 181, 158, 0.16);
     border-radius: var(--radius-full);
     padding: 0.25rem 0.625rem;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.review-hero-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.review-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-shrink: 0;
+}
+
+.hero-stars-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+
+.hero-see-reviews-btn {
+    padding: 0.6rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    white-space: nowrap;
+    min-height: unset;
+}
+
+.review-count-label {
+    color: var(--secondary);
+    font-size: 0.875rem;
+    font-weight: 400;
+    vertical-align: middle;
+    margin-left: 0.375rem;
 }
 
 .review-body {
@@ -288,8 +326,6 @@
 }
 
 .empty-state {
-    border: 1px dashed var(--outline-variant);
-    border-radius: var(--radius-md);
     padding: var(--spacing-6);
     color: var(--secondary);
 }
@@ -555,8 +591,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--primary) !important;
+    color: var(--secondary) !important;
     font-weight: 700;
+}
+
+.car-image-upload.has-file .car-image-upload-filename {
+    color: var(--primary) !important;
 }
 
 .car-image-upload-action {

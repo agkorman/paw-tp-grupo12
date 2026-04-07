@@ -40,7 +40,7 @@
             <div class="filter-row">
                 <label class="filter-row-label" for="filter-brand">Marca:</label>
                 <select class="filter-select" id="filter-brand" name="brand">
-                    <option value="" <c:if test="${empty selectedBrand}">selected</c:if>>todas</option>
+                    <option value="" <c:if test="${empty selectedBrand}">selected</c:if>>Todas</option>
                     <c:forEach items="${brands}" var="b">
                         <option value="<c:out value='${b.name}'/>" <c:if test="${selectedBrand eq b.name}">selected</c:if>>
                             <c:out value="${b.name}"/>
@@ -51,7 +51,7 @@
             <div class="filter-row">
                 <label class="filter-row-label" for="filter-body">Carrocería:</label>
                 <select class="filter-select" id="filter-body" name="bodyType">
-                    <option value="" <c:if test="${empty selectedBodyType}">selected</c:if>>todas</option>
+                    <option value="" <c:if test="${empty selectedBodyType}">selected</c:if>>Todas</option>
                     <c:forEach items="${bodyTypes}" var="bt">
                         <option value="<c:out value='${bt.name}'/>" <c:if test="${selectedBodyType eq bt.name}">selected</c:if>>
                             <c:out value="${bt.name}"/>
