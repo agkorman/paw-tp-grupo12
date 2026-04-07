@@ -1,6 +1,42 @@
 (function () {
     var nativeSubmit = HTMLFormElement.prototype.submit;
 
+    var syncCatalogCount = function (root) {
+        if (!root) {
+            return;
+        }
+
+        var countSource = root.querySelector('.count-label');
+        var countTarget = document.querySelector('.cars-toolbar-count');
+
+        if (!countSource || !countTarget) {
+            return;
+        }
+
+        countTarget.textContent = countSource.textContent.trim();
+    };
+
+    var syncToolbarSelectValue = function (select) {
+        if (!(select instanceof HTMLSelectElement) || !select.name) {
+            return;
+        }
+
+        var valueTarget = document.querySelector('[data-toolbar-select-value="' + select.name + '"]');
+        if (!valueTarget) {
+            return;
+        }
+
+        var selectedOption = select.options[select.selectedIndex];
+        valueTarget.textContent = selectedOption ? selectedOption.textContent.trim() : '';
+    };
+
+    var syncToolbarSelectValues = function (scope) {
+        var root = scope || document;
+        var selects = root.querySelectorAll('.cars-toolbar-select-overlay');
+
+        Array.prototype.forEach.call(selects, syncToolbarSelectValue);
+    };
+
     var buildSearchParams = function (form) {
         var formData = new FormData(form);
         var params = new URLSearchParams();
@@ -76,6 +112,7 @@
             }
 
             currentTarget.replaceWith(replacement);
+            syncCatalogCount(replacement);
             window.history.replaceState({}, '', actionUrl.pathname + actionUrl.search);
         }).catch(function () {
             nativeSubmit.call(form);
@@ -98,6 +135,8 @@
             return;
         }
 
+        syncToolbarSelectValue(target);
+
         var form = target.form;
         if (!form || form.dataset.enhancedFilter !== 'true' || form.dataset.autoSubmit !== 'true') {
             return;
@@ -115,4 +154,7 @@
         event.preventDefault();
         submitEnhancedForm(form);
     });
+
+    syncToolbarSelectValues(document);
+
 })();

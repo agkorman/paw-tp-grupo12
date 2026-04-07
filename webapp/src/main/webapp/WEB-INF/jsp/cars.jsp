@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
@@ -17,53 +18,15 @@
     <link rel="stylesheet" href="<c:url value='/css/cars.css'/>">
 </head>
 <body>
+    <pa:nav activePage="reviews"/>
 
-    <c:url var="carsContentUrl" value="/cars/content"/>
-
-    <pa:nav
-            activePage="reviews"
-            searchAction="${pageContext.request.contextPath}/cars"
-            searchValue="${searchQuery}"
-            searchPlaceholder="Búsqueda rápida..."
-            searchBrand="${selectedBrand}"
-            searchBodyType="${selectedBodyType}"/>
-
-    <form class="filter-bar" method="get" action="<c:url value='/cars'/>" id="car-filter-form"
-          data-enhanced-filter="true"
-          data-fragment-url="${carsContentUrl}"
-          data-target="#carsCatalogContent"
-          data-auto-submit="true">
-        <c:if test="${not empty searchQuery}">
-            <input type="hidden" name="q" value="<c:out value='${searchQuery}'/>">
-        </c:if>
-        <div class="filters">
-            <div class="filter-row">
-                <label class="filter-row-label" for="filter-brand">Marca:</label>
-                <select class="filter-select" id="filter-brand" name="brand">
-                    <option value="" <c:if test="${empty selectedBrand}">selected</c:if>>Todas</option>
-                    <c:forEach items="${brands}" var="b">
-                        <option value="<c:out value='${b.name}'/>" <c:if test="${selectedBrand eq b.name}">selected</c:if>>
-                            <c:out value="${b.name}"/>
-                        </option>
-                    </c:forEach>
-                </select>
-            </div>
-            <div class="filter-row">
-                <label class="filter-row-label" for="filter-body">Carrocería:</label>
-                <select class="filter-select" id="filter-body" name="bodyType">
-                    <option value="" <c:if test="${empty selectedBodyType}">selected</c:if>>Todas</option>
-                    <c:forEach items="${bodyTypes}" var="bt">
-                        <option value="<c:out value='${bt.name}'/>" <c:if test="${selectedBodyType eq bt.name}">selected</c:if>>
-                            <c:out value="${bt.name}"/>
-                        </option>
-                    </c:forEach>
-                </select>
-            </div>
-        </div>
-        <div class="filter-meta">
-            <button type="submit" class="btn-primary">Aplicar filtros</button>
-        </div>
-    </form>
+    <pa:cars-toolbar
+            brands="${brands}"
+            bodyTypes="${bodyTypes}"
+            selectedBrand="${selectedBrand}"
+            selectedBodyType="${selectedBodyType}"
+            searchQuery="${searchQuery}"
+            resultCount="${fn:length(cars)}"/>
 
     <pa:cars-content cars="${cars}" reviewStatsByCarId="${reviewStatsByCarId}"/>
 

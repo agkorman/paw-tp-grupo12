@@ -1,104 +1,155 @@
-/* ── FILTER BAR ── */
-.filter-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
-    padding: 2rem var(--spacing-12) 1.75rem;
-    margin: 0;
-    border: none;
-    background: transparent;
-    width: 100%;
-    box-sizing: border-box;
-    border-bottom: 1px solid rgba(229, 226, 225, 0.08);
+/* ── TOP TOOLBAR ── */
+.cars-toolbar {
+    padding: 1.1rem var(--spacing-12) 0;
 }
 
-.filters {
-    display: flex;
+.cars-toolbar-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 2.2fr) minmax(12rem, 1.15fr) minmax(12rem, 1.15fr) auto;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 2.5rem;
-    flex: 1;
-    min-width: 0;
+    gap: 0.875rem;
+    padding: 0.85rem;
+    background:
+        linear-gradient(180deg, rgba(46, 46, 46, 0.72), rgba(31, 31, 31, 0.94));
+    border: 1px solid rgba(229, 226, 225, 0.08);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-float);
 }
 
-.filter-row {
+.cars-toolbar-search,
+.cars-toolbar-field {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-}
-
-.filter-row-label {
-    flex: 0 0 auto;
-    font-size: 0.9rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+    gap: 0.875rem;
+    min-height: 3.2rem;
+    padding: 0.75rem 1rem;
+    background: rgba(37, 37, 37, 0.88);
+    border: 1px solid rgba(229, 226, 225, 0.1);
+    border-radius: var(--radius-lg);
     color: var(--secondary);
-    min-width: 0;
     cursor: pointer;
-    white-space: nowrap;
 }
 
-.filter-select {
-    appearance: none;
-    min-width: 9rem;
-    max-width: 100%;
-    padding: 0.35rem 1.75rem 0.35rem 0;
+.cars-toolbar-search:focus-within,
+.cars-toolbar-field:focus-within {
+    border-color: rgba(255, 181, 158, 0.35);
+    box-shadow: inset 0 0 0 1px rgba(255, 181, 158, 0.12);
+}
+
+.cars-toolbar-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(196, 198, 204, 0.82);
+    flex: 0 0 auto;
+}
+
+.cars-toolbar-field-ui {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    width: 100%;
+    pointer-events: none;
+}
+
+.cars-toolbar-chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    color: rgba(196, 198, 204, 0.82);
+    flex: 0 0 auto;
+}
+
+.cars-toolbar-search input,
+.cars-toolbar-select {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--on-surface);
     font-family: var(--font-body);
+}
+
+.cars-toolbar-search input {
     font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.cars-toolbar-search input::placeholder {
+    color: rgba(196, 198, 204, 0.58);
+}
+
+.cars-toolbar-field-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+    min-width: 0;
+    width: 100%;
+}
+
+.cars-toolbar-label {
+    font-size: 0.67rem;
     font-weight: 600;
     letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(196, 198, 204, 0.72);
+}
+
+.cars-toolbar-value {
+    font-size: 0.96rem;
+    font-weight: 500;
     color: var(--on-surface);
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-    cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.1rem center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.filter-select:hover,
-.filter-select:focus {
-    outline: none;
-}
-
-.filter-select option {
+.cars-toolbar-select option {
     background: var(--surface-container-high);
     color: var(--on-surface);
 }
 
-.filter-meta {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-4);
-    flex: 0 0 auto;
+.cars-toolbar-select-overlay {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
 }
 
+.cars-toolbar-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-left: 0.25rem;
+}
+
+.cars-toolbar-count {
+    font-size: 0.82rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: rgba(196, 198, 204, 0.62);
+}
+
+.cars-toolbar-submit {
+    min-width: 12.5rem;
+    min-height: 3.2rem;
+    padding-inline: 1.5rem;
+    font-size: 0.76rem;
+    letter-spacing: 0.14em;
+}
+
+/* ── CATALOG WRAP ── */
 .catalog-content {
     display: grid;
-    gap: 1.25rem;
+    gap: 0;
 }
 
 .catalog-meta {
-    display: flex;
-    justify-content: flex-end;
-    padding: 1rem var(--spacing-12) 0;
-}
-
-.count-label {
-    font-size: 0.9rem;
-    color: rgba(196, 198, 204, 0.6);
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-.filter-meta .btn-primary {
-    min-width: 11.5rem;
-    min-height: 3rem;
-    font-size: 0.8rem;
+    display: none;
 }
 
 .catalog-content.is-loading {
@@ -106,15 +157,14 @@
     transition: opacity 0.18s ease;
 }
 
-/* ── CATALOG GRID ── */
 .catalog-section {
-    padding: 0 var(--spacing-12) var(--spacing-16);
+    padding: 1.5rem var(--spacing-12) var(--spacing-16);
 }
 
 .cars-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.35rem;
 }
 
 /* ── EMPTY STATE ── */
@@ -137,48 +187,73 @@
 }
 
 /* ── RESPONSIVE ── */
+@media (max-width: 1200px) {
+    .cars-toolbar-shell {
+        grid-template-columns: minmax(0, 1.8fr) minmax(11rem, 1fr) minmax(11rem, 1fr);
+    }
+
+    .cars-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .cars-toolbar-meta {
+        grid-column: 1 / -1;
+        justify-content: space-between;
+        padding-left: 0;
+    }
+}
+
 @media (max-width: 900px) {
-    .cars-grid { grid-template-columns: repeat(2, 1fr); }
-    .filter-bar, .catalog-section, .catalog-meta {
+    .cars-toolbar,
+    .catalog-section {
         padding-left: 1.5rem;
         padding-right: 1.5rem;
     }
 
-    .filter-bar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
+    .cars-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 
-    .filters {
-        gap: 1rem 1.5rem;
+    .cars-toolbar-shell {
+        grid-template-columns: 1fr;
     }
 
-    .filter-meta {
-        justify-content: space-between;
+    .cars-toolbar-meta {
+        flex-wrap: wrap;
     }
 }
 
 @media (max-width: 560px) {
-    .cars-grid { grid-template-columns: 1fr; }
+    .cars-grid {
+        grid-template-columns: 1fr;
+    }
 
-    .filter-row {
+    .cars-toolbar {
+        padding-top: 0.85rem;
+    }
+
+    .cars-toolbar-shell {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+
+    .cars-toolbar-search,
+    .cars-toolbar-field {
+        min-height: 3rem;
+        padding: 0.7rem 0.9rem;
+    }
+
+    .cars-toolbar-meta {
         align-items: stretch;
-        flex-direction: column;
+        gap: 0.75rem;
     }
 
-    .filter-row-label {
-        min-width: 0;
-    }
-
-    .filter-select {
+    .cars-toolbar-count,
+    .cars-toolbar-submit {
         width: 100%;
-        min-width: 0;
-        padding-left: 0;
     }
 
-    .filter-meta {
-        align-items: stretch;
-        flex-direction: column;
+    .cars-toolbar-submit {
+        min-width: 0;
     }
 }
