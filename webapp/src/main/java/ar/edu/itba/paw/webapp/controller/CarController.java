@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
@@ -84,11 +85,16 @@ public class CarController {
         final List<Car> allCars = carService.getAllCars();
         final Map<Long, ReviewStats> reviewStatsByCarId = getReviewStatsByCarId(allCars);
         final List<Car> featuredCars = selectFeaturedCars(allCars, reviewStatsByCarId);
+        final Car heroCar = featuredCars.isEmpty() ? getFallbackHeroCar(allCars) : featuredCars.get(0);
+        final Review heroReview = heroCar == null
+                ? null
+                : reviewService.getLatestReviewByCar(heroCar.getId()).orElse(null);
 
         final ModelAndView mav = new ModelAndView("landing.jsp");
         mav.addObject("featuredCars", featuredCars);
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
-        mav.addObject("heroCar", featuredCars.isEmpty() ? getFallbackHeroCar(allCars) : featuredCars.get(0));
+        mav.addObject("heroCar", heroCar);
+        mav.addObject("heroReview", heroReview);
         mav.addObject("brands", brandDao.findAll());
         mav.addObject("bodyTypes", bodyTypeDao.findAll());
         if (error != null) {

@@ -20,12 +20,16 @@
 </head>
 <body>
 
-    <pa:nav activePage="explore" actionText="Agregar auto" actionId="openCreateCarModalBtn" actionDialogId="createCarModal"/>
+    <pa:nav activePage="explore"/>
 
     <main class="landing-page">
         <section class="landing-hero">
             <div class="hero-copy">
-                <h1>Encontrá tu próximo auto</h1>
+                <h1 class="hero-title">
+                    <span class="hero-title-accent">Encontrá</span>
+                    <span>tu próximo</span>
+                    <span>auto</span>
+                </h1>
                 <p class="hero-text">
                     Explorá reviews técnicas, compará carrocerías y descubrí modelos con personalidad propia
                     en una galería pensada para entusiastas.
@@ -77,22 +81,107 @@
                 </c:if>
             </div>
 
-            <div class="hero-media" aria-hidden="true">
+            <c:if test="${not empty heroCar and heroCar.hasImage}">
+                <c:url var="heroCarImageUrl" value="/car-image">
+                    <c:param name="carId" value="${heroCar.id}"/>
+                </c:url>
+            </c:if>
+            <c:if test="${not empty heroCar and empty heroCarImageUrl and not empty heroCar.imageUrl}">
+                <c:set var="heroCarImageUrl" value="${heroCar.imageUrl}"/>
+            </c:if>
+
+            <div class="hero-stage">
                 <div class="hero-glow"></div>
-                <c:choose>
-                    <c:when test="${not empty heroCar and heroCar.hasImage}">
-                        <c:url var="heroCarImageUrl" value="/car-image">
-                            <c:param name="carId" value="${heroCar.id}"/>
-                        </c:url>
-                        <img src="${heroCarImageUrl}" alt="" class="hero-car-image">
-                    </c:when>
-                    <c:when test="${not empty heroCar and not empty heroCar.imageUrl}">
-                        <img src="<c:out value='${heroCar.imageUrl}'/>" alt="" class="hero-car-image">
-                    </c:when>
-                    <c:otherwise>
-                        <div class="hero-placeholder"></div>
-                    </c:otherwise>
-                </c:choose>
+                <div class="hero-media-frame" aria-hidden="true">
+                    <c:choose>
+                        <c:when test="${not empty heroCarImageUrl}">
+                            <img
+                                src="${heroCarImageUrl}"
+                                alt=""
+                                class="hero-car-image">
+                        </c:when>
+                        <c:otherwise>
+                            <div class="hero-placeholder"></div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+
+                <c:if test="${not empty heroReview}">
+                    <article class="hero-review-card">
+                        <div class="hero-review-header">
+                            <div class="hero-review-thumb" aria-hidden="true">
+                                <c:choose>
+                                    <c:when test="${not empty heroCarImageUrl}">
+                                        <img src="${heroCarImageUrl}" alt="" class="hero-review-thumb-image">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span><c:out value="${fn:substring(heroCar.brandName, 0, 1)}"/></span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                            <div class="hero-review-rating">
+                                <span class="hero-review-stars" aria-hidden="true">
+                                    <c:forEach var="i" begin="1" end="5">
+                                        <svg viewBox="0 0 24 24" width="18" height="18">
+                                            <c:choose>
+                                                <c:when test="${heroReview.rating >= i}">
+                                                    <path fill="#ff5719" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                                </c:when>
+                                                <c:when test="${heroReview.rating >= i - 0.5}">
+                                                    <defs>
+                                                        <linearGradient id="heroStar${heroReview.id}${i}" x1="0" x2="1" y1="0" y2="0">
+                                                            <stop offset="50%" stop-color="#ff5719"/>
+                                                            <stop offset="50%" stop-color="#3a3a3a"/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <path fill="url(#heroStar${heroReview.id}${i})" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <path fill="#3a3a3a" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </svg>
+                                    </c:forEach>
+                                </span>
+                                <span class="hero-review-score"><c:out value="${heroReview.rating}"/></span>
+                            </div>
+                        </div>
+
+                        <p class="hero-review-quote">
+                            <c:choose>
+                                <c:when test="${not empty heroReview.body and fn:length(heroReview.body) gt 150}">
+                                    “<c:out value="${fn:substring(heroReview.body, 0, 150)}"/>...”
+                                </c:when>
+                                <c:when test="${not empty heroReview.body}">
+                                    “<c:out value="${heroReview.body}"/>”
+                                </c:when>
+                                <c:when test="${not empty heroReview.title}">
+                                    “<c:out value="${heroReview.title}"/>”
+                                </c:when>
+                                <c:otherwise>
+                                    “Una reseña reciente de la comunidad sobre este modelo destacado.”
+                                </c:otherwise>
+                            </c:choose>
+                        </p>
+
+                        <p class="hero-review-meta">
+                            <span>
+                                <c:choose>
+                                    <c:when test="${not empty heroReview.userId}">
+                                        Usuario #<c:out value="${heroReview.userId}"/>
+                                    </c:when>
+                                    <c:when test="${not empty heroReview.reviewerEmail}">
+                                        <c:out value="${fn:substringBefore(heroReview.reviewerEmail, '@')}"/>
+                                    </c:when>
+                                    <c:otherwise>
+                                        Anónimo
+                                    </c:otherwise>
+                                </c:choose>
+                            </span>
+                            <span><c:out value="${fn:substring(heroReview.createdAt, 0, 10)}"/></span>
+                        </p>
+                    </article>
+                </c:if>
             </div>
         </section>
 
@@ -147,7 +236,7 @@
             var fileName = document.getElementById('modalCarFileName');
             var fileUpload = fileInput ? fileInput.closest('.car-image-upload') : null;
 
-            if (!openButton || !modal || !form) {
+            if (!modal || !form) {
                 return;
             }
 
@@ -173,7 +262,9 @@
                 modal.setAttribute('hidden', 'hidden');
                 document.body.classList.remove('modal-open');
                 resetModalState();
-                openButton.focus();
+                if (openButton) {
+                    openButton.focus();
+                }
             };
 
             var openModal = function () {
@@ -186,7 +277,9 @@
                 }
             };
 
-            openButton.addEventListener('click', openModal);
+            if (openButton) {
+                openButton.addEventListener('click', openModal);
+            }
 
             closeElements.forEach(function (element) {
                 element.addEventListener('click', closeModal);
