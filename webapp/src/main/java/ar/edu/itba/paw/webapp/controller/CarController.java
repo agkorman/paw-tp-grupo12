@@ -139,11 +139,14 @@ public class CarController {
         if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
             return redirectToCarsWithError("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
         }
+        if (trimmedDescription == null || trimmedDescription.isEmpty()) {
+            return redirectToCarsWithError("La descripción es obligatoria.");
+        }
         if (trimmedDescription != null && trimmedDescription.length() > 1500) {
             return redirectToCarsWithError("La descripción debe tener como máximo 1500 caracteres.");
         }
 
-        final String imageValidationError = validateUploadedImage(file, false);
+        final String imageValidationError = validateUploadedImage(file, true);
         if (imageValidationError != null) {
             return redirectToCarsWithError(imageValidationError);
         }
@@ -272,7 +275,7 @@ public class CarController {
 
     private ResponseEntity<?> uploadCarImageResponse(final long carId, final MultipartFile file) {
         if (carService.getCarById(carId).isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Car not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Auto no encontrado.");
         }
         final String imageValidationError = validateUploadedImage(file, true);
         if (imageValidationError != null) {
@@ -303,7 +306,7 @@ public class CarController {
         }
         final String contentType = resolveImageContentType(file);
         if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
-            return "Tipo de imagen no soportado. Use JPEG, PNG o WEBP.";
+            return "Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.";
         }
         return null;
     }

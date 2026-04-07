@@ -242,9 +242,35 @@
                ================================================================ */
             var modelYearInput = $('modalModelYear');
             var mileageInput   = $('modalMileageKm');
+            var requiredMessages = {
+                modalReviewerEmail: 'Ingresá tu email.',
+                modalTitle: 'Ingresá un título.',
+                modalBody: 'Ingresá una descripción.'
+            };
 
             function isInt(s) { return /^\d+$/.test(s); }
             function clearV(inp) { if (inp) inp.setCustomValidity(''); }
+
+            function validateRequiredField(inp) {
+                if (!inp) return true;
+
+                clearV(inp);
+                if (inp.required && (!inp.value || inp.value.trim() === '')) {
+                    inp.setCustomValidity(requiredMessages[inp.id] || 'Completá este campo.');
+                    return false;
+                }
+                if (inp.validity.typeMismatch && inp.type === 'email') {
+                    inp.setCustomValidity('Ingresá un email válido.');
+                    return false;
+                }
+                return inp.checkValidity();
+            }
+
+            function validateRequiredFields() {
+                return Array.prototype.slice.call(form.querySelectorAll('[required]')).reduce(function (isValid, inp) {
+                    return validateRequiredField(inp) && isValid;
+                }, true);
+            }
 
             function validateNumerics() {
                 var maxYear = new Date().getFullYear() + 1;
@@ -289,12 +315,16 @@
 
             if (modelYearInput) modelYearInput.addEventListener('input', function () { clearV(modelYearInput); });
             if (mileageInput)   mileageInput.addEventListener('input', function () { clearV(mileageInput); });
+            Array.prototype.slice.call(form.querySelectorAll('[required]')).forEach(function (inp) {
+                inp.addEventListener('input', function () { validateRequiredField(inp); });
+            });
 
             /* ================================================================
                FORM SUBMIT — chain all validations
                ================================================================ */
             form.addEventListener('submit', function (e) {
                 if (!validateRating()) { e.preventDefault(); return; }
+                if (!validateRequiredFields()) { e.preventDefault(); form.reportValidity(); return; }
                 if (!validateNumerics()) { e.preventDefault(); form.reportValidity(); }
             });
         })();

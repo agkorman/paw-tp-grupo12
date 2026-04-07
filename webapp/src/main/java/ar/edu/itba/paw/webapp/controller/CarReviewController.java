@@ -133,22 +133,20 @@ public class CarReviewController {
                                      @RequestParam(value = "wouldRecommend", required = false) final Boolean wouldRecommend) {
 
         // Server-side validation to prevent DB constraint violations
-        // Validate rating: must be between 0 and 5 inclusive
         if (rating == null || rating.compareTo(BigDecimal.ZERO) < 0 || rating.compareTo(BigDecimal.valueOf(5)) > 0) {
-            return carReviewPage(carId, null, "Rating must be between 0 and 5.");
+            return carReviewPage(carId, null, "La puntuación debe estar entre 0 y 5.");
         }
 
         final String normalizedEmail = reviewerEmail == null ? "" : reviewerEmail.trim();
         if (normalizedEmail.isEmpty()) {
-            return carReviewPage(carId, null, "Email is required.");
+            return carReviewPage(carId, null, "El email es obligatorio.");
         }
         if (normalizedEmail.length() > 100 || !SIMPLE_EMAIL_PATTERN.matcher(normalizedEmail).matches()) {
-            return carReviewPage(carId, null, "Enter a valid email address.");
+            return carReviewPage(carId, null, "Ingresá un email válido.");
         }
 
-        // Validate ownershipStatus length according to DB schema (e.g., VARCHAR(20))
         if (ownershipStatus != null && ownershipStatus.length() > 20) {
-            return carReviewPage(carId, null, "Ownership status must be at most 20 characters long.");
+            return carReviewPage(carId, null, "El estado de propiedad debe tener como máximo 20 caracteres.");
         }
 
         reviewService.createReview(null, normalizedEmail, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);

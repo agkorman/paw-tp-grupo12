@@ -57,6 +57,7 @@
                             name="description"
                             rows="4"
                             maxlength="1500"
+                            required
                             placeholder="Describe el auto, su propuesta y cualquier detalle relevante."></textarea>
                 </div>
 
@@ -69,6 +70,7 @@
                                 name="file"
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp"
+                                required
                                 aria-describedby="modalCarFileHelp modalCarFileName">
                         <label class="car-image-upload-card" for="modalCarFile">
                             <span class="car-image-upload-icon" aria-hidden="true">

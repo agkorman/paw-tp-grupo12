@@ -15,7 +15,7 @@
             </button>
         </div>
 
-        <form id="createReviewForm" class="review-modal-form" method="post" action="<c:url value='/reviews'/>">
+        <form id="createReviewForm" class="review-modal-form" method="post" action="<c:url value='/reviews'/>" novalidate>
             <input id="modalCarId" name="carId" type="hidden" value="${carId}">
 
             <p class="review-modal-subtitle">Completá los campos de la reseña. Tu email se guardará para vincular esta reseña a una cuenta más adelante.</p>
