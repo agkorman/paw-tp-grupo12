@@ -3,6 +3,8 @@ name: Notion Bot
 on:
   issue_comment:
     types: [created]
+  pull_request_review_comment:
+    types: [created]
 
 jobs:
   append-to-notion:
@@ -21,50 +23,93 @@ jobs:
       contents: read
       issues: read
       pull-requests: read
+      models: read
 
     steps:
-      - name: Append comment content to Notion
-        uses: actions/github-script@v7
+      - name: Extract command text
+        id: extract
+        shell: bash
+        run: |
+          BODY='${{ github.event.comment.body }}'
+          CONTENT="${BODY#*/notion}"
+          {
+            echo 'content<<EOF'
+            echo "$CONTENT"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Rewrite for docs with AI
+        id: ai
+        uses: actions/ai-inference@v1
+        with:
+          model: openai/gpt-4.1-mini
+          prompt: |
+            Reescribí este pedido para documentación interna en español.
+
+            Reglas:
+            - No inventes nada.
+            - Sé concreto y prolijo.
+            - Máximo 140 palabras.
+            - Devolvé markdown simple.
+            - Estructura:
+              ## Resumen
+              ## Contexto
+              ## Cambio solicitado
+              ## Próximo paso
+
+            Datos del contexto:
+            - Repo: ${{ github.repository }}
+            - PR/Issue: #${{ github.event.issue.number }}
+            - Título: ${{ github.event.issue.title }}
+            - Autor del comentario: ${{ github.event.comment.user.login }}
+            - URL: ${{ github.event.comment.html_url }}
+
+            Instrucción del usuario:
+            ${{ steps.extract.outputs.content }}
+
+      - name: Append to Notion
+        uses: actions/github-script@v8
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
-          COMMENT_BODY: ${{ github.event.comment.body }}
-          COMMENT_URL: ${{ github.event.comment.html_url }}
           COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           REPO_NAME: ${{ github.repository }}
+          COMMENT_URL: ${{ github.event.comment.html_url }}
+          AI_TEXT: ${{ steps.ai.outputs.response }}
         with:
           script: |
-            const body = process.env.COMMENT_BODY || "";
-            const trigger = "/notion";
-            const idx = body.indexOf(trigger);
+            const aiText = process.env.AI_TEXT || "";
 
-            if (idx === -1) {
-              core.info("No trigger found.");
-              return;
+            function splitForNotion(text, max = 1800) {
+              const parts = [];
+              let remaining = text.trim();
+
+              while (remaining.length > max) {
+                let cut = remaining.lastIndexOf('\n', max);
+                if (cut < 400) cut = remaining.lastIndexOf(' ', max);
+                if (cut < 200) cut = max;
+                parts.push(remaining.slice(0, cut).trim());
+                remaining = remaining.slice(cut).trim();
+              }
+
+              if (remaining) parts.push(remaining);
+              return parts;
             }
 
-            const content = body.slice(idx + trigger.length).trim();
-
-            if (!content) {
-              core.setFailed("Found /notion but no content after it.");
-              return;
-            }
-
-            const isPR = !!context.payload.issue.pull_request;
-            const sourceType = isPR ? "PR" : "Issue";
+            const textParts = splitForNotion(aiText);
 
             const blocks = [
               {
                 object: "block",
-                type: "heading_3",
-                heading_3: {
+                type: "heading_2",
+                heading_2: {
                   rich_text: [
                     {
                       type: "text",
                       text: {
-                        content: `${sourceType} #${process.env.ISSUE_NUMBER} · ${process.env.ISSUE_TITLE}`.slice(0, 2000)
+                        content: `PR #${process.env.ISSUE_NUMBER} · ${process.env.ISSUE_TITLE}`.slice(0, 2000)
                       }
                     }
                   ]
@@ -78,13 +123,36 @@ jobs:
                     {
                       type: "text",
                       text: {
-                        content: `Repo: ${process.env.REPO_NAME}\nAuthor: ${process.env.COMMENT_AUTHOR}\nURL: ${process.env.COMMENT_URL}\n\n${content}`.slice(0, 2000)
+                        content: `Repo: ${process.env.REPO_NAME}\nAutor: ${process.env.COMMENT_AUTHOR}\nURL: ${process.env.COMMENT_URL}`.slice(0, 2000)
                       }
                     }
                   ]
                 }
               }
             ];
+
+            for (const part of textParts) {
+              blocks.push({
+                object: "block",
+                type: "paragraph",
+                paragraph: {
+                  rich_text: [
+                    {
+                      type: "text",
+                      text: {
+                        content: part
+                      }
+                    }
+                  ]
+                }
+              });
+            }
+
+            blocks.push({
+              object: "block",
+              type: "divider",
+              divider: {}
+            });
 
             const res = await fetch(`https://api.notion.com/v1/blocks/${process.env.NOTION_PAGE_ID}/children`, {
               method: "PATCH",
