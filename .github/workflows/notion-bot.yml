@@ -7,7 +7,7 @@ on:
 jobs:
   append-to-notion:
     if: |
-      contains(github.event.comment.body, '@notion-bot') &&
+      contains(github.event.comment.body, '/notion') &&
       github.event.comment.user.type != 'Bot' &&
       (
         github.event.comment.user.login == 'nicanovotny' ||
@@ -37,7 +37,7 @@ jobs:
         with:
           script: |
             const body = process.env.COMMENT_BODY || "";
-            const trigger = "@notion-bot";
+            const trigger = "/notion";
             const idx = body.indexOf(trigger);
 
             if (idx === -1) {
@@ -48,7 +48,7 @@ jobs:
             const content = body.slice(idx + trigger.length).trim();
 
             if (!content) {
-              core.setFailed("Found @notion-bot but no content after it.");
+              core.setFailed("Found /notion but no content after it.");
               return;
             }
 
