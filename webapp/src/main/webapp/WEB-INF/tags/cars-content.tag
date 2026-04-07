@@ -27,7 +27,7 @@
                             <c:param name="carId" value="${car.id}"/>
                         </c:url>
                         <pa:car-card
-                            model="${car.model}"
+                            model="${car.brandName} ${car.model}"
                             bodyType="${car.bodyType}"
                             carId="${car.id}"
                             hasImage="${car.hasImage}"

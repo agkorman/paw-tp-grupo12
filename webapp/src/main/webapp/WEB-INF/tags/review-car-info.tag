@@ -28,17 +28,6 @@
                 </c:choose>
             </span>
         </div>
-        <div class="car-info-row">
-            <span class="car-info-label">Rating</span>
-            <span class="car-info-value">
-                <c:choose>
-                    <c:when test="${not empty averageRating}">
-                        <c:out value="${averageRating}"/>/5.0
-                    </c:when>
-                    <c:otherwise>Sin reviews</c:otherwise>
-                </c:choose>
-            </span>
-        </div>
     </div>
 
     <button id="openReviewModalBtn" type="button" class="btn-primary add-review-btn">Agregar reseña</button>
