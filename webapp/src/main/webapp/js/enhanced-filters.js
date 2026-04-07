@@ -1,6 +1,41 @@
 (function () {
     var nativeSubmit = HTMLFormElement.prototype.submit;
 
+    var syncCatalogCount = function (root) {
+        if (!root) {
+            return;
+        }
+
+        var countTarget = document.querySelector('.cars-toolbar-count');
+        if (!countTarget) {
+            return;
+        }
+
+        var carCards = root.querySelectorAll('.car-card-link');
+        countTarget.textContent = carCards.length + ' vehículos encontrados';
+    };
+
+    var syncToolbarSelectValue = function (select) {
+        if (!(select instanceof HTMLSelectElement) || !select.name) {
+            return;
+        }
+
+        var valueTarget = document.querySelector('[data-toolbar-select-value="' + select.name + '"]');
+        if (!valueTarget) {
+            return;
+        }
+
+        var selectedOption = select.options[select.selectedIndex];
+        valueTarget.textContent = selectedOption ? selectedOption.textContent.trim() : '';
+    };
+
+    var syncToolbarSelectValues = function (scope) {
+        var root = scope || document;
+        var selects = root.querySelectorAll('.cars-toolbar-select-overlay');
+
+        Array.prototype.forEach.call(selects, syncToolbarSelectValue);
+    };
+
     var buildSearchParams = function (form) {
         var formData = new FormData(form);
         var params = new URLSearchParams();
@@ -76,6 +111,7 @@
             }
 
             currentTarget.replaceWith(replacement);
+            syncCatalogCount(replacement);
             window.history.replaceState({}, '', actionUrl.pathname + actionUrl.search);
         }).catch(function () {
             nativeSubmit.call(form);
@@ -103,6 +139,7 @@
             return;
         }
 
+        syncToolbarSelectValue(target);
         submitEnhancedForm(form);
     });
 
@@ -115,4 +152,7 @@
         event.preventDefault();
         submitEnhancedForm(form);
     });
+
+    syncToolbarSelectValues(document);
+
 })();

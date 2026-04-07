@@ -3,7 +3,7 @@
 <%@ attribute name="bodyTypes" required="true" type="java.util.Collection" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<div id="createCarModal" class="review-modal" hidden>
+<div id="createCarModal" class="review-modal" hidden <c:if test="${not empty carFormError}">data-auto-open="true"</c:if>>
     <div class="review-modal-overlay" data-close-car-modal></div>
     <section class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createCarModalTitle">
         <div class="review-modal-header">
@@ -28,7 +28,7 @@
                 <div class="review-modal-field">
                     <label for="modalCarBrand">Marca</label>
                     <select id="modalCarBrand" name="brand" required>
-                        <option value="">Seleccioná una marca</option>
+                        <option value="" selected>Seleccioná una marca</option>
                         <c:forEach items="${brands}" var="brand">
                             <option value="<c:out value='${brand.name}'/>"><c:out value="${brand.name}"/></option>
                         </c:forEach>
@@ -38,7 +38,7 @@
                 <div class="review-modal-field">
                     <label for="modalCarBodyType">Tipo de carrocería</label>
                     <select id="modalCarBodyType" name="bodyType" required>
-                        <option value="">Seleccioná un tipo</option>
+                        <option value="" selected>Seleccioná un tipo</option>
                         <c:forEach items="${bodyTypes}" var="bodyType">
                             <option value="<c:out value='${bodyType.name}'/>"><c:out value="${bodyType.name}"/></option>
                         </c:forEach>

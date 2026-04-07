@@ -20,12 +20,16 @@
 </head>
 <body>
 
-    <pa:nav activePage="explore" actionText="Agregar auto" actionId="openCreateCarModalBtn" actionDialogId="createCarModal"/>
+    <pa:nav activePage="explore"/>
 
     <main class="landing-page">
         <section class="landing-hero">
             <div class="hero-copy">
-                <h1>Encontrá tu próximo auto</h1>
+                <h1 class="hero-title">
+                    <span class="hero-title-accent">Encontrá</span>
+                    <span>tu próximo</span>
+                    <span>auto</span>
+                </h1>
                 <p class="hero-text">
                     Explorá reviews técnicas, compará carrocerías y descubrí modelos con personalidad propia
                     en una galería pensada para entusiastas.
@@ -77,22 +81,37 @@
                 </c:if>
             </div>
 
-            <div class="hero-media" aria-hidden="true">
+            <c:if test="${not empty heroCar and heroCar.hasImage}">
+                <c:url var="heroCarImageUrl" value="/car-image">
+                    <c:param name="carId" value="${heroCar.id}"/>
+                </c:url>
+            </c:if>
+            <c:if test="${not empty heroCar and empty heroCarImageUrl and not empty heroCar.imageUrl}">
+                <c:set var="heroCarImageUrl" value="${heroCar.imageUrl}"/>
+            </c:if>
+
+            <div class="hero-stage">
                 <div class="hero-glow"></div>
-                <c:choose>
-                    <c:when test="${not empty heroCar and heroCar.hasImage}">
-                        <c:url var="heroCarImageUrl" value="/car-image">
-                            <c:param name="carId" value="${heroCar.id}"/>
-                        </c:url>
-                        <img src="${heroCarImageUrl}" alt="" class="hero-car-image">
-                    </c:when>
-                    <c:when test="${not empty heroCar and not empty heroCar.imageUrl}">
-                        <img src="<c:out value='${heroCar.imageUrl}'/>" alt="" class="hero-car-image">
-                    </c:when>
-                    <c:otherwise>
-                        <div class="hero-placeholder"></div>
-                    </c:otherwise>
-                </c:choose>
+                <div class="hero-media-frame" aria-hidden="true">
+                    <c:choose>
+                        <c:when test="${not empty heroCarImageUrl}">
+                            <img
+                                src="${heroCarImageUrl}"
+                                alt=""
+                                class="hero-car-image">
+                        </c:when>
+                        <c:otherwise>
+                            <div class="hero-placeholder"></div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+
+                <c:if test="${not empty heroReview}">
+                    <pa:hero-review-card
+                            heroReview="${heroReview}"
+                            heroCarBrandName="${heroCar.brandName}"
+                            heroCarImageUrl="${heroCarImageUrl}"/>
+                </c:if>
             </div>
         </section>
 
@@ -134,85 +153,7 @@
         </section>
     </main>
 
-    <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}"/>
-
     <pa:footer/>
-
-    <script>
-        (function () {
-            var openButton = document.getElementById('openCreateCarModalBtn');
-            var modal = document.getElementById('createCarModal');
-            var form = document.getElementById('createCarForm');
-            var fileInput = document.getElementById('modalCarFile');
-            var fileName = document.getElementById('modalCarFileName');
-            var fileUpload = fileInput ? fileInput.closest('.car-image-upload') : null;
-
-            if (!openButton || !modal || !form) {
-                return;
-            }
-
-            var closeElements = Array.prototype.slice.call(modal.querySelectorAll('[data-close-car-modal]'));
-            var emptyFileLabel = 'Ningún archivo seleccionado';
-
-            var updateFileState = function () {
-                if (!fileInput || !fileName || !fileUpload) {
-                    return;
-                }
-
-                var selectedFile = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
-                fileName.textContent = selectedFile ? selectedFile.name : emptyFileLabel;
-                fileUpload.classList.toggle('has-file', !!selectedFile);
-            };
-
-            var resetModalState = function () {
-                form.reset();
-                updateFileState();
-            };
-
-            var closeModal = function () {
-                modal.setAttribute('hidden', 'hidden');
-                document.body.classList.remove('modal-open');
-                resetModalState();
-                openButton.focus();
-            };
-
-            var openModal = function () {
-                resetModalState();
-                modal.removeAttribute('hidden');
-                document.body.classList.add('modal-open');
-                var firstInput = modal.querySelector('#modalCarBrand');
-                if (firstInput) {
-                    firstInput.focus();
-                }
-            };
-
-            openButton.addEventListener('click', openModal);
-
-            closeElements.forEach(function (element) {
-                element.addEventListener('click', closeModal);
-            });
-
-            if (fileInput) {
-                fileInput.addEventListener('change', updateFileState);
-            }
-
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
-                    closeModal();
-                }
-            });
-
-            form.addEventListener('submit', function (event) {
-                if (!form.reportValidity()) {
-                    event.preventDefault();
-                }
-            });
-
-            <c:if test="${not empty carFormError}">
-                openModal();
-            </c:if>
-        })();
-    </script>
 
 </body>
 </html>

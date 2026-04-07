@@ -68,6 +68,7 @@ public class CarReviewController {
         mav.addObject("selectedCar", pageData.selectedCar);
         mav.addObject("reviews", pageData.reviews);
         mav.addObject("averageRating", calculateAverageRating(pageData.reviews));
+        mav.addObject("reviewCount", pageData.reviews.size());
         mav.addObject("currentSort", pageData.currentSort);
         mav.addObject("latestReview", pageData.latestReview.orElse(null));
         if (error != null) {

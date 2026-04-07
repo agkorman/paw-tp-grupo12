@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -77,23 +79,23 @@ public class CarController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public ModelAndView home() {
-        return landingPage(null);
+        return landingPage();
     }
 
-    private ModelAndView landingPage(final String error) {
+    private ModelAndView landingPage() {
         final List<Car> allCars = carService.getAllCars();
         final Map<Long, ReviewStats> reviewStatsByCarId = getReviewStatsByCarId(allCars);
         final List<Car> featuredCars = selectFeaturedCars(allCars, reviewStatsByCarId);
+        final Car heroCar = featuredCars.isEmpty() ? getFallbackHeroCar(allCars) : featuredCars.get(0);
+        final Review heroReview = heroCar == null
+                ? null
+                : reviewService.getLatestReviewByCar(heroCar.getId()).orElse(null);
 
         final ModelAndView mav = new ModelAndView("landing.jsp");
         mav.addObject("featuredCars", featuredCars);
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
-        mav.addObject("heroCar", featuredCars.isEmpty() ? getFallbackHeroCar(allCars) : featuredCars.get(0));
-        mav.addObject("brands", brandDao.findAll());
-        mav.addObject("bodyTypes", bodyTypeDao.findAll());
-        if (error != null) {
-            mav.addObject("carFormError", error);
-        }
+        mav.addObject("heroCar", heroCar);
+        mav.addObject("heroReview", heroReview);
         return mav;
     }
 
@@ -101,19 +103,9 @@ public class CarController {
     public ModelAndView listCars(
             @RequestParam(value = "q", required = false) final String q,
             @RequestParam(value = "brand", required = false) final String brand,
-            @RequestParam(value = "bodyType", required = false) final String bodyType) {
-        final String searchQuery = blankToNull(q);
-        final CarCatalogData catalogData = resolveCatalogData(searchQuery, brand, bodyType);
-
-        final ModelAndView mav = new ModelAndView("cars.jsp");
-        mav.addObject("cars", catalogData.cars);
-        mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
-        mav.addObject("brands", brandDao.findAll());
-        mav.addObject("bodyTypes", bodyTypeDao.findAll());
-        mav.addObject("selectedBrand", catalogData.brandFilter);
-        mav.addObject("selectedBodyType", catalogData.bodyTypeFilter);
-        mav.addObject("searchQuery", searchQuery);
-        return mav;
+            @RequestParam(value = "bodyType", required = false) final String bodyType,
+            @RequestParam(value = "carFormError", required = false) final String carFormError) {
+        return carsPage(blankToNull(q), brand, bodyType, carFormError);
     }
 
     @RequestMapping(value = "/cars/content", method = RequestMethod.GET)
@@ -142,24 +134,24 @@ public class CarController {
         final String trimmedDescription = description == null ? null : description.trim();
 
         if (trimmedBrand.isEmpty() || trimmedBodyType.isEmpty()) {
-            return landingPage("Marca y tipo de carrocería son obligatorios.");
+            return redirectToCarsWithError("Marca y tipo de carrocería son obligatorios.");
         }
         if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
-            return landingPage("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
+            return redirectToCarsWithError("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
         }
         if (trimmedDescription != null && trimmedDescription.length() > 1500) {
-            return landingPage("La descripción debe tener como máximo 1500 caracteres.");
+            return redirectToCarsWithError("La descripción debe tener como máximo 1500 caracteres.");
         }
 
         final String imageValidationError = validateUploadedImage(file, false);
         if (imageValidationError != null) {
-            return landingPage(imageValidationError);
+            return redirectToCarsWithError(imageValidationError);
         }
 
         final Brand resolvedBrand = brandDao.findByName(trimmedBrand).orElse(null);
         final BodyType resolvedBodyType = bodyTypeDao.findByName(trimmedBodyType).orElse(null);
         if (resolvedBrand == null || resolvedBodyType == null) {
-            return landingPage("Marca o tipo de carrocería no válidos.");
+            return redirectToCarsWithError("Marca o tipo de carrocería no válidos.");
         }
 
         final Optional<String> imageContentType;
@@ -192,6 +184,34 @@ public class CarController {
         }
 
         return new ModelAndView("redirect:/cars");
+    }
+
+    private ModelAndView carsPage(final String q, final String brand, final String bodyType,
+                                  final String error) {
+        final String searchQuery = blankToNull(q);
+        final CarCatalogData catalogData = resolveCatalogData(searchQuery, brand, bodyType);
+
+        final ModelAndView mav = new ModelAndView("cars.jsp");
+        mav.addObject("cars", catalogData.cars);
+        mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
+        mav.addObject("brands", brandDao.findAll());
+        mav.addObject("bodyTypes", bodyTypeDao.findAll());
+        mav.addObject("selectedBrand", catalogData.brandFilter);
+        mav.addObject("selectedBodyType", catalogData.bodyTypeFilter);
+        mav.addObject("searchQuery", searchQuery);
+        if (error != null) {
+            mav.addObject("carFormError", error);
+        }
+        return mav;
+    }
+
+    private ModelAndView redirectToCarsWithError(final String error) {
+        final String redirectUrl = UriComponentsBuilder.fromPath("/cars")
+                .queryParam("carFormError", error)
+                .build()
+                .encode()
+                .toUriString();
+        return new ModelAndView("redirect:" + redirectUrl);
     }
 
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.GET)
@@ -425,4 +445,5 @@ public class CarController {
             this.bodyTypeFilter = bodyTypeFilter;
         }
     }
+
 }
