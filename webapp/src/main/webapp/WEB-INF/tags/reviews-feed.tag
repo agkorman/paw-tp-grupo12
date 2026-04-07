@@ -57,7 +57,7 @@
                                         Usuario #<c:out value="${review.userId}"/>
                                     </c:when>
                                     <c:when test="${not empty review.reviewerEmail}">
-                                        <c:out value="${review.reviewerEmail}"/>
+                                        <c:out value="${fn:substringBefore(review.reviewerEmail, '@')}"/>
                                     </c:when>
                                     <c:otherwise>
                                         Anónimo
