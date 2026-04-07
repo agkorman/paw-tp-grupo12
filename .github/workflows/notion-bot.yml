@@ -7,16 +7,10 @@ on:
     types: [created]
 
 jobs:
-  append-to-notion:
+  append-todo-to-notion:
     if: |
       contains(github.event.comment.body, '/notion') &&
-      github.event.comment.user.type != 'Bot' &&
-      (
-        github.event.comment.user.login == 'nicanovotny' ||
-        github.event.comment.user.login == 'agkorman' ||
-        github.event.comment.user.login == 'roccoppp' ||
-        github.event.comment.user.login == 'NolascoJ'
-      )
+      github.event.comment.user.type != 'Bot'
     runs-on: ubuntu-latest
 
     permissions:
@@ -26,133 +20,131 @@ jobs:
       models: read
 
     steps:
-      - name: Extract command text
-        id: extract
-        shell: bash
-        run: |
-          BODY='${{ github.event.comment.body }}'
-          CONTENT="${BODY#*/notion}"
-          {
-            echo 'content<<EOF'
-            echo "$CONTENT"
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
+      - name: Check allowed users
+        id: auth
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const allowed = ["nicanovotny", "agkorman", "roccoppp", "nolascoj"];
+            const login = (context.payload.comment.user.login || "").toLowerCase();
+            const ok = allowed.includes(login);
+            core.setOutput("ok", ok ? "true" : "false");
+            if (!ok) core.setFailed(`User ${login} is not allowed to trigger this workflow.`);
 
-      - name: Rewrite for docs with AI
+      - name: Extract trigger instruction
+        if: steps.auth.outputs.ok == 'true'
+        id: extract
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const body = context.payload.comment.body || "";
+            const trigger = "/notion";
+            const idx = body.indexOf(trigger);
+
+            if (idx === -1) {
+              core.setFailed("Trigger not found.");
+              return;
+            }
+
+            const instruction = body.slice(idx + trigger.length).trim();
+
+            core.setOutput("instruction", instruction || "");
+            core.setOutput("comment_body", body);
+
+      - name: Gather source context
+        if: steps.auth.outputs.ok == 'true'
+        id: context
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const eventName = context.eventName;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            let sourceText = "";
+            let sourceType = "";
+            let triggerMode = eventName;
+
+            if (eventName === "pull_request_review_comment") {
+              const comment = context.payload.comment;
+              sourceType = "pull_request_review_comment";
+
+              if (comment.in_reply_to_id) {
+                const parent = await github.rest.pulls.getReviewComment({
+                  owner,
+                  repo,
+                  comment_id: comment.in_reply_to_id,
+                });
+                sourceText = parent.data.body || "";
+              } else {
+                sourceText = comment.body || "";
+              }
+            } else if (eventName === "issue_comment") {
+              sourceType = "issue_comment";
+              sourceText = context.payload.comment.body || "";
+            }
+
+            core.setOutput("source_type", sourceType);
+            core.setOutput("source_text", sourceText);
+            core.setOutput("trigger_mode", triggerMode);
+
+      - name: Generate TODO with AI
+        if: steps.auth.outputs.ok == 'true'
         id: ai
         uses: actions/ai-inference@v1
         with:
           model: openai/gpt-4.1-mini
           prompt: |
-            Reescribí este pedido para documentación interna en español.
+            Convertí el comentario técnico a un único TODO accionable en español.
 
             Reglas:
+            - Devolvé exactamente una sola línea.
+            - Debe empezar con: TODO:
+            - Máximo 180 caracteres.
+            - No incluyas repo, PR, autor, links ni contexto general.
+            - No resumas el PR.
             - No inventes nada.
-            - Sé concreto y prolijo.
-            - Máximo 140 palabras.
-            - Devolvé markdown simple.
-            - Estructura:
-              ## Resumen
-              ## Contexto
-              ## Cambio solicitado
-              ## Próximo paso
+            - Si el comentario original ya contiene varias ideas, elegí la acción principal más concreta.
+            - Si la instrucción del usuario agrega una preferencia, usala.
 
-            Datos del contexto:
-            - Repo: ${{ github.repository }}
-            - PR/Issue: #${{ github.event.issue.number }}
-            - Título: ${{ github.event.issue.title }}
-            - Autor del comentario: ${{ github.event.comment.user.login }}
-            - URL: ${{ github.event.comment.html_url }}
+            Comentario técnico base:
+            ${{ steps.context.outputs.source_text }}
 
-            Instrucción del usuario:
-            ${{ steps.extract.outputs.content }}
+            Instrucción adicional del usuario:
+            ${{ steps.extract.outputs.instruction }}
 
-      - name: Append to Notion
+      - name: Append TODO to Notion
+        if: steps.auth.outputs.ok == 'true'
         uses: actions/github-script@v8
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
-          COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          REPO_NAME: ${{ github.repository }}
-          COMMENT_URL: ${{ github.event.comment.html_url }}
-          AI_TEXT: ${{ steps.ai.outputs.response }}
+          TODO_TEXT: ${{ steps.ai.outputs.response }}
         with:
           script: |
-            const aiText = process.env.AI_TEXT || "";
+            const todo = (process.env.TODO_TEXT || "").trim();
 
-            function splitForNotion(text, max = 1800) {
-              const parts = [];
-              let remaining = text.trim();
-
-              while (remaining.length > max) {
-                let cut = remaining.lastIndexOf('\n', max);
-                if (cut < 400) cut = remaining.lastIndexOf(' ', max);
-                if (cut < 200) cut = max;
-                parts.push(remaining.slice(0, cut).trim());
-                remaining = remaining.slice(cut).trim();
-              }
-
-              if (remaining) parts.push(remaining);
-              return parts;
+            if (!todo) {
+              core.setFailed("AI returned empty TODO.");
+              return;
             }
-
-            const textParts = splitForNotion(aiText);
 
             const blocks = [
               {
                 object: "block",
-                type: "heading_2",
-                heading_2: {
+                type: "bulleted_list_item",
+                bulleted_list_item: {
                   rich_text: [
                     {
                       type: "text",
                       text: {
-                        content: `PR #${process.env.ISSUE_NUMBER} · ${process.env.ISSUE_TITLE}`.slice(0, 2000)
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                object: "block",
-                type: "paragraph",
-                paragraph: {
-                  rich_text: [
-                    {
-                      type: "text",
-                      text: {
-                        content: `Repo: ${process.env.REPO_NAME}\nAutor: ${process.env.COMMENT_AUTHOR}\nURL: ${process.env.COMMENT_URL}`.slice(0, 2000)
+                        content: todo.slice(0, 2000)
                       }
                     }
                   ]
                 }
               }
             ];
-
-            for (const part of textParts) {
-              blocks.push({
-                object: "block",
-                type: "paragraph",
-                paragraph: {
-                  rich_text: [
-                    {
-                      type: "text",
-                      text: {
-                        content: part
-                      }
-                    }
-                  ]
-                }
-              });
-            }
-
-            blocks.push({
-              object: "block",
-              type: "divider",
-              divider: {}
-            });
 
             const res = await fetch(`https://api.notion.com/v1/blocks/${process.env.NOTION_PAGE_ID}/children`, {
               method: "PATCH",
@@ -171,4 +163,4 @@ jobs:
               return;
             }
 
-            core.info("Content appended to Notion successfully.");
+            core.info(`Added to Notion: ${todo}`);
