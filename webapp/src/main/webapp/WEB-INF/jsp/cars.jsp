@@ -32,14 +32,7 @@
     <pa:cars-content cars="${cars}" reviewStatsByCarId="${reviewStatsByCarId}"/>
     <pa:create-car-modal
             brands="${brands}"
-            bodyTypes="${bodyTypes}"
-            searchQuery="${searchQuery}"
-            selectedBrand="${selectedBrand}"
-            selectedBodyType="${selectedBodyType}"
-            carFormBrand="${carFormBrand}"
-            carFormBodyType="${carFormBodyType}"
-            carFormModel="${carFormModel}"
-            carFormDescription="${carFormDescription}"/>
+            bodyTypes="${bodyTypes}"/>
 
     <pa:footer/>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>

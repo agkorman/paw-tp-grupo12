@@ -36,13 +36,6 @@
     margin-top: 0.5rem;
 }
 
-.eyebrow {
-    font-size: 0.75rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--secondary);
-}
-
 .subtitle {
     margin-top: 0.75rem;
     color: var(--secondary);
@@ -258,11 +251,6 @@
 .review-sort-select option {
     background: var(--surface-container-high);
     color: var(--on-surface);
-}
-
-.count-label {
-    color: var(--secondary);
-    font-size: 0.875rem;
 }
 
 .review-list {

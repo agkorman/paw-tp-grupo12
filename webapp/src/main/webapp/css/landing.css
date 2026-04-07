@@ -39,7 +39,6 @@
     max-width: 40rem;
 }
 
-.hero-kicker,
 .section-kicker,
 .hero-spotlight-label {
     display: inline-flex;
@@ -98,7 +97,6 @@
 }
 
 .hero-search-field {
-    flex: 1;
     display: flex;
     align-items: center;
     gap: 0.8rem;

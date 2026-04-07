@@ -6,14 +6,13 @@
             return;
         }
 
-        var countSource = root.querySelector('.count-label');
         var countTarget = document.querySelector('.cars-toolbar-count');
-
-        if (!countSource || !countTarget) {
+        if (!countTarget) {
             return;
         }
 
-        countTarget.textContent = countSource.textContent.trim();
+        var carCards = root.querySelectorAll('.car-card-link');
+        countTarget.textContent = carCards.length + ' vehículos encontrados';
     };
 
     var syncToolbarSelectValue = function (select) {
@@ -135,13 +134,12 @@
             return;
         }
 
-        syncToolbarSelectValue(target);
-
         var form = target.form;
         if (!form || form.dataset.enhancedFilter !== 'true' || form.dataset.autoSubmit !== 'true') {
             return;
         }
 
+        syncToolbarSelectValue(target);
         submitEnhancedForm(form);
     });
 

@@ -148,10 +148,6 @@
     gap: 0;
 }
 
-.catalog-meta {
-    display: none;
-}
-
 .catalog-content.is-loading {
     opacity: 0.65;
     transition: opacity 0.18s ease;
@@ -165,11 +161,6 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1.35rem;
-}
-
-.cars-grid--empty {
-    grid-template-columns: minmax(16rem, 28rem);
-    justify-content: center;
 }
 
 .car-request-card {

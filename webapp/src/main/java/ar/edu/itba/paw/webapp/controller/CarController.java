@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -102,8 +103,9 @@ public class CarController {
     public ModelAndView listCars(
             @RequestParam(value = "q", required = false) final String q,
             @RequestParam(value = "brand", required = false) final String brand,
-            @RequestParam(value = "bodyType", required = false) final String bodyType) {
-        return carsPage(blankToNull(q), brand, bodyType, null, null);
+            @RequestParam(value = "bodyType", required = false) final String bodyType,
+            @RequestParam(value = "carFormError", required = false) final String carFormError) {
+        return carsPage(blankToNull(q), brand, bodyType, carFormError);
     }
 
     @RequestMapping(value = "/cars/content", method = RequestMethod.GET)
@@ -124,45 +126,32 @@ public class CarController {
                                   @RequestParam("bodyType") final String bodyType,
                                   @RequestParam("model") final String model,
                                   @RequestParam(value = "description", required = false) final String description,
-                                  @RequestParam(value = "returnQuery", required = false) final String returnQuery,
-                                  @RequestParam(value = "returnBrand", required = false) final String returnBrand,
-                                  @RequestParam(value = "returnBodyType", required = false) final String returnBodyType,
                                   @RequestParam(value = "file", required = false) final MultipartFile file) {
 
         final String trimmedBrand = brand.trim();
         final String trimmedBodyType = bodyType.trim();
         final String trimmedModel = model.trim();
         final String trimmedDescription = description == null ? null : description.trim();
-        final CarFormState formState = new CarFormState(
-                trimmedBrand,
-                trimmedBodyType,
-                trimmedModel,
-                trimmedDescription
-        );
 
         if (trimmedBrand.isEmpty() || trimmedBodyType.isEmpty()) {
-            return carsPage(returnQuery, returnBrand, returnBodyType,
-                    "Marca y tipo de carrocería son obligatorios.", formState);
+            return redirectToCarsWithError("Marca y tipo de carrocería son obligatorios.");
         }
         if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
-            return carsPage(returnQuery, returnBrand, returnBodyType,
-                    "El modelo es obligatorio y debe tener como máximo 120 caracteres.", formState);
+            return redirectToCarsWithError("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
         }
         if (trimmedDescription != null && trimmedDescription.length() > 1500) {
-            return carsPage(returnQuery, returnBrand, returnBodyType,
-                    "La descripción debe tener como máximo 1500 caracteres.", formState);
+            return redirectToCarsWithError("La descripción debe tener como máximo 1500 caracteres.");
         }
 
         final String imageValidationError = validateUploadedImage(file, false);
         if (imageValidationError != null) {
-            return carsPage(returnQuery, returnBrand, returnBodyType, imageValidationError, formState);
+            return redirectToCarsWithError(imageValidationError);
         }
 
         final Brand resolvedBrand = brandDao.findByName(trimmedBrand).orElse(null);
         final BodyType resolvedBodyType = bodyTypeDao.findByName(trimmedBodyType).orElse(null);
         if (resolvedBrand == null || resolvedBodyType == null) {
-            return carsPage(returnQuery, returnBrand, returnBodyType,
-                    "Marca o tipo de carrocería no válidos.", formState);
+            return redirectToCarsWithError("Marca o tipo de carrocería no válidos.");
         }
 
         final Optional<String> imageContentType;
@@ -198,7 +187,7 @@ public class CarController {
     }
 
     private ModelAndView carsPage(final String q, final String brand, final String bodyType,
-                                  final String error, final CarFormState formState) {
+                                  final String error) {
         final String searchQuery = blankToNull(q);
         final CarCatalogData catalogData = resolveCatalogData(searchQuery, brand, bodyType);
 
@@ -213,13 +202,16 @@ public class CarController {
         if (error != null) {
             mav.addObject("carFormError", error);
         }
-        if (formState != null) {
-            mav.addObject("carFormBrand", formState.brand);
-            mav.addObject("carFormBodyType", formState.bodyType);
-            mav.addObject("carFormModel", formState.model);
-            mav.addObject("carFormDescription", formState.description);
-        }
         return mav;
+    }
+
+    private ModelAndView redirectToCarsWithError(final String error) {
+        final String redirectUrl = UriComponentsBuilder.fromPath("/cars")
+                .queryParam("carFormError", error)
+                .build()
+                .encode()
+                .toUriString();
+        return new ModelAndView("redirect:" + redirectUrl);
     }
 
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.GET)
@@ -454,18 +446,4 @@ public class CarController {
         }
     }
 
-    private static final class CarFormState {
-        private final String brand;
-        private final String bodyType;
-        private final String model;
-        private final String description;
-
-        private CarFormState(final String brand, final String bodyType,
-                             final String model, final String description) {
-            this.brand = brand;
-            this.bodyType = bodyType;
-            this.model = model;
-            this.description = description;
-        }
-    }
 }

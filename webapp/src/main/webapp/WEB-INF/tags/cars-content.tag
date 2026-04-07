@@ -2,18 +2,11 @@
 <%@ attribute name="cars" required="true" type="java.util.List" %>
 <%@ attribute name="reviewStatsByCarId" required="true" type="java.util.Map" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <div id="carsCatalogContent" class="catalog-content">
-    <div class="catalog-meta">
-        <span class="count-label">${fn:length(cars)} vehículos encontrados</span>
-    </div>
-
-    <c:set var="isEmptyCatalog" value="${empty cars}"/>
-
     <section class="catalog-section">
-        <div class="cars-grid <c:if test='${isEmptyCatalog}'>cars-grid--empty</c:if>">
+        <div class="cars-grid">
             <c:forEach var="car" items="${cars}">
                 <c:url var="reviewUrl" value="/reviews">
                     <c:param name="carId" value="${car.id}"/>
