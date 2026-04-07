@@ -1,9 +1,16 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="brands" required="true" type="java.util.Collection" %>
 <%@ attribute name="bodyTypes" required="true" type="java.util.Collection" %>
+<%@ attribute name="searchQuery" required="false" %>
+<%@ attribute name="selectedBrand" required="false" %>
+<%@ attribute name="selectedBodyType" required="false" %>
+<%@ attribute name="carFormBrand" required="false" %>
+<%@ attribute name="carFormBodyType" required="false" %>
+<%@ attribute name="carFormModel" required="false" %>
+<%@ attribute name="carFormDescription" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<div id="createCarModal" class="review-modal" hidden>
+<div id="createCarModal" class="review-modal" hidden <c:if test="${not empty carFormError}">data-auto-open="true"</c:if>>
     <div class="review-modal-overlay" data-close-car-modal></div>
     <section class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createCarModalTitle">
         <div class="review-modal-header">
@@ -17,6 +24,10 @@
         </div>
 
         <form id="createCarForm" class="car-modal-form" method="post" action="<c:url value='/cars'/>" enctype="multipart/form-data" novalidate>
+            <input type="hidden" name="returnQuery" value="<c:out value='${searchQuery}'/>">
+            <input type="hidden" name="returnBrand" value="<c:out value='${selectedBrand}'/>">
+            <input type="hidden" name="returnBodyType" value="<c:out value='${selectedBodyType}'/>">
+
             <c:if test="${not empty carFormError}">
                 <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
             </c:if>
@@ -28,9 +39,9 @@
                 <div class="review-modal-field">
                     <label for="modalCarBrand">Marca</label>
                     <select id="modalCarBrand" name="brand" required>
-                        <option value="">Seleccioná una marca</option>
+                        <option value="" <c:if test="${empty carFormBrand}">selected</c:if>>Seleccioná una marca</option>
                         <c:forEach items="${brands}" var="brand">
-                            <option value="<c:out value='${brand.name}'/>"><c:out value="${brand.name}"/></option>
+                            <option value="<c:out value='${brand.name}'/>" <c:if test="${carFormBrand eq brand.name}">selected</c:if>><c:out value="${brand.name}"/></option>
                         </c:forEach>
                     </select>
                 </div>
@@ -38,16 +49,16 @@
                 <div class="review-modal-field">
                     <label for="modalCarBodyType">Tipo de carrocería</label>
                     <select id="modalCarBodyType" name="bodyType" required>
-                        <option value="">Seleccioná un tipo</option>
+                        <option value="" <c:if test="${empty carFormBodyType}">selected</c:if>>Seleccioná un tipo</option>
                         <c:forEach items="${bodyTypes}" var="bodyType">
-                            <option value="<c:out value='${bodyType.name}'/>"><c:out value="${bodyType.name}"/></option>
+                            <option value="<c:out value='${bodyType.name}'/>" <c:if test="${carFormBodyType eq bodyType.name}">selected</c:if>><c:out value="${bodyType.name}"/></option>
                         </c:forEach>
                     </select>
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide">
                     <label for="modalCarModel">Modelo</label>
-                    <input id="modalCarModel" name="model" type="text" maxlength="120" placeholder="Ej: 911 Carrera T" required>
+                    <input id="modalCarModel" name="model" type="text" maxlength="120" placeholder="Ej: 911 Carrera T" value="<c:out value='${carFormModel}'/>" required>
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide">
@@ -57,7 +68,7 @@
                             name="description"
                             rows="4"
                             maxlength="1500"
-                            placeholder="Describe el auto, su propuesta y cualquier detalle relevante."></textarea>
+                            placeholder="Describe el auto, su propuesta y cualquier detalle relevante."><c:out value="${carFormDescription}"/></textarea>
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide car-image-field">

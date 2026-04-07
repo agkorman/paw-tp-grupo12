@@ -78,10 +78,10 @@ public class CarController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public ModelAndView home() {
-        return landingPage(null);
+        return landingPage();
     }
 
-    private ModelAndView landingPage(final String error) {
+    private ModelAndView landingPage() {
         final List<Car> allCars = carService.getAllCars();
         final Map<Long, ReviewStats> reviewStatsByCarId = getReviewStatsByCarId(allCars);
         final List<Car> featuredCars = selectFeaturedCars(allCars, reviewStatsByCarId);
@@ -95,11 +95,6 @@ public class CarController {
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
         mav.addObject("heroCar", heroCar);
         mav.addObject("heroReview", heroReview);
-        mav.addObject("brands", brandDao.findAll());
-        mav.addObject("bodyTypes", bodyTypeDao.findAll());
-        if (error != null) {
-            mav.addObject("carFormError", error);
-        }
         return mav;
     }
 
@@ -108,18 +103,7 @@ public class CarController {
             @RequestParam(value = "q", required = false) final String q,
             @RequestParam(value = "brand", required = false) final String brand,
             @RequestParam(value = "bodyType", required = false) final String bodyType) {
-        final String searchQuery = blankToNull(q);
-        final CarCatalogData catalogData = resolveCatalogData(searchQuery, brand, bodyType);
-
-        final ModelAndView mav = new ModelAndView("cars.jsp");
-        mav.addObject("cars", catalogData.cars);
-        mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
-        mav.addObject("brands", brandDao.findAll());
-        mav.addObject("bodyTypes", bodyTypeDao.findAll());
-        mav.addObject("selectedBrand", catalogData.brandFilter);
-        mav.addObject("selectedBodyType", catalogData.bodyTypeFilter);
-        mav.addObject("searchQuery", searchQuery);
-        return mav;
+        return carsPage(blankToNull(q), brand, bodyType, null, null);
     }
 
     @RequestMapping(value = "/cars/content", method = RequestMethod.GET)
@@ -140,32 +124,45 @@ public class CarController {
                                   @RequestParam("bodyType") final String bodyType,
                                   @RequestParam("model") final String model,
                                   @RequestParam(value = "description", required = false) final String description,
+                                  @RequestParam(value = "returnQuery", required = false) final String returnQuery,
+                                  @RequestParam(value = "returnBrand", required = false) final String returnBrand,
+                                  @RequestParam(value = "returnBodyType", required = false) final String returnBodyType,
                                   @RequestParam(value = "file", required = false) final MultipartFile file) {
 
         final String trimmedBrand = brand.trim();
         final String trimmedBodyType = bodyType.trim();
         final String trimmedModel = model.trim();
         final String trimmedDescription = description == null ? null : description.trim();
+        final CarFormState formState = new CarFormState(
+                trimmedBrand,
+                trimmedBodyType,
+                trimmedModel,
+                trimmedDescription
+        );
 
         if (trimmedBrand.isEmpty() || trimmedBodyType.isEmpty()) {
-            return landingPage("Marca y tipo de carrocería son obligatorios.");
+            return carsPage(returnQuery, returnBrand, returnBodyType,
+                    "Marca y tipo de carrocería son obligatorios.", formState);
         }
         if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
-            return landingPage("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
+            return carsPage(returnQuery, returnBrand, returnBodyType,
+                    "El modelo es obligatorio y debe tener como máximo 120 caracteres.", formState);
         }
         if (trimmedDescription != null && trimmedDescription.length() > 1500) {
-            return landingPage("La descripción debe tener como máximo 1500 caracteres.");
+            return carsPage(returnQuery, returnBrand, returnBodyType,
+                    "La descripción debe tener como máximo 1500 caracteres.", formState);
         }
 
         final String imageValidationError = validateUploadedImage(file, false);
         if (imageValidationError != null) {
-            return landingPage(imageValidationError);
+            return carsPage(returnQuery, returnBrand, returnBodyType, imageValidationError, formState);
         }
 
         final Brand resolvedBrand = brandDao.findByName(trimmedBrand).orElse(null);
         final BodyType resolvedBodyType = bodyTypeDao.findByName(trimmedBodyType).orElse(null);
         if (resolvedBrand == null || resolvedBodyType == null) {
-            return landingPage("Marca o tipo de carrocería no válidos.");
+            return carsPage(returnQuery, returnBrand, returnBodyType,
+                    "Marca o tipo de carrocería no válidos.", formState);
         }
 
         final Optional<String> imageContentType;
@@ -198,6 +195,31 @@ public class CarController {
         }
 
         return new ModelAndView("redirect:/cars");
+    }
+
+    private ModelAndView carsPage(final String q, final String brand, final String bodyType,
+                                  final String error, final CarFormState formState) {
+        final String searchQuery = blankToNull(q);
+        final CarCatalogData catalogData = resolveCatalogData(searchQuery, brand, bodyType);
+
+        final ModelAndView mav = new ModelAndView("cars.jsp");
+        mav.addObject("cars", catalogData.cars);
+        mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
+        mav.addObject("brands", brandDao.findAll());
+        mav.addObject("bodyTypes", bodyTypeDao.findAll());
+        mav.addObject("selectedBrand", catalogData.brandFilter);
+        mav.addObject("selectedBodyType", catalogData.bodyTypeFilter);
+        mav.addObject("searchQuery", searchQuery);
+        if (error != null) {
+            mav.addObject("carFormError", error);
+        }
+        if (formState != null) {
+            mav.addObject("carFormBrand", formState.brand);
+            mav.addObject("carFormBodyType", formState.bodyType);
+            mav.addObject("carFormModel", formState.model);
+            mav.addObject("carFormDescription", formState.description);
+        }
+        return mav;
     }
 
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.GET)
@@ -429,6 +451,21 @@ public class CarController {
             this.reviewStatsByCarId = reviewStatsByCarId;
             this.brandFilter = brandFilter;
             this.bodyTypeFilter = bodyTypeFilter;
+        }
+    }
+
+    private static final class CarFormState {
+        private final String brand;
+        private final String bodyType;
+        private final String model;
+        private final String description;
+
+        private CarFormState(final String brand, final String bodyType,
+                             final String model, final String description) {
+            this.brand = brand;
+            this.bodyType = bodyType;
+            this.model = model;
+            this.description = description;
         }
     }
 }

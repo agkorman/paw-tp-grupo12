@@ -117,6 +117,7 @@ footer {
     align-items: center;
     justify-content: space-between;
     padding: 1.25rem var(--spacing-12);
+    margin-top: auto;
 }
 
 .footer-copy {

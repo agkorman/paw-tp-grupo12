@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/cars.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
 </head>
 <body>
     <pa:nav activePage="reviews"/>
@@ -29,9 +30,20 @@
             resultCount="${fn:length(cars)}"/>
 
     <pa:cars-content cars="${cars}" reviewStatsByCarId="${reviewStatsByCarId}"/>
+    <pa:create-car-modal
+            brands="${brands}"
+            bodyTypes="${bodyTypes}"
+            searchQuery="${searchQuery}"
+            selectedBrand="${selectedBrand}"
+            selectedBodyType="${selectedBodyType}"
+            carFormBrand="${carFormBrand}"
+            carFormBodyType="${carFormBodyType}"
+            carFormModel="${carFormModel}"
+            carFormDescription="${carFormDescription}"/>
 
     <pa:footer/>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
+    <script src="<c:url value='/js/create-car-modal.js'/>"></script>
 
 </body>
 </html>

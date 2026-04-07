@@ -14,6 +14,16 @@
     font-size: 0.9375rem;
 }
 
+.review-modal .alert-error {
+    margin: 0;
+    padding: var(--spacing-4) var(--spacing-5);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 120, 120, 0.35);
+    background: rgba(200, 64, 64, 0.18);
+    color: var(--on-surface);
+    font-size: 0.9375rem;
+}
+
 .review-hero {
     background: var(--surface-container-low);
     border-radius: var(--radius-lg);

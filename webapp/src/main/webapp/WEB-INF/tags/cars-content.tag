@@ -10,34 +10,36 @@
         <span class="count-label">${fn:length(cars)} vehículos encontrados</span>
     </div>
 
+    <c:set var="isEmptyCatalog" value="${empty cars}"/>
+
     <section class="catalog-section">
-        <c:choose>
-            <c:when test="${empty cars}">
-                <div class="empty-state">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c4c6cc" stroke-width="1.5">
-                        <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+        <div class="cars-grid <c:if test='${isEmptyCatalog}'>cars-grid--empty</c:if>">
+            <c:forEach var="car" items="${cars}">
+                <c:url var="reviewUrl" value="/reviews">
+                    <c:param name="carId" value="${car.id}"/>
+                </c:url>
+                <pa:car-card
+                    model="${car.brandName} ${car.model}"
+                    bodyType="${car.bodyType}"
+                    carId="${car.id}"
+                    hasImage="${car.hasImage}"
+                    href="${reviewUrl}"
+                    averageRating="${reviewStatsByCarId[car.id].averageRating}"
+                    reviewCount="${reviewStatsByCarId[car.id].reviewCount}"/>
+            </c:forEach>
+
+            <button type="button" class="car-request-card" data-open-create-car-modal>
+                <span class="car-request-card-icon" aria-hidden="true">
+                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                        <path d="M12 5v14"/>
+                        <path d="M5 12h14"/>
                     </svg>
-                    <p>No se encontraron vehículos en la galería.</p>
-                </div>
-            </c:when>
-            <c:otherwise>
-                <div class="cars-grid">
-                    <c:forEach var="car" items="${cars}">
-                        <c:url var="reviewUrl" value="/reviews">
-                            <c:param name="carId" value="${car.id}"/>
-                        </c:url>
-                        <pa:car-card
-                            model="${car.brandName} ${car.model}"
-                            bodyType="${car.bodyType}"
-                            carId="${car.id}"
-                            hasImage="${car.hasImage}"
-                            href="${reviewUrl}"
-                            averageRating="${reviewStatsByCarId[car.id].averageRating}"
-                            reviewCount="${reviewStatsByCarId[car.id].reviewCount}"/>
-                    </c:forEach>
-                </div>
-            </c:otherwise>
-        </c:choose>
+                </span>
+                <strong class="car-request-card-title">¿No encontrás el auto?</strong>
+                <span class="car-request-card-copy">Ayudanos a completar la galería con el modelo que falta.</span>
+                <span class="btn-primary car-request-card-action">Agregar auto</span>
+            </button>
+        </div>
     </section>
 
     <c:if test="${not empty cars}">
