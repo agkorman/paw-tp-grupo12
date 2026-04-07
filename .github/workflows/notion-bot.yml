@@ -5,12 +5,24 @@ on:
     types: [created]
   pull_request_review_comment:
     types: [created]
+  pull_request_review:
+    types: [submitted, edited]
 
 jobs:
   append-todo-to-notion:
     if: |
-      contains(github.event.comment.body, '/notion') &&
-      github.event.comment.user.type != 'Bot'
+      (
+        github.event_name == 'issue_comment' &&
+        contains(github.event.comment.body, '/notion')
+      ) ||
+      (
+        github.event_name == 'pull_request_review_comment' &&
+        contains(github.event.comment.body, '/notion')
+      ) ||
+      (
+        github.event_name == 'pull_request_review' &&
+        contains(github.event.review.body, '/notion')
+      )
     runs-on: ubuntu-latest
 
     permissions:
@@ -26,18 +38,35 @@ jobs:
         with:
           script: |
             const allowed = ["nicanovotny", "agkorman", "roccoppp", "nolascoj"];
-            const login = (context.payload.comment.user.login || "").toLowerCase();
+
+            let login = "";
+            if (context.eventName === "pull_request_review") {
+              login = (context.payload.review.user.login || "").toLowerCase();
+            } else {
+              login = (context.payload.comment.user.login || "").toLowerCase();
+            }
+
             const ok = allowed.includes(login);
             core.setOutput("ok", ok ? "true" : "false");
-            if (!ok) core.setFailed(`User ${login} is not allowed to trigger this workflow.`);
 
-      - name: Extract trigger instruction
+            if (!ok) {
+              core.setFailed(`User ${login} is not allowed.`);
+            }
+
+      - name: Extract instruction
         if: steps.auth.outputs.ok == 'true'
         id: extract
         uses: actions/github-script@v8
         with:
           script: |
-            const body = context.payload.comment.body || "";
+            let body = "";
+
+            if (context.eventName === "pull_request_review") {
+              body = context.payload.review.body || "";
+            } else {
+              body = context.payload.comment.body || "";
+            }
+
             const trigger = "/notion";
             const idx = body.indexOf(trigger);
 
@@ -47,27 +76,24 @@ jobs:
             }
 
             const instruction = body.slice(idx + trigger.length).trim();
-
             core.setOutput("instruction", instruction || "");
-            core.setOutput("comment_body", body);
+            core.setOutput("body", body);
 
       - name: Gather source context
         if: steps.auth.outputs.ok == 'true'
-        id: context
+        id: ctx
         uses: actions/github-script@v8
         with:
           script: |
-            const eventName = context.eventName;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
             let sourceText = "";
-            let sourceType = "";
-            let triggerMode = eventName;
+            let debug = "";
 
-            if (eventName === "pull_request_review_comment") {
+            if (context.eventName === "pull_request_review_comment") {
               const comment = context.payload.comment;
-              sourceType = "pull_request_review_comment";
+              debug = "event=pull_request_review_comment";
 
               if (comment.in_reply_to_id) {
                 const parent = await github.rest.pulls.getReviewComment({
@@ -76,17 +102,21 @@ jobs:
                   comment_id: comment.in_reply_to_id,
                 });
                 sourceText = parent.data.body || "";
+                debug += " reply_to_parent=yes";
               } else {
                 sourceText = comment.body || "";
+                debug += " reply_to_parent=no";
               }
-            } else if (eventName === "issue_comment") {
-              sourceType = "issue_comment";
+            } else if (context.eventName === "pull_request_review") {
+              sourceText = context.payload.review.body || "";
+              debug = "event=pull_request_review";
+            } else {
               sourceText = context.payload.comment.body || "";
+              debug = "event=issue_comment";
             }
 
-            core.setOutput("source_type", sourceType);
+            core.info(debug);
             core.setOutput("source_text", sourceText);
-            core.setOutput("trigger_mode", triggerMode);
 
       - name: Generate TODO with AI
         if: steps.auth.outputs.ok == 'true'
@@ -102,15 +132,14 @@ jobs:
             - Debe empezar con: TODO:
             - Máximo 180 caracteres.
             - No incluyas repo, PR, autor, links ni contexto general.
-            - No resumas el PR.
             - No inventes nada.
-            - Si el comentario original ya contiene varias ideas, elegí la acción principal más concreta.
+            - Si hay varias ideas, elegí la acción principal más concreta.
             - Si la instrucción del usuario agrega una preferencia, usala.
 
             Comentario técnico base:
-            ${{ steps.context.outputs.source_text }}
+            ${{ steps.ctx.outputs.source_text }}
 
-            Instrucción adicional del usuario:
+            Instrucción adicional:
             ${{ steps.extract.outputs.instruction }}
 
       - name: Append TODO to Notion
