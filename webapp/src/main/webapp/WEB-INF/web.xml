@@ -34,8 +34,8 @@
             >org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
   </init-param>
   <multipart-config>
-    <max-file-size>5242880</max-file-size>
-    <max-request-size>5242880</max-request-size>
+    <max-file-size>10485760</max-file-size>
+    <max-request-size>10485760</max-request-size>
     <file-size-threshold>0</file-size-threshold>
   </multipart-config>
  </servlet>

@@ -54,7 +54,7 @@ public class CarController {
     private static final Pattern SIMPLE_EMAIL_PATTERN =
             Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final int FEATURED_REVIEW_COUNT = 3;
-    private static final long MAX_IMAGE_SIZE_BYTES = 5L * 1024 * 1024;
+    private static final long MAX_IMAGE_SIZE_BYTES = 10L * 1024 * 1024;
     private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
             MediaType.IMAGE_JPEG_VALUE,
             MediaType.IMAGE_PNG_VALUE,
@@ -299,7 +299,7 @@ public class CarController {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<String> handleMaxUploadSizeExceeded(final MaxUploadSizeExceededException ignored) {
-        return ResponseEntity.badRequest().body("La imagen no debe superar los 5 MB.");
+        return ResponseEntity.badRequest().body("La imagen no debe superar los 10 MB.");
     }
 
     private String validateUploadedImage(final MultipartFile file, final boolean required) {
@@ -307,7 +307,7 @@ public class CarController {
             return required ? "La imagen es obligatoria." : null;
         }
         if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-            return "La imagen no debe superar los 5 MB.";
+            return "La imagen no debe superar los 10 MB.";
         }
         final String contentType = resolveImageContentType(file);
         if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {

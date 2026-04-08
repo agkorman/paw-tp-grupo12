@@ -24,7 +24,7 @@ public class CarJdbcDao implements CarDao {
 
     private static final String SELECT_COLUMNS =
             "SELECT c.car_id, c.brand_id, b.name AS brand_name, c.model, c.body_type_id, bt.name AS body_type, "
-                    + "c.description, c.image_url, c.created_at, "
+                    + "c.description, c.created_at, "
                     + "EXISTS (SELECT 1 FROM car_images ci WHERE ci.car_id = c.car_id) AS has_image ";
 
     private final JdbcTemplate jdbcTemplate;
@@ -38,7 +38,6 @@ public class CarJdbcDao implements CarDao {
             rs.getLong("body_type_id"),
             rs.getString("body_type"),
             rs.getString("description"),
-            rs.getString("image_url"),
             rs.getTimestamp("created_at").toLocalDateTime(),
             rs.getBoolean("has_image")
     );
@@ -49,7 +48,7 @@ public class CarJdbcDao implements CarDao {
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("cars")
                 .usingGeneratedKeyColumns("car_id")
-                .usingColumns("brand_id", "model", "body_type_id", "description", "image_url");
+                .usingColumns("brand_id", "model", "body_type_id", "description");
     }
 
     @Override
@@ -77,14 +76,12 @@ public class CarJdbcDao implements CarDao {
     }
 
     @Override
-    public Car create(final long brandId, final String model, final long bodyTypeId,
-                      final String description, final String imageUrl) {
+    public Car create(final long brandId, final String model, final long bodyTypeId, final String description) {
         final Map<String, Object> params = new HashMap<>();
         params.put("brand_id", brandId);
         params.put("model", model);
         params.put("body_type_id", bodyTypeId);
         params.put("description", description);
-        params.put("image_url", imageUrl);
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();
