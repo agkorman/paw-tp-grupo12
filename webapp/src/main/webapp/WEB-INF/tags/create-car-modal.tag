@@ -21,10 +21,15 @@
                 <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
             </c:if>
             <p class="car-modal-subtitle" style="padding-bottom: 1rem;">
-                Completa los datos del auto.
+                Completá los datos del auto. Tu email se guardará para revisar esta solicitud más adelante.
             </p>
 
             <div class="review-modal-grid" style="padding-bottom: 1rem;">
+                <div class="review-modal-field review-modal-field-wide">
+                    <label for="modalCarSubmitterEmail">Email</label>
+                    <input id="modalCarSubmitterEmail" name="submitterEmail" type="email" maxlength="100" required placeholder="tu@email.com">
+                </div>
+
                 <div class="review-modal-field">
                     <label for="modalCarBrand">Marca</label>
                     <select id="modalCarBrand" name="brand" required>

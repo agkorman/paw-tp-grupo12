@@ -11,8 +11,6 @@ import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
-import org.springframework.mail.MailException;
-import java.util.logging.Logger;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -47,12 +45,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
 public class CarController {
 
-    private static final Logger LOGGER = Logger.getLogger(CarController.class.getName());
+    private static final Pattern SIMPLE_EMAIL_PATTERN =
+            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final int FEATURED_REVIEW_COUNT = 3;
     private static final long MAX_IMAGE_SIZE_BYTES = 5L * 1024 * 1024;
     private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
@@ -89,7 +89,7 @@ public class CarController {
         final Car heroCar = featuredCars.isEmpty() ? getFallbackHeroCar(allCars) : featuredCars.get(0);
         final Review heroReview = heroCar == null
                 ? null
-                : reviewService.getLatestReviewByCar(heroCar.getId()).orElse(null);
+                : reviewService.getTopRatedLatestReviewByCar(heroCar.getId()).orElse(null);
 
         final ModelAndView mav = new ModelAndView("landing.jsp");
         mav.addObject("featuredCars", featuredCars);
@@ -125,12 +125,14 @@ public class CarController {
     public ModelAndView createCar(@RequestParam("brand") final String brand,
                                   @RequestParam("bodyType") final String bodyType,
                                   @RequestParam("model") final String model,
+                                  @RequestParam("submitterEmail") final String submitterEmail,
                                   @RequestParam(value = "description", required = false) final String description,
                                   @RequestParam(value = "file", required = false) final MultipartFile file) {
 
         final String trimmedBrand = brand.trim();
         final String trimmedBodyType = bodyType.trim();
         final String trimmedModel = model.trim();
+        final String normalizedEmail = submitterEmail == null ? "" : submitterEmail.trim();
         final String trimmedDescription = description == null ? null : description.trim();
 
         if (trimmedBrand.isEmpty() || trimmedBodyType.isEmpty()) {
@@ -138,6 +140,12 @@ public class CarController {
         }
         if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
             return redirectToCarsWithError("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
+        }
+        if (normalizedEmail.isEmpty()) {
+            return redirectToCarsWithError("El email es obligatorio.");
+        }
+        if (normalizedEmail.length() > 100 || !SIMPLE_EMAIL_PATTERN.matcher(normalizedEmail).matches()) {
+            return redirectToCarsWithError("Ingresá un email válido.");
         }
         if (trimmedDescription == null || trimmedDescription.isEmpty()) {
             return redirectToCarsWithError("La descripción es obligatoria.");
@@ -175,16 +183,13 @@ public class CarController {
                 resolvedBrand.getId(),
                 trimmedModel,
                 resolvedBodyType.getId(),
+                normalizedEmail,
                 Optional.ofNullable(trimmedDescription).filter(value -> !value.isEmpty()),
                 imageContentType,
                 imageData
         );
 
-        try {
-            emailService.sendCarCreatedNotification(createdCar);
-        } catch (final MailException e) {
-            LOGGER.warning("Failed to send car creation notification for car " + createdCar.getId() + ": " + e.getMessage());
-        }
+        emailService.sendCarCreatedNotification(createdCar);
 
         return new ModelAndView("redirect:/cars");
     }
