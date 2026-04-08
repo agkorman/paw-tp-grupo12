@@ -56,16 +56,6 @@
                     <div class="hero-spotlight">
                         <div class="hero-spotlight-header">
                             <span class="hero-spotlight-label">Modelo destacado</span>
-                            <c:if test="${reviewStatsByCarId[heroCar.id].reviewCount gt 0}">
-                                <span class="hero-spotlight-rating">
-                                    <c:out value="${reviewStatsByCarId[heroCar.id].averageRating}"/> /
-                                    <c:out value="${reviewStatsByCarId[heroCar.id].reviewCount}"/>
-                                    <c:choose>
-                                        <c:when test="${reviewStatsByCarId[heroCar.id].reviewCount eq 1}">reseña</c:when>
-                                        <c:otherwise>reseñas</c:otherwise>
-                                    </c:choose>
-                                </span>
-                            </c:if>
                         </div>
                         <h2><c:out value="${heroCar.brandName}"/> <c:out value="${heroCar.model}"/></h2>
                         <p>
