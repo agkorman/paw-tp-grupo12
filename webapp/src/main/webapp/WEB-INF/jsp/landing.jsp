@@ -126,8 +126,8 @@
                     <h2>Opiniones sinceras de nuestros usuarios</h2>
                     <p>Una selección de autos con reseñas, puntajes visibles y acceso a información detallada del vehículo.</p>
                 </div>
-                <c:url var="allReviewsUrl" value="/cars"/>
-                <pa:button text="Ver todas las reseñas" variant="secondary" icon="arrow-right" href="${allReviewsUrl}"/>
+                <c:url var="catalogUrl" value="/cars"/>
+                <pa:button text="Ver catálogo" variant="secondary" icon="arrow-right" href="${catalogUrl}"/>
             </div>
 
             <c:choose>

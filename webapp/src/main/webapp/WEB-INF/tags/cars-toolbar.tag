@@ -102,7 +102,6 @@
 
         <div class="cars-toolbar-meta">
             <span class="cars-toolbar-count"><c:out value="${resultCount}"/> vehículos encontrados</span>
-            <button type="submit" class="btn-primary cars-toolbar-submit">Aplicar filtros</button>
         </div>
     </div>
 </form>

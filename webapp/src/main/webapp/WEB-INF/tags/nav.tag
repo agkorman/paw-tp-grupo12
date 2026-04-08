@@ -15,7 +15,7 @@
     <a href="<c:url value='/'/>" class="nav-brand">La Posta Autos</a>
     <ul class="nav-links">
         <li><a href="<c:url value='/'/>" class="${activePage eq 'explore' ? 'active' : ''}">Explorar</a></li>
-        <li><a href="<c:url value='/cars'/>" class="${activePage eq 'reviews' ? 'active' : ''}">Reseñas</a></li>
+        <li><a href="<c:url value='/cars'/>" class="${activePage eq 'reviews' ? 'active' : ''}">Catálogo</a></li>
     </ul>
     <div class="nav-right">
         <c:if test="${not empty searchAction}">
