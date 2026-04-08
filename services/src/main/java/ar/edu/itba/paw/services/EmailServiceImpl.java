@@ -81,10 +81,21 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String buildSubject(final Car car) {
-        return "[" + APP_NAME + "] Nuevo auto para revisar: " + safeValue(car.getBrandName())
-                + " " + safeValue(car.getModel());
+        return "[" + APP_NAME + "] Nuevo auto para revisar: " + sanitizeHeaderValue(car.getBrandName())
+                + " " + sanitizeHeaderValue(car.getModel());
     }
 
+    private String sanitizeHeaderValue(final String value) {
+        final String sanitized = safeValue(value)
+                .chars()
+                .filter(ch -> !Character.isISOControl(ch))
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString()
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        return sanitized;
+    }
     private String buildPlainTextBody(final Car car) {
         return """
                 Hola equipo,
