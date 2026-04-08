@@ -52,7 +52,7 @@ public class BodyTypeJdbcDao implements BodyTypeDao {
     @Override
     public Optional<BodyType> findByName(final String name) {
         return jdbcTemplate.query(
-                "SELECT body_type_id, name, created_at FROM body_types WHERE name = ?",
+                "SELECT body_type_id, name, created_at FROM body_types WHERE LOWER(name) = LOWER(?)",
                 ROW_MAPPER, name
         ).stream().findFirst();
     }

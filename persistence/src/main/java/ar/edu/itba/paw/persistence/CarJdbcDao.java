@@ -128,7 +128,8 @@ public class CarJdbcDao implements CarDao {
         }
 
         sql.append("ORDER BY ts_rank(c.search_vector, websearch_to_tsquery('simple', ?)) DESC, ");
-        sql.append("greatest(similarity(b.name, ?), similarity(c.model, ?)) DESC");
+        sql.append("greatest(similarity(b.name, ?), similarity(c.model, ?)) DESC, ");
+        sql.append("c.car_id ASC");
         params.add(trimmed);
         params.add(trimmed);
         params.add(trimmed);
