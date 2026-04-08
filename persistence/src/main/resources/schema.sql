@@ -58,8 +58,8 @@ CREATE OR REPLACE FUNCTION cars_build_search_vector(
 $$;
 
 CREATE OR REPLACE FUNCTION cars_search_vector_trigger_fn()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
-DECLARE
+RETURNS TRIGGER LANGUAGE plpgsql AS
+'DECLARE
     v_brand_name TEXT;
     v_body_type  TEXT;
 BEGIN
@@ -67,8 +67,7 @@ BEGIN
     SELECT name INTO v_body_type  FROM body_types WHERE body_type_id = NEW.body_type_id;
     NEW.search_vector := cars_build_search_vector(v_brand_name, NEW.model, v_body_type, NEW.description);
     RETURN NEW;
-END
-$$;
+END';
 
 CREATE OR REPLACE TRIGGER cars_search_vector_trigger
     BEFORE INSERT OR UPDATE ON cars

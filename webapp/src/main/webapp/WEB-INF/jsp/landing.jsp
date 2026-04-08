@@ -90,9 +90,6 @@
                     <c:param name="carId" value="${heroCar.id}"/>
                 </c:url>
             </c:if>
-            <c:if test="${not empty heroCar and empty heroCarImageUrl and not empty heroCar.imageUrl}">
-                <c:set var="heroCarImageUrl" value="${heroCar.imageUrl}"/>
-            </c:if>
 
             <div class="hero-stage">
                 <div class="hero-glow"></div>
