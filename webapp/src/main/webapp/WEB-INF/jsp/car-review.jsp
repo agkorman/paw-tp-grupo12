@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reviews | La Posta Autos</title>
+    <title>Reseñas | La Posta Autos</title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,14 +54,6 @@
                                 </svg>
                             </c:forEach>
                         </div>
-                        <c:if test="${not empty reviewCount}">
-                            <span class="review-count-label">
-                                <c:choose>
-                                    <c:when test="${reviewCount >= 1000}">${reviewCount / 1000}k</c:when>
-                                    <c:otherwise>${reviewCount}</c:otherwise>
-                                </c:choose>
-                            </span>
-                        </c:if>
                     </c:if>
                     <a href="#reviewsFeed" class="btn-secondary hero-see-reviews-btn">
                         Ver reseñas

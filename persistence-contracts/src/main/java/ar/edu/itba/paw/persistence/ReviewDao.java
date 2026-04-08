@@ -13,6 +13,7 @@ public interface ReviewDao {
     List<Review> findAll();
     List<Review> findByCarId(long carId);
     Optional<Review> findLatestByCarId(long carId);
+    Optional<Review> findTopRatedLatestByCarId(long carId);
     List<Review> findByCarIdOrderByRatingAsc(long carId);
     List<Review> findByCarIdOrderByRatingDesc(long carId);
     List<Review> findByUserId(long userId);

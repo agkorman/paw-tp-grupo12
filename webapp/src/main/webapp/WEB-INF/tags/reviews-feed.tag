@@ -51,19 +51,7 @@
                         </div>
                         <p class="review-body"><c:out value="${review.body}"/></p>
                         <div class="review-meta">
-                            <span>
-                                <c:choose>
-                                    <c:when test="${not empty review.userId}">
-                                        Usuario #<c:out value="${review.userId}"/>
-                                    </c:when>
-                                    <c:when test="${not empty review.reviewerEmail}">
-                                        <c:out value="${fn:substringBefore(review.reviewerEmail, '@')}"/>
-                                    </c:when>
-                                    <c:otherwise>
-                                        Anónimo
-                                    </c:otherwise>
-                                </c:choose>
-                            </span>
+                            <span>anon</span>
                             <span><c:out value="${fn:substring(review.createdAt, 0, 10)}"/></span>
                         </div>
                     </article>

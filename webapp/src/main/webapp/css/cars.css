@@ -242,13 +242,6 @@
     pointer-events: none;
 }
 
-/* ── DISCOVER MORE ── */
-.discover-wrap {
-    display: flex;
-    justify-content: center;
-    padding: 1rem 0 3rem;
-}
-
 /* ── RESPONSIVE ── */
 @media (max-width: 1200px) {
     .cars-toolbar-shell {

@@ -97,6 +97,14 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
+    public Optional<Review> findTopRatedLatestByCarId(final long carId) {
+        return jdbcTemplate.query(
+                "SELECT review_id, user_id, reviewer_email, car_id, rating, title, body, ownership_status, model_year, mileage_km, would_recommend, created_at, updated_at FROM reviews WHERE car_id = ? ORDER BY rating DESC, created_at DESC, review_id DESC LIMIT 1",
+                ROW_MAPPER, carId
+        ).stream().findFirst();
+    }
+
+    @Override
     public List<Review> findByCarIdOrderByRatingAsc(final long carId) {
         return findByCarIdOrdered(carId, "rating ASC, created_at DESC");
     }

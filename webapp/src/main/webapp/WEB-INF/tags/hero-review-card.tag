@@ -63,19 +63,7 @@
     </p>
 
     <p class="hero-review-meta">
-        <span>
-            <c:choose>
-                <c:when test="${not empty heroReview.userId}">
-                    Usuario #<c:out value="${heroReview.userId}"/>
-                </c:when>
-                <c:when test="${not empty heroReview.reviewerEmail}">
-                    <c:out value="${fn:substringBefore(heroReview.reviewerEmail, '@')}"/>
-                </c:when>
-                <c:otherwise>
-                    Anónimo
-                </c:otherwise>
-            </c:choose>
-        </span>
+        <span>anon</span>
         <span><c:out value="${fn:substring(heroReview.createdAt, 0, 10)}"/></span>
     </p>
 </article>
