@@ -55,7 +55,7 @@
     };
 
     var setControlsDisabled = function (form, disabled) {
-        var controls = form.querySelectorAll('button, select, input, textarea');
+        var controls = form.querySelectorAll('button, select, textarea, input:not([type="search"])');
         Array.prototype.forEach.call(controls, function (control) {
             control.disabled = disabled;
         });
@@ -127,6 +127,23 @@
             }
         });
     };
+
+    document.addEventListener('input', function (event) {
+        var target = event.target;
+        if (!(target instanceof HTMLInputElement) || target.type !== 'search') {
+            return;
+        }
+
+        var form = target.form;
+        if (!form || form.dataset.enhancedFilter !== 'true' || form.dataset.autoSubmit !== 'true') {
+            return;
+        }
+
+        clearTimeout(form._searchDebounce);
+        form._searchDebounce = setTimeout(function () {
+            submitEnhancedForm(form);
+        }, 300);
+    });
 
     document.addEventListener('change', function (event) {
         var target = event.target;

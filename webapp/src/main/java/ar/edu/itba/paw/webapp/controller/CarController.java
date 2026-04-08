@@ -324,18 +324,7 @@ public class CarController {
         final String brandFilter = blankToNull(brand);
         final String bodyTypeFilter = blankToNull(bodyType);
 
-        final List<Car> cars;
-        if (searchQuery != null) {
-            cars = filterCars(carService.searchCars(searchQuery), brandFilter, bodyTypeFilter);
-        } else if (brandFilter != null && bodyTypeFilter != null) {
-            cars = carService.getCarsByBrandAndBodyType(brandFilter, bodyTypeFilter);
-        } else if (brandFilter != null) {
-            cars = carService.getCarsByBrand(brandFilter);
-        } else if (bodyTypeFilter != null) {
-            cars = carService.getCarsByBodyType(bodyTypeFilter);
-        } else {
-            cars = carService.getAllCars();
-        }
+        final List<Car> cars = carService.searchCars(searchQuery, brandFilter, bodyTypeFilter);
 
         final Map<Long, ReviewStats> reviewStatsByCarId;
         if (cars.isEmpty()) {
@@ -356,13 +345,6 @@ public class CarController {
         return reviewService.getReviewStatsByCarIds(cars.stream().map(Car::getId).collect(Collectors.toList()))
                 .stream()
                 .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
-    }
-
-    private List<Car> filterCars(final List<Car> cars, final String brandFilter, final String bodyTypeFilter) {
-        return cars.stream()
-                .filter(car -> brandFilter == null || brandFilter.equalsIgnoreCase(car.getBrandName()))
-                .filter(car -> bodyTypeFilter == null || bodyTypeFilter.equalsIgnoreCase(car.getBodyType()))
-                .collect(Collectors.toList());
     }
 
     private List<Car> selectFeaturedCars(final List<Car> allCars, final Map<Long, ReviewStats> reviewStatsByCarId) {

@@ -53,7 +53,7 @@ public class BrandJdbcDao implements BrandDao {
     @Override
     public Optional<Brand> findByName(String name) {
         return jdbcTemplate.query(
-                "SELECT brand_id, name, image_url, created_at FROM brands WHERE name = ?",
+                "SELECT brand_id, name, image_url, created_at FROM brands WHERE LOWER(name) = LOWER(?)",
                 ROW_MAPPER, name
         ).stream().findFirst();
     }

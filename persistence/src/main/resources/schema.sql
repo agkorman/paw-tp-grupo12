@@ -44,6 +44,44 @@ CREATE INDEX IF NOT EXISTS idx_cars_body_type_id
 CREATE INDEX IF NOT EXISTS idx_cars_brand_body_type
     ON cars (brand_id, body_type_id);
 
+-- Full-text search infrastructure
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS search_vector tsvector;
+
+CREATE INDEX IF NOT EXISTS idx_cars_fts          ON cars   USING GIN (search_vector);
+CREATE INDEX IF NOT EXISTS idx_brands_name_trgm  ON brands USING GIN (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_cars_model_trgm   ON cars   USING GIN (model gin_trgm_ops);
+
+CREATE OR REPLACE FUNCTION cars_build_search_vector(
+    p_brand_name  TEXT,
+    p_model       TEXT,
+    p_body_type   TEXT,
+    p_description TEXT
+) RETURNS tsvector LANGUAGE sql IMMUTABLE AS $$
+    SELECT
+        setweight(to_tsvector('simple', COALESCE(p_brand_name,  '')), 'A') ||
+        setweight(to_tsvector('simple', COALESCE(p_model,       '')), 'A') ||
+        setweight(to_tsvector('simple', COALESCE(p_body_type,   '')), 'B') ||
+        setweight(to_tsvector('simple', COALESCE(p_description, '')), 'C')
+$$;
+
+CREATE OR REPLACE FUNCTION cars_search_vector_trigger_fn()
+RETURNS TRIGGER LANGUAGE plpgsql AS
+'DECLARE
+    v_brand_name TEXT;
+    v_body_type  TEXT;
+BEGIN
+    SELECT name INTO v_brand_name FROM brands     WHERE brand_id     = NEW.brand_id;
+    SELECT name INTO v_body_type  FROM body_types WHERE body_type_id = NEW.body_type_id;
+    NEW.search_vector := cars_build_search_vector(v_brand_name, NEW.model, v_body_type, NEW.description);
+    RETURN NEW;
+END';
+
+CREATE OR REPLACE TRIGGER cars_search_vector_trigger
+    BEFORE INSERT OR UPDATE ON cars
+    FOR EACH ROW EXECUTE FUNCTION cars_search_vector_trigger_fn();
+
 CREATE TABLE IF NOT EXISTS car_requests (
     car_request_id        BIGSERIAL PRIMARY KEY,
     submitted_by_user_id  INT
@@ -218,6 +256,16 @@ WHERE b.name = 'Audi'
       SELECT 1 FROM cars c
       WHERE c.brand_id = b.brand_id AND c.model = 'RS6 Avant' AND c.body_type_id = bt.body_type_id
   );
+
+-- Backfill search_vector for any rows that pre-date the trigger
+UPDATE cars c
+SET search_vector = cars_build_search_vector(
+    (SELECT name FROM brands     WHERE brand_id     = c.brand_id),
+    c.model,
+    (SELECT name FROM body_types WHERE body_type_id = c.body_type_id),
+    c.description
+)
+WHERE c.search_vector IS NULL;
 
 CREATE TABLE IF NOT EXISTS reviews (
     review_id        SERIAL PRIMARY KEY,
