@@ -19,19 +19,7 @@
                 </div>
                 <p class="last-review-body"><c:out value="${latestReview.body}"/></p>
                 <div class="review-meta last-review-meta">
-                    <span>
-                        <c:choose>
-                            <c:when test="${not empty latestReview.userId}">
-                                Usuario #<c:out value="${latestReview.userId}"/>
-                            </c:when>
-                            <c:when test="${not empty latestReview.reviewerEmail}">
-                                <c:out value="${fn:substringBefore(latestReview.reviewerEmail, '@')}"/>
-                            </c:when>
-                            <c:otherwise>
-                                Anónimo
-                            </c:otherwise>
-                        </c:choose>
-                    </span>
+                    <span>anon</span>
                     <span><c:out value="${fn:substring(latestReview.createdAt, 0, 10)}"/></span>
                 </div>
             </article>

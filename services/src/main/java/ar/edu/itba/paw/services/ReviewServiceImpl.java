@@ -39,6 +39,11 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public Optional<Review> getTopRatedLatestReviewByCar(final long carId) {
+        return reviewDao.findTopRatedLatestByCarId(carId);
+    }
+
+    @Override
     public List<Review> getReviewsByCarOrderByRatingAsc(final long carId) {
         return reviewDao.findByCarIdOrderByRatingAsc(carId);
     }

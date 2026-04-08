@@ -13,6 +13,7 @@ public interface ReviewService {
                         String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
     List<Review> getReviewsByCar(long carId);
     Optional<Review> getLatestReviewByCar(long carId);
+    Optional<Review> getTopRatedLatestReviewByCar(long carId);
     List<Review> getReviewsByCarOrderByRatingAsc(long carId);
     List<Review> getReviewsByCarOrderByRatingDesc(long carId);
     List<Review> getAllReviews();

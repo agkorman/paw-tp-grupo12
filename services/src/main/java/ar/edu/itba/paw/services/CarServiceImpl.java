@@ -19,14 +19,17 @@ public class CarServiceImpl implements CarService {
 
     private final CarDao carDao;
     private final CarImageDao carImageDao;
+    private final CarRequestService carRequestService;
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
 
     @Autowired
     public CarServiceImpl(final CarDao carDao, final CarImageDao carImageDao,
+                          final CarRequestService carRequestService,
                           final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
         this.carDao = carDao;
         this.carImageDao = carImageDao;
+        this.carRequestService = carRequestService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
     }
@@ -102,13 +105,19 @@ public class CarServiceImpl implements CarService {
     @Override
     @Transactional
     public Car createCar(final long brandId, final String model, final long bodyTypeId,
+                         final String submitterEmail,
                          final Optional<String> description, final Optional<String> imageContentType,
                          final Optional<byte[]> imageData) {
+        final String normalizedDescription = description
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
+
         final Car createdCar = carDao.create(
                 brandId,
                 model,
                 bodyTypeId,
-                description.orElse(null),
+                normalizedDescription,
                 null
         );
 
@@ -121,6 +130,17 @@ public class CarServiceImpl implements CarService {
             carImageDao.saveOrReplace(createdCar.getId(), imageContentType.orElseThrow(), imageData.orElseThrow());
         }
 
-        return createdCar;
+        carRequestService.createPendingRequest(
+                null,
+                submitterEmail,
+                brandId,
+                bodyTypeId,
+                model,
+                normalizedDescription,
+                imageContentType,
+                imageData
+        );
+
+        return carDao.findById(createdCar.getId()).orElse(createdCar);
     }
 }

@@ -35,9 +35,4 @@
         </div>
     </section>
 
-    <c:if test="${not empty cars}">
-        <div class="discover-wrap">
-            <pa:button text="Descubrir más" variant="secondary" icon="chevron-down"/>
-        </div>
-    </c:if>
 </div>

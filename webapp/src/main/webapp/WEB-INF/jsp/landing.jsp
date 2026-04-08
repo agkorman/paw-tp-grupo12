@@ -31,7 +31,7 @@
                     <span>auto</span>
                 </h1>
                 <p class="hero-text">
-                    Explorá reviews técnicas, compará carrocerías y descubrí modelos con personalidad propia
+                    Explorá reseñas técnicas, compará carrocerías y descubrí modelos con personalidad propia
                     en una galería pensada para entusiastas.
                 </p>
 
@@ -59,7 +59,11 @@
                             <c:if test="${reviewStatsByCarId[heroCar.id].reviewCount gt 0}">
                                 <span class="hero-spotlight-rating">
                                     <c:out value="${reviewStatsByCarId[heroCar.id].averageRating}"/> /
-                                    <c:out value="${reviewStatsByCarId[heroCar.id].reviewCount}"/> reviews
+                                    <c:out value="${reviewStatsByCarId[heroCar.id].reviewCount}"/>
+                                    <c:choose>
+                                        <c:when test="${reviewStatsByCarId[heroCar.id].reviewCount eq 1}">reseña</c:when>
+                                        <c:otherwise>reseñas</c:otherwise>
+                                    </c:choose>
                                 </span>
                             </c:if>
                         </div>
@@ -123,7 +127,7 @@
                     <p>Una selección de autos con reseñas, puntajes visibles y acceso a información detallada del vehículo.</p>
                 </div>
                 <c:url var="allReviewsUrl" value="/cars"/>
-                <pa:button text="Ver todas las reviews" variant="secondary" icon="arrow-right" href="${allReviewsUrl}"/>
+                <pa:button text="Ver todas las reseñas" variant="secondary" icon="arrow-right" href="${allReviewsUrl}"/>
             </div>
 
             <c:choose>

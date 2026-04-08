@@ -13,6 +13,7 @@
     var emptyFileLabel = 'Ningún archivo seleccionado';
     var lastTrigger = null;
     var requiredMessages = {
+        modalCarSubmitterEmail: 'Ingresá tu email.',
         modalCarBrand: 'Seleccioná una marca.',
         modalCarBodyType: 'Seleccioná un tipo de carrocería.',
         modalCarModel: 'Ingresá el modelo.',
@@ -32,6 +33,8 @@
 
         if (field.required && isMissingRequiredValue(field)) {
             field.setCustomValidity(requiredMessages[field.id] || 'Completá este campo.');
+        } else if (field.validity.typeMismatch && field.type === 'email') {
+            field.setCustomValidity('Ingresá un email válido.');
         }
 
         return field.checkValidity();
@@ -74,7 +77,7 @@
         resetModalState();
         modal.removeAttribute('hidden');
         document.body.classList.add('modal-open');
-        var firstInput = modal.querySelector('#modalCarBrand');
+        var firstInput = modal.querySelector('#modalCarSubmitterEmail');
         if (firstInput) {
             firstInput.focus();
         }

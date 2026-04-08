@@ -82,6 +82,33 @@ CREATE OR REPLACE TRIGGER cars_search_vector_trigger
     BEFORE INSERT OR UPDATE ON cars
     FOR EACH ROW EXECUTE FUNCTION cars_search_vector_trigger_fn();
 
+CREATE TABLE IF NOT EXISTS car_requests (
+    car_request_id        BIGSERIAL PRIMARY KEY,
+    submitted_by_user_id  INT
+                        REFERENCES users(user_id) ON DELETE SET NULL,
+    submitter_email       VARCHAR(100),
+    brand_id              BIGINT NOT NULL
+                        REFERENCES brands(brand_id) ON DELETE RESTRICT,
+    body_type_id          SMALLINT NOT NULL
+                        REFERENCES body_types(body_type_id) ON DELETE RESTRICT,
+    model                 VARCHAR(120) NOT NULL,
+    description           TEXT NOT NULL,
+    image_content_type    VARCHAR(100),
+    image_data            BYTEA,
+    status                VARCHAR(20) NOT NULL DEFAULT 'pending',
+    created_at            TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_car_requests_submitter_identity
+        CHECK (submitted_by_user_id IS NOT NULL OR submitter_email IS NOT NULL),
+    CONSTRAINT chk_car_requests_status
+        CHECK (status IN ('pending', 'approved', 'rejected')),
+    CONSTRAINT chk_car_requests_image_payload
+        CHECK (
+            (image_content_type IS NULL AND image_data IS NULL)
+            OR (image_content_type IS NOT NULL AND image_data IS NOT NULL)
+        )
+);
+
 CREATE TABLE IF NOT EXISTS car_images (
     car_id       BIGINT PRIMARY KEY
                  REFERENCES cars(car_id) ON DELETE CASCADE,
