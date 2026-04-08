@@ -23,8 +23,6 @@ CREATE TABLE IF NOT EXISTS body_types (
     created_at   TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
 CREATE TABLE IF NOT EXISTS cars (
     car_id         BIGSERIAL    PRIMARY KEY,
     brand_id       BIGINT       NOT NULL REFERENCES brands(brand_id)         ON DELETE RESTRICT,
@@ -41,8 +39,6 @@ CREATE INDEX IF NOT EXISTS idx_cars_brand_id        ON cars   (brand_id);
 CREATE INDEX IF NOT EXISTS idx_cars_body_type_id    ON cars   (body_type_id);
 CREATE INDEX IF NOT EXISTS idx_cars_brand_body_type ON cars   (brand_id, body_type_id);
 CREATE INDEX IF NOT EXISTS idx_cars_fts             ON cars   USING GIN (search_vector);
-CREATE INDEX IF NOT EXISTS idx_cars_model_trgm      ON cars   USING GIN (model gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS idx_brands_name_trgm     ON brands USING GIN (name gin_trgm_ops);
 
 CREATE OR REPLACE FUNCTION cars_build_search_vector(
     p_brand_name  TEXT,

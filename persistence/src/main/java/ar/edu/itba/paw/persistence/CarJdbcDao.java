@@ -106,14 +106,18 @@ public class CarJdbcDao implements CarDao {
     @Override
     public List<Car> search(final String query, final Long brandId, final Long bodyTypeId) {
         final String trimmed = query.trim();
+        final String likeQuery = "%" + trimmed.toLowerCase() + "%";
         final StringBuilder sql = new StringBuilder(SELECT_COLUMNS).append(FROM_JOIN);
         sql.append("WHERE (c.search_vector @@ websearch_to_tsquery('simple', ?) ");
-        sql.append("   OR greatest(similarity(b.name, ?), similarity(c.model, ?)) > 0.2) ");
+        sql.append("   OR lower(b.name) LIKE ? ");
+        sql.append("   OR lower(c.model) LIKE ? ");
+        sql.append("   OR lower(COALESCE(c.description, '')) LIKE ?) ");
 
         final List<Object> params = new ArrayList<>();
         params.add(trimmed);
-        params.add(trimmed);
-        params.add(trimmed);
+        params.add(likeQuery);
+        params.add(likeQuery);
+        params.add(likeQuery);
 
         if (brandId != null) {
             sql.append("AND c.brand_id = ? ");
@@ -125,11 +129,15 @@ public class CarJdbcDao implements CarDao {
         }
 
         sql.append("ORDER BY ts_rank(c.search_vector, websearch_to_tsquery('simple', ?)) DESC, ");
-        sql.append("greatest(similarity(b.name, ?), similarity(c.model, ?)) DESC, ");
+        sql.append("CASE WHEN lower(c.model) LIKE ? THEN 0 ");
+        sql.append("     WHEN lower(b.name) LIKE ? THEN 1 ");
+        sql.append("     WHEN lower(COALESCE(c.description, '')) LIKE ? THEN 2 ");
+        sql.append("     ELSE 3 END, ");
         sql.append("c.car_id ASC");
         params.add(trimmed);
-        params.add(trimmed);
-        params.add(trimmed);
+        params.add(likeQuery);
+        params.add(likeQuery);
+        params.add(likeQuery);
 
         return jdbcTemplate.query(sql.toString(), ROW_MAPPER, params.toArray());
     }
