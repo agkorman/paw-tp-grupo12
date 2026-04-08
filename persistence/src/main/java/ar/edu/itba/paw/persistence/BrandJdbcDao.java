@@ -22,7 +22,6 @@ public class BrandJdbcDao implements BrandDao {
     private static final RowMapper<Brand> ROW_MAPPER = (rs, rowNum) -> new Brand(
             rs.getLong("brand_id"),
             rs.getString("name"),
-            rs.getString("image_url"),
             rs.getTimestamp("created_at").toLocalDateTime()
     );
 
@@ -37,7 +36,7 @@ public class BrandJdbcDao implements BrandDao {
     @Override
     public List<Brand> findAll() {
         return jdbcTemplate.query(
-                "SELECT brand_id, name, image_url, created_at FROM brands ORDER BY name",
+                "SELECT brand_id, name, created_at FROM brands ORDER BY name",
                 ROW_MAPPER
         );
     }
@@ -45,7 +44,7 @@ public class BrandJdbcDao implements BrandDao {
     @Override
     public Optional<Brand> findById(long id) {
         return jdbcTemplate.query(
-                "SELECT brand_id, name, image_url, created_at FROM brands WHERE brand_id = ?",
+                "SELECT brand_id, name, created_at FROM brands WHERE brand_id = ?",
                 ROW_MAPPER, id
         ).stream().findFirst();
     }
@@ -53,16 +52,15 @@ public class BrandJdbcDao implements BrandDao {
     @Override
     public Optional<Brand> findByName(String name) {
         return jdbcTemplate.query(
-                "SELECT brand_id, name, image_url, created_at FROM brands WHERE LOWER(name) = LOWER(?)",
+                "SELECT brand_id, name, created_at FROM brands WHERE LOWER(name) = LOWER(?)",
                 ROW_MAPPER, name
         ).stream().findFirst();
     }
 
     @Override
-    public Brand create(String name, String imageUrl) {
+    public Brand create(String name) {
         Map<String, Object> params = new HashMap<>();
         params.put("name", name);
-        params.put("image_url", imageUrl);
 
         long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();

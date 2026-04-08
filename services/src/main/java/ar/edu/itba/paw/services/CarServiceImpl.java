@@ -113,13 +113,7 @@ public class CarServiceImpl implements CarService {
                 .filter(value -> !value.isEmpty())
                 .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
 
-        final Car createdCar = carDao.create(
-                brandId,
-                model,
-                bodyTypeId,
-                normalizedDescription,
-                null
-        );
+        final Car createdCar = carDao.create(brandId, model, bodyTypeId, normalizedDescription);
 
         final boolean hasImageContentType = imageContentType.isPresent();
         final boolean hasImageData = imageData.isPresent();

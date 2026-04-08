@@ -9,5 +9,5 @@ public interface BrandDao {
     List<Brand> findAll();
     Optional<Brand> findById(long id);
     Optional<Brand> findByName(String name);
-    Brand create(String name, String imageUrl);
+    Brand create(String name);
 }
