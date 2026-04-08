@@ -18,7 +18,7 @@ public interface CarService {
 
     List<Car> getCarsByBrandAndBodyType(String brand, String bodyType);
 
-    List<Car> searchCars(String query);
+    List<Car> searchCars(String query, String brand, String bodyType);
     Optional<CarImage> getCarImageByCarId(long carId);
 
     void saveCarImage(long carId, String contentType, byte[] imageData);

@@ -64,11 +64,29 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public List<Car> searchCars(final String query) {
-        if (query == null || query.trim().isEmpty()) {
-            return getAllCars();
+    public List<Car> searchCars(final String query, final String brand, final String bodyType) {
+        final Long brandId = brand != null
+                ? brandDao.findByName(brand).map(br -> br.getId()).orElse(null)
+                : null;
+        if (brand != null && brandId == null) {
+            return Collections.emptyList();
         }
-        return carDao.search(query);
+
+        final Long bodyTypeId = bodyType != null
+                ? bodyTypeDao.findByName(bodyType).map(bt -> bt.getId()).orElse(null)
+                : null;
+        if (bodyType != null && bodyTypeId == null) {
+            return Collections.emptyList();
+        }
+
+        if (query == null || query.trim().isEmpty()) {
+            if (brandId != null && bodyTypeId != null) return carDao.findByBrandIdAndBodyTypeId(brandId, bodyTypeId);
+            if (brandId != null)                        return carDao.findByBrandId(brandId);
+            if (bodyTypeId != null)                     return carDao.findByBodyTypeId(bodyTypeId);
+            return carDao.findAll();
+        }
+
+        return carDao.search(query, brandId, bodyTypeId);
     }
 
     @Override

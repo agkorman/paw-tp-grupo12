@@ -16,7 +16,7 @@ public interface CarDao {
 
     List<Car> findByBrandIdAndBodyTypeId(long brandId, long bodyTypeId);
 
-    List<Car> search(String query);
+    List<Car> search(String query, Long brandId, Long bodyTypeId);
 
     Car create(long brandId, String model, long bodyTypeId, String description, String imageUrl);
 }
