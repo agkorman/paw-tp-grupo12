@@ -1,0 +1,209 @@
+.admin-page {
+    flex: 1;
+    background: linear-gradient(180deg, var(--surface), var(--surface-container-lowest));
+    padding: var(--spacing-16) var(--spacing-12);
+}
+
+.admin-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--spacing-8);
+    max-width: 72rem;
+    margin: 0 auto var(--spacing-12);
+}
+
+.admin-hero-copy {
+    display: grid;
+    gap: 1rem;
+    max-width: 42rem;
+}
+
+.admin-kicker {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0.4rem 0.7rem;
+    border-radius: var(--radius-md);
+    background: rgba(255, 87, 25, 0.14);
+    color: var(--primary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.admin-hero h1 {
+    font-family: var(--font-display);
+    font-size: 4.75rem;
+    line-height: 0.98;
+    text-transform: uppercase;
+}
+
+.admin-hero p {
+    color: var(--secondary);
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 36rem;
+}
+
+.admin-hero-action {
+    align-self: start;
+    margin-top: 5.75rem;
+    min-height: 3.5rem;
+    padding: 1rem 2.25rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.admin-status {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 11rem;
+    padding: 0.85rem 1.15rem;
+    border: 1px solid rgba(229, 226, 225, 0.12);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, rgba(46, 46, 46, 0.72), rgba(31, 31, 31, 0.94));
+    box-shadow: var(--shadow-float);
+}
+
+.admin-status span {
+    color: var(--secondary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.admin-status strong {
+    color: var(--on-surface);
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    line-height: 1.2;
+}
+
+.admin-requests-section {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 72rem;
+    margin: 0 auto;
+}
+
+.admin-section-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--spacing-6);
+}
+
+.admin-section-heading h2 {
+    margin-top: 0.75rem;
+    font-family: var(--font-display);
+    font-size: 2rem;
+    line-height: 1.1;
+}
+
+.admin-section-heading p {
+    max-width: 24rem;
+    color: var(--secondary);
+    line-height: 1.55;
+}
+
+.admin-section-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.admin-requests-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.admin-empty-state {
+    padding: var(--spacing-8);
+    border: 1px solid rgba(229, 226, 225, 0.1);
+    border-radius: var(--radius-lg);
+    background: var(--surface-container-low);
+    color: var(--secondary);
+}
+
+.admin-empty-state p {
+    margin: 0;
+}
+
+.car-image-upload.is-readonly .car-image-upload-input {
+    pointer-events: none;
+}
+
+.car-image-upload.is-readonly .car-image-upload-card {
+    cursor: default;
+}
+
+.review-modal[data-admin-mode="true"] .review-modal-field input[readonly],
+.review-modal[data-admin-mode="true"] .review-modal-field textarea[readonly],
+.review-modal[data-admin-mode="true"] .review-modal-field select:disabled {
+    opacity: 1;
+    color: var(--on-surface);
+}
+
+.review-modal[data-admin-mode="true"] .review-modal-action-group .btn-primary,
+.review-modal[data-admin-mode="true"] .review-modal-action-group .btn-secondary {
+    min-width: 8.5rem;
+    min-height: 2.75rem;
+    padding: 0.75rem 2rem;
+}
+
+.admin-reject-btn:hover {
+    border-color: rgba(255, 120, 120, 0.5);
+    color: #ef9a9a;
+}
+
+@media (max-width: 900px) {
+    .admin-page {
+        padding: var(--spacing-12) 1.5rem;
+    }
+
+    .admin-hero {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+
+    .admin-hero-action {
+        margin-top: 0;
+    }
+
+    .admin-status {
+        width: min(100%, 22rem);
+    }
+
+    .admin-section-heading {
+        display: grid;
+        align-items: start;
+    }
+
+    .admin-section-actions {
+        display: grid;
+        justify-content: stretch;
+    }
+
+    .admin-hero-action {
+        width: 100%;
+    }
+
+    .admin-requests-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-hero h1 {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .admin-hero h1 {
+        font-size: 2.35rem;
+    }
+}

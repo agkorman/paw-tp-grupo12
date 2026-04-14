@@ -99,4 +99,14 @@ public class CarRequestJdbcDao implements CarRequestDao {
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();
     }
+
+    @Override
+    public boolean updateStatus(final long id, final String currentStatus, final String newStatus) {
+        return jdbcTemplate.update(
+                "UPDATE car_requests SET status = ? WHERE car_request_id = ? AND status = ?",
+                newStatus,
+                id,
+                currentStatus
+        ) > 0;
+    }
 }

@@ -6,18 +6,46 @@
 <%@ attribute name="href"       required="true" %>
 <%@ attribute name="averageRating" required="false" %>
 <%@ attribute name="reviewCount" required="false" %>
+<%@ attribute name="imageUrl" required="false" %>
+<%@ attribute name="submitter" required="false" %>
+<%@ attribute name="footerText" required="false" %>
+<%@ attribute name="actionText" required="false" %>
+<%@ attribute name="openModal" required="false" %>
+<%@ attribute name="requestId" required="false" %>
+<%@ attribute name="requestBrand" required="false" %>
+<%@ attribute name="requestModel" required="false" %>
+<%@ attribute name="requestBodyType" required="false" %>
+<%@ attribute name="requestDescription" required="false" %>
+<%@ attribute name="requestSubmitter" required="false" %>
 <%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
-<a href="${fn:escapeXml(href)}" class="car-card-link" aria-label="Ver reseñas de ${fn:escapeXml(model)}">
+<a href="${fn:escapeXml(href)}"
+   class="car-card-link"
+   aria-label="Ver ${fn:escapeXml(model)}"
+   data-open-create-car-modal="${openModal ? 'true' : 'false'}"
+   data-request-id="${fn:escapeXml(requestId)}"
+   data-request-brand="${fn:escapeXml(requestBrand)}"
+   data-request-model="${fn:escapeXml(requestModel)}"
+   data-request-body-type="${fn:escapeXml(requestBodyType)}"
+   data-request-description="${fn:escapeXml(requestDescription)}"
+   data-request-submitter="${fn:escapeXml(requestSubmitter)}"
+   data-request-image-url="${fn:escapeXml(imageUrl)}">
     <div class="car-card">
         <div class="card-image-wrap">
             <c:choose>
                 <c:when test="${hasImage}">
-                    <c:url var="carImageUrl" value="/car-image">
-                        <c:param name="carId" value="${carId}"/>
-                    </c:url>
-                    <img src="${carImageUrl}" alt="${fn:escapeXml(model)}" loading="lazy">
+                    <c:choose>
+                        <c:when test="${not empty imageUrl}">
+                            <c:url var="resolvedImageUrl" value="${imageUrl}"/>
+                        </c:when>
+                        <c:otherwise>
+                            <c:url var="resolvedImageUrl" value="/car-image">
+                                <c:param name="carId" value="${carId}"/>
+                            </c:url>
+                        </c:otherwise>
+                    </c:choose>
+                    <img src="${resolvedImageUrl}" alt="${fn:escapeXml(model)}" loading="lazy">
                 </c:when>
                 <c:otherwise>
                     <div class="img-placeholder">
@@ -40,6 +68,9 @@
             </div>
             <div class="card-rating-row">
                 <c:choose>
+                    <c:when test="${not empty submitter}">
+                        <span class="card-rating-empty">Enviado por <c:out value="${submitter}"/></span>
+                    </c:when>
                     <c:when test="${reviewCount gt 0}">
                         <span class="card-rating-badge">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -63,12 +94,16 @@
             <div class="card-footer">
                 <span class="card-meta">
                     <c:choose>
+                        <c:when test="${not empty footerText}"><c:out value="${footerText}"/></c:when>
                         <c:when test="${reviewCount gt 0}">Puntaje de la comunidad sobre 5</c:when>
                         <c:otherwise>Comparte la primera impresión</c:otherwise>
                     </c:choose>
                 </span>
                 <span class="card-specs-link">
-                    Ver reseñas
+                    <c:choose>
+                        <c:when test="${not empty actionText}"><c:out value="${actionText}"/></c:when>
+                        <c:otherwise>Ver reseñas</c:otherwise>
+                    </c:choose>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M5 12h14M12 5l7 7-7 7"/>
                     </svg>
