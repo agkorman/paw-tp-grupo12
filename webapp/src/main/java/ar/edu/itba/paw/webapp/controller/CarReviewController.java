@@ -5,10 +5,12 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -69,7 +71,7 @@ public class CarReviewController {
                                    @RequestParam(value = "sort", required = false) final String sort) {
         final ReviewPageData pageData = resolveReviewPageData(carId, sort);
         if (pageData == null) {
-            return new ModelAndView("redirect:/cars");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El auto referenciado no existe.");
         }
 
         final ModelAndView mav = new ModelAndView("reviews-feed-fragment.jsp");
@@ -82,7 +84,7 @@ public class CarReviewController {
     private ModelAndView carReviewPage(final long carId, final String sort, final String reviewFormError) {
         final ReviewPageData pageData = resolveReviewPageData(carId, sort);
         if (pageData == null) {
-            return new ModelAndView("redirect:/cars");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El auto referenciado no existe.");
         }
 
         final ModelAndView mav = new ModelAndView("car-review.jsp");
@@ -165,7 +167,7 @@ public class CarReviewController {
 
 
         if (carService.getCarById(carId).isEmpty()) {
-            return new ModelAndView("redirect:/cars");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El auto referenciado no existe.");
         }
 
         if (rating == null || rating.compareTo(MIN_RATING) < 0 || rating.compareTo(MAX_RATING) > 0) {
