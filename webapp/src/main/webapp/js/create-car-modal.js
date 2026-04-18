@@ -21,6 +21,11 @@
         modalCarFile: 'Seleccioná una imagen del auto.'
     };
 
+    // Must mirror SIMPLE_EMAIL_PATTERN / validateUploadedImage in CarController.java.
+    var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    var MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+
     var isMissingRequiredValue = function (field) {
         if (field.type === 'file') {
             return !field.files || field.files.length === 0;
@@ -33,8 +38,24 @@
 
         if (field.required && isMissingRequiredValue(field)) {
             field.setCustomValidity(requiredMessages[field.id] || 'Completá este campo.');
-        } else if (field.validity.typeMismatch && field.type === 'email') {
+            return field.checkValidity();
+        }
+
+        if (field.type === 'email' && field.value && !EMAIL_PATTERN.test(field.value.trim())) {
             field.setCustomValidity('Ingresá un email válido.');
+            return field.checkValidity();
+        }
+
+        if (field.type === 'file' && field.files && field.files.length > 0) {
+            var f = field.files[0];
+            if (!f.type || ALLOWED_IMAGE_TYPES.indexOf(f.type) === -1) {
+                field.setCustomValidity('Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.');
+                return field.checkValidity();
+            }
+            if (f.size > MAX_IMAGE_BYTES) {
+                field.setCustomValidity('La imagen no debe superar los 10 MB.');
+                return field.checkValidity();
+            }
         }
 
         return field.checkValidity();

@@ -1,0 +1,63 @@
+.error-page {
+    min-height: calc(100vh - 56px);
+    padding: 4rem var(--spacing-12) 5rem;
+    display: grid;
+    place-items: center;
+    background:
+        radial-gradient(circle at top right, rgba(255, 87, 25, 0.14), transparent 28rem),
+        radial-gradient(circle at 20% 10%, rgba(94, 212, 255, 0.08), transparent 22rem),
+        var(--surface);
+}
+
+.error-hero {
+    max-width: 38rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: center;
+    text-align: center;
+}
+
+.error-status {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(5rem, 14vw, 9rem);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    background: linear-gradient(135deg, var(--primary-container), var(--primary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.error-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    color: var(--on-surface);
+    margin: 0;
+}
+
+.error-text {
+    color: var(--secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 32rem;
+    margin: 0;
+}
+
+.error-actions {
+    display: flex;
+    gap: 0.875rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+.error-actions .btn-primary,
+.error-actions .btn-secondary {
+    text-decoration: none;
+}

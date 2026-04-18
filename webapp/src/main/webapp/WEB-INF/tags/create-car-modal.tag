@@ -87,7 +87,7 @@
                             </span>
                             <span class="car-image-upload-copy">
                                 <strong>Arrastrá o elegí una imagen del auto</strong>
-                                <span id="modalCarFileHelp">JPEG, PNG o WEBP. Máximo 5 MB.</span>
+                                <span id="modalCarFileHelp">JPEG, PNG o WEBP. Máximo 10 MB.</span>
                                 <span id="modalCarFileName" class="car-image-upload-filename">Ningún archivo seleccionado</span>
                             </span>
                             <span class="car-image-upload-action">Buscar</span>

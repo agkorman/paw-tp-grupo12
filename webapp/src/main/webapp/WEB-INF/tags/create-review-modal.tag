@@ -2,7 +2,7 @@
 <%@ attribute name="carId" required="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<div id="createReviewModal" class="review-modal" hidden>
+<div id="createReviewModal" class="review-modal" hidden <c:if test="${not empty reviewFormError}">data-auto-open="true"</c:if>>
     <div class="review-modal-overlay" data-close-modal></div>
     <section class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createReviewTitle">
         <div class="review-modal-header">
@@ -16,6 +16,9 @@
         </div>
 
         <form id="createReviewForm" class="review-modal-form" method="post" action="<c:url value='/reviews'/>" novalidate>
+            <c:if test="${not empty reviewFormError}">
+                <div class="alert alert-error" role="alert"><c:out value="${reviewFormError}"/></div>
+            </c:if>
             <input id="modalCarId" name="carId" type="hidden" value="${carId}">
 
             <p class="review-modal-subtitle">Completá los campos de la reseña. Tu email se guardará para vincular esta reseña a una cuenta más adelante.</p>

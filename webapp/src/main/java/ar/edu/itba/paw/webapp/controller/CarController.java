@@ -17,14 +17,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -135,35 +134,45 @@ public class CarController {
         final String normalizedEmail = submitterEmail == null ? "" : submitterEmail.trim();
         final String trimmedDescription = description == null ? null : description.trim();
 
-        if (trimmedBrand.isEmpty() || trimmedBodyType.isEmpty()) {
-            return redirectToCarsWithError("Marca y tipo de carrocería son obligatorios.");
-        }
         if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
             return redirectToCarsWithError("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
         }
-        if (normalizedEmail.isEmpty()) {
+        if (normalizedEmail.isEmpty() || normalizedEmail.length() > 100) {
             return redirectToCarsWithError("El email es obligatorio.");
         }
-        if (normalizedEmail.length() > 100 || !SIMPLE_EMAIL_PATTERN.matcher(normalizedEmail).matches()) {
+        if (!SIMPLE_EMAIL_PATTERN.matcher(normalizedEmail).matches()) {
             return redirectToCarsWithError("Ingresá un email válido.");
         }
         if (trimmedDescription == null || trimmedDescription.isEmpty()) {
             return redirectToCarsWithError("La descripción es obligatoria.");
         }
-        if (trimmedDescription != null && trimmedDescription.length() > 1500) {
+        if (trimmedDescription.length() > 1500) {
             return redirectToCarsWithError("La descripción debe tener como máximo 1500 caracteres.");
         }
 
-        final String imageValidationError = validateUploadedImage(file, true);
+        final String imageValidationError = validateUploadedImage(file, false);
         if (imageValidationError != null) {
             return redirectToCarsWithError(imageValidationError);
         }
 
+        // Brand/bodyType not resolving means a hand-crafted POST bypassing the
+        // dropdown: fire a real 404 instead of the UX-recovery banner.
         final Brand resolvedBrand = brandDao.findByName(trimmedBrand).orElse(null);
         final BodyType resolvedBodyType = bodyTypeDao.findByName(trimmedBodyType).orElse(null);
         if (resolvedBrand == null || resolvedBodyType == null) {
-            return redirectToCarsWithError("Marca o tipo de carrocería no válidos.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca o tipo de carrocería no válidos.");
         }
+
+        // Duplicate on uq_cars_brand_model_body_type is a legitimate user mistake
+        // (they don't know what's already in the catalog), so stay on /cars.
+        final boolean duplicate = carService
+                .getCarsByBrandAndBodyType(resolvedBrand.getName(), resolvedBodyType.getName())
+                .stream()
+                .anyMatch(c -> c.getModel().equals(trimmedModel));
+        if (duplicate) {
+            return redirectToCarsWithError("Ya existe un auto con esa marca, modelo y tipo de carrocería.");
+        }
+
 
         final Optional<String> imageContentType;
         final Optional<byte[]> imageData;
@@ -295,11 +304,6 @@ public class CarController {
         }
 
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<String> handleMaxUploadSizeExceeded(final MaxUploadSizeExceededException ignored) {
-        return ResponseEntity.badRequest().body("La imagen no debe superar los 10 MB.");
     }
 
     private String validateUploadedImage(final MultipartFile file, final boolean required) {

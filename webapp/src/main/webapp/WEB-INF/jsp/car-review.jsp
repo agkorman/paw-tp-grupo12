@@ -20,9 +20,6 @@
     <pa:nav activePage="reviews"/>
 
     <main class="reviews-page">
-        <c:if test="${not empty error}">
-            <div class="alert alert-error" role="alert"><c:out value="${error}"/></div>
-        </c:if>
         <section class="review-hero">
             <div class="review-hero-inner">
                 <div>
@@ -192,10 +189,18 @@
                 }
             });
 
-            /* -- Validate: requires a rating before submit ------------------ */
+            /* -- Validate: requires a rating in [0,5] with 0.5 step --------- */
             function validateRating() {
-                if (!starInput.value) {
+                var raw = starInput.value;
+                if (!raw) {
                     starLabel.textContent = 'Seleccioná una puntuación';
+                    starLabel.style.color = '#ef9a9a';
+                    starWrap.focus();
+                    return false;
+                }
+                var n = Number(raw);
+                if (isNaN(n) || n < 0 || n > 5 || Math.round(n * 2) !== n * 2) {
+                    starLabel.textContent = 'Puntuación inválida';
                     starLabel.style.color = '#ef9a9a';
                     starWrap.focus();
                     return false;
@@ -229,6 +234,10 @@
                 if (e.key === 'Escape' && !modal.hasAttribute('hidden')) closeModal();
             });
 
+            if (modal.dataset.autoOpen === 'true') {
+                openModal();
+            }
+
             /* ================================================================
                NUMERIC FIELD VALIDATION (model year & mileage)
                ================================================================ */
@@ -239,6 +248,11 @@
                 modalTitle: 'Ingresá un título.',
                 modalBody: 'Ingresá una descripción.'
             };
+            // Must mirror SIMPLE_EMAIL_PATTERN + length/enum caps in CarReviewController.java.
+            var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            var MAX_EMAIL_LENGTH = 100;
+            var MAX_TITLE_LENGTH = 200;
+            var ALLOWED_OWNERSHIP_STATUSES = ['', 'Propietario actual', 'Ex propietario'];
 
             function isInt(s) { return /^\d+$/.test(s); }
             function clearV(inp) { if (inp) inp.setCustomValidity(''); }
@@ -247,15 +261,28 @@
                 if (!inp) return true;
 
                 clearV(inp);
-                if (inp.required && (!inp.value || inp.value.trim() === '')) {
+                var value = inp.value == null ? '' : inp.value.trim();
+                if (inp.required && value === '') {
                     inp.setCustomValidity(requiredMessages[inp.id] || 'Completá este campo.');
                     return false;
                 }
-                if (inp.validity.typeMismatch && inp.type === 'email') {
-                    inp.setCustomValidity('Ingresá un email válido.');
+                if (inp.type === 'email' && value !== '') {
+                    if (value.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(value)) {
+                        inp.setCustomValidity('Ingresá un email válido.');
+                        return false;
+                    }
+                }
+                if (inp.id === 'modalTitle' && value.length > MAX_TITLE_LENGTH) {
+                    inp.setCustomValidity('El título debe tener como máximo ' + MAX_TITLE_LENGTH + ' caracteres.');
                     return false;
                 }
                 return inp.checkValidity();
+            }
+
+            function validateOwnershipStatus() {
+                var selected = form.querySelector('input[name="ownershipStatus"]:checked');
+                var value = selected ? selected.value : '';
+                return ALLOWED_OWNERSHIP_STATUSES.indexOf(value) !== -1;
             }
 
             function validateRequiredFields() {
@@ -317,7 +344,8 @@
             form.addEventListener('submit', function (e) {
                 if (!validateRating()) { e.preventDefault(); return; }
                 if (!validateRequiredFields()) { e.preventDefault(); form.reportValidity(); return; }
-                if (!validateNumerics()) { e.preventDefault(); form.reportValidity(); }
+                if (!validateNumerics()) { e.preventDefault(); form.reportValidity(); return; }
+                if (!validateOwnershipStatus()) { e.preventDefault(); alert('Estado de propiedad no válido.'); }
             });
         })();
     </script>
