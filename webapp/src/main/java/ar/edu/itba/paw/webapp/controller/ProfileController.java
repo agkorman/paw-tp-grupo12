@@ -63,6 +63,8 @@ public class ProfileController {
         mav.addObject("favoriteCars", favoriteCars);
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
         mav.addObject("likedReviews", likedReviews);
+        mav.addObject("followingUsers", demoFollowingUsers());
+        mav.addObject("followerUsers", demoFollowerUsers());
         mav.addObject("ownProfile", true);
         mav.addObject("followingProfile", false);
         return mav;
@@ -74,6 +76,40 @@ public class ProfileController {
 
     private long demoLikeCount(final Review review) {
         return review.getId() + 3;
+    }
+
+    private List<ProfileConnection> demoFollowingUsers() {
+        return List.of(
+                new ProfileConnection("usuario1", "U1", true),
+                new ProfileConnection("usuario2", "U2", true),
+                new ProfileConnection("usuario3", "U3", true),
+                new ProfileConnection("usuario4", "U4", true),
+                new ProfileConnection("usuario5", "U5", true),
+                new ProfileConnection("usuario6", "U6", false),
+                new ProfileConnection("usuario7", "U7", true),
+                new ProfileConnection("usuario8", "U8", false),
+                new ProfileConnection("usuario9", "U9", true),
+                new ProfileConnection("usuario10", "U10", true),
+                new ProfileConnection("usuario11", "U11", false),
+                new ProfileConnection("usuario12", "U12", true)
+        );
+    }
+
+    private List<ProfileConnection> demoFollowerUsers() {
+        return List.of(
+                new ProfileConnection("usuario13", "U13", false),
+                new ProfileConnection("usuario14", "U14", true),
+                new ProfileConnection("usuario15", "U15", false),
+                new ProfileConnection("usuario16", "U16", true),
+                new ProfileConnection("usuario17", "U17", false),
+                new ProfileConnection("usuario18", "U18", true),
+                new ProfileConnection("usuario19", "U19", false),
+                new ProfileConnection("usuario20", "U20", false),
+                new ProfileConnection("usuario21", "U21", true),
+                new ProfileConnection("usuario22", "U22", false),
+                new ProfileConnection("usuario23", "U23", true),
+                new ProfileConnection("usuario24", "U24", false)
+        );
     }
 
     public static final class ProfileData {
@@ -151,6 +187,30 @@ public class ProfileController {
 
         public long getLikeCount() {
             return likeCount;
+        }
+    }
+
+    public static final class ProfileConnection {
+        private final String username;
+        private final String initials;
+        private final boolean following;
+
+        private ProfileConnection(final String username, final String initials, final boolean following) {
+            this.username = username;
+            this.initials = initials;
+            this.following = following;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public String getInitials() {
+            return initials;
+        }
+
+        public boolean getFollowing() {
+            return following;
         }
     }
 }

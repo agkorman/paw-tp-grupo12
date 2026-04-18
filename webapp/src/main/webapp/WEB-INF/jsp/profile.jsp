@@ -32,15 +32,37 @@
 
                 <dl class="profile-stats" aria-label="Estadísticas del perfil">
                     <div>
-                        <dt><c:out value="${profile.reviewCount}"/></dt>
+                        <dt>
+                            <button type="button" class="profile-stat-button" data-scroll-to-reviews>
+                                <c:out value="${profile.reviewCount}"/>
+                            </button>
+                        </dt>
                         <dd>Reviews</dd>
                     </div>
                     <div>
-                        <dt><c:out value="${profile.followingCount}"/></dt>
+                        <dt>
+                            <button
+                                    type="button"
+                                    class="profile-stat-button"
+                                    data-open-connections-modal
+                                    data-connections-kind="following"
+                                    data-connections-title="Seguidos">
+                                <c:out value="${profile.followingCount}"/>
+                            </button>
+                        </dt>
                         <dd>Seguidos</dd>
                     </div>
                     <div>
-                        <dt><c:out value="${profile.followerCount}"/></dt>
+                        <dt>
+                            <button
+                                    type="button"
+                                    class="profile-stat-button"
+                                    data-open-connections-modal
+                                    data-connections-kind="followers"
+                                    data-connections-title="Seguidores">
+                                <c:out value="${profile.followerCount}"/>
+                            </button>
+                        </dt>
                         <dd>Seguidores</dd>
                     </div>
                 </dl>
@@ -48,7 +70,7 @@
 
             <c:choose>
                 <c:when test="${ownProfile}">
-                    <button type="button" class="btn-primary profile-action-button">Editar perfil</button>
+                    <button type="button" class="btn-primary profile-action-button" data-open-edit-profile-modal>Editar perfil</button>
                 </c:when>
                 <c:otherwise>
                     <button
@@ -152,6 +174,8 @@
     </main>
 
     <pa:footer/>
+    <pa:edit-profile-modal profile="${profile}"/>
+    <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/profile.js'/>"></script>
 </body>

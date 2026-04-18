@@ -1,17 +1,165 @@
 (function () {
-    var followButton = document.querySelector('[data-follow-toggle]');
-
-    if (!followButton) {
-        return;
+    function hasClass(node, className) {
+        return (' ' + node.className + ' ').indexOf(' ' + className + ' ') >= 0;
     }
 
-    followButton.addEventListener('click', function () {
-        var isFollowing = followButton.getAttribute('data-following') === 'true';
-        var nextState = !isFollowing;
+    function setClass(node, className, enabled) {
+        if (enabled && !hasClass(node, className)) {
+            node.className += ' ' + className;
+        }
+        if (!enabled && hasClass(node, className)) {
+            node.className = (' ' + node.className + ' ')
+                .replace(' ' + className + ' ', ' ')
+                .replace(/^\s+|\s+$/g, '');
+        }
+    }
 
-        followButton.setAttribute('data-following', String(nextState));
-        followButton.setAttribute('aria-pressed', String(nextState));
-        followButton.classList.toggle('is-following', nextState);
-        followButton.textContent = nextState ? 'Seguido' : 'Seguir';
+    function hasAttribute(node, attrName) {
+        return node && node.nodeType === 1 && node.getAttribute(attrName) !== null;
+    }
+
+    function closestByAttribute(target, attrName) {
+        var node = target;
+
+        while (node && node !== document) {
+            if (hasAttribute(node, attrName)) {
+                return node;
+            }
+            node = node.parentNode;
+        }
+
+        return null;
+    }
+
+    function openModal(modal) {
+        if (!modal) {
+            return;
+        }
+        modal.hidden = false;
+        setClass(document.body, 'profile-modal-open', true);
+    }
+
+    function closeModal(modal) {
+        if (!modal) {
+            return;
+        }
+        modal.hidden = true;
+        setClass(document.body, 'profile-modal-open', false);
+    }
+
+    function closeOpenModal() {
+        var modals = document.querySelectorAll('.profile-modal');
+        for (var i = 0; i < modals.length; i += 1) {
+            if (!modals[i].hidden) {
+                closeModal(modals[i]);
+            }
+        }
+    }
+
+    function setFollowState(button, nextState) {
+        button.setAttribute('data-following', String(nextState));
+        button.setAttribute('aria-pressed', String(nextState));
+        setClass(button, 'is-following', nextState);
+        button.textContent = nextState ? 'Siguiendo' : 'Seguir';
+    }
+
+    function switchConnectionsList(kind, title) {
+        var modal = document.getElementById('profileConnectionsModal');
+        var titleNode = modal ? modal.querySelector('[data-connections-title]') : null;
+        var lists = modal ? modal.querySelectorAll('[data-connections-list]') : [];
+        var search = modal ? modal.querySelector('[data-connections-search]') : null;
+
+        if (titleNode) {
+            titleNode.textContent = title;
+        }
+        for (var i = 0; i < lists.length; i += 1) {
+            lists[i].hidden = lists[i].getAttribute('data-connections-list') !== kind;
+        }
+        if (search) {
+            search.value = '';
+            filterConnections('');
+        }
+        openModal(modal);
+    }
+
+    function filterConnections(query) {
+        var modal = document.getElementById('profileConnectionsModal');
+        var visibleList = modal ? modal.querySelector('[data-connections-list]:not([hidden])') : null;
+        var rows = visibleList ? visibleList.querySelectorAll('[data-connection-row]') : [];
+        var normalizedQuery = query.toLowerCase();
+
+        for (var i = 0; i < rows.length; i += 1) {
+            var haystack = (rows[i].getAttribute('data-search-text') || '').toLowerCase();
+            rows[i].hidden = normalizedQuery !== '' && haystack.indexOf(normalizedQuery) < 0;
+        }
+    }
+
+    document.addEventListener('click', function (event) {
+        var editButton = closestByAttribute(event.target, 'data-open-edit-profile-modal');
+        if (editButton) {
+            openModal(document.getElementById('editProfileModal'));
+            return;
+        }
+
+        var connectionsButton = closestByAttribute(event.target, 'data-open-connections-modal');
+        if (connectionsButton) {
+            switchConnectionsList(
+                connectionsButton.getAttribute('data-connections-kind') || 'following',
+                connectionsButton.getAttribute('data-connections-title') || 'Seguidos'
+            );
+            return;
+        }
+
+        var closeButton = closestByAttribute(event.target, 'data-close-profile-modal');
+        if (closeButton) {
+            closeOpenModal();
+            return;
+        }
+
+        var followButton = closestByAttribute(event.target, 'data-follow-toggle');
+        if (followButton) {
+            var isFollowing = followButton.getAttribute('data-following') === 'true';
+            setFollowState(followButton, !isFollowing);
+            return;
+        }
+
+        var reviewsButton = closestByAttribute(event.target, 'data-scroll-to-reviews');
+        if (reviewsButton) {
+            var reviewsTitle = document.getElementById('profileReviewsTitle');
+            if (reviewsTitle) {
+                reviewsTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
     });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeOpenModal();
+        }
+    });
+
+    var search = document.querySelector('[data-connections-search]');
+    if (search) {
+        search.addEventListener('input', function () {
+            filterConnections(search.value);
+        });
+    }
+
+    var photoInput = document.querySelector('[data-profile-photo-input]');
+    var photoPreview = document.querySelector('[data-profile-photo-preview]');
+
+    if (photoInput && photoPreview && window.FileReader) {
+        photoInput.addEventListener('change', function () {
+            var file = photoInput.files && photoInput.files[0];
+            if (!file || file.type.indexOf('image/') !== 0) {
+                return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = function (event) {
+                photoPreview.style.backgroundImage = 'url("' + event.target.result + '")';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 }());
