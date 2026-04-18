@@ -7,6 +7,8 @@
 <c:url var="profileReviewUrl" value="/reviews">
     <c:param name="carId" value="${reviewCard.review.carId}"/>
 </c:url>
+<c:url var="reviewEditUrl" value="/reviews/${reviewCard.review.id}"/>
+<c:url var="reviewDeleteUrl" value="/reviews/${reviewCard.review.id}/delete"/>
 
 <article class="profile-review-card">
     <a class="profile-review-image" href="${profileReviewUrl}">
@@ -32,6 +34,47 @@
                         reviewId="${reviewCard.review.id}"
                         liked="${reviewCard.liked}"
                         likeCount="${reviewCard.likeCount}"/>
+                <div class="profile-review-menu" data-profile-review-menu>
+                    <button
+                            type="button"
+                            class="profile-review-menu-toggle"
+                            data-profile-review-menu-toggle
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            aria-label="Abrir opciones de review">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true" focusable="false">
+                            <circle cx="9" cy="4" r="1.6"/>
+                            <circle cx="9" cy="9" r="1.6"/>
+                            <circle cx="9" cy="14" r="1.6"/>
+                        </svg>
+                    </button>
+                    <div class="profile-review-menu-panel" data-profile-review-menu-panel hidden>
+                        <button
+                                type="button"
+                                data-open-review-modal="edit"
+                                data-review-action="${fn:escapeXml(reviewEditUrl)}"
+                                data-review-id="${fn:escapeXml(reviewCard.review.id)}"
+                                data-review-car-id="${fn:escapeXml(reviewCard.review.carId)}"
+                                data-review-reviewer-email="${fn:escapeXml(reviewCard.review.reviewerEmail)}"
+                                data-review-rating="${fn:escapeXml(reviewCard.review.rating)}"
+                                data-review-ownership-status="${fn:escapeXml(reviewCard.review.ownershipStatus)}"
+                                data-review-title="${fn:escapeXml(reviewCard.review.title)}"
+                                data-review-body="${fn:escapeXml(reviewCard.review.body)}"
+                                data-review-model-year="${fn:escapeXml(reviewCard.review.modelYear)}"
+                                data-review-mileage-km="${fn:escapeXml(reviewCard.review.mileageKm)}"
+                                data-review-would-recommend="${fn:escapeXml(reviewCard.review.wouldRecommend)}">
+                            Editar
+                        </button>
+                        <button
+                                type="button"
+                                class="profile-review-menu-danger"
+                                data-open-delete-review-modal
+                                data-review-delete-action="${fn:escapeXml(reviewDeleteUrl)}"
+                                data-review-title="${fn:escapeXml(reviewCard.review.title)}">
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
         <p class="profile-review-car"><c:out value="${reviewCard.carName}"/></p>

@@ -21,5 +21,7 @@ public interface ReviewDao {
     List<ReviewStats> findStatsByCarIds(Collection<Long> carIds);
     Review create(Long userId, String reviewerEmail, long carId, BigDecimal rating, String title, String body,
                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
+    Optional<Review> update(long id, String reviewerEmail, long carId, BigDecimal rating, String title, String body,
+                            String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
     boolean delete(long id);
 }

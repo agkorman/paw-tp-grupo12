@@ -29,6 +29,24 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public Optional<Review> getReviewById(final long id) {
+        return reviewDao.findById(id);
+    }
+
+    @Override
+    public Optional<Review> updateReview(final long id, final String reviewerEmail, final long carId,
+                                         final BigDecimal rating, final String title, final String body,
+                                         final String ownershipStatus, final Integer modelYear,
+                                         final Integer mileageKm, final Boolean wouldRecommend) {
+        return reviewDao.update(id, reviewerEmail, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
+    }
+
+    @Override
+    public boolean deleteReview(final long id) {
+        return reviewDao.delete(id);
+    }
+
+    @Override
     public List<Review> getReviewsByCar(long carId) {
         return reviewDao.findByCarId(carId);
     }

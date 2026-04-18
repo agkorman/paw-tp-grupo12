@@ -23,6 +23,11 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
+<c:set var="modalImageUrl" value=""/>
+<c:if test="${not empty imageUrl}">
+    <c:url var="modalImageUrl" value="${imageUrl}"/>
+</c:if>
+
 <div class="car-card-shell">
     <a href="${fn:escapeXml(href)}"
        class="car-card-link"
@@ -34,7 +39,7 @@
        data-request-body-type="${fn:escapeXml(requestBodyType)}"
        data-request-description="${fn:escapeXml(requestDescription)}"
        data-request-submitter="${fn:escapeXml(requestSubmitter)}"
-       data-request-image-url="${fn:escapeXml(imageUrl)}">
+       data-request-image-url="${fn:escapeXml(modalImageUrl)}">
         <div class="car-card">
             <div class="card-image-wrap">
                 <c:choose>
