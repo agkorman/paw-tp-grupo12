@@ -74,6 +74,18 @@
     margin-bottom: 1rem;
 }
 
+.selected-car-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.selected-car-header h2 {
+    margin-bottom: 0;
+}
+
 .selected-car-image {
     width: 100%;
     aspect-ratio: 16 / 10;
@@ -333,6 +345,7 @@
     color: var(--secondary);
     font-size: 0.8rem;
     display: flex;
+    align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
 }

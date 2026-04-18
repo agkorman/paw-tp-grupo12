@@ -109,16 +109,40 @@
     background: var(--surface-container-highest);
 }
 
-.profile-reviews-section {
+.profile-reviews-section,
+.profile-favorites-section,
+.profile-liked-section {
     display: grid;
     gap: var(--spacing-6);
 }
 
-.profile-reviews-section h2 {
+.profile-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--outline-variant);
+    padding-bottom: 0.75rem;
+}
+
+.profile-section-heading h2 {
     font-family: var(--font-display);
     font-size: 1.35rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+}
+
+.profile-section-heading span {
+    color: var(--secondary);
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.profile-favorites-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-6);
 }
 
 .profile-review-list {
@@ -175,6 +199,14 @@
     gap: 1rem;
     border-bottom: 1px solid rgba(229, 226, 225, 0.08);
     padding-bottom: 0.625rem;
+}
+
+.profile-review-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .profile-review-date,
@@ -245,6 +277,10 @@
 
     .profile-hero,
     .profile-review-card {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-favorites-grid {
         grid-template-columns: 1fr;
     }
 

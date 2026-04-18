@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/landing.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
 </head>
@@ -135,6 +135,7 @@
                                 carId="${car.id}"
                                 hasImage="${car.hasImage}"
                                 href="${reviewUrl}"
+                                favorited="${car.id mod 2 eq 0}"
                                 averageRating="${reviewStatsByCarId[car.id].averageRating}"
                                 reviewCount="${reviewStatsByCarId[car.id].reviewCount}"/>
                         </c:forEach>
@@ -145,6 +146,7 @@
     </main>
 
     <pa:footer/>
+    <script src="<c:url value='/js/reactions.js'/>"></script>
 
 </body>
 </html>

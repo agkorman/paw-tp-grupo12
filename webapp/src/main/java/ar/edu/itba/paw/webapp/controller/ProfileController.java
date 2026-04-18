@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,21 +35,45 @@ public class ProfileController {
 
     @RequestMapping(value = "/profile", method = RequestMethod.GET)
     public ModelAndView profile() {
-        final Map<Long, Car> carsById = carService.getAllCars()
+        final List<Car> cars = carService.getAllCars();
+        final Map<Long, Car> carsById = cars
                 .stream()
                 .collect(Collectors.toMap(Car::getId, Function.identity()));
+        final List<Car> favoriteCars = cars.stream()
+                .filter(car -> car.getId() % 2 == 0)
+                .limit(4)
+                .toList();
+        final Map<Long, ReviewStats> reviewStatsByCarId = reviewService.getReviewStatsByCarIds(
+                        favoriteCars.stream().map(Car::getId).toList()
+                )
+                .stream()
+                .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
         final List<ProfileReviewCard> reviews = reviewService.getAllReviews()
                 .stream()
-                .map(review -> new ProfileReviewCard(review, carsById.get(review.getCarId())))
+                .map(review -> new ProfileReviewCard(review, carsById.get(review.getCarId()), isDemoLiked(review), demoLikeCount(review)))
+                .toList();
+        final List<ProfileReviewCard> likedReviews = reviews.stream()
+                .filter(ProfileReviewCard::getLiked)
                 .toList();
 
         final ModelAndView mav = new ModelAndView("profile.jsp");
         mav.addObject("profile", new ProfileData(PROFILE_NAME, PROFILE_EMAIL, reviews.size(),
                 FOLLOWING_COUNT, FOLLOWER_COUNT));
         mav.addObject("profileReviews", reviews);
+        mav.addObject("favoriteCars", favoriteCars);
+        mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
+        mav.addObject("likedReviews", likedReviews);
         mav.addObject("ownProfile", true);
         mav.addObject("followingProfile", false);
         return mav;
+    }
+
+    private boolean isDemoLiked(final Review review) {
+        return review.getId() % 2 == 0;
+    }
+
+    private long demoLikeCount(final Review review) {
+        return review.getId() + 3;
     }
 
     public static final class ProfileData {
@@ -91,10 +116,14 @@ public class ProfileController {
     public static final class ProfileReviewCard {
         private final Review review;
         private final Car car;
+        private final boolean liked;
+        private final long likeCount;
 
-        private ProfileReviewCard(final Review review, final Car car) {
+        private ProfileReviewCard(final Review review, final Car car, final boolean liked, final long likeCount) {
             this.review = review;
             this.car = car;
+            this.liked = liked;
+            this.likeCount = likeCount;
         }
 
         public Review getReview() {
@@ -114,6 +143,14 @@ public class ProfileController {
 
         public boolean getHasCarImage() {
             return car != null && car.getHasImage();
+        }
+
+        public boolean getLiked() {
+            return liked;
+        }
+
+        public long getLikeCount() {
+            return likeCount;
         }
     }
 }

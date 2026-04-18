@@ -10,6 +10,8 @@
 <%@ attribute name="submitter" required="false" %>
 <%@ attribute name="footerText" required="false" %>
 <%@ attribute name="actionText" required="false" %>
+<%@ attribute name="showFavorite" required="false" %>
+<%@ attribute name="favorited" required="false" %>
 <%@ attribute name="openModal" required="false" %>
 <%@ attribute name="requestId" required="false" %>
 <%@ attribute name="requestBrand" required="false" %>
@@ -19,96 +21,104 @@
 <%@ attribute name="requestSubmitter" required="false" %>
 <%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
-<a href="${fn:escapeXml(href)}"
-   class="car-card-link"
-   aria-label="Ver ${fn:escapeXml(model)}"
-   data-open-create-car-modal="${openModal ? 'true' : 'false'}"
-   data-request-id="${fn:escapeXml(requestId)}"
-   data-request-brand="${fn:escapeXml(requestBrand)}"
-   data-request-model="${fn:escapeXml(requestModel)}"
-   data-request-body-type="${fn:escapeXml(requestBodyType)}"
-   data-request-description="${fn:escapeXml(requestDescription)}"
-   data-request-submitter="${fn:escapeXml(requestSubmitter)}"
-   data-request-image-url="${fn:escapeXml(imageUrl)}">
-    <div class="car-card">
-        <div class="card-image-wrap">
-            <c:choose>
-                <c:when test="${hasImage}">
-                    <c:choose>
-                        <c:when test="${not empty imageUrl}">
-                            <c:url var="resolvedImageUrl" value="${imageUrl}"/>
-                        </c:when>
-                        <c:otherwise>
-                            <c:url var="resolvedImageUrl" value="/car-image">
-                                <c:param name="carId" value="${carId}"/>
-                            </c:url>
-                        </c:otherwise>
-                    </c:choose>
-                    <img src="${resolvedImageUrl}" alt="${fn:escapeXml(model)}" loading="lazy">
-                </c:when>
-                <c:otherwise>
-                    <div class="img-placeholder">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c4c6cc" stroke-width="1.5">
-                            <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-                        </svg>
-                    </div>
-                </c:otherwise>
-            </c:choose>
-        </div>
-        <div class="card-body">
-            <span class="card-category">
+<div class="car-card-shell">
+    <a href="${fn:escapeXml(href)}"
+       class="car-card-link"
+       aria-label="Ver ${fn:escapeXml(model)}"
+       data-open-create-car-modal="${openModal ? 'true' : 'false'}"
+       data-request-id="${fn:escapeXml(requestId)}"
+       data-request-brand="${fn:escapeXml(requestBrand)}"
+       data-request-model="${fn:escapeXml(requestModel)}"
+       data-request-body-type="${fn:escapeXml(requestBodyType)}"
+       data-request-description="${fn:escapeXml(requestDescription)}"
+       data-request-submitter="${fn:escapeXml(requestSubmitter)}"
+       data-request-image-url="${fn:escapeXml(imageUrl)}">
+        <div class="car-card">
+            <div class="card-image-wrap">
                 <c:choose>
-                    <c:when test="${not empty bodyType}"><c:out value="${bodyType}"/></c:when>
-                    <c:otherwise>Vehículo</c:otherwise>
-                </c:choose>
-            </span>
-            <div class="card-title-row">
-                <span class="card-title"><c:out value="${model}"/></span>
-            </div>
-            <div class="card-rating-row">
-                <c:choose>
-                    <c:when test="${not empty submitter}">
-                        <span class="card-rating-empty">Enviado por <c:out value="${submitter}"/></span>
-                    </c:when>
-                    <c:when test="${reviewCount gt 0}">
-                        <span class="card-rating-badge">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M12 2.75l2.91 5.9 6.51.95-4.71 4.59 1.11 6.48L12 17.62l-5.82 3.05 1.11-6.48-4.71-4.59 6.51-.95L12 2.75z"/>
-                            </svg>
-                            <span class="card-rating-value"><c:out value="${averageRating}"/></span>
-                        </span>
-                        <span class="card-rating-count">
-                            <c:out value="${reviewCount}"/>
-                            <c:choose>
-                                <c:when test="${reviewCount eq 1}">reseña</c:when>
-                                <c:otherwise>reseñas</c:otherwise>
-                            </c:choose>
-                        </span>
+                    <c:when test="${hasImage}">
+                        <c:choose>
+                            <c:when test="${not empty imageUrl}">
+                                <c:url var="resolvedImageUrl" value="${imageUrl}"/>
+                            </c:when>
+                            <c:otherwise>
+                                <c:url var="resolvedImageUrl" value="/car-image">
+                                    <c:param name="carId" value="${carId}"/>
+                                </c:url>
+                            </c:otherwise>
+                        </c:choose>
+                        <img src="${resolvedImageUrl}" alt="${fn:escapeXml(model)}" loading="lazy">
                     </c:when>
                     <c:otherwise>
-                        <span class="card-rating-empty">Sin reseñas todavía</span>
+                        <div class="img-placeholder">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c4c6cc" stroke-width="1.5">
+                                <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                            </svg>
+                        </div>
                     </c:otherwise>
                 </c:choose>
             </div>
-            <div class="card-footer">
-                <span class="card-meta">
+            <div class="card-body">
+                <span class="card-category">
                     <c:choose>
-                        <c:when test="${not empty footerText}"><c:out value="${footerText}"/></c:when>
-                        <c:when test="${reviewCount gt 0}">Puntaje de la comunidad sobre 5</c:when>
-                        <c:otherwise>Comparte la primera impresión</c:otherwise>
+                        <c:when test="${not empty bodyType}"><c:out value="${bodyType}"/></c:when>
+                        <c:otherwise>Vehículo</c:otherwise>
                     </c:choose>
                 </span>
-                <span class="card-specs-link">
+                <div class="card-title-row">
+                    <span class="card-title"><c:out value="${model}"/></span>
+                </div>
+                <div class="card-rating-row">
                     <c:choose>
-                        <c:when test="${not empty actionText}"><c:out value="${actionText}"/></c:when>
-                        <c:otherwise>Ver reseñas</c:otherwise>
+                        <c:when test="${not empty submitter}">
+                            <span class="card-rating-empty">Enviado por <c:out value="${submitter}"/></span>
+                        </c:when>
+                        <c:when test="${reviewCount gt 0}">
+                            <span class="card-rating-badge">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <path d="M12 2.75l2.91 5.9 6.51.95-4.71 4.59 1.11 6.48L12 17.62l-5.82 3.05 1.11-6.48-4.71-4.59 6.51-.95L12 2.75z"/>
+                                </svg>
+                                <span class="card-rating-value"><c:out value="${averageRating}"/></span>
+                            </span>
+                            <span class="card-rating-count">
+                                <c:out value="${reviewCount}"/>
+                                <c:choose>
+                                    <c:when test="${reviewCount eq 1}">reseña</c:when>
+                                    <c:otherwise>reseñas</c:otherwise>
+                                </c:choose>
+                            </span>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="card-rating-empty">Sin reseñas todavía</span>
+                        </c:otherwise>
                     </c:choose>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                </span>
+                </div>
+                <div class="card-footer">
+                    <span class="card-meta">
+                        <c:choose>
+                            <c:when test="${not empty footerText}"><c:out value="${footerText}"/></c:when>
+                            <c:when test="${reviewCount gt 0}">Puntaje de la comunidad sobre 5</c:when>
+                            <c:otherwise>Comparte la primera impresión</c:otherwise>
+                        </c:choose>
+                    </span>
+                    <span class="card-specs-link">
+                        <c:choose>
+                            <c:when test="${not empty actionText}"><c:out value="${actionText}"/></c:when>
+                            <c:otherwise>Ver reseñas</c:otherwise>
+                        </c:choose>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                        </span>
+                </div>
             </div>
         </div>
-    </div>
-</a>
+    </a>
+    <c:if test="${showFavorite ne false}">
+        <div class="car-card-favorite">
+            <pa:car-favorite-button carId="${carId}" favorited="${favorited}"/>
+        </div>
+    </c:if>
+</div>

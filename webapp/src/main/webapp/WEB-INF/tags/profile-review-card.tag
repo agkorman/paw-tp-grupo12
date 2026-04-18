@@ -2,6 +2,7 @@
 <%@ attribute name="reviewCard" required="true" type="ar.edu.itba.paw.webapp.controller.ProfileController.ProfileReviewCard" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <c:url var="profileReviewUrl" value="/reviews">
     <c:param name="carId" value="${reviewCard.review.carId}"/>
@@ -25,7 +26,13 @@
     <div class="profile-review-content">
         <div class="profile-review-meta-row">
             <span class="profile-review-date"><c:out value="${fn:substring(reviewCard.review.createdAt, 0, 10)}"/></span>
-            <span class="profile-review-score"><c:out value="${reviewCard.review.rating}"/></span>
+            <div class="profile-review-actions">
+                <span class="profile-review-score"><c:out value="${reviewCard.review.rating}"/></span>
+                <pa:review-like-button
+                        reviewId="${reviewCard.review.id}"
+                        liked="${reviewCard.liked}"
+                        likeCount="${reviewCard.likeCount}"/>
+            </div>
         </div>
         <p class="profile-review-car"><c:out value="${reviewCard.carName}"/></p>
         <h3><c:out value="${reviewCard.review.title}"/></h3>

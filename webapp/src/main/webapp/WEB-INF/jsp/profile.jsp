@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
@@ -13,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile.css'/>">
 </head>
 <body>
@@ -66,12 +67,15 @@
         </section>
 
         <section class="profile-reviews-section" aria-labelledby="profileReviewsTitle">
-            <h2 id="profileReviewsTitle">
-                <c:choose>
-                    <c:when test="${ownProfile}">Mis reviews</c:when>
-                    <c:otherwise>Reviews</c:otherwise>
-                </c:choose>
-            </h2>
+            <div class="profile-section-heading">
+                <h2 id="profileReviewsTitle">
+                    <c:choose>
+                        <c:when test="${ownProfile}">Mis reviews</c:when>
+                        <c:otherwise>Reviews</c:otherwise>
+                    </c:choose>
+                </h2>
+                <span><c:out value="${fn:length(profileReviews)}"/></span>
+            </div>
 
             <c:choose>
                 <c:when test="${empty profileReviews}">
@@ -88,9 +92,67 @@
                 </c:otherwise>
             </c:choose>
         </section>
+
+        <c:if test="${ownProfile}">
+            <section class="profile-favorites-section" aria-labelledby="profileFavoritesTitle">
+                <div class="profile-section-heading">
+                    <h2 id="profileFavoritesTitle">Autos favoritos</h2>
+                    <span><c:out value="${fn:length(favoriteCars)}"/></span>
+                </div>
+
+                <c:choose>
+                    <c:when test="${empty favoriteCars}">
+                        <div class="profile-empty-state">
+                            <p>Todavía no agregaste autos a favoritos.</p>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="profile-favorites-grid">
+                            <c:forEach var="favoriteCar" items="${favoriteCars}">
+                                <c:url var="favoriteReviewUrl" value="/reviews">
+                                    <c:param name="carId" value="${favoriteCar.id}"/>
+                                </c:url>
+                                <pa:car-card
+                                        model="${favoriteCar.brandName} ${favoriteCar.model}"
+                                        bodyType="${favoriteCar.bodyType}"
+                                        carId="${favoriteCar.id}"
+                                        hasImage="${favoriteCar.hasImage}"
+                                        href="${favoriteReviewUrl}"
+                                        favorited="true"
+                                        averageRating="${reviewStatsByCarId[favoriteCar.id].averageRating}"
+                                        reviewCount="${reviewStatsByCarId[favoriteCar.id].reviewCount}"/>
+                            </c:forEach>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
+            </section>
+
+            <section class="profile-liked-section" aria-labelledby="profileLikedTitle">
+                <div class="profile-section-heading">
+                    <h2 id="profileLikedTitle">Reviews likeadas</h2>
+                    <span><c:out value="${fn:length(likedReviews)}"/></span>
+                </div>
+
+                <c:choose>
+                    <c:when test="${empty likedReviews}">
+                        <div class="profile-empty-state">
+                            <p>Todavía no likeaste reviews.</p>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="profile-review-list">
+                            <c:forEach var="likedReview" items="${likedReviews}">
+                                <pa:profile-review-card reviewCard="${likedReview}"/>
+                            </c:forEach>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
+            </section>
+        </c:if>
     </main>
 
     <pa:footer/>
+    <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/profile.js'/>"></script>
 </body>
 </html>
