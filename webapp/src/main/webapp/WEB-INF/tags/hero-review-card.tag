@@ -2,10 +2,11 @@
 <%@ attribute name="heroReview" required="true" type="ar.edu.itba.paw.model.Review" %>
 <%@ attribute name="heroCarBrandName" required="false" type="java.lang.String" %>
 <%@ attribute name="heroCarImageUrl" required="false" type="java.lang.String" %>
+<%@ attribute name="href" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
-<article class="hero-review-card">
+<a class="hero-review-card" href="${fn:escapeXml(href)}" aria-label="Ver review completa">
     <div class="hero-review-header">
         <div class="hero-review-thumb" aria-hidden="true">
             <c:choose>
@@ -66,4 +67,4 @@
         <span>anon</span>
         <span><c:out value="${fn:substring(heroReview.createdAt, 0, 10)}"/></span>
     </p>
-</article>
+</a>

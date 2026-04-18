@@ -45,7 +45,7 @@
         <c:otherwise>
             <div class="review-list">
                 <c:forEach var="review" items="${reviews}">
-                    <article class="review-item">
+                    <article class="review-item" id="review-${review.id}">
                         <div class="review-item-top">
                             <strong><c:out value="${review.title}"/></strong>
                             <span class="rating-pill"><c:out value="${review.rating}"/>/5.0</span>

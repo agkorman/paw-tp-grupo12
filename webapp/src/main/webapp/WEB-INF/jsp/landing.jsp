@@ -98,10 +98,14 @@
                 </div>
 
                 <c:if test="${not empty heroReview}">
+                    <c:url var="heroReviewUrl" value="/reviews">
+                        <c:param name="carId" value="${heroCar.id}"/>
+                    </c:url>
                     <pa:hero-review-card
                             heroReview="${heroReview}"
                             heroCarBrandName="${heroCar.brandName}"
-                            heroCarImageUrl="${heroCarImageUrl}"/>
+                            heroCarImageUrl="${heroCarImageUrl}"
+                            href="${heroReviewUrl}#review-${heroReview.id}"/>
                 </c:if>
             </div>
         </section>
