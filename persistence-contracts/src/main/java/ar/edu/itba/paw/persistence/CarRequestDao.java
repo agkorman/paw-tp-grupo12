@@ -14,4 +14,6 @@ public interface CarRequestDao {
 
     CarRequest create(Long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId, String model,
                       String description, String imageContentType, byte[] imageData, String status);
+
+    boolean updateStatus(long id, String currentStatus, String newStatus);
 }

@@ -16,6 +16,9 @@
     <ul class="nav-links">
         <li><a href="<c:url value='/'/>" class="${activePage eq 'explore' ? 'active' : ''}">Explorar</a></li>
         <li><a href="<c:url value='/cars'/>" class="${activePage eq 'reviews' ? 'active' : ''}">Catálogo</a></li>
+        <c:if test="${activePage eq 'admin'}">
+            <li><a href="<c:url value='/admin'/>" class="active">Admin</a></li>
+        </c:if>
     </ul>
     <div class="nav-right">
         <c:if test="${not empty searchAction}">
