@@ -3,6 +3,7 @@
 <%@ attribute name="reviewStatsByCarId" required="true" type="java.util.Map" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <div id="carsCatalogContent" class="catalog-content">
     <section class="catalog-section">
@@ -21,17 +22,33 @@
                     reviewCount="${reviewStatsByCarId[car.id].reviewCount}"/>
             </c:forEach>
 
-            <button type="button" class="car-request-card" data-open-create-car-modal>
-                <span class="car-request-card-icon" aria-hidden="true">
-                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                        <path d="M12 5v14"/>
-                        <path d="M5 12h14"/>
-                    </svg>
-                </span>
-                <strong class="car-request-card-title">¿No encontrás el auto?</strong>
-                <span class="car-request-card-copy">Ayudanos a completar la galería con el modelo que falta.</span>
-                <span class="btn-primary car-request-card-action">Agregar auto</span>
-            </button>
+            <sec:authorize access="isAuthenticated()">
+                <button type="button" class="car-request-card" data-open-create-car-modal>
+                    <span class="car-request-card-icon" aria-hidden="true">
+                        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                            <path d="M12 5v14"/>
+                            <path d="M5 12h14"/>
+                        </svg>
+                    </span>
+                    <strong class="car-request-card-title">¿No encontrás el auto?</strong>
+                    <span class="car-request-card-copy">Ayudanos a completar la galería con el modelo que falta.</span>
+                    <span class="btn-primary car-request-card-action">Agregar auto</span>
+                </button>
+            </sec:authorize>
+            <sec:authorize access="isAnonymous()">
+                <c:url var="newCarUrl" value="/cars/new"/>
+                <a class="car-request-card" href="${newCarUrl}">
+                    <span class="car-request-card-icon" aria-hidden="true">
+                        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                            <path d="M12 5v14"/>
+                            <path d="M5 12h14"/>
+                        </svg>
+                    </span>
+                    <strong class="car-request-card-title">¿No encontrás el auto?</strong>
+                    <span class="car-request-card-copy">Iniciá sesión para sumar el modelo que falta.</span>
+                    <span class="btn-primary car-request-card-action">Ingresar</span>
+                </a>
+            </sec:authorize>
         </div>
     </section>
 

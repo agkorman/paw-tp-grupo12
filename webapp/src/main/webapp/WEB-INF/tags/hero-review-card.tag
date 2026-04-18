@@ -63,7 +63,14 @@
     </p>
 
     <p class="hero-review-meta">
-        <span>anon</span>
+        <span>
+            <c:choose>
+                <c:when test="${not empty heroReview.reviewerUsername}">
+                    <c:out value="${heroReview.reviewerUsername}"/>
+                </c:when>
+                <c:otherwise>anon</c:otherwise>
+            </c:choose>
+        </span>
         <span><c:out value="${fn:substring(heroReview.createdAt, 0, 10)}"/></span>
     </p>
 </article>

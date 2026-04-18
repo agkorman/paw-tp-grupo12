@@ -2,6 +2,8 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.User;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserDao {
@@ -9,4 +11,5 @@ public interface UserDao {
     Optional<User> findByEmail(String email);
     Optional<User> findByUsername(String username);
     User create(String username, String email, String password, String role);
+    List<String> findEmailsByRoles(Collection<String> roles);
 }

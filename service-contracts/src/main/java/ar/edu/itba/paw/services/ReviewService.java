@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ReviewService {
-    Review createReview(Long userId, String reviewerEmail, long carId, BigDecimal rating, String title, String body,
+    Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
                         String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
     List<Review> getReviewsByCar(long carId);
     Optional<Review> getLatestReviewByCar(long carId);

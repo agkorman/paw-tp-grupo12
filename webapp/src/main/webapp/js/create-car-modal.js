@@ -13,7 +13,6 @@
     var emptyFileLabel = 'Ningún archivo seleccionado';
     var lastTrigger = null;
     var requiredMessages = {
-        modalCarSubmitterEmail: 'Ingresá tu email.',
         modalCarBrand: 'Seleccioná una marca.',
         modalCarBodyType: 'Seleccioná un tipo de carrocería.',
         modalCarModel: 'Ingresá el modelo.',
@@ -77,7 +76,7 @@
         resetModalState();
         modal.removeAttribute('hidden');
         document.body.classList.add('modal-open');
-        var firstInput = modal.querySelector('#modalCarSubmitterEmail');
+        var firstInput = modal.querySelector('#modalCarBrand');
         if (firstInput) {
             firstInput.focus();
         }

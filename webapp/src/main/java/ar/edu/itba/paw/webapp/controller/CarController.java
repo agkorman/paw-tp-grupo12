@@ -11,11 +11,13 @@ import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,14 +47,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
 public class CarController {
 
-    private static final Pattern SIMPLE_EMAIL_PATTERN =
-            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final int FEATURED_REVIEW_COUNT = 3;
     private static final long MAX_IMAGE_SIZE_BYTES = 10L * 1024 * 1024;
     private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
@@ -104,8 +103,9 @@ public class CarController {
             @RequestParam(value = "q", required = false) final String q,
             @RequestParam(value = "brand", required = false) final String brand,
             @RequestParam(value = "bodyType", required = false) final String bodyType,
-            @RequestParam(value = "carFormError", required = false) final String carFormError) {
-        return carsPage(blankToNull(q), brand, bodyType, carFormError);
+            @RequestParam(value = "carFormError", required = false) final String carFormError,
+            @RequestParam(value = "createCar", required = false) final String createCar) {
+        return carsPage(blankToNull(q), brand, bodyType, carFormError, "true".equalsIgnoreCase(createCar));
     }
 
     @RequestMapping(value = "/cars/content", method = RequestMethod.GET)
@@ -121,18 +121,25 @@ public class CarController {
         return mav;
     }
 
+    @RequestMapping(value = "/cars/new", method = RequestMethod.GET)
+    public ModelAndView newCarRequest() {
+        return new ModelAndView("redirect:/cars?createCar=true");
+    }
+
     @RequestMapping(value = "/cars", method = RequestMethod.POST, consumes = "multipart/form-data")
     public ModelAndView createCar(@RequestParam("brand") final String brand,
                                   @RequestParam("bodyType") final String bodyType,
                                   @RequestParam("model") final String model,
-                                  @RequestParam("submitterEmail") final String submitterEmail,
                                   @RequestParam(value = "description", required = false) final String description,
-                                  @RequestParam(value = "file", required = false) final MultipartFile file) {
+                                  @RequestParam(value = "file", required = false) final MultipartFile file,
+                                  @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        if (currentUser == null) {
+            return new ModelAndView("redirect:/cars/new");
+        }
 
         final String trimmedBrand = brand.trim();
         final String trimmedBodyType = bodyType.trim();
         final String trimmedModel = model.trim();
-        final String normalizedEmail = submitterEmail == null ? "" : submitterEmail.trim();
         final String trimmedDescription = description == null ? null : description.trim();
 
         if (trimmedBrand.isEmpty() || trimmedBodyType.isEmpty()) {
@@ -140,12 +147,6 @@ public class CarController {
         }
         if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
             return redirectToCarsWithError("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
-        }
-        if (normalizedEmail.isEmpty()) {
-            return redirectToCarsWithError("El email es obligatorio.");
-        }
-        if (normalizedEmail.length() > 100 || !SIMPLE_EMAIL_PATTERN.matcher(normalizedEmail).matches()) {
-            return redirectToCarsWithError("Ingresá un email válido.");
         }
         if (trimmedDescription == null || trimmedDescription.isEmpty()) {
             return redirectToCarsWithError("La descripción es obligatoria.");
@@ -183,7 +184,7 @@ public class CarController {
                 resolvedBrand.getId(),
                 trimmedModel,
                 resolvedBodyType.getId(),
-                normalizedEmail,
+                currentUser.getId(),
                 Optional.ofNullable(trimmedDescription).filter(value -> !value.isEmpty()),
                 imageContentType,
                 imageData
@@ -195,7 +196,7 @@ public class CarController {
     }
 
     private ModelAndView carsPage(final String q, final String brand, final String bodyType,
-                                  final String error) {
+                                  final String error, final boolean openCreateCarModal) {
         final String searchQuery = blankToNull(q);
         final CarCatalogData catalogData = resolveCatalogData(searchQuery, brand, bodyType);
 
@@ -207,6 +208,7 @@ public class CarController {
         mav.addObject("selectedBrand", catalogData.brandFilter);
         mav.addObject("selectedBodyType", catalogData.bodyTypeFilter);
         mav.addObject("searchQuery", searchQuery);
+        mav.addObject("openCreateCarModal", openCreateCarModal);
         if (error != null) {
             mav.addObject("carFormError", error);
         }

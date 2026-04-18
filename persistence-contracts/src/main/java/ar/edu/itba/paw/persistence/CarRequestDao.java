@@ -12,6 +12,8 @@ public interface CarRequestDao {
 
     List<CarRequest> findByStatus(String status);
 
-    CarRequest create(Long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId, String model,
+    CarRequest create(long submittedByUserId, long brandId, long bodyTypeId, String model,
                       String description, String imageContentType, byte[] imageData, String status);
+
+    int bindRequestsToUserByEmail(long userId, String email);
 }

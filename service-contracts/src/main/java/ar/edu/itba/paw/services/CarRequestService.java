@@ -12,7 +12,7 @@ public interface CarRequestService {
 
     List<CarRequest> getCarRequestsByStatus(String status);
 
-    CarRequest createPendingRequest(Long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId,
+    CarRequest createPendingRequest(long submittedByUserId, long brandId, long bodyTypeId,
                                    String model, String description, Optional<String> imageContentType,
                                    Optional<byte[]> imageData);
 }

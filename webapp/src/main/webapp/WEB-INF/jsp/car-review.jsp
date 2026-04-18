@@ -77,7 +77,7 @@
         <pa:reviews-feed reviews="${reviews}" carId="${selectedCar.id}" currentSort="${currentSort}"/>
     </main>
 
-    <pa:create-review-modal carId="${selectedCar.id}"/>
+    <pa:create-review-modal carId="${selectedCar.id}" autoOpen="${openReviewModal}"/>
 
     <pa:footer/>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
@@ -219,11 +219,14 @@
             function openModal() {
                 modal.removeAttribute('hidden');
                 document.body.classList.add('modal-open');
-                var first = $('modalReviewerEmail');
+                var first = $('modalTitle');
                 if (first) first.focus();
             }
 
             openButton.addEventListener('click', openModal);
+            if (modal.dataset.autoOpen === 'true') {
+                openModal();
+            }
             closeEls.forEach(function (el) { el.addEventListener('click', closeModal); });
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && !modal.hasAttribute('hidden')) closeModal();
@@ -235,7 +238,6 @@
             var modelYearInput = $('modalModelYear');
             var mileageInput   = $('modalMileageKm');
             var requiredMessages = {
-                modalReviewerEmail: 'Ingresá tu email.',
                 modalTitle: 'Ingresá un título.',
                 modalBody: 'Ingresá una descripción.'
             };
@@ -249,10 +251,6 @@
                 clearV(inp);
                 if (inp.required && (!inp.value || inp.value.trim() === '')) {
                     inp.setCustomValidity(requiredMessages[inp.id] || 'Completá este campo.');
-                    return false;
-                }
-                if (inp.validity.typeMismatch && inp.type === 'email') {
-                    inp.setCustomValidity('Ingresá un email válido.');
                     return false;
                 }
                 return inp.checkValidity();

@@ -41,8 +41,8 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
-    public CarRequest createPendingRequest(final Long submittedByUserId, final String submitterEmail,
-                                           final long brandId, final long bodyTypeId, final String model,
+    public CarRequest createPendingRequest(final long submittedByUserId, final long brandId,
+                                           final long bodyTypeId, final String model,
                                            final String description, final Optional<String> imageContentType,
                                            final Optional<byte[]> imageData) {
         final boolean hasImageContentType = imageContentType.isPresent();
@@ -63,7 +63,6 @@ public class CarRequestServiceImpl implements CarRequestService {
 
         return carRequestDao.create(
                 submittedByUserId,
-                normalize(submitterEmail),
                 brandId,
                 bodyTypeId,
                 normalizedModel,
