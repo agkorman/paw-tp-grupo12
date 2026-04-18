@@ -144,7 +144,6 @@ public class CarReviewController {
 
     @RequestMapping(value = "/reviews/{reviewId}", method = RequestMethod.POST)
     public ModelAndView updateReview(@PathVariable("reviewId") final long reviewId,
-                                     @RequestParam("carId") final long carId,
                                      @RequestParam("reviewerEmail") final String reviewerEmail,
                                      @RequestParam("rating") final BigDecimal rating,
                                      @RequestParam("title") final String title,
@@ -153,7 +152,8 @@ public class CarReviewController {
                                      @RequestParam(value = "modelYear", required = false) final Integer modelYear,
                                      @RequestParam(value = "mileageKm", required = false) final Integer mileageKm,
                                      @RequestParam(value = "wouldRecommend", required = false) final Boolean wouldRecommend) {
-        if (reviewService.getReviewById(reviewId).isEmpty() || carService.getCarById(carId).isEmpty()) {
+        final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
+        if (existingReview == null) {
             return new ModelAndView("redirect:/profile");
         }
 
@@ -165,7 +165,7 @@ public class CarReviewController {
         reviewService.updateReview(
                 reviewId,
                 normalizeEmail(reviewerEmail),
-                carId,
+                existingReview.getCarId(),
                 rating,
                 title,
                 body,
