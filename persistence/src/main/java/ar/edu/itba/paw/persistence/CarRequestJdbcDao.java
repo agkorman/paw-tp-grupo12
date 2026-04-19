@@ -82,12 +82,12 @@ public class CarRequestJdbcDao implements CarRequestDao {
     }
 
     @Override
-    public CarRequest create(final Long submittedByUserId, final String submitterEmail, final long brandId,
-                             final long bodyTypeId, final String model, final String description,
+    public CarRequest create(final long submittedByUserId, final long brandId, final long bodyTypeId,
+                             final String model, final String description,
                              final String imageContentType, final byte[] imageData, final String status) {
         final Map<String, Object> params = new HashMap<>();
         params.put("submitted_by_user_id", submittedByUserId);
-        params.put("submitter_email", submitterEmail);
+        params.put("submitter_email", null);
         params.put("brand_id", brandId);
         params.put("body_type_id", bodyTypeId);
         params.put("model", model);
@@ -101,12 +101,13 @@ public class CarRequestJdbcDao implements CarRequestDao {
     }
 
     @Override
-    public boolean updateStatus(final long id, final String currentStatus, final String newStatus) {
+    public int bindRequestsToUserByEmail(final long userId, final String email) {
         return jdbcTemplate.update(
-                "UPDATE car_requests SET status = ? WHERE car_request_id = ? AND status = ?",
-                newStatus,
-                id,
-                currentStatus
-        ) > 0;
+                "UPDATE car_requests SET submitted_by_user_id = ? "
+                        + "WHERE submitted_by_user_id IS NULL "
+                        + "AND submitter_email IS NOT NULL AND LOWER(BTRIM(submitter_email)) = LOWER(?)",
+                userId,
+                email
+        );
     }
 }

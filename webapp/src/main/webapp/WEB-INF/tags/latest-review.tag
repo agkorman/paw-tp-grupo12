@@ -19,7 +19,14 @@
                 </div>
                 <p class="last-review-body"><c:out value="${latestReview.body}"/></p>
                 <div class="review-meta last-review-meta">
-                    <span>anon</span>
+                    <span>
+                        <c:choose>
+                            <c:when test="${not empty latestReview.reviewerUsername}">
+                                <c:out value="${latestReview.reviewerUsername}"/>
+                            </c:when>
+                            <c:otherwise>anon</c:otherwise>
+                        </c:choose>
+                    </span>
                     <span><c:out value="${fn:substring(latestReview.createdAt, 0, 10)}"/></span>
                 </div>
             </article>

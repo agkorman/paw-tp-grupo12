@@ -9,6 +9,7 @@ public class Review implements Serializable {
     private long id;
     private Long userId;
     private String reviewerEmail;
+    private String reviewerUsername;
     private long carId;
     private BigDecimal rating;
     private String title;
@@ -25,9 +26,17 @@ public class Review implements Serializable {
     public Review(long id, Long userId, String reviewerEmail, long carId, BigDecimal rating, String title, String body,
                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                   LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this(id, userId, reviewerEmail, null, carId, rating, title, body, ownershipStatus, modelYear, mileageKm,
+                wouldRecommend, createdAt, updatedAt);
+    }
+
+    public Review(long id, Long userId, String reviewerEmail, String reviewerUsername, long carId, BigDecimal rating,
+                  String title, String body, String ownershipStatus, Integer modelYear, Integer mileageKm,
+                  Boolean wouldRecommend, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.userId = userId;
         this.reviewerEmail = reviewerEmail;
+        this.reviewerUsername = reviewerUsername;
         this.carId = carId;
         this.rating = rating;
         this.title = title;
@@ -48,6 +57,9 @@ public class Review implements Serializable {
 
     public String getReviewerEmail() { return reviewerEmail; }
     public void setReviewerEmail(String reviewerEmail) { this.reviewerEmail = reviewerEmail; }
+
+    public String getReviewerUsername() { return reviewerUsername; }
+    public void setReviewerUsername(String reviewerUsername) { this.reviewerUsername = reviewerUsername; }
 
     public long getCarId() { return carId; }
     public void setCarId(long carId) { this.carId = carId; }

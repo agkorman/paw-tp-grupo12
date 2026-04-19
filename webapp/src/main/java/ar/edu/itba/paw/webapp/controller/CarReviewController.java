@@ -4,7 +4,9 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -15,13 +17,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 @Controller
 public class CarReviewController {
 
-    private static final Pattern SIMPLE_EMAIL_PATTERN =
-            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final String SORT_RATING_ASC = "rating_asc";
     private static final String SORT_RATING_DESC = "rating_desc";
 
@@ -36,11 +35,20 @@ public class CarReviewController {
 
     @RequestMapping(value = "/reviews", method = RequestMethod.GET)
     public ModelAndView reviewForm(@RequestParam(value = "carId", required = false) final Long carId,
-                                   @RequestParam(value = "sort", required = false) final String sort) {
+                                   @RequestParam(value = "sort", required = false) final String sort,
+                                   @RequestParam(value = "reviewForm", required = false) final String reviewForm) {
         if (carId == null) {
             return new ModelAndView("redirect:/cars");
         }
-        return carReviewPage(carId, sort, null);
+        return carReviewPage(carId, sort, null, "true".equalsIgnoreCase(reviewForm));
+    }
+
+    @RequestMapping(value = "/reviews/new", method = RequestMethod.GET)
+    public ModelAndView newReview(@RequestParam(value = "carId", required = false) final Long carId) {
+        if (carId == null || carService.getCarById(carId).isEmpty()) {
+            return new ModelAndView("redirect:/cars");
+        }
+        return new ModelAndView("redirect:/reviews?carId=" + carId + "&reviewForm=true");
     }
 
     @RequestMapping(value = "/reviews/feed", method = RequestMethod.GET)
@@ -59,6 +67,11 @@ public class CarReviewController {
     }
 
     private ModelAndView carReviewPage(final long carId, final String sort, final String error) {
+        return carReviewPage(carId, sort, error, false);
+    }
+
+    private ModelAndView carReviewPage(final long carId, final String sort, final String error,
+                                       final boolean openReviewModal) {
         final ReviewPageData pageData = resolveReviewPageData(carId, sort);
         if (pageData == null) {
             return new ModelAndView("redirect:/cars");
@@ -71,6 +84,7 @@ public class CarReviewController {
         mav.addObject("reviewCount", pageData.reviews.size());
         mav.addObject("currentSort", pageData.currentSort);
         mav.addObject("latestReview", pageData.latestReview.orElse(null));
+        mav.addObject("openReviewModal", openReviewModal);
         if (error != null) {
             mav.addObject("error", error);
         }
@@ -123,33 +137,28 @@ public class CarReviewController {
 
     @RequestMapping(value = "/reviews", method = RequestMethod.POST)
     public ModelAndView createReview(@RequestParam("carId") final long carId,
-                                     @RequestParam("reviewerEmail") final String reviewerEmail,
                                      @RequestParam("rating") final BigDecimal rating,
                                      @RequestParam("title") final String title,
                                      @RequestParam("body") final String body,
                                      @RequestParam(value = "ownershipStatus", required = false) final String ownershipStatus,
                                      @RequestParam(value = "modelYear", required = false) final Integer modelYear,
                                      @RequestParam(value = "mileageKm", required = false) final Integer mileageKm,
-                                     @RequestParam(value = "wouldRecommend", required = false) final Boolean wouldRecommend) {
+                                     @RequestParam(value = "wouldRecommend", required = false) final Boolean wouldRecommend,
+                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        if (currentUser == null) {
+            return new ModelAndView("redirect:/reviews/new?carId=" + carId);
+        }
 
         // Server-side validation to prevent DB constraint violations
         if (rating == null || rating.compareTo(BigDecimal.ZERO) < 0 || rating.compareTo(BigDecimal.valueOf(5)) > 0) {
             return carReviewPage(carId, null, "La puntuación debe estar entre 0 y 5.");
         }
 
-        final String normalizedEmail = reviewerEmail == null ? "" : reviewerEmail.trim();
-        if (normalizedEmail.isEmpty()) {
-            return carReviewPage(carId, null, "El email es obligatorio.");
-        }
-        if (normalizedEmail.length() > 100 || !SIMPLE_EMAIL_PATTERN.matcher(normalizedEmail).matches()) {
-            return carReviewPage(carId, null, "Ingresá un email válido.");
-        }
-
         if (ownershipStatus != null && ownershipStatus.length() > 20) {
             return carReviewPage(carId, null, "El estado de propiedad debe tener como máximo 20 caracteres.");
         }
 
-        reviewService.createReview(null, normalizedEmail, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
+        reviewService.createReview(currentUser.getId(), carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
         return new ModelAndView("redirect:/reviews?carId=" + carId);
     }
 

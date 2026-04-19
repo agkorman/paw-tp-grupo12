@@ -23,6 +23,6 @@ public interface CarService {
 
     void saveCarImage(long carId, String contentType, byte[] imageData);
 
-    Car createCar(long brandId, String model, long bodyTypeId, String submitterEmail,
+    Car createCar(long brandId, String model, long bodyTypeId, long submittedByUserId,
                   Optional<String> description, Optional<String> imageContentType, Optional<byte[]> imageData);
 }

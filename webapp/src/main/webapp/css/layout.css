@@ -69,6 +69,43 @@ nav {
     white-space: nowrap;
 }
 
+.nav-auth-link {
+    color: var(--secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.nav-auth-link:hover {
+    color: var(--on-surface);
+}
+
+.nav-register-link,
+.nav-logout-btn {
+    min-height: 2.4rem;
+    padding: 0.6rem 0.95rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+}
+
+.nav-user {
+    max-width: 12rem;
+    color: var(--on-surface);
+    font-size: 0.82rem;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nav-logout-form {
+    margin: 0;
+}
+
 .search-box {
     display: flex;
     align-items: center;
@@ -178,6 +215,12 @@ footer {
 @media (max-width: 560px) {
     .nav-right,
     .nav-action-btn {
+        width: 100%;
+    }
+
+    .nav-register-link,
+    .nav-logout-btn,
+    .nav-logout-form {
         width: 100%;
     }
 

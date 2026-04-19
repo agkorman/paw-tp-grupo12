@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE users
+    ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+
 CREATE TABLE IF NOT EXISTS brands (
     brand_id   BIGSERIAL   PRIMARY KEY,
     name       VARCHAR(80)  NOT NULL UNIQUE,
@@ -93,6 +96,15 @@ CREATE TABLE IF NOT EXISTS car_requests (
         )
 );
 
+ALTER TABLE car_requests
+    ADD COLUMN IF NOT EXISTS submitted_by_user_id INT REFERENCES users(user_id) ON DELETE SET NULL;
+
+ALTER TABLE car_requests
+    ADD COLUMN IF NOT EXISTS submitter_email VARCHAR(100);
+
+ALTER TABLE car_requests
+    ALTER COLUMN submitter_email DROP NOT NULL;
+
 CREATE TABLE IF NOT EXISTS car_images (
     car_id       BIGINT       PRIMARY KEY REFERENCES cars(car_id) ON DELETE CASCADE,
     content_type VARCHAR(100) NOT NULL,
@@ -119,7 +131,40 @@ CREATE TABLE IF NOT EXISTS reviews (
         CHECK (user_id IS NOT NULL OR reviewer_email IS NOT NULL)
 );
 
+ALTER TABLE reviews
+    ADD COLUMN IF NOT EXISTS user_id INT REFERENCES users(user_id);
+
+ALTER TABLE reviews
+    ADD COLUMN IF NOT EXISTS reviewer_email VARCHAR(100);
+
+ALTER TABLE reviews
+    ALTER COLUMN reviewer_email DROP NOT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_reviews_car_id ON reviews (car_id);
+
+UPDATE reviews r
+SET user_id = u.user_id
+FROM (
+    SELECT LOWER(BTRIM(email)) AS email_key, MIN(user_id) AS user_id
+    FROM users
+    GROUP BY LOWER(BTRIM(email))
+    HAVING COUNT(*) = 1
+) u
+WHERE r.user_id IS NULL
+  AND r.reviewer_email IS NOT NULL
+  AND LOWER(BTRIM(r.reviewer_email)) = u.email_key;
+
+UPDATE car_requests cr
+SET submitted_by_user_id = u.user_id
+FROM (
+    SELECT LOWER(BTRIM(email)) AS email_key, MIN(user_id) AS user_id
+    FROM users
+    GROUP BY LOWER(BTRIM(email))
+    HAVING COUNT(*) = 1
+) u
+WHERE cr.submitted_by_user_id IS NULL
+  AND cr.submitter_email IS NOT NULL
+  AND LOWER(BTRIM(cr.submitter_email)) = u.email_key;
 
 -- ============================================================
 -- Seed data

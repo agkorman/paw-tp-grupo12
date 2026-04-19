@@ -1,8 +1,9 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="carId" required="true" %>
+<%@ attribute name="autoOpen" required="false" type="java.lang.Boolean" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<div id="createReviewModal" class="review-modal" hidden>
+<div id="createReviewModal" class="review-modal" hidden <c:if test="${autoOpen}">data-auto-open="true"</c:if>>
     <div class="review-modal-overlay" data-close-modal></div>
     <section class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createReviewTitle">
         <div class="review-modal-header">
@@ -16,16 +17,12 @@
         </div>
 
         <form id="createReviewForm" class="review-modal-form" method="post" action="<c:url value='/reviews'/>" novalidate>
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <input id="modalCarId" name="carId" type="hidden" value="${carId}">
 
-            <p class="review-modal-subtitle">Completá los campos de la reseña. Tu email se guardará para vincular esta reseña a una cuenta más adelante.</p>
+            <p class="review-modal-subtitle">Completá los campos de la reseña. La publicación quedará asociada a tu cuenta.</p>
 
             <div class="review-modal-grid">
-                <div class="review-modal-field review-modal-field-wide">
-                    <label for="modalReviewerEmail">Email</label>
-                    <input id="modalReviewerEmail" name="reviewerEmail" type="email" maxlength="100" required placeholder="tu@email.com">
-                </div>
-
                 <div class="review-modal-field review-modal-field-wide">
                     <label id="ratingLabel">Puntuación</label>
                     <div class="star-rating" role="slider" aria-labelledby="ratingLabel" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" tabindex="0">

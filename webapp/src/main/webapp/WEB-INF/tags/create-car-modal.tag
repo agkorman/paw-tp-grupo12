@@ -4,10 +4,7 @@
 <%@ attribute name="mode" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<c:set var="adminMode" value="${mode eq 'admin'}"/>
-<c:url var="adminBaseUrl" value="/admin"/>
-
-<div id="createCarModal" class="review-modal" hidden <c:if test="${not empty carFormError}">data-auto-open="true"</c:if> <c:if test="${adminMode}">data-admin-mode="true" data-admin-base-url="${adminBaseUrl}"</c:if>>
+<div id="createCarModal" class="review-modal" hidden <c:if test="${not empty carFormError or openCreateCarModal}">data-auto-open="true"</c:if>>
     <div class="review-modal-overlay" data-close-car-modal></div>
     <section class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createCarModalTitle">
         <div class="review-modal-header">
@@ -31,22 +28,15 @@
         </div>
 
         <form id="createCarForm" class="car-modal-form" method="post" action="<c:url value='/cars'/>" enctype="multipart/form-data" novalidate>
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <c:if test="${not empty carFormError}">
                 <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
             </c:if>
-            <p id="createCarModalSubtitle" class="car-modal-subtitle" style="padding-bottom: 1rem;">
-                <c:choose>
-                    <c:when test="${adminMode}">Revisá los datos enviados por el usuario antes de aprobar o rechazar la solicitud.</c:when>
-                    <c:otherwise>Completá los datos del auto. Tu email se guardará para revisar esta solicitud más adelante.</c:otherwise>
-                </c:choose>
+            <p class="car-modal-subtitle" style="padding-bottom: 1rem;">
+                Completá los datos del auto. La solicitud quedará asociada a tu cuenta.
             </p>
 
             <div class="review-modal-grid" style="padding-bottom: 1rem;">
-                <div class="review-modal-field review-modal-field-wide">
-                    <label for="modalCarSubmitterEmail">Email</label>
-                    <input id="modalCarSubmitterEmail" name="submitterEmail" type="email" maxlength="100" required placeholder="tu@email.com" <c:if test="${adminMode}">readonly</c:if>>
-                </div>
-
                 <div class="review-modal-field">
                     <label for="modalCarBrand">Marca</label>
                     <select id="modalCarBrand" name="brand" required <c:if test="${adminMode}">disabled</c:if>>

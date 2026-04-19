@@ -19,7 +19,8 @@ public interface ReviewDao {
     List<Review> findByUserId(long userId);
     Optional<ReviewStats> findStatsByCarId(long carId);
     List<ReviewStats> findStatsByCarIds(Collection<Long> carIds);
-    Review create(Long userId, String reviewerEmail, long carId, BigDecimal rating, String title, String body,
+    Review create(long userId, long carId, BigDecimal rating, String title, String body,
                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
+    int bindReviewsToUserByEmail(long userId, String email);
     boolean delete(long id);
 }
