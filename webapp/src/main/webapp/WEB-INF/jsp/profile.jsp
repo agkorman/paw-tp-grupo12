@@ -16,7 +16,10 @@
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=3'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=4'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=1'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile-connections.css?v=1'/>">
 </head>
 <body>
     <pa:nav activePage="profile"/>
