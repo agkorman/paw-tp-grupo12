@@ -12,8 +12,6 @@ import java.util.Optional;
 @Service
 public class CarRequestServiceImpl implements CarRequestService {
 
-    private static final String PENDING_STATUS = "pending";
-
     private final CarRequestDao carRequestDao;
 
     @Autowired
@@ -69,8 +67,18 @@ public class CarRequestServiceImpl implements CarRequestService {
                 normalizedDescription,
                 imageContentType.orElse(null),
                 imageData.orElse(null),
-                PENDING_STATUS
+                STATUS_PENDING
         );
+    }
+
+    @Override
+    public boolean approvePendingRequest(final long id) {
+        return carRequestDao.updateStatus(id, STATUS_PENDING, STATUS_APPROVED);
+    }
+
+    @Override
+    public boolean rejectPendingRequest(final long id) {
+        return carRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
     }
 
     private String normalize(final String value) {
