@@ -369,6 +369,17 @@
     flex-wrap: wrap;
 }
 
+.review-author-link {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.review-author-link:hover,
+.review-author-link:focus-visible {
+    color: var(--primary);
+}
+
 .empty-state {
     padding: var(--spacing-6);
     color: var(--secondary);

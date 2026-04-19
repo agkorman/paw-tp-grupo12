@@ -52,7 +52,7 @@
                         </div>
                         <p class="review-body"><c:out value="${review.body}"/></p>
                         <div class="review-meta">
-                            <span>anon</span>
+                            <pa:review-author-link review="${review}"/>
                             <span><c:out value="${fn:substring(review.createdAt, 0, 10)}"/></span>
                             <pa:review-like-button
                                     reviewId="${review.id}"

@@ -24,7 +24,7 @@
     <main class="profile-page">
         <section class="profile-hero" aria-labelledby="profileName">
             <div class="profile-avatar" aria-hidden="true">
-                <span>JR</span>
+                <span><c:out value="${profile.initials}"/></span>
             </div>
 
             <div class="profile-summary">
@@ -71,20 +71,22 @@
 
             <c:choose>
                 <c:when test="${ownProfile}">
-                    <button type="button" class="btn-primary profile-action-button" data-open-edit-profile-modal>Editar perfil</button>
+                    <button type="button" class="btn-primary profile-action-button" data-open-edit-profile-modal>Ajustes de perfil</button>
                 </c:when>
                 <c:otherwise>
-                    <button
-                            type="button"
-                            class="btn-primary profile-action-button profile-follow-button ${followingProfile ? 'is-following' : ''}"
-                            data-follow-toggle
-                            data-following="${followingProfile}"
-                            aria-pressed="${followingProfile}">
-                        <c:choose>
-                            <c:when test="${followingProfile}">Seguido</c:when>
-                            <c:otherwise>Seguir</c:otherwise>
-                        </c:choose>
-                    </button>
+                    <c:url var="profileFollowUrl" value="/profiles/${profile.id}/follow"/>
+                    <form class="profile-action-form" method="post" action="${profileFollowUrl}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                        <button
+                                type="submit"
+                                class="btn-primary profile-action-button profile-follow-button ${followingProfile ? 'is-following' : ''}"
+                                aria-pressed="${followingProfile}">
+                            <c:choose>
+                                <c:when test="${followingProfile}">Siguiendo</c:when>
+                                <c:otherwise>Seguir</c:otherwise>
+                            </c:choose>
+                        </button>
+                    </form>
                 </c:otherwise>
             </c:choose>
         </section>

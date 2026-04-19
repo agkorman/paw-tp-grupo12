@@ -2,16 +2,24 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.ReviewStats;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.services.UserFollowService;
+import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -19,113 +27,150 @@ import java.util.stream.Collectors;
 @Controller
 public class ProfileController {
 
-    private static final String PROFILE_NAME = "Julian Rossi";
-    private static final String PROFILE_EMAIL = "julian.rossi@lapostaautos.com";
-    private static final long FOLLOWING_COUNT = 9;
-    private static final long FOLLOWER_COUNT = 152;
-
     private final ReviewService reviewService;
     private final CarService carService;
+    private final UserService userService;
+    private final UserFollowService userFollowService;
 
     @Autowired
-    public ProfileController(final ReviewService reviewService, final CarService carService) {
+    public ProfileController(final ReviewService reviewService, final CarService carService,
+                             final UserService userService, final UserFollowService userFollowService) {
         this.reviewService = reviewService;
         this.carService = carService;
+        this.userService = userService;
+        this.userFollowService = userFollowService;
     }
 
     @RequestMapping(value = "/profile", method = RequestMethod.GET)
-    public ModelAndView profile() {
+    public ModelAndView ownProfile(@AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        if (currentUser == null) {
+            return new ModelAndView("redirect:/login");
+        }
+        return profile(currentUser.getId(), currentUser);
+    }
+
+    @RequestMapping(value = "/profiles/{userId}", method = RequestMethod.GET)
+    public ModelAndView publicProfile(@PathVariable("userId") final long userId,
+                                      @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        return profile(userId, currentUser);
+    }
+
+    @RequestMapping(value = "/profiles/{userId}/follow", method = RequestMethod.POST)
+    public ModelAndView toggleFollow(@PathVariable("userId") final long userId,
+                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        if (currentUser == null) {
+            return new ModelAndView("redirect:/login");
+        }
+        if (currentUser.getId() == userId) {
+            return new ModelAndView("redirect:/profile");
+        }
+        if (userService.getUserById(userId).isEmpty()) {
+            throw new ProfileNotFoundException();
+        }
+
+        if (userFollowService.isFollowing(currentUser.getId(), userId)) {
+            userFollowService.unfollowUser(currentUser.getId(), userId);
+        } else {
+            userFollowService.followUser(currentUser.getId(), userId);
+        }
+        return new ModelAndView("redirect:/profiles/" + userId);
+    }
+
+    private ModelAndView profile(final long profileUserId, final AuthenticatedUser currentUser) {
+        final User profileUser = userService.getUserById(profileUserId)
+                .orElseThrow(ProfileNotFoundException::new);
+        final Long currentUserId = currentUser == null ? null : currentUser.getId();
+        final boolean ownProfile = currentUserId != null && currentUserId == profileUser.getId();
+
         final List<Car> cars = carService.getAllCars();
         final Map<Long, Car> carsById = cars
                 .stream()
                 .collect(Collectors.toMap(Car::getId, Function.identity()));
-        final List<Car> favoriteCars = cars.stream()
-                .filter(car -> car.getId() % 2 == 0)
-                .limit(4)
-                .toList();
-        final Map<Long, ReviewStats> reviewStatsByCarId = reviewService.getReviewStatsByCarIds(
-                        favoriteCars.stream().map(Car::getId).toList()
-                )
+        final List<ProfileReviewCard> reviews = reviewService.getReviewsByUser(profileUser.getId())
                 .stream()
-                .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
-        final List<ProfileReviewCard> reviews = reviewService.getAllReviews()
-                .stream()
-                .map(review -> new ProfileReviewCard(review, carsById.get(review.getCarId()), isDemoLiked(review), demoLikeCount(review)))
+                .map(review -> new ProfileReviewCard(review, carsById.get(review.getCarId()), false, 0))
                 .toList();
-        final List<ProfileReviewCard> likedReviews = reviews.stream()
-                .filter(ProfileReviewCard::getLiked)
-                .toList();
+        final boolean followingProfile = currentUserId != null
+                && !ownProfile
+                && userFollowService.isFollowing(currentUserId, profileUser.getId());
 
         final ModelAndView mav = new ModelAndView("profile.jsp");
-        mav.addObject("profile", new ProfileData(PROFILE_NAME, PROFILE_EMAIL, reviews.size(),
-                FOLLOWING_COUNT, FOLLOWER_COUNT));
+        mav.addObject("profile", new ProfileData(
+                profileUser.getId(),
+                displayName(profileUser),
+                profileUser.getEmail(),
+                initials(profileUser),
+                reviews.size(),
+                userFollowService.countFollowing(profileUser.getId()),
+                userFollowService.countFollowers(profileUser.getId())
+        ));
         mav.addObject("profileReviews", reviews);
-        mav.addObject("favoriteCars", favoriteCars);
-        mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
-        mav.addObject("likedReviews", likedReviews);
-        mav.addObject("followingUsers", demoFollowingUsers());
-        mav.addObject("followerUsers", demoFollowerUsers());
-        mav.addObject("ownProfile", true);
-        mav.addObject("followingProfile", false);
+        mav.addObject("favoriteCars", List.of());
+        mav.addObject("reviewStatsByCarId", Map.of());
+        mav.addObject("likedReviews", List.of());
+        mav.addObject("followingUsers", toConnections(userFollowService.getFollowing(profileUser.getId()), currentUserId));
+        mav.addObject("followerUsers", toConnections(userFollowService.getFollowers(profileUser.getId()), currentUserId));
+        mav.addObject("ownProfile", ownProfile);
+        mav.addObject("followingProfile", followingProfile);
         return mav;
     }
 
-    private boolean isDemoLiked(final Review review) {
-        return review.getId() % 2 == 0;
+    private List<ProfileConnection> toConnections(final List<User> users, final Long currentUserId) {
+        return users.stream()
+                .map(user -> toConnection(user, currentUserId))
+                .toList();
     }
 
-    private long demoLikeCount(final Review review) {
-        return review.getId() + 3;
+    private ProfileConnection toConnection(final User user, final Long currentUserId) {
+        final boolean currentUser = currentUserId != null && currentUserId == user.getId();
+        final boolean following = currentUserId != null
+                && !currentUser
+                && userFollowService.isFollowing(currentUserId, user.getId());
+        return new ProfileConnection(user.getId(), displayName(user), initials(user), following, !currentUser);
     }
 
-    private List<ProfileConnection> demoFollowingUsers() {
-        return List.of(
-                new ProfileConnection("usuario1", "U1", true),
-                new ProfileConnection("usuario2", "U2", true),
-                new ProfileConnection("usuario3", "U3", true),
-                new ProfileConnection("usuario4", "U4", true),
-                new ProfileConnection("usuario5", "U5", true),
-                new ProfileConnection("usuario6", "U6", false),
-                new ProfileConnection("usuario7", "U7", true),
-                new ProfileConnection("usuario8", "U8", false),
-                new ProfileConnection("usuario9", "U9", true),
-                new ProfileConnection("usuario10", "U10", true),
-                new ProfileConnection("usuario11", "U11", false),
-                new ProfileConnection("usuario12", "U12", true)
-        );
+    private String displayName(final User user) {
+        if (user.getUsername() != null && !user.getUsername().trim().isEmpty()) {
+            return user.getUsername().trim();
+        }
+        return user.getEmail();
     }
 
-    private List<ProfileConnection> demoFollowerUsers() {
-        return List.of(
-                new ProfileConnection("usuario13", "U13", false),
-                new ProfileConnection("usuario14", "U14", true),
-                new ProfileConnection("usuario15", "U15", false),
-                new ProfileConnection("usuario16", "U16", true),
-                new ProfileConnection("usuario17", "U17", false),
-                new ProfileConnection("usuario18", "U18", true),
-                new ProfileConnection("usuario19", "U19", false),
-                new ProfileConnection("usuario20", "U20", false),
-                new ProfileConnection("usuario21", "U21", true),
-                new ProfileConnection("usuario22", "U22", false),
-                new ProfileConnection("usuario23", "U23", true),
-                new ProfileConnection("usuario24", "U24", false)
-        );
+    private String initials(final User user) {
+        final String value = displayName(user);
+        if (value == null || value.trim().isEmpty()) {
+            return "?";
+        }
+        final String[] parts = value.trim().split("\\s+");
+        if (parts.length > 1) {
+            return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase(Locale.ROOT);
+        }
+        return value.substring(0, Math.min(2, value.length())).toUpperCase(Locale.ROOT);
     }
 
     public static final class ProfileData {
+        private final long id;
         private final String name;
         private final String email;
+        private final String initials;
         private final int reviewCount;
         private final long followingCount;
         private final long followerCount;
 
-        private ProfileData(final String name, final String email, final int reviewCount,
+        private ProfileData(final long id, final String name, final String email, final String initials,
+                            final int reviewCount,
                             final long followingCount, final long followerCount) {
+            this.id = id;
             this.name = name;
             this.email = email;
+            this.initials = initials;
             this.reviewCount = reviewCount;
             this.followingCount = followingCount;
             this.followerCount = followerCount;
+        }
+
+        public long getId() {
+            return id;
         }
 
         public String getName() {
@@ -134,6 +179,10 @@ public class ProfileController {
 
         public String getEmail() {
             return email;
+        }
+
+        public String getInitials() {
+            return initials;
         }
 
         public int getReviewCount() {
@@ -191,14 +240,23 @@ public class ProfileController {
     }
 
     public static final class ProfileConnection {
+        private final long id;
         private final String username;
         private final String initials;
         private final boolean following;
+        private final boolean followable;
 
-        private ProfileConnection(final String username, final String initials, final boolean following) {
+        private ProfileConnection(final long id, final String username, final String initials,
+                                  final boolean following, final boolean followable) {
+            this.id = id;
             this.username = username;
             this.initials = initials;
             this.following = following;
+            this.followable = followable;
+        }
+
+        public long getId() {
+            return id;
         }
 
         public String getUsername() {
@@ -212,5 +270,13 @@ public class ProfileController {
         public boolean getFollowing() {
             return following;
         }
+
+        public boolean getFollowable() {
+            return followable;
+        }
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    private static final class ProfileNotFoundException extends RuntimeException {
     }
 }

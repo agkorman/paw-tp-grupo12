@@ -14,6 +14,18 @@ CREATE TABLE IF NOT EXISTS users (
 ALTER TABLE users
     ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
 
+CREATE TABLE IF NOT EXISTS user_follows (
+    follower_id INT         NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    followed_id INT         NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_user_follows PRIMARY KEY (follower_id, followed_id),
+    CONSTRAINT chk_user_follows_no_self_follow CHECK (follower_id <> followed_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_follows_followed_id ON user_follows (followed_id);
+CREATE INDEX IF NOT EXISTS idx_user_follows_follower_id ON user_follows (follower_id);
+
 CREATE TABLE IF NOT EXISTS brands (
     brand_id   BIGSERIAL   PRIMARY KEY,
     name       VARCHAR(80)  NOT NULL UNIQUE,
@@ -141,6 +153,7 @@ ALTER TABLE reviews
     ALTER COLUMN reviewer_email DROP NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_reviews_car_id ON reviews (car_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews (user_id);
 
 UPDATE reviews r
 SET user_id = u.user_id

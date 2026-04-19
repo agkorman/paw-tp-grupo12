@@ -18,7 +18,7 @@
         <form class="profile-edit-form" method="post" action="#" enctype="multipart/form-data">
             <div class="profile-photo-editor">
                 <div class="profile-avatar profile-avatar-preview" data-profile-photo-preview aria-hidden="true">
-                    <span>JR</span>
+                    <span><c:out value="${profile.initials}"/></span>
                 </div>
                 <label class="btn-secondary profile-photo-button" for="profilePhotoInput">Cambiar foto</label>
                 <input id="profilePhotoInput" class="profile-photo-input" name="profilePhoto" type="file" accept="image/*" data-profile-photo-input>
@@ -42,6 +42,12 @@
                 <button type="button" class="btn-secondary" data-close-profile-modal>Cancelar</button>
                 <button type="button" class="btn-primary" data-close-profile-modal>Guardar cambios</button>
             </div>
+        </form>
+
+        <c:url var="logoutUrl" value="/logout"/>
+        <form class="profile-logout-form" method="post" action="${logoutUrl}">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+            <button type="submit" class="btn-secondary profile-logout-button">Cerrar Sesión</button>
         </form>
     </section>
 </div>

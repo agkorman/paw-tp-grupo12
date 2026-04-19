@@ -20,6 +20,7 @@ public interface ReviewService {
     Optional<Review> getTopRatedLatestReviewByCar(long carId);
     List<Review> getReviewsByCarOrderByRatingAsc(long carId);
     List<Review> getReviewsByCarOrderByRatingDesc(long carId);
+    List<Review> getReviewsByUser(long userId);
     List<Review> getAllReviews();
     Optional<ReviewStats> getReviewStatsByCar(long carId);
     List<ReviewStats> getReviewStatsByCarIds(Collection<Long> carIds);

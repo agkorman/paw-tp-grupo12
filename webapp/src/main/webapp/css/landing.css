@@ -237,7 +237,6 @@
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     color: inherit;
-    cursor: pointer;
     display: block;
     text-decoration: none;
     transition: background 0.2s, border-color 0.2s, transform 0.2s;
@@ -316,6 +315,17 @@
     flex-wrap: wrap;
     color: var(--secondary);
     font-size: 0.85rem;
+}
+
+.hero-review-detail-link {
+    color: var(--primary);
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.hero-review-detail-link:hover,
+.hero-review-detail-link:focus-visible {
+    color: var(--primary-container);
 }
 
 .featured-section {

@@ -237,6 +237,13 @@ class UserServiceImplTest {
         }
 
         @Override
+        public Optional<Review> update(final long id, final long carId, final BigDecimal rating, final String title,
+                                       final String body, final String ownershipStatus, final Integer modelYear,
+                                       final Integer mileageKm, final Boolean wouldRecommend) {
+            return Optional.empty();
+        }
+
+        @Override
         public boolean delete(final long id) {
             return false;
         }
@@ -289,6 +296,11 @@ class UserServiceImplTest {
                                  final String model, final String description, final String imageContentType,
                                  final byte[] imageData, final String status) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean updateStatus(final long id, final String expectedStatus, final String newStatus) {
+            return false;
         }
     }
 

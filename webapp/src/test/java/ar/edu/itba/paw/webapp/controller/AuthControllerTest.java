@@ -50,6 +50,11 @@ public class AuthControllerTest {
         private boolean throwIntegrityFailure;
 
         @Override
+        public Optional<User> getUserById(final long id) {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<User> findByEmail(final String email) {
             return Optional.empty();
         }

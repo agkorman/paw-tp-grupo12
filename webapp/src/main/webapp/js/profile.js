@@ -69,13 +69,6 @@
         }
     }
 
-    function setFollowState(button, nextState) {
-        button.setAttribute('data-following', String(nextState));
-        button.setAttribute('aria-pressed', String(nextState));
-        setClass(button, 'is-following', nextState);
-        button.textContent = nextState ? 'Siguiendo' : 'Seguir';
-    }
-
     function switchConnectionsList(kind, title) {
         var modal = document.getElementById('profileConnectionsModal');
         var titleNode = modal ? modal.querySelector('[data-connections-title]') : null;
@@ -192,13 +185,6 @@
         var closeButton = closestByAttribute(event.target, 'data-close-profile-modal');
         if (closeButton) {
             closeOpenModal();
-            return;
-        }
-
-        var followButton = closestByAttribute(event.target, 'data-follow-toggle');
-        if (followButton) {
-            var isFollowing = followButton.getAttribute('data-following') === 'true';
-            setFollowState(followButton, !isFollowing);
             return;
         }
 

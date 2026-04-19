@@ -5,8 +5,9 @@
 <%@ attribute name="href" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
-<a class="hero-review-card" href="${fn:escapeXml(href)}" aria-label="Ver review completa">
+<article class="hero-review-card">
     <div class="hero-review-header">
         <div class="hero-review-thumb" aria-hidden="true">
             <c:choose>
@@ -64,14 +65,10 @@
     </p>
 
     <p class="hero-review-meta">
-        <span>
-            <c:choose>
-                <c:when test="${not empty heroReview.reviewerUsername}">
-                    <c:out value="${heroReview.reviewerUsername}"/>
-                </c:when>
-                <c:otherwise>anon</c:otherwise>
-            </c:choose>
-        </span>
+        <pa:review-author-link review="${heroReview}"/>
         <span><c:out value="${fn:substring(heroReview.createdAt, 0, 10)}"/></span>
+        <c:if test="${not empty href}">
+            <a class="hero-review-detail-link" href="${fn:escapeXml(href)}">Ver review</a>
+        </c:if>
     </p>
-</a>
+</article>
