@@ -10,6 +10,7 @@
 <%@ attribute name="searchBodyType" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <nav>
     <a href="<c:url value='/'/>" class="nav-brand">La Posta Autos</a>
@@ -51,6 +52,30 @@
                 <c:out value="${actionText}"/>
             </button>
         </c:if>
-        <a href="<c:url value='/profile'/>" class="nav-profile-link ${activePage eq 'profile' ? 'active' : ''}">Perfil</a>
+        <sec:authorize access="isAnonymous()">
+            <span class="nav-profile">
+                <a class="nav-profile-text nav-auth-link" href="<c:url value='/login'/>">Iniciar sesión</a>
+                <span class="avatar" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="8" r="4"></circle>
+                        <path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"></path>
+                    </svg>
+                </span>
+            </span>
+        </sec:authorize>
+        <sec:authorize access="isAuthenticated()">
+            <sec:authentication property="principal.displayName" var="displayName"/>
+            <span class="nav-profile">
+                <a class="nav-user nav-profile-text ${activePage eq 'profile' ? 'active' : ''}" href="<c:url value='/profile'/>" aria-label="Ir al perfil">
+                    <c:out value="${displayName}"/>
+                </a>
+                <span class="avatar" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="8" r="4"></circle>
+                        <path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"></path>
+                    </svg>
+                </span>
+            </span>
+        </sec:authorize>
     </div>
 </nav>
