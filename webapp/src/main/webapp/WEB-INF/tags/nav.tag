@@ -51,5 +51,6 @@
                 <c:out value="${actionText}"/>
             </button>
         </c:if>
+        <a href="<c:url value='/profile'/>" class="nav-profile-link ${activePage eq 'profile' ? 'active' : ''}">Perfil</a>
     </div>
 </nav>

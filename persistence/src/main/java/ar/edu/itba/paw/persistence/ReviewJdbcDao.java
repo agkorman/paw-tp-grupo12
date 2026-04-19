@@ -189,6 +189,20 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
+    public Optional<Review> update(final long id, final long carId,
+                                   final BigDecimal rating, final String title, final String body,
+                                   final String ownershipStatus, final Integer modelYear,
+                                   final Integer mileageKm, final Boolean wouldRecommend) {
+        final int updated = jdbcTemplate.update(
+                "UPDATE reviews SET car_id = ?, rating = ?, title = ?, body = ?, "
+                        + "ownership_status = ?, model_year = ?, mileage_km = ?, would_recommend = ?, "
+                        + "updated_at = CURRENT_TIMESTAMP WHERE review_id = ?",
+                carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend, id
+        );
+        return updated > 0 ? findById(id) : Optional.empty();
+    }
+
+    @Override
     public boolean delete(long id) {
         return jdbcTemplate.update("DELETE FROM reviews WHERE review_id = ?", id) > 0;
     }

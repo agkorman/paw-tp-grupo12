@@ -2,6 +2,7 @@
 <%@ attribute name="latestReview" required="false" type="ar.edu.itba.paw.model.Review" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <section class="latest-review-section" aria-label="Última reseña">
     <h2>Última reseña</h2>
@@ -28,6 +29,10 @@
                         </c:choose>
                     </span>
                     <span><c:out value="${fn:substring(latestReview.createdAt, 0, 10)}"/></span>
+                    <pa:review-like-button
+                            reviewId="${latestReview.id}"
+                            liked="${latestReview.id mod 2 eq 0}"
+                            likeCount="${latestReview.id + 3}"/>
                 </div>
             </article>
         </c:otherwise>

@@ -31,7 +31,8 @@ nav {
     justify-self: center;
 }
 
-.nav-links a {
+.nav-links a,
+.nav-profile-link {
     font-family: var(--font-body);
     font-size: 0.875rem;
     font-weight: 500;
@@ -41,11 +42,13 @@ nav {
     transition: color 0.2s;
 }
 
-.nav-links a:hover {
+.nav-links a:hover,
+.nav-profile-link:hover {
     color: var(--on-surface);
 }
 
-.nav-links a.active {
+.nav-links a.active,
+.nav-profile-link.active {
     color: var(--primary-container);
     box-shadow: inset 0 -2px 0 var(--primary-container);
 }

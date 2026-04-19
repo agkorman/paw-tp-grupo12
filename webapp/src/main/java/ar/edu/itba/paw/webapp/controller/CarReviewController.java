@@ -8,6 +8,7 @@ import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -149,17 +150,74 @@ public class CarReviewController {
             return new ModelAndView("redirect:/reviews/new?carId=" + carId);
         }
 
-        // Server-side validation to prevent DB constraint violations
-        if (rating == null || rating.compareTo(BigDecimal.ZERO) < 0 || rating.compareTo(BigDecimal.valueOf(5)) > 0) {
-            return carReviewPage(carId, null, "La puntuación debe estar entre 0 y 5.");
-        }
-
-        if (ownershipStatus != null && ownershipStatus.length() > 20) {
-            return carReviewPage(carId, null, "El estado de propiedad debe tener como máximo 20 caracteres.");
+        final String validationError = validateReviewInput(rating, ownershipStatus);
+        if (validationError != null) {
+            return carReviewPage(carId, null, validationError);
         }
 
         reviewService.createReview(currentUser.getId(), carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
         return new ModelAndView("redirect:/reviews?carId=" + carId);
+    }
+
+    @RequestMapping(value = "/reviews/{reviewId}", method = RequestMethod.POST)
+    public ModelAndView updateReview(@PathVariable("reviewId") final long reviewId,
+                                     @RequestParam("rating") final BigDecimal rating,
+                                     @RequestParam("title") final String title,
+                                     @RequestParam("body") final String body,
+                                     @RequestParam(value = "ownershipStatus", required = false) final String ownershipStatus,
+                                     @RequestParam(value = "modelYear", required = false) final Integer modelYear,
+                                     @RequestParam(value = "mileageKm", required = false) final Integer mileageKm,
+                                     @RequestParam(value = "wouldRecommend", required = false) final Boolean wouldRecommend,
+                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
+        if (!canModifyReview(existingReview, currentUser)) {
+            return new ModelAndView("redirect:/profile");
+        }
+
+        final String validationError = validateReviewInput(rating, ownershipStatus);
+        if (validationError != null) {
+            return new ModelAndView("redirect:/profile");
+        }
+
+        reviewService.updateReview(
+                reviewId,
+                existingReview.getCarId(),
+                rating,
+                title,
+                body,
+                ownershipStatus,
+                modelYear,
+                mileageKm,
+                wouldRecommend
+        );
+        return new ModelAndView("redirect:/profile");
+    }
+
+    @RequestMapping(value = "/reviews/{reviewId}/delete", method = RequestMethod.POST)
+    public ModelAndView deleteReview(@PathVariable("reviewId") final long reviewId,
+                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
+        if (canModifyReview(existingReview, currentUser)) {
+            reviewService.deleteReview(reviewId);
+        }
+        return new ModelAndView("redirect:/profile");
+    }
+
+    private boolean canModifyReview(final Review review, final AuthenticatedUser currentUser) {
+        return review != null
+                && currentUser != null
+                && review.getUserId() != null
+                && review.getUserId().equals(currentUser.getId());
+    }
+
+    private String validateReviewInput(final BigDecimal rating, final String ownershipStatus) {
+        if (rating == null || rating.compareTo(BigDecimal.ZERO) < 0 || rating.compareTo(BigDecimal.valueOf(5)) > 0) {
+            return "La puntuación debe estar entre 0 y 5.";
+        }
+        if (ownershipStatus != null && ownershipStatus.length() > 20) {
+            return "El estado de propiedad debe tener como máximo 20 caracteres.";
+        }
+        return null;
     }
 
     private static final class ReviewPageData {

@@ -22,5 +22,7 @@ public interface ReviewDao {
     Review create(long userId, long carId, BigDecimal rating, String title, String body,
                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
     int bindReviewsToUserByEmail(long userId, String email);
+    Optional<Review> update(long id, long carId, BigDecimal rating, String title, String body,
+                            String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
     boolean delete(long id);
 }

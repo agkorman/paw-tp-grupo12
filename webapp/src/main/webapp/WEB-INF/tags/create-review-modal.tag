@@ -1,26 +1,29 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
-<%@ attribute name="carId" required="true" %>
+<%@ attribute name="carId" required="false" %>
 <%@ attribute name="autoOpen" required="false" type="java.lang.Boolean" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<div id="createReviewModal" class="review-modal" hidden <c:if test="${autoOpen}">data-auto-open="true"</c:if>>
+<c:url var="reviewCreateUrl" value="/reviews"/>
+
+<div id="createReviewModal" class="review-modal" hidden data-default-car-id="${carId}" <c:if test="${autoOpen}">data-auto-open="true"</c:if>>
     <div class="review-modal-overlay" data-close-modal></div>
     <section class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createReviewTitle">
         <div class="review-modal-header">
             <div>
-                <span class="review-modal-kicker">Nueva reseña</span>
-                <h2 id="createReviewTitle">Compartí tu experiencia</h2>
+                <span class="review-modal-kicker" data-review-modal-kicker>Nueva reseña</span>
+                <h2 id="createReviewTitle" data-review-modal-title>Compartí tu experiencia</h2>
             </div>
             <button type="button" class="review-modal-close" data-close-modal aria-label="Cerrar modal">
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/></svg>
             </button>
         </div>
 
-        <form id="createReviewForm" class="review-modal-form" method="post" action="<c:url value='/reviews'/>" novalidate>
+        <form id="createReviewForm" class="review-modal-form" method="post" action="${reviewCreateUrl}" data-create-action="${reviewCreateUrl}" novalidate>
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+            <input id="modalReviewId" name="reviewId" type="hidden" value="">
             <input id="modalCarId" name="carId" type="hidden" value="${carId}">
 
-            <p class="review-modal-subtitle">Completá los campos de la reseña. La publicación quedará asociada a tu cuenta.</p>
+            <p class="review-modal-subtitle" data-review-modal-subtitle>Completá los campos de la reseña. La publicación quedará asociada a tu cuenta.</p>
 
             <div class="review-modal-grid">
                 <div class="review-modal-field review-modal-field-wide">
@@ -103,8 +106,8 @@
             </div>
 
             <div class="review-modal-actions">
-                <button type="button" class="btn-secondary" data-close-modal>Cancelar</button>
-                <button type="submit" class="btn-primary">Guardar reseña</button>
+                <button id="reviewModalCancelButton" type="button" class="btn-secondary" data-close-modal>Cancelar</button>
+                <button id="reviewModalSubmitButton" type="submit" class="btn-primary">Guardar reseña</button>
             </div>
         </form>
     </section>

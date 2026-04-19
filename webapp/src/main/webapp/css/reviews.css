@@ -74,6 +74,18 @@
     margin-bottom: 1rem;
 }
 
+.selected-car-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.selected-car-header h2 {
+    margin-bottom: 0;
+}
+
 .selected-car-image {
     width: 100%;
     aspect-ratio: 16 / 10;
@@ -132,6 +144,18 @@
 .car-info-value {
     font-weight: 600;
     text-align: right;
+}
+
+.car-info-row-description {
+    display: grid;
+    justify-content: stretch;
+}
+
+.car-info-description {
+    color: var(--on-surface);
+    font-weight: 500;
+    line-height: 1.55;
+    text-align: left;
 }
 
 .add-review-btn {
@@ -262,6 +286,13 @@
     background: var(--surface-container-high);
     border-radius: var(--radius-md);
     padding: 1rem;
+    scroll-margin-top: 72px;
+    transition: box-shadow 0.2s, background 0.2s;
+}
+
+.review-item:target {
+    background: var(--surface-container-highest);
+    box-shadow: inset 0 0 0 1px rgba(255, 181, 158, 0.42);
 }
 
 .review-item-top {
@@ -333,6 +364,7 @@
     color: var(--secondary);
     font-size: 0.8rem;
     display: flex;
+    align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
 }
@@ -569,6 +601,10 @@
     border-color: rgba(255, 181, 158, 0.7);
 }
 
+.car-image-upload.has-preview .car-image-upload-card {
+    grid-template-columns: 8rem minmax(0, 1fr) auto;
+}
+
 .car-image-upload-icon {
     width: 3.5rem;
     height: 3.5rem;
@@ -579,6 +615,31 @@
     background: rgba(94, 212, 255, 0.14);
     color: var(--tertiary);
     flex: 0 0 auto;
+}
+
+.car-image-upload.has-preview .car-image-upload-icon {
+    display: none;
+}
+
+.car-image-upload-preview {
+    width: 8rem;
+    aspect-ratio: 4 / 3;
+    display: block;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--surface-container-high);
+    box-shadow: inset 0 0 0 1px rgba(229, 226, 225, 0.08);
+}
+
+.car-image-upload-preview[hidden] {
+    display: none;
+}
+
+.car-image-upload-preview img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
 }
 
 .car-image-upload-copy {
@@ -598,7 +659,7 @@
     line-height: 1.45;
 }
 
-.car-image-upload-filename {
+.car-image-upload-status {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -607,7 +668,7 @@
     font-weight: 700;
 }
 
-.car-image-upload.has-file .car-image-upload-filename {
+.car-image-upload.has-file .car-image-upload-status {
     color: var(--primary) !important;
 }
 
@@ -781,6 +842,15 @@ body.modal-open {
     .car-image-upload-card {
         grid-template-columns: 1fr;
         align-items: flex-start;
+    }
+
+    .car-image-upload.has-preview .car-image-upload-card {
+        grid-template-columns: 1fr;
+    }
+
+    .car-image-upload-preview {
+        width: 100%;
+        max-width: 14rem;
     }
 
     .car-image-upload-action {

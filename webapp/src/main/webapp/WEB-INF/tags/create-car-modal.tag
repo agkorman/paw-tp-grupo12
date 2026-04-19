@@ -85,7 +85,7 @@
                                 accept="image/jpeg,image/png,image/webp"
                                 <c:if test="${not adminMode}">required</c:if>
                                 <c:if test="${adminMode}">disabled</c:if>
-                                aria-describedby="modalCarFileHelp modalCarFileName">
+                                aria-describedby="modalCarFileHelp modalCarFileStatus">
                         <label class="car-image-upload-card" for="modalCarFile">
                             <span class="car-image-upload-icon" aria-hidden="true">
                                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -93,6 +93,9 @@
                                     <rect x="4.5" y="5.25" width="19" height="17.5" rx="3"/>
                                     <circle cx="18.75" cy="9.75" r="1.75"/>
                                 </svg>
+                            </span>
+                            <span id="modalCarImagePreview" class="car-image-upload-preview" hidden aria-hidden="true">
+                                <img id="modalCarImagePreviewImg" alt="">
                             </span>
                             <span class="car-image-upload-copy">
                                 <strong>
@@ -104,10 +107,10 @@
                                 <span id="modalCarFileHelp">
                                     <c:choose>
                                         <c:when test="${adminMode}">La imagen se revisa desde la tarjeta seleccionada.</c:when>
-                                        <c:otherwise>JPEG, PNG o WEBP. Máximo 5 MB.</c:otherwise>
+                                        <c:otherwise>JPEG, PNG o WEBP. Máximo 10 MB.</c:otherwise>
                                     </c:choose>
                                 </span>
-                                <span id="modalCarFileName" class="car-image-upload-filename">Ningún archivo seleccionado</span>
+                                <span id="modalCarFileStatus" class="car-image-upload-status">Ninguna imagen seleccionada</span>
                             </span>
                             <span class="car-image-upload-action">
                                 <c:choose>
