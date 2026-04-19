@@ -11,6 +11,7 @@
         </div>
 
         <form id="deleteReviewForm" class="profile-delete-form" method="post">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <p>Vas a eliminar esta review de forma permanente.</p>
             <p class="profile-delete-review-title" data-delete-review-title></p>
 

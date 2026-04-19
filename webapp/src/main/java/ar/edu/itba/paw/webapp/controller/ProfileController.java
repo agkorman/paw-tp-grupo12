@@ -88,7 +88,13 @@ public class ProfileController {
                 .collect(Collectors.toMap(Car::getId, Function.identity()));
         final List<ProfileReviewCard> reviews = reviewService.getReviewsByUser(profileUser.getId())
                 .stream()
-                .map(review -> new ProfileReviewCard(review, carsById.get(review.getCarId()), false, 0))
+                .map(review -> new ProfileReviewCard(
+                        review,
+                        carsById.get(review.getCarId()),
+                        false,
+                        0,
+                        isOwnedByCurrentUser(review, currentUserId)
+                ))
                 .toList();
         final boolean followingProfile = currentUserId != null
                 && !ownProfile
@@ -127,6 +133,10 @@ public class ProfileController {
                 && !currentUser
                 && userFollowService.isFollowing(currentUserId, user.getId());
         return new ProfileConnection(user.getId(), displayName(user), initials(user), following, !currentUser);
+    }
+
+    private boolean isOwnedByCurrentUser(final Review review, final Long currentUserId) {
+        return currentUserId != null && review.getUserId() != null && review.getUserId().equals(currentUserId);
     }
 
     private String displayName(final User user) {
@@ -203,12 +213,15 @@ public class ProfileController {
         private final Car car;
         private final boolean liked;
         private final long likeCount;
+        private final boolean ownedByCurrentUser;
 
-        private ProfileReviewCard(final Review review, final Car car, final boolean liked, final long likeCount) {
+        private ProfileReviewCard(final Review review, final Car car, final boolean liked, final long likeCount,
+                                  final boolean ownedByCurrentUser) {
             this.review = review;
             this.car = car;
             this.liked = liked;
             this.likeCount = likeCount;
+            this.ownedByCurrentUser = ownedByCurrentUser;
         }
 
         public Review getReview() {
@@ -236,6 +249,10 @@ public class ProfileController {
 
         public long getLikeCount() {
             return likeCount;
+        }
+
+        public boolean getOwnedByCurrentUser() {
+            return ownedByCurrentUser;
         }
     }
 

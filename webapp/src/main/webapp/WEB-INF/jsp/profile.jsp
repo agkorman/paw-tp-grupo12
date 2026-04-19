@@ -111,7 +111,9 @@
                 <c:otherwise>
                     <div class="profile-review-list">
                         <c:forEach var="profileReview" items="${profileReviews}">
-                            <pa:profile-review-card reviewCard="${profileReview}"/>
+                            <pa:profile-review-card
+                                    reviewCard="${profileReview}"
+                                    editable="${profileReview.ownedByCurrentUser}"/>
                         </c:forEach>
                     </div>
                 </c:otherwise>
@@ -167,7 +169,9 @@
                     <c:otherwise>
                         <div class="profile-review-list">
                             <c:forEach var="likedReview" items="${likedReviews}">
-                                <pa:profile-review-card reviewCard="${likedReview}"/>
+                                <pa:profile-review-card
+                                        reviewCard="${likedReview}"
+                                        editable="${likedReview.ownedByCurrentUser}"/>
                             </c:forEach>
                         </div>
                     </c:otherwise>

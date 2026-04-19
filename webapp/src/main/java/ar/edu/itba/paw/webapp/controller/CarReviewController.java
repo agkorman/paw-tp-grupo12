@@ -6,12 +6,14 @@ import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.math.BigDecimal;
@@ -170,14 +172,13 @@ public class CarReviewController {
                                      @RequestParam(value = "wouldRecommend", required = false) final Boolean wouldRecommend,
                                      @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
-        if (!canModifyReview(existingReview, currentUser)) {
-            return new ModelAndView("redirect:/profile");
-        }
+        validateReviewOwnership(existingReview, currentUser);
 
         final String validationError = validateReviewInput(rating, ownershipStatus);
         if (validationError != null) {
-            return new ModelAndView("redirect:/profile");
+            return carReviewPage(existingReview.getCarId(), null, validationError, true);
         }
+
 
         reviewService.updateReview(
                 reviewId,
@@ -197,17 +198,18 @@ public class CarReviewController {
     public ModelAndView deleteReview(@PathVariable("reviewId") final long reviewId,
                                      @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
-        if (canModifyReview(existingReview, currentUser)) {
-            reviewService.deleteReview(reviewId);
-        }
+        validateReviewOwnership(existingReview, currentUser);
+        reviewService.deleteReview(reviewId);
         return new ModelAndView("redirect:/profile");
     }
 
-    private boolean canModifyReview(final Review review, final AuthenticatedUser currentUser) {
-        return review != null
-                && currentUser != null
-                && review.getUserId() != null
-                && review.getUserId().equals(currentUser.getId());
+    private void validateReviewOwnership(final Review review, final AuthenticatedUser currentUser) {
+        if (review == null) {
+            throw new ReviewNotFoundException();
+        }
+        if (currentUser == null || review.getUserId() == null || !review.getUserId().equals(currentUser.getId())) {
+            throw new ReviewForbiddenException();
+        }
     }
 
     private String validateReviewInput(final BigDecimal rating, final String ownershipStatus) {
@@ -233,5 +235,13 @@ public class CarReviewController {
             this.currentSort = currentSort;
             this.latestReview = latestReview;
         }
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    private static final class ReviewNotFoundException extends RuntimeException {
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    private static final class ReviewForbiddenException extends RuntimeException {
     }
 }
