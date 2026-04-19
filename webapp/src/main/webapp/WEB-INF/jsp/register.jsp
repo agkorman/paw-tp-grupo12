@@ -91,6 +91,5 @@
         </section>
     </main>
 
-    <pa:footer/>
 </body>
 </html>

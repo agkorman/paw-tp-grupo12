@@ -79,7 +79,6 @@
 
     <pa:create-review-modal carId="${selectedCar.id}" autoOpen="${openReviewModal}"/>
 
-    <pa:footer/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
 

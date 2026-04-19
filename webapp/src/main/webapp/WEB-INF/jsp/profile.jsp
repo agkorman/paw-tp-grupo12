@@ -180,7 +180,6 @@
         </c:if>
     </main>
 
-    <pa:footer/>
     <pa:create-review-modal/>
     <pa:review-delete-modal/>
     <pa:edit-profile-modal profile="${profile}"/>

@@ -34,7 +34,6 @@
             brands="${brands}"
             bodyTypes="${bodyTypes}"/>
 
-    <pa:footer/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
     <script src="<c:url value='/js/create-car-modal.js'/>"></script>

@@ -149,7 +149,6 @@
         </section>
     </main>
 
-    <pa:footer/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
 
 </body>

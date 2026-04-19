@@ -86,7 +86,6 @@
     </main>
 
     <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
-    <pa:footer/>
     <script src="<c:url value='/js/create-car-modal.js'/>"></script>
 </body>
 </html>
