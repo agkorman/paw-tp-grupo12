@@ -75,12 +75,23 @@ class CarModerationFlowTest {
                 CarRequestService.STATUS_PENDING
         );
 
-        final boolean approved = carRequestService.approvePendingRequest(request.getId());
+        final boolean approved = carRequestService.approvePendingRequest(
+                request.getId(),
+                9L,
+                "GR86",
+                8L,
+                "Edited desc",
+                Optional.empty(),
+                Optional.empty()
+        );
 
         assertTrue(approved);
         assertEquals(CarRequestService.STATUS_APPROVED, carRequestDao.request.getStatus());
         assertTrue(carDao.created);
-        assertEquals("Supra", carDao.createdModel);
+        assertEquals(9L, carDao.createdBrandId);
+        assertEquals("GR86", carDao.createdModel);
+        assertEquals(8L, carDao.createdBodyTypeId);
+        assertEquals("Edited desc", carDao.createdDescription);
         assertTrue(carImageDao.saved);
         assertEquals(100L, carImageDao.savedCarId);
         assertEquals("image/png", carImageDao.savedContentType);
@@ -129,6 +140,14 @@ class CarModerationFlowTest {
 
         @Override
         public boolean approvePendingRequest(final long id) {
+            return false;
+        }
+
+        @Override
+        public boolean approvePendingRequest(final long id, final long brandId, final String model,
+                                             final long bodyTypeId, final String description,
+                                             final Optional<String> imageContentType,
+                                             final Optional<byte[]> imageData) {
             return false;
         }
 
@@ -195,7 +214,10 @@ class CarModerationFlowTest {
 
     private static final class FakeCarDao implements CarDao {
         private boolean created;
+        private long createdBrandId;
         private String createdModel;
+        private long createdBodyTypeId;
+        private String createdDescription;
 
         @Override
         public List<Car> findAll() {
@@ -230,7 +252,10 @@ class CarModerationFlowTest {
         @Override
         public Car create(final long brandId, final String model, final long bodyTypeId, final String description) {
             created = true;
+            createdBrandId = brandId;
             createdModel = model;
+            createdBodyTypeId = bodyTypeId;
+            createdDescription = description;
             return new Car(100L, brandId, "Toyota", model, bodyTypeId, "Coupe", description, LocalDateTime.now());
         }
     }

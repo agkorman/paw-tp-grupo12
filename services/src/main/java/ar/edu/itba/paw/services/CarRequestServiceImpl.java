@@ -88,19 +88,59 @@ public class CarRequestServiceImpl implements CarRequestService {
             return false;
         }
 
+        return approvePendingRequest(
+                id,
+                request.getBrandId(),
+                request.getModel(),
+                request.getBodyTypeId(),
+                request.getDescription(),
+                Optional.empty(),
+                Optional.empty()
+        );
+    }
+
+    @Override
+    @Transactional
+    public boolean approvePendingRequest(final long id, final long brandId, final String model,
+                                         final long bodyTypeId, final String description,
+                                         final Optional<String> imageContentType,
+                                         final Optional<byte[]> imageData) {
+        final CarRequest request = carRequestDao.findById(id).orElse(null);
+        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            return false;
+        }
+
+        final String normalizedModel = normalize(model);
+        if (normalizedModel == null) {
+            throw new IllegalArgumentException("Model is required to approve car requests.");
+        }
+
+        final String normalizedDescription = normalize(description);
+        if (normalizedDescription == null) {
+            throw new IllegalArgumentException("Description is required to approve car requests.");
+        }
+
+        final boolean hasImageContentType = imageContentType.isPresent();
+        final boolean hasImageData = imageData.isPresent();
+        if (hasImageContentType != hasImageData) {
+            throw new IllegalArgumentException("Image metadata and payload must be provided together.");
+        }
+
         final boolean statusUpdated = carRequestDao.updateStatus(id, STATUS_PENDING, STATUS_APPROVED);
         if (!statusUpdated) {
             return false;
         }
 
         final Car createdCar = carDao.create(
-                request.getBrandId(),
-                request.getModel(),
-                request.getBodyTypeId(),
-                request.getDescription()
+                brandId,
+                normalizedModel,
+                bodyTypeId,
+                normalizedDescription
         );
-        if (request.getImageContentType() != null && request.getImageData() != null) {
-            carImageDao.saveOrReplace(createdCar.getId(), request.getImageContentType(), request.getImageData());
+        final String contentTypeToPersist = imageContentType.orElse(request.getImageContentType());
+        final byte[] imageDataToPersist = imageData.orElse(request.getImageData());
+        if (contentTypeToPersist != null && imageDataToPersist != null) {
+            carImageDao.saveOrReplace(createdCar.getId(), contentTypeToPersist, imageDataToPersist);
         }
         return true;
     }

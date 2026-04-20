@@ -7,7 +7,6 @@
     var filePreviewImg = document.getElementById('modalCarImagePreviewImg');
     var fileUpload = fileInput ? fileInput.closest('.car-image-upload') : null;
     var isAdminMode = modal ? modal.dataset.adminMode === 'true' : false;
-    var acceptForm = document.getElementById('acceptCarRequestForm');
     var rejectForm = document.getElementById('rejectCarRequestForm');
     var modalKicker = document.getElementById('createCarModalKicker');
     var modalTitle = document.getElementById('createCarModalTitle');
@@ -15,6 +14,7 @@
     var createActions = document.getElementById('createCarCreateActions');
     var reviewActions = document.getElementById('createCarReviewActions');
     var currentMode = isAdminMode ? 'review' : 'create';
+    var createAction = form ? form.getAttribute('action') : '';
 
     if (!modal || !form) {
         return;
@@ -115,11 +115,6 @@
             return;
         }
 
-        if (currentMode === 'review') {
-            fileUpload.classList.add('has-file');
-            return;
-        }
-
         var selectedFile = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
         fileUpload.classList.toggle('has-file', !!selectedFile);
 
@@ -166,9 +161,7 @@
         }
 
         var baseUrl = modal.dataset.adminBaseUrl || '/admin';
-        if (acceptForm) {
-            acceptForm.setAttribute('action', baseUrl + '/requests/' + requestId + '/accept');
-        }
+        form.setAttribute('action', baseUrl + '/requests/' + requestId + '/accept');
         if (rejectForm) {
             rejectForm.setAttribute('action', baseUrl + '/requests/' + requestId + '/reject');
         }
@@ -209,12 +202,14 @@
 
     var setCreateMode = function () {
         currentMode = 'create';
+        form.setAttribute('action', createAction);
         setText(modalKicker, 'Nuevo vehículo');
         setText(modalTitle, 'Agregá un auto');
         setText(modalSubtitle, 'Completá los datos del auto. Esta carga se registrará desde el panel de administración.');
         setActionVisibility(true);
 
         setFieldReadonly('modalCarSubmitterEmail', false);
+        setFieldDisabled('modalCarSubmitterEmail', false);
         setFieldReadonly('modalCarModel', false);
         setFieldReadonly('modalCarDescription', false);
         setFieldDisabled('modalCarBrand', false);
@@ -235,21 +230,22 @@
     var setReviewMode = function () {
         currentMode = 'review';
         setText(modalKicker, 'Solicitud pendiente');
-        setText(modalTitle, 'Revisar formulario');
-        setText(modalSubtitle, 'Revisá los datos enviados por el usuario antes de aprobar o rechazar la solicitud.');
+        setText(modalTitle, 'Revisar y editar formulario');
+        setText(modalSubtitle, 'Corregí los datos que haga falta antes de aprobar la solicitud.');
         setActionVisibility(false);
 
         setFieldReadonly('modalCarSubmitterEmail', true);
-        setFieldReadonly('modalCarModel', true);
-        setFieldReadonly('modalCarDescription', true);
-        setFieldDisabled('modalCarBrand', true);
-        setFieldDisabled('modalCarBodyType', true);
-        setFieldDisabled('modalCarFile', true);
+        setFieldDisabled('modalCarSubmitterEmail', true);
+        setFieldReadonly('modalCarModel', false);
+        setFieldReadonly('modalCarDescription', false);
+        setFieldDisabled('modalCarBrand', false);
+        setFieldDisabled('modalCarBodyType', false);
+        setFieldDisabled('modalCarFile', false);
         if (fileInput) {
             fileInput.removeAttribute('required');
         }
         if (fileUpload) {
-            fileUpload.classList.add('is-readonly');
+            fileUpload.classList.remove('is-readonly');
         }
     };
 
@@ -341,10 +337,6 @@
     });
 
     form.addEventListener('submit', function (event) {
-        if (currentMode === 'review') {
-            event.preventDefault();
-            return;
-        }
         if (!validateRequiredFields()) {
             event.preventDefault();
             form.reportValidity();
