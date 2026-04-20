@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
@@ -98,8 +99,25 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    public List<CarImage> getCarImagesByCarId(final long carId) {
+        return carImageDao.findAllByCarId(carId);
+    }
+
+    @Override
+    public Optional<CarImage> getCarImageById(final long carId, final long imageId) {
+        return carImageDao.findByCarIdAndImageId(carId, imageId);
+    }
+
+    @Override
+    @Transactional
     public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
         carImageDao.saveOrReplace(carId, contentType, imageData);
+    }
+
+    @Override
+    @Transactional
+    public void saveCarImages(final long carId, final List<CarImagePayload> images) {
+        carImageDao.replaceAll(carId, normalizeImages(images));
     }
 
     @Override
@@ -108,32 +126,63 @@ public class CarServiceImpl implements CarService {
                          final long submittedByUserId,
                          final Optional<String> description, final Optional<String> imageContentType,
                          final Optional<byte[]> imageData) {
-        final String normalizedDescription = description
-                .map(String::trim)
-                .filter(value -> !value.isEmpty())
-                .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
-
-        final Car createdCar = carDao.create(brandId, model, bodyTypeId, normalizedDescription);
-
+        final List<CarImagePayload> images;
         final boolean hasImageContentType = imageContentType.isPresent();
         final boolean hasImageData = imageData.isPresent();
         if (hasImageContentType != hasImageData) {
             throw new IllegalArgumentException("Image metadata and payload must be provided together.");
         }
         if (hasImageContentType) {
-            carImageDao.saveOrReplace(createdCar.getId(), imageContentType.orElseThrow(), imageData.orElseThrow());
+            images = List.of(new CarImagePayload(imageContentType.orElseThrow(), imageData.orElseThrow()));
+        } else {
+            images = Collections.emptyList();
+        }
+        return createCar(brandId, model, bodyTypeId, submittedByUserId, description, images);
+    }
+
+    @Override
+    @Transactional
+    public Car createCar(final long brandId, final String model, final long bodyTypeId,
+                         final long submittedByUserId,
+                         final Optional<String> description, final List<CarImagePayload> images) {
+        final String normalizedDescription = description
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
+        final List<CarImagePayload> normalizedImages = normalizeImages(images);
+        if (normalizedImages.isEmpty()) {
+            throw new IllegalArgumentException("At least one image is required for car creation.");
         }
 
-        carRequestService.createPendingRequest(
-                submittedByUserId,
-                brandId,
-                bodyTypeId,
-                model,
-                normalizedDescription,
-                imageContentType,
-                imageData
-        );
+        try {
+            final Car createdCar = carDao.create(brandId, model, bodyTypeId, normalizedDescription);
+            carImageDao.replaceAll(createdCar.getId(), normalizedImages);
 
-        return carDao.findById(createdCar.getId()).orElse(createdCar);
+            carRequestService.createPendingRequest(
+                    submittedByUserId,
+                    brandId,
+                    bodyTypeId,
+                    model,
+                    normalizedDescription,
+                    normalizedImages
+            );
+
+            return carDao.findById(createdCar.getId()).orElse(createdCar);
+        } catch (final RuntimeException e) {
+            throw new IllegalStateException("Failed to create car with image gallery.", e);
+        }
+    }
+
+    private List<CarImagePayload> normalizeImages(final List<CarImagePayload> images) {
+        if (images == null) {
+            return Collections.emptyList();
+        }
+        for (final CarImagePayload image : images) {
+            if (image == null || image.getContentType() == null || image.getContentType().isBlank()
+                    || image.getImageData() == null || image.getImageData().length == 0) {
+                throw new IllegalArgumentException("Image metadata and payload must be provided together.");
+            }
+        }
+        return List.copyOf(images);
     }
 }

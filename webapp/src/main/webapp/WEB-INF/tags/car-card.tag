@@ -19,6 +19,7 @@
 <%@ attribute name="requestBodyType" required="false" %>
 <%@ attribute name="requestDescription" required="false" %>
 <%@ attribute name="requestSubmitter" required="false" %>
+<%@ attribute name="requestImageUrls" required="false" %>
 <%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -39,7 +40,8 @@
        data-request-body-type="${fn:escapeXml(requestBodyType)}"
        data-request-description="${fn:escapeXml(requestDescription)}"
        data-request-submitter="${fn:escapeXml(requestSubmitter)}"
-       data-request-image-url="${fn:escapeXml(modalImageUrl)}">
+       data-request-image-url="${fn:escapeXml(modalImageUrl)}"
+       data-request-image-urls="${fn:escapeXml(requestImageUrls)}">
         <div class="car-card">
             <div class="card-image-wrap">
                 <c:choose>

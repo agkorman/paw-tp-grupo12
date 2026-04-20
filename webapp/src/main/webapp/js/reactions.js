@@ -80,6 +80,9 @@
 
         var likeButton = findActionButton(event.target, 'data-review-like-toggle');
         if (likeButton) {
+            if (likeButton.form && likeButton.form.getAttribute('action')) {
+                return;
+            }
             event.preventDefault();
             event.stopPropagation();
             if (!likeButton.disabled) {

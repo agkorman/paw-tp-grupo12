@@ -1,9 +1,12 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +42,7 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    @Transactional
     public CarRequest createPendingRequest(final long submittedByUserId, final long brandId,
                                            final long bodyTypeId, final String model,
                                            final String description, final Optional<String> imageContentType,
@@ -48,7 +52,17 @@ public class CarRequestServiceImpl implements CarRequestService {
         if (hasImageContentType != hasImageData) {
             throw new IllegalArgumentException("Image metadata and payload must be provided together.");
         }
+        final List<CarImagePayload> images = hasImageContentType
+                ? List.of(new CarImagePayload(imageContentType.orElseThrow(), imageData.orElseThrow()))
+                : Collections.emptyList();
+        return createPendingRequest(submittedByUserId, brandId, bodyTypeId, model, description, images);
+    }
 
+    @Override
+    @Transactional
+    public CarRequest createPendingRequest(final long submittedByUserId, final long brandId,
+                                           final long bodyTypeId, final String model,
+                                           final String description, final List<CarImagePayload> images) {
         final String normalizedModel = normalize(model);
         if (normalizedModel == null) {
             throw new IllegalArgumentException("Model is required for car requests.");
@@ -58,17 +72,37 @@ public class CarRequestServiceImpl implements CarRequestService {
         if (normalizedDescription == null) {
             throw new IllegalArgumentException("Description is required for car requests.");
         }
+        final List<CarImagePayload> normalizedImages = normalizeImages(images);
+        final CarImagePayload coverImage = normalizedImages.isEmpty() ? null : normalizedImages.get(0);
 
-        return carRequestDao.create(
-                submittedByUserId,
-                brandId,
-                bodyTypeId,
-                normalizedModel,
-                normalizedDescription,
-                imageContentType.orElse(null),
-                imageData.orElse(null),
-                STATUS_PENDING
-        );
+        try {
+            final CarRequest request = carRequestDao.create(
+                    submittedByUserId,
+                    brandId,
+                    bodyTypeId,
+                    normalizedModel,
+                    normalizedDescription,
+                    coverImage == null ? null : coverImage.getContentType(),
+                    coverImage == null ? null : coverImage.getImageData(),
+                    STATUS_PENDING
+            );
+            if (!normalizedImages.isEmpty()) {
+                carRequestDao.replaceImages(request.getId(), normalizedImages);
+            }
+            return request;
+        } catch (final RuntimeException e) {
+            throw new IllegalStateException("Failed to create pending car request with image gallery.", e);
+        }
+    }
+
+    @Override
+    public List<CarRequestImage> getCarRequestImages(final long requestId) {
+        return carRequestDao.findImagesByRequestId(requestId);
+    }
+
+    @Override
+    public Optional<CarRequestImage> getCarRequestImageById(final long requestId, final long imageId) {
+        return carRequestDao.findImageByRequestIdAndImageId(requestId, imageId);
     }
 
     @Override
@@ -87,5 +121,18 @@ public class CarRequestServiceImpl implements CarRequestService {
         }
         final String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private List<CarImagePayload> normalizeImages(final List<CarImagePayload> images) {
+        if (images == null) {
+            return Collections.emptyList();
+        }
+        for (final CarImagePayload image : images) {
+            if (image == null || image.getContentType() == null || image.getContentType().isBlank()
+                    || image.getImageData() == null || image.getImageData().length == 0) {
+                throw new IllegalArgumentException("Image metadata and payload must be provided together.");
+            }
+        }
+        return List.copyOf(images);
     }
 }

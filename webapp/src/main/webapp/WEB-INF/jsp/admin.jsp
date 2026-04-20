@@ -77,7 +77,8 @@
                                     requestModel="${request.model}"
                                     requestBodyType="${request.bodyTypeName}"
                                     requestDescription="${request.description}"
-                                    requestSubmitter="${request.submitter}"/>
+                                    requestSubmitter="${request.submitter}"
+                                    requestImageUrls="${request.imageUrls}"/>
                         </c:forEach>
                     </div>
                 </c:otherwise>

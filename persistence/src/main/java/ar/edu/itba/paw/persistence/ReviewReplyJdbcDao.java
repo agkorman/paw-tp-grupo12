@@ -1,0 +1,97 @@
+package ar.edu.itba.paw.persistence;
+
+import ar.edu.itba.paw.model.ReviewReply;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.stereotype.Repository;
+
+import javax.sql.DataSource;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@Repository
+public class ReviewReplyJdbcDao implements ReviewReplyDao {
+
+    private static final String REPLY_SELECT =
+            "SELECT rr.reply_id, rr.review_id, rr.user_id, u.username AS author_username, "
+                    + "rr.body, rr.created_at, rr.updated_at "
+                    + "FROM review_replies rr JOIN users u ON rr.user_id = u.user_id ";
+
+    private static final RowMapper<ReviewReply> ROW_MAPPER = (rs, rowNum) -> new ReviewReply(
+            rs.getLong("reply_id"),
+            rs.getLong("review_id"),
+            rs.getLong("user_id"),
+            rs.getString("author_username"),
+            rs.getString("body"),
+            rs.getTimestamp("created_at").toLocalDateTime(),
+            rs.getTimestamp("updated_at").toLocalDateTime()
+    );
+
+    private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final SimpleJdbcInsert jdbcInsert;
+
+    @Autowired
+    public ReviewReplyJdbcDao(final DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+        this.jdbcInsert = new SimpleJdbcInsert(dataSource)
+                .withTableName("review_replies")
+                .usingColumns("review_id", "user_id", "body")
+                .usingGeneratedKeyColumns("reply_id");
+    }
+
+    @Override
+    public Optional<ReviewReply> findById(final long id) {
+        return jdbcTemplate.query(
+                REPLY_SELECT + "WHERE rr.reply_id = ?",
+                ROW_MAPPER,
+                id
+        ).stream().findFirst();
+    }
+
+    @Override
+    public List<ReviewReply> findByReviewId(final long reviewId) {
+        return jdbcTemplate.query(
+                REPLY_SELECT + "WHERE rr.review_id = ? ORDER BY rr.created_at ASC, rr.reply_id ASC",
+                ROW_MAPPER,
+                reviewId
+        );
+    }
+
+    @Override
+    public List<ReviewReply> findByReviewIds(final Collection<Long> reviewIds) {
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return List.of();
+        }
+        return namedParameterJdbcTemplate.query(
+                REPLY_SELECT + "WHERE rr.review_id IN (:reviewIds) "
+                        + "ORDER BY rr.review_id ASC, rr.created_at ASC, rr.reply_id ASC",
+                new MapSqlParameterSource("reviewIds", reviewIds),
+                ROW_MAPPER
+        );
+    }
+
+    @Override
+    public ReviewReply create(final long reviewId, final long userId, final String body) {
+        final Map<String, Object> params = new HashMap<>();
+        params.put("review_id", reviewId);
+        params.put("user_id", userId);
+        params.put("body", body);
+
+        final long id = jdbcInsert.executeAndReturnKey(params).longValue();
+        return findById(id).orElseThrow();
+    }
+
+    @Override
+    public boolean delete(final long id) {
+        return jdbcTemplate.update("DELETE FROM review_replies WHERE reply_id = ?", id) > 0;
+    }
+}

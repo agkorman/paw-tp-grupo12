@@ -2,10 +2,12 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CarService;
+import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.UserService;
@@ -18,7 +20,9 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -69,6 +73,7 @@ public class ProfileControllerTest {
     private ProfileController controller(final Review review) {
         return new ProfileController(
                 new FakeReviewService(review),
+                new FakeReviewLikeService(),
                 new FakeCarService(),
                 new FakeUserService(),
                 new FakeUserFollowService()
@@ -114,7 +119,7 @@ public class ProfileControllerTest {
 
         @Override
         public Optional<Review> getReviewById(final long id) {
-            return Optional.empty();
+            return review.getId() == id ? Optional.of(review) : Optional.empty();
         }
 
         @Override
@@ -178,6 +183,53 @@ public class ProfileControllerTest {
         }
     }
 
+    private static final class FakeReviewLikeService implements ReviewLikeService {
+        @Override
+        public boolean toggleReviewLike(final long reviewId, final long userId) {
+            return false;
+        }
+
+        @Override
+        public boolean toggleReplyLike(final long replyId, final long userId) {
+            return false;
+        }
+
+        @Override
+        public long countReviewLikes(final long reviewId) {
+            return 0;
+        }
+
+        @Override
+        public Map<Long, Long> countReviewLikesByReviewIds(final Collection<Long> reviewIds) {
+            return Collections.emptyMap();
+        }
+
+        @Override
+        public Set<Long> getLikedReviewIds(final Collection<Long> reviewIds, final long userId) {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public List<Long> getLikedReviewIdsByUser(final long userId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public long countReplyLikes(final long replyId) {
+            return 0;
+        }
+
+        @Override
+        public Map<Long, Long> countReplyLikesByReplyIds(final Collection<Long> replyIds) {
+            return Collections.emptyMap();
+        }
+
+        @Override
+        public Set<Long> getLikedReplyIds(final Collection<Long> replyIds, final long userId) {
+            return Collections.emptySet();
+        }
+    }
+
     private static final class FakeCarService implements CarService {
         @Override
         public List<Car> getAllCars() {
@@ -215,13 +267,34 @@ public class ProfileControllerTest {
         }
 
         @Override
+        public List<CarImage> getCarImagesByCarId(final long carId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<CarImage> getCarImageById(final long carId, final long imageId) {
+            return Optional.empty();
+        }
+
+        @Override
         public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
+        }
+
+        @Override
+        public void saveCarImages(final long carId, final List<CarImagePayload> images) {
         }
 
         @Override
         public Car createCar(final long brandId, final String model, final long bodyTypeId,
                              final long submittedByUserId, final Optional<String> description,
                              final Optional<String> imageContentType, final Optional<byte[]> imageData) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Car createCar(final long brandId, final String model, final long bodyTypeId,
+                             final long submittedByUserId, final Optional<String> description,
+                             final List<CarImagePayload> images) {
             throw new UnsupportedOperationException();
         }
     }

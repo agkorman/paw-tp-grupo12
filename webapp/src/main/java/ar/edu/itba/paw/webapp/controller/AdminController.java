@@ -3,6 +3,7 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarRequestService;
@@ -82,10 +83,32 @@ public class AdminController {
             @PathVariable("requestId") final long requestId,
             @RequestHeader(value = "If-None-Match", required = false) final String ifNoneMatch) {
         final CarRequest request = carRequestService.getCarRequestById(requestId).orElse(null);
-        if (request == null || request.getImageData() == null || request.getImageContentType() == null) {
+        if (request == null) {
             return ResponseEntity.notFound().build();
         }
+        final List<CarRequestImage> requestImages = carRequestService.getCarRequestImages(requestId);
+        if (!requestImages.isEmpty()) {
+            final CarRequestImage coverImage = carRequestService
+                    .getCarRequestImageById(requestId, requestImages.get(0).getImageId())
+                    .orElse(null);
+            return getRequestImageResponse(coverImage, ifNoneMatch);
+        }
+        if (request.getImageData() == null || request.getImageContentType() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return getLegacyRequestImageResponse(request, ifNoneMatch);
+    }
 
+    @RequestMapping(value = "/requests/{requestId}/images/{imageId}", method = RequestMethod.GET)
+    public ResponseEntity<byte[]> getRequestImageById(
+            @PathVariable("requestId") final long requestId,
+            @PathVariable("imageId") final long imageId,
+            @RequestHeader(value = "If-None-Match", required = false) final String ifNoneMatch) {
+        final CarRequestImage requestImage = carRequestService.getCarRequestImageById(requestId, imageId).orElse(null);
+        return getRequestImageResponse(requestImage, ifNoneMatch);
+    }
+
+    private ResponseEntity<byte[]> getLegacyRequestImageResponse(final CarRequest request, final String ifNoneMatch) {
         final String eTag = "\"" + request.getId() + "-" + request.getImageData().length + "\"";
         final CacheControl cacheControl = CacheControl.maxAge(1, TimeUnit.HOURS)
                 .cachePrivate()
@@ -108,10 +131,40 @@ public class AdminController {
                 .body(request.getImageData());
     }
 
+    private ResponseEntity<byte[]> getRequestImageResponse(final CarRequestImage requestImage,
+                                                           final String ifNoneMatch) {
+        if (requestImage == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        final String eTag = "\"" + requestImage.getImageId() + "-" + requestImage.getImageData().length
+                + "-" + requestImage.getUpdatedAt() + "\"";
+        final CacheControl cacheControl = CacheControl.maxAge(1, TimeUnit.HOURS)
+                .cachePrivate()
+                .mustRevalidate();
+
+        if (eTag.equals(ifNoneMatch)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                    .eTag(eTag)
+                    .cacheControl(cacheControl)
+                    .lastModified(Timestamp.valueOf(requestImage.getUpdatedAt()).getTime())
+                    .build();
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(requestImage.getContentType()))
+                .contentLength(requestImage.getImageData().length)
+                .eTag(eTag)
+                .cacheControl(cacheControl)
+                .lastModified(Timestamp.valueOf(requestImage.getUpdatedAt()).getTime())
+                .body(requestImage.getImageData());
+    }
+
     private AdminCarRequestCard toCard(final CarRequest request, final Map<Long, Brand> brandsById,
                                        final Map<Long, BodyType> bodyTypesById) {
         final String brandName = brandsById.getOrDefault(request.getBrandId(), new Brand()).getName();
         final String bodyTypeName = bodyTypesById.getOrDefault(request.getBodyTypeId(), new BodyType()).getName();
+        final List<String> imageUrls = buildRequestImageUrls(request);
         return new AdminCarRequestCard(
                 request.getId(),
                 valueOrFallback(brandName, "Marca pendiente"),
@@ -119,9 +172,23 @@ public class AdminController {
                 valueOrFallback(bodyTypeName, "Carrocería pendiente"),
                 request.getDescription(),
                 submitterLabel(request),
-                request.getImageData() != null,
-                request.getImageData() == null ? null : "/admin/requests/" + request.getId() + "/image"
+                !imageUrls.isEmpty(),
+                imageUrls.isEmpty() ? null : imageUrls.get(0),
+                String.join("|", imageUrls)
         );
+    }
+
+    private List<String> buildRequestImageUrls(final CarRequest request) {
+        final List<CarRequestImage> requestImages = carRequestService.getCarRequestImages(request.getId());
+        if (!requestImages.isEmpty()) {
+            return requestImages.stream()
+                    .map(image -> "/admin/requests/" + request.getId() + "/images/" + image.getImageId())
+                    .collect(Collectors.toList());
+        }
+        if (request.getImageData() == null) {
+            return List.of();
+        }
+        return List.of("/admin/requests/" + request.getId() + "/image");
     }
 
     private String submitterLabel(final CarRequest request) {
@@ -147,10 +214,11 @@ public class AdminController {
         private final String submitter;
         private final boolean hasImage;
         private final String imageUrl;
+        private final String imageUrls;
 
         private AdminCarRequestCard(final long id, final String brandName, final String model,
                                     final String bodyTypeName, final String description, final String submitter,
-                                    final boolean hasImage, final String imageUrl) {
+                                    final boolean hasImage, final String imageUrl, final String imageUrls) {
             this.id = id;
             this.brandName = brandName;
             this.model = model;
@@ -159,6 +227,7 @@ public class AdminController {
             this.submitter = submitter;
             this.hasImage = hasImage;
             this.imageUrl = imageUrl;
+            this.imageUrls = imageUrls;
         }
 
         public long getId() {
@@ -191,6 +260,10 @@ public class AdminController {
 
         public String getImageUrl() {
             return imageUrl;
+        }
+
+        public String getImageUrls() {
+            return imageUrls;
         }
     }
 }

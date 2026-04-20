@@ -1,7 +1,10 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.CarRequestImage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -19,6 +22,7 @@ public class CarRequestJdbcDao implements CarRequestDao {
 
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
+    private final SimpleJdbcInsert imageJdbcInsert;
 
     private static Long getNullableLong(final java.sql.ResultSet rs, final String columnName) throws SQLException {
         final Number value = (Number) rs.getObject(columnName);
@@ -39,6 +43,15 @@ public class CarRequestJdbcDao implements CarRequestDao {
             rs.getTimestamp("created_at").toLocalDateTime()
     );
 
+    private static final RowMapper<CarRequestImage> IMAGE_ROW_MAPPER = (rs, rowNum) -> new CarRequestImage(
+            rs.getLong("image_id"),
+            rs.getLong("car_request_id"),
+            rs.getInt("display_order"),
+            rs.getString("content_type"),
+            rs.getBytes("image_data"),
+            rs.getTimestamp("updated_at").toLocalDateTime()
+    );
+
     @Autowired
     public CarRequestJdbcDao(final DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -47,6 +60,10 @@ public class CarRequestJdbcDao implements CarRequestDao {
                 .usingGeneratedKeyColumns("car_request_id")
                 .usingColumns("submitted_by_user_id", "submitter_email", "brand_id", "body_type_id", "model",
                         "description", "image_content_type", "image_data", "status");
+        this.imageJdbcInsert = new SimpleJdbcInsert(dataSource)
+                .withTableName("car_request_images")
+                .usingGeneratedKeyColumns("image_id")
+                .usingColumns("car_request_id", "display_order", "content_type", "image_data");
     }
 
     @Override
@@ -98,6 +115,55 @@ public class CarRequestJdbcDao implements CarRequestDao {
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();
+    }
+
+    @Override
+    public List<CarRequestImage> findImagesByRequestId(final long requestId) {
+        try {
+            return jdbcTemplate.query(
+                    "SELECT image_id, car_request_id, display_order, content_type, NULL::bytea AS image_data, updated_at "
+                            + "FROM car_request_images WHERE car_request_id = ? "
+                            + "ORDER BY display_order ASC, image_id ASC",
+                    IMAGE_ROW_MAPPER,
+                    requestId
+            );
+        } catch (final DataAccessException e) {
+            throw new IllegalStateException("Failed to fetch image metadata for car request " + requestId + ".", e);
+        }
+    }
+
+    @Override
+    public Optional<CarRequestImage> findImageByRequestIdAndImageId(final long requestId, final long imageId) {
+        try {
+            return jdbcTemplate.query(
+                    "SELECT image_id, car_request_id, display_order, content_type, image_data, updated_at "
+                            + "FROM car_request_images WHERE car_request_id = ? AND image_id = ?",
+                    IMAGE_ROW_MAPPER,
+                    requestId,
+                    imageId
+            ).stream().findFirst();
+        } catch (final DataAccessException e) {
+            throw new IllegalStateException("Failed to fetch image " + imageId
+                    + " for car request " + requestId + ".", e);
+        }
+    }
+
+    @Override
+    public void replaceImages(final long requestId, final List<CarImagePayload> images) {
+        try {
+            jdbcTemplate.update("DELETE FROM car_request_images WHERE car_request_id = ?", requestId);
+            for (int i = 0; i < images.size(); i++) {
+                final CarImagePayload image = images.get(i);
+                final Map<String, Object> params = new HashMap<>();
+                params.put("car_request_id", requestId);
+                params.put("display_order", i);
+                params.put("content_type", image.getContentType());
+                params.put("image_data", image.getImageData());
+                imageJdbcInsert.execute(params);
+            }
+        } catch (final DataAccessException e) {
+            throw new IllegalStateException("Failed to replace image gallery for car request " + requestId + ".", e);
+        }
     }
 
     @Override

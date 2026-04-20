@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
@@ -60,6 +61,7 @@ import java.util.stream.Collectors;
 public class CarController {
 
     private static final int FEATURED_REVIEW_COUNT = 3;
+    private static final int MAX_IMAGE_COUNT = 5;
     private static final long MAX_IMAGE_SIZE_BYTES = 10L * 1024 * 1024;
     private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
             MediaType.IMAGE_JPEG_VALUE,
@@ -152,10 +154,10 @@ public class CarController {
             return "redirect:/cars/new";
         }
 
-        final MultipartFile file = carForm.getFile();
-        final String imageError = validateUploadedImage(file, true);
+        final List<MultipartFile> files = selectedImageFiles(carForm.getFiles());
+        final String imageError = validateUploadedImages(files, true);
         if (imageError != null) {
-            errors.rejectValue("file", "image.invalid", imageError);
+            errors.rejectValue("files", "image.invalid", imageError);
         }
 
         Brand resolvedBrand = null;
@@ -192,10 +194,9 @@ public class CarController {
             return "cars.jsp";
         }
 
-        final Optional<String> imageContentType = Optional.ofNullable(resolveImageContentType(file));
-        final Optional<byte[]> imageData;
+        final List<CarImagePayload> imagePayloads;
         try {
-            imageData = Optional.of(file.getBytes());
+            imagePayloads = toImagePayloads(files);
         } catch (final IOException e) {
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
@@ -206,8 +207,7 @@ public class CarController {
                 resolvedBodyType.getId(),
                 currentUser.getId(),
                 Optional.ofNullable(carForm.getDescription()).filter(value -> !value.isEmpty()),
-                imageContentType,
-                imageData
+                imagePayloads
         );
 
         emailService.sendCarCreatedNotification(createdCar);
@@ -244,6 +244,19 @@ public class CarController {
 
     private ResponseEntity<byte[]> getCarImageResponse(final long carId, final String ifNoneMatch) {
         final CarImage carImage = carService.getCarImageByCarId(carId).orElse(null);
+        return getCarImageResponse(carImage, ifNoneMatch);
+    }
+
+    @RequestMapping(value = "/cars/{carId}/images/{imageId}", method = RequestMethod.GET)
+    public ResponseEntity<byte[]> getCarImageById(
+            @PathVariable("carId") final long carId,
+            @PathVariable("imageId") final long imageId,
+            @RequestHeader(value = "If-None-Match", required = false) final String ifNoneMatch) {
+        final CarImage carImage = carService.getCarImageById(carId, imageId).orElse(null);
+        return getCarImageResponse(carImage, ifNoneMatch);
+    }
+
+    private ResponseEntity<byte[]> getCarImageResponse(final CarImage carImage, final String ifNoneMatch) {
         if (carImage == null) {
             return ResponseEntity.notFound().build();
         }
@@ -273,29 +286,29 @@ public class CarController {
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.POST, consumes = "multipart/form-data")
     public ResponseEntity<?> uploadCarImage(
             @PathVariable("carId") final long carId,
-            @RequestParam("file") final MultipartFile file) {
-        return uploadCarImageResponse(carId, file);
+            @RequestParam("file") final List<MultipartFile> files) {
+        return uploadCarImageResponse(carId, files);
     }
 
     @RequestMapping(value = "/car-image", method = RequestMethod.POST, consumes = "multipart/form-data")
     public ResponseEntity<?> uploadCarImageByQueryParam(
             @RequestParam("carId") final long carId,
-            @RequestParam("file") final MultipartFile file) {
-        return uploadCarImageResponse(carId, file);
+            @RequestParam("file") final List<MultipartFile> files) {
+        return uploadCarImageResponse(carId, files);
     }
 
-    private ResponseEntity<?> uploadCarImageResponse(final long carId, final MultipartFile file) {
+    private ResponseEntity<?> uploadCarImageResponse(final long carId, final List<MultipartFile> files) {
         if (carService.getCarById(carId).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Auto no encontrado.");
         }
-        final String imageValidationError = validateUploadedImage(file, true);
+        final List<MultipartFile> selectedFiles = selectedImageFiles(files);
+        final String imageValidationError = validateUploadedImages(selectedFiles, true);
         if (imageValidationError != null) {
             return ResponseEntity.badRequest().body(imageValidationError);
         }
 
-        final String contentType = resolveImageContentType(file);
         try {
-            carService.saveCarImage(carId, contentType, file.getBytes());
+            carService.saveCarImages(carId, toImagePayloads(selectedFiles));
         } catch (final IOException e) {
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
@@ -305,7 +318,24 @@ public class CarController {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<String> handleMaxUploadSizeExceeded(final MaxUploadSizeExceededException ignored) {
-        return ResponseEntity.badRequest().body("La imagen no debe superar los 10 MB.");
+        return ResponseEntity.badRequest()
+                .body("Cada imagen no debe superar los 10 MB y la carga total no debe superar los 50 MB.");
+    }
+
+    private String validateUploadedImages(final List<MultipartFile> files, final boolean required) {
+        if (files.isEmpty()) {
+            return required ? "La imagen es obligatoria." : null;
+        }
+        if (files.size() > MAX_IMAGE_COUNT) {
+            return "Podés cargar hasta " + MAX_IMAGE_COUNT + " imágenes.";
+        }
+        for (final MultipartFile file : files) {
+            final String imageError = validateUploadedImage(file, true);
+            if (imageError != null) {
+                return imageError;
+            }
+        }
+        return null;
     }
 
     private String validateUploadedImage(final MultipartFile file, final boolean required) {
@@ -324,6 +354,23 @@ public class CarController {
 
     private String resolveImageContentType(final MultipartFile file) {
         return normalizeContentType(file == null ? null : file.getContentType());
+    }
+
+    private List<MultipartFile> selectedImageFiles(final List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return files.stream()
+                .filter(file -> file != null && !file.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private List<CarImagePayload> toImagePayloads(final List<MultipartFile> files) throws IOException {
+        final List<CarImagePayload> payloads = new ArrayList<>();
+        for (final MultipartFile file : files) {
+            payloads.add(new CarImagePayload(resolveImageContentType(file), file.getBytes()));
+        }
+        return payloads;
     }
 
     private CarCatalogData resolveCatalogData(final String searchQuery, final String brand, final String bodyType) {

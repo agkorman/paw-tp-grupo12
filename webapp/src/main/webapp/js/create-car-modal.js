@@ -5,6 +5,10 @@
     var fileStatus = document.getElementById('modalCarFileStatus');
     var filePreview = document.getElementById('modalCarImagePreview');
     var filePreviewImg = document.getElementById('modalCarImagePreviewImg');
+    var filePreviewPrev = document.getElementById('modalCarImagePrev');
+    var filePreviewNext = document.getElementById('modalCarImageNext');
+    var filePreviewCounter = document.getElementById('modalCarImageCounter');
+    var filePreviewThumbnails = document.getElementById('modalCarImageThumbnails');
     var fileUpload = fileInput ? fileInput.closest('.car-image-upload') : null;
     var isAdminMode = modal ? modal.dataset.adminMode === 'true' : false;
     var acceptForm = document.getElementById('acceptCarRequestForm');
@@ -22,24 +26,36 @@
 
     var closeElements = Array.prototype.slice.call(modal.querySelectorAll('[data-close-car-modal]'));
     var emptyFileStatus = 'Ninguna imagen seleccionada';
-    var previewUrl = null;
+    var previewImages = [];
+    var previewObjectUrls = [];
+    var previewIndex = 0;
     var lastTrigger = null;
     var requiredMessages = {
         modalCarBrand: 'Seleccioná una marca.',
         modalCarBodyType: 'Seleccioná un tipo de carrocería.',
         modalCarModel: 'Ingresá el modelo.',
         modalCarDescription: 'Ingresá una descripción.',
-        modalCarFile: 'Seleccioná una imagen del auto.'
+        modalCarFile: 'Seleccioná al menos una imagen del auto.'
     };
 
-    // Must mirror validateUploadedImage in CarController.java.
+    // Must mirror validateUploadedImages in CarController.java.
     var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     var ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
     var MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+    var MAX_IMAGE_COUNT = 5;
+
+    var selectedFiles = function (field) {
+        if (!field || !field.files) {
+            return [];
+        }
+        return Array.prototype.slice.call(field.files).filter(function (file) {
+            return file && file.size > 0;
+        });
+    };
 
     var isMissingRequiredValue = function (field) {
         if (field.type === 'file') {
-            return !field.files || field.files.length === 0;
+            return selectedFiles(field).length === 0;
         }
         return !field.value || field.value.trim() === '';
     };
@@ -57,15 +73,21 @@
             return field.checkValidity();
         }
 
-        if (field.type === 'file' && field.files && field.files.length > 0) {
-            var f = field.files[0];
-            if (!f.type || ALLOWED_IMAGE_TYPES.indexOf(f.type) === -1) {
-                field.setCustomValidity('Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.');
+        if (field.type === 'file') {
+            var files = selectedFiles(field);
+            if (files.length > MAX_IMAGE_COUNT) {
+                field.setCustomValidity('Podés cargar hasta ' + MAX_IMAGE_COUNT + ' imágenes.');
                 return field.checkValidity();
             }
-            if (f.size > MAX_IMAGE_BYTES) {
-                field.setCustomValidity('La imagen no debe superar los 10 MB.');
-                return field.checkValidity();
+            for (var i = 0; i < files.length; i++) {
+                if (!files[i].type || ALLOWED_IMAGE_TYPES.indexOf(files[i].type) === -1) {
+                    field.setCustomValidity('Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.');
+                    return field.checkValidity();
+                }
+                if (files[i].size > MAX_IMAGE_BYTES) {
+                    field.setCustomValidity('La imagen no debe superar los 10 MB.');
+                    return field.checkValidity();
+                }
             }
         }
 
@@ -78,36 +100,90 @@
         }, true);
     };
 
-    var setPreviewImage = function (imageUrl, shouldRevoke) {
-        if (previewUrl) {
-            window.URL.revokeObjectURL(previewUrl);
-            previewUrl = null;
+    var revokePreviewObjectUrls = function () {
+        if (!window.URL || typeof window.URL.revokeObjectURL !== 'function') {
+            previewObjectUrls = [];
+            return;
         }
+        previewObjectUrls.forEach(function (url) {
+            window.URL.revokeObjectURL(url);
+        });
+        previewObjectUrls = [];
+    };
 
+    var renderPreview = function () {
         if (!filePreview || !filePreviewImg || !fileUpload) {
             return;
         }
 
-        if (!imageUrl) {
+        if (previewImages.length === 0) {
             filePreviewImg.removeAttribute('src');
             filePreview.setAttribute('hidden', 'hidden');
             filePreview.setAttribute('aria-hidden', 'true');
             fileUpload.classList.remove('has-preview');
+            if (filePreviewThumbnails) {
+                filePreviewThumbnails.setAttribute('hidden', 'hidden');
+                filePreviewThumbnails.textContent = '';
+            }
             return;
         }
 
-        filePreviewImg.src = imageUrl;
+        previewIndex = (previewIndex + previewImages.length) % previewImages.length;
+        filePreviewImg.src = previewImages[previewIndex];
         filePreview.removeAttribute('hidden');
         filePreview.setAttribute('aria-hidden', 'false');
         fileUpload.classList.add('has-preview');
 
-        if (shouldRevoke) {
-            previewUrl = imageUrl;
+        if (filePreviewCounter) {
+            filePreviewCounter.textContent = (previewIndex + 1) + ' / ' + previewImages.length;
+        }
+        if (filePreviewPrev) {
+            filePreviewPrev.toggleAttribute('hidden', previewImages.length <= 1);
+        }
+        if (filePreviewNext) {
+            filePreviewNext.toggleAttribute('hidden', previewImages.length <= 1);
+        }
+        if (filePreviewThumbnails) {
+            filePreviewThumbnails.textContent = '';
+            previewImages.forEach(function (url, index) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'car-image-upload-thumb' + (index === previewIndex ? ' is-active' : '');
+                button.setAttribute('data-upload-preview-index', String(index));
+                button.setAttribute('aria-label', 'Ver imagen ' + (index + 1));
+
+                var img = document.createElement('img');
+                img.src = url;
+                img.alt = '';
+                button.appendChild(img);
+                filePreviewThumbnails.appendChild(button);
+            });
+            filePreviewThumbnails.toggleAttribute('hidden', previewImages.length <= 1);
         }
     };
 
-    var clearPreviewImage = function () {
-        setPreviewImage(null, false);
+    var setPreviewImages = function (imageUrls, shouldRevoke) {
+        revokePreviewObjectUrls();
+        previewImages = imageUrls || [];
+        previewIndex = 0;
+        if (shouldRevoke) {
+            previewObjectUrls = previewImages.slice();
+        }
+        renderPreview();
+    };
+
+    var clearPreviewImages = function () {
+        setPreviewImages([], false);
+    };
+
+    var setPreviewFromFiles = function (files) {
+        if (!window.URL || typeof window.URL.createObjectURL !== 'function') {
+            clearPreviewImages();
+            return;
+        }
+        setPreviewImages(files.map(function (file) {
+            return window.URL.createObjectURL(file);
+        }), true);
     };
 
     var updateFileState = function () {
@@ -116,23 +192,22 @@
         }
 
         if (currentMode === 'review') {
-            fileUpload.classList.add('has-file');
+            fileUpload.classList.toggle('has-file', previewImages.length > 0);
             return;
         }
 
-        var selectedFile = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
-        fileUpload.classList.toggle('has-file', !!selectedFile);
+        var files = selectedFiles(fileInput);
+        fileUpload.classList.toggle('has-file', files.length > 0);
 
-        if (selectedFile) {
-            fileStatus.textContent = selectedFile.name;
-            if (window.URL && typeof window.URL.createObjectURL === 'function') {
-                setPreviewImage(window.URL.createObjectURL(selectedFile), true);
-            } else {
-                clearPreviewImage();
-            }
+        if (files.length === 1) {
+            fileStatus.textContent = files[0].name;
+            setPreviewFromFiles(files);
+        } else if (files.length > 1) {
+            fileStatus.textContent = files.length + ' imágenes seleccionadas';
+            setPreviewFromFiles(files);
         } else {
             fileStatus.textContent = emptyFileStatus;
-            clearPreviewImage();
+            clearPreviewImages();
         }
 
         validateField(fileInput);
@@ -143,7 +218,7 @@
         if (fileStatus) {
             fileStatus.textContent = emptyFileStatus;
         }
-        clearPreviewImage();
+        clearPreviewImages();
         updateFileState();
     };
 
@@ -229,7 +304,7 @@
         if (fileStatus) {
             fileStatus.textContent = emptyFileStatus;
         }
-        clearPreviewImage();
+        clearPreviewImages();
     };
 
     var setReviewMode = function () {
@@ -253,12 +328,23 @@
         }
     };
 
+    var parseImageUrls = function (data) {
+        var imageUrls = data.requestImageUrls || data.requestImageUrl || '';
+        if (!imageUrls) {
+            return [];
+        }
+        return imageUrls.split('|').filter(function (url) {
+            return !!url;
+        });
+    };
+
     var populateAdminForm = function (trigger) {
         if (!isAdminMode || !trigger) {
             return;
         }
 
         var data = trigger.dataset;
+        var imageUrls = parseImageUrls(data);
         setFieldValue('modalCarSubmitterEmail', data.requestSubmitter);
         setFieldValue('modalCarBrand', data.requestBrand);
         setFieldValue('modalCarBodyType', data.requestBodyType);
@@ -267,14 +353,14 @@
         setAdminAction(data.requestId);
 
         if (fileStatus) {
-            fileStatus.textContent = data.requestImageUrl
-                    ? 'Imagen cargada en la solicitud #' + data.requestId
-                    : 'Sin imagen cargada';
+            fileStatus.textContent = imageUrls.length > 0
+                    ? imageUrls.length + ' imagen' + (imageUrls.length === 1 ? '' : 'es') + ' cargada' + (imageUrls.length === 1 ? '' : 's') + ' en la solicitud #' + data.requestId
+                    : 'Sin imágenes cargadas';
         }
         if (fileUpload) {
-            fileUpload.classList.toggle('has-file', !!data.requestImageUrl);
+            fileUpload.classList.toggle('has-file', imageUrls.length > 0);
         }
-        setPreviewImage(data.requestImageUrl || null, false);
+        setPreviewImages(imageUrls, false);
     };
 
     var closeModal = function () {
@@ -325,6 +411,37 @@
 
     if (fileInput) {
         fileInput.addEventListener('change', updateFileState);
+    }
+
+    if (filePreviewPrev) {
+        filePreviewPrev.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            previewIndex -= 1;
+            renderPreview();
+        });
+    }
+
+    if (filePreviewNext) {
+        filePreviewNext.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            previewIndex += 1;
+            renderPreview();
+        });
+    }
+
+    if (filePreviewThumbnails) {
+        filePreviewThumbnails.addEventListener('click', function (event) {
+            var thumb = event.target.closest('[data-upload-preview-index]');
+            if (!thumb) {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            previewIndex = Number(thumb.getAttribute('data-upload-preview-index') || 0);
+            renderPreview();
+        });
     }
 
     Array.prototype.slice.call(form.querySelectorAll('[required]')).forEach(function (field) {

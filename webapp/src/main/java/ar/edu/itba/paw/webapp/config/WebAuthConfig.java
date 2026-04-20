@@ -36,6 +36,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.GET, "/reviews/feed"),
                                 antMatcher(HttpMethod.GET, "/car-image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/image"),
+                                antMatcher(HttpMethod.GET, "/cars/*/images/*"),
                                 antMatcher(HttpMethod.GET, "/profiles/*"),
                                 antMatcher(HttpMethod.GET, "/login"),
                                 antMatcher(HttpMethod.GET, "/register"))
@@ -49,6 +50,9 @@ public class WebAuthConfig {
                         .requestMatchers(
                                 antMatcher(HttpMethod.POST, "/cars"),
                                 antMatcher(HttpMethod.POST, "/reviews"),
+                                antMatcher(HttpMethod.POST, "/reviews/*/like"),
+                                antMatcher(HttpMethod.POST, "/reviews/*/replies"),
+                                antMatcher(HttpMethod.POST, "/reviews/replies/*/like"),
                                 antMatcher(HttpMethod.POST, "/logout"),
                                 antMatcher(HttpMethod.POST, "/car-image"),
                                 antMatcher(HttpMethod.POST, "/cars/*/image"),

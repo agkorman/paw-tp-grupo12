@@ -63,21 +63,24 @@
         </section>
 
         <section class="review-layout review-detail-layout">
-            <pa:review-selected-car selectedCar="${selectedCar}"/>
+            <pa:review-selected-car selectedCar="${selectedCar}" carImages="${carImages}"/>
 
             <div class="review-side-column">
                 <pa:review-car-info selectedCar="${selectedCar}" averageRating="${averageRating}"/>
-                <pa:latest-review latestReview="${latestReview}"/>
+                <pa:latest-review latestReview="${latestReview}"
+                                  liked="${latestReviewLiked}"
+                                  likeCount="${latestReviewLikeCount}"/>
             </div>
         </section>
 
-        <pa:reviews-feed reviews="${reviews}" carId="${selectedCar.id}" currentSort="${currentSort}"/>
+        <pa:reviews-feed reviews="${reviews}" reviewThreads="${reviewThreads}" carId="${selectedCar.id}" currentSort="${currentSort}"/>
     </main>
 
     <pa:create-review-modal carId="${selectedCar.id}" autoOpen="${openReviewModal}"/>
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
+    <script src="<c:url value='/js/car-image-carousel.js'/>"></script>
     <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>

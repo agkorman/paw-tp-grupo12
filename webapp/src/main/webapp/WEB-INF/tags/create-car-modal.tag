@@ -103,20 +103,22 @@
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide car-image-field">
-                    <span class="car-image-label">Imagen</span>
+                    <span class="car-image-label">Imágenes</span>
                     <div class="car-image-upload <c:if test="${adminMode}">is-readonly</c:if>">
                         <c:choose>
                             <c:when test="${adminMode}">
-                                <form:input id="modalCarFile" path="file" type="file"
+                                <form:input id="modalCarFile" path="files" type="file"
                                             cssClass="car-image-upload-input"
                                             accept="image/jpeg,image/png,image/webp"
+                                            multiple="multiple"
                                             disabled="true"
                                             aria-describedby="modalCarFileHelp modalCarFileStatus"/>
                             </c:when>
                             <c:otherwise>
-                                <form:input id="modalCarFile" path="file" type="file"
+                                <form:input id="modalCarFile" path="files" type="file"
                                             cssClass="car-image-upload-input"
                                             accept="image/jpeg,image/png,image/webp"
+                                            multiple="multiple"
                                             required="required"
                                             aria-describedby="modalCarFileHelp modalCarFileStatus"/>
                             </c:otherwise>
@@ -130,22 +132,30 @@
                                 </svg>
                             </span>
                             <span id="modalCarImagePreview" class="car-image-upload-preview" hidden aria-hidden="true">
+                                <button id="modalCarImagePrev" class="car-image-upload-preview-nav car-image-upload-preview-prev" type="button" aria-label="Imagen anterior">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                                </button>
                                 <img id="modalCarImagePreviewImg" alt="">
+                                <button id="modalCarImageNext" class="car-image-upload-preview-nav car-image-upload-preview-next" type="button" aria-label="Imagen siguiente">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                                </button>
+                                <span id="modalCarImageCounter" class="car-image-upload-preview-counter">1 / 1</span>
                             </span>
                             <span class="car-image-upload-copy">
                                 <strong>
                                     <c:choose>
-                                        <c:when test="${adminMode}">Imagen enviada por el usuario</c:when>
-                                        <c:otherwise>Arrastrá o elegí una imagen del auto</c:otherwise>
+                                        <c:when test="${adminMode}">Imágenes enviadas por el usuario</c:when>
+                                        <c:otherwise>Arrastrá o elegí imágenes del auto</c:otherwise>
                                     </c:choose>
                                 </strong>
                                 <span id="modalCarFileHelp">
                                     <c:choose>
-                                        <c:when test="${adminMode}">La imagen se revisa desde la tarjeta seleccionada.</c:when>
-                                        <c:otherwise>JPEG, PNG o WEBP. Máximo 10 MB.</c:otherwise>
+                                        <c:when test="${adminMode}">Las imágenes se revisan desde la tarjeta seleccionada.</c:when>
+                                        <c:otherwise>JPEG, PNG o WEBP. Máximo 5 imágenes, 10 MB cada una.</c:otherwise>
                                     </c:choose>
                                 </span>
                                 <span id="modalCarFileStatus" class="car-image-upload-status">Ninguna imagen seleccionada</span>
+                                <span id="modalCarImageThumbnails" class="car-image-upload-thumbnails" hidden></span>
                             </span>
                             <span class="car-image-upload-action">
                                 <c:choose>
@@ -155,7 +165,7 @@
                             </span>
                         </label>
                     </div>
-                    <form:errors path="file" cssClass="form-error" element="span"/>
+                    <form:errors path="files" cssClass="form-error" element="span"/>
                 </div>
             </div>
 

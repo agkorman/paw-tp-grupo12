@@ -1,7 +1,9 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.CarRequestDao;
@@ -296,6 +298,20 @@ class UserServiceImplTest {
                                  final String model, final String description, final String imageContentType,
                                  final byte[] imageData, final String status) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<CarRequestImage> findImagesByRequestId(final long requestId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<CarRequestImage> findImageByRequestIdAndImageId(final long requestId, final long imageId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void replaceImages(final long requestId, final List<CarImagePayload> images) {
         }
 
         @Override

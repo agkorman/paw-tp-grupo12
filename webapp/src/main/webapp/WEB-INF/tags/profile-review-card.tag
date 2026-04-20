@@ -10,6 +10,8 @@
 </c:url>
 <c:url var="reviewEditUrl" value="/reviews/${reviewCard.review.id}"/>
 <c:url var="reviewDeleteUrl" value="/reviews/${reviewCard.review.id}/delete"/>
+<c:url var="reviewLikeUrl" value="/reviews/${reviewCard.review.id}/like"/>
+<c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 
 <article class="profile-review-card">
     <a class="profile-review-image" href="${profileReviewUrl}">
@@ -33,8 +35,10 @@
                 <span class="profile-review-score"><c:out value="${reviewCard.review.rating}"/></span>
                 <pa:review-like-button
                         reviewId="${reviewCard.review.id}"
+                        action="${reviewLikeUrl}"
                         liked="${reviewCard.liked}"
-                        likeCount="${reviewCard.likeCount}"/>
+                        likeCount="${reviewCard.likeCount}"
+                        disabled="${not authenticated}"/>
                 <c:if test="${editable}">
                     <div class="profile-review-menu" data-profile-review-menu>
                         <button
