@@ -1,8 +1,9 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="carId" required="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 
-<div id="createReviewModal" class="review-modal" hidden <c:if test="${not empty reviewFormError}">data-auto-open="true"</c:if>>
+<div id="createReviewModal" class="review-modal" hidden <c:if test="${openReviewModal}">data-auto-open="true"</c:if>>
     <div class="review-modal-overlay" data-close-modal></div>
     <section class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createReviewTitle">
         <div class="review-modal-header">
@@ -15,24 +16,27 @@
             </button>
         </div>
 
-        <form id="createReviewForm" class="review-modal-form" method="post" action="<c:url value='/reviews'/>" novalidate>
-            <c:if test="${not empty reviewFormError}">
-                <div class="alert alert-error" role="alert"><c:out value="${reviewFormError}"/></div>
-            </c:if>
-            <input id="modalCarId" name="carId" type="hidden" value="${carId}">
+        <form:form id="createReviewForm" cssClass="review-modal-form" modelAttribute="reviewForm"
+                   method="post" action="${pageContext.request.contextPath}/reviews"
+                   data-submit-lock="true">
+            <form:errors cssClass="alert alert-error" element="div" />
+
+            <form:hidden path="carId"/>
 
             <p class="review-modal-subtitle">Completá los campos de la reseña. Tu email se guardará para vincular esta reseña a una cuenta más adelante.</p>
 
             <div class="review-modal-grid">
                 <div class="review-modal-field review-modal-field-wide">
                     <label for="modalReviewerEmail">Email</label>
-                    <input id="modalReviewerEmail" name="reviewerEmail" type="email" maxlength="100" required placeholder="tu@email.com">
+                    <form:input id="modalReviewerEmail" path="reviewerEmail" type="email"
+                                maxlength="100" placeholder="tu@email.com"/>
+                    <form:errors path="reviewerEmail" cssClass="form-error" element="span"/>
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide">
                     <label id="ratingLabel">Puntuación</label>
                     <div class="star-rating" role="slider" aria-labelledby="ratingLabel" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" tabindex="0">
-                        <input id="modalRating" name="rating" type="hidden" value="" required>
+                        <form:hidden id="modalRating" path="rating"/>
                         <div class="star-rating-stars">
                             <c:forEach var="i" begin="1" end="5">
                                 <div class="star-slot" data-star="${i}">
@@ -52,59 +56,70 @@
                         </div>
                         <span class="star-rating-value" aria-live="polite">Sin puntuación</span>
                     </div>
+                    <form:errors path="rating" cssClass="form-error" element="span"/>
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide">
                     <label>Estado de propiedad</label>
                     <div class="toggle-group">
                         <label class="toggle-option">
-                            <input type="radio" name="ownershipStatus" value="" checked>
+                            <form:radiobutton path="ownershipStatus" value=""/>
                             <span>No especificado</span>
                         </label>
                         <label class="toggle-option">
-                            <input type="radio" name="ownershipStatus" value="Propietario actual">
+                            <form:radiobutton path="ownershipStatus" value="Propietario actual"/>
                             <span>Propietario actual</span>
                         </label>
                         <label class="toggle-option">
-                            <input type="radio" name="ownershipStatus" value="Ex propietario">
+                            <form:radiobutton path="ownershipStatus" value="Ex propietario"/>
                             <span>Ex propietario</span>
                         </label>
                     </div>
+                    <form:errors path="ownershipStatus" cssClass="form-error" element="span"/>
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide">
                     <label for="modalTitle">Título</label>
-                    <input id="modalTitle" name="title" type="text" maxlength="200" required placeholder="Resumí tu experiencia en una frase">
+                    <form:input id="modalTitle" path="title" type="text" maxlength="200"
+                                placeholder="Resumí tu experiencia en una frase"/>
+                    <form:errors path="title" cssClass="form-error" element="span"/>
                 </div>
                 <div class="review-modal-field review-modal-field-wide">
                     <label for="modalBody">Descripción</label>
-                    <textarea id="modalBody" name="body" rows="4" required placeholder="Contanos qué te pareció el auto, qué destacarías y qué mejorarías."></textarea>
+                    <form:textarea id="modalBody" path="body" rows="4"
+                                   placeholder="Contanos qué te pareció el auto, qué destacarías y qué mejorarías."/>
+                    <form:errors path="body" cssClass="form-error" element="span"/>
                 </div>
                 <div class="review-modal-field">
                     <label for="modalModelYear">Año del modelo</label>
-                    <input id="modalModelYear" name="modelYear" type="text" inputmode="numeric" maxlength="4" placeholder="Ej: 2020">
+                    <form:input id="modalModelYear" path="modelYear" type="text" inputmode="numeric"
+                                maxlength="4" placeholder="Ej: 2020"/>
+                    <form:errors path="modelYear" cssClass="form-error" element="span"/>
                 </div>
                 <div class="review-modal-field">
                     <label for="modalMileageKm">Kilometraje (km)</label>
-                    <input id="modalMileageKm" name="mileageKm" type="text" inputmode="numeric" maxlength="7" placeholder="Ej: 45000">
+                    <form:input id="modalMileageKm" path="mileageKm" type="text" inputmode="numeric"
+                                maxlength="7" placeholder="Ej: 45000"/>
+                    <form:errors path="mileageKm" cssClass="form-error" element="span"/>
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide">
                     <label>¿Lo recomendarías?</label>
                     <div class="toggle-group">
                         <label class="toggle-option">
-                            <input type="radio" name="wouldRecommend" value="" checked>
+                            <form:radiobutton path="wouldRecommend" value=""/>
                             <span>No especificado</span>
                         </label>
                         <label class="toggle-option toggle-option--yes">
-                            <input type="radio" name="wouldRecommend" value="true">
+                            <form:radiobutton path="wouldRecommend" value="true"/>
                             <span>Sí</span>
                         </label>
                         <label class="toggle-option toggle-option--no">
-                            <input type="radio" name="wouldRecommend" value="false">
+                            <form:radiobutton path="wouldRecommend" value="false"/>
                             <span>No</span>
                         </label>
                     </div>
+                    <form:errors path="wouldRecommend" cssClass="form-error" element="span"/>
                 </div>
             </div>
 
@@ -112,6 +127,6 @@
                 <button type="button" class="btn-secondary" data-close-modal>Cancelar</button>
                 <button type="submit" class="btn-primary">Guardar reseña</button>
             </div>
-        </form>
+        </form:form>
     </section>
 </div>

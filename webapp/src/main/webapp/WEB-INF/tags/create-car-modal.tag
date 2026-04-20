@@ -2,8 +2,9 @@
 <%@ attribute name="brands" required="true" type="java.util.Collection" %>
 <%@ attribute name="bodyTypes" required="true" type="java.util.Collection" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 
-<div id="createCarModal" class="review-modal" hidden <c:if test="${not empty carFormError}">data-auto-open="true"</c:if>>
+<div id="createCarModal" class="review-modal" hidden <c:if test="${openCarModal}">data-auto-open="true"</c:if>>
     <div class="review-modal-overlay" data-close-car-modal></div>
     <section class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createCarModalTitle">
         <div class="review-modal-header">
@@ -16,10 +17,12 @@
             </button>
         </div>
 
-        <form id="createCarForm" class="car-modal-form" method="post" action="<c:url value='/cars'/>" enctype="multipart/form-data" novalidate>
-            <c:if test="${not empty carFormError}">
-                <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
-            </c:if>
+        <form:form id="createCarForm" cssClass="car-modal-form" modelAttribute="carForm"
+                   method="post" action="${pageContext.request.contextPath}/cars"
+                   enctype="multipart/form-data"
+                   data-submit-lock="true">
+            <form:errors cssClass="alert alert-error" element="div" />
+
             <p class="car-modal-subtitle" style="padding-bottom: 1rem;">
                 Completá los datos del auto. Tu email se guardará para revisar esta solicitud más adelante.
             </p>
@@ -27,56 +30,54 @@
             <div class="review-modal-grid" style="padding-bottom: 1rem;">
                 <div class="review-modal-field review-modal-field-wide">
                     <label for="modalCarSubmitterEmail">Email</label>
-                    <input id="modalCarSubmitterEmail" name="submitterEmail" type="email" maxlength="100" required placeholder="tu@email.com">
+                    <form:input id="modalCarSubmitterEmail" path="submitterEmail" type="email"
+                                maxlength="100" placeholder="tu@email.com"/>
+                    <form:errors path="submitterEmail" cssClass="form-error" element="span"/>
                 </div>
 
                 <div class="review-modal-field">
                     <label for="modalCarBrand">Marca</label>
-                    <select id="modalCarBrand" name="brand" required>
-                        <option value="" selected>Seleccioná una marca</option>
+                    <form:select id="modalCarBrand" path="brand">
+                        <form:option value="" label="Seleccioná una marca"/>
                         <c:forEach items="${brands}" var="brand">
-                            <option value="<c:out value='${brand.name}'/>"><c:out value="${brand.name}"/></option>
+                            <form:option value="${brand.name}">${brand.name}</form:option>
                         </c:forEach>
-                    </select>
+                    </form:select>
+                    <form:errors path="brand" cssClass="form-error" element="span"/>
                 </div>
 
                 <div class="review-modal-field">
                     <label for="modalCarBodyType">Tipo de carrocería</label>
-                    <select id="modalCarBodyType" name="bodyType" required>
-                        <option value="" selected>Seleccioná un tipo</option>
+                    <form:select id="modalCarBodyType" path="bodyType">
+                        <form:option value="" label="Seleccioná un tipo"/>
                         <c:forEach items="${bodyTypes}" var="bodyType">
-                            <option value="<c:out value='${bodyType.name}'/>"><c:out value="${bodyType.name}"/></option>
+                            <form:option value="${bodyType.name}">${bodyType.name}</form:option>
                         </c:forEach>
-                    </select>
+                    </form:select>
+                    <form:errors path="bodyType" cssClass="form-error" element="span"/>
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide">
                     <label for="modalCarModel">Modelo</label>
-                    <input id="modalCarModel" name="model" type="text" maxlength="120" placeholder="Ej: 911 Carrera T" required>
+                    <form:input id="modalCarModel" path="model" type="text"
+                                maxlength="120" placeholder="Ej: 911 Carrera T"/>
+                    <form:errors path="model" cssClass="form-error" element="span"/>
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide">
                     <label for="modalCarDescription">Descripción</label>
-                    <textarea
-                            id="modalCarDescription"
-                            name="description"
-                            rows="4"
-                            maxlength="1500"
-                            required
-                            placeholder="Describe el auto, su propuesta y cualquier detalle relevante."></textarea>
+                    <form:textarea id="modalCarDescription" path="description" rows="4" maxlength="1500"
+                                   placeholder="Describe el auto, su propuesta y cualquier detalle relevante."/>
+                    <form:errors path="description" cssClass="form-error" element="span"/>
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide car-image-field">
                     <span class="car-image-label">Imagen</span>
                     <div class="car-image-upload">
-                        <input
-                                id="modalCarFile"
-                                class="car-image-upload-input"
-                                name="file"
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                required
-                                aria-describedby="modalCarFileHelp modalCarFileName">
+                        <form:input id="modalCarFile" path="file" type="file"
+                                    cssClass="car-image-upload-input"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    aria-describedby="modalCarFileHelp modalCarFileName"/>
                         <label class="car-image-upload-card" for="modalCarFile">
                             <span class="car-image-upload-icon" aria-hidden="true">
                                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -93,6 +94,7 @@
                             <span class="car-image-upload-action">Buscar</span>
                         </label>
                     </div>
+                    <form:errors path="file" cssClass="form-error" element="span"/>
                 </div>
             </div>
 
@@ -100,6 +102,6 @@
                 <button type="button" class="btn-secondary" data-close-car-modal>Cancelar</button>
                 <button id="createCarSubmitButton" type="submit" class="btn-primary">Confirmar auto</button>
             </div>
-        </form>
+        </form:form>
     </section>
 </div>

@@ -349,5 +349,6 @@
             });
         })();
     </script>
+    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

@@ -11,31 +11,37 @@ import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.webapp.form.CarForm;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.validation.Valid;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.sql.Timestamp;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
@@ -44,14 +50,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
 public class CarController {
 
-    private static final Pattern SIMPLE_EMAIL_PATTERN =
-            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final int FEATURED_REVIEW_COUNT = 3;
     private static final long MAX_IMAGE_SIZE_BYTES = 10L * 1024 * 1024;
     private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
@@ -74,6 +77,11 @@ public class CarController {
         this.bodyTypeDao = bodyTypeDao;
         this.reviewService = reviewService;
         this.emailService = emailService;
+    }
+
+    @InitBinder
+    public void initBinder(final WebDataBinder binder) {
+        binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
@@ -99,12 +107,13 @@ public class CarController {
     }
 
     @RequestMapping(value = "/cars", method = RequestMethod.GET)
-    public ModelAndView listCars(
-            @RequestParam(value = "q", required = false) final String q,
-            @RequestParam(value = "brand", required = false) final String brand,
-            @RequestParam(value = "bodyType", required = false) final String bodyType,
-            @RequestParam(value = "carFormError", required = false) final String carFormError) {
-        return carsPage(blankToNull(q), brand, bodyType, carFormError);
+    public String listCars(@RequestParam(value = "q", required = false) final String q,
+                           @RequestParam(value = "brand", required = false) final String brand,
+                           @RequestParam(value = "bodyType", required = false) final String bodyType,
+                           @ModelAttribute("carForm") final CarForm carForm,
+                           final Model model) {
+        populateCarsPageModel(model, blankToNull(q), brand, bodyType);
+        return "cars.jsp";
     }
 
     @RequestMapping(value = "/cars/content", method = RequestMethod.GET)
@@ -121,114 +130,83 @@ public class CarController {
     }
 
     @RequestMapping(value = "/cars", method = RequestMethod.POST, consumes = "multipart/form-data")
-    public ModelAndView createCar(@RequestParam("brand") final String brand,
-                                  @RequestParam("bodyType") final String bodyType,
-                                  @RequestParam("model") final String model,
-                                  @RequestParam("submitterEmail") final String submitterEmail,
-                                  @RequestParam(value = "description", required = false) final String description,
-                                  @RequestParam(value = "file", required = false) final MultipartFile file) {
+    public String createCar(@Valid @ModelAttribute("carForm") final CarForm carForm,
+                            final BindingResult errors,
+                            final Model model) {
 
-        final String trimmedBrand = brand.trim();
-        final String trimmedBodyType = bodyType.trim();
-        final String trimmedModel = model.trim();
-        final String normalizedEmail = submitterEmail == null ? "" : submitterEmail.trim();
-        final String trimmedDescription = description == null ? null : description.trim();
-
-        if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
-            return redirectToCarsWithError("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
-        }
-        if (normalizedEmail.isEmpty() || normalizedEmail.length() > 100) {
-            return redirectToCarsWithError("El email es obligatorio.");
-        }
-        if (!SIMPLE_EMAIL_PATTERN.matcher(normalizedEmail).matches()) {
-            return redirectToCarsWithError("Ingresá un email válido.");
-        }
-        if (trimmedDescription == null || trimmedDescription.isEmpty()) {
-            return redirectToCarsWithError("La descripción es obligatoria.");
-        }
-        if (trimmedDescription.length() > 1500) {
-            return redirectToCarsWithError("La descripción debe tener como máximo 1500 caracteres.");
+        final MultipartFile file = carForm.getFile();
+        final String imageError = validateUploadedImage(file, true);
+        if (imageError != null) {
+            errors.rejectValue("file", "image.invalid", imageError);
         }
 
-        final String imageValidationError = validateUploadedImage(file, false);
-        if (imageValidationError != null) {
-            return redirectToCarsWithError(imageValidationError);
-        }
-
-        // Brand/bodyType not resolving means a hand-crafted POST bypassing the
-        // dropdown: fire a real 404 instead of the UX-recovery banner.
-        final Brand resolvedBrand = brandDao.findByName(trimmedBrand).orElse(null);
-        final BodyType resolvedBodyType = bodyTypeDao.findByName(trimmedBodyType).orElse(null);
-        if (resolvedBrand == null || resolvedBodyType == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca o tipo de carrocería no válidos.");
-        }
-
-        // Duplicate on uq_cars_brand_model_body_type is a legitimate user mistake
-        // (they don't know what's already in the catalog), so stay on /cars.
-        final boolean duplicate = carService
-                .getCarsByBrandAndBodyType(resolvedBrand.getName(), resolvedBodyType.getName())
-                .stream()
-                .anyMatch(c -> c.getModel().equals(trimmedModel));
-        if (duplicate) {
-            return redirectToCarsWithError("Ya existe un auto con esa marca, modelo y tipo de carrocería.");
-        }
-
-
-        final Optional<String> imageContentType;
-        final Optional<byte[]> imageData;
-        if (file == null || file.isEmpty()) {
-            imageContentType = Optional.empty();
-            imageData = Optional.empty();
-        } else {
-            imageContentType = Optional.ofNullable(resolveImageContentType(file));
-            try {
-                imageData = Optional.of(file.getBytes());
-            } catch (final IOException e) {
-                throw new IllegalStateException("Failed to read uploaded image.", e);
+        Brand resolvedBrand = null;
+        if (!errors.hasFieldErrors("brand")) {
+            resolvedBrand = brandDao.findByName(carForm.getBrand()).orElse(null);
+            if (resolvedBrand == null) {
+                errors.rejectValue("brand", "brand.invalid", "Marca no válida.");
             }
+        }
+
+        BodyType resolvedBodyType = null;
+        if (!errors.hasFieldErrors("bodyType")) {
+            resolvedBodyType = bodyTypeDao.findByName(carForm.getBodyType()).orElse(null);
+            if (resolvedBodyType == null) {
+                errors.rejectValue("bodyType", "bodyType.invalid", "Tipo de carrocería no válido.");
+            }
+        }
+
+        if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null) {
+            final boolean duplicate = carService
+                    .getCarsByBrandAndBodyType(resolvedBrand.getName(), resolvedBodyType.getName())
+                    .stream()
+                    .anyMatch(c -> c.getModel().equals(carForm.getModel()));
+            if (duplicate) {
+                errors.reject("car.duplicate",
+                        "Ya existe un auto con esa marca, modelo y tipo de carrocería.");
+            }
+        }
+
+        if (errors.hasErrors()) {
+            populateCarsPageModel(model, null, null, null);
+            model.addAttribute("openCarModal", true);
+            return "cars.jsp";
+        }
+
+        final Optional<String> imageContentType = Optional.ofNullable(resolveImageContentType(file));
+        final Optional<byte[]> imageData;
+        try {
+            imageData = Optional.of(file.getBytes());
+        } catch (final IOException e) {
+            throw new IllegalStateException("Failed to read uploaded image.", e);
         }
 
         final Car createdCar = carService.createCar(
                 resolvedBrand.getId(),
-                trimmedModel,
+                carForm.getModel(),
                 resolvedBodyType.getId(),
-                normalizedEmail,
-                Optional.ofNullable(trimmedDescription).filter(value -> !value.isEmpty()),
+                carForm.getSubmitterEmail(),
+                Optional.ofNullable(carForm.getDescription()).filter(value -> !value.isEmpty()),
                 imageContentType,
                 imageData
         );
 
         emailService.sendCarCreatedNotification(createdCar);
 
-        return new ModelAndView("redirect:/cars");
+        return "redirect:/cars";
     }
 
-    private ModelAndView carsPage(final String q, final String brand, final String bodyType,
-                                  final String error) {
+    private void populateCarsPageModel(final Model model, final String q, final String brand, final String bodyType) {
         final String searchQuery = blankToNull(q);
         final CarCatalogData catalogData = resolveCatalogData(searchQuery, brand, bodyType);
 
-        final ModelAndView mav = new ModelAndView("cars.jsp");
-        mav.addObject("cars", catalogData.cars);
-        mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
-        mav.addObject("brands", brandDao.findAll());
-        mav.addObject("bodyTypes", bodyTypeDao.findAll());
-        mav.addObject("selectedBrand", catalogData.brandFilter);
-        mav.addObject("selectedBodyType", catalogData.bodyTypeFilter);
-        mav.addObject("searchQuery", searchQuery);
-        if (error != null) {
-            mav.addObject("carFormError", error);
-        }
-        return mav;
-    }
-
-    private ModelAndView redirectToCarsWithError(final String error) {
-        final String redirectUrl = UriComponentsBuilder.fromPath("/cars")
-                .queryParam("carFormError", error)
-                .build()
-                .encode()
-                .toUriString();
-        return new ModelAndView("redirect:" + redirectUrl);
+        model.addAttribute("cars", catalogData.cars);
+        model.addAttribute("reviewStatsByCarId", catalogData.reviewStatsByCarId);
+        model.addAttribute("brands", brandDao.findAll());
+        model.addAttribute("bodyTypes", bodyTypeDao.findAll());
+        model.addAttribute("selectedBrand", catalogData.brandFilter);
+        model.addAttribute("selectedBodyType", catalogData.bodyTypeFilter);
+        model.addAttribute("searchQuery", searchQuery);
     }
 
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.GET)
