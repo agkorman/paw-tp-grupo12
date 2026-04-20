@@ -2,6 +2,7 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,6 +10,8 @@ public interface CarDao {
     List<Car> findAll();
 
     Optional<Car> findById(long id);
+
+    List<Car> findByIds(Collection<Long> ids);
 
     List<Car> findByBrandId(long brandId);
 

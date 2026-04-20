@@ -211,6 +211,11 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public List<Car> getCarsByIds(final Collection<Long> ids) {
+            return Collections.emptyList();
+        }
+
+        @Override
         public List<Car> getCarsByBodyType(final String bodyType) {
             return Collections.emptyList();
         }

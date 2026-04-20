@@ -182,12 +182,19 @@ public class ProfileControllerTest {
     private static final class FakeCarService implements CarService {
         @Override
         public List<Car> getAllCars() {
-            return List.of(new Car(10L, 1L, "Toyota", "Supra", 1L, "Coupe", "Desc", LocalDateTime.now()));
+            throw new UnsupportedOperationException("ProfileController should fetch only reviewed cars.");
         }
 
         @Override
         public Optional<Car> getCarById(final long id) {
             return Optional.empty();
+        }
+
+        @Override
+        public List<Car> getCarsByIds(final Collection<Long> ids) {
+            return ids.contains(10L)
+                    ? List.of(new Car(10L, 1L, "Toyota", "Supra", 1L, "Coupe", "Desc", LocalDateTime.now()))
+                    : Collections.emptyList();
         }
 
         @Override

@@ -9,9 +9,11 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Repository
@@ -65,6 +67,26 @@ public class CarJdbcDao implements CarDao {
                 SELECT_COLUMNS + FROM_JOIN + "WHERE c.car_id = ?",
                 ROW_MAPPER, id
         ).stream().findFirst();
+    }
+
+    @Override
+    public List<Car> findByIds(final Collection<Long> ids) {
+        final List<Long> normalizedIds = ids == null
+                ? List.of()
+                : ids.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (normalizedIds.isEmpty()) {
+            return List.of();
+        }
+
+        final String placeholders = String.join(", ", java.util.Collections.nCopies(normalizedIds.size(), "?"));
+        return jdbcTemplate.query(
+                SELECT_COLUMNS + FROM_JOIN + "WHERE c.car_id IN (" + placeholders + ") ORDER BY c.car_id",
+                ROW_MAPPER,
+                normalizedIds.toArray()
+        );
     }
 
     @Override

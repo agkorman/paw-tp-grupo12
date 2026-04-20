@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +44,11 @@ public class CarServiceImpl implements CarService {
     @Override
     public Optional<Car> getCarById(final long id) {
         return carDao.findById(id);
+    }
+
+    @Override
+    public List<Car> getCarsByIds(final Collection<Long> ids) {
+        return carDao.findByIds(ids);
     }
 
     @Override

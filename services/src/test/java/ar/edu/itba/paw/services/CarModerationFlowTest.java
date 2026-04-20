@@ -13,6 +13,7 @@ import ar.edu.itba.paw.persistence.CarRequestDao;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -227,6 +228,11 @@ class CarModerationFlowTest {
         @Override
         public Optional<Car> findById(final long id) {
             return Optional.empty();
+        }
+
+        @Override
+        public List<Car> findByIds(final Collection<Long> ids) {
+            return Collections.emptyList();
         }
 
         @Override
