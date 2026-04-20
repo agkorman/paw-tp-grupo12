@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
@@ -104,27 +105,23 @@ public class CarServiceImpl implements CarService {
 
     @Override
     @Transactional
-    public Car createCar(final long brandId, final String model, final long bodyTypeId,
-                         final long submittedByUserId,
-                         final Optional<String> description, final Optional<String> imageContentType,
-                         final Optional<byte[]> imageData) {
+    public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                         final long submittedByUserId,
+                                         final Optional<String> description,
+                                         final Optional<String> imageContentType,
+                                         final Optional<byte[]> imageData) {
         final String normalizedDescription = description
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
                 .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
-
-        final Car createdCar = carDao.create(brandId, model, bodyTypeId, normalizedDescription);
 
         final boolean hasImageContentType = imageContentType.isPresent();
         final boolean hasImageData = imageData.isPresent();
         if (hasImageContentType != hasImageData) {
             throw new IllegalArgumentException("Image metadata and payload must be provided together.");
         }
-        if (hasImageContentType) {
-            carImageDao.saveOrReplace(createdCar.getId(), imageContentType.orElseThrow(), imageData.orElseThrow());
-        }
 
-        carRequestService.createPendingRequest(
+        return carRequestService.createPendingRequest(
                 submittedByUserId,
                 brandId,
                 bodyTypeId,
@@ -133,7 +130,5 @@ public class CarServiceImpl implements CarService {
                 imageContentType,
                 imageData
         );
-
-        return carDao.findById(createdCar.getId()).orElse(createdCar);
     }
 }

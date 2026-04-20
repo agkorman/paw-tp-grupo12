@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.services.CarService;
@@ -239,9 +240,10 @@ public class CarReviewControllerTest {
         }
 
         @Override
-        public Car createCar(final long brandId, final String model, final long bodyTypeId,
-                             final long submittedByUserId, final Optional<String> description,
-                             final Optional<String> imageContentType, final Optional<byte[]> imageData) {
+        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                             final long submittedByUserId, final Optional<String> description,
+                                             final Optional<String> imageContentType,
+                                             final Optional<byte[]> imageData) {
             throw new UnsupportedOperationException();
         }
     }

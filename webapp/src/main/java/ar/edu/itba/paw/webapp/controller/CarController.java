@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
@@ -200,7 +201,7 @@ public class CarController {
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
 
-        final Car createdCar = carService.createCar(
+        final CarRequest createdRequest = carService.requestCarCreation(
                 resolvedBrand.getId(),
                 carForm.getModel(),
                 resolvedBodyType.getId(),
@@ -210,7 +211,7 @@ public class CarController {
                 imageData
         );
 
-        emailService.sendCarCreatedNotification(createdCar);
+        emailService.sendCarRequestCreatedNotification(createdRequest);
 
         return "redirect:/cars";
     }

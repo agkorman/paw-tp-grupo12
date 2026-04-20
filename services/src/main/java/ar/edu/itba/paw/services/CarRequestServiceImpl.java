@@ -1,9 +1,13 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.persistence.CarDao;
+import ar.edu.itba.paw.persistence.CarImageDao;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -13,10 +17,15 @@ import java.util.Optional;
 public class CarRequestServiceImpl implements CarRequestService {
 
     private final CarRequestDao carRequestDao;
+    private final CarDao carDao;
+    private final CarImageDao carImageDao;
 
     @Autowired
-    public CarRequestServiceImpl(final CarRequestDao carRequestDao) {
+    public CarRequestServiceImpl(final CarRequestDao carRequestDao, final CarDao carDao,
+                                 final CarImageDao carImageDao) {
         this.carRequestDao = carRequestDao;
+        this.carDao = carDao;
+        this.carImageDao = carImageDao;
     }
 
     @Override
@@ -72,8 +81,28 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    @Transactional
     public boolean approvePendingRequest(final long id) {
-        return carRequestDao.updateStatus(id, STATUS_PENDING, STATUS_APPROVED);
+        final CarRequest request = carRequestDao.findById(id).orElse(null);
+        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            return false;
+        }
+
+        final boolean statusUpdated = carRequestDao.updateStatus(id, STATUS_PENDING, STATUS_APPROVED);
+        if (!statusUpdated) {
+            return false;
+        }
+
+        final Car createdCar = carDao.create(
+                request.getBrandId(),
+                request.getModel(),
+                request.getBodyTypeId(),
+                request.getDescription()
+        );
+        if (request.getImageContentType() != null && request.getImageData() != null) {
+            carImageDao.saveOrReplace(createdCar.getId(), request.getImageContentType(), request.getImageData());
+        }
+        return true;
     }
 
     @Override
