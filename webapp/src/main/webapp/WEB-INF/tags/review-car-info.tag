@@ -2,6 +2,7 @@
 <%@ attribute name="selectedCar" required="true" type="ar.edu.itba.paw.model.Car" %>
 <%@ attribute name="averageRating" required="false" type="java.math.BigDecimal" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <aside class="review-form-panel car-info-panel">
     <h2>Datos del auto</h2>
@@ -30,5 +31,13 @@
         </div>
     </div>
 
-    <button id="openReviewModalBtn" type="button" class="btn-primary add-review-btn">Agregar reseña</button>
+    <sec:authorize access="isAuthenticated()">
+        <button id="openReviewModalBtn" type="button" class="btn-primary add-review-btn">Agregar reseña</button>
+    </sec:authorize>
+    <sec:authorize access="isAnonymous()">
+        <c:url var="newReviewUrl" value="/reviews/new">
+            <c:param name="carId" value="${selectedCar.id}"/>
+        </c:url>
+        <a href="${newReviewUrl}" class="btn-secondary add-review-btn">Ingresar para reseñar</a>
+    </sec:authorize>
 </aside>

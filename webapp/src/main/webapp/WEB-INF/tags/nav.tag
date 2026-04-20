@@ -10,6 +10,7 @@
 <%@ attribute name="searchBodyType" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <nav>
     <a href="<c:url value='/'/>" class="nav-brand">La Posta Autos</a>
@@ -51,5 +52,16 @@
                 <c:out value="${actionText}"/>
             </button>
         </c:if>
+        <sec:authorize access="isAnonymous()">
+            <a class="nav-auth-link" href="<c:url value='/login'/>">Ingresar</a>
+            <a class="btn-secondary nav-register-link" href="<c:url value='/register'/>">Registro</a>
+        </sec:authorize>
+        <sec:authorize access="isAuthenticated()">
+            <span class="nav-user"><sec:authentication property="principal.displayName"/></span>
+            <form class="nav-logout-form" method="post" action="<c:url value='/logout'/>">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                <button type="submit" class="btn-secondary nav-logout-btn">Salir</button>
+            </form>
+        </sec:authorize>
     </div>
 </nav>
