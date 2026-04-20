@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/admin.css'/>">
 </head>
@@ -67,6 +67,7 @@
                                     hasImage="${request.hasImage}"
                                     imageUrl="${request.imageUrl}"
                                     href="#"
+                                    showFavorite="false"
                                     submitter="${request.submitter}"
                                     footerText="Solicitud pendiente"
                                     actionText="Revisar"
@@ -85,7 +86,6 @@
     </main>
 
     <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
-    <pa:footer/>
     <script src="<c:url value='/js/create-car-modal.js'/>"></script>
 </body>
 </html>

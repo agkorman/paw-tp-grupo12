@@ -28,7 +28,23 @@
                 </c:choose>
             </span>
         </div>
+        <div class="car-info-row car-info-row-description">
+            <span class="car-info-label">Descripción</span>
+            <span class="car-info-value car-info-description">
+                <c:choose>
+                    <c:when test="${not empty selectedCar.description}"><c:out value="${selectedCar.description}"/></c:when>
+                    <c:otherwise>N/A</c:otherwise>
+                </c:choose>
+            </span>
+        </div>
     </div>
 
-    <button id="openReviewModalBtn" type="button" class="btn-primary add-review-btn">Agregar reseña</button>
+    <button
+            id="openReviewModalBtn"
+            type="button"
+            class="btn-primary add-review-btn"
+            data-open-review-modal="create"
+            data-review-car-id="${selectedCar.id}">
+        Agregar reseña
+    </button>
 </aside>

@@ -36,6 +36,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.GET, "/reviews/feed"),
                                 antMatcher(HttpMethod.GET, "/car-image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/image"),
+                                antMatcher(HttpMethod.GET, "/profiles/*"),
                                 antMatcher(HttpMethod.GET, "/login"),
                                 antMatcher(HttpMethod.GET, "/register"))
                             .permitAll()
@@ -50,7 +51,8 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/reviews"),
                                 antMatcher(HttpMethod.POST, "/logout"),
                                 antMatcher(HttpMethod.POST, "/car-image"),
-                                antMatcher(HttpMethod.POST, "/cars/*/image"))
+                                antMatcher(HttpMethod.POST, "/cars/*/image"),
+                                antMatcher(HttpMethod.POST, "/profiles/*/follow"))
                             .authenticated()
                         .anyRequest().authenticated())
                 .formLogin(form -> form

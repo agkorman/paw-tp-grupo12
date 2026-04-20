@@ -2,7 +2,9 @@
     var modal = document.getElementById('createCarModal');
     var form = document.getElementById('createCarForm');
     var fileInput = document.getElementById('modalCarFile');
-    var fileName = document.getElementById('modalCarFileName');
+    var fileStatus = document.getElementById('modalCarFileStatus');
+    var filePreview = document.getElementById('modalCarImagePreview');
+    var filePreviewImg = document.getElementById('modalCarImagePreviewImg');
     var fileUpload = fileInput ? fileInput.closest('.car-image-upload') : null;
     var isAdminMode = modal ? modal.dataset.adminMode === 'true' : false;
     var acceptForm = document.getElementById('acceptCarRequestForm');
@@ -19,7 +21,8 @@
     }
 
     var closeElements = Array.prototype.slice.call(modal.querySelectorAll('[data-close-car-modal]'));
-    var emptyFileLabel = 'Ningún archivo seleccionado';
+    var emptyFileStatus = 'Ninguna imagen seleccionada';
+    var previewUrl = null;
     var lastTrigger = null;
     var requiredMessages = {
         modalCarBrand: 'Seleccioná una marca.',
@@ -54,8 +57,40 @@
         }, true);
     };
 
+    var setPreviewImage = function (imageUrl, shouldRevoke) {
+        if (previewUrl) {
+            window.URL.revokeObjectURL(previewUrl);
+            previewUrl = null;
+        }
+
+        if (!filePreview || !filePreviewImg || !fileUpload) {
+            return;
+        }
+
+        if (!imageUrl) {
+            filePreviewImg.removeAttribute('src');
+            filePreview.setAttribute('hidden', 'hidden');
+            filePreview.setAttribute('aria-hidden', 'true');
+            fileUpload.classList.remove('has-preview');
+            return;
+        }
+
+        filePreviewImg.src = imageUrl;
+        filePreview.removeAttribute('hidden');
+        filePreview.setAttribute('aria-hidden', 'false');
+        fileUpload.classList.add('has-preview');
+
+        if (shouldRevoke) {
+            previewUrl = imageUrl;
+        }
+    };
+
+    var clearPreviewImage = function () {
+        setPreviewImage(null, false);
+    };
+
     var updateFileState = function () {
-        if (!fileInput || !fileName || !fileUpload) {
+        if (!fileInput || !fileStatus || !fileUpload) {
             return;
         }
 
@@ -65,13 +100,29 @@
         }
 
         var selectedFile = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
-        fileName.textContent = selectedFile ? selectedFile.name : emptyFileLabel;
         fileUpload.classList.toggle('has-file', !!selectedFile);
+
+        if (selectedFile) {
+            fileStatus.textContent = selectedFile.name;
+            if (window.URL && typeof window.URL.createObjectURL === 'function') {
+                setPreviewImage(window.URL.createObjectURL(selectedFile), true);
+            } else {
+                clearPreviewImage();
+            }
+        } else {
+            fileStatus.textContent = emptyFileStatus;
+            clearPreviewImage();
+        }
+
         validateField(fileInput);
     };
 
     var resetModalState = function () {
         form.reset();
+        if (fileStatus) {
+            fileStatus.textContent = emptyFileStatus;
+        }
+        clearPreviewImage();
         updateFileState();
     };
 
@@ -154,9 +205,10 @@
         if (fileUpload) {
             fileUpload.classList.remove('is-readonly', 'has-file');
         }
-        if (fileName) {
-            fileName.textContent = emptyFileLabel;
+        if (fileStatus) {
+            fileStatus.textContent = emptyFileStatus;
         }
+        clearPreviewImage();
     };
 
     var setReviewMode = function () {
@@ -193,14 +245,15 @@
         setFieldValue('modalCarDescription', data.requestDescription);
         setAdminAction(data.requestId);
 
-        if (fileName) {
-            fileName.textContent = data.requestImageUrl
+        if (fileStatus) {
+            fileStatus.textContent = data.requestImageUrl
                     ? 'Imagen cargada en la solicitud #' + data.requestId
                     : 'Sin imagen cargada';
         }
         if (fileUpload) {
             fileUpload.classList.toggle('has-file', !!data.requestImageUrl);
         }
+        setPreviewImage(data.requestImageUrl || null, false);
     };
 
     var closeModal = function () {

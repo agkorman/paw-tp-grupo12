@@ -1,0 +1,111 @@
+.profile-connections-dialog {
+    width: min(560px, 100%);
+}
+
+.profile-connections-search {
+    margin: 0.75rem 1rem;
+    min-height: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--surface-container);
+    color: var(--secondary);
+    border-radius: var(--radius-md);
+    padding: 0.35rem 0.75rem;
+}
+
+.profile-connections-search input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--on-surface);
+    font: inherit;
+}
+
+.profile-connections-list {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 0 1rem 1rem;
+    scrollbar-color: var(--surface-container-highest) transparent;
+}
+
+.profile-connection-row {
+    min-height: 60px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.profile-connection-avatar {
+    width: 44px;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--tertiary), var(--primary));
+    color: var(--on-primary-fixed);
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.profile-connection-copy {
+    min-width: 0;
+    display: grid;
+}
+
+.profile-connection-name {
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+
+.profile-connection-name:hover,
+.profile-connection-name:focus-visible {
+    color: var(--primary);
+}
+
+.profile-connection-copy strong {
+    color: var(--on-surface);
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-connection-name:hover strong,
+.profile-connection-name:focus-visible strong {
+    color: inherit;
+}
+
+.profile-connection-follow-form {
+    margin: 0;
+}
+
+.profile-connection-button {
+    appearance: none;
+    -webkit-appearance: none;
+    min-width: 106px;
+    min-height: 2rem;
+    border: 1px solid rgba(255, 181, 158, 0.28);
+    border-radius: var(--radius-md);
+    background: rgba(255, 87, 25, 0.14);
+    color: var(--primary);
+    cursor: pointer;
+    font: inherit;
+    font-weight: 800;
+    padding: 0.35rem 0.8rem;
+}
+
+.profile-connection-button:not(.is-following) {
+    background: var(--primary);
+    color: var(--on-primary-fixed);
+    border-color: var(--primary);
+}
+
+.profile-connection-row[hidden] {
+    display: none;
+}

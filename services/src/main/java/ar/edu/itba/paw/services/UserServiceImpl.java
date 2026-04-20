@@ -35,6 +35,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Optional<User> getUserById(final long id) {
+        return userDao.findById(id);
+    }
+
+    @Override
     public Optional<User> findByEmail(final String email) {
         final String normalizedEmail = normalizeEmail(email);
         if (normalizedEmail == null) {

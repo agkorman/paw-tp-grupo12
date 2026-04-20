@@ -80,6 +80,10 @@ a.filter-chip {
 }
 
 /* ── CAR CARD ── */
+.car-card-shell {
+    position: relative;
+}
+
 .car-card {
     background: var(--surface-container-high);
     border-radius: var(--radius-lg);
@@ -107,6 +111,33 @@ a.filter-chip {
 
 .car-card-link * {
     text-decoration: none !important;
+}
+
+.car-card-favorite {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 3;
+}
+
+.car-card-favorite .favorite-toggle {
+    width: 2.5rem;
+    min-width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border-radius: var(--radius-md);
+    background: rgba(13, 13, 13, 0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.car-card-favorite .favorite-toggle span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
 }
 
 .card-image-wrap {
@@ -245,3 +276,64 @@ a.filter-chip {
 }
 
 .card-specs-link:hover { color: var(--primary); }
+
+/* ── REACTIONS ── */
+.favorite-toggle,
+.review-like-toggle {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: 1px solid rgba(229, 226, 225, 0.22);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--on-surface);
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.25rem;
+    padding: 0.45rem 0.75rem;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.favorite-toggle:hover,
+.review-like-toggle:hover {
+    background: var(--surface-container-high);
+    border-color: rgba(229, 226, 225, 0.34);
+}
+
+.favorite-toggle svg,
+.review-like-toggle svg {
+    flex: 0 0 auto;
+    fill: transparent;
+    pointer-events: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+}
+
+.favorite-toggle span,
+.review-like-toggle span {
+    pointer-events: none;
+}
+
+.favorite-toggle.is-active,
+.review-like-toggle.is-active {
+    color: var(--primary);
+    border-color: rgba(255, 181, 158, 0.42);
+    background: rgba(255, 87, 25, 0.13);
+}
+
+.favorite-toggle.is-active svg,
+.review-like-toggle.is-active svg {
+    fill: currentColor;
+}
+
+.review-like-count {
+    color: inherit;
+    font-variant-numeric: tabular-nums;
+}

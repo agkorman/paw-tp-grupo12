@@ -101,6 +101,16 @@ public class CarRequestJdbcDao implements CarRequestDao {
     }
 
     @Override
+    public boolean updateStatus(final long id, final String expectedStatus, final String newStatus) {
+        return jdbcTemplate.update(
+                "UPDATE car_requests SET status = ? WHERE car_request_id = ? AND status = ?",
+                newStatus,
+                id,
+                expectedStatus
+        ) > 0;
+    }
+
+    @Override
     public int bindRequestsToUserByEmail(final long userId, final String email) {
         return jdbcTemplate.update(
                 "UPDATE car_requests SET submitted_by_user_id = ? "

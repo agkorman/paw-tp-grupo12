@@ -1,0 +1,184 @@
+.profile-review-list {
+    display: grid;
+    gap: var(--spacing-6);
+}
+
+.profile-review-card {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: var(--spacing-8);
+    align-items: center;
+    padding-bottom: var(--spacing-6);
+    border-bottom: 1px solid var(--outline-variant);
+}
+
+.profile-review-image {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--surface-container-high);
+    text-decoration: none;
+}
+
+.profile-review-image img,
+.profile-review-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.profile-review-image img {
+    object-fit: cover;
+}
+
+.profile-review-image-placeholder {
+    background:
+        linear-gradient(135deg, rgba(94, 212, 255, 0.16), transparent 42%),
+        linear-gradient(35deg, transparent 0 38%, rgba(229, 226, 225, 0.20) 39% 42%, transparent 43%),
+        var(--surface-container-high);
+}
+
+.profile-review-content {
+    min-width: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.profile-review-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid rgba(229, 226, 225, 0.08);
+    padding-bottom: 0.625rem;
+}
+
+.profile-review-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.profile-review-menu {
+    position: relative;
+    display: inline-flex;
+}
+
+.profile-review-menu-toggle {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-md);
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+    cursor: pointer;
+}
+
+.profile-review-menu-toggle:hover,
+.profile-review-menu-toggle[aria-expanded="true"] {
+    background: var(--surface-container-highest);
+    color: var(--primary);
+}
+
+.profile-review-menu-panel {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    right: 0;
+    z-index: 20;
+    min-width: 9rem;
+    display: grid;
+    padding: 0.35rem;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-md);
+    background: var(--surface-container-high);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+}
+
+.profile-review-menu-panel[hidden] {
+    display: none;
+}
+
+.profile-review-menu-panel button {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    min-height: 2.25rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--on-surface);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-align: left;
+    padding: 0.55rem 0.65rem;
+}
+
+.profile-review-menu-panel button:hover {
+    background: var(--surface-container-highest);
+}
+
+.profile-review-menu-panel .profile-review-menu-danger {
+    color: #ff9f92;
+}
+
+.profile-review-date,
+.profile-review-car {
+    color: var(--secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.profile-review-score {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3rem;
+    min-height: 2rem;
+    padding: 0.35rem 0.75rem;
+    background: rgba(94, 212, 255, 0.14);
+    color: var(--tertiary);
+    font-family: var(--font-display);
+    font-weight: 700;
+}
+
+.profile-review-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.profile-review-body {
+    color: var(--on-surface-variant);
+    line-height: 1.65;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@media (max-width: 900px) {
+    .profile-review-card {
+        grid-template-columns: 240px minmax(0, 1fr);
+        gap: var(--spacing-6);
+    }
+}
+
+@media (max-width: 680px) {
+    .profile-review-card {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+}

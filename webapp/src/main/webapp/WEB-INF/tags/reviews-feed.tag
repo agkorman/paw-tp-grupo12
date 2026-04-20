@@ -4,6 +4,7 @@
 <%@ attribute name="currentSort" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 
 <c:url var="reviewsFeedUrl" value="/reviews/feed"/>
@@ -44,15 +45,19 @@
         <c:otherwise>
             <div class="review-list">
                 <c:forEach var="review" items="${reviews}">
-                    <article class="review-item">
+                    <article class="review-item" id="review-${review.id}">
                         <div class="review-item-top">
                             <strong><c:out value="${review.title}"/></strong>
                             <span class="rating-pill"><c:out value="${review.rating}"/>/5.0</span>
                         </div>
                         <p class="review-body"><c:out value="${review.body}"/></p>
                         <div class="review-meta">
-                            <span>anon</span>
+                            <pa:review-author-link review="${review}"/>
                             <span><c:out value="${fn:substring(review.createdAt, 0, 10)}"/></span>
+                            <pa:review-like-button
+                                    reviewId="${review.id}"
+                                    liked="${review.id mod 2 eq 0}"
+                                    likeCount="${review.id + 3}"/>
                         </div>
                     </article>
                 </c:forEach>

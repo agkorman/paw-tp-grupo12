@@ -2,8 +2,10 @@
 <%@ attribute name="heroReview" required="true" type="ar.edu.itba.paw.model.Review" %>
 <%@ attribute name="heroCarBrandName" required="false" type="java.lang.String" %>
 <%@ attribute name="heroCarImageUrl" required="false" type="java.lang.String" %>
+<%@ attribute name="href" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <article class="hero-review-card">
     <div class="hero-review-header">
@@ -63,14 +65,10 @@
     </p>
 
     <p class="hero-review-meta">
-        <span>
-            <c:choose>
-                <c:when test="${not empty heroReview.reviewerUsername}">
-                    <c:out value="${heroReview.reviewerUsername}"/>
-                </c:when>
-                <c:otherwise>anon</c:otherwise>
-            </c:choose>
-        </span>
+        <pa:review-author-link review="${heroReview}"/>
         <span><c:out value="${fn:substring(heroReview.createdAt, 0, 10)}"/></span>
+        <c:if test="${not empty href}">
+            <a class="hero-review-detail-link" href="${fn:escapeXml(href)}">Ver review</a>
+        </c:if>
     </p>
 </article>
