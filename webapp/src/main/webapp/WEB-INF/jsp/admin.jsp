@@ -87,5 +87,6 @@
 
     <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
     <script src="<c:url value='/js/create-car-modal.js'/>"></script>
+    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

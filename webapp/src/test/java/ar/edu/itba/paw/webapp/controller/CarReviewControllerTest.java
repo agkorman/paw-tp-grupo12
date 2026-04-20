@@ -7,8 +7,12 @@ import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.ui.ExtendedModelMap;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -30,8 +34,7 @@ public class CarReviewControllerTest {
     public void createReviewUsesAuthenticatedUserId() {
         final FakeReviewService reviewService = new FakeReviewService();
         final CarReviewController controller = controller(reviewService);
-
-        final ModelAndView mav = controller.createReview(
+        final ReviewForm reviewForm = reviewForm(
                 10L,
                 BigDecimal.valueOf(4.5),
                 "Gran auto",
@@ -39,11 +42,19 @@ public class CarReviewControllerTest {
                 "Propietario actual",
                 2020,
                 45000,
-                true,
+                true
+        );
+        final BindingResult errors = new BeanPropertyBindingResult(reviewForm, "reviewForm");
+
+        final String view = controller.createReview(
+                reviewForm,
+                errors,
+                new ExtendedModelMap(),
                 user(7L)
         );
 
-        assertEquals("redirect:/reviews?carId=10", mav.getViewName());
+        assertEquals("redirect:/reviews?carId=10", view);
+        assertFalse(errors.hasErrors());
         assertEquals(7L, reviewService.createdUserId);
         assertEquals(10L, reviewService.createdCarId);
     }
@@ -165,6 +176,21 @@ public class CarReviewControllerTest {
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
+    }
+
+    private ReviewForm reviewForm(final long carId, final BigDecimal rating, final String title, final String body,
+                                  final String ownershipStatus, final Integer modelYear, final Integer mileageKm,
+                                  final Boolean wouldRecommend) {
+        final ReviewForm form = new ReviewForm();
+        form.setCarId(carId);
+        form.setRating(rating);
+        form.setTitle(title);
+        form.setBody(body);
+        form.setOwnershipStatus(ownershipStatus);
+        form.setModelYear(modelYear);
+        form.setMileageKm(mileageKm);
+        form.setWouldRecommend(wouldRecommend);
+        return form;
     }
 
     private void assertResponseStatus(final RuntimeException exception, final HttpStatus expectedStatus) {

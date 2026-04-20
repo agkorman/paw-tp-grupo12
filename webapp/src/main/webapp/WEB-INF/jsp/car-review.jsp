@@ -20,9 +20,6 @@
     <pa:nav activePage="reviews"/>
 
     <main class="reviews-page">
-        <c:if test="${not empty error}">
-            <div class="alert alert-error" role="alert"><c:out value="${error}"/></div>
-        </c:if>
         <section class="review-hero">
             <div class="review-hero-inner">
                 <div>
@@ -81,7 +78,7 @@
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
-
     <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
+    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

@@ -12,33 +12,40 @@ import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.form.CarForm;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.validation.Valid;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.sql.Timestamp;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
@@ -76,6 +83,11 @@ public class CarController {
         this.emailService = emailService;
     }
 
+    @InitBinder
+    public void initBinder(final WebDataBinder binder) {
+        binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
+    }
+
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public ModelAndView home() {
         return landingPage();
@@ -99,13 +111,18 @@ public class CarController {
     }
 
     @RequestMapping(value = "/cars", method = RequestMethod.GET)
-    public ModelAndView listCars(
-            @RequestParam(value = "q", required = false) final String q,
-            @RequestParam(value = "brand", required = false) final String brand,
-            @RequestParam(value = "bodyType", required = false) final String bodyType,
-            @RequestParam(value = "carFormError", required = false) final String carFormError,
-            @RequestParam(value = "createCar", required = false) final String createCar) {
-        return carsPage(blankToNull(q), brand, bodyType, carFormError, "true".equalsIgnoreCase(createCar));
+    public String listCars(@RequestParam(value = "q", required = false) final String q,
+                           @RequestParam(value = "brand", required = false) final String brand,
+                           @RequestParam(value = "bodyType", required = false) final String bodyType,
+                           @RequestParam(value = "createCar", required = false) final String createCar,
+                           @ModelAttribute("carForm") final CarForm carForm,
+                           final Model model) {
+        populateCarsPageModel(model, blankToNull(q), brand, bodyType);
+        if ("true".equalsIgnoreCase(createCar)) {
+            model.addAttribute("openCarModal", true);
+            model.addAttribute("openCreateCarModal", true);
+        }
+        return "cars.jsp";
     }
 
     @RequestMapping(value = "/cars/content", method = RequestMethod.GET)
@@ -127,101 +144,88 @@ public class CarController {
     }
 
     @RequestMapping(value = "/cars", method = RequestMethod.POST, consumes = "multipart/form-data")
-    public ModelAndView createCar(@RequestParam("brand") final String brand,
-                                  @RequestParam("bodyType") final String bodyType,
-                                  @RequestParam("model") final String model,
-                                  @RequestParam(value = "description", required = false) final String description,
-                                  @RequestParam(value = "file", required = false) final MultipartFile file,
-                                  @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+    public String createCar(@Valid @ModelAttribute("carForm") final CarForm carForm,
+                            final BindingResult errors,
+                            final Model model,
+                            @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         if (currentUser == null) {
-            return new ModelAndView("redirect:/cars/new");
+            return "redirect:/cars/new";
         }
 
-        final String trimmedBrand = brand.trim();
-        final String trimmedBodyType = bodyType.trim();
-        final String trimmedModel = model.trim();
-        final String trimmedDescription = description == null ? null : description.trim();
-
-        if (trimmedBrand.isEmpty() || trimmedBodyType.isEmpty()) {
-            return redirectToCarsWithError("Marca y tipo de carrocería son obligatorios.");
-        }
-        if (trimmedModel.isEmpty() || trimmedModel.length() > 120) {
-            return redirectToCarsWithError("El modelo es obligatorio y debe tener como máximo 120 caracteres.");
-        }
-        if (trimmedDescription == null || trimmedDescription.isEmpty()) {
-            return redirectToCarsWithError("La descripción es obligatoria.");
-        }
-        if (trimmedDescription != null && trimmedDescription.length() > 1500) {
-            return redirectToCarsWithError("La descripción debe tener como máximo 1500 caracteres.");
+        final MultipartFile file = carForm.getFile();
+        final String imageError = validateUploadedImage(file, true);
+        if (imageError != null) {
+            errors.rejectValue("file", "image.invalid", imageError);
         }
 
-        final String imageValidationError = validateUploadedImage(file, true);
-        if (imageValidationError != null) {
-            return redirectToCarsWithError(imageValidationError);
-        }
-
-        final Brand resolvedBrand = brandDao.findByName(trimmedBrand).orElse(null);
-        final BodyType resolvedBodyType = bodyTypeDao.findByName(trimmedBodyType).orElse(null);
-        if (resolvedBrand == null || resolvedBodyType == null) {
-            return redirectToCarsWithError("Marca o tipo de carrocería no válidos.");
-        }
-
-        final Optional<String> imageContentType;
-        final Optional<byte[]> imageData;
-        if (file == null || file.isEmpty()) {
-            imageContentType = Optional.empty();
-            imageData = Optional.empty();
-        } else {
-            imageContentType = Optional.ofNullable(resolveImageContentType(file));
-            try {
-                imageData = Optional.of(file.getBytes());
-            } catch (final IOException e) {
-                throw new IllegalStateException("Failed to read uploaded image.", e);
+        Brand resolvedBrand = null;
+        if (!errors.hasFieldErrors("brand")) {
+            resolvedBrand = brandDao.findByName(carForm.getBrand()).orElse(null);
+            if (resolvedBrand == null) {
+                errors.rejectValue("brand", "brand.invalid", "Marca no válida.");
             }
+        }
+
+        BodyType resolvedBodyType = null;
+        if (!errors.hasFieldErrors("bodyType")) {
+            resolvedBodyType = bodyTypeDao.findByName(carForm.getBodyType()).orElse(null);
+            if (resolvedBodyType == null) {
+                errors.rejectValue("bodyType", "bodyType.invalid", "Tipo de carrocería no válido.");
+            }
+        }
+
+        if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null) {
+            final boolean duplicate = carService
+                    .getCarsByBrandAndBodyType(resolvedBrand.getName(), resolvedBodyType.getName())
+                    .stream()
+                    .anyMatch(car -> car.getModel().equalsIgnoreCase(carForm.getModel()));
+            if (duplicate) {
+                errors.reject("car.duplicate",
+                        "Ya existe un auto con esa marca, modelo y tipo de carrocería.");
+            }
+        }
+
+        if (errors.hasErrors()) {
+            populateCarsPageModel(model, null, null, null);
+            model.addAttribute("openCarModal", true);
+            model.addAttribute("openCreateCarModal", true);
+            return "cars.jsp";
+        }
+
+        final Optional<String> imageContentType = Optional.ofNullable(resolveImageContentType(file));
+        final Optional<byte[]> imageData;
+        try {
+            imageData = Optional.of(file.getBytes());
+        } catch (final IOException e) {
+            throw new IllegalStateException("Failed to read uploaded image.", e);
         }
 
         final Car createdCar = carService.createCar(
                 resolvedBrand.getId(),
-                trimmedModel,
+                carForm.getModel(),
                 resolvedBodyType.getId(),
                 currentUser.getId(),
-                Optional.ofNullable(trimmedDescription).filter(value -> !value.isEmpty()),
+                Optional.ofNullable(carForm.getDescription()).filter(value -> !value.isEmpty()),
                 imageContentType,
                 imageData
         );
 
         emailService.sendCarCreatedNotification(createdCar);
 
-        return new ModelAndView("redirect:/cars");
+        return "redirect:/cars";
     }
 
-    private ModelAndView carsPage(final String q, final String brand, final String bodyType,
-                                  final String error, final boolean openCreateCarModal) {
+    private void populateCarsPageModel(final Model model, final String q, final String brand, final String bodyType) {
         final String searchQuery = blankToNull(q);
         final CarCatalogData catalogData = resolveCatalogData(searchQuery, brand, bodyType);
 
-        final ModelAndView mav = new ModelAndView("cars.jsp");
-        mav.addObject("cars", catalogData.cars);
-        mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
-        mav.addObject("brands", brandDao.findAll());
-        mav.addObject("bodyTypes", bodyTypeDao.findAll());
-        mav.addObject("selectedBrand", catalogData.brandFilter);
-        mav.addObject("selectedBodyType", catalogData.bodyTypeFilter);
-        mav.addObject("searchQuery", searchQuery);
-        mav.addObject("openCreateCarModal", openCreateCarModal);
-        if (error != null) {
-            mav.addObject("carFormError", error);
-        }
-        return mav;
-    }
-
-    private ModelAndView redirectToCarsWithError(final String error) {
-        final String redirectUrl = UriComponentsBuilder.fromPath("/cars")
-                .queryParam("carFormError", error)
-                .build()
-                .encode()
-                .toUriString();
-        return new ModelAndView("redirect:" + redirectUrl);
+        model.addAttribute("cars", catalogData.cars);
+        model.addAttribute("reviewStatsByCarId", catalogData.reviewStatsByCarId);
+        model.addAttribute("brands", brandDao.findAll());
+        model.addAttribute("bodyTypes", bodyTypeDao.findAll());
+        model.addAttribute("selectedBrand", catalogData.brandFilter);
+        model.addAttribute("selectedBodyType", catalogData.bodyTypeFilter);
+        model.addAttribute("searchQuery", searchQuery);
     }
 
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.GET)
@@ -437,5 +441,4 @@ public class CarController {
             this.bodyTypeFilter = bodyTypeFilter;
         }
     }
-
 }

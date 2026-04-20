@@ -187,6 +187,34 @@
         }
     }
 
+    function syncRatingFromInput() {
+        var raw = starInput ? starInput.value : '';
+        var value = raw ? Number(raw) : 0;
+        if (value > 0 && value <= 5) {
+            setRating(value);
+        } else {
+            resetRating();
+        }
+    }
+
+    function openModalPreservingForm() {
+        lastTrigger = null;
+        form.action = form.getAttribute('data-create-action') || form.action;
+        setModeTexts(createTexts);
+        if (reviewIdInput) {
+            reviewIdInput.value = '';
+        }
+        if (carIdInput && !carIdInput.value) {
+            carIdInput.value = modal.getAttribute('data-default-car-id') || '';
+        }
+        syncRatingFromInput();
+        modal.removeAttribute('hidden');
+        document.body.classList.add('modal-open');
+        if (titleInput) {
+            titleInput.focus();
+        }
+    }
+
     function closeModal() {
         modal.setAttribute('hidden', 'hidden');
         document.body.classList.remove('modal-open');
@@ -354,5 +382,9 @@
         }
     });
 
-    renderStars(0);
+    if (modal.dataset.autoOpen === 'true') {
+        openModalPreservingForm();
+    } else {
+        syncRatingFromInput();
+    }
 }());

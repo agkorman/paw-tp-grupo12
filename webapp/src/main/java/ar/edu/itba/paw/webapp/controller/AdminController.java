@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarRequestService;
+import ar.edu.itba.paw.webapp.form.CarForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -60,6 +61,7 @@ public class AdminController {
         mav.addObject("pendingRequests", pendingRequests);
         mav.addObject("brands", brands);
         mav.addObject("bodyTypes", bodyTypes);
+        mav.addObject("carForm", new CarForm());
         return mav;
     }
 
