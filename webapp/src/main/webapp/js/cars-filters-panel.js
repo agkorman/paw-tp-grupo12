@@ -93,7 +93,7 @@
     function initSingleRange(sliderId, displayId, prefix, unit) {
         var slider  = document.getElementById(sliderId);
         var display = document.getElementById(displayId);
-        if (!slider || !display) { return; }
+        if (!slider || !display) { return function () {}; }
 
         function updateDisplay() {
             display.innerHTML = (prefix ? prefix + ' <strong>' : '<strong>') +
@@ -104,10 +104,11 @@
 
         slider.addEventListener('input', updateDisplay);
         updateDisplay();
+        return updateDisplay;
     }
 
-    initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', 'Hasta', 'L/100km');
-    initSingleRange('panelMaxSpeedSlider',    'panelMaxSpeedDisplay',    'Desde', 'km/h');
+    var updateConsumptionDisplay = initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', 'Hasta', 'L/100km');
+    var updateSpeedDisplay       = initSingleRange('panelMaxSpeedSlider',    'panelMaxSpeedDisplay',    'Desde', 'km/h');
 
     /* ── DUAL-RANGE SLIDER (HP) ── */
 
@@ -384,13 +385,13 @@
         var consumptionSlider = document.getElementById('panelConsumptionSlider');
         if (consumptionSlider) {
             consumptionSlider.value = consumptionSlider.max;
-            initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', 'Hasta', 'L/100km');
+            updateConsumptionDisplay();
         }
 
         var speedSlider = document.getElementById('panelMaxSpeedSlider');
         if (speedSlider) {
             speedSlider.value = speedSlider.min;
-            initSingleRange('panelMaxSpeedSlider', 'panelMaxSpeedDisplay', 'Desde', 'km/h');
+            updateSpeedDisplay();
         }
     }
 

@@ -2,8 +2,6 @@
 <%@ attribute name="criteria" required="true" type="ar.edu.itba.paw.model.CarSearchCriteria" %>
 <%@ attribute name="vehicleCount" required="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-
 <div id="carsFiltersOverlay" class="cars-filters-overlay" data-close-filters-panel></div>
 
 <aside id="carsFiltersPanel"

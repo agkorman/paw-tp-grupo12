@@ -199,11 +199,18 @@
     };
 
     var setRadioGroupReadonly = function (name, readonly) {
-        var firstField = form.querySelector('input[type="radio"][name="' + name + '"]');
-        if (!firstField) { return; }
-        var group = firstField.closest('.modal-radio-group');
+        var fields = form.querySelectorAll('input[type="radio"][name="' + name + '"]');
+        if (!fields.length) { return; }
+        var group = fields[0].closest('.modal-radio-group');
         if (!group) { return; }
         group.classList.toggle('modal-radio-group--readonly', readonly);
+        Array.prototype.forEach.call(fields, function (field) {
+            if (readonly) {
+                field.setAttribute('tabindex', '-1');
+            } else {
+                field.removeAttribute('tabindex');
+            }
+        });
     };
 
     var setRadioGroupValue = function (name, value) {

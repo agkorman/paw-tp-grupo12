@@ -115,6 +115,7 @@
             </svg>
             Filtros
         </button>
+        <span class="cars-toolbar-count" hidden aria-live="polite"></span>
 
         <div class="cars-toolbar-field">
             <span class="cars-toolbar-field-ui" aria-hidden="true">

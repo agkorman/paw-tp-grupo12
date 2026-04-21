@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.model;
 
 import java.math.BigDecimal;
+import java.util.Locale;
 import java.util.Set;
 
 public class CarSearchCriteria {
@@ -105,7 +106,7 @@ public class CarSearchCriteria {
     }
 
     public void setFuelType(final String fuelType) {
-        this.fuelType = fuelType == null || fuelType.trim().isEmpty() ? null : fuelType.trim().toLowerCase();
+        this.fuelType = fuelType == null || fuelType.trim().isEmpty() ? null : fuelType.trim().toLowerCase(Locale.ROOT);
     }
 
     public Integer getHorsepowerMin() {
@@ -137,7 +138,7 @@ public class CarSearchCriteria {
     }
 
     public void setTransmission(final String transmission) {
-        this.transmission = transmission == null || transmission.trim().isEmpty() ? null : transmission.trim().toLowerCase();
+        this.transmission = transmission == null || transmission.trim().isEmpty() ? null : transmission.trim().toLowerCase(Locale.ROOT);
     }
 
     public BigDecimal getFuelConsumptionMax() {
