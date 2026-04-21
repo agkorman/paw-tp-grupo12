@@ -225,7 +225,7 @@ public class CarReviewControllerTest {
         }
 
         @Override
-        public List<Car> searchCars(final String query, final String brand, final String bodyType) {
+        public List<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
             return Collections.emptyList();
         }
 
@@ -241,7 +241,10 @@ public class CarReviewControllerTest {
         @Override
         public Car createCar(final long brandId, final String model, final long bodyTypeId,
                              final long submittedByUserId, final Optional<String> description,
-                             final Optional<String> imageContentType, final Optional<byte[]> imageData) {
+                             final Optional<String> imageContentType, final Optional<byte[]> imageData,
+                             final String fuelType, final Integer horsepower, final Integer airbagCount,
+                             final String transmission, final java.math.BigDecimal fuelConsumption,
+                             final Integer maxSpeedKmh) {
             throw new UnsupportedOperationException();
         }
     }

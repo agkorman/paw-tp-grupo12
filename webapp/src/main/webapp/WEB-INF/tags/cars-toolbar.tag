@@ -5,6 +5,7 @@
 <%@ attribute name="selectedBodyType" required="false" %>
 <%@ attribute name="searchQuery" required="false" %>
 <%@ attribute name="resultCount" required="true" %>
+<%@ attribute name="hasAdvancedFilters" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <c:url var="carsContentUrl" value="/cars/content"/>
@@ -99,6 +100,21 @@
                 </c:forEach>
             </select>
         </div>
+
+        <button type="button"
+                id="filtersToggleBtn"
+                class="cars-toolbar-filters-btn${hasAdvancedFilters ? ' is-active' : ''}"
+                data-open-filters-panel
+                aria-expanded="false"
+                aria-controls="carsFiltersPanel"
+                aria-label="Filtros avanzados">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <line x1="4" y1="6" x2="20" y2="6"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+                <line x1="10" y1="18" x2="14" y2="18"></line>
+            </svg>
+            Filtros
+        </button>
 
         <div class="cars-toolbar-meta">
             <span class="cars-toolbar-count"><c:out value="${resultCount}"/> vehículos encontrados</span>

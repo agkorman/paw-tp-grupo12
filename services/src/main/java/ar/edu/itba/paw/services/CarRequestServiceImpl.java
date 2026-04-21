@@ -5,6 +5,7 @@ import ar.edu.itba.paw.persistence.CarRequestDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +43,10 @@ public class CarRequestServiceImpl implements CarRequestService {
     public CarRequest createPendingRequest(final long submittedByUserId, final long brandId,
                                            final long bodyTypeId, final String model,
                                            final String description, final Optional<String> imageContentType,
-                                           final Optional<byte[]> imageData) {
+                                           final Optional<byte[]> imageData, final String fuelType,
+                                           final Integer horsepower, final Integer airbagCount,
+                                           final String transmission, final BigDecimal fuelConsumption,
+                                           final Integer maxSpeedKmh) {
         final boolean hasImageContentType = imageContentType.isPresent();
         final boolean hasImageData = imageData.isPresent();
         if (hasImageContentType != hasImageData) {
@@ -67,7 +71,13 @@ public class CarRequestServiceImpl implements CarRequestService {
                 normalizedDescription,
                 imageContentType.orElse(null),
                 imageData.orElse(null),
-                STATUS_PENDING
+                STATUS_PENDING,
+                fuelType,
+                horsepower,
+                airbagCount,
+                transmission,
+                fuelConsumption,
+                maxSpeedKmh
         );
     }
 

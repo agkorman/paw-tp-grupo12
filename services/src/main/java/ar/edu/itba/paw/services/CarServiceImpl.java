@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -67,29 +69,8 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public List<Car> searchCars(final String query, final String brand, final String bodyType) {
-        final Long brandId = brand != null
-                ? brandDao.findByName(brand).map(br -> br.getId()).orElse(null)
-                : null;
-        if (brand != null && brandId == null) {
-            return Collections.emptyList();
-        }
-
-        final Long bodyTypeId = bodyType != null
-                ? bodyTypeDao.findByName(bodyType).map(bt -> bt.getId()).orElse(null)
-                : null;
-        if (bodyType != null && bodyTypeId == null) {
-            return Collections.emptyList();
-        }
-
-        if (query == null || query.trim().isEmpty()) {
-            if (brandId != null && bodyTypeId != null) return carDao.findByBrandIdAndBodyTypeId(brandId, bodyTypeId);
-            if (brandId != null)                        return carDao.findByBrandId(brandId);
-            if (bodyTypeId != null)                     return carDao.findByBodyTypeId(bodyTypeId);
-            return carDao.findAll();
-        }
-
-        return carDao.search(query, brandId, bodyTypeId);
+    public List<Car> searchCars(final CarSearchCriteria criteria) {
+        return carDao.findByCriteria(criteria);
     }
 
     @Override
@@ -107,13 +88,16 @@ public class CarServiceImpl implements CarService {
     public Car createCar(final long brandId, final String model, final long bodyTypeId,
                          final long submittedByUserId,
                          final Optional<String> description, final Optional<String> imageContentType,
-                         final Optional<byte[]> imageData) {
+                         final Optional<byte[]> imageData,
+                         final String fuelType, final Integer horsepower, final Integer airbagCount,
+                         final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
         final String normalizedDescription = description
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
                 .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
 
-        final Car createdCar = carDao.create(brandId, model, bodyTypeId, normalizedDescription);
+        final Car createdCar = carDao.create(brandId, model, bodyTypeId, normalizedDescription,
+                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh);
 
         final boolean hasImageContentType = imageContentType.isPresent();
         final boolean hasImageData = imageData.isPresent();
@@ -131,7 +115,13 @@ public class CarServiceImpl implements CarService {
                 model,
                 normalizedDescription,
                 imageContentType,
-                imageData
+                imageData,
+                fuelType,
+                horsepower,
+                airbagCount,
+                transmission,
+                fuelConsumption,
+                maxSpeedKmh
         );
 
         return carDao.findById(createdCar.getId()).orElse(createdCar);

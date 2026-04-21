@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.CarRequest;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,7 +19,9 @@ public interface CarRequestService {
 
     CarRequest createPendingRequest(long submittedByUserId, long brandId, long bodyTypeId,
                                    String model, String description, Optional<String> imageContentType,
-                                   Optional<byte[]> imageData);
+                                   Optional<byte[]> imageData, String fuelType, Integer horsepower,
+                                   Integer airbagCount, String transmission, BigDecimal fuelConsumption,
+                                   Integer maxSpeedKmh);
 
     boolean approvePendingRequest(long id);
 

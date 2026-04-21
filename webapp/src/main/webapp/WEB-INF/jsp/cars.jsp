@@ -27,7 +27,12 @@
             selectedBrand="${selectedBrand}"
             selectedBodyType="${selectedBodyType}"
             searchQuery="${searchQuery}"
-            resultCount="${fn:length(cars)}"/>
+            resultCount="${fn:length(cars)}"
+            hasAdvancedFilters="${hasAdvancedFilters}"/>
+
+    <pa:cars-filters-panel
+            criteria="${criteria}"
+            vehicleCount="${fn:length(cars)}"/>
 
     <pa:cars-content cars="${cars}" reviewStatsByCarId="${reviewStatsByCarId}"/>
     <pa:create-car-modal
@@ -36,6 +41,7 @@
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
+    <script src="<c:url value='/js/cars-filters-panel.js'/>"></script>
     <script src="<c:url value='/js/create-car-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +121,13 @@ public class AdminController {
                 request.getDescription(),
                 submitterLabel(request),
                 request.getImageData() != null,
-                request.getImageData() == null ? null : "/admin/requests/" + request.getId() + "/image"
+                request.getImageData() == null ? null : "/admin/requests/" + request.getId() + "/image",
+                request.getFuelType(),
+                request.getHorsepower(),
+                request.getAirbagCount(),
+                request.getTransmission(),
+                request.getFuelConsumption(),
+                request.getMaxSpeedKmh()
         );
     }
 
@@ -147,10 +154,18 @@ public class AdminController {
         private final String submitter;
         private final boolean hasImage;
         private final String imageUrl;
+        private final String fuelType;
+        private final Integer horsepower;
+        private final Integer airbagCount;
+        private final String transmission;
+        private final BigDecimal fuelConsumption;
+        private final Integer maxSpeedKmh;
 
         private AdminCarRequestCard(final long id, final String brandName, final String model,
                                     final String bodyTypeName, final String description, final String submitter,
-                                    final boolean hasImage, final String imageUrl) {
+                                    final boolean hasImage, final String imageUrl, final String fuelType,
+                                    final Integer horsepower, final Integer airbagCount, final String transmission,
+                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
             this.id = id;
             this.brandName = brandName;
             this.model = model;
@@ -159,6 +174,12 @@ public class AdminController {
             this.submitter = submitter;
             this.hasImage = hasImage;
             this.imageUrl = imageUrl;
+            this.fuelType = fuelType;
+            this.horsepower = horsepower;
+            this.airbagCount = airbagCount;
+            this.transmission = transmission;
+            this.fuelConsumption = fuelConsumption;
+            this.maxSpeedKmh = maxSpeedKmh;
         }
 
         public long getId() {
@@ -191,6 +212,30 @@ public class AdminController {
 
         public String getImageUrl() {
             return imageUrl;
+        }
+
+        public String getFuelType() {
+            return fuelType;
+        }
+
+        public Integer getHorsepower() {
+            return horsepower;
+        }
+
+        public Integer getAirbagCount() {
+            return airbagCount;
+        }
+
+        public String getTransmission() {
+            return transmission;
+        }
+
+        public BigDecimal getFuelConsumption() {
+            return fuelConsumption;
+        }
+
+        public Integer getMaxSpeedKmh() {
+            return maxSpeedKmh;
         }
     }
 }

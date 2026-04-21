@@ -19,6 +19,12 @@
 <%@ attribute name="requestBodyType" required="false" %>
 <%@ attribute name="requestDescription" required="false" %>
 <%@ attribute name="requestSubmitter" required="false" %>
+<%@ attribute name="requestFuelType" required="false" %>
+<%@ attribute name="requestHorsepower" required="false" %>
+<%@ attribute name="requestAirbagCount" required="false" %>
+<%@ attribute name="requestTransmission" required="false" %>
+<%@ attribute name="requestFuelConsumption" required="false" %>
+<%@ attribute name="requestMaxSpeedKmh" required="false" %>
 <%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -39,6 +45,12 @@
        data-request-body-type="${fn:escapeXml(requestBodyType)}"
        data-request-description="${fn:escapeXml(requestDescription)}"
        data-request-submitter="${fn:escapeXml(requestSubmitter)}"
+       data-request-fuel-type="${fn:escapeXml(requestFuelType)}"
+       data-request-horsepower="${fn:escapeXml(requestHorsepower)}"
+       data-request-airbag-count="${fn:escapeXml(requestAirbagCount)}"
+       data-request-transmission="${fn:escapeXml(requestTransmission)}"
+       data-request-fuel-consumption="${fn:escapeXml(requestFuelConsumption)}"
+       data-request-max-speed-kmh="${fn:escapeXml(requestMaxSpeedKmh)}"
        data-request-image-url="${fn:escapeXml(modalImageUrl)}">
         <div class="car-card">
             <div class="card-image-wrap">
