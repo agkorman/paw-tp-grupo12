@@ -52,6 +52,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/logout"),
                                 antMatcher(HttpMethod.POST, "/car-image"),
                                 antMatcher(HttpMethod.POST, "/cars/*/image"),
+                                antMatcher(HttpMethod.POST, "/cars/*/favorite"),
                                 antMatcher(HttpMethod.POST, "/profiles/*/follow"))
                             .authenticated()
                         .anyRequest().authenticated())

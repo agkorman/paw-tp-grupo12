@@ -100,7 +100,7 @@
         </section>
 
         <section class="review-layout review-detail-layout">
-            <pa:review-selected-car selectedCar="${selectedCar}"/>
+            <pa:review-selected-car selectedCar="${selectedCar}" favorited="${selectedCarFavorited}"/>
 
             <div class="review-side-column">
                 <pa:review-car-info selectedCar="${selectedCar}" averageRating="${averageRating}"/>

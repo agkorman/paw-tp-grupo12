@@ -148,7 +148,7 @@
                                         carId="${favoriteCar.id}"
                                         hasImage="${favoriteCar.hasImage}"
                                         href="${favoriteReviewUrl}"
-                                        favorited="true"
+                                        favorited="${favoritedCarIds[favoriteCar.id] eq true}"
                                         averageRating="${reviewStatsByCarId[favoriteCar.id].averageRating}"
                                         reviewCount="${reviewStatsByCarId[favoriteCar.id].reviewCount}"/>
                             </c:forEach>

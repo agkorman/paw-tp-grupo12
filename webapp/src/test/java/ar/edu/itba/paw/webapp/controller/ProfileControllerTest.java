@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
@@ -71,6 +72,7 @@ public class ProfileControllerTest {
         return new ProfileController(
                 new FakeReviewService(review),
                 new FakeCarService(),
+                new FakeCarFavoriteService(),
                 new FakeUserService(),
                 new FakeUserFollowService()
         );
@@ -253,6 +255,28 @@ public class ProfileControllerTest {
         @Override
         public boolean deleteCar(final long id) {
             return false;
+        }
+    }
+
+    private static final class FakeCarFavoriteService implements CarFavoriteService {
+        @Override
+        public boolean setFavorite(final long userId, final long carId, final boolean favorite) {
+            return false;
+        }
+
+        @Override
+        public boolean isFavorited(final long userId, final long carId) {
+            return false;
+        }
+
+        @Override
+        public List<Car> getFavoriteCars(final long userId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public java.util.Set<Long> getFavoritedCarIds(final long userId, final Collection<Long> carIds) {
+            return Collections.emptySet();
         }
     }
 
