@@ -131,6 +131,7 @@ public class CarController {
         final ModelAndView mav = new ModelAndView("cars-content.jsp");
         mav.addObject("cars", catalogData.cars);
         mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
+        addShowSpecFlags(mav, criteria);
         return mav;
     }
 
@@ -230,6 +231,21 @@ public class CarController {
         model.addAttribute("searchQuery", criteria.getQ());
         model.addAttribute("criteria", criteria);
         model.addAttribute("hasAdvancedFilters", criteria.hasAdvancedFilters());
+        model.addAttribute("showHp", criteria.getHorsepowerMin() != null || criteria.getHorsepowerMax() != null);
+        model.addAttribute("showSpeed", criteria.getMaxSpeedMin() != null);
+        model.addAttribute("showConsumption", criteria.getFuelConsumptionMax() != null);
+        model.addAttribute("showAirbags", criteria.getAirbagMin() != null);
+        model.addAttribute("showTransmission", criteria.getTransmission() != null);
+        model.addAttribute("showFuelType", criteria.getFuelType() != null);
+    }
+
+    private void addShowSpecFlags(final ModelAndView mav, final CarSearchCriteria criteria) {
+        mav.addObject("showHp", criteria.getHorsepowerMin() != null || criteria.getHorsepowerMax() != null);
+        mav.addObject("showSpeed", criteria.getMaxSpeedMin() != null);
+        mav.addObject("showConsumption", criteria.getFuelConsumptionMax() != null);
+        mav.addObject("showAirbags", criteria.getAirbagMin() != null);
+        mav.addObject("showTransmission", criteria.getTransmission() != null);
+        mav.addObject("showFuelType", criteria.getFuelType() != null);
     }
 
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.GET)

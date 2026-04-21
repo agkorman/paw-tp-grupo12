@@ -181,7 +181,31 @@ public class CarJdbcDao implements CarDao {
             params.addValue("maxSpeedMin", criteria.getMaxSpeedMin());
         }
 
-        if (criteria.getQ() != null) {
+        final String sortBy = criteria.getSortBy();
+        if (sortBy != null) {
+            switch (sortBy) {
+                case "name_asc":
+                    sql.append("ORDER BY b.name ASC, c.model ASC");
+                    break;
+                case "name_desc":
+                    sql.append("ORDER BY b.name DESC, c.model DESC");
+                    break;
+                case "hp_desc":
+                    sql.append("ORDER BY c.horsepower DESC NULLS LAST, c.car_id ASC");
+                    break;
+                case "hp_asc":
+                    sql.append("ORDER BY c.horsepower ASC NULLS LAST, c.car_id ASC");
+                    break;
+                case "speed_desc":
+                    sql.append("ORDER BY c.max_speed_kmh DESC NULLS LAST, c.car_id ASC");
+                    break;
+                case "consumption_asc":
+                    sql.append("ORDER BY c.fuel_consumption ASC NULLS LAST, c.car_id ASC");
+                    break;
+                default:
+                    sql.append("ORDER BY c.car_id ASC");
+            }
+        } else if (criteria.getQ() != null) {
             final String tsQ = criteria.getQ().replaceAll("[%_\\\\]", " ").trim();
             final StringBuilder order = new StringBuilder("ORDER BY ");
             if (tsQ.matches(".*[a-zA-Z0-9]{2,}.*")) {

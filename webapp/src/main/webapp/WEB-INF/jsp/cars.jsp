@@ -27,14 +27,22 @@
             selectedBrand="${selectedBrand}"
             selectedBodyType="${selectedBodyType}"
             searchQuery="${searchQuery}"
-            resultCount="${fn:length(cars)}"
+            sortBy="${criteria.sortBy}"
             hasAdvancedFilters="${hasAdvancedFilters}"/>
 
     <pa:cars-filters-panel
             criteria="${criteria}"
             vehicleCount="${fn:length(cars)}"/>
 
-    <pa:cars-content cars="${cars}" reviewStatsByCarId="${reviewStatsByCarId}"/>
+    <pa:cars-content
+            cars="${cars}"
+            reviewStatsByCarId="${reviewStatsByCarId}"
+            showHp="${showHp}"
+            showSpeed="${showSpeed}"
+            showConsumption="${showConsumption}"
+            showAirbags="${showAirbags}"
+            showTransmission="${showTransmission}"
+            showFuelType="${showFuelType}"/>
     <pa:create-car-modal
             brands="${brands}"
             bodyTypes="${bodyTypes}"/>

@@ -7,6 +7,7 @@ public class CarSearchCriteria {
 
     public static final Set<String> ALLOWED_FUEL_TYPES = Set.of("combustion", "hybrid", "electric");
     public static final Set<String> ALLOWED_TRANSMISSIONS = Set.of("manual", "automatic");
+    public static final Set<String> ALLOWED_SORT_BY = Set.of("name_asc", "name_desc", "hp_desc", "hp_asc", "speed_desc", "consumption_asc");
     private static final Set<Integer> ALLOWED_AIRBAG_MIN_VALUES = Set.of(2, 4, 6, 8, 10);
     private static final int HORSEPOWER_MIN_BOUND = 0;
     private static final int HORSEPOWER_MAX_BOUND = 1500;
@@ -61,7 +62,10 @@ public class CarSearchCriteria {
         if (fuelConsumptionMax != null && !isWithinBounds(fuelConsumptionMax, FUEL_CONSUMPTION_MIN_BOUND, FUEL_CONSUMPTION_MAX_BOUND)) {
             return false;
         }
-        return maxSpeedMin == null || isWithinBounds(maxSpeedMin, MAX_SPEED_MIN_BOUND, MAX_SPEED_MAX_BOUND);
+        if (maxSpeedMin != null && !isWithinBounds(maxSpeedMin, MAX_SPEED_MIN_BOUND, MAX_SPEED_MAX_BOUND)) {
+            return false;
+        }
+        return sortBy == null || ALLOWED_SORT_BY.contains(sortBy);
     }
 
     private boolean isWithinBounds(final int value, final int min, final int max) {

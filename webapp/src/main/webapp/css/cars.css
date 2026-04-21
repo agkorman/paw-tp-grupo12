@@ -5,7 +5,7 @@
 
 .cars-toolbar-shell {
     display: grid;
-    grid-template-columns: minmax(0, 2.2fr) minmax(12rem, 1.15fr) minmax(12rem, 1.15fr) auto auto;
+    grid-template-columns: minmax(0, 2.2fr) minmax(12rem, 1.15fr) minmax(12rem, 1.15fr) auto minmax(12rem, 1.15fr);
     align-items: center;
     gap: 0.875rem;
     padding: 0.85rem;
