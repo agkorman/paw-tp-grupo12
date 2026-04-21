@@ -117,12 +117,21 @@ public class CarJdbcDao implements CarDao {
         boolean hasWhere = false;
 
         if (criteria.getQ() != null) {
-            final String likeQ = "%" + criteria.getQ().toLowerCase() + "%";
-            sql.append("WHERE (c.search_vector @@ websearch_to_tsquery('simple', :q) "
-                    + "OR lower(b.name) LIKE :likeQ "
-                    + "OR lower(c.model) LIKE :likeQ "
-                    + "OR lower(COALESCE(c.description, '')) LIKE :likeQ) ");
-            params.addValue("q", criteria.getQ());
+            final String escaped = criteria.getQ().toLowerCase().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+            final String likeQ = "%" + escaped + "%";
+            final String tsQ = criteria.getQ().replaceAll("[%_\\\\]", " ").trim();
+            final boolean useTsQuery = tsQ.matches(".*[a-zA-Z0-9]{2,}.*");
+            if (!useTsQuery) {
+                sql.append("WHERE (lower(b.name) LIKE :likeQ ESCAPE '\\' "
+                        + "OR lower(c.model) LIKE :likeQ ESCAPE '\\' "
+                        + "OR lower(COALESCE(c.description, '')) LIKE :likeQ ESCAPE '\\') ");
+            } else {
+                sql.append("WHERE (c.search_vector @@ websearch_to_tsquery('simple', :q) "
+                        + "OR lower(b.name) LIKE :likeQ ESCAPE '\\' "
+                        + "OR lower(c.model) LIKE :likeQ ESCAPE '\\' "
+                        + "OR lower(COALESCE(c.description, '')) LIKE :likeQ ESCAPE '\\') ");
+                params.addValue("q", tsQ);
+            }
             params.addValue("likeQ", likeQ);
             hasWhere = true;
         }
@@ -173,11 +182,16 @@ public class CarJdbcDao implements CarDao {
         }
 
         if (criteria.getQ() != null) {
-            sql.append("ORDER BY ts_rank(c.search_vector, websearch_to_tsquery('simple', :q)) DESC, "
-                    + "CASE WHEN lower(c.model) LIKE :likeQ THEN 0 "
-                    + "     WHEN lower(b.name) LIKE :likeQ THEN 1 "
-                    + "     WHEN lower(COALESCE(c.description, '')) LIKE :likeQ THEN 2 "
+            final String tsQ = criteria.getQ().replaceAll("[%_\\\\]", " ").trim();
+            final StringBuilder order = new StringBuilder("ORDER BY ");
+            if (tsQ.matches(".*[a-zA-Z0-9]{2,}.*")) {
+                order.append("ts_rank(c.search_vector, websearch_to_tsquery('simple', :q)) DESC, ");
+            }
+            order.append("CASE WHEN lower(c.model) LIKE :likeQ ESCAPE '\\' THEN 0 "
+                    + "     WHEN lower(b.name) LIKE :likeQ ESCAPE '\\' THEN 1 "
+                    + "     WHEN lower(COALESCE(c.description, '')) LIKE :likeQ ESCAPE '\\' THEN 2 "
                     + "     ELSE 3 END, c.car_id ASC");
+            sql.append(order);
         } else {
             sql.append("ORDER BY c.car_id ASC");
         }
@@ -204,15 +218,23 @@ public class CarJdbcDao implements CarDao {
     @Override
     public List<Car> search(final String query, final Long brandId, final Long bodyTypeId) {
         final String trimmed = query.trim();
-        final String likeQuery = "%" + trimmed.toLowerCase() + "%";
+        final String escaped = trimmed.toLowerCase().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        final String likeQuery = "%" + escaped + "%";
+        final String tsQuery = trimmed.replaceAll("[%_\\\\]", " ").trim();
         final StringBuilder sql = new StringBuilder(SELECT_COLUMNS).append(FROM_JOIN);
-        sql.append("WHERE (c.search_vector @@ websearch_to_tsquery('simple', ?) ");
-        sql.append("   OR lower(b.name) LIKE ? ");
-        sql.append("   OR lower(c.model) LIKE ? ");
-        sql.append("   OR lower(COALESCE(c.description, '')) LIKE ?) ");
-
+        final boolean useTsQuery = tsQuery.matches(".*[a-zA-Z0-9]{2,}.*");
         final List<Object> params = new ArrayList<>();
-        params.add(trimmed);
+        if (!useTsQuery) {
+            sql.append("WHERE (lower(b.name) LIKE ? ESCAPE '\\' ");
+            sql.append("   OR lower(c.model) LIKE ? ESCAPE '\\' ");
+            sql.append("   OR lower(COALESCE(c.description, '')) LIKE ? ESCAPE '\\') ");
+        } else {
+            sql.append("WHERE (c.search_vector @@ websearch_to_tsquery('simple', ?) ");
+            sql.append("   OR lower(b.name) LIKE ? ESCAPE '\\' ");
+            sql.append("   OR lower(c.model) LIKE ? ESCAPE '\\' ");
+            sql.append("   OR lower(COALESCE(c.description, '')) LIKE ? ESCAPE '\\') ");
+            params.add(tsQuery);
+        }
         params.add(likeQuery);
         params.add(likeQuery);
         params.add(likeQuery);
@@ -226,13 +248,17 @@ public class CarJdbcDao implements CarDao {
             params.add(bodyTypeId);
         }
 
-        sql.append("ORDER BY ts_rank(c.search_vector, websearch_to_tsquery('simple', ?)) DESC, ");
-        sql.append("CASE WHEN lower(c.model) LIKE ? THEN 0 ");
-        sql.append("     WHEN lower(b.name) LIKE ? THEN 1 ");
-        sql.append("     WHEN lower(COALESCE(c.description, '')) LIKE ? THEN 2 ");
+        if (useTsQuery) {
+            sql.append("ORDER BY ts_rank(c.search_vector, websearch_to_tsquery('simple', ?)) DESC, ");
+            params.add(tsQuery);
+        } else {
+            sql.append("ORDER BY ");
+        }
+        sql.append("CASE WHEN lower(c.model) LIKE ? ESCAPE '\\' THEN 0 ");
+        sql.append("     WHEN lower(b.name) LIKE ? ESCAPE '\\' THEN 1 ");
+        sql.append("     WHEN lower(COALESCE(c.description, '')) LIKE ? ESCAPE '\\' THEN 2 ");
         sql.append("     ELSE 3 END, ");
         sql.append("c.car_id ASC");
-        params.add(trimmed);
         params.add(likeQuery);
         params.add(likeQuery);
         params.add(likeQuery);
