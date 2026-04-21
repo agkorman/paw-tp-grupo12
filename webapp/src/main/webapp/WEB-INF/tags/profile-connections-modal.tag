@@ -4,6 +4,8 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
+<c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
+
 <div id="profileConnectionsModal" class="profile-modal" hidden>
     <div class="profile-modal-overlay" data-close-profile-modal></div>
     <section class="profile-modal-dialog profile-connections-dialog" role="dialog" aria-modal="true" aria-labelledby="profileConnectionsTitle">
@@ -38,7 +40,15 @@
                     </div>
                     <c:if test="${user.followable}">
                         <c:url var="connectionFollowUrl" value="/profiles/${user.id}/follow"/>
-                        <form class="profile-connection-follow-form" method="post" action="${connectionFollowUrl}">
+                        <form class="profile-connection-follow-form"
+                              method="post"
+                              action="${connectionFollowUrl}"
+                              data-auth-resume-intent="follow-profile-${user.id}"
+                              <c:if test="${not authenticated}">
+                                  data-auth-required="true"
+                                  data-auth-required-action="seguir a este usuario"
+                                  data-auth-required-intent="follow-profile-${user.id}"
+                              </c:if>>
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <button
                                     type="submit"
@@ -69,7 +79,15 @@
                     </div>
                     <c:if test="${user.followable}">
                         <c:url var="connectionFollowUrl" value="/profiles/${user.id}/follow"/>
-                        <form class="profile-connection-follow-form" method="post" action="${connectionFollowUrl}">
+                        <form class="profile-connection-follow-form"
+                              method="post"
+                              action="${connectionFollowUrl}"
+                              data-auth-resume-intent="follow-profile-${user.id}"
+                              <c:if test="${not authenticated}">
+                                  data-auth-required="true"
+                                  data-auth-required-action="seguir a este usuario"
+                                  data-auth-required-intent="follow-profile-${user.id}"
+                              </c:if>>
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <button
                                     type="submit"

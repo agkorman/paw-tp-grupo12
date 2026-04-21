@@ -529,5 +529,10 @@ public class CarReviewControllerTest {
         public Set<Long> getLikedReplyIds(final Collection<Long> replyIds, final long userId) {
             return Collections.emptySet();
         }
+
+        @Override
+        public List<Long> getLikedReplyIdsByUser(final long userId) {
+            return Collections.emptyList();
+        }
     }
 }

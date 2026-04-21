@@ -120,6 +120,15 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
         return findLikedIds("review_reply_likes", "reply_id", "replyIds", replyIds, userId);
     }
 
+    @Override
+    public List<Long> findLikedReplyIdsByUserId(final long userId) {
+        return jdbcTemplate.queryForList(
+                "SELECT reply_id FROM review_reply_likes WHERE user_id = ? ORDER BY created_at DESC, reply_id DESC",
+                Long.class,
+                userId
+        );
+    }
+
     private boolean exists(final String tableName, final String idColumn, final long id, final long userId) {
         final Boolean exists = jdbcTemplate.queryForObject(
                 "SELECT EXISTS (SELECT 1 FROM " + tableName + " WHERE " + idColumn + " = ? AND user_id = ?)",

@@ -5,6 +5,8 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
+<c:url var="newCarUrl" value="/cars/new"/>
+
 <div id="carsCatalogContent" class="catalog-content">
     <section class="catalog-section">
         <div class="cars-grid">
@@ -24,7 +26,7 @@
             </c:forEach>
 
             <sec:authorize access="isAuthenticated()">
-                <button type="button" class="car-request-card" data-open-create-car-modal>
+                <button type="button" class="car-request-card" data-open-create-car-modal data-auth-resume-intent="create-car">
                     <span class="car-request-card-icon" aria-hidden="true">
                         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
                             <path d="M12 5v14"/>
@@ -37,8 +39,11 @@
                 </button>
             </sec:authorize>
             <sec:authorize access="isAnonymous()">
-                <c:url var="newCarUrl" value="/cars/new"/>
-                <a class="car-request-card" href="${newCarUrl}">
+                <a href="${newCarUrl}"
+                   class="car-request-card"
+                   data-auth-required="true"
+                   data-auth-required-action="agregar un auto"
+                   data-auth-required-intent="create-car">
                     <span class="car-request-card-icon" aria-hidden="true">
                         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
                             <path d="M12 5v14"/>

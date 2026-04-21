@@ -3,6 +3,8 @@
 <%@ attribute name="averageRating" required="false" type="java.math.BigDecimal" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
+<c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
+
 <aside class="review-form-panel car-info-panel">
     <h2>Datos del auto</h2>
     <div class="car-info-list">
@@ -44,7 +46,13 @@
             type="button"
             class="btn-primary add-review-btn"
             data-open-review-modal="create"
-            data-review-car-id="${selectedCar.id}">
+            data-review-car-id="${selectedCar.id}"
+            data-auth-resume-intent="create-review"
+            <c:if test="${not authenticated}">
+                data-auth-required="true"
+                data-auth-required-action="publicar una reseña"
+                data-auth-required-intent="create-review"
+            </c:if>>
         Agregar reseña
     </button>
 </aside>

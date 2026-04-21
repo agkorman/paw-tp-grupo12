@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.config;
 
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.auth.PawUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +12,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
+
+import java.util.Optional;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
@@ -65,7 +71,8 @@ public class WebAuthConfig {
                         .usernameParameter("email")
                         .passwordParameter("password")
                         .defaultSuccessUrl("/", false)
-                        .failureUrl("/login?error")
+                        .successHandler(loginSuccessHandler())
+                        .failureHandler(loginFailureHandler())
                         .permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/logout")
@@ -98,5 +105,42 @@ public class WebAuthConfig {
             return LOCAL_REMEMBER_ME_KEY;
         }
         return configuredKey.trim();
+    }
+
+    private AuthenticationSuccessHandler loginSuccessHandler() {
+        final SavedRequestAwareAuthenticationSuccessHandler savedRequestHandler =
+                new SavedRequestAwareAuthenticationSuccessHandler();
+        savedRequestHandler.setDefaultTargetUrl("/");
+
+        return (request, response, authentication) -> {
+            final Optional<String> redirect = LoginRedirectUtils.safeRedirect(
+                    request.getParameter(LoginRedirectUtils.REDIRECT_PARAM)
+            );
+            if (redirect.isEmpty()) {
+                savedRequestHandler.onAuthenticationSuccess(request, response, authentication);
+                return;
+            }
+
+            final String target = LoginRedirectUtils.appendIntent(
+                    redirect.get(),
+                    request.getParameter(LoginRedirectUtils.INTENT_PARAM)
+            );
+            response.sendRedirect(request.getContextPath() + target);
+        };
+    }
+
+    private AuthenticationFailureHandler loginFailureHandler() {
+        return (request, response, exception) -> {
+            String target = "/login?error";
+            final String redirect = request.getParameter(LoginRedirectUtils.REDIRECT_PARAM);
+            if (LoginRedirectUtils.safeRedirect(redirect).isPresent()) {
+                target = LoginRedirectUtils.appendQueryParam(target, LoginRedirectUtils.REDIRECT_PARAM, redirect);
+            }
+            final String intent = request.getParameter(LoginRedirectUtils.INTENT_PARAM);
+            if (LoginRedirectUtils.safeIntent(intent).isPresent()) {
+                target = LoginRedirectUtils.appendQueryParam(target, LoginRedirectUtils.INTENT_PARAM, intent);
+            }
+            response.sendRedirect(request.getContextPath() + target);
+        };
     }
 }

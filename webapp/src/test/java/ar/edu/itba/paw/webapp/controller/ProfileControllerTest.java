@@ -4,10 +4,12 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
+import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.UserService;
@@ -24,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -60,6 +63,28 @@ public class ProfileControllerTest {
         assertFalse(reviewCards(mav).get(0).getOwnedByCurrentUser());
     }
 
+    @Test
+    public void ownProfileIncludesLikedReplies() {
+        final Review review = review(1L, 8L);
+        final ReviewReply reply = new ReviewReply(
+                20L,
+                review.getId(),
+                8L,
+                "driver8",
+                "Buena respuesta.",
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        final ProfileController controller = controller(review, reply);
+
+        final ModelAndView mav = controller.ownProfile(user(7L));
+
+        final List<ProfileController.ProfileLikedReplyCard> likedReplies = likedReplyCards(mav);
+        assertEquals(1, likedReplies.size());
+        assertEquals(reply.getId(), likedReplies.get(0).getReply().getId());
+        assertTrue(likedReplies.get(0).getLiked());
+    }
+
     @SuppressWarnings("unchecked")
     private List<ProfileController.ProfileReviewCard> reviewCards(final ModelAndView mav) {
         return (List<ProfileController.ProfileReviewCard>) mav.getModel().get("profileReviews");
@@ -70,10 +95,20 @@ public class ProfileControllerTest {
         return (List<ProfileController.ProfileReviewCard>) mav.getModel().get("likedReviews");
     }
 
+    @SuppressWarnings("unchecked")
+    private List<ProfileController.ProfileLikedReplyCard> likedReplyCards(final ModelAndView mav) {
+        return (List<ProfileController.ProfileLikedReplyCard>) mav.getModel().get("likedReplies");
+    }
+
     private ProfileController controller(final Review review) {
+        return controller(review, null);
+    }
+
+    private ProfileController controller(final Review review, final ReviewReply likedReply) {
         return new ProfileController(
                 new FakeReviewService(review),
-                new FakeReviewLikeService(),
+                new FakeReviewLikeService(likedReply == null ? Collections.emptyList() : List.of(likedReply.getId())),
+                new FakeReviewReplyService(likedReply),
                 new FakeCarService(),
                 new FakeUserService(),
                 new FakeUserFollowService()
@@ -184,6 +219,12 @@ public class ProfileControllerTest {
     }
 
     private static final class FakeReviewLikeService implements ReviewLikeService {
+        private final List<Long> likedReplyIds;
+
+        private FakeReviewLikeService(final List<Long> likedReplyIds) {
+            this.likedReplyIds = likedReplyIds;
+        }
+
         @Override
         public boolean toggleReviewLike(final long reviewId, final long userId) {
             return false;
@@ -226,7 +267,45 @@ public class ProfileControllerTest {
 
         @Override
         public Set<Long> getLikedReplyIds(final Collection<Long> replyIds, final long userId) {
-            return Collections.emptySet();
+            return replyIds == null ? Collections.emptySet() : Set.copyOf(replyIds);
+        }
+
+        @Override
+        public List<Long> getLikedReplyIdsByUser(final long userId) {
+            return likedReplyIds;
+        }
+    }
+
+    private static final class FakeReviewReplyService implements ReviewReplyService {
+        private final ReviewReply likedReply;
+
+        private FakeReviewReplyService(final ReviewReply likedReply) {
+            this.likedReply = likedReply;
+        }
+
+        @Override
+        public Optional<ReviewReply> getReplyById(final long id) {
+            return likedReply != null && likedReply.getId() == id ? Optional.of(likedReply) : Optional.empty();
+        }
+
+        @Override
+        public List<ReviewReply> getRepliesByReview(final long reviewId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Map<Long, List<ReviewReply>> getRepliesByReviewIds(final Collection<Long> reviewIds) {
+            return Collections.emptyMap();
+        }
+
+        @Override
+        public ReviewReply createReply(final long reviewId, final long userId, final String body) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean deleteReply(final long id, final long userId) {
+            return false;
         }
     }
 

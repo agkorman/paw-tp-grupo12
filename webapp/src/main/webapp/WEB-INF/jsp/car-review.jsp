@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=2'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
 </head>
 <body>
@@ -77,11 +77,13 @@
     </main>
 
     <pa:create-review-modal carId="${selectedCar.id}" autoOpen="${openReviewModal}"/>
+    <pa:auth-required-modal/>
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
     <script src="<c:url value='/js/car-image-carousel.js'/>"></script>
     <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
+    <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

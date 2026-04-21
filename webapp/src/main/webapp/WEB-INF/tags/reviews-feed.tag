@@ -9,7 +9,6 @@
 
 
 <c:url var="reviewsFeedUrl" value="/reviews/feed"/>
-<c:url var="loginUrl" value="/login"/>
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 
 <section id="reviewsFeed" class="reviews-feed">
@@ -98,7 +97,10 @@
                             </c:if>
                             <c:choose>
                                 <c:when test="${authenticated}">
-                                    <form method="post" action="${replyCreateUrl}" class="review-reply-form">
+                                    <form method="post" action="${replyCreateUrl}" class="review-reply-form"
+                                          data-enhanced-review-reply="true"
+                                          data-target="#reviewsFeed"
+                                          data-auth-resume-intent="reply-${review.id}">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                         <label for="replyBody-${review.id}">Responder</label>
                                         <div class="review-reply-form-row">
@@ -109,8 +111,19 @@
                                     </form>
                                 </c:when>
                                 <c:otherwise>
+                                    <c:url var="replyLoginUrl" value="/login">
+                                        <c:param name="redirect" value="/reviews?carId=${carId}#review-${review.id}"/>
+                                        <c:param name="intent" value="reply-${review.id}"/>
+                                    </c:url>
                                     <p class="review-reply-login">
-                                        <a href="${loginUrl}">Iniciá sesión</a> para responder o dar like.
+                                        <a href="${replyLoginUrl}"
+                                           class="review-reply-login-button"
+                                           data-auth-required="true"
+                                           data-auth-required-action="responder una reseña"
+                                           data-auth-required-intent="reply-${review.id}">
+                                            Iniciá sesión
+                                        </a>
+                                        para responder o dar like.
                                     </p>
                                 </c:otherwise>
                             </c:choose>

@@ -17,4 +17,5 @@ public interface ReviewLikeService {
     long countReplyLikes(long replyId);
     Map<Long, Long> countReplyLikesByReplyIds(Collection<Long> replyIds);
     Set<Long> getLikedReplyIds(Collection<Long> replyIds, long userId);
+    List<Long> getLikedReplyIdsByUser(long userId);
 }

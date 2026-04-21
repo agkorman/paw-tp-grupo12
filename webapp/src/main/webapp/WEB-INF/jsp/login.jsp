@@ -35,6 +35,12 @@
 
             <form class="auth-form" method="post" action="<c:url value='/login'/>">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                <c:if test="${not empty loginRedirect}">
+                    <input type="hidden" name="redirect" value="<c:out value='${loginRedirect}'/>">
+                </c:if>
+                <c:if test="${not empty loginIntent}">
+                    <input type="hidden" name="intent" value="<c:out value='${loginIntent}'/>">
+                </c:if>
 
                 <div class="auth-field">
                     <label for="loginEmail">Email</label>

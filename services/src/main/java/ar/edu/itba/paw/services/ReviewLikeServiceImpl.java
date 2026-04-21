@@ -145,6 +145,16 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> getLikedReplyIdsByUser(final long userId) {
+        try {
+            return reviewLikeDao.findLikedReplyIdsByUserId(userId);
+        } catch (final RuntimeException ignored) {
+            return Collections.emptyList();
+        }
+    }
+
     private void validateReviewAndUser(final long reviewId, final long userId) {
         if (reviewDao.findById(reviewId).isEmpty()) {
             throw new IllegalArgumentException("Review not found.");

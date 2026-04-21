@@ -16,7 +16,7 @@
      data-admin-base-url="${adminBaseUrl}"
      <c:if test="${openCarModal or openCreateCarModal or not empty carFormError}">data-auto-open="true"</c:if>>
     <div class="review-modal-overlay" data-close-car-modal></div>
-    <section class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createCarModalTitle">
+    <section class="review-modal-dialog car-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createCarModalTitle">
         <div class="review-modal-header">
             <div>
                 <span id="createCarModalKicker" class="review-modal-kicker">
@@ -46,14 +46,14 @@
                 <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
             </c:if>
 
-            <p id="createCarModalSubtitle" class="car-modal-subtitle" style="padding-bottom: 1rem;">
+            <p id="createCarModalSubtitle" class="car-modal-subtitle">
                 <c:choose>
                     <c:when test="${adminMode}">Revisá los datos enviados por el usuario antes de aprobar o rechazar la solicitud.</c:when>
                     <c:otherwise>Completá los datos del auto. La solicitud quedará asociada a tu cuenta.</c:otherwise>
                 </c:choose>
             </p>
 
-            <div class="review-modal-grid" style="padding-bottom: 1rem;">
+            <div class="review-modal-grid car-modal-layout">
                 <c:if test="${adminMode}">
                     <div class="review-modal-field review-modal-field-wide">
                         <label for="modalCarSubmitterEmail">Email</label>

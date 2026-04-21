@@ -2,9 +2,11 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
+import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.UserService;
@@ -33,16 +35,19 @@ public class ProfileController {
 
     private final ReviewService reviewService;
     private final ReviewLikeService reviewLikeService;
+    private final ReviewReplyService reviewReplyService;
     private final CarService carService;
     private final UserService userService;
     private final UserFollowService userFollowService;
 
     @Autowired
     public ProfileController(final ReviewService reviewService, final ReviewLikeService reviewLikeService,
+                             final ReviewReplyService reviewReplyService,
                              final CarService carService,
                              final UserService userService, final UserFollowService userFollowService) {
         this.reviewService = reviewService;
         this.reviewLikeService = reviewLikeService;
+        this.reviewReplyService = reviewReplyService;
         this.carService = carService;
         this.userService = userService;
         this.userFollowService = userFollowService;
@@ -133,6 +138,34 @@ public class ProfileController {
                         currentUserId
                 ))
                 .toList();
+        final List<ReviewReply> likedReplies = reviewLikeService.getLikedReplyIdsByUser(profileUser.getId())
+                .stream()
+                .map(reviewReplyService::getReplyById)
+                .flatMap(Optional::stream)
+                .toList();
+        final Map<Long, Review> parentReviewsById = likedReplies.stream()
+                .map(ReviewReply::getReviewId)
+                .distinct()
+                .map(reviewService::getReviewById)
+                .flatMap(Optional::stream)
+                .collect(Collectors.toMap(Review::getId, Function.identity()));
+        final List<Long> likedReplyIds = likedReplies.stream()
+                .map(ReviewReply::getId)
+                .toList();
+        final Map<Long, Long> likedReplyLikeCounts = reviewLikeService.countReplyLikesByReplyIds(likedReplyIds);
+        final Set<Long> likedByCurrentUserInLikedReplies = currentUserId == null
+                ? Set.of()
+                : reviewLikeService.getLikedReplyIds(likedReplyIds, currentUserId);
+        final List<ProfileLikedReplyCard> likedReplyCards = likedReplies
+                .stream()
+                .map(reply -> toProfileLikedReplyCard(
+                        reply,
+                        parentReviewsById.get(reply.getReviewId()),
+                        carsById,
+                        likedReplyLikeCounts,
+                        likedByCurrentUserInLikedReplies
+                ))
+                .toList();
         final boolean followingProfile = currentUserId != null
                 && !ownProfile
                 && userFollowService.isFollowing(currentUserId, profileUser.getId());
@@ -151,6 +184,8 @@ public class ProfileController {
         mav.addObject("favoriteCars", List.of());
         mav.addObject("reviewStatsByCarId", Map.of());
         mav.addObject("likedReviews", likedReviewCards);
+        mav.addObject("likedReplies", likedReplyCards);
+        mav.addObject("likedActivityCount", likedReviewCards.size() + likedReplyCards.size());
         mav.addObject("followingUsers", toConnections(userFollowService.getFollowing(profileUser.getId()), currentUserId));
         mav.addObject("followerUsers", toConnections(userFollowService.getFollowers(profileUser.getId()), currentUserId));
         mav.addObject("ownProfile", ownProfile);
@@ -169,6 +204,20 @@ public class ProfileController {
                 likedByCurrentUser.contains(review.getId()),
                 likeCounts.getOrDefault(review.getId(), 0L),
                 isOwnedByCurrentUser(review, currentUserId)
+        );
+    }
+
+    private ProfileLikedReplyCard toProfileLikedReplyCard(final ReviewReply reply, final Review parentReview,
+                                                          final Map<Long, Car> carsById,
+                                                          final Map<Long, Long> likeCounts,
+                                                          final Set<Long> likedByCurrentUser) {
+        final Car car = parentReview == null ? null : carsById.get(parentReview.getCarId());
+        return new ProfileLikedReplyCard(
+                reply,
+                parentReview,
+                car,
+                likedByCurrentUser.contains(reply.getId()),
+                likeCounts.getOrDefault(reply.getId(), 0L)
         );
     }
 
@@ -304,6 +353,58 @@ public class ProfileController {
 
         public boolean getOwnedByCurrentUser() {
             return ownedByCurrentUser;
+        }
+    }
+
+    public static final class ProfileLikedReplyCard {
+        private final ReviewReply reply;
+        private final Review parentReview;
+        private final Car car;
+        private final boolean liked;
+        private final long likeCount;
+
+        private ProfileLikedReplyCard(final ReviewReply reply, final Review parentReview, final Car car,
+                                      final boolean liked, final long likeCount) {
+            this.reply = reply;
+            this.parentReview = parentReview;
+            this.car = car;
+            this.liked = liked;
+            this.likeCount = likeCount;
+        }
+
+        public ReviewReply getReply() {
+            return reply;
+        }
+
+        public Review getParentReview() {
+            return parentReview;
+        }
+
+        public Car getCar() {
+            return car;
+        }
+
+        public String getCarName() {
+            if (car == null) {
+                return "Auto no disponible";
+            }
+            return car.getBrandName() + " " + car.getModel();
+        }
+
+        public long getCarId() {
+            return parentReview == null ? 0 : parentReview.getCarId();
+        }
+
+        public String getParentReviewTitle() {
+            return parentReview == null ? "Review no disponible" : parentReview.getTitle();
+        }
+
+        public boolean getLiked() {
+            return liked;
+        }
+
+        public long getLikeCount() {
+            return likeCount;
         }
     }
 

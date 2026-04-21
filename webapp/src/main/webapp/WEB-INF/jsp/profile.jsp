@@ -14,15 +14,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=2'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile.css?v=4'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=1'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-connections.css?v=1'/>">
 </head>
 <body>
     <pa:nav activePage="profile"/>
+    <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 
     <main class="profile-page">
         <section class="profile-hero" aria-labelledby="profileName">
@@ -78,7 +79,15 @@
                 </c:when>
                 <c:otherwise>
                     <c:url var="profileFollowUrl" value="/profiles/${profile.id}/follow"/>
-                    <form class="profile-action-form" method="post" action="${profileFollowUrl}">
+                    <form class="profile-action-form"
+                          method="post"
+                          action="${profileFollowUrl}"
+                          data-auth-resume-intent="follow-profile-${profile.id}"
+                          <c:if test="${not authenticated}">
+                              data-auth-required="true"
+                              data-auth-required-action="seguir a este usuario"
+                              data-auth-required-intent="follow-profile-${profile.id}"
+                          </c:if>>
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <button
                                 type="submit"
@@ -160,23 +169,38 @@
             <section class="profile-liked-section" aria-labelledby="profileLikedTitle">
                 <div class="profile-section-heading">
                     <h2 id="profileLikedTitle">Reviews likeadas</h2>
-                    <span><c:out value="${fn:length(likedReviews)}"/></span>
+                    <span><c:out value="${likedActivityCount}"/></span>
                 </div>
 
                 <c:choose>
-                    <c:when test="${empty likedReviews}">
+                    <c:when test="${empty likedReviews and empty likedReplies}">
                         <div class="profile-empty-state">
-                            <p>Todavía no likeaste reviews.</p>
+                            <p>Todavía no likeaste reviews ni respuestas.</p>
                         </div>
                     </c:when>
                     <c:otherwise>
-                        <div class="profile-review-list">
-                            <c:forEach var="likedReview" items="${likedReviews}">
-                                <pa:profile-review-card
-                                        reviewCard="${likedReview}"
-                                        editable="${likedReview.ownedByCurrentUser}"/>
-                            </c:forEach>
-                        </div>
+                        <c:if test="${not empty likedReviews}">
+                            <div class="profile-liked-group">
+                                <h3>Reviews</h3>
+                                <div class="profile-review-list">
+                                    <c:forEach var="likedReview" items="${likedReviews}">
+                                        <pa:profile-review-card
+                                                reviewCard="${likedReview}"
+                                                editable="${likedReview.ownedByCurrentUser}"/>
+                                    </c:forEach>
+                                </div>
+                            </div>
+                        </c:if>
+                        <c:if test="${not empty likedReplies}">
+                            <div class="profile-liked-group">
+                                <h3>Respuestas</h3>
+                                <div class="profile-liked-reply-list">
+                                    <c:forEach var="likedReply" items="${likedReplies}">
+                                        <pa:profile-liked-reply-card replyCard="${likedReply}"/>
+                                    </c:forEach>
+                                </div>
+                            </div>
+                        </c:if>
                     </c:otherwise>
                 </c:choose>
             </section>
@@ -187,9 +211,11 @@
     <pa:review-delete-modal/>
     <pa:edit-profile-modal profile="${profile}"/>
     <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
+    <pa:auth-required-modal/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
+    <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/profile.js?v=3'/>"></script>
+    <script src="<c:url value='/js/profile.js?v=4'/>"></script>
 </body>
 </html>

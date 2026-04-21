@@ -20,4 +20,5 @@ public interface ReviewLikeDao {
     long countReplyLikes(long replyId);
     Map<Long, Long> countReplyLikesByReplyIds(Collection<Long> replyIds);
     Set<Long> findLikedReplyIds(Collection<Long> replyIds, long userId);
+    List<Long> findLikedReplyIdsByUserId(long userId);
 }
