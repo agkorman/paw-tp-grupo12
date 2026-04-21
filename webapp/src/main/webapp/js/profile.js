@@ -93,6 +93,42 @@
         }
     }
 
+    function setupCollapsibleSections() {
+        var sections = document.querySelectorAll('[data-collapsible-section]');
+
+        for (var i = 0; i < sections.length; i += 1) {
+            var extras = sections[i].querySelectorAll('[data-collapsible-extra]');
+            var toggle = sections[i].querySelector('[data-collapsible-toggle]');
+
+            if (!toggle || extras.length === 0) {
+                continue;
+            }
+
+            for (var j = 0; j < extras.length; j += 1) {
+                extras[j].hidden = true;
+            }
+            toggle.hidden = false;
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.setAttribute('data-expanded', 'false');
+            toggle.textContent = toggle.getAttribute('data-show-label') || 'Ver más';
+        }
+    }
+
+    function setCollapsibleSectionExpanded(toggle, expanded) {
+        var section = closestByAttribute(toggle, 'data-collapsible-section');
+        var extras = section ? section.querySelectorAll('[data-collapsible-extra]') : [];
+        var label = expanded
+            ? toggle.getAttribute('data-hide-label') || 'Ver menos'
+            : toggle.getAttribute('data-show-label') || 'Ver más';
+
+        for (var i = 0; i < extras.length; i += 1) {
+            extras[i].hidden = !expanded;
+        }
+        toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        toggle.setAttribute('data-expanded', expanded ? 'true' : 'false');
+        toggle.textContent = label;
+    }
+
     function openDeleteReviewModal(button) {
         var modal = document.getElementById('deleteReviewModal');
         var form = document.getElementById('deleteReviewForm');
@@ -148,6 +184,16 @@
             if (reviewsTitle) {
                 reviewsTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
+            return;
+        }
+
+        var sectionToggle = closestByAttribute(event.target, 'data-collapsible-toggle');
+        if (sectionToggle) {
+            event.preventDefault();
+            setCollapsibleSectionExpanded(
+                sectionToggle,
+                sectionToggle.getAttribute('data-expanded') !== 'true'
+            );
         }
     });
 
@@ -181,4 +227,6 @@
             reader.readAsDataURL(file);
         });
     }
+
+    setupCollapsibleSections();
 }());
