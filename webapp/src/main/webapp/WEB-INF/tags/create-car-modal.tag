@@ -55,10 +55,10 @@
 
             <div class="review-modal-grid" style="padding-bottom: 1rem;">
                 <c:if test="${adminMode}">
-                    <div class="review-modal-field review-modal-field-wide">
+                    <div id="modalCarSubmitterEmailField" class="review-modal-field review-modal-field-wide" hidden>
                         <label for="modalCarSubmitterEmail">Email</label>
                         <form:input id="modalCarSubmitterEmail" path="submitterEmail" type="email"
-                                    maxlength="100" placeholder="Usuario sin identificar" disabled="true"/>
+                                    maxlength="100" disabled="true"/>
                         <form:errors path="submitterEmail" cssClass="form-error" element="span"/>
                     </div>
                 </c:if>
@@ -131,7 +131,7 @@
                                 <img id="modalCarImagePreviewImg" alt="">
                             </span>
                             <span class="car-image-upload-copy">
-                                <strong>
+                                <strong id="modalCarFileTitle">
                                     <c:choose>
                                         <c:when test="${adminMode}">Imagen enviada por el usuario</c:when>
                                         <c:otherwise>Arrastrá o elegí una imagen del auto</c:otherwise>
@@ -145,7 +145,7 @@
                                 </span>
                                 <span id="modalCarFileStatus" class="car-image-upload-status">Ninguna imagen seleccionada</span>
                             </span>
-                            <span class="car-image-upload-action">
+                            <span id="modalCarFileAction" class="car-image-upload-action">
                                 <c:choose>
                                     <c:when test="${adminMode}">Cargada</c:when>
                                     <c:otherwise>Buscar</c:otherwise>
@@ -166,6 +166,10 @@
                     <div id="createCarReviewActions" class="review-modal-action-group">
                         <button type="submit" class="btn-secondary admin-reject-btn" form="rejectCarRequestForm">Rechazar</button>
                         <button id="createCarReviewSubmitButton" type="submit" class="btn-primary">Confirmar auto</button>
+                    </div>
+                    <div id="createCarEditActions" class="review-modal-action-group" hidden>
+                        <button type="button" class="btn-secondary" data-close-car-modal>Cancelar</button>
+                        <button id="createCarEditSubmitButton" type="submit" class="btn-primary">Guardar cambios</button>
                     </div>
                 </c:if>
             </div>

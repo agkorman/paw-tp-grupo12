@@ -108,6 +108,9 @@ public class CarController {
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
         mav.addObject("heroCar", heroCar);
         mav.addObject("heroReview", heroReview);
+        mav.addObject("brands", brandDao.findAll());
+        mav.addObject("bodyTypes", bodyTypeDao.findAll());
+        mav.addObject("carForm", new CarForm());
         return mav;
     }
 

@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=2'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/admin.css'/>">
 </head>
@@ -86,10 +86,11 @@
                 </c:otherwise>
             </c:choose>
         </section>
+
     </main>
 
     <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
-    <script src="<c:url value='/js/create-car-modal.js'/>"></script>
+    <script src="<c:url value='/js/create-car-modal.js?v=2'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

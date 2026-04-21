@@ -5,13 +5,17 @@ import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
 import ar.edu.itba.paw.persistence.CarRequestDao;
+import ar.edu.itba.paw.persistence.ReviewDao;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +37,7 @@ class CarModerationFlowTest {
         final CarService carService = new CarServiceImpl(
                 carDao,
                 carImageDao,
+                new FakeReviewDao(),
                 carRequestService,
                 new FakeBrandDao(),
                 new FakeBodyTypeDao()
@@ -96,6 +101,66 @@ class CarModerationFlowTest {
         assertTrue(carImageDao.saved);
         assertEquals(100L, carImageDao.savedCarId);
         assertEquals("image/png", carImageDao.savedContentType);
+        assertArrayEquals(imageData, carImageDao.savedImageData);
+    }
+
+    @Test
+    void deletingCarRemovesReviewsBeforeCar() {
+        final FakeCarRequestDao carRequestDao = new FakeCarRequestDao();
+        final FakeCarDao carDao = new FakeCarDao();
+        carDao.existingCar = new Car(20L, 1L, "Toyota", "Supra", 2L, "Coupe", "Desc", LocalDateTime.now());
+        final FakeReviewDao reviewDao = new FakeReviewDao();
+        final CarService carService = new CarServiceImpl(
+                carDao,
+                new FakeCarImageDao(),
+                reviewDao,
+                new CarRequestServiceImpl(carRequestDao, carDao, new FakeCarImageDao()),
+                new FakeBrandDao(),
+                new FakeBodyTypeDao()
+        );
+
+        final boolean deleted = carService.deleteCar(20L);
+
+        assertTrue(deleted);
+        assertTrue(reviewDao.deletedByCarId);
+        assertTrue(carDao.deleted);
+        assertEquals(20L, reviewDao.deletedCarId);
+        assertEquals(20L, carDao.deletedCarId);
+    }
+
+    @Test
+    void updatingCarPersistsEditedValuesAndReplacementImage() {
+        final FakeCarDao carDao = new FakeCarDao();
+        carDao.existingCar = new Car(20L, 1L, "Toyota", "Supra", 2L, "Coupe", "Desc", LocalDateTime.now());
+        final FakeCarImageDao carImageDao = new FakeCarImageDao();
+        final CarService carService = new CarServiceImpl(
+                carDao,
+                carImageDao,
+                new FakeReviewDao(),
+                new FakeCarRequestService(),
+                new FakeBrandDao(),
+                new FakeBodyTypeDao()
+        );
+        final byte[] imageData = new byte[] {9, 8, 7};
+
+        final Optional<Car> updated = carService.updateCar(
+                20L,
+                3L,
+                "  GR86  ",
+                4L,
+                "  Edited desc  ",
+                Optional.of("image/webp"),
+                Optional.of(imageData)
+        );
+
+        assertTrue(updated.isPresent());
+        assertEquals(3L, carDao.existingCar.getBrandId());
+        assertEquals("GR86", carDao.existingCar.getModel());
+        assertEquals(4L, carDao.existingCar.getBodyTypeId());
+        assertEquals("Edited desc", carDao.existingCar.getDescription());
+        assertTrue(carImageDao.saved);
+        assertEquals(20L, carImageDao.savedCarId);
+        assertEquals("image/webp", carImageDao.savedContentType);
         assertArrayEquals(imageData, carImageDao.savedImageData);
     }
 
@@ -215,10 +280,13 @@ class CarModerationFlowTest {
 
     private static final class FakeCarDao implements CarDao {
         private boolean created;
+        private boolean deleted;
+        private long deletedCarId;
         private long createdBrandId;
         private String createdModel;
         private long createdBodyTypeId;
         private String createdDescription;
+        private Car existingCar;
 
         @Override
         public List<Car> findAll() {
@@ -227,7 +295,7 @@ class CarModerationFlowTest {
 
         @Override
         public Optional<Car> findById(final long id) {
-            return Optional.empty();
+            return existingCar != null && existingCar.getId() == id ? Optional.of(existingCar) : Optional.empty();
         }
 
         @Override
@@ -263,6 +331,108 @@ class CarModerationFlowTest {
             createdBodyTypeId = bodyTypeId;
             createdDescription = description;
             return new Car(100L, brandId, "Toyota", model, bodyTypeId, "Coupe", description, LocalDateTime.now());
+        }
+
+        @Override
+        public Optional<Car> update(final long id, final long brandId, final String model, final long bodyTypeId,
+                                    final String description) {
+            existingCar = new Car(id, brandId, "Toyota", model, bodyTypeId, "Coupe", description, LocalDateTime.now());
+            return Optional.of(existingCar);
+        }
+
+        @Override
+        public boolean delete(final long id) {
+            deleted = true;
+            deletedCarId = id;
+            existingCar = null;
+            return true;
+        }
+    }
+
+    private static final class FakeReviewDao implements ReviewDao {
+        private boolean deletedByCarId;
+        private long deletedCarId;
+
+        @Override
+        public Optional<Review> findById(final long id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<Review> findAll() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<Review> findByCarId(final long carId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<Review> findLatestByCarId(final long carId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Review> findTopRatedLatestByCarId(final long carId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<Review> findByCarIdOrderByRatingAsc(final long carId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<Review> findByCarIdOrderByRatingDesc(final long carId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<Review> findByUserId(final long userId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<ReviewStats> findStatsByCarId(final long carId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<ReviewStats> findStatsByCarIds(final Collection<Long> carIds) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Review create(final long userId, final long carId, final BigDecimal rating, final String title,
+                             final String body, final String ownershipStatus, final Integer modelYear,
+                             final Integer mileageKm, final Boolean wouldRecommend) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int bindReviewsToUserByEmail(final long userId, final String email) {
+            return 0;
+        }
+
+        @Override
+        public Optional<Review> update(final long id, final long carId, final BigDecimal rating,
+                                       final String title, final String body, final String ownershipStatus,
+                                       final Integer modelYear, final Integer mileageKm,
+                                       final Boolean wouldRecommend) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean delete(final long id) {
+            return false;
+        }
+
+        @Override
+        public int deleteByCarId(final long carId) {
+            deletedByCarId = true;
+            deletedCarId = carId;
+            return 1;
         }
     }
 

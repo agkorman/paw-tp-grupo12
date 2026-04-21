@@ -233,6 +233,19 @@ public class ProfileControllerTest {
                                              final Optional<byte[]> imageData) {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public Optional<Car> updateCar(final long id, final long brandId, final String model,
+                                       final long bodyTypeId, final String description,
+                                       final Optional<String> imageContentType,
+                                       final Optional<byte[]> imageData) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean deleteCar(final long id) {
+            return false;
+        }
     }
 
     private static final class FakeUserService implements UserService {

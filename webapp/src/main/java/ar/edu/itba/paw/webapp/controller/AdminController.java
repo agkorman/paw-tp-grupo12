@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarRequestService;
+import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
 import java.io.IOException;
+import java.net.URI;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Locale;
@@ -48,14 +50,17 @@ public class AdminController {
     );
 
     private final CarRequestService carRequestService;
+    private final CarService carService;
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
     private final UserService userService;
 
     @Autowired
-    public AdminController(final CarRequestService carRequestService, final BrandDao brandDao,
+    public AdminController(final CarRequestService carRequestService, final CarService carService,
+                           final BrandDao brandDao,
                            final BodyTypeDao bodyTypeDao, final UserService userService) {
         this.carRequestService = carRequestService;
+        this.carService = carService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
         this.userService = userService;
@@ -75,7 +80,6 @@ public class AdminController {
                 .stream()
                 .map(request -> toCard(request, brandsById, bodyTypesById))
                 .toList();
-
         final ModelAndView mav = new ModelAndView("admin.jsp");
         mav.addObject("pendingRequests", pendingRequests);
         mav.addObject("brands", brands);
@@ -105,19 +109,12 @@ public class AdminController {
             return new ModelAndView("redirect:/admin");
         }
 
-        final Optional<String> imageContentType;
-        final Optional<byte[]> imageData;
-        if (file == null || file.isEmpty()) {
-            imageContentType = Optional.empty();
-            imageData = Optional.empty();
-        } else {
-            imageContentType = Optional.ofNullable(resolveImageContentType(file));
-            try {
-                imageData = Optional.of(file.getBytes());
-            } catch (final IOException e) {
-                throw new IllegalStateException("Failed to read uploaded image.", e);
-            }
+        if (isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), -1L)) {
+            return new ModelAndView("redirect:/admin");
         }
+
+        final Optional<String> imageContentType = resolveOptionalImageContentType(file);
+        final Optional<byte[]> imageData = readOptionalImageData(file);
 
         carRequestService.approvePendingRequest(
                 requestId,
@@ -129,6 +126,50 @@ public class AdminController {
                 imageData
         );
         return new ModelAndView("redirect:/admin");
+    }
+
+    @RequestMapping(value = "/cars/{carId}", method = RequestMethod.POST, consumes = "multipart/form-data")
+    public ModelAndView updateCar(@PathVariable("carId") final long carId,
+                                  @Valid @ModelAttribute("carForm") final CarForm carForm,
+                                  final BindingResult errors,
+                                  @RequestHeader(value = "Referer", required = false) final String referer) {
+        if (errors.hasErrors()) {
+            return redirectBackToCatalog(referer);
+        }
+
+        final Brand resolvedBrand = brandDao.findByName(carForm.getBrand()).orElse(null);
+        final BodyType resolvedBodyType = bodyTypeDao.findByName(carForm.getBodyType()).orElse(null);
+        if (resolvedBrand == null || resolvedBodyType == null) {
+            return redirectBackToCatalog(referer);
+        }
+
+        if (isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carId)) {
+            return redirectBackToCatalog(referer);
+        }
+
+        final MultipartFile file = carForm.getFile();
+        final String imageError = validateUploadedImage(file, false);
+        if (imageError != null) {
+            return redirectBackToCatalog(referer);
+        }
+
+        carService.updateCar(
+                carId,
+                resolvedBrand.getId(),
+                carForm.getModel(),
+                resolvedBodyType.getId(),
+                carForm.getDescription(),
+                resolveOptionalImageContentType(file),
+                readOptionalImageData(file)
+        );
+        return redirectBackToCatalog(referer);
+    }
+
+    @RequestMapping(value = "/cars/{carId}/delete", method = RequestMethod.POST)
+    public ModelAndView deleteCar(@PathVariable("carId") final long carId,
+                                  @RequestHeader(value = "Referer", required = false) final String referer) {
+        carService.deleteCar(carId);
+        return redirectBackAfterDelete(referer);
     }
 
     @RequestMapping(value = "/requests/{requestId}/reject", method = RequestMethod.POST)
@@ -215,12 +256,76 @@ public class AdminController {
         return normalizeContentType(file == null ? null : file.getContentType());
     }
 
+    private boolean isDuplicateCar(final Brand brand, final BodyType bodyType, final String model,
+                                   final long ignoredCarId) {
+        final String normalizedModel = normalizeText(model);
+        if (normalizedModel == null) {
+            return false;
+        }
+        return carService
+                .getCarsByBrandAndBodyType(brand.getName(), bodyType.getName())
+                .stream()
+                .anyMatch(car -> car.getId() != ignoredCarId && car.getModel().equalsIgnoreCase(normalizedModel));
+    }
+
+    private Optional<String> resolveOptionalImageContentType(final MultipartFile file) {
+        return file == null || file.isEmpty() ? Optional.empty() : Optional.ofNullable(resolveImageContentType(file));
+    }
+
+    private Optional<byte[]> readOptionalImageData(final MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(file.getBytes());
+        } catch (final IOException e) {
+            throw new IllegalStateException("Failed to read uploaded image.", e);
+        }
+    }
+
     private static String normalizeContentType(final String contentType) {
         if (contentType == null) {
             return null;
         }
         final String normalized = contentType.trim().toLowerCase(Locale.ROOT);
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static String normalizeText(final String value) {
+        if (value == null) {
+            return null;
+        }
+        final String normalized = value.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private ModelAndView redirectBackToCatalog(final String referer) {
+        return redirectBackToCatalog(referer, true);
+    }
+
+    private ModelAndView redirectBackAfterDelete(final String referer) {
+        return redirectBackToCatalog(referer, false);
+    }
+
+    private ModelAndView redirectBackToCatalog(final String referer, final boolean allowReviewsPage) {
+        final String fallback = "redirect:/cars";
+        if (referer == null || referer.isBlank()) {
+            return new ModelAndView(fallback);
+        }
+        try {
+            final URI uri = URI.create(referer);
+            final String path = uri.getRawPath();
+            if (path == null || path.isBlank()) {
+                return new ModelAndView(fallback);
+            }
+            if ("/".equals(path) || "/cars".equals(path) || (allowReviewsPage && "/reviews".equals(path))) {
+                final String query = uri.getRawQuery();
+                return new ModelAndView("redirect:" + path + (query == null ? "" : "?" + query));
+            }
+        } catch (final IllegalArgumentException ignored) {
+            return new ModelAndView(fallback);
+        }
+        return new ModelAndView(fallback);
     }
 
     private String valueOrFallback(final String value, final String fallback) {

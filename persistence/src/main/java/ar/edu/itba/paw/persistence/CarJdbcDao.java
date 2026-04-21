@@ -110,6 +110,21 @@ public class CarJdbcDao implements CarDao {
     }
 
     @Override
+    public Optional<Car> update(final long id, final long brandId, final String model,
+                                final long bodyTypeId, final String description) {
+        final int updated = jdbcTemplate.update(
+                "UPDATE cars SET brand_id = ?, model = ?, body_type_id = ?, description = ? WHERE car_id = ?",
+                brandId, model, bodyTypeId, description, id
+        );
+        return updated > 0 ? findById(id) : Optional.empty();
+    }
+
+    @Override
+    public boolean delete(final long id) {
+        return jdbcTemplate.update("DELETE FROM cars WHERE car_id = ?", id) > 0;
+    }
+
+    @Override
     public List<Car> findByBodyTypeId(final long bodyTypeId) {
         return jdbcTemplate.query(
                 SELECT_COLUMNS + FROM_JOIN + "WHERE c.body_type_id = ? ORDER BY c.model",

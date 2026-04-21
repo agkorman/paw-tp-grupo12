@@ -1,10 +1,14 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.BodyType;
+import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
+import ar.edu.itba.paw.persistence.BodyTypeDao;
+import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
@@ -153,7 +157,7 @@ public class CarReviewControllerTest {
     }
 
     private CarReviewController controller(final FakeReviewService reviewService) {
-        return new CarReviewController(new FakeCarService(), reviewService);
+        return new CarReviewController(new FakeCarService(), reviewService, new FakeBrandDao(), new FakeBodyTypeDao());
     }
 
     private AuthenticatedUser user(final long id) {
@@ -251,6 +255,19 @@ public class CarReviewControllerTest {
                                              final Optional<byte[]> imageData) {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public Optional<Car> updateCar(final long id, final long brandId, final String model,
+                                       final long bodyTypeId, final String description,
+                                       final Optional<String> imageContentType,
+                                       final Optional<byte[]> imageData) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean deleteCar(final long id) {
+            return false;
+        }
     }
 
     private static final class FakeReviewService implements ReviewService {
@@ -338,6 +355,40 @@ public class CarReviewControllerTest {
         @Override
         public List<ReviewStats> getReviewStatsByCarIds(final Collection<Long> carIds) {
             return Collections.emptyList();
+        }
+    }
+
+    private static final class FakeBrandDao implements BrandDao {
+        @Override
+        public List<Brand> findAll() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<Brand> findById(final long id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Brand> findByName(final String name) {
+            return Optional.empty();
+        }
+    }
+
+    private static final class FakeBodyTypeDao implements BodyTypeDao {
+        @Override
+        public List<BodyType> findAll() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<BodyType> findById(final long id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<BodyType> findByName(final String name) {
+            return Optional.empty();
         }
     }
 }

@@ -206,4 +206,9 @@ public class ReviewJdbcDao implements ReviewDao {
     public boolean delete(long id) {
         return jdbcTemplate.update("DELETE FROM reviews WHERE review_id = ?", id) > 0;
     }
+
+    @Override
+    public int deleteByCarId(final long carId) {
+        return jdbcTemplate.update("DELETE FROM reviews WHERE car_id = ?", carId);
+    }
 }

@@ -30,4 +30,9 @@ public interface CarService {
     CarRequest requestCarCreation(long brandId, String model, long bodyTypeId, long submittedByUserId,
                                   Optional<String> description, Optional<String> imageContentType,
                                   Optional<byte[]> imageData);
+
+    Optional<Car> updateCar(long id, long brandId, String model, long bodyTypeId, String description,
+                            Optional<String> imageContentType, Optional<byte[]> imageData);
+
+    boolean deleteCar(long id);
 }

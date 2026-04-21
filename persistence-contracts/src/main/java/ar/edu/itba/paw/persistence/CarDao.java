@@ -22,4 +22,8 @@ public interface CarDao {
     List<Car> search(String query, Long brandId, Long bodyTypeId);
 
     Car create(long brandId, String model, long bodyTypeId, String description);
+
+    Optional<Car> update(long id, long brandId, String model, long bodyTypeId, String description);
+
+    boolean delete(long id);
 }
