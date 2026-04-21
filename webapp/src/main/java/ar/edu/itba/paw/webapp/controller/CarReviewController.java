@@ -2,9 +2,12 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.persistence.BodyTypeDao;
+import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.form.CarForm;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -44,11 +47,16 @@ public class CarReviewController {
 
     private final CarService carService;
     private final ReviewService reviewService;
+    private final BrandDao brandDao;
+    private final BodyTypeDao bodyTypeDao;
 
     @Autowired
-    public CarReviewController(final CarService carService, final ReviewService reviewService) {
+    public CarReviewController(final CarService carService, final ReviewService reviewService,
+                               final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
         this.carService = carService;
         this.reviewService = reviewService;
+        this.brandDao = brandDao;
+        this.bodyTypeDao = bodyTypeDao;
     }
 
     @InitBinder
@@ -175,6 +183,9 @@ public class CarReviewController {
         model.addAttribute("reviewCount", pageData.reviews.size());
         model.addAttribute("currentSort", pageData.currentSort);
         model.addAttribute("latestReview", pageData.latestReview.orElse(null));
+        model.addAttribute("brands", brandDao.findAll());
+        model.addAttribute("bodyTypes", bodyTypeDao.findAll());
+        model.addAttribute("carForm", new CarForm());
     }
 
     private void populateCarReviewPageModel(final ModelAndView mav, final ReviewPageData pageData) {
@@ -184,6 +195,9 @@ public class CarReviewController {
         mav.addObject("reviewCount", pageData.reviews.size());
         mav.addObject("currentSort", pageData.currentSort);
         mav.addObject("latestReview", pageData.latestReview.orElse(null));
+        mav.addObject("brands", brandDao.findAll());
+        mav.addObject("bodyTypes", bodyTypeDao.findAll());
+        mav.addObject("carForm", new CarForm());
     }
 
     private ReviewPageData resolveReviewPageData(final long carId, final String sort) {

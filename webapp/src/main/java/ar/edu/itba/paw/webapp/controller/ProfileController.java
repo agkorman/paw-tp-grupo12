@@ -22,6 +22,7 @@ import org.springframework.web.servlet.ModelAndView;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -83,11 +84,16 @@ public class ProfileController {
         final Long currentUserId = currentUser == null ? null : currentUser.getId();
         final boolean ownProfile = currentUserId != null && currentUserId == profileUser.getId();
 
-        final List<Car> cars = carService.getAllCars();
+        final List<Review> userReviews = reviewService.getReviewsByUser(profileUser.getId());
+        final Set<Long> reviewedCarIds = userReviews
+                .stream()
+                .map(Review::getCarId)
+                .collect(Collectors.toSet());
+        final List<Car> cars = carService.getCarsByIds(reviewedCarIds);
         final Map<Long, Car> carsById = cars
                 .stream()
                 .collect(Collectors.toMap(Car::getId, Function.identity()));
-        final List<ProfileReviewCard> reviews = reviewService.getReviewsByUser(profileUser.getId())
+        final List<ProfileReviewCard> reviews = userReviews
                 .stream()
                 .map(review -> new ProfileReviewCard(
                         review,

@@ -5,10 +5,6 @@
 }
 
 .admin-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    gap: var(--spacing-8);
     max-width: 72rem;
     margin: 0 auto var(--spacing-12);
 }
@@ -16,7 +12,13 @@
 .admin-hero-copy {
     display: grid;
     gap: 1rem;
-    max-width: 42rem;
+}
+
+.admin-hero-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--spacing-8);
 }
 
 .admin-kicker {
@@ -167,12 +169,16 @@
     }
 
     .admin-hero {
-        grid-template-columns: 1fr;
-        align-items: start;
+        display: block;
     }
 
     .admin-hero-action {
         margin-top: 0;
+    }
+
+    .admin-hero-heading {
+        display: grid;
+        gap: var(--spacing-6);
     }
 
     .admin-status {

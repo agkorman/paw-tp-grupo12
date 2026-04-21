@@ -46,6 +46,97 @@
     border-color: rgba(229, 226, 225, 0.30);
 }
 
+/* ── ACTION MENU ── */
+.action-menu {
+    position: relative;
+    display: inline-flex;
+}
+
+.action-menu-toggle {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-md);
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+    cursor: pointer;
+}
+
+.action-menu-toggle:hover,
+.action-menu-toggle[aria-expanded="true"] {
+    background: var(--surface-container-highest);
+    color: var(--primary);
+}
+
+.action-menu-panel {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    right: 0;
+    z-index: 20;
+    min-width: 9rem;
+    display: grid;
+    padding: 0.35rem;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-md);
+    background: var(--surface-container-high);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+}
+
+.action-menu-panel[hidden] {
+    display: none;
+}
+
+.action-menu-panel button {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    min-height: 2.25rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--on-surface);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-align: left;
+    padding: 0.55rem 0.65rem;
+}
+
+.action-menu-panel button:hover {
+    background: var(--surface-container-highest);
+}
+
+.action-menu-panel .action-menu-danger {
+    color: #ff9f92;
+}
+
+.car-delete-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.car-delete-form p {
+    margin: 0;
+    color: var(--secondary);
+    line-height: 1.6;
+}
+
+.car-delete-form strong {
+    color: var(--on-surface);
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+}
+
+.car-delete-confirm-button {
+    background: linear-gradient(135deg, #c84636, #ff6f61);
+}
+
 /* ── FILTER CHIP ── */
 .filter-chip {
     appearance: none;

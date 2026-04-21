@@ -2,16 +2,19 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
+import ar.edu.itba.paw.persistence.ReviewDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -21,16 +24,19 @@ public class CarServiceImpl implements CarService {
 
     private final CarDao carDao;
     private final CarImageDao carImageDao;
+    private final ReviewDao reviewDao;
     private final CarRequestService carRequestService;
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
 
     @Autowired
     public CarServiceImpl(final CarDao carDao, final CarImageDao carImageDao,
+                          final ReviewDao reviewDao,
                           final CarRequestService carRequestService,
                           final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
         this.carDao = carDao;
         this.carImageDao = carImageDao;
+        this.reviewDao = reviewDao;
         this.carRequestService = carRequestService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
@@ -44,6 +50,11 @@ public class CarServiceImpl implements CarService {
     @Override
     public Optional<Car> getCarById(final long id) {
         return carDao.findById(id);
+    }
+
+    @Override
+    public List<Car> getCarsByIds(final Collection<Long> ids) {
+        return carDao.findByIds(ids);
     }
 
     @Override
@@ -85,30 +96,26 @@ public class CarServiceImpl implements CarService {
 
     @Override
     @Transactional
-    public Car createCar(final long brandId, final String model, final long bodyTypeId,
-                         final long submittedByUserId,
-                         final Optional<String> description, final Optional<String> imageContentType,
-                         final Optional<byte[]> imageData,
-                         final String fuelType, final Integer horsepower, final Integer airbagCount,
-                         final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+    public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                         final long submittedByUserId,
+                                         final Optional<String> description,
+                                         final Optional<String> imageContentType,
+                                         final Optional<byte[]> imageData,
+                                         final String fuelType, final Integer horsepower,
+                                         final Integer airbagCount, final String transmission,
+                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
         final String normalizedDescription = description
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
                 .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
-
-        final Car createdCar = carDao.create(brandId, model, bodyTypeId, normalizedDescription,
-                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh);
 
         final boolean hasImageContentType = imageContentType.isPresent();
         final boolean hasImageData = imageData.isPresent();
         if (hasImageContentType != hasImageData) {
             throw new IllegalArgumentException("Image metadata and payload must be provided together.");
         }
-        if (hasImageContentType) {
-            carImageDao.saveOrReplace(createdCar.getId(), imageContentType.orElseThrow(), imageData.orElseThrow());
-        }
 
-        carRequestService.createPendingRequest(
+        return carRequestService.createPendingRequest(
                 submittedByUserId,
                 brandId,
                 bodyTypeId,
@@ -123,7 +130,55 @@ public class CarServiceImpl implements CarService {
                 fuelConsumption,
                 maxSpeedKmh
         );
+    }
 
-        return carDao.findById(createdCar.getId()).orElse(createdCar);
+    @Override
+    @Transactional
+    public Optional<Car> updateCar(final long id, final long brandId, final String model,
+                                   final long bodyTypeId, final String description,
+                                   final Optional<String> imageContentType,
+                                   final Optional<byte[]> imageData,
+                                   final String fuelType, final Integer horsepower,
+                                   final Integer airbagCount, final String transmission,
+                                   final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+        final String normalizedModel = normalizeRequired(model, "Model is required for car update.");
+        final String normalizedDescription = normalizeRequired(description, "Description is required for car update.");
+        validateImagePair(imageContentType, imageData);
+
+        final Optional<Car> updated = carDao.update(id, brandId, normalizedModel, bodyTypeId, normalizedDescription,
+                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh);
+        if (updated.isPresent() && imageContentType.isPresent()) {
+            carImageDao.saveOrReplace(id, imageContentType.get(), imageData.orElseThrow());
+        }
+        return updated;
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteCar(final long id) {
+        if (carDao.findById(id).isEmpty()) {
+            return false;
+        }
+        reviewDao.deleteByCarId(id);
+        return carDao.delete(id);
+    }
+
+    private String normalizeRequired(final String value, final String errorMessage) {
+        if (value == null) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+        final String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+        return trimmed;
+    }
+
+    private void validateImagePair(final Optional<String> imageContentType, final Optional<byte[]> imageData) {
+        final boolean hasImageContentType = imageContentType.isPresent();
+        final boolean hasImageData = imageData.isPresent();
+        if (hasImageContentType != hasImageData) {
+            throw new IllegalArgumentException("Image metadata and payload must be provided together.");
+        }
     }
 }

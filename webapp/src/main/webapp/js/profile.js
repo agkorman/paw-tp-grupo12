@@ -31,19 +31,6 @@
         return null;
     }
 
-    function closestByClass(target, className) {
-        var node = target;
-
-        while (node && node !== document) {
-            if (node.nodeType === 1 && hasClass(node, className)) {
-                return node;
-            }
-            node = node.parentNode;
-        }
-
-        return null;
-    }
-
     function openModal(modal) {
         if (!modal) {
             return;
@@ -100,34 +87,10 @@
         }
     }
 
-    function closeReviewMenus(exceptMenu) {
-        var menus = document.querySelectorAll('[data-profile-review-menu]');
-        for (var i = 0; i < menus.length; i += 1) {
-            if (menus[i] === exceptMenu) {
-                continue;
-            }
-            var panel = menus[i].querySelector('[data-profile-review-menu-panel]');
-            var toggle = menus[i].querySelector('[data-profile-review-menu-toggle]');
-            if (panel) {
-                panel.hidden = true;
-            }
-            if (toggle) {
-                toggle.setAttribute('aria-expanded', 'false');
-            }
+    function closeActionMenus() {
+        if (window.PawActionMenus) {
+            window.PawActionMenus.close();
         }
-    }
-
-    function toggleReviewMenu(button) {
-        var menu = closestByAttribute(button, 'data-profile-review-menu');
-        var panel = menu ? menu.querySelector('[data-profile-review-menu-panel]') : null;
-        if (!menu || !panel) {
-            return;
-        }
-
-        var willOpen = panel.hidden;
-        closeReviewMenus(menu);
-        panel.hidden = !willOpen;
-        button.setAttribute('aria-expanded', String(willOpen));
     }
 
     function openDeleteReviewModal(button) {
@@ -142,18 +105,11 @@
         if (title) {
             title.textContent = button.getAttribute('data-review-title') || '';
         }
-        closeReviewMenus();
+        closeActionMenus();
         openModal(modal);
     }
 
     document.addEventListener('click', function (event) {
-        var reviewMenuToggle = closestByAttribute(event.target, 'data-profile-review-menu-toggle');
-        if (reviewMenuToggle) {
-            event.preventDefault();
-            toggleReviewMenu(reviewMenuToggle);
-            return;
-        }
-
         var deleteReviewButton = closestByAttribute(event.target, 'data-open-delete-review-modal');
         if (deleteReviewButton) {
             event.preventDefault();
@@ -162,9 +118,7 @@
         }
 
         if (closestByAttribute(event.target, 'data-open-review-modal')) {
-            closeReviewMenus();
-        } else if (!closestByClass(event.target, 'profile-review-menu')) {
-            closeReviewMenus();
+            closeActionMenus();
         }
 
         var editButton = closestByAttribute(event.target, 'data-open-edit-profile-modal');

@@ -247,6 +247,11 @@ class UserServiceImplTest {
         public boolean delete(final long id) {
             return false;
         }
+
+        @Override
+        public int deleteByCarId(final long carId) {
+            return 0;
+        }
     }
 
     private static final class FakeCarRequestDao implements CarRequestDao {

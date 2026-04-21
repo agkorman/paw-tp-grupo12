@@ -13,9 +13,11 @@ import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Repository
@@ -80,6 +82,26 @@ public class CarJdbcDao implements CarDao {
                 SELECT_COLUMNS + FROM_JOIN + "WHERE c.car_id = ?",
                 ROW_MAPPER, id
         ).stream().findFirst();
+    }
+
+    @Override
+    public List<Car> findByIds(final Collection<Long> ids) {
+        final List<Long> normalizedIds = ids == null
+                ? List.of()
+                : ids.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (normalizedIds.isEmpty()) {
+            return List.of();
+        }
+
+        final String placeholders = String.join(", ", java.util.Collections.nCopies(normalizedIds.size(), "?"));
+        return jdbcTemplate.query(
+                SELECT_COLUMNS + FROM_JOIN + "WHERE c.car_id IN (" + placeholders + ") ORDER BY c.car_id",
+                ROW_MAPPER,
+                normalizedIds.toArray()
+        );
     }
 
     @Override
@@ -221,6 +243,27 @@ public class CarJdbcDao implements CarDao {
         }
 
         return namedJdbcTemplate.query(sql.toString(), params, ROW_MAPPER);
+    }
+
+    @Override
+    public Optional<Car> update(final long id, final long brandId, final String model,
+                                final long bodyTypeId, final String description,
+                                final String fuelType, final Integer horsepower, final Integer airbagCount,
+                                final String transmission, final BigDecimal fuelConsumption,
+                                final Integer maxSpeedKmh) {
+        final int updated = jdbcTemplate.update(
+                "UPDATE cars SET brand_id = ?, model = ?, body_type_id = ?, description = ?, "
+                        + "fuel_type = ?, horsepower = ?, airbag_count = ?, transmission = ?, "
+                        + "fuel_consumption = ?, max_speed_kmh = ? WHERE car_id = ?",
+                brandId, model, bodyTypeId, description, fuelType, horsepower, airbagCount, transmission,
+                fuelConsumption, maxSpeedKmh, id
+        );
+        return updated > 0 ? findById(id) : Optional.empty();
+    }
+
+    @Override
+    public boolean delete(final long id) {
+        return jdbcTemplate.update("DELETE FROM cars WHERE car_id = ?", id) > 0;
     }
 
     @Override

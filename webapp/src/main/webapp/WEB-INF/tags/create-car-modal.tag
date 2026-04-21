@@ -55,17 +55,17 @@
 
             <div class="review-modal-grid" style="padding-bottom: 1rem;">
                 <c:if test="${adminMode}">
-                    <div class="review-modal-field review-modal-field-wide">
+                    <div id="modalCarSubmitterEmailField" class="review-modal-field review-modal-field-wide" hidden>
                         <label for="modalCarSubmitterEmail">Email</label>
                         <form:input id="modalCarSubmitterEmail" path="submitterEmail" type="email"
-                                    maxlength="100" placeholder="Usuario sin identificar" readonly="true"/>
+                                    maxlength="100" disabled="true"/>
                         <form:errors path="submitterEmail" cssClass="form-error" element="span"/>
                     </div>
                 </c:if>
 
                 <div class="review-modal-field">
                     <label for="modalCarBrand">Marca</label>
-                    <form:select id="modalCarBrand" path="brand" required="required" disabled="${adminMode}">
+                    <form:select id="modalCarBrand" path="brand" required="required">
                         <form:option value="" label="Seleccioná una marca"/>
                         <c:forEach items="${brands}" var="brand">
                             <form:option value="${brand.name}" label="${brand.name}"/>
@@ -76,7 +76,7 @@
 
                 <div class="review-modal-field">
                     <label for="modalCarBodyType">Tipo de carrocería</label>
-                    <form:select id="modalCarBodyType" path="bodyType" required="required" disabled="${adminMode}">
+                    <form:select id="modalCarBodyType" path="bodyType" required="required">
                         <form:option value="" label="Seleccioná un tipo"/>
                         <c:forEach items="${bodyTypes}" var="bodyType">
                             <form:option value="${bodyType.name}" label="${bodyType.name}"/>
@@ -89,7 +89,7 @@
                     <label for="modalCarModel">Modelo</label>
                     <form:input id="modalCarModel" path="model" type="text"
                                 maxlength="120" required="required"
-                                placeholder="Ej: 911 Carrera T" readonly="${adminMode}"/>
+                                placeholder="Ej: 911 Carrera T"/>
                     <form:errors path="model" cssClass="form-error" element="span"/>
                 </div>
 
@@ -97,8 +97,7 @@
                     <label for="modalCarDescription">Descripción</label>
                     <form:textarea id="modalCarDescription" path="description" rows="4" maxlength="1500"
                                    required="required"
-                                   placeholder="Describe el auto, su propuesta y cualquier detalle relevante."
-                                   readonly="${adminMode}"/>
+                                   placeholder="Describe el auto, su propuesta y cualquier detalle relevante."/>
                     <form:errors path="description" cssClass="form-error" element="span"/>
                 </div>
 
@@ -180,7 +179,6 @@
                                 <form:input id="modalCarFile" path="file" type="file"
                                             cssClass="car-image-upload-input"
                                             accept="image/jpeg,image/png,image/webp"
-                                            disabled="true"
                                             aria-describedby="modalCarFileHelp modalCarFileStatus"/>
                             </c:when>
                             <c:otherwise>
@@ -203,7 +201,7 @@
                                 <img id="modalCarImagePreviewImg" alt="">
                             </span>
                             <span class="car-image-upload-copy">
-                                <strong>
+                                <strong id="modalCarFileTitle">
                                     <c:choose>
                                         <c:when test="${adminMode}">Imagen enviada por el usuario</c:when>
                                         <c:otherwise>Arrastrá o elegí una imagen del auto</c:otherwise>
@@ -217,7 +215,7 @@
                                 </span>
                                 <span id="modalCarFileStatus" class="car-image-upload-status">Ninguna imagen seleccionada</span>
                             </span>
-                            <span class="car-image-upload-action">
+                            <span id="modalCarFileAction" class="car-image-upload-action">
                                 <c:choose>
                                     <c:when test="${adminMode}">Cargada</c:when>
                                     <c:otherwise>Buscar</c:otherwise>
@@ -237,15 +235,16 @@
                 <c:if test="${adminMode}">
                     <div id="createCarReviewActions" class="review-modal-action-group">
                         <button type="submit" class="btn-secondary admin-reject-btn" form="rejectCarRequestForm">Rechazar</button>
-                        <button type="submit" class="btn-primary" form="acceptCarRequestForm">Confirmar auto</button>
+                        <button id="createCarReviewSubmitButton" type="submit" class="btn-primary">Confirmar auto</button>
+                    </div>
+                    <div id="createCarEditActions" class="review-modal-action-group" hidden>
+                        <button type="button" class="btn-secondary" data-close-car-modal>Cancelar</button>
+                        <button id="createCarEditSubmitButton" type="submit" class="btn-primary">Guardar cambios</button>
                     </div>
                 </c:if>
             </div>
         </form:form>
         <c:if test="${adminMode}">
-            <form id="acceptCarRequestForm" method="post">
-                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-            </form>
             <form id="rejectCarRequestForm" method="post">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             </form>

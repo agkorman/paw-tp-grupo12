@@ -1,111 +1,225 @@
-# AGENTS.md
+# Repository Guidelines
 
-## Proyecto: manejo de imagenes y recursos estaticos
+## Purpose
 
-Estas reglas sintetizan el material de referencia compartido por el equipo:
+This repository is an ITBA PAW course project: a server-rendered car listing and review web application. It is a multi-module Maven project using Spring MVC, Spring JDBC, JSP/JSTL, PostgreSQL, and Jetty for local execution. The UI is not a separate SPA; views, reusable tags, CSS, and JavaScript live inside `webapp`.
 
-- Baeldung: `https://www.baeldung.com/spring-file-upload`
-- Apuntes internos sobre imagenes
-- Apuntes internos sobre recursos estaticos
+Use this file as the working guide for contributors and coding agents. Keep changes aligned with the existing layered architecture instead of introducing parallel patterns.
 
-El objetivo es evitar implementaciones inconsistentes en uploads, almacenamiento y renderizado de imagenes.
+## Project Structure & Module Organization
 
-## Reglas de trabajo
+The root `pom.xml` is the Maven reactor and defines these active modules:
 
-### 1. Uploads de imagenes
+- `model`: domain objects such as `Car`, `Brand`, `BodyType`, `CarImage`, `CarRequest`, `Review`, `ReviewStats`, and `User`.
+- `persistence-contracts`: DAO interfaces. Controllers and services should not depend on JDBC implementation classes.
+- `service-contracts`: service interfaces exposed to the web layer.
+- `persistence`: Spring JDBC DAO implementations and database resources under `persistence/src/main/resources`.
+- `services`: business logic implementations that coordinate DAOs and service contracts.
+- `webapp`: Spring MVC controllers, configuration, JSPs, JSP tag files, CSS, JS, and WAR packaging.
 
-- Los archivos se suben con requests `multipart/form-data`.
-- El mismo request puede incluir campos normales del formulario y el archivo.
-- En controllers Spring MVC, los archivos se reciben con `MultipartFile`.
-- Si hay varios campos ademas del archivo, se puede usar `@RequestParam` para cada campo o un `@ModelAttribute` que contenga el `MultipartFile`.
-- No usar Base64 para transportar o persistir imagenes del proyecto salvo que exista una necesidad excepcional y explicitamente aprobada.
+Expected dependency direction:
 
-### 2. Configuracion esperada en Spring MVC
+```text
+model -> contracts -> implementations -> webapp
+```
 
-- El proyecto debe tener un `multipartResolver` configurado. Hoy existe en [webapp/src/main/java/ar/edu/itba/paw/webapp/config/WebConfig.java](/Users/agkorman/itba/paw/paw-webapp2026a/webapp/src/main/java/ar/edu/itba/paw/webapp/config/WebConfig.java#L45).
-- Si se toca la inicializacion del servlet o la configuracion de uploads, mantener compatibilidad con parsing multipart de Servlet 3.
-- Los limites de upload deben validarse del lado servidor aunque exista validacion del lado cliente.
+Do not make lower-level modules depend on `webapp`. Keep domain classes free of Spring MVC, servlet, JSP, and persistence framework concerns.
 
-### 3. Como guardar imagenes en este proyecto
+## Runtime Architecture
 
-- Las imagenes subidas por usuarios se deben guardar en la base de datos, no como Base64 embebido en HTML ni como string enorme en tablas de negocio.
-- La estructura actual separa el binario en `car_images` y deja metadatos en columnas especificas.
-- Mantener el patron actual:
-  - entidad de negocio principal en `cars`
-  - binario y `content_type` en `car_images`
-  - acceso via DAO/servicio/controlador
-- Para nuevas features similares, seguir el mismo enfoque: tabla dedicada para binario + endpoint HTTP que entregue los bytes.
+`webapp/src/main/java/ar/edu/itba/paw/webapp/config/WebConfig.java` is the main runtime wiring. It enables Spring MVC, scans controllers/services/persistence packages, serves static resources, configures JSP view resolution, initializes the datasource, configures mail, and runs SQL initialization.
 
-### 4. Como exponer imagenes
+Controllers currently live in:
 
-- Las imagenes guardadas en BD se deben servir con endpoints propios del backend.
-- Los `<img>` deben apuntar a URLs del proyecto, no a blobs Base64 incrustados.
-- Mantener respuesta con `contentType`, `contentLength` y, cuando aplique, headers de cache.
-- En este repo ya existe el patron correcto para imagenes de autos en [webapp/src/main/java/ar/edu/itba/paw/webapp/controller/CarController.java](/Users/agkorman/itba/paw/paw-webapp2026a/webapp/src/main/java/ar/edu/itba/paw/webapp/controller/CarController.java#L166) y [webapp/src/main/java/ar/edu/itba/paw/webapp/controller/CarController.java](/Users/agkorman/itba/paw/paw-webapp2026a/webapp/src/main/java/ar/edu/itba/paw/webapp/controller/CarController.java#L208).
-- Cuando una imagen viene de BD, preferir este patron antes que guardar una URL externa en la tabla principal.
+- `webapp/src/main/java/ar/edu/itba/paw/webapp/controller/CarController.java`
+- `webapp/src/main/java/ar/edu/itba/paw/webapp/controller/CarReviewController.java`
 
-### 5. Validaciones obligatorias para imagenes subidas
+The main user flows are:
 
-- Validar que el archivo exista y no este vacio.
-- Validar tamano maximo.
-- Validar `content-type`.
-- Validar que el recurso pertenezca a una entidad existente antes de guardarlo.
-- Mantener mensajes de error claros y HTTP status correctos.
-- Si se cambia la politica de formatos o tamano, actualizar controller, servicio y documentacion.
+- `/`: landing page.
+- `/cars`: catalog, filters, search, and car creation.
+- `/cars/content`: catalog fragment for progressive enhancement.
+- `/car-image` and `/cars/{carId}/image`: image retrieval/upload endpoints.
+- `/reviews`: car review page and review creation.
+- `/reviews/feed`: review feed fragment.
 
-### 6. Recursos estaticos
+Keep server-rendered fallback behavior working when adding JavaScript enhancements.
 
-- CSS y JS deben ir en carpetas estaticas del webapp.
-- Imagenes estaticas del frontend, como logos, iconos e ilustraciones decorativas, tambien deben vivir en carpetas estaticas del proyecto junto al webapp, no en la base.
-- En JSP/tag files se deben referenciar con `c:url`.
-- Si se agrega una nueva carpeta estatica, debe exponerse en `WebConfig.addResourceHandlers(...)`.
-- El proyecto ya expone `/favicon.ico`, `/css/**` y `/js/**` en [webapp/src/main/java/ar/edu/itba/paw/webapp/config/WebConfig.java](/Users/agkorman/itba/paw/paw-webapp2026a/webapp/src/main/java/ar/edu/itba/paw/webapp/config/WebConfig.java#L31).
-- Si agregamos una carpeta como `images/` para assets estaticos, tambien hay que agregar su `ResourceHandler`.
+## Web Assets, Views, and Tags
 
-### 7. Distincion importante: imagen estatica vs imagen subida por usuario
+JSP pages and fragments live under `webapp/src/main/webapp/WEB-INF/jsp`. Reusable JSP tags live under `webapp/src/main/webapp/WEB-INF/tags`. Static assets live under:
 
-- Imagen estatica:
-  - vive en el repo
-  - se sirve como recurso estatico
-  - se referencia con `c:url`
-- Imagen subida por usuario:
-  - llega via `multipart/form-data`
-  - se valida en backend
-  - se persiste en BD
-  - se sirve por endpoint del controller
+- `webapp/src/main/webapp/css`
+- `webapp/src/main/webapp/js`
 
-No mezclar ambos mecanismos.
+Prefer reusable JSP tags for repeated UI pieces such as car cards, navigation, review panels, toolbars, and modals. Keep large CSS in stylesheet files and large behavior in JS files, not inline in JSPs.
 
-### 8. Patron ya presente en el repo
+UI changes should respect `DESIGN.md`, especially the dark showroom-style visual direction, typography, spacing, and existing component language.
 
-- Upload multipart con `MultipartFile`: [webapp/src/main/java/ar/edu/itba/paw/webapp/controller/CarController.java](/Users/agkorman/itba/paw/paw-webapp2026a/webapp/src/main/java/ar/edu/itba/paw/webapp/controller/CarController.java#L208)
-- Persistencia del binario: [services/src/main/java/ar/edu/itba/paw/services/CarServiceImpl.java](/Users/agkorman/itba/paw/paw-webapp2026a/services/src/main/java/ar/edu/itba/paw/services/CarServiceImpl.java#L78)
-- Renderizado por URL interna del proyecto: [webapp/src/main/webapp/WEB-INF/tags/car-card.tag](/Users/agkorman/itba/paw/paw-webapp2026a/webapp/src/main/webapp/WEB-INF/tags/car-card.tag#L17)
-- Recursos estaticos con `c:url`: [webapp/src/main/webapp/WEB-INF/jsp/cars.jsp](/Users/agkorman/itba/paw/paw-webapp2026a/webapp/src/main/webapp/WEB-INF/jsp/cars.jsp#L14)
+## Build, Test, and Development Commands
 
-### 9. Decision de arquitectura para futuras tareas
+Common commands:
 
-- Para nuevas imagenes subidas por usuarios, seguir el esquema actual de BD + endpoint.
-- Para assets visuales del sitio, usar recursos estaticos del webapp.
-- Evitar introducir nuevas soluciones paralelas para imagenes si no hay una justificacion fuerte.
-- No introducir Base64 en JSP, DTOs o tablas como camino rapido.
+```bash
+mvn clean install
+mvn test
+mvn -pl services test
+mvn -pl webapp jetty:run
+bash run-project.sh
+```
 
-### 10. Nota sobre codigo existente
+Command meanings:
 
-- Hay vistas legacy o seed data que todavia usan `imageUrl` externo en algunos lugares, por ejemplo [webapp/src/main/webapp/WEB-INF/jsp/landing.jsp](/Users/agkorman/itba/paw/paw-webapp2026a/webapp/src/main/webapp/WEB-INF/jsp/landing.jsp#L82).
-- Eso no define la direccion futura del proyecto.
-- Para codigo nuevo, priorizar el patron interno de upload + almacenamiento binario + endpoint propio, o recursos estaticos del repo si la imagen es parte fija de la UI.
+- `mvn clean install`: builds every module and installs artifacts into the local Maven repository.
+- `mvn test`: runs tests for all modules through Maven Surefire.
+- `mvn -pl services test`: runs only service module tests for faster feedback.
+- `mvn -pl webapp jetty:run`: starts the web application locally on port `8080`.
+- `bash run-project.sh`: resolves JDK 21, loads a root `.env` when present, builds, and starts Jetty.
 
-### 11. Uso de librerias y utilidades de Spring
+The README documents the app at `http://localhost:8080/webapp`, but local Jetty behavior may mount the app at root in some setups. When verifying manually, check both `http://localhost:8080/` and `http://localhost:8080/webapp/` if needed.
 
-- Antes de implementar una funcionalidad nueva de forma manual, verificar si Spring o las librerias ya presentes en el proyecto ofrecen una implementacion adecuada.
-- Preferir APIs, helpers y patrones provistos por Spring cuando cubran correctamente el caso de uso, en lugar de duplicar comportamiento a mano.
-- Si no existe una implementacion disponible o no encaja con los requisitos del proyecto, documentar brevemente la razon antes de agregar una solucion propia.
+## Environment and Configuration
 
-### 12. Modularizacion de vistas y componentes
+The app expects Java 21, Maven 3.x, and PostgreSQL 16. Database configuration is read from environment variables first:
 
-- Siempre que una funcionalidad pueda separarse de forma clara, preferir modularizarla en archivos especificos antes que concentrar demasiado codigo en una sola vista o clase.
-- En frontend JSP, priorizar tag files reutilizables para componentes o bloques con comportamiento propio, por ejemplo cards, botones, headers, secciones de perfil, formularios o items de listas.
-- Mantener las JSP como composicion de componentes y flujo de pagina; evitar que acumulen markup repetido o logica de presentacion extensa.
-- Para CSS y JS, separar estilos y scripts por responsabilidad cuando la funcionalidad lo justifique, reutilizando archivos existentes si el comportamiento es compartido.
-- Modularizar sin sobredisenar: crear un nuevo archivo cuando mejore legibilidad, reutilizacion, testeo o mantenimiento, y evitar abstracciones innecesarias para codigo trivial de un solo uso.
+```bash
+export DB_URL=jdbc:postgresql://localhost/pawdb
+export DB_USERNAME=pawuser
+export DB_PASSWORD=yourpassword
+```
+
+If environment variables are not available in the deploy target, `webapp/src/main/resources/db.properties` may be packaged with equivalent values. Do not commit real credentials. Use local, untracked configuration for secrets.
+
+Mail configuration follows the same principle through environment variables or `mail.properties`. Car creation notification email is asynchronous; user-facing car creation must not block on SMTP success.
+
+## Database and Data Model Notes
+
+Primary schema resources live in `persistence/src/main/resources`:
+
+- `schema.sql`: creates tables and seed data.
+- `schema-pg-trgm.sql`: PostgreSQL trigram/search-related schema support, when used.
+- `populate.sql`: supplemental seed data, when used.
+
+`schema.sql` uses `CREATE TABLE IF NOT EXISTS`, so changing a table definition there does not migrate an already-created local database. For local testing after schema changes, recreate the database or add an explicit migration step.
+
+Important model behavior:
+
+- Reviews support guest submissions; `reviews.user_id` may be nullable and `reviewer_email` stores guest identity.
+- Review stats are derived from `reviews`, not stored in a separate table.
+- Car image bytes live in `car_images`; catalog views should avoid loading blobs except through image endpoints.
+- Car submissions from users create only a pending `car_requests` row. The public `cars` row and its `car_images` bytes are created only when an admin approves the request.
+
+## Maven Dependency Management
+
+All dependency and plugin versions must be centralized in the root `pom.xml`.
+
+Rules:
+
+- Define version constants under the root `<properties>` section, for example `<spring.version>5.3.33</spring.version>`.
+- Reference versions from root-level `<dependencyManagement>` or `<pluginManagement>` using `${property.name}`.
+- Module `pom.xml` files must declare dependencies without `<version>`.
+- Internal module dependencies should also be managed centrally in the root, using `${project.version}` there, so child modules do not repeat versions.
+- Do not hard-code third-party versions inside module POMs.
+- Avoid duplicating plugin version declarations in child modules unless a module has a clearly different plugin configuration need.
+
+Preferred root pattern:
+
+```xml
+<properties>
+  <spring.version>5.3.33</spring.version>
+  <postgresql.version>42.7.3</postgresql.version>
+</properties>
+
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgresql.version}</version>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+```
+
+Preferred module pattern:
+
+```xml
+<dependency>
+  <groupId>org.postgresql</groupId>
+  <artifactId>postgresql</artifactId>
+</dependency>
+```
+
+## Coding Style & Naming Conventions
+
+Use package names under `ar.edu.itba.paw`. Follow the existing 4-space Java indentation style. Keep names descriptive and layer-specific:
+
+- Controllers: `*Controller`
+- Services: service interfaces in `service-contracts`, implementations as `*ServiceImpl`
+- DAOs: DAO interfaces in `persistence-contracts`, JDBC implementations as `*JdbcDao`
+- Tests: `*Test`
+- JSP tags: lowercase, hyphenated names such as `car-card.tag`
+- CSS/JS assets: lowercase, hyphenated names when adding new files
+
+Prefer Spring-managed dependencies over manual object construction. Keep validation rules close to the service/controller boundary that owns them, and keep SQL-specific mapping inside persistence classes.
+
+## Testing Guidelines
+
+Tests belong in each module's `src/test/java` tree and should mirror production packages. Current committed coverage is minimal, with service tests using JUnit Jupiter and Maven Surefire.
+
+When changing behavior:
+
+- Add service tests for business rules, validation, sorting, filtering, and moderation decisions.
+- Add persistence tests or focused DAO verification when changing SQL queries or mappings.
+- Add web-layer checks when changing controller routing, request parameters, redirects, or multipart handling.
+- Run `mvn test` before opening a PR.
+- Use `mvn -pl <module> test` during development for faster feedback.
+
+Do not rely only on browser checks for service or DAO behavior.
+
+## Helper Scripts
+
+Scripts under `scripts/` support local data and image workflows:
+
+- `download-seeded-car-images.sh`
+- `upload-car-images.sh`
+- `populate-reviews.sh`
+- `upload-reviews.sh`
+
+Read the script before running it, confirm expected environment variables, and avoid committing generated local files. Some scripts assume a running local app and PostgreSQL database.
+
+## Commit & Pull Request Guidelines
+
+Recent commit messages are short and direct, for example `remove rating from landing review` and `expand image upload limit`. Keep that style:
+
+- Use an imperative or descriptive summary.
+- Keep each commit focused on one change.
+- Mention schema, dependency, or configuration changes explicitly.
+- Include tests run in the PR description.
+- Add screenshots or short screen recordings for visible JSP/CSS/UI changes.
+- Link the issue, task, or class requirement when applicable.
+
+## Agent-Specific Instructions
+
+Before editing, inspect the relevant module and follow its existing patterns. Do not refactor unrelated code while implementing a requested change. Do not delete `AGENT.MD`; it contains additional project context and known quirks.
+
+Be careful with the current git state. There may be local untracked SQL or generated files. Do not revert or remove files you did not create unless explicitly asked.
+
+When modifying Maven files, enforce the centralized version policy above. When adding web features, preserve non-JavaScript fallback paths and keep route behavior compatible with existing JSP forms and fragments.
+
+## Image Uploads and Static Resource Policy
+
+The previous project-specific agent guide had stricter image rules that are still important. Keep these rules in force when adding or changing image-related behavior.
+
+- User-uploaded images must arrive as `multipart/form-data` and be received in Spring MVC with `MultipartFile`, either through individual `@RequestParam` values or a form-backing `@ModelAttribute` that includes the file.
+- Do not transport, persist, or render project images as Base64 unless there is an explicit, exceptional approval.
+- Keep Servlet 3 multipart parsing compatible. If upload initialization or `WebConfig` changes, preserve the configured multipart resolver behavior.
+- Validate uploaded images on the server even when client-side validation exists. Required checks are: file exists, file is not empty, maximum size, allowed `content-type`, and the referenced entity exists before storing bytes.
+- Store user-uploaded image bytes in dedicated image tables and expose them through backend endpoints. For cars, keep the established `cars` plus `car_images` pattern, where `car_images` owns binary data and `content_type`.
+- Image endpoints that return database-backed images should set `Content-Type`, `Content-Length`, and appropriate cache headers when possible.
+- `<img>` elements for uploaded images should point to internal project URLs, not inline blobs or Base64 strings.
+- Static UI images such as logos, icons, and decorative illustrations belong in webapp static asset folders, not in the database.
+- Reference static assets from JSPs and tag files with `c:url`.
+- If a new static folder such as `/images/**` is added, expose it from `WebConfig.addResourceHandlers(...)`.
+- Do not mix static assets and user uploads. Static images live in the repo and are served as resources; uploaded images are validated, persisted, and served through controller endpoints.
+- Some legacy views or seed data may still use external `imageUrl` values. Treat that as legacy compatibility, not the direction for new code.

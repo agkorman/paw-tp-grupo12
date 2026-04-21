@@ -10,7 +10,6 @@ import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarService;
-import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.form.CarForm;
@@ -72,16 +71,14 @@ public class CarController {
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
     private final ReviewService reviewService;
-    private final EmailService emailService;
 
     @Autowired
     public CarController(final CarService carService, final BrandDao brandDao, final BodyTypeDao bodyTypeDao,
-                         final ReviewService reviewService, final EmailService emailService) {
+                         final ReviewService reviewService) {
         this.carService = carService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
         this.reviewService = reviewService;
-        this.emailService = emailService;
     }
 
     @InitBinder
@@ -198,7 +195,7 @@ public class CarController {
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
 
-        final Car createdCar = carService.createCar(
+        carService.requestCarCreation(
                 resolvedBrand.getId(),
                 carForm.getModel(),
                 resolvedBodyType.getId(),
@@ -213,8 +210,6 @@ public class CarController {
                 carForm.getFuelConsumption(),
                 carForm.getMaxSpeedKmh()
         );
-
-        emailService.sendCarCreatedNotification(createdCar);
 
         return "redirect:/cars";
     }

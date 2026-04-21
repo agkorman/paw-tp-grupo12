@@ -25,5 +25,10 @@ public interface CarRequestService {
 
     boolean approvePendingRequest(long id);
 
+    boolean approvePendingRequest(long id, long brandId, String model, long bodyTypeId, String description,
+                                  Optional<String> imageContentType, Optional<byte[]> imageData,
+                                  String fuelType, Integer horsepower, Integer airbagCount,
+                                  String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+
     boolean rejectPendingRequest(long id);
 }

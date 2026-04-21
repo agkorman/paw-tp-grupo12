@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
@@ -181,12 +182,19 @@ public class ProfileControllerTest {
     private static final class FakeCarService implements CarService {
         @Override
         public List<Car> getAllCars() {
-            return List.of(new Car(10L, 1L, "Toyota", "Supra", 1L, "Coupe", "Desc", LocalDateTime.now()));
+            throw new UnsupportedOperationException("ProfileController should fetch only reviewed cars.");
         }
 
         @Override
         public Optional<Car> getCarById(final long id) {
             return Optional.empty();
+        }
+
+        @Override
+        public List<Car> getCarsByIds(final Collection<Long> ids) {
+            return ids.contains(10L)
+                    ? List.of(new Car(10L, 1L, "Toyota", "Supra", 1L, "Coupe", "Desc", LocalDateTime.now()))
+                    : Collections.emptyList();
         }
 
         @Override
@@ -219,13 +227,32 @@ public class ProfileControllerTest {
         }
 
         @Override
-        public Car createCar(final long brandId, final String model, final long bodyTypeId,
-                             final long submittedByUserId, final Optional<String> description,
-                             final Optional<String> imageContentType, final Optional<byte[]> imageData,
-                             final String fuelType, final Integer horsepower, final Integer airbagCount,
-                             final String transmission, final java.math.BigDecimal fuelConsumption,
-                             final Integer maxSpeedKmh) {
+        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                             final long submittedByUserId, final Optional<String> description,
+                                             final Optional<String> imageContentType,
+                                             final Optional<byte[]> imageData,
+                                             final String fuelType, final Integer horsepower,
+                                             final Integer airbagCount, final String transmission,
+                                             final java.math.BigDecimal fuelConsumption,
+                                             final Integer maxSpeedKmh) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<Car> updateCar(final long id, final long brandId, final String model,
+                                       final long bodyTypeId, final String description,
+                                       final Optional<String> imageContentType,
+                                       final Optional<byte[]> imageData,
+                                       final String fuelType, final Integer horsepower,
+                                       final Integer airbagCount, final String transmission,
+                                       final java.math.BigDecimal fuelConsumption,
+                                       final Integer maxSpeedKmh) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean deleteCar(final long id) {
+            return false;
         }
     }
 
