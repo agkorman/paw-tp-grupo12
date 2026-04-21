@@ -204,29 +204,11 @@ a.filter-chip {
     text-decoration: none !important;
 }
 
-.car-card-controls {
+.car-card-favorite {
     position: absolute;
     top: 0.75rem;
     right: 0.75rem;
     z-index: 3;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.car-card-favorite {
-    position: relative;
-}
-
-.car-card-admin-menu {
-    position: relative;
-    z-index: 4;
-}
-
-.car-card-admin-menu .action-menu-toggle {
-    background: rgba(13, 13, 13, 0.72);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
 }
 
 .car-card-favorite .favorite-toggle {

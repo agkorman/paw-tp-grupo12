@@ -4,13 +4,11 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
-import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarService;
-import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.form.CarForm;
@@ -72,16 +70,14 @@ public class CarController {
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
     private final ReviewService reviewService;
-    private final EmailService emailService;
 
     @Autowired
     public CarController(final CarService carService, final BrandDao brandDao, final BodyTypeDao bodyTypeDao,
-                         final ReviewService reviewService, final EmailService emailService) {
+                         final ReviewService reviewService) {
         this.carService = carService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
         this.reviewService = reviewService;
-        this.emailService = emailService;
     }
 
     @InitBinder
@@ -108,9 +104,6 @@ public class CarController {
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
         mav.addObject("heroCar", heroCar);
         mav.addObject("heroReview", heroReview);
-        mav.addObject("brands", brandDao.findAll());
-        mav.addObject("bodyTypes", bodyTypeDao.findAll());
-        mav.addObject("carForm", new CarForm());
         return mav;
     }
 
@@ -204,7 +197,7 @@ public class CarController {
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
 
-        final CarRequest createdRequest = carService.requestCarCreation(
+        carService.requestCarCreation(
                 resolvedBrand.getId(),
                 carForm.getModel(),
                 resolvedBodyType.getId(),
@@ -213,8 +206,6 @@ public class CarController {
                 imageContentType,
                 imageData
         );
-
-        emailService.sendCarRequestCreatedNotification(createdRequest);
 
         return "redirect:/cars";
     }

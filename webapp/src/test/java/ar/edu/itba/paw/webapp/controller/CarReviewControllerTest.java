@@ -373,6 +373,11 @@ public class CarReviewControllerTest {
         public Optional<Brand> findByName(final String name) {
             return Optional.empty();
         }
+
+        @Override
+        public Brand create(final String name) {
+            throw new UnsupportedOperationException("Not needed by this test fake.");
+        }
     }
 
     private static final class FakeBodyTypeDao implements BodyTypeDao {
@@ -389,6 +394,11 @@ public class CarReviewControllerTest {
         @Override
         public Optional<BodyType> findByName(final String name) {
             return Optional.empty();
+        }
+
+        @Override
+        public BodyType create(final String name) {
+            throw new UnsupportedOperationException("Not needed by this test fake.");
         }
     }
 }

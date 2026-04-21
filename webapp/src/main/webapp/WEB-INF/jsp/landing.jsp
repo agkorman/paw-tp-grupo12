@@ -2,7 +2,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
-<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -15,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/landing.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
 </head>
@@ -141,9 +140,6 @@
                                 hasImage="${car.hasImage}"
                                 href="${reviewUrl}"
                                 favorited="${car.id mod 2 eq 0}"
-                                adminBrand="${car.brandName}"
-                                adminModel="${car.model}"
-                                adminDescription="${car.description}"
                                 averageRating="${reviewStatsByCarId[car.id].averageRating}"
                                 reviewCount="${reviewStatsByCarId[car.id].reviewCount}"/>
                         </c:forEach>
@@ -153,14 +149,6 @@
         </section>
     </main>
 
-    <sec:authorize access="hasRole('ADMIN')">
-        <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
-        <pa:car-delete-modal/>
-        <script src="<c:url value='/js/action-menu.js'/>"></script>
-        <script src="<c:url value='/js/create-car-modal.js?v=4'/>"></script>
-        <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
-        <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    </sec:authorize>
     <script src="<c:url value='/js/reactions.js'/>"></script>
 
 </body>

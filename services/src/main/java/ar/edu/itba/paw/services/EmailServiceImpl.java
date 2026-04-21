@@ -2,9 +2,6 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
-import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.persistence.BodyTypeDao;
-import ar.edu.itba.paw.persistence.BrandDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -41,18 +38,13 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
     private final UserService userService;
     private final CarService carService;
-    private final BrandDao brandDao;
-    private final BodyTypeDao bodyTypeDao;
 
     @Autowired
     public EmailServiceImpl(final JavaMailSender mailSender, final UserService userService,
-                            final CarService carService, final BrandDao brandDao,
-                            final BodyTypeDao bodyTypeDao) {
+                            final CarService carService) {
         this.mailSender = mailSender;
         this.userService = userService;
         this.carService = carService;
-        this.brandDao = brandDao;
-        this.bodyTypeDao = bodyTypeDao;
     }
 
     @Override
@@ -86,178 +78,6 @@ public class EmailServiceImpl implements EmailService {
         } catch (final MessagingException | RuntimeException e) {
             LOGGER.warning("Failed to send car creation notification for car " + car.getId() + ": " + e.getMessage());
         }
-    }
-
-    @Override
-    @Async("mailTaskExecutor")
-    public void sendCarRequestCreatedNotification(final CarRequest carRequest) {
-        try {
-            final List<String> moderators = userService.getModeratorsEmails();
-            if (moderators.isEmpty()) {
-                return;
-            }
-
-            final String brandName = resolveBrandName(carRequest.getBrandId());
-            final String bodyTypeName = resolveBodyTypeName(carRequest.getBodyTypeId());
-            final boolean hasInlineImage = carRequest.getImageData() != null && carRequest.getImageContentType() != null;
-
-            final MimeMessage message = mailSender.createMimeMessage();
-            final MimeMessageHelper helper = new MimeMessageHelper(
-                    message,
-                    true,
-                    StandardCharsets.UTF_8.name()
-            );
-            helper.setTo(moderators.toArray(new String[0]));
-            helper.setSubject("[" + APP_NAME + "] Solicitud de auto pendiente: "
-                    + sanitizeHeaderValue(brandName) + " " + sanitizeHeaderValue(carRequest.getModel()));
-            helper.setText(
-                    buildRequestPlainTextBody(carRequest, brandName, bodyTypeName),
-                    buildRequestHtmlBody(carRequest, brandName, bodyTypeName, hasInlineImage)
-            );
-            if (hasInlineImage) {
-                helper.addInline(
-                        CAR_IMAGE_CID,
-                        new ByteArrayResource(carRequest.getImageData()),
-                        carRequest.getImageContentType()
-                );
-            }
-
-            mailSender.send(message);
-        } catch (final MessagingException | RuntimeException e) {
-            LOGGER.warning("Failed to send car request notification for request "
-                    + carRequest.getId() + ": " + e.getMessage());
-        }
-    }
-
-    private String buildRequestPlainTextBody(final CarRequest request, final String brandName,
-                                             final String bodyTypeName) {
-        return """
-                Hola equipo,
-
-                Se recibió una nueva solicitud de auto en %s y quedó pendiente de aprobación.
-
-                Marca: %s
-                Modelo: %s
-                Carrocería: %s
-                Imagen cargada: %s
-
-                Descripción:
-                %s
-                """.formatted(
-                APP_NAME,
-                safeValue(brandName),
-                safeValue(request.getModel()),
-                safeValue(bodyTypeName),
-                request.getImageData() != null ? "Sí" : "No",
-                previewDescription(request.getDescription())
-        );
-    }
-
-    private String buildRequestHtmlBody(final CarRequest request, final String brandName,
-                                        final String bodyTypeName, final boolean hasInlineImage) {
-        final String description = escapeHtml(previewDescription(request.getDescription())).replace("\n", "<br>");
-        final String carName = escapeHtml(safeValue(brandName) + " " + safeValue(request.getModel()));
-        final String imageBlock = hasInlineImage
-                ? """
-                                    <div style="margin-bottom:24px;">
-                                        <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
-                                            Imagen enviada
-                                        </div>
-                                        <div style="background:%s;border:1px solid %s;border-radius:18px;padding:10px;">
-                                            <img src="cid:%s" alt="%s" style="display:block;width:100%%;max-width:596px;height:auto;border-radius:12px;">
-                                        </div>
-                                    </div>
-                                """.formatted(
-                        COLOR_ON_SURFACE_VARIANT,
-                        BODY_FONT,
-                        COLOR_SURFACE_HIGH,
-                        COLOR_OUTLINE,
-                        CAR_IMAGE_CID,
-                        carName
-                )
-                : "";
-
-        return """
-                <!DOCTYPE html>
-                <html lang="es">
-                <body style="margin:0;padding:24px;background:%s;color:%s;font-family:%s;">
-                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
-                        <tr>
-                            <td style="padding:0;">
-                                <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
-                                    <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
-                                        %s
-                                    </div>
-                                    <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
-                                        Nueva solicitud pendiente
-                                    </h1>
-                                    <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
-                                        Revisá esta solicitud desde el panel de administración antes de publicarla.
-                                    </p>
-                                </div>
-
-                                <div style="background:%s;padding:32px;border:1px solid %s;border-top:none;border-radius:0 0 22px 22px;">
-                                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:24px;">
-                                        <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;font-weight:700;font-family:%s;">
-                                            Resumen del vehículo
-                                        </div>
-                                        <div style="font-size:28px;line-height:1.15;font-weight:700;color:%s;font-family:%s;">
-                                            %s
-                                        </div>
-                                        <div style="margin-top:10px;font-size:14px;line-height:1.5;color:%s;font-family:%s;">
-                                            %s
-                                        </div>
-                                    </div>
-
-                                    %s
-
-                                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;">
-                                        <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;font-weight:700;font-family:%s;">
-                                            Descripción
-                                        </div>
-                                        <div style="font-size:15px;line-height:1.7;color:%s;font-family:%s;">
-                                            %s
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                </body>
-                </html>
-                """.formatted(
-                COLOR_SURFACE_LOW,
-                COLOR_ON_SURFACE,
-                BODY_FONT,
-                COLOR_PRIMARY_CONTAINER,
-                COLOR_PRIMARY_CONTAINER,
-                COLOR_PRIMARY,
-                COLOR_ON_PRIMARY,
-                BODY_FONT,
-                APP_NAME,
-                DISPLAY_FONT,
-                BODY_FONT,
-                COLOR_SURFACE,
-                COLOR_OUTLINE,
-                COLOR_SURFACE_LOW,
-                COLOR_OUTLINE,
-                COLOR_ON_SURFACE_VARIANT,
-                BODY_FONT,
-                COLOR_ON_SURFACE,
-                DISPLAY_FONT,
-                carName,
-                COLOR_ON_SURFACE_VARIANT,
-                BODY_FONT,
-                escapeHtml(safeValue(bodyTypeName)),
-                imageBlock,
-                COLOR_SURFACE_LOW,
-                COLOR_OUTLINE,
-                COLOR_ON_SURFACE_VARIANT,
-                BODY_FONT,
-                COLOR_ON_SURFACE,
-                BODY_FONT,
-                description
-        );
     }
 
     private String buildSubject(final Car car) {
@@ -446,30 +266,14 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String previewDescription(final Car car) {
-        return previewDescription(car.getDescription());
-    }
-
-    private String previewDescription(final String value) {
-        if (value == null || value.isBlank()) {
+        if (car.getDescription() == null || car.getDescription().isBlank()) {
             return "Sin descripción provista.";
         }
-        final String description = value.trim();
+        final String description = car.getDescription().trim();
         if (description.length() <= DESCRIPTION_PREVIEW_LENGTH) {
             return description;
         }
         return description.substring(0, DESCRIPTION_PREVIEW_LENGTH - 3).trim() + "...";
-    }
-
-    private String resolveBrandName(final long brandId) {
-        return brandDao.findById(brandId)
-                .map(brand -> brand.getName())
-                .orElse("Marca pendiente");
-    }
-
-    private String resolveBodyTypeName(final long bodyTypeId) {
-        return bodyTypeDao.findById(bodyTypeId)
-                .map(bodyType -> bodyType.getName())
-                .orElse("Carrocería pendiente");
     }
 
     private String safeValue(final String value) {

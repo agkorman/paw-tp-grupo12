@@ -19,15 +19,12 @@
                     hasImage="${car.hasImage}"
                     href="${reviewUrl}"
                     favorited="${car.id mod 2 eq 0}"
-                    adminBrand="${car.brandName}"
-                    adminModel="${car.model}"
-                    adminDescription="${car.description}"
                     averageRating="${reviewStatsByCarId[car.id].averageRating}"
                     reviewCount="${reviewStatsByCarId[car.id].reviewCount}"/>
             </c:forEach>
 
             <sec:authorize access="isAuthenticated()">
-                <button type="button" class="car-request-card" data-open-create-car-modal="create">
+                <button type="button" class="car-request-card" data-open-create-car-modal>
                     <span class="car-request-card-icon" aria-hidden="true">
                         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
                             <path d="M12 5v14"/>

@@ -19,23 +19,14 @@
 <%@ attribute name="requestBodyType" required="false" %>
 <%@ attribute name="requestDescription" required="false" %>
 <%@ attribute name="requestSubmitter" required="false" %>
-<%@ attribute name="adminBrand" required="false" %>
-<%@ attribute name="adminModel" required="false" %>
-<%@ attribute name="adminDescription" required="false" %>
 <%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
-<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <c:set var="modalImageUrl" value=""/>
 <c:if test="${not empty imageUrl}">
     <c:url var="modalImageUrl" value="${imageUrl}"/>
 </c:if>
-<c:url var="defaultCarImageUrl" value="/car-image">
-    <c:param name="carId" value="${carId}"/>
-</c:url>
-<c:url var="adminCarEditUrl" value="/admin/cars/${carId}"/>
-<c:url var="adminCarDeleteUrl" value="/admin/cars/${carId}/delete"/>
 
 <div class="car-card-shell">
     <a href="${fn:escapeXml(href)}"
@@ -130,45 +121,9 @@
             </div>
         </div>
     </a>
-    <c:set var="showAdminMenu" value="false"/>
-    <sec:authorize access="hasRole('ADMIN')">
-        <c:if test="${openModal ne true and not empty adminBrand and not empty adminModel}">
-            <c:set var="showAdminMenu" value="true"/>
-        </c:if>
-    </sec:authorize>
-    <c:if test="${showFavorite ne false or showAdminMenu}">
-        <div class="car-card-controls">
-            <c:if test="${showFavorite ne false}">
-                <div class="car-card-favorite">
-                    <pa:car-favorite-button carId="${carId}" favorited="${favorited}"/>
-                </div>
-            </c:if>
-            <c:if test="${showAdminMenu}">
-                <div class="car-card-admin-menu">
-                    <pa:action-menu label="Abrir opciones de auto">
-                        <button
-                                type="button"
-                                data-open-create-car-modal="edit-car"
-                                data-car-action="${fn:escapeXml(adminCarEditUrl)}"
-                                data-car-id="${fn:escapeXml(carId)}"
-                                data-car-brand="${fn:escapeXml(adminBrand)}"
-                                data-car-model="${fn:escapeXml(adminModel)}"
-                                data-car-body-type="${fn:escapeXml(bodyType)}"
-                                data-car-description="${fn:escapeXml(adminDescription)}"
-                                data-car-image-url="${hasImage ? fn:escapeXml(defaultCarImageUrl) : ''}">
-                            Editar
-                        </button>
-                        <button
-                                type="button"
-                                class="action-menu-danger"
-                                data-open-delete-car-modal
-                                data-car-delete-action="${fn:escapeXml(adminCarDeleteUrl)}"
-                                data-car-title="${fn:escapeXml(adminBrand)} ${fn:escapeXml(adminModel)}">
-                            Eliminar
-                        </button>
-                    </pa:action-menu>
-                </div>
-            </c:if>
+    <c:if test="${showFavorite ne false}">
+        <div class="car-card-favorite">
+            <pa:car-favorite-button carId="${carId}" favorited="${favorited}"/>
         </div>
     </c:if>
 </div>
