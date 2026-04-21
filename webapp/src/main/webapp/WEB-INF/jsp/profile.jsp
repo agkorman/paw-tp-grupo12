@@ -102,7 +102,7 @@
             <div class="profile-section-heading">
                 <h2 id="profileReviewsTitle">
                     <c:choose>
-                        <c:when test="${ownProfile}">Mis reviews</c:when>
+                        <c:when test="${ownProfile}">Mis Reseñas</c:when>
                         <c:otherwise>Reviews</c:otherwise>
                     </c:choose>
                 </h2>
@@ -112,7 +112,7 @@
             <c:choose>
                 <c:when test="${empty profileReviews}">
                     <div class="profile-empty-state">
-                        <p>Todavía no hay reviews publicadas.</p>
+                        <p>Todavía no tienes reseñas publicadas.</p>
                     </div>
                 </c:when>
                 <c:otherwise>
@@ -179,14 +179,14 @@
 
             <section class="profile-liked-section" aria-labelledby="profileLikedTitle" data-collapsible-section>
                 <div class="profile-section-heading">
-                    <h2 id="profileLikedTitle">Reviews likeadas</h2>
+                    <h2 id="profileLikedTitle">Reseñas likeadas</h2>
                     <span><c:out value="${fn:length(likedReviews)}"/></span>
                 </div>
 
                 <c:choose>
                     <c:when test="${empty likedReviews}">
                         <div class="profile-empty-state">
-                            <p>Todavía no likeaste reviews.</p>
+                            <p>Todavía no le diste like a ninguna reseña.</p>
                         </div>
                     </c:when>
                     <c:otherwise>
