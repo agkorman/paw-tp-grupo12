@@ -2,9 +2,15 @@ package ar.edu.itba.paw.webapp.form;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Email;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.math.BigDecimal;
 
 public class CarForm {
 
@@ -27,6 +33,32 @@ public class CarForm {
     private String description;
 
     private MultipartFile file;
+
+    @NotBlank(message = "El tipo de motorización es obligatorio.")
+    private String fuelType;
+
+    @NotNull(message = "La potencia es obligatoria.")
+    @Min(value = 1, message = "La potencia debe ser mayor a 0.")
+    @Max(value = 2000, message = "La potencia no puede superar los 2000 HP.")
+    private Integer horsepower;
+
+    @NotNull(message = "El número de airbags es obligatorio.")
+    @Min(value = 0, message = "El número de airbags no puede ser negativo.")
+    @Max(value = 30, message = "El número de airbags no puede superar 30.")
+    private Integer airbagCount;
+
+    @NotBlank(message = "La transmisión es obligatoria.")
+    private String transmission;
+
+    @NotNull(message = "El consumo de nafta es obligatorio.")
+    @DecimalMin(value = "0.0", message = "El consumo debe ser mayor o igual a 0.")
+    @DecimalMax(value = "99.9", message = "El consumo no puede superar 99.9 L/100km.")
+    private BigDecimal fuelConsumption;
+
+    @NotNull(message = "La velocidad máxima es obligatoria.")
+    @Min(value = 1, message = "La velocidad debe ser mayor a 0.")
+    @Max(value = 600, message = "La velocidad no puede superar los 600 km/h.")
+    private Integer maxSpeedKmh;
 
     public String getBrand() {
         return brand;
@@ -74,5 +106,53 @@ public class CarForm {
 
     public void setFile(final MultipartFile file) {
         this.file = file;
+    }
+
+    public String getFuelType() {
+        return fuelType;
+    }
+
+    public void setFuelType(final String fuelType) {
+        this.fuelType = fuelType;
+    }
+
+    public Integer getHorsepower() {
+        return horsepower;
+    }
+
+    public void setHorsepower(final Integer horsepower) {
+        this.horsepower = horsepower;
+    }
+
+    public Integer getAirbagCount() {
+        return airbagCount;
+    }
+
+    public void setAirbagCount(final Integer airbagCount) {
+        this.airbagCount = airbagCount;
+    }
+
+    public String getTransmission() {
+        return transmission;
+    }
+
+    public void setTransmission(final String transmission) {
+        this.transmission = transmission;
+    }
+
+    public BigDecimal getFuelConsumption() {
+        return fuelConsumption;
+    }
+
+    public void setFuelConsumption(final BigDecimal fuelConsumption) {
+        this.fuelConsumption = fuelConsumption;
+    }
+
+    public Integer getMaxSpeedKmh() {
+        return maxSpeedKmh;
+    }
+
+    public void setMaxSpeedKmh(final Integer maxSpeedKmh) {
+        this.maxSpeedKmh = maxSpeedKmh;
     }
 }

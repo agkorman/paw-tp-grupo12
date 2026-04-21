@@ -180,6 +180,64 @@ WHERE cr.submitted_by_user_id IS NULL
   AND LOWER(BTRIM(cr.submitter_email)) = u.email_key;
 
 -- ============================================================
+-- Car & CarRequest spec columns
+-- ============================================================
+
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS fuel_type        VARCHAR(20);
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS horsepower       INT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS airbag_count     INT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS transmission     VARCHAR(20);
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS fuel_consumption NUMERIC(4,1);
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS max_speed_kmh    INT;
+
+ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS fuel_type        VARCHAR(20);
+ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS horsepower       INT;
+ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS airbag_count     INT;
+ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS transmission     VARCHAR(20);
+ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS fuel_consumption NUMERIC(4,1);
+ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS max_speed_kmh    INT;
+
+ALTER TABLE cars DROP CONSTRAINT IF EXISTS chk_cars_fuel_type;
+ALTER TABLE cars
+    ADD CONSTRAINT chk_cars_fuel_type
+    CHECK (fuel_type IS NULL OR fuel_type IN ('combustion', 'hybrid', 'electric'));
+
+ALTER TABLE cars DROP CONSTRAINT IF EXISTS chk_cars_transmission;
+ALTER TABLE cars
+    ADD CONSTRAINT chk_cars_transmission
+    CHECK (transmission IS NULL OR transmission IN ('manual', 'automatic'));
+
+ALTER TABLE cars DROP CONSTRAINT IF EXISTS chk_cars_specs_ranges;
+ALTER TABLE cars
+    ADD CONSTRAINT chk_cars_specs_ranges
+    CHECK (
+        (horsepower IS NULL OR horsepower BETWEEN 1 AND 2000)
+        AND (airbag_count IS NULL OR airbag_count BETWEEN 0 AND 30)
+        AND (fuel_consumption IS NULL OR fuel_consumption BETWEEN 0.0 AND 99.9)
+        AND (max_speed_kmh IS NULL OR max_speed_kmh BETWEEN 1 AND 600)
+    );
+
+ALTER TABLE car_requests DROP CONSTRAINT IF EXISTS chk_car_requests_fuel_type;
+ALTER TABLE car_requests
+    ADD CONSTRAINT chk_car_requests_fuel_type
+    CHECK (fuel_type IS NULL OR fuel_type IN ('combustion', 'hybrid', 'electric'));
+
+ALTER TABLE car_requests DROP CONSTRAINT IF EXISTS chk_car_requests_transmission;
+ALTER TABLE car_requests
+    ADD CONSTRAINT chk_car_requests_transmission
+    CHECK (transmission IS NULL OR transmission IN ('manual', 'automatic'));
+
+ALTER TABLE car_requests DROP CONSTRAINT IF EXISTS chk_car_requests_specs_ranges;
+ALTER TABLE car_requests
+    ADD CONSTRAINT chk_car_requests_specs_ranges
+    CHECK (
+        (horsepower IS NULL OR horsepower BETWEEN 1 AND 2000)
+        AND (airbag_count IS NULL OR airbag_count BETWEEN 0 AND 30)
+        AND (fuel_consumption IS NULL OR fuel_consumption BETWEEN 0.0 AND 99.9)
+        AND (max_speed_kmh IS NULL OR max_speed_kmh BETWEEN 1 AND 600)
+    );
+
+-- ============================================================
 -- Seed data
 -- ============================================================
 
@@ -251,3 +309,34 @@ SELECT b.brand_id, 'RS6 Avant', bt.body_type_id,
        'The C8 RS6 Avant is powered by a 4.0L twin-turbo V8 with a 48V mild-hybrid system producing 600 PS. It was the first RS6 Avant sold in North America since the C5 generation and the first RS6 to use a hybrid drivetrain.'
 FROM brands b, body_types bt WHERE b.name = 'Audi' AND bt.name = 'Estate'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
+
+-- Populate spec fields for seed cars (idempotent UPDATEs)
+UPDATE cars SET fuel_type='combustion', horsepower=382, airbag_count=8,  transmission='automatic', fuel_consumption=9.8,  max_speed_kmh=250
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Toyota'    AND c.model='GR Supra');
+
+UPDATE cars SET fuel_type='combustion', horsepower=450, airbag_count=6,  transmission='automatic', fuel_consumption=12.4, max_speed_kmh=250
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Ford'      AND c.model='Mustang');
+
+UPDATE cars SET fuel_type='combustion', horsepower=184, airbag_count=6,  transmission='manual',    fuel_consumption=7.4,  max_speed_kmh=214
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Mazda'     AND c.model='MX-5 Miata');
+
+UPDATE cars SET fuel_type='combustion', horsepower=503, airbag_count=10, transmission='automatic', fuel_consumption=10.5, max_speed_kmh=290
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='BMW'       AND c.model='M3');
+
+UPDATE cars SET fuel_type='combustion', horsepower=385, airbag_count=8,  transmission='automatic', fuel_consumption=10.2, max_speed_kmh=293
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Porsche'   AND c.model='911');
+
+UPDATE cars SET fuel_type='combustion', horsepower=330, airbag_count=6,  transmission='manual',    fuel_consumption=8.9,  max_speed_kmh=272
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Honda'     AND c.model='Civic Type R');
+
+UPDATE cars SET fuel_type='combustion', horsepower=305, airbag_count=6,  transmission='manual',    fuel_consumption=10.7, max_speed_kmh=255
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Subaru'    AND c.model='WRX STI');
+
+UPDATE cars SET fuel_type='combustion', horsepower=570, airbag_count=6,  transmission='automatic', fuel_consumption=12.4, max_speed_kmh=315
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Nissan'    AND c.model='GT-R');
+
+UPDATE cars SET fuel_type='combustion', horsepower=650, airbag_count=6,  transmission='automatic', fuel_consumption=14.7, max_speed_kmh=290
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Chevrolet' AND c.model='Camaro');
+
+UPDATE cars SET fuel_type='hybrid',     horsepower=600, airbag_count=10, transmission='automatic', fuel_consumption=11.5, max_speed_kmh=280
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Audi'      AND c.model='RS6 Avant');

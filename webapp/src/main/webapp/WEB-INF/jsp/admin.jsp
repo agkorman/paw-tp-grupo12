@@ -77,7 +77,13 @@
                                     requestModel="${request.model}"
                                     requestBodyType="${request.bodyTypeName}"
                                     requestDescription="${request.description}"
-                                    requestSubmitter="${request.submitter}"/>
+                                    requestSubmitter="${request.submitter}"
+                                    requestFuelType="${request.fuelType}"
+                                    requestHorsepower="${request.horsepower}"
+                                    requestAirbagCount="${request.airbagCount}"
+                                    requestTransmission="${request.transmission}"
+                                    requestFuelConsumption="${request.fuelConsumption}"
+                                    requestMaxSpeedKmh="${request.maxSpeedKmh}"/>
                         </c:forEach>
                     </div>
                 </c:otherwise>

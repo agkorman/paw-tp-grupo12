@@ -102,6 +102,76 @@
                     <form:errors path="description" cssClass="form-error" element="span"/>
                 </div>
 
+                <div class="review-modal-field review-modal-field-wide">
+                    <span class="review-modal-section-label">Especificaciones técnicas</span>
+                </div>
+
+                <div class="review-modal-field">
+                    <label>Motorización</label>
+                    <div class="modal-radio-group">
+                        <label class="modal-radio-option">
+                            <form:radiobutton path="fuelType" value="combustion" required="required"/>
+                            <span>Combustión</span>
+                        </label>
+                        <label class="modal-radio-option">
+                            <form:radiobutton path="fuelType" value="hybrid"/>
+                            <span>Híbrido</span>
+                        </label>
+                        <label class="modal-radio-option">
+                            <form:radiobutton path="fuelType" value="electric"/>
+                            <span>Eléctrico</span>
+                        </label>
+                    </div>
+                    <form:errors path="fuelType" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="review-modal-field">
+                    <label>Transmisión</label>
+                    <div class="modal-radio-group">
+                        <label class="modal-radio-option">
+                            <form:radiobutton path="transmission" value="manual" required="required"/>
+                            <span>Manual</span>
+                        </label>
+                        <label class="modal-radio-option">
+                            <form:radiobutton path="transmission" value="automatic"/>
+                            <span>Automática</span>
+                        </label>
+                    </div>
+                    <form:errors path="transmission" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="review-modal-field">
+                    <label for="modalCarHorsepower">Potencia (HP)</label>
+                    <form:input id="modalCarHorsepower" path="horsepower" type="number"
+                                min="1" max="2000" required="required"
+                                placeholder="Ej: 150" readonly="${adminMode}"/>
+                    <form:errors path="horsepower" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="review-modal-field">
+                    <label for="modalCarAirbagCount">Airbags</label>
+                    <form:input id="modalCarAirbagCount" path="airbagCount" type="number"
+                                min="0" max="30" required="required"
+                                placeholder="Ej: 6" readonly="${adminMode}"/>
+                    <form:errors path="airbagCount" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="review-modal-field">
+                    <label for="modalCarFuelConsumption">Consumo (L/100km)</label>
+                    <form:input id="modalCarFuelConsumption" path="fuelConsumption" type="number"
+                                step="0.1" min="0" max="99.9" required="required"
+                                placeholder="Ej: 6.8" readonly="${adminMode}"/>
+                    <form:errors path="fuelConsumption" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="review-modal-field">
+                    <label for="modalCarMaxSpeed">Vel. máxima (km/h)</label>
+                    <form:input id="modalCarMaxSpeed" path="maxSpeedKmh" type="number"
+                                min="1" max="600" required="required"
+                                placeholder="Ej: 190" readonly="${adminMode}"/>
+                    <form:errors path="maxSpeedKmh" cssClass="form-error" element="span"/>
+                </div>
+
                 <div class="review-modal-field review-modal-field-wide car-image-field">
                     <span class="car-image-label">Imagen</span>
                     <div class="car-image-upload <c:if test="${adminMode}">is-readonly</c:if>">

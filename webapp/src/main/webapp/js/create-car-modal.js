@@ -198,6 +198,35 @@
         }
     };
 
+    var setRadioGroupReadonly = function (name, readonly) {
+        var fields = form.querySelectorAll('input[type="radio"][name="' + name + '"]');
+        if (!fields.length) { return; }
+        var group = fields[0].closest('.modal-radio-group');
+        if (!group) { return; }
+        group.classList.toggle('modal-radio-group--readonly', readonly);
+        Array.prototype.forEach.call(fields, function (field) {
+            if (readonly) {
+                field.setAttribute('tabindex', '-1');
+            } else {
+                field.removeAttribute('tabindex');
+            }
+        });
+    };
+
+    var setRadioGroupValue = function (name, value) {
+        var fields = form.querySelectorAll('input[type="radio"][name="' + name + '"]');
+        Array.prototype.forEach.call(fields, function (field) {
+            field.checked = field.value === value;
+        });
+    };
+
+    var setSpecFieldsReadonly = function (readonly) {
+        setFieldReadonly('modalCarHorsepower', readonly);
+        setFieldReadonly('modalCarAirbagCount', readonly);
+        setFieldReadonly('modalCarFuelConsumption', readonly);
+        setFieldReadonly('modalCarMaxSpeed', readonly);
+    };
+
     var setActionVisibility = function (showCreateActions) {
         if (createActions) {
             createActions.toggleAttribute('hidden', !showCreateActions);
@@ -217,9 +246,12 @@
         setFieldReadonly('modalCarSubmitterEmail', false);
         setFieldReadonly('modalCarModel', false);
         setFieldReadonly('modalCarDescription', false);
+        setSpecFieldsReadonly(false);
         setFieldDisabled('modalCarBrand', false);
         setFieldDisabled('modalCarBodyType', false);
         setFieldDisabled('modalCarFile', false);
+        setRadioGroupReadonly('fuelType', false);
+        setRadioGroupReadonly('transmission', false);
         if (fileInput) {
             fileInput.setAttribute('required', 'required');
         }
@@ -242,9 +274,12 @@
         setFieldReadonly('modalCarSubmitterEmail', true);
         setFieldReadonly('modalCarModel', true);
         setFieldReadonly('modalCarDescription', true);
+        setSpecFieldsReadonly(true);
         setFieldDisabled('modalCarBrand', true);
         setFieldDisabled('modalCarBodyType', true);
         setFieldDisabled('modalCarFile', true);
+        setRadioGroupReadonly('fuelType', true);
+        setRadioGroupReadonly('transmission', true);
         if (fileInput) {
             fileInput.removeAttribute('required');
         }
@@ -264,6 +299,12 @@
         setFieldValue('modalCarBodyType', data.requestBodyType);
         setFieldValue('modalCarModel', data.requestModel);
         setFieldValue('modalCarDescription', data.requestDescription);
+        setRadioGroupValue('fuelType', data.requestFuelType);
+        setRadioGroupValue('transmission', data.requestTransmission);
+        setFieldValue('modalCarHorsepower', data.requestHorsepower);
+        setFieldValue('modalCarAirbagCount', data.requestAirbagCount);
+        setFieldValue('modalCarFuelConsumption', data.requestFuelConsumption);
+        setFieldValue('modalCarMaxSpeed', data.requestMaxSpeedKmh);
         setAdminAction(data.requestId);
 
         if (fileStatus) {

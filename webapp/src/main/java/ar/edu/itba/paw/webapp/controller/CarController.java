@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
@@ -111,13 +112,11 @@ public class CarController {
     }
 
     @RequestMapping(value = "/cars", method = RequestMethod.GET)
-    public String listCars(@RequestParam(value = "q", required = false) final String q,
-                           @RequestParam(value = "brand", required = false) final String brand,
-                           @RequestParam(value = "bodyType", required = false) final String bodyType,
+    public String listCars(@ModelAttribute final CarSearchCriteria criteria,
                            @RequestParam(value = "createCar", required = false) final String createCar,
                            @ModelAttribute("carForm") final CarForm carForm,
                            final Model model) {
-        populateCarsPageModel(model, blankToNull(q), brand, bodyType);
+        populateCarsPageModel(model, criteria);
         if ("true".equalsIgnoreCase(createCar)) {
             model.addAttribute("openCarModal", true);
             model.addAttribute("openCreateCarModal", true);
@@ -126,15 +125,13 @@ public class CarController {
     }
 
     @RequestMapping(value = "/cars/content", method = RequestMethod.GET)
-    public ModelAndView listCarsContent(
-            @RequestParam(value = "q", required = false) final String q,
-            @RequestParam(value = "brand", required = false) final String brand,
-            @RequestParam(value = "bodyType", required = false) final String bodyType) {
-        final CarCatalogData catalogData = resolveCatalogData(blankToNull(q), brand, bodyType);
+    public ModelAndView listCarsContent(@ModelAttribute final CarSearchCriteria criteria) {
+        final CarCatalogData catalogData = resolveCatalogData(criteria);
 
         final ModelAndView mav = new ModelAndView("cars-content.jsp");
         mav.addObject("cars", catalogData.cars);
         mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
+        addShowSpecFlags(mav, criteria);
         return mav;
     }
 
@@ -157,6 +154,7 @@ public class CarController {
         if (imageError != null) {
             errors.rejectValue("file", "image.invalid", imageError);
         }
+        rejectInvalidSpecFields(errors, carForm);
 
         Brand resolvedBrand = null;
         if (!errors.hasFieldErrors("brand")) {
@@ -186,7 +184,7 @@ public class CarController {
         }
 
         if (errors.hasErrors()) {
-            populateCarsPageModel(model, null, null, null);
+            populateCarsPageModel(model, new CarSearchCriteria());
             model.addAttribute("openCarModal", true);
             model.addAttribute("openCreateCarModal", true);
             return "cars.jsp";
@@ -207,7 +205,13 @@ public class CarController {
                 currentUser.getId(),
                 Optional.ofNullable(carForm.getDescription()).filter(value -> !value.isEmpty()),
                 imageContentType,
-                imageData
+                imageData,
+                carForm.getFuelType(),
+                carForm.getHorsepower(),
+                carForm.getAirbagCount(),
+                carForm.getTransmission(),
+                carForm.getFuelConsumption(),
+                carForm.getMaxSpeedKmh()
         );
 
         emailService.sendCarCreatedNotification(createdCar);
@@ -215,17 +219,33 @@ public class CarController {
         return "redirect:/cars";
     }
 
-    private void populateCarsPageModel(final Model model, final String q, final String brand, final String bodyType) {
-        final String searchQuery = blankToNull(q);
-        final CarCatalogData catalogData = resolveCatalogData(searchQuery, brand, bodyType);
+    private void populateCarsPageModel(final Model model, final CarSearchCriteria criteria) {
+        final CarCatalogData catalogData = resolveCatalogData(criteria);
 
         model.addAttribute("cars", catalogData.cars);
         model.addAttribute("reviewStatsByCarId", catalogData.reviewStatsByCarId);
         model.addAttribute("brands", brandDao.findAll());
         model.addAttribute("bodyTypes", bodyTypeDao.findAll());
-        model.addAttribute("selectedBrand", catalogData.brandFilter);
-        model.addAttribute("selectedBodyType", catalogData.bodyTypeFilter);
-        model.addAttribute("searchQuery", searchQuery);
+        model.addAttribute("selectedBrand", criteria.getBrand());
+        model.addAttribute("selectedBodyType", criteria.getBodyType());
+        model.addAttribute("searchQuery", criteria.getQ());
+        model.addAttribute("criteria", criteria);
+        model.addAttribute("hasAdvancedFilters", criteria.hasAdvancedFilters());
+        model.addAttribute("showHp", criteria.getHorsepowerMin() != null || criteria.getHorsepowerMax() != null);
+        model.addAttribute("showSpeed", criteria.getMaxSpeedMin() != null);
+        model.addAttribute("showConsumption", criteria.getFuelConsumptionMax() != null);
+        model.addAttribute("showAirbags", criteria.getAirbagMin() != null);
+        model.addAttribute("showTransmission", criteria.getTransmission() != null);
+        model.addAttribute("showFuelType", criteria.getFuelType() != null);
+    }
+
+    private void addShowSpecFlags(final ModelAndView mav, final CarSearchCriteria criteria) {
+        mav.addObject("showHp", criteria.getHorsepowerMin() != null || criteria.getHorsepowerMax() != null);
+        mav.addObject("showSpeed", criteria.getMaxSpeedMin() != null);
+        mav.addObject("showConsumption", criteria.getFuelConsumptionMax() != null);
+        mav.addObject("showAirbags", criteria.getAirbagMin() != null);
+        mav.addObject("showTransmission", criteria.getTransmission() != null);
+        mav.addObject("showFuelType", criteria.getFuelType() != null);
     }
 
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.GET)
@@ -326,11 +346,12 @@ public class CarController {
         return normalizeContentType(file == null ? null : file.getContentType());
     }
 
-    private CarCatalogData resolveCatalogData(final String searchQuery, final String brand, final String bodyType) {
-        final String brandFilter = blankToNull(brand);
-        final String bodyTypeFilter = blankToNull(bodyType);
+    private CarCatalogData resolveCatalogData(final CarSearchCriteria criteria) {
+        if (!criteria.isValid()) {
+            return new CarCatalogData(Collections.emptyList(), Collections.emptyMap());
+        }
 
-        final List<Car> cars = carService.searchCars(searchQuery, brandFilter, bodyTypeFilter);
+        final List<Car> cars = carService.searchCars(criteria);
 
         final Map<Long, ReviewStats> reviewStatsByCarId;
         if (cars.isEmpty()) {
@@ -341,7 +362,7 @@ public class CarController {
                     .stream()
                     .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
         }
-        return new CarCatalogData(cars, reviewStatsByCarId, brandFilter, bodyTypeFilter);
+        return new CarCatalogData(cars, reviewStatsByCarId);
     }
 
     private Map<Long, ReviewStats> getReviewStatsByCarId(final List<Car> cars) {
@@ -399,19 +420,28 @@ public class CarController {
         return stats == null ? 0 : stats.getReviewCount();
     }
 
-    private static String blankToNull(final String s) {
-        if (s == null) {
-            return null;
-        }
-        final String t = s.trim();
-        return t.isEmpty() ? null : t;
-    }
-
     private static String normalizeContentType(final String contentType) {
         if (contentType == null) {
             return null;
         }
         final String normalized = contentType.trim().toLowerCase(Locale.ROOT);
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private void rejectInvalidSpecFields(final BindingResult errors, final CarForm carForm) {
+        if (!errors.hasFieldErrors("fuelType") && !CarSearchCriteria.ALLOWED_FUEL_TYPES.contains(normalizeSpecValue(carForm.getFuelType()))) {
+            errors.rejectValue("fuelType", "fuelType.invalid", "Tipo de motorización no válido.");
+        }
+        if (!errors.hasFieldErrors("transmission") && !CarSearchCriteria.ALLOWED_TRANSMISSIONS.contains(normalizeSpecValue(carForm.getTransmission()))) {
+            errors.rejectValue("transmission", "transmission.invalid", "Transmisión no válida.");
+        }
+    }
+
+    private static String normalizeSpecValue(final String value) {
+        if (value == null) {
+            return null;
+        }
+        final String normalized = value.trim().toLowerCase(Locale.ROOT);
         return normalized.isEmpty() ? null : normalized;
     }
 
@@ -430,15 +460,10 @@ public class CarController {
     private static final class CarCatalogData {
         private final List<Car> cars;
         private final Map<Long, ReviewStats> reviewStatsByCarId;
-        private final String brandFilter;
-        private final String bodyTypeFilter;
 
-        private CarCatalogData(final List<Car> cars, final Map<Long, ReviewStats> reviewStatsByCarId,
-                               final String brandFilter, final String bodyTypeFilter) {
+        private CarCatalogData(final List<Car> cars, final Map<Long, ReviewStats> reviewStatsByCarId) {
             this.cars = cars;
             this.reviewStatsByCarId = reviewStatsByCarId;
-            this.brandFilter = brandFilter;
-            this.bodyTypeFilter = bodyTypeFilter;
         }
     }
 }
