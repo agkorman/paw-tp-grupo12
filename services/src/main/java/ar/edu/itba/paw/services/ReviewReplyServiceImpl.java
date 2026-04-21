@@ -44,6 +44,19 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<ReviewReply> getRepliesByIds(final Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        try {
+            return reviewReplyDao.findByIds(ids);
+        } catch (final RuntimeException ignored) {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ReviewReply> getRepliesByReview(final long reviewId) {
         try {
             return reviewReplyDao.findByReviewId(reviewId);

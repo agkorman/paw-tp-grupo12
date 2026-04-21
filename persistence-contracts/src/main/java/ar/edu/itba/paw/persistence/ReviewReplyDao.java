@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface ReviewReplyDao {
     Optional<ReviewReply> findById(long id);
+    List<ReviewReply> findByIds(Collection<Long> ids);
     List<ReviewReply> findByReviewId(long reviewId);
     List<ReviewReply> findByReviewIds(Collection<Long> reviewIds);
     ReviewReply create(long reviewId, long userId, String body);

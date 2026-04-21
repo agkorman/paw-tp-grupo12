@@ -187,6 +187,11 @@ class UserServiceImplTest {
         }
 
         @Override
+        public List<Review> findByIds(final Collection<Long> ids) {
+            return Collections.emptyList();
+        }
+
+        @Override
         public List<Review> findAll() {
             return Collections.emptyList();
         }

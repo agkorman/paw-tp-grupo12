@@ -228,21 +228,14 @@ public class CarReviewController {
         final Optional<Review> latestReview = reviewService.getLatestReviewByCar(selectedCar.getId());
         final List<CarImage> carImages = carService.getCarImagesByCarId(selectedCar.getId());
         final List<ReviewThread> reviewThreads = buildReviewThreads(reviews, currentUserId);
-        long latestReviewLikeCount = 0L;
-        boolean latestReviewLiked = false;
-        try {
-            latestReviewLikeCount = latestReview
-                    .map(review -> reviewLikeService.countReviewLikes(review.getId()))
-                    .orElse(0L);
-            latestReviewLiked = currentUserId != null
-                    && latestReview
-                    .map(review -> reviewLikeService.getLikedReviewIds(List.of(review.getId()), currentUserId)
-                            .contains(review.getId()))
-                    .orElse(false);
-        } catch (final RuntimeException ignored) {
-            latestReviewLikeCount = 0L;
-            latestReviewLiked = false;
-        }
+        final long latestReviewLikeCount = latestReview
+                .map(review -> reviewLikeService.countReviewLikes(review.getId()))
+                .orElse(0L);
+        final boolean latestReviewLiked = currentUserId != null
+                && latestReview
+                .map(review -> reviewLikeService.getLikedReviewIds(List.of(review.getId()), currentUserId)
+                        .contains(review.getId()))
+                .orElse(false);
         return new ReviewPageData(selectedCar, reviews, reviewThreads, normalizedSort, latestReview, carImages,
                 latestReviewLikeCount, latestReviewLiked);
     }
@@ -255,40 +248,21 @@ public class CarReviewController {
         final List<Long> reviewIds = reviews.stream()
                 .map(Review::getId)
                 .toList();
-        Map<Long, List<ReviewReply>> repliesByReviewId = Collections.emptyMap();
-        Map<Long, Long> reviewLikeCounts = Collections.emptyMap();
-        Set<Long> likedReviewIds = Collections.emptySet();
-        try {
-            repliesByReviewId = reviewReplyService.getRepliesByReviewIds(reviewIds);
-        } catch (final RuntimeException ignored) {
-            repliesByReviewId = Collections.emptyMap();
-        }
-        try {
-            reviewLikeCounts = reviewLikeService.countReviewLikesByReviewIds(reviewIds);
-            likedReviewIds = currentUserId == null
-                    ? Collections.emptySet()
-                    : reviewLikeService.getLikedReviewIds(reviewIds, currentUserId);
-        } catch (final RuntimeException ignored) {
-            reviewLikeCounts = Collections.emptyMap();
-            likedReviewIds = Collections.emptySet();
-        }
+        final Map<Long, List<ReviewReply>> repliesByReviewId = reviewReplyService.getRepliesByReviewIds(reviewIds);
+        final Map<Long, Long> reviewLikeCounts = reviewLikeService.countReviewLikesByReviewIds(reviewIds);
+        final Set<Long> likedReviewIds = currentUserId == null
+                ? Collections.emptySet()
+                : reviewLikeService.getLikedReviewIds(reviewIds, currentUserId);
 
         final List<Long> replyIds = repliesByReviewId.values()
                 .stream()
                 .flatMap(List::stream)
                 .map(ReviewReply::getId)
                 .toList();
-        Map<Long, Long> replyLikeCounts = Collections.emptyMap();
-        Set<Long> likedReplyIds = Collections.emptySet();
-        try {
-            replyLikeCounts = reviewLikeService.countReplyLikesByReplyIds(replyIds);
-            likedReplyIds = currentUserId == null
-                    ? Collections.emptySet()
-                    : reviewLikeService.getLikedReplyIds(replyIds, currentUserId);
-        } catch (final RuntimeException ignored) {
-            replyLikeCounts = Collections.emptyMap();
-            likedReplyIds = Collections.emptySet();
-        }
+        final Map<Long, Long> replyLikeCounts = reviewLikeService.countReplyLikesByReplyIds(replyIds);
+        final Set<Long> likedReplyIds = currentUserId == null
+                ? Collections.emptySet()
+                : reviewLikeService.getLikedReplyIds(replyIds, currentUserId);
 
         final Map<Long, List<ReviewReply>> finalRepliesByReviewId = repliesByReviewId;
         final Map<Long, Long> finalReviewLikeCounts = reviewLikeCounts;

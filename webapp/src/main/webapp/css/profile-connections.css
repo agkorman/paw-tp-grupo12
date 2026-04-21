@@ -95,9 +95,13 @@
     background: rgba(255, 87, 25, 0.14);
     color: var(--primary);
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font: inherit;
     font-weight: 800;
     padding: 0.35rem 0.8rem;
+    text-decoration: none;
 }
 
 .profile-connection-button:not(.is-following) {

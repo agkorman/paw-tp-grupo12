@@ -40,26 +40,39 @@
                     </div>
                     <c:if test="${user.followable}">
                         <c:url var="connectionFollowUrl" value="/profiles/${user.id}/follow"/>
-                        <form class="profile-connection-follow-form"
-                              method="post"
-                              action="${connectionFollowUrl}"
-                              data-auth-resume-intent="follow-profile-${user.id}"
-                              <c:if test="${not authenticated}">
-                                  data-auth-required="true"
-                                  data-auth-required-action="seguir a este usuario"
-                                  data-auth-required-intent="follow-profile-${user.id}"
-                              </c:if>>
-                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                            <button
-                                    type="submit"
-                                    class="profile-connection-button ${user.following ? 'is-following' : ''}"
-                                    aria-pressed="${user.following}">
-                                <c:choose>
-                                    <c:when test="${user.following}">Siguiendo</c:when>
-                                    <c:otherwise>Seguir</c:otherwise>
-                                </c:choose>
-                            </button>
-                        </form>
+                        <c:choose>
+                            <c:when test="${authenticated}">
+                                <form class="profile-connection-follow-form"
+                                      method="post"
+                                      action="${connectionFollowUrl}"
+                                      data-auth-resume-intent="follow-profile-${user.id}">
+                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                    <button
+                                            type="submit"
+                                            class="profile-connection-button ${user.following ? 'is-following' : ''}"
+                                            aria-pressed="${user.following}">
+                                        <c:choose>
+                                            <c:when test="${user.following}">Siguiendo</c:when>
+                                            <c:otherwise>Seguir</c:otherwise>
+                                        </c:choose>
+                                    </button>
+                                </form>
+                            </c:when>
+                            <c:otherwise>
+                                <c:url var="connectionFollowLoginUrl" value="/login">
+                                    <c:param name="redirect" value="/profiles/${user.id}"/>
+                                    <c:param name="intent" value="follow-profile-${user.id}"/>
+                                </c:url>
+                                <a href="${connectionFollowLoginUrl}"
+                                   class="profile-connection-button"
+                                   data-auth-resume-intent="follow-profile-${user.id}"
+                                   data-auth-required="true"
+                                   data-auth-required-action="seguir a este usuario"
+                                   data-auth-required-intent="follow-profile-${user.id}">
+                                    Seguir
+                                </a>
+                            </c:otherwise>
+                        </c:choose>
                     </c:if>
                 </article>
             </c:forEach>
@@ -79,26 +92,39 @@
                     </div>
                     <c:if test="${user.followable}">
                         <c:url var="connectionFollowUrl" value="/profiles/${user.id}/follow"/>
-                        <form class="profile-connection-follow-form"
-                              method="post"
-                              action="${connectionFollowUrl}"
-                              data-auth-resume-intent="follow-profile-${user.id}"
-                              <c:if test="${not authenticated}">
-                                  data-auth-required="true"
-                                  data-auth-required-action="seguir a este usuario"
-                                  data-auth-required-intent="follow-profile-${user.id}"
-                              </c:if>>
-                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                            <button
-                                    type="submit"
-                                    class="profile-connection-button ${user.following ? 'is-following' : ''}"
-                                    aria-pressed="${user.following}">
-                                <c:choose>
-                                    <c:when test="${user.following}">Siguiendo</c:when>
-                                    <c:otherwise>Seguir</c:otherwise>
-                                </c:choose>
-                            </button>
-                        </form>
+                        <c:choose>
+                            <c:when test="${authenticated}">
+                                <form class="profile-connection-follow-form"
+                                      method="post"
+                                      action="${connectionFollowUrl}"
+                                      data-auth-resume-intent="follow-profile-${user.id}">
+                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                    <button
+                                            type="submit"
+                                            class="profile-connection-button ${user.following ? 'is-following' : ''}"
+                                            aria-pressed="${user.following}">
+                                        <c:choose>
+                                            <c:when test="${user.following}">Siguiendo</c:when>
+                                            <c:otherwise>Seguir</c:otherwise>
+                                        </c:choose>
+                                    </button>
+                                </form>
+                            </c:when>
+                            <c:otherwise>
+                                <c:url var="connectionFollowLoginUrl" value="/login">
+                                    <c:param name="redirect" value="/profiles/${user.id}"/>
+                                    <c:param name="intent" value="follow-profile-${user.id}"/>
+                                </c:url>
+                                <a href="${connectionFollowLoginUrl}"
+                                   class="profile-connection-button"
+                                   data-auth-resume-intent="follow-profile-${user.id}"
+                                   data-auth-required="true"
+                                   data-auth-required-action="seguir a este usuario"
+                                   data-auth-required-intent="follow-profile-${user.id}">
+                                    Seguir
+                                </a>
+                            </c:otherwise>
+                        </c:choose>
                     </c:if>
                 </article>
             </c:forEach>

@@ -28,6 +28,15 @@
 <c:if test="${not empty imageUrl}">
     <c:url var="modalImageUrl" value="${imageUrl}"/>
 </c:if>
+<c:set var="modalImageUrls" value=""/>
+<c:if test="${not empty requestImageUrls}">
+    <c:forEach var="requestImageUrl" items="${fn:split(requestImageUrls, '|')}">
+        <c:if test="${not empty requestImageUrl}">
+            <c:url var="resolvedRequestImageUrl" value="${requestImageUrl}"/>
+            <c:set var="modalImageUrls" value="${modalImageUrls}${empty modalImageUrls ? '' : '|'}${resolvedRequestImageUrl}"/>
+        </c:if>
+    </c:forEach>
+</c:if>
 
 <div class="car-card-shell">
     <a href="${fn:escapeXml(href)}"
@@ -41,7 +50,7 @@
        data-request-description="${fn:escapeXml(requestDescription)}"
        data-request-submitter="${fn:escapeXml(requestSubmitter)}"
        data-request-image-url="${fn:escapeXml(modalImageUrl)}"
-       data-request-image-urls="${fn:escapeXml(requestImageUrls)}">
+       data-request-image-urls="${fn:escapeXml(modalImageUrls)}">
         <div class="car-card">
             <div class="card-image-wrap">
                 <c:choose>

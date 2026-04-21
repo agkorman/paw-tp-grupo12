@@ -79,26 +79,39 @@
                 </c:when>
                 <c:otherwise>
                     <c:url var="profileFollowUrl" value="/profiles/${profile.id}/follow"/>
-                    <form class="profile-action-form"
-                          method="post"
-                          action="${profileFollowUrl}"
-                          data-auth-resume-intent="follow-profile-${profile.id}"
-                          <c:if test="${not authenticated}">
-                              data-auth-required="true"
-                              data-auth-required-action="seguir a este usuario"
-                              data-auth-required-intent="follow-profile-${profile.id}"
-                          </c:if>>
-                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                        <button
-                                type="submit"
-                                class="btn-primary profile-action-button profile-follow-button ${followingProfile ? 'is-following' : ''}"
-                                aria-pressed="${followingProfile}">
-                            <c:choose>
-                                <c:when test="${followingProfile}">Siguiendo</c:when>
-                                <c:otherwise>Seguir</c:otherwise>
-                            </c:choose>
-                        </button>
-                    </form>
+                    <c:choose>
+                        <c:when test="${authenticated}">
+                            <form class="profile-action-form"
+                                  method="post"
+                                  action="${profileFollowUrl}"
+                                  data-auth-resume-intent="follow-profile-${profile.id}">
+                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                <button
+                                        type="submit"
+                                        class="btn-primary profile-action-button profile-follow-button ${followingProfile ? 'is-following' : ''}"
+                                        aria-pressed="${followingProfile}">
+                                    <c:choose>
+                                        <c:when test="${followingProfile}">Siguiendo</c:when>
+                                        <c:otherwise>Seguir</c:otherwise>
+                                    </c:choose>
+                                </button>
+                            </form>
+                        </c:when>
+                        <c:otherwise>
+                            <c:url var="profileFollowLoginUrl" value="/login">
+                                <c:param name="redirect" value="/profiles/${profile.id}"/>
+                                <c:param name="intent" value="follow-profile-${profile.id}"/>
+                            </c:url>
+                            <a href="${profileFollowLoginUrl}"
+                               class="btn-primary profile-action-button profile-follow-button"
+                               data-auth-resume-intent="follow-profile-${profile.id}"
+                               data-auth-required="true"
+                               data-auth-required-action="seguir a este usuario"
+                               data-auth-required-intent="follow-profile-${profile.id}">
+                                Seguir
+                            </a>
+                        </c:otherwise>
+                    </c:choose>
                 </c:otherwise>
             </c:choose>
         </section>

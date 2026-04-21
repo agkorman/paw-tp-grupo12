@@ -53,8 +53,12 @@
 
         carousel.addEventListener('keydown', function (event) {
             if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                event.stopPropagation();
                 setActiveSlide(carousel, Number(carousel.dataset.activeSlide || 0) - 1);
             } else if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                event.stopPropagation();
                 setActiveSlide(carousel, Number(carousel.dataset.activeSlide || 0) + 1);
             }
         });

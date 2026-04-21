@@ -15,6 +15,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 
 import java.util.Optional;
 
@@ -110,6 +112,7 @@ public class WebAuthConfig {
     private AuthenticationSuccessHandler loginSuccessHandler() {
         final SavedRequestAwareAuthenticationSuccessHandler savedRequestHandler =
                 new SavedRequestAwareAuthenticationSuccessHandler();
+        final HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
         savedRequestHandler.setDefaultTargetUrl("/");
 
         return (request, response, authentication) -> {
@@ -117,6 +120,12 @@ public class WebAuthConfig {
                     request.getParameter(LoginRedirectUtils.REDIRECT_PARAM)
             );
             if (redirect.isEmpty()) {
+                final SavedRequest savedRequest = requestCache.getRequest(request, response);
+                if (savedRequest != null && !HttpMethod.GET.name().equalsIgnoreCase(savedRequest.getMethod())) {
+                    requestCache.removeRequest(request, response);
+                    response.sendRedirect(request.getContextPath() + "/");
+                    return;
+                }
                 savedRequestHandler.onAuthenticationSuccess(request, response, authentication);
                 return;
             }

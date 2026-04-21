@@ -201,7 +201,7 @@ Recent commit messages are short and direct, for example `remove rating from lan
 
 ## Agent-Specific Instructions
 
-Before editing, inspect the relevant module and follow its existing patterns. Do not refactor unrelated code while implementing a requested change. Do not delete `AGENT.MD`; it contains additional project context and known quirks.
+Before editing, inspect the relevant module and follow its existing patterns. Do not refactor unrelated code while implementing a requested change. Do not delete `AGENTS.md`; it contains additional project context and known quirks.
 
 Be careful with the current git state. There may be local untracked SQL or generated files. Do not revert or remove files you did not create unless explicitly asked.
 

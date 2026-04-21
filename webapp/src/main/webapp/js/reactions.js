@@ -259,7 +259,7 @@
         }
 
         if (body && body.value.trim().length === 0) {
-            showReplyError(form, 'La respuesta no puede estar vacia.');
+            showReplyError(form, 'La respuesta no puede estar vacía.');
             body.focus();
             return;
         }

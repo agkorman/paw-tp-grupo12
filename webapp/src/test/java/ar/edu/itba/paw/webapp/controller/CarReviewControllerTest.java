@@ -377,6 +377,14 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public List<Review> getReviewsByIds(final Collection<Long> ids) {
+            if (review == null || ids == null || !ids.contains(review.getId())) {
+                return Collections.emptyList();
+            }
+            return List.of(review);
+        }
+
+        @Override
         public Optional<Review> updateReview(final long id, final long carId, final BigDecimal rating,
                                              final String title, final String body, final String ownershipStatus,
                                              final Integer modelYear, final Integer mileageKm,
@@ -450,6 +458,14 @@ public class CarReviewControllerTest {
         @Override
         public Optional<ReviewReply> getReplyById(final long id) {
             return reply != null && reply.getId() == id ? Optional.of(reply) : Optional.empty();
+        }
+
+        @Override
+        public List<ReviewReply> getRepliesByIds(final Collection<Long> ids) {
+            if (reply == null || ids == null || !ids.contains(reply.getId())) {
+                return Collections.emptyList();
+            }
+            return List.of(reply);
         }
 
         @Override

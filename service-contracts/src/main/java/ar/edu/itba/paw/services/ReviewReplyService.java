@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public interface ReviewReplyService {
     Optional<ReviewReply> getReplyById(long id);
+    List<ReviewReply> getRepliesByIds(Collection<Long> ids);
     List<ReviewReply> getRepliesByReview(long reviewId);
     Map<Long, List<ReviewReply>> getRepliesByReviewIds(Collection<Long> reviewIds);
     ReviewReply createReply(long reviewId, long userId, String body);

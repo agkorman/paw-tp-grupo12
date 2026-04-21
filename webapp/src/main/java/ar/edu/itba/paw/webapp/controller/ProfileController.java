@@ -25,7 +25,7 @@ import org.springframework.web.servlet.ModelAndView;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -116,18 +116,22 @@ public class ProfileController {
                         currentUserId
                 ))
                 .toList();
-        final List<Review> likedReviews = reviewLikeService.getLikedReviewIdsByUser(profileUser.getId())
+        final List<Long> likedReviewIds = reviewLikeService.getLikedReviewIdsByUser(profileUser.getId());
+        final Map<Long, Review> likedReviewsById = reviewService.getReviewsByIds(likedReviewIds)
                 .stream()
-                .map(reviewService::getReviewById)
-                .flatMap(Optional::stream)
+                .collect(Collectors.toMap(Review::getId, Function.identity(), (left, right) -> left));
+        final List<Review> likedReviews = likedReviewIds
+                .stream()
+                .map(likedReviewsById::get)
+                .filter(Objects::nonNull)
                 .toList();
-        final List<Long> likedReviewIds = likedReviews.stream()
+        final List<Long> existingLikedReviewIds = likedReviews.stream()
                 .map(Review::getId)
                 .toList();
-        final Map<Long, Long> likedReviewLikeCounts = reviewLikeService.countReviewLikesByReviewIds(likedReviewIds);
+        final Map<Long, Long> likedReviewLikeCounts = reviewLikeService.countReviewLikesByReviewIds(existingLikedReviewIds);
         final Set<Long> likedByCurrentUserInLikedReviews = currentUserId == null
                 ? Set.of()
-                : reviewLikeService.getLikedReviewIds(likedReviewIds, currentUserId);
+                : reviewLikeService.getLikedReviewIds(existingLikedReviewIds, currentUserId);
         final List<ProfileReviewCard> likedReviewCards = likedReviews
                 .stream()
                 .map(review -> toProfileReviewCard(
@@ -138,24 +142,29 @@ public class ProfileController {
                         currentUserId
                 ))
                 .toList();
-        final List<ReviewReply> likedReplies = reviewLikeService.getLikedReplyIdsByUser(profileUser.getId())
+        final List<Long> likedReplyIds = reviewLikeService.getLikedReplyIdsByUser(profileUser.getId());
+        final Map<Long, ReviewReply> likedRepliesById = reviewReplyService.getRepliesByIds(likedReplyIds)
                 .stream()
-                .map(reviewReplyService::getReplyById)
-                .flatMap(Optional::stream)
+                .collect(Collectors.toMap(ReviewReply::getId, Function.identity(), (left, right) -> left));
+        final List<ReviewReply> likedReplies = likedReplyIds
+                .stream()
+                .map(likedRepliesById::get)
+                .filter(Objects::nonNull)
                 .toList();
-        final Map<Long, Review> parentReviewsById = likedReplies.stream()
+        final List<Long> parentReviewIds = likedReplies.stream()
                 .map(ReviewReply::getReviewId)
                 .distinct()
-                .map(reviewService::getReviewById)
-                .flatMap(Optional::stream)
-                .collect(Collectors.toMap(Review::getId, Function.identity()));
-        final List<Long> likedReplyIds = likedReplies.stream()
+                .toList();
+        final Map<Long, Review> parentReviewsById = reviewService.getReviewsByIds(parentReviewIds)
+                .stream()
+                .collect(Collectors.toMap(Review::getId, Function.identity(), (left, right) -> left));
+        final List<Long> existingLikedReplyIds = likedReplies.stream()
                 .map(ReviewReply::getId)
                 .toList();
-        final Map<Long, Long> likedReplyLikeCounts = reviewLikeService.countReplyLikesByReplyIds(likedReplyIds);
+        final Map<Long, Long> likedReplyLikeCounts = reviewLikeService.countReplyLikesByReplyIds(existingLikedReplyIds);
         final Set<Long> likedByCurrentUserInLikedReplies = currentUserId == null
                 ? Set.of()
-                : reviewLikeService.getLikedReplyIds(likedReplyIds, currentUserId);
+                : reviewLikeService.getLikedReplyIds(existingLikedReplyIds, currentUserId);
         final List<ProfileLikedReplyCard> likedReplyCards = likedReplies
                 .stream()
                 .map(reply -> toProfileLikedReplyCard(

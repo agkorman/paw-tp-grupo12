@@ -58,6 +58,18 @@ public class ReviewReplyJdbcDao implements ReviewReplyDao {
     }
 
     @Override
+    public List<ReviewReply> findByIds(final Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return namedParameterJdbcTemplate.query(
+                REPLY_SELECT + "WHERE rr.reply_id IN (:replyIds)",
+                new MapSqlParameterSource("replyIds", ids),
+                ROW_MAPPER
+        );
+    }
+
+    @Override
     public List<ReviewReply> findByReviewId(final long reviewId) {
         return jdbcTemplate.query(
                 REPLY_SELECT + "WHERE rr.review_id = ? ORDER BY rr.created_at ASC, rr.reply_id ASC",
