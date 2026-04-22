@@ -17,6 +17,7 @@ import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -411,9 +413,14 @@ public class CarReviewController {
     }
 
     @RequestMapping(value = "/reviews/{reviewId}/like", method = RequestMethod.POST)
-    public ModelAndView toggleReviewLike(@PathVariable("reviewId") final long reviewId,
-                                         @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+    public Object toggleReviewLike(@PathVariable("reviewId") final long reviewId,
+                                   @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
+                                   @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        final boolean ajax = isAjaxRequest(requestedWith);
         if (currentUser == null) {
+            if (ajax) {
+                return new ResponseEntity<String>("/login", HttpStatus.UNAUTHORIZED);
+            }
             return new ModelAndView("redirect:/login");
         }
 
@@ -422,20 +429,33 @@ public class CarReviewController {
             throw new ReviewNotFoundException();
         }
 
+        final boolean liked;
         try {
-            reviewLikeService.toggleReviewLike(reviewId, currentUser.getId());
+            liked = reviewLikeService.toggleReviewLike(reviewId, currentUser.getId());
         } catch (final RuntimeException ignored) {
+            if (ajax) {
+                return new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
             return carReviewPage(review.getCarId(), null,
                     "No pudimos actualizar el like. Intentá de nuevo en unos segundos.",
                     false, currentUser);
+        }
+        if (ajax) {
+            final long count = reviewLikeService.countReviewLikes(reviewId);
+            return new ResponseEntity<String>(liked + "|" + count, HttpStatus.OK);
         }
         return new ModelAndView("redirect:/reviews?carId=" + review.getCarId() + "#review-" + reviewId);
     }
 
     @RequestMapping(value = "/reviews/replies/{replyId}/like", method = RequestMethod.POST)
-    public ModelAndView toggleReplyLike(@PathVariable("replyId") final long replyId,
-                                        @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+    public Object toggleReplyLike(@PathVariable("replyId") final long replyId,
+                                  @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
+                                  @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        final boolean ajax = isAjaxRequest(requestedWith);
         if (currentUser == null) {
+            if (ajax) {
+                return new ResponseEntity<String>("/login", HttpStatus.UNAUTHORIZED);
+            }
             return new ModelAndView("redirect:/login");
         }
 
@@ -446,14 +466,26 @@ public class CarReviewController {
         final Review review = reviewService.getReviewById(reply.getReviewId())
                 .orElseThrow(ReviewNotFoundException::new);
 
+        final boolean liked;
         try {
-            reviewLikeService.toggleReplyLike(replyId, currentUser.getId());
+            liked = reviewLikeService.toggleReplyLike(replyId, currentUser.getId());
         } catch (final RuntimeException ignored) {
+            if (ajax) {
+                return new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
             return carReviewPage(review.getCarId(), null,
                     "No pudimos actualizar el like. Intentá de nuevo en unos segundos.",
                     false, currentUser);
         }
+        if (ajax) {
+            final long count = reviewLikeService.countReplyLikes(replyId);
+            return new ResponseEntity<String>(liked + "|" + count, HttpStatus.OK);
+        }
         return new ModelAndView("redirect:/reviews?carId=" + review.getCarId() + "#review-" + review.getId());
+    }
+
+    private boolean isAjaxRequest(final String requestedWith) {
+        return "XMLHttpRequest".equalsIgnoreCase(requestedWith);
     }
 
     private void validateReviewOwnership(final Review review, final AuthenticatedUser currentUser) {

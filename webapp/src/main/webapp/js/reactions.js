@@ -184,7 +184,6 @@
     function setLikeFormsPending(items, pending) {
         Array.prototype.forEach.call(items, function (item) {
             item.form.dataset.loading = pending ? 'true' : 'false';
-            item.button.disabled = pending;
             item.button.setAttribute('aria-busy', String(pending));
         });
     }
@@ -201,17 +200,27 @@
         }
     }
 
-    function syncLikeStateFromResponse(html, sourceForm, sourceButton) {
-        var parsed = new DOMParser().parseFromString(html, 'text/html');
-        var parsedMatches = getMatchingLikeForms(parsed, sourceForm, sourceButton);
+    function parseLikeResponse(body) {
+        if (!body) {
+            return null;
+        }
+        var parts = body.trim().split('|');
+        if (parts.length !== 2) {
+            return null;
+        }
+        var count = parseInt(parts[1], 10);
+        if (isNaN(count)) {
+            return null;
+        }
+        return { liked: parts[0] === 'true', count: Math.max(0, count) };
+    }
 
-        if (parsedMatches.length === 0) {
+    function syncLikeStateFromResponse(body, sourceForm, sourceButton) {
+        var nextState = parseLikeResponse(body);
+        if (!nextState) {
             return;
         }
-
-        var nextState = getReviewLikeState(parsedMatches[0].button);
         var currentMatches = getMatchingLikeForms(document, sourceForm, sourceButton);
-
         Array.prototype.forEach.call(currentMatches, function (item) {
             applyReviewLikeState(item.button, nextState);
         });
@@ -242,6 +251,7 @@
             method: 'POST',
             body: new FormData(form),
             headers: {
+                'Accept': 'text/plain',
                 'X-Requested-With': 'XMLHttpRequest'
             },
             credentials: 'same-origin'
@@ -250,13 +260,17 @@
                 window.location.href = response.url;
                 return '';
             }
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return '';
+            }
             if (!response.ok) {
                 throw new Error('Review like request failed');
             }
             return response.text();
-        }).then(function (html) {
-            if (html) {
-                syncLikeStateFromResponse(html, form, button);
+        }).then(function (body) {
+            if (body) {
+                syncLikeStateFromResponse(body, form, button);
             }
         }).catch(function () {
             Array.prototype.forEach.call(previousStates, function (item) {
