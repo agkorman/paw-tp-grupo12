@@ -17,11 +17,11 @@ public interface CarRequestService {
 
     List<CarRequest> getCarRequestsByStatus(String status);
 
-    CarRequest createPendingRequest(long submittedByUserId, long brandId, long bodyTypeId,
-                                   String model, String description, Optional<String> imageContentType,
-                                   Optional<byte[]> imageData, String fuelType, Integer horsepower,
-                                   Integer airbagCount, String transmission, BigDecimal fuelConsumption,
-                                   Integer maxSpeedKmh);
+    CarRequest createPendingRequest(long submittedByUserId, String submitterEmail, long brandId,
+                                   long bodyTypeId, String model, String description,
+                                   Optional<String> imageContentType, Optional<byte[]> imageData,
+                                   String fuelType, Integer horsepower, Integer airbagCount,
+                                   String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
 
     boolean approvePendingRequest(long id);
 

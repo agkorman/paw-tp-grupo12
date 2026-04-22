@@ -31,10 +31,10 @@ public interface CarService {
     void saveCarImage(long carId, String contentType, byte[] imageData);
 
     CarRequest requestCarCreation(long brandId, String model, long bodyTypeId, long submittedByUserId,
-                                  Optional<String> description, Optional<String> imageContentType,
-                                  Optional<byte[]> imageData, String fuelType, Integer horsepower,
-                                  Integer airbagCount, String transmission, BigDecimal fuelConsumption,
-                                  Integer maxSpeedKmh);
+                                  String submitterEmail, Optional<String> description,
+                                  Optional<String> imageContentType, Optional<byte[]> imageData,
+                                  String fuelType, Integer horsepower, Integer airbagCount,
+                                  String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
 
     Optional<Car> updateCar(long id, long brandId, String model, long bodyTypeId, String description,
                             Optional<String> imageContentType, Optional<byte[]> imageData,

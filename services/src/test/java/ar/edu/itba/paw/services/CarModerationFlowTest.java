@@ -48,6 +48,7 @@ class CarModerationFlowTest {
                 "Supra",
                 2L,
                 7L,
+                "user@example.com",
                 Optional.of("Desc"),
                 Optional.of("image/png"),
                 Optional.of(new byte[] {1, 2, 3}),
@@ -78,6 +79,7 @@ class CarModerationFlowTest {
         final byte[] imageData = new byte[] {4, 5, 6};
         final CarRequest request = carRequestDao.create(
                 7L,
+                "user@example.com",
                 1L,
                 2L,
                 "Supra",
@@ -207,8 +209,8 @@ class CarModerationFlowTest {
         }
 
         @Override
-        public CarRequest createPendingRequest(final long submittedByUserId, final long brandId,
-                                               final long bodyTypeId, final String model,
+        public CarRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
+                                               final long brandId, final long bodyTypeId, final String model,
                                                final String description,
                                                final Optional<String> imageContentType,
                                                final Optional<byte[]> imageData,
@@ -219,7 +221,7 @@ class CarModerationFlowTest {
             return new CarRequest(
                     10L,
                     submittedByUserId,
-                    null,
+                    submitterEmail,
                     brandId,
                     bodyTypeId,
                     model,
@@ -280,7 +282,8 @@ class CarModerationFlowTest {
         }
 
         @Override
-        public CarRequest create(final long submittedByUserId, final long brandId, final long bodyTypeId,
+        public CarRequest create(final long submittedByUserId, final String submitterEmail,
+                                 final long brandId, final long bodyTypeId,
                                  final String model, final String description, final String imageContentType,
                                  final byte[] imageData, final String status, final String fuelType,
                                  final Integer horsepower, final Integer airbagCount, final String transmission,
@@ -288,7 +291,7 @@ class CarModerationFlowTest {
             request = new CarRequest(
                     20L,
                     submittedByUserId,
-                    null,
+                    submitterEmail,
                     brandId,
                     bodyTypeId,
                     model,

@@ -49,8 +49,8 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
-    public CarRequest createPendingRequest(final long submittedByUserId, final long brandId,
-                                           final long bodyTypeId, final String model,
+    public CarRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
+                                           final long brandId, final long bodyTypeId, final String model,
                                            final String description, final Optional<String> imageContentType,
                                            final Optional<byte[]> imageData, final String fuelType,
                                            final Integer horsepower, final Integer airbagCount,
@@ -74,6 +74,7 @@ public class CarRequestServiceImpl implements CarRequestService {
 
         return carRequestDao.create(
                 submittedByUserId,
+                submitterEmail,
                 brandId,
                 bodyTypeId,
                 normalizedModel,

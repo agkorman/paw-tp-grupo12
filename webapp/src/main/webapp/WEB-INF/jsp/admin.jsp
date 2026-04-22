@@ -36,6 +36,12 @@
                     </button>
                     --%>
                     <div class="admin-section-actions">
+                        <form method="post" action="<c:url value='/admin/digest/preview'/>">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                            <button type="submit" class="btn-secondary">
+                                Enviar resumen semanal
+                            </button>
+                        </form>
                         <div class="admin-status" aria-label="Solicitudes pendientes">
                             <span>Pendientes</span>
                             <strong><c:out value="${fn:length(pendingRequests)}"/></strong>
