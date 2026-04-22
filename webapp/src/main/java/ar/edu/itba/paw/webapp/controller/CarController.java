@@ -42,6 +42,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.security.MessageDigest;
@@ -221,10 +222,10 @@ public class CarController {
                 currentUser.getEmail(),
                 Optional.ofNullable(carForm.getDescription()).filter(value -> !value.isEmpty()),
                 imagePayloads,
-                carForm.getFuelType(),
+                normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),
                 carForm.getAirbagCount(),
-                carForm.getTransmission(),
+                normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
                 carForm.getMaxSpeedKmh()
         );
@@ -449,6 +450,13 @@ public class CarController {
         if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
             return "Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.";
         }
+        try {
+            if (!hasMatchingImageSignature(file, contentType)) {
+                return "El archivo no coincide con una imagen JPEG, PNG o WEBP válida.";
+            }
+        } catch (final IOException e) {
+            return "No pudimos leer la imagen. Intentá con otro archivo.";
+        }
         return null;
     }
 
@@ -471,6 +479,43 @@ public class CarController {
             payloads.add(new CarImagePayload(resolveImageContentType(file), file.getBytes()));
         }
         return payloads;
+    }
+
+    private boolean hasMatchingImageSignature(final MultipartFile file, final String contentType) throws IOException {
+        final byte[] header = new byte[12];
+        final int read;
+        try (InputStream inputStream = file.getInputStream()) {
+            read = inputStream.read(header);
+        }
+        if (MediaType.IMAGE_JPEG_VALUE.equals(contentType)) {
+            return read >= 3
+                    && (header[0] & 0xFF) == 0xFF
+                    && (header[1] & 0xFF) == 0xD8
+                    && (header[2] & 0xFF) == 0xFF;
+        }
+        if (MediaType.IMAGE_PNG_VALUE.equals(contentType)) {
+            return read >= 8
+                    && (header[0] & 0xFF) == 0x89
+                    && header[1] == 'P'
+                    && header[2] == 'N'
+                    && header[3] == 'G'
+                    && header[4] == 0x0D
+                    && header[5] == 0x0A
+                    && header[6] == 0x1A
+                    && header[7] == 0x0A;
+        }
+        if ("image/webp".equals(contentType)) {
+            return read >= 12
+                    && header[0] == 'R'
+                    && header[1] == 'I'
+                    && header[2] == 'F'
+                    && header[3] == 'F'
+                    && header[8] == 'W'
+                    && header[9] == 'E'
+                    && header[10] == 'B'
+                    && header[11] == 'P';
+        }
+        return false;
     }
 
     private CarCatalogData resolveCatalogData(final CarSearchCriteria criteria) {

@@ -56,14 +56,16 @@ public class WebAuthConfig {
                         .requestMatchers(antMatcher("/moderation/**"))
                             .hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(
+                                antMatcher(HttpMethod.POST, "/car-image"),
+                                antMatcher(HttpMethod.POST, "/cars/*/image"))
+                            .hasRole("ADMIN")
+                        .requestMatchers(
                                 antMatcher(HttpMethod.POST, "/cars"),
                                 antMatcher(HttpMethod.POST, "/reviews"),
                                 antMatcher(HttpMethod.POST, "/reviews/*/like"),
                                 antMatcher(HttpMethod.POST, "/reviews/*/replies"),
                                 antMatcher(HttpMethod.POST, "/reviews/replies/*/like"),
                                 antMatcher(HttpMethod.POST, "/logout"),
-                                antMatcher(HttpMethod.POST, "/car-image"),
-                                antMatcher(HttpMethod.POST, "/cars/*/image"),
                                 antMatcher(HttpMethod.POST, "/cars/*/favorite"),
                                 antMatcher(HttpMethod.POST, "/profiles/*/follow"))
                             .authenticated()
