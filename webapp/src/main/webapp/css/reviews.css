@@ -721,23 +721,31 @@
 }
 
 .car-modal-layout {
-    grid-template-columns: minmax(19rem, 0.9fr) minmax(24rem, 1.1fr);
-    gap: 0.75rem 1.25rem;
+    grid-template-columns: minmax(24rem, 1.12fr) minmax(19rem, 0.88fr);
+    gap: 1.25rem;
     align-items: start;
 }
 
-.car-modal-layout > .review-modal-field:not(.car-image-field) {
-    grid-column: 1;
+.car-modal-column {
+    display: grid;
+    gap: 0.85rem;
+    align-content: start;
 }
 
-.car-modal-layout > .review-modal-field-wide:not(.car-image-field) {
-    grid-column: 1;
+.car-modal-inline-fields,
+.car-modal-spec-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
 }
 
-.car-modal-layout > .car-image-field {
-    grid-column: 2;
-    grid-row: 1 / span 5;
-    min-height: 100%;
+.car-modal-spec-panel {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+    background: rgba(13, 13, 13, 0.48);
+    box-shadow: inset 0 0 0 1px rgba(229, 226, 225, 0.06);
 }
 
 .review-modal-field {
@@ -799,7 +807,7 @@
 }
 
 .car-modal-layout .review-modal-field textarea {
-    min-height: 7rem;
+    min-height: 8rem;
 }
 
 .review-modal-field input[readonly] {
@@ -1051,17 +1059,35 @@
 }
 
 .car-modal-layout .car-image-upload-card {
-    min-height: 100%;
+    height: clamp(18rem, 43vh, 24rem);
+    min-height: 0;
     gap: 0.75rem;
     padding: 0.85rem;
+    overflow: hidden;
+}
+
+.car-modal-layout .car-image-upload.has-preview .car-image-upload-card {
+    grid-template-rows: minmax(0, 1fr) auto;
 }
 
 .car-modal-layout .car-image-upload-preview {
-    min-height: clamp(16rem, 46vh, 26rem);
+    height: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
 }
 
 .car-modal-layout .car-image-upload-copy {
     gap: 0.18rem;
+    align-self: center;
+}
+
+.car-modal-layout .car-image-upload.has-preview .car-image-upload-copy {
+    align-self: end;
+}
+
+.car-modal-layout .car-image-upload.has-preview .car-image-upload-copy strong,
+.car-modal-layout .car-image-upload.has-preview .car-image-upload-copy #modalCarFileHelp {
+    display: none;
 }
 
 .car-modal-layout .car-image-upload-copy span {
@@ -1069,11 +1095,19 @@
 }
 
 .car-modal-layout .car-image-upload-thumbnails {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    display: flex;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+}
+
+.car-modal-layout .car-image-upload-thumbnails[hidden] {
+    display: none;
 }
 
 .car-modal-layout .car-image-upload-thumb {
-    width: 100%;
+    width: 3.35rem;
+    flex: 0 0 3.35rem;
 }
 
 /* ── Star Rating (half-star via linearGradient) ── */
@@ -1234,11 +1268,13 @@ body.modal-open {
         padding: var(--spacing-8);
     }
 
-    .car-modal-layout > .review-modal-field:not(.car-image-field),
-    .car-modal-layout > .review-modal-field-wide:not(.car-image-field),
-    .car-modal-layout > .car-image-field {
-        grid-column: 1;
-        grid-row: auto;
+    .car-modal-layout {
+        gap: 1rem;
+    }
+
+    .car-modal-inline-fields,
+    .car-modal-spec-grid {
+        grid-template-columns: 1fr;
     }
 
     .car-image-upload-card {

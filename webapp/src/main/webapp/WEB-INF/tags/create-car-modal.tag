@@ -54,187 +54,197 @@
             </p>
 
             <div class="review-modal-grid car-modal-layout">
-                <c:if test="${adminMode}">
-                    <div id="modalCarSubmitterEmailField" class="review-modal-field review-modal-field-wide" hidden>
-                        <label for="modalCarSubmitterEmail">Email</label>
-                        <form:input id="modalCarSubmitterEmail" path="submitterEmail" type="email"
-                                    maxlength="100" disabled="true"/>
-                        <form:errors path="submitterEmail" cssClass="form-error" element="span"/>
+                <div class="car-modal-column car-modal-column-details">
+                    <c:if test="${adminMode}">
+                        <div id="modalCarSubmitterEmailField" class="review-modal-field review-modal-field-wide" hidden>
+                            <label for="modalCarSubmitterEmail">Email</label>
+                            <form:input id="modalCarSubmitterEmail" path="submitterEmail" type="email"
+                                        maxlength="100" disabled="true"/>
+                            <form:errors path="submitterEmail" cssClass="form-error" element="span"/>
+                        </div>
+                    </c:if>
+
+                    <div class="car-modal-inline-fields">
+                        <div class="review-modal-field">
+                            <label for="modalCarBrand">Marca</label>
+                            <form:select id="modalCarBrand" path="brand" required="required">
+                                <form:option value="" label="Seleccioná una marca"/>
+                                <c:forEach items="${brands}" var="brand">
+                                    <form:option value="${brand.name}" label="${brand.name}"/>
+                                </c:forEach>
+                            </form:select>
+                            <form:errors path="brand" cssClass="form-error" element="span"/>
+                        </div>
+
+                        <div class="review-modal-field">
+                            <label for="modalCarBodyType">Tipo de carrocería</label>
+                            <form:select id="modalCarBodyType" path="bodyType" required="required">
+                                <form:option value="" label="Seleccioná un tipo"/>
+                                <c:forEach items="${bodyTypes}" var="bodyType">
+                                    <form:option value="${bodyType.name}" label="${bodyType.name}"/>
+                                </c:forEach>
+                            </form:select>
+                            <form:errors path="bodyType" cssClass="form-error" element="span"/>
+                        </div>
                     </div>
-                </c:if>
 
-                <div class="review-modal-field">
-                    <label for="modalCarBrand">Marca</label>
-                    <form:select id="modalCarBrand" path="brand" required="required">
-                        <form:option value="" label="Seleccioná una marca"/>
-                        <c:forEach items="${brands}" var="brand">
-                            <form:option value="${brand.name}" label="${brand.name}"/>
-                        </c:forEach>
-                    </form:select>
-                    <form:errors path="brand" cssClass="form-error" element="span"/>
-                </div>
-
-                <div class="review-modal-field">
-                    <label for="modalCarBodyType">Tipo de carrocería</label>
-                    <form:select id="modalCarBodyType" path="bodyType" required="required">
-                        <form:option value="" label="Seleccioná un tipo"/>
-                        <c:forEach items="${bodyTypes}" var="bodyType">
-                            <form:option value="${bodyType.name}" label="${bodyType.name}"/>
-                        </c:forEach>
-                    </form:select>
-                    <form:errors path="bodyType" cssClass="form-error" element="span"/>
-                </div>
-
-                <div class="review-modal-field review-modal-field-wide">
-                    <label for="modalCarModel">Modelo</label>
-                    <form:input id="modalCarModel" path="model" type="text"
-                                maxlength="120" required="required"
-                                placeholder="Ej: 911 Carrera T"/>
-                    <form:errors path="model" cssClass="form-error" element="span"/>
-                </div>
-
-                <div class="review-modal-field review-modal-field-wide">
-                    <label for="modalCarDescription">Descripción</label>
-                    <form:textarea id="modalCarDescription" path="description" rows="4" maxlength="1500"
-                                   required="required"
-                                   placeholder="Describe el auto, su propuesta y cualquier detalle relevante."/>
-                    <form:errors path="description" cssClass="form-error" element="span"/>
-                </div>
-
-                <div class="review-modal-field review-modal-field-wide">
-                    <span class="review-modal-section-label">Especificaciones técnicas</span>
-                </div>
-
-                <div class="review-modal-field">
-                    <label>Motorización</label>
-                    <div class="modal-radio-group">
-                        <label class="modal-radio-option">
-                            <form:radiobutton path="fuelType" value="combustion" required="required"/>
-                            <span>Combustión</span>
-                        </label>
-                        <label class="modal-radio-option">
-                            <form:radiobutton path="fuelType" value="hybrid"/>
-                            <span>Híbrido</span>
-                        </label>
-                        <label class="modal-radio-option">
-                            <form:radiobutton path="fuelType" value="electric"/>
-                            <span>Eléctrico</span>
-                        </label>
+                    <div class="review-modal-field review-modal-field-wide">
+                        <label for="modalCarModel">Modelo</label>
+                        <form:input id="modalCarModel" path="model" type="text"
+                                    maxlength="120" required="required"
+                                    placeholder="Ej: 911 Carrera T"/>
+                        <form:errors path="model" cssClass="form-error" element="span"/>
                     </div>
-                    <form:errors path="fuelType" cssClass="form-error" element="span"/>
-                </div>
 
-                <div class="review-modal-field">
-                    <label>Transmisión</label>
-                    <div class="modal-radio-group">
-                        <label class="modal-radio-option">
-                            <form:radiobutton path="transmission" value="manual" required="required"/>
-                            <span>Manual</span>
-                        </label>
-                        <label class="modal-radio-option">
-                            <form:radiobutton path="transmission" value="automatic"/>
-                            <span>Automática</span>
-                        </label>
+                    <div class="review-modal-field review-modal-field-wide">
+                        <label for="modalCarDescription">Descripción</label>
+                        <form:textarea id="modalCarDescription" path="description" rows="4" maxlength="1500"
+                                       required="required"
+                                       placeholder="Describe el auto, su propuesta y cualquier detalle relevante."/>
+                        <form:errors path="description" cssClass="form-error" element="span"/>
                     </div>
-                    <form:errors path="transmission" cssClass="form-error" element="span"/>
+
+                    <div class="review-modal-field review-modal-field-wide">
+                        <span class="review-modal-section-label">Especificaciones técnicas</span>
+                    </div>
+
+                    <div class="car-modal-spec-panel">
+                        <div class="car-modal-spec-grid">
+                            <div class="review-modal-field">
+                                <label for="modalCarHorsepower">Potencia (HP)</label>
+                                <form:input id="modalCarHorsepower" path="horsepower" type="number"
+                                            min="1" max="2000" required="required"
+                                            placeholder="Ej: 150" readonly="${adminMode}"/>
+                                <form:errors path="horsepower" cssClass="form-error" element="span"/>
+                            </div>
+
+                            <div class="review-modal-field">
+                                <label for="modalCarAirbagCount">Airbags</label>
+                                <form:input id="modalCarAirbagCount" path="airbagCount" type="number"
+                                            min="0" max="30" required="required"
+                                            placeholder="Ej: 6" readonly="${adminMode}"/>
+                                <form:errors path="airbagCount" cssClass="form-error" element="span"/>
+                            </div>
+
+                            <div class="review-modal-field">
+                                <label for="modalCarFuelConsumption">Consumo (L/100km)</label>
+                                <form:input id="modalCarFuelConsumption" path="fuelConsumption" type="number"
+                                            step="0.1" min="0" max="99.9" required="required"
+                                            placeholder="Ej: 6.8" readonly="${adminMode}"/>
+                                <form:errors path="fuelConsumption" cssClass="form-error" element="span"/>
+                            </div>
+
+                            <div class="review-modal-field">
+                                <label for="modalCarMaxSpeed">Vel. máxima (km/h)</label>
+                                <form:input id="modalCarMaxSpeed" path="maxSpeedKmh" type="number"
+                                            min="1" max="600" required="required"
+                                            placeholder="Ej: 190" readonly="${adminMode}"/>
+                                <form:errors path="maxSpeedKmh" cssClass="form-error" element="span"/>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="review-modal-field">
-                    <label for="modalCarHorsepower">Potencia (HP)</label>
-                    <form:input id="modalCarHorsepower" path="horsepower" type="number"
-                                min="1" max="2000" required="required"
-                                placeholder="Ej: 150" readonly="${adminMode}"/>
-                    <form:errors path="horsepower" cssClass="form-error" element="span"/>
-                </div>
+                <div class="car-modal-column car-modal-column-media">
+                    <div class="review-modal-field">
+                        <label>Motorización</label>
+                        <div class="segmented-control segmented-control-radio-group">
+                            <label class="segmented-control-radio-option">
+                                <form:radiobutton path="fuelType" value="combustion" required="required"/>
+                                <span>Combustión</span>
+                            </label>
+                            <label class="segmented-control-radio-option">
+                                <form:radiobutton path="fuelType" value="hybrid"/>
+                                <span>Híbrido</span>
+                            </label>
+                            <label class="segmented-control-radio-option">
+                                <form:radiobutton path="fuelType" value="electric"/>
+                                <span>Eléctrico</span>
+                            </label>
+                        </div>
+                        <form:errors path="fuelType" cssClass="form-error" element="span"/>
+                    </div>
 
-                <div class="review-modal-field">
-                    <label for="modalCarAirbagCount">Airbags</label>
-                    <form:input id="modalCarAirbagCount" path="airbagCount" type="number"
-                                min="0" max="30" required="required"
-                                placeholder="Ej: 6" readonly="${adminMode}"/>
-                    <form:errors path="airbagCount" cssClass="form-error" element="span"/>
-                </div>
+                    <div class="review-modal-field">
+                        <label>Transmisión</label>
+                        <div class="segmented-control segmented-control-radio-group">
+                            <label class="segmented-control-radio-option">
+                                <form:radiobutton path="transmission" value="manual" required="required"/>
+                                <span>Manual</span>
+                            </label>
+                            <label class="segmented-control-radio-option">
+                                <form:radiobutton path="transmission" value="automatic"/>
+                                <span>Automática</span>
+                            </label>
+                        </div>
+                        <form:errors path="transmission" cssClass="form-error" element="span"/>
+                    </div>
 
-                <div class="review-modal-field">
-                    <label for="modalCarFuelConsumption">Consumo (L/100km)</label>
-                    <form:input id="modalCarFuelConsumption" path="fuelConsumption" type="number"
-                                step="0.1" min="0" max="99.9" required="required"
-                                placeholder="Ej: 6.8" readonly="${adminMode}"/>
-                    <form:errors path="fuelConsumption" cssClass="form-error" element="span"/>
-                </div>
-
-                <div class="review-modal-field">
-                    <label for="modalCarMaxSpeed">Vel. máxima (km/h)</label>
-                    <form:input id="modalCarMaxSpeed" path="maxSpeedKmh" type="number"
-                                min="1" max="600" required="required"
-                                placeholder="Ej: 190" readonly="${adminMode}"/>
-                    <form:errors path="maxSpeedKmh" cssClass="form-error" element="span"/>
-                </div>
-
-                <div class="review-modal-field review-modal-field-wide car-image-field">
-                    <span class="car-image-label">Imágenes</span>
-                    <div class="car-image-upload <c:if test="${adminMode}">is-readonly</c:if>">
-                        <c:choose>
-                            <c:when test="${adminMode}">
-                                <form:input id="modalCarFile" path="files" type="file"
-                                            cssClass="car-image-upload-input"
-                                            accept="image/jpeg,image/png,image/webp"
-                                            multiple="multiple"
-                                            disabled="true"
-                                            aria-describedby="modalCarFileHelp modalCarFileStatus"/>
-                            </c:when>
-                            <c:otherwise>
-                                <form:input id="modalCarFile" path="files" type="file"
-                                            cssClass="car-image-upload-input"
-                                            accept="image/jpeg,image/png,image/webp"
-                                            multiple="multiple"
-                                            required="required"
-                                            aria-describedby="modalCarFileHelp modalCarFileStatus"/>
-                            </c:otherwise>
-                        </c:choose>
-                        <label class="car-image-upload-card" for="modalCarFile">
-                            <span class="car-image-upload-icon" aria-hidden="true">
-                                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M5.25 19.25L9.8 14.7a2 2 0 0 1 2.8 0l1.05 1.05 2.9-2.9a2 2 0 0 1 2.8 0L22.75 16.25"/>
-                                    <rect x="4.5" y="5.25" width="19" height="17.5" rx="3"/>
-                                    <circle cx="18.75" cy="9.75" r="1.75"/>
-                                </svg>
-                            </span>
-                            <span id="modalCarImagePreview" class="car-image-upload-preview" hidden aria-hidden="true">
-                                <button id="modalCarImagePrev" class="car-image-upload-preview-nav car-image-upload-preview-prev" type="button" aria-label="Imagen anterior">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-                                </button>
-                                <img id="modalCarImagePreviewImg" alt="">
-                                <button id="modalCarImageNext" class="car-image-upload-preview-nav car-image-upload-preview-next" type="button" aria-label="Imagen siguiente">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-                                </button>
-                                <span id="modalCarImageCounter" class="car-image-upload-preview-counter">1 / 1</span>
-                            </span>
-                            <span class="car-image-upload-copy">
-                                <strong id="modalCarFileTitle">
+                    <div class="review-modal-field review-modal-field-wide car-image-field">
+                        <span class="car-image-label">Imágenes</span>
+                        <div class="car-image-upload <c:if test="${adminMode}">is-readonly</c:if>">
+                            <c:choose>
+                                <c:when test="${adminMode}">
+                                    <form:input id="modalCarFile" path="files" type="file"
+                                                cssClass="car-image-upload-input"
+                                                accept="image/jpeg,image/png,image/webp"
+                                                multiple="multiple"
+                                                disabled="true"
+                                                aria-describedby="modalCarFileHelp modalCarFileStatus"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <form:input id="modalCarFile" path="files" type="file"
+                                                cssClass="car-image-upload-input"
+                                                accept="image/jpeg,image/png,image/webp"
+                                                multiple="multiple"
+                                                required="required"
+                                                aria-describedby="modalCarFileHelp modalCarFileStatus"/>
+                                </c:otherwise>
+                            </c:choose>
+                            <label class="car-image-upload-card" for="modalCarFile">
+                                <span class="car-image-upload-icon" aria-hidden="true">
+                                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M5.25 19.25L9.8 14.7a2 2 0 0 1 2.8 0l1.05 1.05 2.9-2.9a2 2 0 0 1 2.8 0L22.75 16.25"/>
+                                        <rect x="4.5" y="5.25" width="19" height="17.5" rx="3"/>
+                                        <circle cx="18.75" cy="9.75" r="1.75"/>
+                                    </svg>
+                                </span>
+                                <span id="modalCarImagePreview" class="car-image-upload-preview" hidden aria-hidden="true">
+                                    <button id="modalCarImagePrev" class="car-image-upload-preview-nav car-image-upload-preview-prev" type="button" aria-label="Imagen anterior">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                                    </button>
+                                    <img id="modalCarImagePreviewImg" alt="">
+                                    <button id="modalCarImageNext" class="car-image-upload-preview-nav car-image-upload-preview-next" type="button" aria-label="Imagen siguiente">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                                    </button>
+                                    <span id="modalCarImageCounter" class="car-image-upload-preview-counter">1 / 1</span>
+                                </span>
+                                <span class="car-image-upload-copy">
+                                    <strong id="modalCarFileTitle">
+                                        <c:choose>
+                                            <c:when test="${adminMode}">Imágenes enviadas por el usuario</c:when>
+                                            <c:otherwise>Arrastrá o elegí imágenes del auto</c:otherwise>
+                                        </c:choose>
+                                    </strong>
+                                    <span id="modalCarFileHelp">
+                                        <c:choose>
+                                            <c:when test="${adminMode}">Las imágenes se revisan desde la tarjeta seleccionada.</c:when>
+                                            <c:otherwise>JPEG, PNG o WEBP. Máximo 5 imágenes, 10 MB cada una.</c:otherwise>
+                                        </c:choose>
+                                    </span>
+                                    <span id="modalCarFileStatus" class="car-image-upload-status">Ninguna imagen seleccionada</span>
+                                    <span id="modalCarImageThumbnails" class="car-image-upload-thumbnails" hidden></span>
+                                </span>
+                                <span id="modalCarFileAction" class="car-image-upload-action">
                                     <c:choose>
-                                        <c:when test="${adminMode}">Imágenes enviadas por el usuario</c:when>
-                                        <c:otherwise>Arrastrá o elegí imágenes del auto</c:otherwise>
-                                    </c:choose>
-                                </strong>
-                                <span id="modalCarFileHelp">
-                                    <c:choose>
-                                        <c:when test="${adminMode}">Las imágenes se revisan desde la tarjeta seleccionada.</c:when>
-                                        <c:otherwise>JPEG, PNG o WEBP. Máximo 5 imágenes, 10 MB cada una.</c:otherwise>
+                                        <c:when test="${adminMode}">Cargada</c:when>
+                                        <c:otherwise>Buscar</c:otherwise>
                                     </c:choose>
                                 </span>
-                                <span id="modalCarFileStatus" class="car-image-upload-status">Ninguna imagen seleccionada</span>
-                                <span id="modalCarImageThumbnails" class="car-image-upload-thumbnails" hidden></span>
-                            </span>
-                            <span id="modalCarFileAction" class="car-image-upload-action">
-                                <c:choose>
-                                    <c:when test="${adminMode}">Cargada</c:when>
-                                    <c:otherwise>Buscar</c:otherwise>
-                                </c:choose>
-                            </span>
-                        </label>
+                            </label>
+                        </div>
+                        <form:errors path="files" cssClass="form-error" element="span"/>
                     </div>
-                    <form:errors path="files" cssClass="form-error" element="span"/>
                 </div>
             </div>
 

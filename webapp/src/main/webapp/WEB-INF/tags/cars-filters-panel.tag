@@ -34,11 +34,11 @@
         <%-- Motorización — segmented control --%>
         <section class="filters-panel-section">
             <h3 class="filters-panel-section-title">Motorización</h3>
-            <div class="filter-segmented" data-filter-target="panelFuelType">
-                <button type="button" class="filter-segment-option${empty criteria.fuelType ? ' is-selected' : ''}" data-value="">Todos</button>
-                <button type="button" class="filter-segment-option${'combustion' eq criteria.fuelType ? ' is-selected' : ''}" data-value="combustion">Combustión</button>
-                <button type="button" class="filter-segment-option${'hybrid' eq criteria.fuelType ? ' is-selected' : ''}" data-value="hybrid">Híbrido</button>
-                <button type="button" class="filter-segment-option${'electric' eq criteria.fuelType ? ' is-selected' : ''}" data-value="electric">Eléctrico</button>
+            <div class="segmented-control filter-segmented" data-filter-target="panelFuelType">
+                <button type="button" class="segmented-control-option filter-segment-option${empty criteria.fuelType ? ' is-selected' : ''}" data-value="">Todos</button>
+                <button type="button" class="segmented-control-option filter-segment-option${'combustion' eq criteria.fuelType ? ' is-selected' : ''}" data-value="combustion">Combustión</button>
+                <button type="button" class="segmented-control-option filter-segment-option${'hybrid' eq criteria.fuelType ? ' is-selected' : ''}" data-value="hybrid">Híbrido</button>
+                <button type="button" class="segmented-control-option filter-segment-option${'electric' eq criteria.fuelType ? ' is-selected' : ''}" data-value="electric">Eléctrico</button>
             </div>
             <input type="hidden" id="panelFuelType" name="fuelType" value="<c:out value='${criteria.fuelType}'/>">
         </section>
@@ -90,10 +90,10 @@
         <%-- Transmisión — segmented control --%>
         <section class="filters-panel-section">
             <h3 class="filters-panel-section-title">Transmisión</h3>
-            <div class="filter-segmented" data-filter-target="panelTransmission">
-                <button type="button" class="filter-segment-option${empty criteria.transmission ? ' is-selected' : ''}" data-value="">Ambos</button>
-                <button type="button" class="filter-segment-option${'automatic' eq criteria.transmission ? ' is-selected' : ''}" data-value="automatic">Automática</button>
-                <button type="button" class="filter-segment-option${'manual' eq criteria.transmission ? ' is-selected' : ''}" data-value="manual">Manual</button>
+            <div class="segmented-control filter-segmented" data-filter-target="panelTransmission">
+                <button type="button" class="segmented-control-option filter-segment-option${empty criteria.transmission ? ' is-selected' : ''}" data-value="">Ambos</button>
+                <button type="button" class="segmented-control-option filter-segment-option${'automatic' eq criteria.transmission ? ' is-selected' : ''}" data-value="automatic">Automática</button>
+                <button type="button" class="segmented-control-option filter-segment-option${'manual' eq criteria.transmission ? ' is-selected' : ''}" data-value="manual">Manual</button>
             </div>
             <input type="hidden" id="panelTransmission" name="transmission" value="<c:out value='${criteria.transmission}'/>">
         </section>

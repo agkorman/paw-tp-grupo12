@@ -46,6 +46,85 @@
     border-color: rgba(229, 226, 225, 0.30);
 }
 
+/* ── SEGMENTED CONTROL ── */
+.segmented-control {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(229, 226, 225, 0.08);
+    border-radius: var(--radius-full);
+    padding: 3px;
+    gap: 2px;
+}
+
+.segmented-control-option,
+.segmented-control-radio-option span {
+    flex: 1;
+    padding: 0.45rem 0.5rem;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-full);
+    color: rgba(196, 198, 204, 0.62);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.segmented-control-option:hover:not(.is-selected),
+.segmented-control-radio-option:hover input:not(:checked) + span {
+    color: var(--on-surface);
+}
+
+.segmented-control-option.is-selected,
+.segmented-control-radio-option input:checked + span {
+    background: var(--surface-container-highest, #2e2e2e);
+    color: var(--on-surface);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.segmented-control-radio-option {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.segmented-control-radio-option input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.segmented-control-radio-option span {
+    display: block;
+    width: 100%;
+}
+
+.segmented-control-radio-option input:focus-visible + span {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.segmented-control-radio-option input:disabled + span {
+    cursor: default;
+    opacity: 0.72;
+}
+
+.segmented-control-radio-group.is-readonly,
+.modal-radio-group--readonly {
+    pointer-events: none;
+}
+
+.segmented-control-radio-group.is-readonly .segmented-control-radio-option,
+.modal-radio-group--readonly .segmented-control-radio-option {
+    cursor: default;
+}
+
 /* ── AUTH REQUIRED MODAL ── */
 .auth-required-modal {
     position: fixed;

@@ -287,7 +287,7 @@
     var setRadioGroupReadonly = function (name, readonly) {
         var fields = form.querySelectorAll('input[type="radio"][name="' + name + '"]');
         if (!fields.length) { return; }
-        var group = fields[0].closest('.modal-radio-group');
+        var group = fields[0].closest('.segmented-control-radio-group');
         if (!group) { return; }
         group.classList.toggle('modal-radio-group--readonly', readonly);
         Array.prototype.forEach.call(fields, function (field) {
