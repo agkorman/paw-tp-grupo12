@@ -141,6 +141,11 @@ class UserServiceImplTest {
         }
 
         @Override
+        public List<User> findAll() {
+            return List.copyOf(users);
+        }
+
+        @Override
         public List<String> findEmailsByRoles(final Collection<String> roles) {
             final List<String> normalizedRoles = roles.stream()
                     .map(role -> role.toLowerCase(Locale.ROOT))

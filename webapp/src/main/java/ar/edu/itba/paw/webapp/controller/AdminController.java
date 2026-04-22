@@ -10,6 +10,7 @@ import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.WeeklyDigestService;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
@@ -57,18 +58,21 @@ public class AdminController {
     private final BodyTypeDao bodyTypeDao;
     private final UserService userService;
     private final EmailService emailService;
+    private final WeeklyDigestService weeklyDigestService;
 
     @Autowired
     public AdminController(final CarRequestService carRequestService, final CarService carService,
                            final BrandDao brandDao,
                            final BodyTypeDao bodyTypeDao, final UserService userService,
-                           final EmailService emailService) {
+                           final EmailService emailService,
+                           final WeeklyDigestService weeklyDigestService) {
         this.carRequestService = carRequestService;
         this.carService = carService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
         this.userService = userService;
         this.emailService = emailService;
+        this.weeklyDigestService = weeklyDigestService;
     }
 
     @RequestMapping(method = RequestMethod.GET)
@@ -199,6 +203,12 @@ public class AdminController {
                                   @RequestHeader(value = "Referer", required = false) final String referer) {
         carService.deleteCar(carId);
         return redirectBackAfterDelete(referer);
+    }
+
+    @RequestMapping(value = "/digest/preview", method = RequestMethod.POST)
+    public ModelAndView previewDigest() {
+        weeklyDigestService.sendWeeklyDigest();
+        return new ModelAndView("redirect:/admin");
     }
 
     @RequestMapping(value = "/requests/{requestId}/reject", method = RequestMethod.POST)

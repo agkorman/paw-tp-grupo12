@@ -11,4 +11,5 @@ public interface UserService {
     Optional<User> findByUsername(String username);
     User createUser(String username, String email, String rawPassword);
     List<String> getModeratorsEmails();
+    List<User> getAllUsers();
 }

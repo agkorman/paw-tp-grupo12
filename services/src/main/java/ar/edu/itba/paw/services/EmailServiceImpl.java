@@ -303,6 +303,346 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
+    // ── Weekly moderator digest ───────────────────────────────────────────────
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendWeeklyModeratorDigest(final List<String> moderatorEmails, final int pendingRequestCount) {
+        if (moderatorEmails == null || moderatorEmails.isEmpty()) {
+            return;
+        }
+        try {
+            final MimeMessage message = mailSender.createMimeMessage();
+            final MimeMessageHelper helper = new MimeMessageHelper(
+                    message,
+                    true,
+                    StandardCharsets.UTF_8.name()
+            );
+            helper.setTo(moderatorEmails.toArray(new String[0]));
+            helper.setSubject(buildModeratorDigestSubject(pendingRequestCount));
+            helper.setText(
+                    buildModeratorDigestPlainText(pendingRequestCount),
+                    buildModeratorDigestHtml(pendingRequestCount)
+            );
+            mailSender.send(message);
+        } catch (final MessagingException | RuntimeException e) {
+            LOGGER.warning("Failed to send weekly moderator digest: " + e.getMessage());
+        }
+    }
+
+    private String buildModeratorDigestSubject(final int pendingCount) {
+        return "[" + APP_NAME + "] Resumen semanal — "
+                + (pendingCount == 0 ? "sin pedidos pendientes" : pendingCount + " pedido" + (pendingCount == 1 ? "" : "s") + " pendiente" + (pendingCount == 1 ? "" : "s"));
+    }
+
+    private String buildModeratorDigestPlainText(final int pendingCount) {
+        if (pendingCount == 0) {
+            return """
+                    Resumen semanal — %s
+
+                    Todo al día: no hay pedidos de autos pendientes de revisión esta semana.
+
+                    Dashboard: %s
+                    """.formatted(APP_NAME, appBaseUrl + "/admin");
+        }
+        return """
+                Resumen semanal — %s
+
+                Esta semana hay %d pedido%s de autos esperando tu revisión.
+
+                Revisalos en el dashboard: %s
+                """.formatted(APP_NAME, pendingCount, pendingCount == 1 ? "" : "s", appBaseUrl + "/admin");
+    }
+
+    private String buildModeratorDigestHtml(final int pendingCount) {
+        final String dashboardUrl = escapeHtml(appBaseUrl + "/admin");
+        final boolean hasPending = pendingCount > 0;
+        final String preheader = hasPending
+                ? escapeHtml(pendingCount + " pedido" + (pendingCount == 1 ? "" : "s") + " de autos esperan tu revisión")
+                : escapeHtml("Todo al día — sin pedidos pendientes esta semana");
+
+        final String bodySection = hasPending
+                ? """
+                            <div style="background:%s;border:1px solid %s;border-radius:18px;padding:28px 24px;margin-bottom:28px;text-align:center;">
+                                <div style="font-size:56px;line-height:1;font-weight:700;color:%s;font-family:%s;">
+                                    %d
+                                </div>
+                                <div style="margin-top:8px;font-size:16px;line-height:1.5;color:%s;font-family:%s;">
+                                    pedido%s pendiente%s de revisión
+                                </div>
+                            </div>
+                        """.formatted(
+                        COLOR_SURFACE_HIGH, COLOR_OUTLINE,
+                        COLOR_PRIMARY, DISPLAY_FONT,
+                        pendingCount,
+                        COLOR_ON_SURFACE_VARIANT, BODY_FONT,
+                        pendingCount == 1 ? "" : "s", pendingCount == 1 ? "" : "s"
+                )
+                : """
+                            <div style="background:%s;border:1px solid %s;border-radius:18px;padding:28px 24px;margin-bottom:28px;text-align:center;">
+                                <div style="font-size:40px;line-height:1;margin-bottom:12px;">✓</div>
+                                <div style="font-size:16px;line-height:1.5;color:%s;font-family:%s;">
+                                    Todo al día — sin pedidos pendientes esta semana.
+                                </div>
+                            </div>
+                        """.formatted(COLOR_SURFACE_HIGH, COLOR_OUTLINE, COLOR_ON_SURFACE_VARIANT, BODY_FONT);
+
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <body style="margin:0;padding:24px;background:%s;color:%s;font-family:%s;">
+                    <div style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;color:transparent;">%s</div>
+                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
+                        <tr><td style="padding:0;">
+                            <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
+                                <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
+                                    %s
+                                </div>
+                                <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
+                                    Resumen semanal
+                                </h1>
+                                <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
+                                    Pedidos de autos pendientes de revisión en el catálogo.
+                                </p>
+                            </div>
+                            <div style="background:%s;padding:32px;border:1px solid %s;border-top:none;border-radius:0 0 22px 22px;">
+                                %s
+                                <div style="text-align:center;">
+                                    <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
+                                        Ir al dashboard
+                                    </a>
+                                </div>
+                            </div>
+                        </td></tr>
+                    </table>
+                </body>
+                </html>
+                """.formatted(
+                COLOR_SURFACE_LOW, COLOR_ON_SURFACE, BODY_FONT,
+                preheader,
+                COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY, COLOR_ON_PRIMARY,
+                BODY_FONT, escapeHtml(APP_NAME),
+                DISPLAY_FONT,
+                BODY_FONT,
+                COLOR_SURFACE, COLOR_OUTLINE,
+                bodySection,
+                dashboardUrl, COLOR_PRIMARY_CONTAINER, COLOR_ON_PRIMARY, DISPLAY_FONT
+        );
+    }
+
+    // ── Weekly user digest ────────────────────────────────────────────────────
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendWeeklyUserDigest(final String recipientEmail, final String username,
+                                     final List<EmailService.ReviewActivityItem> reviewActivity,
+                                     final List<EmailService.FavoriteActivityItem> favoriteActivity) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+        try {
+            final MimeMessage message = mailSender.createMimeMessage();
+            final MimeMessageHelper helper = new MimeMessageHelper(
+                    message,
+                    true,
+                    StandardCharsets.UTF_8.name()
+            );
+            helper.setTo(recipientEmail);
+            helper.setSubject("[" + APP_NAME + "] Tu resumen semanal, " + sanitizeHeaderValue(safeValue(username)));
+            helper.setText(
+                    buildUserDigestPlainText(username, reviewActivity, favoriteActivity),
+                    buildUserDigestHtml(username, reviewActivity, favoriteActivity)
+            );
+            mailSender.send(message);
+        } catch (final MessagingException | RuntimeException e) {
+            LOGGER.warning("Failed to send weekly user digest to " + recipientEmail + ": " + e.getMessage());
+        }
+    }
+
+    private String buildUserDigestPlainText(final String username,
+                                            final List<EmailService.ReviewActivityItem> reviewActivity,
+                                            final List<EmailService.FavoriteActivityItem> favoriteActivity) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Hola, ").append(safeValue(username)).append("!\n\n");
+        sb.append("Tu resumen semanal en ").append(APP_NAME).append(".\n\n");
+
+        sb.append("── Actividad en tus reseñas ──\n");
+        if (reviewActivity.isEmpty()) {
+            sb.append("Sin actividad nueva esta semana.\n");
+        } else {
+            for (final EmailService.ReviewActivityItem item : reviewActivity) {
+                sb.append("• ").append(safeValue(item.reviewTitle))
+                        .append(" (").append(safeValue(item.carName)).append(")");
+                if (item.newLikes > 0) {
+                    sb.append(" — ").append(item.newLikes).append(" me gusta nuevo").append(item.newLikes == 1 ? "" : "s");
+                }
+                if (item.newReplies > 0) {
+                    sb.append(" — ").append(item.newReplies).append(" respuesta").append(item.newReplies == 1 ? "" : "s").append(" nueva").append(item.newReplies == 1 ? "" : "s");
+                }
+                sb.append("\n");
+            }
+        }
+
+        sb.append("\n── Novedades en tus favoritos ──\n");
+        if (favoriteActivity.isEmpty()) {
+            sb.append("Sin novedades esta semana.\n");
+        } else {
+            for (final EmailService.FavoriteActivityItem item : favoriteActivity) {
+                sb.append("• ").append(safeValue(item.carName))
+                        .append(" — ").append(item.newReviewCount)
+                        .append(" reseña").append(item.newReviewCount == 1 ? "" : "s").append(" nueva").append(item.newReviewCount == 1 ? "" : "s").append("\n");
+            }
+        }
+
+        sb.append("\nVer catálogo: ").append(appBaseUrl).append("/cars\n");
+        return sb.toString();
+    }
+
+    private String buildUserDigestHtml(final String username,
+                                       final List<EmailService.ReviewActivityItem> reviewActivity,
+                                       final List<EmailService.FavoriteActivityItem> favoriteActivity) {
+        final String displayName = escapeHtml(safeValue(username));
+        final String catalogUrl = escapeHtml(appBaseUrl + "/cars");
+        final String preheader = escapeHtml("Tu actividad semanal en " + APP_NAME);
+
+        final String reviewSection = buildUserDigestReviewSection(reviewActivity);
+        final String favoriteSection = buildUserDigestFavoriteSection(favoriteActivity);
+
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <body style="margin:0;padding:24px;background:%s;color:%s;font-family:%s;">
+                    <div style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;color:transparent;">%s</div>
+                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
+                        <tr><td style="padding:0;">
+                            <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
+                                <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
+                                    %s
+                                </div>
+                                <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
+                                    Hola, %s!
+                                </h1>
+                                <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
+                                    Esto es lo que pasó esta semana en tu cuenta.
+                                </p>
+                            </div>
+                            <div style="background:%s;padding:32px;border:1px solid %s;border-top:none;border-radius:0 0 22px 22px;">
+                                %s
+                                %s
+                                <div style="text-align:center;margin-top:8px;">
+                                    <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
+                                        Ver catálogo
+                                    </a>
+                                </div>
+                            </div>
+                        </td></tr>
+                    </table>
+                </body>
+                </html>
+                """.formatted(
+                COLOR_SURFACE_LOW, COLOR_ON_SURFACE, BODY_FONT,
+                preheader,
+                COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY, COLOR_ON_PRIMARY,
+                BODY_FONT, escapeHtml(APP_NAME),
+                DISPLAY_FONT, displayName, BODY_FONT,
+                COLOR_SURFACE, COLOR_OUTLINE,
+                reviewSection, favoriteSection,
+                catalogUrl, COLOR_PRIMARY_CONTAINER, COLOR_ON_PRIMARY, DISPLAY_FONT
+        );
+    }
+
+    private String buildUserDigestReviewSection(final List<EmailService.ReviewActivityItem> items) {
+        final String sectionLabel = "Actividad en tus reseñas";
+        if (items.isEmpty()) {
+            return buildDigestEmptySection(sectionLabel, "Sin actividad nueva esta semana.");
+        }
+        final StringBuilder rows = new StringBuilder();
+        for (final EmailService.ReviewActivityItem item : items) {
+            final StringBuilder detail = new StringBuilder();
+            if (item.newLikes > 0) {
+                detail.append(item.newLikes).append(" me gusta nuevo").append(item.newLikes == 1 ? "" : "s");
+            }
+            if (item.newReplies > 0) {
+                if (detail.length() > 0) detail.append(" &amp; ");
+                detail.append(item.newReplies).append(" respuesta").append(item.newReplies == 1 ? "" : "s").append(" nueva").append(item.newReplies == 1 ? "" : "s");
+            }
+            rows.append(buildDigestRow(
+                    escapeHtml(safeValue(item.reviewTitle)),
+                    escapeHtml(safeValue(item.carName)),
+                    detail.toString()
+            ));
+        }
+        return buildDigestSection(sectionLabel, rows.toString());
+    }
+
+    private String buildUserDigestFavoriteSection(final List<EmailService.FavoriteActivityItem> items) {
+        final String sectionLabel = "Novedades en tus favoritos";
+        if (items.isEmpty()) {
+            return buildDigestEmptySection(sectionLabel, "Sin novedades esta semana.");
+        }
+        final StringBuilder rows = new StringBuilder();
+        for (final EmailService.FavoriteActivityItem item : items) {
+            final String detail = item.newReviewCount + " reseña" + (item.newReviewCount == 1 ? "" : "s") + " nueva" + (item.newReviewCount == 1 ? "" : "s");
+            rows.append(buildDigestRow(escapeHtml(safeValue(item.carName)), null, detail));
+        }
+        return buildDigestSection(sectionLabel, rows.toString());
+    }
+
+    private String buildDigestSection(final String label, final String rowsHtml) {
+        return """
+                <div style="margin-bottom:24px;">
+                    <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
+                        %s
+                    </div>
+                    <div style="background:%s;border:1px solid %s;border-radius:18px;overflow:hidden;">
+                        %s
+                    </div>
+                </div>
+                """.formatted(
+                COLOR_ON_SURFACE_VARIANT, BODY_FONT,
+                escapeHtml(label),
+                COLOR_SURFACE_HIGH, COLOR_OUTLINE,
+                rowsHtml
+        );
+    }
+
+    private String buildDigestEmptySection(final String label, final String message) {
+        return """
+                <div style="margin-bottom:24px;">
+                    <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
+                        %s
+                    </div>
+                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:20px 22px;font-size:15px;color:%s;font-family:%s;">
+                        %s
+                    </div>
+                </div>
+                """.formatted(
+                COLOR_ON_SURFACE_VARIANT, BODY_FONT,
+                escapeHtml(label),
+                COLOR_SURFACE_HIGH, COLOR_OUTLINE,
+                COLOR_ON_SURFACE_VARIANT, BODY_FONT,
+                escapeHtml(message)
+        );
+    }
+
+    private String buildDigestRow(final String title, final String subtitle, final String detail) {
+        final String subtitleHtml = subtitle != null
+                ? "<div style=\"font-size:13px;line-height:1.4;color:" + COLOR_ON_SURFACE_VARIANT + ";font-family:" + BODY_FONT + ";margin-top:2px;\">" + subtitle + "</div>"
+                : "";
+        return """
+                <div style="padding:16px 22px;border-bottom:1px solid %s;">
+                    <div style="font-size:15px;font-weight:600;color:%s;font-family:%s;">%s</div>
+                    %s
+                    <div style="margin-top:6px;font-size:13px;color:%s;font-family:%s;">%s</div>
+                </div>
+                """.formatted(
+                COLOR_OUTLINE,
+                COLOR_ON_SURFACE, BODY_FONT, title,
+                subtitleHtml,
+                COLOR_PRIMARY, BODY_FONT, detail
+        );
+    }
+
     // ── Approved notification helpers ─────────────────────────────────────────
 
     private String buildApprovedSubject(final String brandName, final String model) {

@@ -80,6 +80,14 @@ public class UserJdbcDao implements UserDao {
     }
 
     @Override
+    public List<User> findAll() {
+        return jdbcTemplate.query(
+                "SELECT user_id, username, email, password, role, created_at FROM users ORDER BY user_id",
+                ROW_MAPPER
+        );
+    }
+
+    @Override
     public List<String> findEmailsByRoles(final Collection<String> roles) {
         if (roles == null || roles.isEmpty()) {
             return Collections.emptyList();

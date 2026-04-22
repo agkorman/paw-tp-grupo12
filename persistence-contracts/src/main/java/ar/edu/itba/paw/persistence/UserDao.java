@@ -12,4 +12,5 @@ public interface UserDao {
     Optional<User> findByUsername(String username);
     User create(String username, String email, String password, String role);
     List<String> findEmailsByRoles(Collection<String> roles);
+    List<User> findAll();
 }
