@@ -54,7 +54,7 @@
                 <path d="M7.5 12.5l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <span class="submitted-toast-text">Tu auto ha sido enviado correctamente y está en proceso de moderación.</span>
-            <button class="submitted-toast-action" onclick="document.getElementById('submittedToast').remove()">ENTENDIDO</button>
+            <button type="button" class="submitted-toast-action" onclick="document.getElementById('submittedToast').remove()">ENTENDIDO</button>
         </div>
     </c:if>
 

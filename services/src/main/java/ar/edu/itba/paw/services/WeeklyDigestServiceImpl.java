@@ -8,15 +8,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 @Service
 public class WeeklyDigestServiceImpl implements WeeklyDigestService {
+
+    private static final ZoneId DIGEST_ZONE = ZoneId.of("America/Argentina/Buenos_Aires");
 
     private final UserService userService;
     private final CarService carService;
@@ -47,7 +49,7 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
     @Override
     @Scheduled(cron = "0 0 23 * * SUN", zone = "America/Argentina/Buenos_Aires")
     public void sendWeeklyDigest() {
-        final LocalDateTime since = LocalDateTime.now().minusDays(7);
+        final LocalDateTime since = LocalDateTime.now(DIGEST_ZONE).minusDays(7);
 
         sendModeratorDigest();
 

@@ -160,7 +160,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Bean(name = "appBaseUrl")
     public String appBaseUrl() {
-        final String envValue = normalize(System.getenv("APP_BASE_URL"));
+        final String envValue = normalizeBaseUrl(System.getenv("APP_BASE_URL"));
         if (envValue != null) {
             return envValue;
         }
@@ -173,13 +173,24 @@ public class WebConfig implements WebMvcConfigurer {
             } catch (final IOException e) {
                 throw new IllegalStateException("Failed to load " + MAIL_PROPERTIES_RESOURCE, e);
             }
-            final String propValue = normalize(properties.getProperty("app.baseUrl"));
+            final String propValue = normalizeBaseUrl(properties.getProperty("app.baseUrl"));
             if (propValue != null) {
                 return propValue;
             }
         }
 
         return "http://localhost:8080";
+    }
+
+    private String normalizeBaseUrl(final String value) {
+        final String normalized = normalize(value);
+        if (normalized == null) {
+            return null;
+        }
+        if (normalized.endsWith("/") && !normalized.endsWith("://")) {
+            return normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     @Bean(name = "mailTaskExecutor")
