@@ -475,10 +475,6 @@
     opacity: 0.58;
 }
 
-.review-like-toggle[aria-busy="true"] {
-    cursor: progress;
-}
-
 .review-author-link {
     color: inherit;
     font-weight: 700;
