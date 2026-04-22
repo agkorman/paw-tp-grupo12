@@ -261,23 +261,5 @@
         });
     }
 
-    var photoInput = document.querySelector('[data-profile-photo-input]');
-    var photoPreview = document.querySelector('[data-profile-photo-preview]');
-
-    if (photoInput && photoPreview && window.FileReader) {
-        photoInput.addEventListener('change', function () {
-            var file = photoInput.files && photoInput.files[0];
-            if (!file || file.type.indexOf('image/') !== 0) {
-                return;
-            }
-
-            var reader = new FileReader();
-            reader.onload = function (event) {
-                photoPreview.style.backgroundImage = 'url("' + event.target.result + '")';
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
     setupCollapsibleSections();
 }());

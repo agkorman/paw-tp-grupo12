@@ -32,7 +32,10 @@
     <main class="profile-page">
         <section class="profile-hero" aria-labelledby="profileName">
             <div class="profile-avatar" aria-hidden="true">
-                <span><c:out value="${profile.initials}"/></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"></path>
+                </svg>
             </div>
 
             <div class="profile-summary">

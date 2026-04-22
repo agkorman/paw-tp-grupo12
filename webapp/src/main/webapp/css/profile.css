@@ -26,17 +26,16 @@
     display: grid;
     place-items: center;
     align-self: center;
-    background:
-        radial-gradient(circle at 50% 35%, #e5e2e1 0 18%, transparent 19%),
-        radial-gradient(circle at 50% 98%, #f7f0ea 0 42%, transparent 43%),
-        linear-gradient(#0f2b36 0 34%, transparent 35%),
-        #8bd1d6;
+    background: var(--surface-container-highest);
     border: 1px solid rgba(229, 226, 225, 0.18);
+    border-radius: 50%;
+    color: var(--secondary);
     box-shadow: var(--shadow-float);
 }
 
-.profile-avatar span {
-    opacity: 0;
+.profile-avatar svg {
+    width: 58%;
+    height: 58%;
 }
 
 .profile-summary {

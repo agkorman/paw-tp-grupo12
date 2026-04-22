@@ -100,15 +100,17 @@
         </section>
 
         <section class="review-layout review-detail-layout">
-            <pa:review-selected-car selectedCar="${selectedCar}"
-                                    carImages="${carImages}"
-                                    favorited="${selectedCarFavorited}"/>
-
-            <div class="review-side-column">
-                <pa:review-car-info selectedCar="${selectedCar}" averageRating="${averageRating}"/>
+            <div class="review-media-column">
+                <pa:review-selected-car selectedCar="${selectedCar}"
+                                        carImages="${carImages}"
+                                        favorited="${selectedCarFavorited}"/>
                 <pa:latest-review latestReview="${latestReview}"
                                   liked="${latestReviewLiked}"
                                   likeCount="${latestReviewLikeCount}"/>
+            </div>
+
+            <div class="review-side-column">
+                <pa:review-car-info selectedCar="${selectedCar}" averageRating="${averageRating}"/>
             </div>
         </section>
 

@@ -46,10 +46,16 @@
     place-items: center;
     flex: 0 0 auto;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--tertiary), var(--primary));
-    color: var(--on-primary-fixed);
+    background: var(--surface-container-highest);
+    color: var(--secondary);
+    border: 1px solid var(--outline-variant);
     font-weight: 800;
     text-decoration: none;
+}
+
+.profile-connection-avatar svg {
+    width: 58%;
+    height: 58%;
 }
 
 .profile-connection-copy {

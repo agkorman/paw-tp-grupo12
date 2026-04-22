@@ -171,6 +171,22 @@ nav {
     flex: 0 0 32px;
 }
 
+.nav-avatar-link {
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.nav-avatar-link:hover,
+.nav-avatar-link:focus-visible {
+    background: var(--surface-container-high);
+    border-color: rgba(229, 226, 225, 0.28);
+    color: var(--on-surface);
+    outline: none;
+}
+
 .avatar svg {
     pointer-events: none;
 }

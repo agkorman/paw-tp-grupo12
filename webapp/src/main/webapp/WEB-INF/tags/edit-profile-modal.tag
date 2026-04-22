@@ -15,15 +15,7 @@
             </button>
         </header>
 
-        <form class="profile-edit-form" method="post" action="#" enctype="multipart/form-data">
-            <div class="profile-photo-editor">
-                <div class="profile-avatar profile-avatar-preview" data-profile-photo-preview aria-hidden="true">
-                    <span><c:out value="${profile.initials}"/></span>
-                </div>
-                <label class="btn-secondary profile-photo-button" for="profilePhotoInput">Cambiar foto</label>
-                <input id="profilePhotoInput" class="profile-photo-input" name="profilePhoto" type="file" accept="image/*" data-profile-photo-input>
-            </div>
-
+        <form class="profile-edit-form" method="post" action="#">
             <div class="profile-edit-fields">
                 <label class="profile-edit-field" for="profileNameInput">
                     <span>Nombre de usuario</span>

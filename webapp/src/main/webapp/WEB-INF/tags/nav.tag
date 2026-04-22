@@ -69,12 +69,12 @@
                 <a class="nav-user nav-profile-text ${activePage eq 'profile' ? 'active' : ''}" href="<c:url value='/profile'/>" aria-label="Ir al perfil">
                     <c:out value="${displayName}"/>
                 </a>
-                <span class="avatar" aria-hidden="true">
+                <a class="avatar nav-avatar-link" href="<c:url value='/profile'/>" aria-label="Ir al perfil">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="8" r="4"></circle>
                         <path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"></path>
                     </svg>
-                </span>
+                </a>
             </span>
         </sec:authorize>
     </div>

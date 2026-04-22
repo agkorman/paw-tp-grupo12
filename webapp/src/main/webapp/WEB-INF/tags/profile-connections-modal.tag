@@ -31,7 +31,10 @@
                 <c:url var="connectionProfileUrl" value="/profiles/${user.id}"/>
                 <article class="profile-connection-row" data-connection-row data-search-text="${fn:escapeXml(user.username)}">
                     <a class="profile-connection-avatar" href="${connectionProfileUrl}" aria-hidden="true" tabindex="-1">
-                        <span><c:out value="${user.initials}"/></span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true" focusable="false">
+                            <circle cx="12" cy="8" r="4"></circle>
+                            <path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"></path>
+                        </svg>
                     </a>
                     <div class="profile-connection-copy">
                         <a class="profile-connection-name" href="${connectionProfileUrl}">
@@ -83,7 +86,10 @@
                 <c:url var="connectionProfileUrl" value="/profiles/${user.id}"/>
                 <article class="profile-connection-row" data-connection-row data-search-text="${fn:escapeXml(user.username)}">
                     <a class="profile-connection-avatar" href="${connectionProfileUrl}" aria-hidden="true" tabindex="-1">
-                        <span><c:out value="${user.initials}"/></span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true" focusable="false">
+                            <circle cx="12" cy="8" r="4"></circle>
+                            <path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"></path>
+                        </svg>
                     </a>
                     <div class="profile-connection-copy">
                         <a class="profile-connection-name" href="${connectionProfileUrl}">

@@ -499,7 +499,7 @@
         if (fileUpload) {
             fileUpload.classList.toggle('has-file', !!data.carImageUrl);
         }
-        setPreviewImage(data.carImageUrl || null, false);
+        setPreviewImages(data.carImageUrl ? [data.carImageUrl] : [], false);
     };
 
     var closeModal = function () {

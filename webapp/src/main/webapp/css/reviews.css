@@ -52,6 +52,7 @@
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
 }
 
+.review-media-column,
 .review-side-column {
     display: grid;
     gap: var(--spacing-8);
