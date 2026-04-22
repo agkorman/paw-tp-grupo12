@@ -222,7 +222,7 @@ public class CarReviewControllerTest {
                 new FakeBodyTypeDao()
         );
 
-        final ModelAndView mav = controller.toggleReviewLike(3L, user(7L));
+        final ModelAndView mav = (ModelAndView) controller.toggleReviewLike(3L, null, user(7L));
 
         assertEquals("redirect:/reviews?carId=10#review-3", mav.getViewName());
         assertEquals(3L, likeService.toggledReviewId);
@@ -247,7 +247,7 @@ public class CarReviewControllerTest {
                 new FakeBodyTypeDao()
         );
 
-        final ModelAndView mav = controller.toggleReplyLike(4L, user(7L));
+        final ModelAndView mav = (ModelAndView) controller.toggleReplyLike(4L, null, user(7L));
 
         assertEquals("redirect:/reviews?carId=10#review-3", mav.getViewName());
         assertEquals(4L, likeService.toggledReplyId);
