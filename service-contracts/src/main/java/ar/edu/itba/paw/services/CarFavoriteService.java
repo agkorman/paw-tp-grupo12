@@ -1,11 +1,19 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.Car;
+
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public interface CarFavoriteService {
-    /**
-     * Returns the IDs of cars marked as favorites by the given user.
-     * Returns an empty list until implemented by the favorites PR.
-     */
     List<Long> findFavoriteCarIdsByUser(long userId);
+
+    boolean setFavorite(long userId, long carId, boolean favorite);
+
+    boolean isFavorited(long userId, long carId);
+
+    List<Car> getFavoriteCars(long userId);
+
+    Set<Long> getFavoritedCarIds(long userId, Collection<Long> carIds);
 }

@@ -55,6 +55,17 @@ CREATE INDEX IF NOT EXISTS idx_cars_body_type_id    ON cars   (body_type_id);
 CREATE INDEX IF NOT EXISTS idx_cars_brand_body_type ON cars   (brand_id, body_type_id);
 CREATE INDEX IF NOT EXISTS idx_cars_fts             ON cars   USING GIN (search_vector);
 
+CREATE TABLE IF NOT EXISTS car_favorites (
+    user_id    INT         NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    car_id     BIGINT      NOT NULL REFERENCES cars(car_id)   ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_car_favorites PRIMARY KEY (user_id, car_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_car_favorites_car_id ON car_favorites (car_id);
+CREATE INDEX IF NOT EXISTS idx_car_favorites_user_created_at ON car_favorites (user_id, created_at DESC);
+
 CREATE OR REPLACE FUNCTION cars_build_search_vector(
     p_brand_name  TEXT,
     p_model       TEXT,

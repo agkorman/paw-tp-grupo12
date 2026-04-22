@@ -2,7 +2,9 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
@@ -31,14 +33,17 @@ public class ProfileController {
 
     private final ReviewService reviewService;
     private final CarService carService;
+    private final CarFavoriteService carFavoriteService;
     private final UserService userService;
     private final UserFollowService userFollowService;
 
     @Autowired
     public ProfileController(final ReviewService reviewService, final CarService carService,
+                             final CarFavoriteService carFavoriteService,
                              final UserService userService, final UserFollowService userFollowService) {
         this.reviewService = reviewService;
         this.carService = carService;
+        this.carFavoriteService = carFavoriteService;
         this.userService = userService;
         this.userFollowService = userFollowService;
     }
@@ -106,6 +111,12 @@ public class ProfileController {
         final boolean followingProfile = currentUserId != null
                 && !ownProfile
                 && userFollowService.isFollowing(currentUserId, profileUser.getId());
+        final List<Car> favoriteCars = carFavoriteService.getFavoriteCars(profileUser.getId());
+        final Map<Long, ReviewStats> reviewStatsByCarId = favoriteCars.isEmpty()
+                ? Map.of()
+                : reviewService.getReviewStatsByCarIds(favoriteCars.stream().map(Car::getId).toList())
+                .stream()
+                .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
 
         final ModelAndView mav = new ModelAndView("profile.jsp");
         mav.addObject("profile", new ProfileData(
@@ -118,8 +129,9 @@ public class ProfileController {
                 userFollowService.countFollowers(profileUser.getId())
         ));
         mav.addObject("profileReviews", reviews);
-        mav.addObject("favoriteCars", List.of());
-        mav.addObject("reviewStatsByCarId", Map.of());
+        mav.addObject("favoriteCars", favoriteCars);
+        mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
+        mav.addObject("favoritedCarIds", favoritedCarIdsById(favoriteCars, currentUserId));
         mav.addObject("likedReviews", List.of());
         mav.addObject("followingUsers", toConnections(userFollowService.getFollowing(profileUser.getId()), currentUserId));
         mav.addObject("followerUsers", toConnections(userFollowService.getFollowers(profileUser.getId()), currentUserId));
@@ -141,6 +153,15 @@ public class ProfileController {
                 && !currentUser
                 && userFollowService.isFollowing(currentUserId, user.getId());
         return new ProfileConnection(user.getId(), displayName(user), initials(user), following, !currentUser);
+    }
+
+    private Map<Long, Boolean> favoritedCarIdsById(final List<Car> cars, final Long currentUserId) {
+        if (currentUserId == null || cars.isEmpty()) {
+            return Map.of();
+        }
+        return carFavoriteService.getFavoritedCarIds(currentUserId, cars.stream().map(Car::getId).toList())
+                .stream()
+                .collect(Collectors.toMap(Function.identity(), ignored -> Boolean.TRUE));
     }
 
     private boolean isOwnedByCurrentUser(final Review review, final Long currentUserId) {

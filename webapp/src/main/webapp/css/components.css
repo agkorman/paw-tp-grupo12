@@ -418,6 +418,10 @@ a.filter-chip {
     transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
+.favorite-form {
+    display: contents;
+}
+
 .favorite-toggle:hover,
 .review-like-toggle:hover {
     background: var(--surface-container-high);

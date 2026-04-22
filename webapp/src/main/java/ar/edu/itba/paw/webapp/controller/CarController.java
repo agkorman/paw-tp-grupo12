@@ -10,6 +10,7 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
+import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
@@ -41,6 +42,7 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
@@ -70,15 +72,18 @@ public class CarController {
     );
 
     private final CarService carService;
+    private final CarFavoriteService carFavoriteService;
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
     private final ReviewService reviewService;
     private final EmailService emailService;
 
     @Autowired
-    public CarController(final CarService carService, final BrandDao brandDao, final BodyTypeDao bodyTypeDao,
+    public CarController(final CarService carService, final CarFavoriteService carFavoriteService,
+                         final BrandDao brandDao, final BodyTypeDao bodyTypeDao,
                          final ReviewService reviewService, final EmailService emailService) {
         this.carService = carService;
+        this.carFavoriteService = carFavoriteService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
         this.reviewService = reviewService;
@@ -91,11 +96,11 @@ public class CarController {
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    public ModelAndView home() {
-        return landingPage();
+    public ModelAndView home(@AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        return landingPage(currentUser);
     }
 
-    private ModelAndView landingPage() {
+    private ModelAndView landingPage(final AuthenticatedUser currentUser) {
         final List<Car> allCars = carService.getAllCars();
         final Map<Long, ReviewStats> reviewStatsByCarId = getReviewStatsByCarId(allCars);
         final List<Car> featuredCars = selectFeaturedCars(allCars, reviewStatsByCarId);
@@ -107,6 +112,7 @@ public class CarController {
         final ModelAndView mav = new ModelAndView("landing.jsp");
         mav.addObject("featuredCars", featuredCars);
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
+        mav.addObject("favoritedCarIds", favoritedCarIdsById(featuredCars, currentUser));
         mav.addObject("heroCar", heroCar);
         mav.addObject("heroReview", heroReview);
         return mav;
@@ -117,8 +123,9 @@ public class CarController {
                            @RequestParam(value = "createCar", required = false) final String createCar,
                            @RequestParam(value = "submitted", required = false) final String submitted,
                            @ModelAttribute("carForm") final CarForm carForm,
+                           @AuthenticationPrincipal final AuthenticatedUser currentUser,
                            final Model model) {
-        populateCarsPageModel(model, criteria);
+        populateCarsPageModel(model, criteria, currentUser);
         if ("true".equalsIgnoreCase(createCar)) {
             model.addAttribute("openCarModal", true);
             model.addAttribute("openCreateCarModal", true);
@@ -130,12 +137,14 @@ public class CarController {
     }
 
     @RequestMapping(value = "/cars/content", method = RequestMethod.GET)
-    public ModelAndView listCarsContent(@ModelAttribute final CarSearchCriteria criteria) {
+    public ModelAndView listCarsContent(@ModelAttribute final CarSearchCriteria criteria,
+                                        @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final CarCatalogData catalogData = resolveCatalogData(criteria);
 
         final ModelAndView mav = new ModelAndView("cars-content.jsp");
         mav.addObject("cars", catalogData.cars);
         mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
+        mav.addObject("favoritedCarIds", favoritedCarIdsById(catalogData.cars, currentUser));
         addShowSpecFlags(mav, criteria);
         return mav;
     }
@@ -189,7 +198,7 @@ public class CarController {
         }
 
         if (errors.hasErrors()) {
-            populateCarsPageModel(model, new CarSearchCriteria());
+            populateCarsPageModel(model, new CarSearchCriteria(), currentUser);
             model.addAttribute("openCarModal", true);
             model.addAttribute("openCreateCarModal", true);
             return "cars.jsp";
@@ -224,11 +233,40 @@ public class CarController {
         return "redirect:/cars?submitted=true";
     }
 
-    private void populateCarsPageModel(final Model model, final CarSearchCriteria criteria) {
+    @RequestMapping(value = "/cars/{carId}/favorite", method = RequestMethod.POST)
+    public Object updateFavorite(@PathVariable("carId") final long carId,
+                                 @RequestParam("favorite") final boolean favorite,
+                                 @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
+                                 @RequestHeader(value = "Referer", required = false) final String referer,
+                                 @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        if (currentUser == null) {
+            if (isAjaxRequest(requestedWith)) {
+                return new ResponseEntity<String>("/login", HttpStatus.UNAUTHORIZED);
+            }
+            return new ModelAndView("redirect:/login");
+        }
+        if (carService.getCarById(carId).isEmpty()) {
+            if (isAjaxRequest(requestedWith)) {
+                return new ResponseEntity<String>("Auto no encontrado.", HttpStatus.NOT_FOUND);
+            }
+            return new ModelAndView("redirect:/cars");
+        }
+
+        carFavoriteService.setFavorite(currentUser.getId(), carId, favorite);
+        final boolean favorited = carFavoriteService.isFavorited(currentUser.getId(), carId);
+        if (isAjaxRequest(requestedWith)) {
+            return new ResponseEntity<String>(Boolean.toString(favorited), HttpStatus.OK);
+        }
+        return new ModelAndView("redirect:" + safeRedirectPath(referer));
+    }
+
+    private void populateCarsPageModel(final Model model, final CarSearchCriteria criteria,
+                                       final AuthenticatedUser currentUser) {
         final CarCatalogData catalogData = resolveCatalogData(criteria);
 
         model.addAttribute("cars", catalogData.cars);
         model.addAttribute("reviewStatsByCarId", catalogData.reviewStatsByCarId);
+        model.addAttribute("favoritedCarIds", favoritedCarIdsById(catalogData.cars, currentUser));
         model.addAttribute("brands", brandDao.findAll());
         model.addAttribute("bodyTypes", bodyTypeDao.findAll());
         model.addAttribute("selectedBrand", criteria.getBrand());
@@ -251,6 +289,43 @@ public class CarController {
         mav.addObject("showAirbags", criteria.getAirbagMin() != null);
         mav.addObject("showTransmission", criteria.getTransmission() != null);
         mav.addObject("showFuelType", criteria.getFuelType() != null);
+    }
+
+    private Map<Long, Boolean> favoritedCarIdsById(final List<Car> cars, final AuthenticatedUser currentUser) {
+        if (currentUser == null || cars.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return carFavoriteService.getFavoritedCarIds(
+                        currentUser.getId(),
+                        cars.stream().map(Car::getId).collect(Collectors.toList())
+                )
+                .stream()
+                .collect(Collectors.toMap(Function.identity(), ignored -> Boolean.TRUE));
+    }
+
+    private boolean isAjaxRequest(final String requestedWith) {
+        return "XMLHttpRequest".equalsIgnoreCase(requestedWith);
+    }
+
+    private String safeRedirectPath(final String referer) {
+        if (referer == null || referer.isBlank()) {
+            return "/cars";
+        }
+        try {
+            final URI uri = URI.create(referer);
+            final String path = uri.getRawPath();
+            if (path == null || path.isBlank()) {
+                return "/cars";
+            }
+            if ("/".equals(path) || "/cars".equals(path) || "/reviews".equals(path) || "/profile".equals(path)
+                    || path.matches("/profiles/\\d+")) {
+                final String query = uri.getRawQuery();
+                return path + (query == null ? "" : "?" + query);
+            }
+        } catch (final IllegalArgumentException ignored) {
+            return "/cars";
+        }
+        return "/cars";
     }
 
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.GET)

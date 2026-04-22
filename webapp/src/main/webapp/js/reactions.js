@@ -37,16 +37,65 @@
         setClass(button, 'is-active', active);
     }
 
-    function updateFavorite(button) {
-        var isFavorited = button.getAttribute('data-favorited') === 'true';
-        var nextState = !isFavorited;
+    function updateFavoriteButton(button, favorited) {
         var label = button.querySelector('span');
 
-        setPressedState(button, 'data-favorited', nextState);
-        button.setAttribute('aria-label', nextState ? 'Quitar de favoritos' : 'Agregar a favoritos');
+        setPressedState(button, 'data-favorited', favorited);
+        button.setAttribute('aria-label', favorited ? 'Quitar de favoritos' : 'Agregar a favoritos');
         if (label) {
-            label.textContent = nextState ? 'Favorito' : 'Agregar';
+            label.textContent = favorited ? 'Favorito' : 'Agregar';
         }
+    }
+
+    function updateFavoriteForms(carId, favorited) {
+        var selector = '[data-favorite-toggle][data-car-id="' + carId + '"]';
+        Array.prototype.forEach.call(document.querySelectorAll(selector), function (button) {
+            var form = button.form || button.closest('form');
+            var nextValue = form ? form.querySelector('[data-favorite-next-value]') : null;
+            updateFavoriteButton(button, favorited);
+            if (nextValue) {
+                nextValue.value = favorited ? 'false' : 'true';
+            }
+        });
+    }
+
+    function submitFavorite(form, button) {
+        if (!form || !button || button.disabled) {
+            return;
+        }
+
+        button.disabled = true;
+        window.fetch(form.getAttribute('action'), {
+            method: 'POST',
+            body: new window.FormData(form),
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'text/plain',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(function (response) {
+            if (response.redirected) {
+                window.location.href = response.url;
+                return null;
+            }
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return null;
+            }
+            if (!response.ok) {
+                throw new Error('favorite-request-failed');
+            }
+            return response.text();
+        }).then(function (body) {
+            if (body === null || body === undefined || body === '') {
+                return;
+            }
+            updateFavoriteForms(button.getAttribute('data-car-id'), body.trim() === 'true');
+        }).catch(function () {
+            form.submit();
+        }).finally(function () {
+            button.disabled = false;
+        });
     }
 
     function updateReviewLike(button) {
@@ -73,7 +122,7 @@
             event.preventDefault();
             event.stopPropagation();
             if (!favoriteButton.disabled) {
-                updateFavorite(favoriteButton);
+                submitFavorite(favoriteButton.form || favoriteButton.closest('form'), favoriteButton);
             }
             return;
         }
@@ -85,6 +134,18 @@
             if (!likeButton.disabled) {
                 updateReviewLike(likeButton);
             }
+        }
+    });
+
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+        if (!hasAttribute(form, 'data-favorite-form')) {
+            return;
+        }
+        var button = form.querySelector('[data-favorite-toggle]');
+        event.preventDefault();
+        if (button && !button.disabled) {
+            submitFavorite(form, button);
         }
     });
 }());

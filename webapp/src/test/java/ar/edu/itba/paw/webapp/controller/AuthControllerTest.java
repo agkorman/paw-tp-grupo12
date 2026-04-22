@@ -76,5 +76,10 @@ public class AuthControllerTest {
         public List<String> getModeratorsEmails() {
             return List.of();
         }
+
+        @Override
+        public List<User> getAllUsers() {
+            return List.of();
+        }
     }
 }

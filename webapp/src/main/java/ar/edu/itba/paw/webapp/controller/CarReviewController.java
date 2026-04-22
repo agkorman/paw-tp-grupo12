@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
+import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
@@ -46,14 +47,17 @@ public class CarReviewController {
             Set.of("", "Propietario actual", "Ex propietario");
 
     private final CarService carService;
+    private final CarFavoriteService carFavoriteService;
     private final ReviewService reviewService;
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
 
     @Autowired
-    public CarReviewController(final CarService carService, final ReviewService reviewService,
+    public CarReviewController(final CarService carService, final CarFavoriteService carFavoriteService,
+                               final ReviewService reviewService,
                                final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
         this.carService = carService;
+        this.carFavoriteService = carFavoriteService;
         this.reviewService = reviewService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
@@ -69,6 +73,7 @@ public class CarReviewController {
                              @RequestParam(value = "sort", required = false) final String sort,
                              @RequestParam(value = "reviewForm", required = false) final String reviewFormParam,
                              @ModelAttribute("reviewForm") final ReviewForm reviewForm,
+                             @AuthenticationPrincipal final AuthenticatedUser currentUser,
                              final Model model) {
         if (carId == null) {
             return "redirect:/cars";
@@ -82,7 +87,7 @@ public class CarReviewController {
         if (reviewForm.getCarId() == null) {
             reviewForm.setCarId(carId);
         }
-        populateCarReviewPageModel(model, pageData);
+        populateCarReviewPageModel(model, pageData, currentUser);
         if ("true".equalsIgnoreCase(reviewFormParam)) {
             model.addAttribute("openReviewModal", true);
         }
@@ -134,7 +139,7 @@ public class CarReviewController {
 
         if (errors.hasErrors()) {
             final ReviewPageData pageData = resolveReviewPageData(car.getId(), null);
-            populateCarReviewPageModel(model, pageData);
+            populateCarReviewPageModel(model, pageData, currentUser);
             model.addAttribute("openReviewModal", true);
             return "car-review.jsp";
         }
@@ -154,18 +159,18 @@ public class CarReviewController {
     }
 
     private ModelAndView carReviewPage(final long carId, final String sort, final String error) {
-        return carReviewPage(carId, sort, error, false);
+        return carReviewPage(carId, sort, error, false, null);
     }
 
     private ModelAndView carReviewPage(final long carId, final String sort, final String error,
-                                       final boolean openReviewModal) {
+                                       final boolean openReviewModal, final AuthenticatedUser currentUser) {
         final ReviewPageData pageData = resolveReviewPageData(carId, sort);
         if (pageData == null) {
             return new ModelAndView("redirect:/cars");
         }
 
         final ModelAndView mav = new ModelAndView("car-review.jsp");
-        populateCarReviewPageModel(mav, pageData);
+        populateCarReviewPageModel(mav, pageData, currentUser);
         final ReviewForm reviewForm = new ReviewForm();
         reviewForm.setCarId(carId);
         mav.addObject("reviewForm", reviewForm);
@@ -176,8 +181,10 @@ public class CarReviewController {
         return mav;
     }
 
-    private void populateCarReviewPageModel(final Model model, final ReviewPageData pageData) {
+    private void populateCarReviewPageModel(final Model model, final ReviewPageData pageData,
+                                            final AuthenticatedUser currentUser) {
         model.addAttribute("selectedCar", pageData.selectedCar);
+        model.addAttribute("selectedCarFavorited", isSelectedCarFavorited(pageData.selectedCar, currentUser));
         model.addAttribute("reviews", pageData.reviews);
         model.addAttribute("averageRating", calculateAverageRating(pageData.reviews));
         model.addAttribute("reviewCount", pageData.reviews.size());
@@ -188,8 +195,10 @@ public class CarReviewController {
         model.addAttribute("carForm", new CarForm());
     }
 
-    private void populateCarReviewPageModel(final ModelAndView mav, final ReviewPageData pageData) {
+    private void populateCarReviewPageModel(final ModelAndView mav, final ReviewPageData pageData,
+                                            final AuthenticatedUser currentUser) {
         mav.addObject("selectedCar", pageData.selectedCar);
+        mav.addObject("selectedCarFavorited", isSelectedCarFavorited(pageData.selectedCar, currentUser));
         mav.addObject("reviews", pageData.reviews);
         mav.addObject("averageRating", calculateAverageRating(pageData.reviews));
         mav.addObject("reviewCount", pageData.reviews.size());
@@ -210,6 +219,10 @@ public class CarReviewController {
         final List<Review> reviews = getReviewsForCar(selectedCar.getId(), normalizedSort);
         final Optional<Review> latestReview = reviewService.getLatestReviewByCar(selectedCar.getId());
         return new ReviewPageData(selectedCar, reviews, normalizedSort, latestReview);
+    }
+
+    private boolean isSelectedCarFavorited(final Car selectedCar, final AuthenticatedUser currentUser) {
+        return currentUser != null && carFavoriteService.isFavorited(currentUser.getId(), selectedCar.getId());
     }
 
     private List<Review> getReviewsForCar(final long carId, final String sort) {
@@ -259,7 +272,7 @@ public class CarReviewController {
 
         final String validationError = validateReviewInput(rating, title, body, ownershipStatus, modelYear);
         if (validationError != null) {
-            return carReviewPage(existingReview.getCarId(), null, validationError, true);
+            return carReviewPage(existingReview.getCarId(), null, validationError, true, currentUser);
         }
 
         reviewService.updateReview(

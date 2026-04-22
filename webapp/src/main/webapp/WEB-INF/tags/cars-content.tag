@@ -1,6 +1,7 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="cars" required="true" type="java.util.List" %>
 <%@ attribute name="reviewStatsByCarId" required="true" type="java.util.Map" %>
+<%@ attribute name="favoritedCarIds" required="false" type="java.util.Map" %>
 <%@ attribute name="showHp" required="false" %>
 <%@ attribute name="showSpeed" required="false" %>
 <%@ attribute name="showConsumption" required="false" %>
@@ -24,7 +25,7 @@
                     carId="${car.id}"
                     hasImage="${car.hasImage}"
                     href="${reviewUrl}"
-                    favorited="${car.id mod 2 eq 0}"
+                    favorited="${favoritedCarIds[car.id] eq true}"
                     averageRating="${reviewStatsByCarId[car.id].averageRating}"
                     reviewCount="${reviewStatsByCarId[car.id].reviewCount}"
                     horsepower="${car.horsepower}"

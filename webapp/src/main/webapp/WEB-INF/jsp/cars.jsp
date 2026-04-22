@@ -37,6 +37,7 @@
     <pa:cars-content
             cars="${cars}"
             reviewStatsByCarId="${reviewStatsByCarId}"
+            favoritedCarIds="${favoritedCarIds}"
             showHp="${showHp}"
             showSpeed="${showSpeed}"
             showConsumption="${showConsumption}"
