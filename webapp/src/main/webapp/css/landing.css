@@ -317,17 +317,6 @@
     font-size: 0.85rem;
 }
 
-.hero-review-detail-link {
-    color: var(--primary);
-    font-weight: 800;
-    text-decoration: none;
-}
-
-.hero-review-detail-link:hover,
-.hero-review-detail-link:focus-visible {
-    color: var(--primary-container);
-}
-
 .featured-section {
     padding: 0 var(--spacing-12) var(--spacing-16);
     display: grid;
