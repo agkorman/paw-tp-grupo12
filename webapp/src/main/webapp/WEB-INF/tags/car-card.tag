@@ -31,6 +31,7 @@
 <%@ attribute name="requestBodyType" required="false" %>
 <%@ attribute name="requestDescription" required="false" %>
 <%@ attribute name="requestSubmitter" required="false" %>
+<%@ attribute name="requestImageUrls" required="false" %>
 <%@ attribute name="requestFuelType" required="false" %>
 <%@ attribute name="requestHorsepower" required="false" %>
 <%@ attribute name="requestAirbagCount" required="false" %>
@@ -44,6 +45,15 @@
 <c:set var="modalImageUrl" value=""/>
 <c:if test="${not empty imageUrl}">
     <c:url var="modalImageUrl" value="${imageUrl}"/>
+</c:if>
+<c:set var="modalImageUrls" value=""/>
+<c:if test="${not empty requestImageUrls}">
+    <c:forEach var="requestImageUrl" items="${fn:split(requestImageUrls, '|')}">
+        <c:if test="${not empty requestImageUrl}">
+            <c:url var="resolvedRequestImageUrl" value="${requestImageUrl}"/>
+            <c:set var="modalImageUrls" value="${modalImageUrls}${empty modalImageUrls ? '' : '|'}${resolvedRequestImageUrl}"/>
+        </c:if>
+    </c:forEach>
 </c:if>
 
 <div class="car-card-shell">
@@ -63,7 +73,8 @@
        data-request-transmission="${fn:escapeXml(requestTransmission)}"
        data-request-fuel-consumption="${fn:escapeXml(requestFuelConsumption)}"
        data-request-max-speed-kmh="${fn:escapeXml(requestMaxSpeedKmh)}"
-       data-request-image-url="${fn:escapeXml(modalImageUrl)}">
+       data-request-image-url="${fn:escapeXml(modalImageUrl)}"
+       data-request-image-urls="${fn:escapeXml(modalImageUrls)}">
         <div class="car-card">
             <div class="card-image-wrap">
                 <c:choose>

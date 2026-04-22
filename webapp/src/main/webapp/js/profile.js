@@ -31,6 +31,38 @@
         return null;
     }
 
+    function closestByClass(target, className) {
+        var node = target;
+
+        while (node && node !== document) {
+            if (node.nodeType === 1 && hasClass(node, className)) {
+                return node;
+            }
+            node = node.parentNode;
+        }
+
+        return null;
+    }
+
+    function closestByTagName(target, tagNames) {
+        var node = target;
+
+        while (node && node !== document) {
+            if (node.nodeType === 1 && tagNames.indexOf(node.tagName) >= 0) {
+                return node;
+            }
+            node = node.parentNode;
+        }
+
+        return null;
+    }
+
+    function isInteractiveCardTarget(target) {
+        return closestByTagName(target, ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'FORM', 'LABEL'])
+                || closestByAttribute(target, 'data-profile-review-menu')
+                || closestByAttribute(target, 'data-review-like-toggle');
+    }
+
     function openModal(modal) {
         if (!modal) {
             return;
@@ -187,6 +219,12 @@
             return;
         }
 
+        var linkedCard = closestByAttribute(event.target, 'data-profile-card-link');
+        if (linkedCard && !isInteractiveCardTarget(event.target)) {
+            window.location.href = linkedCard.getAttribute('data-profile-card-link');
+            return;
+        }
+
         var sectionToggle = closestByAttribute(event.target, 'data-collapsible-toggle');
         if (sectionToggle) {
             event.preventDefault();
@@ -200,7 +238,20 @@
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') {
             closeOpenModal();
+            return;
         }
+
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+
+        var linkedCard = closestByAttribute(event.target, 'data-profile-card-link');
+        if (!linkedCard || isInteractiveCardTarget(event.target)) {
+            return;
+        }
+
+        event.preventDefault();
+        window.location.href = linkedCard.getAttribute('data-profile-card-link');
     });
 
     var search = document.querySelector('[data-connections-search]');

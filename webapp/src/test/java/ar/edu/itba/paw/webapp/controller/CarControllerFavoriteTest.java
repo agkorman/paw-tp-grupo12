@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
@@ -166,7 +167,21 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
+        public List<CarImage> getCarImagesByCarId(final long carId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<CarImage> getCarImageById(final long carId, final long imageId) {
+            return Optional.empty();
+        }
+
+        @Override
         public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
+        }
+
+        @Override
+        public void saveCarImages(final long carId, final List<CarImagePayload> images) {
         }
 
         @Override
@@ -175,6 +190,17 @@ public class CarControllerFavoriteTest {
                                              final Optional<String> description,
                                              final Optional<String> imageContentType,
                                              final Optional<byte[]> imageData, final String fuelType,
+                                             final Integer horsepower, final Integer airbagCount,
+                                             final String transmission, final BigDecimal fuelConsumption,
+                                             final Integer maxSpeedKmh) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                             final long submittedByUserId, final String submitterEmail,
+                                             final Optional<String> description,
+                                             final List<CarImagePayload> images, final String fuelType,
                                              final Integer horsepower, final Integer airbagCount,
                                              final String transmission, final BigDecimal fuelConsumption,
                                              final Integer maxSpeedKmh) {
@@ -209,6 +235,11 @@ public class CarControllerFavoriteTest {
         @Override
         public Optional<Review> getReviewById(final long id) {
             return Optional.empty();
+        }
+
+        @Override
+        public List<Review> getReviewsByIds(final Collection<Long> ids) {
+            return Collections.emptyList();
         }
 
         @Override

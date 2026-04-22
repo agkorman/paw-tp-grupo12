@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
@@ -90,8 +91,25 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    public List<CarImage> getCarImagesByCarId(final long carId) {
+        return carImageDao.findAllByCarId(carId);
+    }
+
+    @Override
+    public Optional<CarImage> getCarImageById(final long carId, final long imageId) {
+        return carImageDao.findByCarIdAndImageId(carId, imageId);
+    }
+
+    @Override
+    @Transactional
     public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
         carImageDao.saveOrReplace(carId, contentType, imageData);
+    }
+
+    @Override
+    @Transactional
+    public void saveCarImages(final long carId, final List<CarImagePayload> images) {
+        carImageDao.replaceAll(carId, normalizeImages(images));
     }
 
     @Override
@@ -104,26 +122,25 @@ public class CarServiceImpl implements CarService {
                                          final String fuelType, final Integer horsepower,
                                          final Integer airbagCount, final String transmission,
                                          final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
-        final String normalizedDescription = description
-                .map(String::trim)
-                .filter(value -> !value.isEmpty())
-                .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
-
+        final List<CarImagePayload> images;
         final boolean hasImageContentType = imageContentType.isPresent();
         final boolean hasImageData = imageData.isPresent();
         if (hasImageContentType != hasImageData) {
             throw new IllegalArgumentException("Image metadata and payload must be provided together.");
         }
-
-        return carRequestService.createPendingRequest(
+        if (hasImageContentType) {
+            images = List.of(new CarImagePayload(imageContentType.orElseThrow(), imageData.orElseThrow()));
+        } else {
+            images = Collections.emptyList();
+        }
+        return requestCarCreation(
+                brandId,
+                model,
+                bodyTypeId,
                 submittedByUserId,
                 submitterEmail,
-                brandId,
-                bodyTypeId,
-                model,
-                normalizedDescription,
-                imageContentType,
-                imageData,
+                description,
+                images,
                 fuelType,
                 horsepower,
                 airbagCount,
@@ -131,6 +148,58 @@ public class CarServiceImpl implements CarService {
                 fuelConsumption,
                 maxSpeedKmh
         );
+    }
+
+    @Override
+    @Transactional
+    public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                         final long submittedByUserId, final String submitterEmail,
+                                         final Optional<String> description,
+                                         final List<CarImagePayload> images,
+                                         final String fuelType, final Integer horsepower,
+                                         final Integer airbagCount, final String transmission,
+                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+        final String normalizedDescription = description
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
+        final List<CarImagePayload> normalizedImages = normalizeImages(images);
+        if (normalizedImages.isEmpty()) {
+            throw new IllegalArgumentException("At least one image is required for car creation.");
+        }
+
+        try {
+            return carRequestService.createPendingRequest(
+                    submittedByUserId,
+                    submitterEmail,
+                    brandId,
+                    bodyTypeId,
+                    model,
+                    normalizedDescription,
+                    normalizedImages,
+                    fuelType,
+                    horsepower,
+                    airbagCount,
+                    transmission,
+                    fuelConsumption,
+                    maxSpeedKmh
+            );
+        } catch (final RuntimeException e) {
+            throw new IllegalStateException("Failed to request car creation with image gallery.", e);
+        }
+    }
+
+    private List<CarImagePayload> normalizeImages(final List<CarImagePayload> images) {
+        if (images == null) {
+            return Collections.emptyList();
+        }
+        for (final CarImagePayload image : images) {
+            if (image == null || image.getContentType() == null || image.getContentType().isBlank()
+                    || image.getImageData() == null || image.getImageData().length == 0) {
+                throw new IllegalArgumentException("Image metadata and payload must be provided together.");
+            }
+        }
+        return List.copyOf(images);
     }
 
     @Override

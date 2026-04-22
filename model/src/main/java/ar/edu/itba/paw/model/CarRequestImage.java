@@ -3,27 +3,22 @@ package ar.edu.itba.paw.model;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class CarImage implements Serializable {
+public class CarRequestImage implements Serializable {
 
     private long imageId;
-    private long carId;
+    private long requestId;
     private int displayOrder;
     private String contentType;
     private byte[] imageData;
     private LocalDateTime updatedAt;
 
-    public CarImage() {}
+    public CarRequestImage() {}
 
-    public CarImage(final long carId, final String contentType, final byte[] imageData,
-                    final LocalDateTime updatedAt) {
-        this(0, carId, 0, contentType, imageData, updatedAt);
-    }
-
-    public CarImage(final long imageId, final long carId, final int displayOrder,
-                    final String contentType, final byte[] imageData,
-                    final LocalDateTime updatedAt) {
+    public CarRequestImage(final long imageId, final long requestId, final int displayOrder,
+                           final String contentType, final byte[] imageData,
+                           final LocalDateTime updatedAt) {
         this.imageId = imageId;
-        this.carId = carId;
+        this.requestId = requestId;
         this.displayOrder = displayOrder;
         this.contentType = contentType;
         this.imageData = imageData;
@@ -38,12 +33,12 @@ public class CarImage implements Serializable {
         this.imageId = imageId;
     }
 
-    public long getCarId() {
-        return carId;
+    public long getRequestId() {
+        return requestId;
     }
 
-    public void setCarId(final long carId) {
-        this.carId = carId;
+    public void setRequestId(final long requestId) {
+        this.requestId = requestId;
     }
 
     public int getDisplayOrder() {

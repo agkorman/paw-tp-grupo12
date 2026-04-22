@@ -34,6 +34,14 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public List<Review> getReviewsByIds(final Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return reviewDao.findByIds(ids);
+    }
+
+    @Override
     public Optional<Review> updateReview(final long id, final long carId,
                                          final BigDecimal rating, final String title, final String body,
                                          final String ownershipStatus, final Integer modelYear,

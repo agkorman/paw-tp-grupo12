@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.UserService;
 import org.junit.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.List;
@@ -44,6 +45,39 @@ public class AuthControllerTest {
                 "driver", "driver@example.com", "password123", "password123", null);
 
         assertEquals("redirect:/login?registered", mav.getViewName());
+    }
+
+    @Test
+    public void loginWithSafeRedirectKeepsRedirectAndIntent() {
+        final AuthController controller = new AuthController(new FakeUserService());
+
+        final ModelAndView mav = controller.login(null, null, null, "/reviews?carId=7", "create-review", null);
+
+        assertEquals("login.jsp", mav.getViewName());
+        assertEquals("/reviews?carId=7", mav.getModel().get("loginRedirect"));
+        assertEquals("create-review", mav.getModel().get("loginIntent"));
+    }
+
+    @Test
+    public void loginWithExternalRedirectIgnoresRedirect() {
+        final AuthController controller = new AuthController(new FakeUserService());
+
+        final ModelAndView mav = controller.login(null, null, null, "https://example.com", "create-review", null);
+
+        assertEquals("login.jsp", mav.getViewName());
+        assertEquals(null, mav.getModel().get("loginRedirect"));
+        assertEquals("create-review", mav.getModel().get("loginIntent"));
+    }
+
+    @Test
+    public void loggedInLoginWithSafeRedirectRedirectsBackWithIntent() {
+        final AuthController controller = new AuthController(new FakeUserService());
+        final UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("driver@example.com", "password", List.of());
+
+        final ModelAndView mav = controller.login(null, null, null, "/cars", "create-car", authentication);
+
+        assertEquals("redirect:/cars?intent=create-car", mav.getViewName());
     }
 
     private static final class FakeUserService implements UserService {

@@ -12,6 +12,7 @@ public interface ReviewService {
     Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
                         String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
     Optional<Review> getReviewById(long id);
+    List<Review> getReviewsByIds(Collection<Long> ids);
     Optional<Review> updateReview(long id, long carId, BigDecimal rating, String title, String body,
                                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
     boolean deleteReview(long id);

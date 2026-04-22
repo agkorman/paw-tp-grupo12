@@ -4,13 +4,17 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
+import ar.edu.itba.paw.services.ReviewLikeService;
+import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
@@ -27,7 +31,9 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -157,11 +163,104 @@ public class CarReviewControllerTest {
         assertFalse(reviewService.updated);
     }
 
+    @Test
+    public void authenticatedUserCanReplyToReview() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        reviewService.review = review(3L, 8L, 10L);
+        final FakeReviewReplyService replyService = new FakeReviewReplyService();
+        final CarReviewController controller = new CarReviewController(
+                new FakeCarService(),
+                new FakeCarFavoriteService(),
+                reviewService,
+                replyService,
+                new FakeReviewLikeService(),
+                new FakeBrandDao(),
+                new FakeBodyTypeDao()
+        );
+
+        final ModelAndView mav = controller.createReply(3L, "Totalmente de acuerdo.", user(7L));
+
+        assertEquals("redirect:/reviews?carId=10#review-3", mav.getViewName());
+        assertTrue(replyService.created);
+        assertEquals(3L, replyService.createdReviewId);
+        assertEquals(7L, replyService.createdUserId);
+    }
+
+    @Test
+    public void blankReplyDoesNotCallService() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        reviewService.review = review(3L, 8L, 10L);
+        final FakeReviewReplyService replyService = new FakeReviewReplyService();
+        final CarReviewController controller = new CarReviewController(
+                new FakeCarService(),
+                new FakeCarFavoriteService(),
+                reviewService,
+                replyService,
+                new FakeReviewLikeService(),
+                new FakeBrandDao(),
+                new FakeBodyTypeDao()
+        );
+
+        final ModelAndView mav = controller.createReply(3L, "   ", user(7L));
+
+        assertEquals("car-review.jsp", mav.getViewName());
+        assertFalse(replyService.created);
+    }
+
+    @Test
+    public void authenticatedUserCanToggleReviewLike() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        reviewService.review = review(3L, 8L, 10L);
+        final FakeReviewLikeService likeService = new FakeReviewLikeService();
+        final CarReviewController controller = new CarReviewController(
+                new FakeCarService(),
+                new FakeCarFavoriteService(),
+                reviewService,
+                new FakeReviewReplyService(),
+                likeService,
+                new FakeBrandDao(),
+                new FakeBodyTypeDao()
+        );
+
+        final ModelAndView mav = controller.toggleReviewLike(3L, user(7L));
+
+        assertEquals("redirect:/reviews?carId=10#review-3", mav.getViewName());
+        assertEquals(3L, likeService.toggledReviewId);
+        assertEquals(7L, likeService.toggledUserId);
+    }
+
+    @Test
+    public void authenticatedUserCanToggleReplyLike() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        reviewService.review = review(3L, 8L, 10L);
+        final FakeReviewReplyService replyService = new FakeReviewReplyService();
+        replyService.reply = new ReviewReply(4L, 3L, 8L, "driver", "Respuesta.",
+                LocalDateTime.now(), LocalDateTime.now());
+        final FakeReviewLikeService likeService = new FakeReviewLikeService();
+        final CarReviewController controller = new CarReviewController(
+                new FakeCarService(),
+                new FakeCarFavoriteService(),
+                reviewService,
+                replyService,
+                likeService,
+                new FakeBrandDao(),
+                new FakeBodyTypeDao()
+        );
+
+        final ModelAndView mav = controller.toggleReplyLike(4L, user(7L));
+
+        assertEquals("redirect:/reviews?carId=10#review-3", mav.getViewName());
+        assertEquals(4L, likeService.toggledReplyId);
+        assertEquals(7L, likeService.toggledUserId);
+    }
+
     private CarReviewController controller(final FakeReviewService reviewService) {
         return new CarReviewController(
                 new FakeCarService(),
                 new FakeCarFavoriteService(),
                 reviewService,
+                new FakeReviewReplyService(),
+                new FakeReviewLikeService(),
                 new FakeBrandDao(),
                 new FakeBodyTypeDao()
         );
@@ -252,7 +351,21 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public List<CarImage> getCarImagesByCarId(final long carId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<CarImage> getCarImageById(final long carId, final long imageId) {
+            return Optional.empty();
+        }
+
+        @Override
         public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
+        }
+
+        @Override
+        public void saveCarImages(final long carId, final List<CarImagePayload> images) {
         }
 
         @Override
@@ -261,6 +374,18 @@ public class CarReviewControllerTest {
                                              final Optional<String> description,
                                              final Optional<String> imageContentType,
                                              final Optional<byte[]> imageData,
+                                             final String fuelType, final Integer horsepower,
+                                             final Integer airbagCount, final String transmission,
+                                             final java.math.BigDecimal fuelConsumption,
+                                             final Integer maxSpeedKmh) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                             final long submittedByUserId, final String submitterEmail,
+                                             final Optional<String> description,
+                                             final List<CarImagePayload> images,
                                              final String fuelType, final Integer horsepower,
                                              final Integer airbagCount, final String transmission,
                                              final java.math.BigDecimal fuelConsumption,
@@ -337,6 +462,14 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public List<Review> getReviewsByIds(final Collection<Long> ids) {
+            if (review == null || ids == null || !ids.contains(review.getId())) {
+                return Collections.emptyList();
+            }
+            return List.of(review);
+        }
+
+        @Override
         public Optional<Review> updateReview(final long id, final long carId, final BigDecimal rating,
                                              final String title, final String body, final String ownershipStatus,
                                              final Integer modelYear, final Integer mileageKm,
@@ -398,6 +531,119 @@ public class CarReviewControllerTest {
         @Override
         public List<ReviewStats> getReviewStatsByCarIds(final Collection<Long> carIds) {
             return Collections.emptyList();
+        }
+    }
+
+    private static final class FakeReviewReplyService implements ReviewReplyService {
+        private ReviewReply reply;
+        private boolean created;
+        private long createdReviewId;
+        private long createdUserId;
+
+        @Override
+        public Optional<ReviewReply> getReplyById(final long id) {
+            return reply != null && reply.getId() == id ? Optional.of(reply) : Optional.empty();
+        }
+
+        @Override
+        public List<ReviewReply> getRepliesByIds(final Collection<Long> ids) {
+            if (reply == null || ids == null || !ids.contains(reply.getId())) {
+                return Collections.emptyList();
+            }
+            return List.of(reply);
+        }
+
+        @Override
+        public List<ReviewReply> getRepliesByReview(final long reviewId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Map<Long, List<ReviewReply>> getRepliesByReviewIds(final Collection<Long> reviewIds) {
+            return Collections.emptyMap();
+        }
+
+        @Override
+        public ReviewReply createReply(final long reviewId, final long userId, final String body) {
+            this.created = true;
+            this.createdReviewId = reviewId;
+            this.createdUserId = userId;
+            return new ReviewReply(1L, reviewId, userId, "driver", body, LocalDateTime.now(), LocalDateTime.now());
+        }
+
+        @Override
+        public boolean deleteReply(final long id, final long userId) {
+            return false;
+        }
+
+        @Override
+        public Map<Long, Long> countNewRepliesPerReview(final long userId, final LocalDateTime since) {
+            return Collections.emptyMap();
+        }
+    }
+
+    private static final class FakeReviewLikeService implements ReviewLikeService {
+        private long toggledReviewId;
+        private long toggledReplyId;
+        private long toggledUserId;
+
+        @Override
+        public boolean toggleReviewLike(final long reviewId, final long userId) {
+            this.toggledReviewId = reviewId;
+            this.toggledUserId = userId;
+            return true;
+        }
+
+        @Override
+        public boolean toggleReplyLike(final long replyId, final long userId) {
+            this.toggledReplyId = replyId;
+            this.toggledUserId = userId;
+            return true;
+        }
+
+        @Override
+        public long countReviewLikes(final long reviewId) {
+            return 0;
+        }
+
+        @Override
+        public Map<Long, Long> countReviewLikesByReviewIds(final Collection<Long> reviewIds) {
+            return Collections.emptyMap();
+        }
+
+        @Override
+        public Set<Long> getLikedReviewIds(final Collection<Long> reviewIds, final long userId) {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public List<Long> getLikedReviewIdsByUser(final long userId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public long countReplyLikes(final long replyId) {
+            return 0;
+        }
+
+        @Override
+        public Map<Long, Long> countReplyLikesByReplyIds(final Collection<Long> replyIds) {
+            return Collections.emptyMap();
+        }
+
+        @Override
+        public Set<Long> getLikedReplyIds(final Collection<Long> replyIds, final long userId) {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public List<Long> getLikedReplyIdsByUser(final long userId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Map<Long, Long> countNewLikesPerReview(final long userId, final LocalDateTime since) {
+            return Collections.emptyMap();
         }
     }
 

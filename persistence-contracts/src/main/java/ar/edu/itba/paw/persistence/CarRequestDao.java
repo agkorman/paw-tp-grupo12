@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.CarRequestImage;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,6 +19,12 @@ public interface CarRequestDao {
                       String model, String description, String imageContentType, byte[] imageData,
                       String status, String fuelType, Integer horsepower, Integer airbagCount,
                       String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+
+    List<CarRequestImage> findImagesByRequestId(long requestId);
+
+    Optional<CarRequestImage> findImageByRequestIdAndImageId(long requestId, long imageId);
+
+    void replaceImages(long requestId, List<CarImagePayload> images);
 
     boolean updateStatus(long id, String expectedStatus, String newStatus);
 

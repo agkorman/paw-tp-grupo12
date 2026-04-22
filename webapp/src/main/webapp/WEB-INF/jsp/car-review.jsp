@@ -100,18 +100,23 @@
         </section>
 
         <section class="review-layout review-detail-layout">
-            <pa:review-selected-car selectedCar="${selectedCar}" favorited="${selectedCarFavorited}"/>
+            <pa:review-selected-car selectedCar="${selectedCar}"
+                                    carImages="${carImages}"
+                                    favorited="${selectedCarFavorited}"/>
 
             <div class="review-side-column">
                 <pa:review-car-info selectedCar="${selectedCar}" averageRating="${averageRating}"/>
-                <pa:latest-review latestReview="${latestReview}"/>
+                <pa:latest-review latestReview="${latestReview}"
+                                  liked="${latestReviewLiked}"
+                                  likeCount="${latestReviewLikeCount}"/>
             </div>
         </section>
 
-        <pa:reviews-feed reviews="${reviews}" carId="${selectedCar.id}" currentSort="${currentSort}"/>
+        <pa:reviews-feed reviews="${reviews}" reviewThreads="${reviewThreads}" carId="${selectedCar.id}" currentSort="${currentSort}"/>
     </main>
 
     <pa:create-review-modal carId="${selectedCar.id}" autoOpen="${openReviewModal}"/>
+    <pa:auth-required-modal/>
     <sec:authorize access="hasRole('ADMIN')">
         <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
         <pa:car-delete-modal/>
@@ -120,7 +125,9 @@
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/action-menu.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
+    <script src="<c:url value='/js/car-image-carousel.js'/>"></script>
     <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
+    <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <sec:authorize access="hasRole('ADMIN')">
         <script src="<c:url value='/js/create-car-modal.js?v=4'/>"></script>
         <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>

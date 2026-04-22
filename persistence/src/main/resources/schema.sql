@@ -128,12 +128,93 @@ ALTER TABLE car_requests
 ALTER TABLE car_requests
     ALTER COLUMN submitter_email DROP NOT NULL;
 
+CREATE SEQUENCE IF NOT EXISTS car_images_image_id_seq;
+
 CREATE TABLE IF NOT EXISTS car_images (
-    car_id       BIGINT       PRIMARY KEY REFERENCES cars(car_id) ON DELETE CASCADE,
-    content_type VARCHAR(100) NOT NULL,
-    image_data   BYTEA        NOT NULL,
-    updated_at   TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+    image_id      BIGINT       PRIMARY KEY DEFAULT nextval('car_images_image_id_seq'),
+    car_id        BIGINT       NOT NULL REFERENCES cars(car_id) ON DELETE CASCADE,
+    display_order INT          NOT NULL DEFAULT 0,
+    content_type  VARCHAR(100) NOT NULL,
+    image_data    BYTEA        NOT NULL,
+    updated_at    TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE car_images
+    ADD COLUMN IF NOT EXISTS image_id BIGINT;
+
+ALTER TABLE car_images
+    ADD COLUMN IF NOT EXISTS display_order INT;
+
+ALTER TABLE car_images
+    ALTER COLUMN image_id SET DEFAULT nextval('car_images_image_id_seq');
+
+UPDATE car_images
+SET image_id = nextval('car_images_image_id_seq')
+WHERE image_id IS NULL;
+
+UPDATE car_images
+SET display_order = 0
+WHERE display_order IS NULL;
+
+ALTER TABLE car_images
+    ALTER COLUMN image_id SET NOT NULL;
+
+ALTER TABLE car_images
+    ALTER COLUMN display_order SET DEFAULT 0;
+
+ALTER TABLE car_images
+    ALTER COLUMN display_order SET NOT NULL;
+
+ALTER SEQUENCE car_images_image_id_seq OWNED BY car_images.image_id;
+
+SELECT setval(
+    'car_images_image_id_seq',
+    COALESCE((SELECT MAX(image_id) FROM car_images), 1),
+    (SELECT COUNT(*) > 0 FROM car_images)
+);
+
+ALTER TABLE car_images
+    DROP CONSTRAINT IF EXISTS car_images_pkey;
+
+ALTER TABLE car_images
+    DROP CONSTRAINT IF EXISTS pk_car_images;
+
+ALTER TABLE car_images
+    ADD CONSTRAINT pk_car_images PRIMARY KEY (image_id);
+
+ALTER TABLE car_images
+    DROP CONSTRAINT IF EXISTS chk_car_images_display_order;
+
+ALTER TABLE car_images
+    ADD CONSTRAINT chk_car_images_display_order CHECK (display_order >= 0);
+
+CREATE INDEX IF NOT EXISTS idx_car_images_car_id ON car_images (car_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_car_images_car_order ON car_images (car_id, display_order);
+
+CREATE TABLE IF NOT EXISTS car_request_images (
+    image_id       BIGSERIAL    PRIMARY KEY,
+    car_request_id BIGINT       NOT NULL REFERENCES car_requests(car_request_id) ON DELETE CASCADE,
+    display_order  INT          NOT NULL DEFAULT 0,
+    content_type   VARCHAR(100) NOT NULL,
+    image_data     BYTEA        NOT NULL,
+    updated_at     TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_car_request_images_display_order CHECK (display_order >= 0)
+);
+
+CREATE INDEX IF NOT EXISTS idx_car_request_images_request_id ON car_request_images (car_request_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_car_request_images_request_order
+    ON car_request_images (car_request_id, display_order);
+
+INSERT INTO car_request_images (car_request_id, display_order, content_type, image_data, updated_at)
+SELECT cr.car_request_id, 0, cr.image_content_type, cr.image_data, cr.created_at
+FROM car_requests cr
+WHERE cr.image_content_type IS NOT NULL
+  AND cr.image_data IS NOT NULL
+  AND NOT EXISTS (
+      SELECT 1
+      FROM car_request_images cri
+      WHERE cri.car_request_id = cr.car_request_id
+  );
 
 CREATE TABLE IF NOT EXISTS reviews (
     review_id        SERIAL       PRIMARY KEY,
@@ -165,6 +246,41 @@ ALTER TABLE reviews
 
 CREATE INDEX IF NOT EXISTS idx_reviews_car_id ON reviews (car_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews (user_id);
+
+CREATE TABLE IF NOT EXISTS review_replies (
+    reply_id   SERIAL      PRIMARY KEY,
+    review_id  INT         NOT NULL REFERENCES reviews(review_id) ON DELETE CASCADE,
+    user_id    INT         NOT NULL REFERENCES users(user_id),
+    body       TEXT        NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_review_replies_body_not_blank CHECK (BTRIM(body) <> '')
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_replies_review_id_created_at
+    ON review_replies (review_id, created_at ASC, reply_id ASC);
+CREATE INDEX IF NOT EXISTS idx_review_replies_user_id ON review_replies (user_id);
+
+CREATE TABLE IF NOT EXISTS review_likes (
+    review_id  INT         NOT NULL REFERENCES reviews(review_id) ON DELETE CASCADE,
+    user_id    INT         NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_review_likes PRIMARY KEY (review_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_likes_user_id ON review_likes (user_id);
+
+CREATE TABLE IF NOT EXISTS review_reply_likes (
+    reply_id   INT         NOT NULL REFERENCES review_replies(reply_id) ON DELETE CASCADE,
+    user_id    INT         NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_review_reply_likes PRIMARY KEY (reply_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_reply_likes_user_id ON review_reply_likes (user_id);
 
 UPDATE reviews r
 SET user_id = u.user_id

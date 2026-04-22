@@ -87,6 +87,7 @@
                                     requestBodyType="${request.bodyTypeName}"
                                     requestDescription="${request.description}"
                                     requestSubmitter="${request.submitter}"
+                                    requestImageUrls="${request.imageUrls}"
                                     requestFuelType="${request.fuelType}"
                                     requestHorsepower="${request.horsepower}"
                                     requestAirbagCount="${request.airbagCount}"

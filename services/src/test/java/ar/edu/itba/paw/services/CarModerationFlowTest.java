@@ -4,7 +4,9 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
@@ -240,6 +242,42 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public CarRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
+                                               final long brandId, final long bodyTypeId, final String model,
+                                               final String description, final List<CarImagePayload> images,
+                                               final String fuelType, final Integer horsepower,
+                                               final Integer airbagCount, final String transmission,
+                                               final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+            final CarImagePayload coverImage = images == null || images.isEmpty() ? null : images.get(0);
+            return createPendingRequest(
+                    submittedByUserId,
+                    submitterEmail,
+                    brandId,
+                    bodyTypeId,
+                    model,
+                    description,
+                    coverImage == null ? Optional.empty() : Optional.of(coverImage.getContentType()),
+                    coverImage == null ? Optional.empty() : Optional.of(coverImage.getImageData()),
+                    fuelType,
+                    horsepower,
+                    airbagCount,
+                    transmission,
+                    fuelConsumption,
+                    maxSpeedKmh
+            );
+        }
+
+        @Override
+        public List<CarRequestImage> getCarRequestImages(final long requestId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<CarRequestImage> getCarRequestImageById(final long requestId, final long imageId) {
+            return Optional.empty();
+        }
+
+        @Override
         public boolean approvePendingRequest(final long id) {
             return false;
         }
@@ -308,6 +346,20 @@ class CarModerationFlowTest {
                     maxSpeedKmh
             );
             return request;
+        }
+
+        @Override
+        public List<CarRequestImage> findImagesByRequestId(final long requestId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<CarRequestImage> findImageByRequestIdAndImageId(final long requestId, final long imageId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void replaceImages(final long requestId, final List<CarImagePayload> images) {
         }
 
         @Override
@@ -419,6 +471,11 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public List<Review> findByIds(final Collection<Long> ids) {
+            return Collections.emptyList();
+        }
+
+        @Override
         public List<Review> findAll() {
             return Collections.emptyList();
         }
@@ -508,11 +565,29 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public List<CarImage> findAllByCarId(final long carId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<CarImage> findByCarIdAndImageId(final long carId, final long imageId) {
+            return Optional.empty();
+        }
+
+        @Override
         public void saveOrReplace(final long carId, final String contentType, final byte[] imageData) {
             saved = true;
             savedCarId = carId;
             savedContentType = contentType;
             savedImageData = imageData;
+        }
+
+        @Override
+        public void replaceAll(final long carId, final List<CarImagePayload> images) {
+            if (images == null || images.isEmpty()) {
+                return;
+            }
+            saveOrReplace(carId, images.get(0).getContentType(), images.get(0).getImageData());
         }
     }
 

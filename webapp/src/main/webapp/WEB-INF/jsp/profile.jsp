@@ -17,12 +17,13 @@
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile.css?v=5'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=1'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-connections.css?v=1'/>">
 </head>
 <body>
     <pa:nav activePage="profile"/>
+    <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 
     <c:set var="profileReviewsPreviewLimit" value="2"/>
     <c:set var="favoriteCarsPreviewLimit" value="4"/>
@@ -82,18 +83,39 @@
                 </c:when>
                 <c:otherwise>
                     <c:url var="profileFollowUrl" value="/profiles/${profile.id}/follow"/>
-                    <form class="profile-action-form" method="post" action="${profileFollowUrl}">
-                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                        <button
-                                type="submit"
-                                class="btn-primary profile-action-button profile-follow-button ${followingProfile ? 'is-following' : ''}"
-                                aria-pressed="${followingProfile}">
-                            <c:choose>
-                                <c:when test="${followingProfile}">Siguiendo</c:when>
-                                <c:otherwise>Seguir</c:otherwise>
-                            </c:choose>
-                        </button>
-                    </form>
+                    <c:choose>
+                        <c:when test="${authenticated}">
+                            <form class="profile-action-form"
+                                  method="post"
+                                  action="${profileFollowUrl}"
+                                  data-auth-resume-intent="follow-profile-${profile.id}">
+                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                <button
+                                        type="submit"
+                                        class="btn-primary profile-action-button profile-follow-button ${followingProfile ? 'is-following' : ''}"
+                                        aria-pressed="${followingProfile}">
+                                    <c:choose>
+                                        <c:when test="${followingProfile}">Siguiendo</c:when>
+                                        <c:otherwise>Seguir</c:otherwise>
+                                    </c:choose>
+                                </button>
+                            </form>
+                        </c:when>
+                        <c:otherwise>
+                            <c:url var="profileFollowLoginUrl" value="/login">
+                                <c:param name="redirect" value="/profiles/${profile.id}"/>
+                                <c:param name="intent" value="follow-profile-${profile.id}"/>
+                            </c:url>
+                            <a href="${profileFollowLoginUrl}"
+                               class="btn-primary profile-action-button profile-follow-button"
+                               data-auth-resume-intent="follow-profile-${profile.id}"
+                               data-auth-required="true"
+                               data-auth-required-action="seguir a este usuario"
+                               data-auth-required-intent="follow-profile-${profile.id}">
+                                Seguir
+                            </a>
+                        </c:otherwise>
+                    </c:choose>
                 </c:otherwise>
             </c:choose>
         </section>
@@ -180,26 +202,41 @@
             <section class="profile-liked-section" aria-labelledby="profileLikedTitle" data-collapsible-section>
                 <div class="profile-section-heading">
                     <h2 id="profileLikedTitle">Reseñas likeadas</h2>
-                    <span><c:out value="${fn:length(likedReviews)}"/></span>
+                    <span><c:out value="${likedActivityCount}"/></span>
                 </div>
 
                 <c:choose>
-                    <c:when test="${empty likedReviews}">
+                    <c:when test="${empty likedReviews and empty likedReplies}">
                         <div class="profile-empty-state">
-                            <p>Todavía no le diste like a ninguna reseña.</p>
+                            <p>Todavía no le diste like a ninguna reseña o respuesta.</p>
                         </div>
                     </c:when>
                     <c:otherwise>
-                        <div class="profile-review-list">
-                            <c:forEach var="likedReview" items="${likedReviews}" varStatus="likedReviewStatus">
-                                <div class="profile-collapsible-item"
-                                     <c:if test="${likedReviewStatus.index ge likedReviewsPreviewLimit}">data-collapsible-extra</c:if>>
-                                    <pa:profile-review-card
-                                            reviewCard="${likedReview}"
-                                            editable="${likedReview.ownedByCurrentUser}"/>
+                        <c:if test="${not empty likedReviews}">
+                            <div class="profile-liked-group">
+                                <h3>Reseñas</h3>
+                                <div class="profile-review-list">
+                                    <c:forEach var="likedReview" items="${likedReviews}" varStatus="likedReviewStatus">
+                                        <div class="profile-collapsible-item"
+                                             <c:if test="${likedReviewStatus.index ge likedReviewsPreviewLimit}">data-collapsible-extra</c:if>>
+                                            <pa:profile-review-card
+                                                    reviewCard="${likedReview}"
+                                                    editable="${likedReview.ownedByCurrentUser}"/>
+                                        </div>
+                                    </c:forEach>
                                 </div>
-                            </c:forEach>
-                        </div>
+                            </div>
+                        </c:if>
+                        <c:if test="${not empty likedReplies}">
+                            <div class="profile-liked-group">
+                                <h3>Respuestas</h3>
+                                <div class="profile-liked-reply-list">
+                                    <c:forEach var="likedReply" items="${likedReplies}">
+                                        <pa:profile-liked-reply-card replyCard="${likedReply}"/>
+                                    </c:forEach>
+                                </div>
+                            </div>
+                        </c:if>
                         <c:if test="${fn:length(likedReviews) gt likedReviewsPreviewLimit}">
                             <div class="profile-collapsible-actions">
                                 <pa:collapsible-toggle/>
@@ -215,9 +252,11 @@
     <pa:review-delete-modal/>
     <pa:edit-profile-modal profile="${profile}"/>
     <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
+    <pa:auth-required-modal/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/action-menu.js'/>"></script>
     <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
+    <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/profile.js?v=5'/>"></script>
 </body>

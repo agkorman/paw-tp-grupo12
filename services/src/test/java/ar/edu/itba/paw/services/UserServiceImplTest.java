@@ -1,7 +1,9 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.CarRequestDao;
@@ -190,6 +192,11 @@ class UserServiceImplTest {
         }
 
         @Override
+        public List<Review> findByIds(final Collection<Long> ids) {
+            return Collections.emptyList();
+        }
+
+        @Override
         public List<Review> findAll() {
             return Collections.emptyList();
         }
@@ -310,6 +317,20 @@ class UserServiceImplTest {
                                  final String transmission, final java.math.BigDecimal fuelConsumption,
                                  final Integer maxSpeedKmh) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<CarRequestImage> findImagesByRequestId(final long requestId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<CarRequestImage> findImageByRequestIdAndImageId(final long requestId, final long imageId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void replaceImages(final long requestId, final List<CarImagePayload> images) {
         }
 
         @Override

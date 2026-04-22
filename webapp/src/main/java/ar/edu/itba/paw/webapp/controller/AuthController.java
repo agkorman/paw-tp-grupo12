@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -38,12 +39,21 @@ public class AuthController {
     public ModelAndView login(@RequestParam(value = "error", required = false) final String error,
                               @RequestParam(value = "logout", required = false) final String logout,
                               @RequestParam(value = "registered", required = false) final String registered,
+                              @RequestParam(value = LoginRedirectUtils.REDIRECT_PARAM, required = false) final String redirect,
+                              @RequestParam(value = LoginRedirectUtils.INTENT_PARAM, required = false) final String intent,
                               final Authentication authentication) {
+        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect).orElse(null);
+        final String safeIntent = LoginRedirectUtils.safeIntent(intent).orElse(null);
         if (isLoggedIn(authentication)) {
-            return new ModelAndView("redirect:/");
+            return new ModelAndView("redirect:" + LoginRedirectUtils.appendIntent(
+                    safeRedirect == null ? "/" : safeRedirect,
+                    safeIntent
+            ));
         }
 
         final ModelAndView mav = new ModelAndView("login.jsp");
+        mav.addObject("loginRedirect", safeRedirect);
+        mav.addObject("loginIntent", safeIntent);
         if (error != null) {
             mav.addObject("loginError", "Email o contraseña inválidos.");
         }

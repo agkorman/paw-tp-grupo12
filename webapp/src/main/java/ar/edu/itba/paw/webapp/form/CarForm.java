@@ -11,6 +11,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CarForm {
 
@@ -32,7 +34,7 @@ public class CarForm {
     @Size(max = 1500, message = "La descripción debe tener como máximo 1500 caracteres.")
     private String description;
 
-    private MultipartFile file;
+    private List<MultipartFile> files = new ArrayList<>();
 
     @NotBlank(message = "El tipo de motorización es obligatorio.")
     private String fuelType;
@@ -101,11 +103,22 @@ public class CarForm {
     }
 
     public MultipartFile getFile() {
-        return file;
+        return files == null || files.isEmpty() ? null : files.get(0);
     }
 
     public void setFile(final MultipartFile file) {
-        this.file = file;
+        this.files = new ArrayList<>();
+        if (file != null) {
+            this.files.add(file);
+        }
+    }
+
+    public List<MultipartFile> getFiles() {
+        return files;
+    }
+
+    public void setFiles(final List<MultipartFile> files) {
+        this.files = files == null ? new ArrayList<>() : files;
     }
 
     public String getFuelType() {

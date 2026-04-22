@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 
@@ -28,11 +29,23 @@ public interface CarService {
 
     Optional<CarImage> getCarImageByCarId(long carId);
 
+    List<CarImage> getCarImagesByCarId(long carId);
+
+    Optional<CarImage> getCarImageById(long carId, long imageId);
+
     void saveCarImage(long carId, String contentType, byte[] imageData);
+
+    void saveCarImages(long carId, List<CarImagePayload> images);
 
     CarRequest requestCarCreation(long brandId, String model, long bodyTypeId, long submittedByUserId,
                                   String submitterEmail, Optional<String> description,
                                   Optional<String> imageContentType, Optional<byte[]> imageData,
+                                  String fuelType, Integer horsepower, Integer airbagCount,
+                                  String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+
+    CarRequest requestCarCreation(long brandId, String model, long bodyTypeId, long submittedByUserId,
+                                  String submitterEmail, Optional<String> description,
+                                  List<CarImagePayload> images,
                                   String fuelType, Integer horsepower, Integer airbagCount,
                                   String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
 
