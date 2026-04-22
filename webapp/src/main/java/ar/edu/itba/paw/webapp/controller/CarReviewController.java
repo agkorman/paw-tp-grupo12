@@ -387,7 +387,7 @@ public class CarReviewController {
 
     @RequestMapping(value = "/reviews/{reviewId}/replies", method = RequestMethod.POST)
     public ModelAndView createReply(@PathVariable("reviewId") final long reviewId,
-                                    @RequestParam("body") final String body,
+                                    @RequestParam(value = "body", required = false) final String body,
                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
