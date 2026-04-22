@@ -13,9 +13,9 @@ public interface CarRequestDao {
 
     List<CarRequest> findByStatus(String status);
 
-    CarRequest create(long submittedByUserId, long brandId, long bodyTypeId, String model,
-                      String description, String imageContentType, byte[] imageData, String status,
-                      String fuelType, Integer horsepower, Integer airbagCount,
+    CarRequest create(long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId,
+                      String model, String description, String imageContentType, byte[] imageData,
+                      String status, String fuelType, Integer horsepower, Integer airbagCount,
                       String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
 
     boolean updateStatus(long id, String expectedStatus, String newStatus);

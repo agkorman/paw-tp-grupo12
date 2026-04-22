@@ -94,14 +94,14 @@ public class CarRequestJdbcDao implements CarRequestDao {
     }
 
     @Override
-    public CarRequest create(final long submittedByUserId, final long brandId, final long bodyTypeId,
-                             final String model, final String description,
+    public CarRequest create(final long submittedByUserId, final String submitterEmail, final long brandId,
+                             final long bodyTypeId, final String model, final String description,
                              final String imageContentType, final byte[] imageData, final String status,
                              final String fuelType, final Integer horsepower, final Integer airbagCount,
                              final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
         final Map<String, Object> params = new HashMap<>();
         params.put("submitted_by_user_id", submittedByUserId);
-        params.put("submitter_email", null);
+        params.put("submitter_email", submitterEmail);
         params.put("brand_id", brandId);
         params.put("body_type_id", bodyTypeId);
         params.put("model", model);

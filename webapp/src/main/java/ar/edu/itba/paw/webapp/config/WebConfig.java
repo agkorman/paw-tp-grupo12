@@ -156,6 +156,30 @@ public class WebConfig implements WebMvcConfigurer {
         return sender;
     }
 
+    @Bean(name = "appBaseUrl")
+    public String appBaseUrl() {
+        final String envValue = normalize(System.getenv("APP_BASE_URL"));
+        if (envValue != null) {
+            return envValue;
+        }
+
+        final ClassPathResource resource = new ClassPathResource(MAIL_PROPERTIES_RESOURCE);
+        if (resource.exists()) {
+            final Properties properties = new Properties();
+            try (InputStream is = resource.getInputStream()) {
+                properties.load(is);
+            } catch (final IOException e) {
+                throw new IllegalStateException("Failed to load " + MAIL_PROPERTIES_RESOURCE, e);
+            }
+            final String propValue = normalize(properties.getProperty("app.baseUrl"));
+            if (propValue != null) {
+                return propValue;
+            }
+        }
+
+        return "http://localhost:8080";
+    }
+
     @Bean(name = "mailTaskExecutor")
     public Executor mailTaskExecutor() {
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

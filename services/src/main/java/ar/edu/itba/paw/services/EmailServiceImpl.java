@@ -1,8 +1,8 @@
 package ar.edu.itba.paw.services;
 
-import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -37,19 +37,20 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final UserService userService;
-    private final CarService carService;
+    private final String appBaseUrl;
 
     @Autowired
     public EmailServiceImpl(final JavaMailSender mailSender, final UserService userService,
-                            final CarService carService) {
+                            @Qualifier("appBaseUrl") final String appBaseUrl) {
         this.mailSender = mailSender;
         this.userService = userService;
-        this.carService = carService;
+        this.appBaseUrl = appBaseUrl;
     }
 
     @Override
     @Async("mailTaskExecutor")
-    public void sendCarCreatedNotification(final Car car) {
+    public void sendNewCarRequestNotification(final CarRequest request, final String brandName,
+                                              final String bodyTypeName) {
         try {
             final List<String> moderators = userService.getModeratorsEmails();
             if (moderators.isEmpty()) {
@@ -63,40 +64,68 @@ public class EmailServiceImpl implements EmailService {
                     StandardCharsets.UTF_8.name()
             );
             helper.setTo(moderators.toArray(new String[0]));
-            helper.setSubject(buildSubject(car));
-            final CarImage carImage = getInlineCarImage(car);
-            helper.setText(buildPlainTextBody(car), buildHtmlBody(car, carImage != null));
-            if (carImage != null) {
+            helper.setSubject(buildRequestSubject(brandName, request.getModel()));
+
+            final boolean hasImage = request.getImageData() != null && request.getImageData().length > 0
+                    && request.getImageContentType() != null && !request.getImageContentType().isBlank();
+
+            helper.setText(
+                    buildRequestPlainTextBody(request, brandName, bodyTypeName),
+                    buildRequestHtmlBody(request, brandName, bodyTypeName, hasImage)
+            );
+
+            if (hasImage) {
                 helper.addInline(
                         CAR_IMAGE_CID,
-                        new ByteArrayResource(carImage.getImageData()),
-                        carImage.getContentType()
+                        new ByteArrayResource(request.getImageData()),
+                        request.getImageContentType()
                 );
             }
 
             mailSender.send(message);
         } catch (final MessagingException | RuntimeException e) {
-            LOGGER.warning("Failed to send car creation notification for car " + car.getId() + ": " + e.getMessage());
+            LOGGER.warning("Failed to send car request notification for request " + request.getId()
+                    + ": " + e.getMessage());
         }
     }
 
-    private String buildSubject(final Car car) {
-        return "[" + APP_NAME + "] Nuevo auto para revisar: " + sanitizeHeaderValue(car.getBrandName())
-                + " " + sanitizeHeaderValue(car.getModel());
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendCarApprovedNotification(final String recipientEmail, final String brandName,
+                                            final String model) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+        try {
+            final MimeMessage message = mailSender.createMimeMessage();
+            final MimeMessageHelper helper = new MimeMessageHelper(
+                    message,
+                    true,
+                    StandardCharsets.UTF_8.name()
+            );
+            helper.setTo(recipientEmail);
+            helper.setSubject(buildApprovedSubject(brandName, model));
+            helper.setText(
+                    buildApprovedPlainTextBody(brandName, model),
+                    buildApprovedHtmlBody(brandName, model)
+            );
+
+            mailSender.send(message);
+        } catch (final MessagingException | RuntimeException e) {
+            LOGGER.warning("Failed to send car approved notification to " + recipientEmail
+                    + ": " + e.getMessage());
+        }
     }
 
-    private String sanitizeHeaderValue(final String value) {
-        final String sanitized = safeValue(value)
-                .chars()
-                .filter(ch -> !Character.isISOControl(ch))
-                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                .toString()
-                .replaceAll("\\s+", " ")
-                .trim();
+    // ── New request notification helpers ──────────────────────────────────────
 
-        return sanitized;
+    private String buildRequestSubject(final String brandName, final String model) {
+        return "[" + APP_NAME + "] Nuevo auto para revisar: "
+                + sanitizeHeaderValue(brandName) + " " + sanitizeHeaderValue(model);
     }
-    private String buildPlainTextBody(final Car car) {
+
+    private String buildRequestPlainTextBody(final CarRequest request, final String brandName,
+                                             final String bodyTypeName) {
         return """
                 Hola equipo,
 
@@ -109,27 +138,33 @@ public class EmailServiceImpl implements EmailService {
 
                 Descripción:
                 %s
+
+                Revisalo en el dashboard: %s
                 """.formatted(
                 APP_NAME,
-                safeValue(car.getBrandName()),
-                safeValue(car.getModel()),
-                safeValue(car.getBodyType()),
-                car.getHasImage() ? "Sí" : "No",
-                previewDescription(car)
+                safeValue(brandName),
+                safeValue(request.getModel()),
+                safeValue(bodyTypeName),
+                request.getImageData() != null && request.getImageData().length > 0 ? "Sí" : "No",
+                previewDescription(request.getDescription()),
+                appBaseUrl + "/admin"
         );
     }
 
-    private String buildHtmlBody(final Car car, final boolean hasInlineImage) {
-        final String brand = safeValue(car.getBrandName());
-        final String model = safeValue(car.getModel());
-        final String bodyType = escapeHtml(safeValue(car.getBodyType()));
-        final String description = escapeHtml(previewDescription(car)).replace("\n", "<br>");
+    private String buildRequestHtmlBody(final CarRequest request, final String brandName,
+                                        final String bodyTypeName, final boolean hasInlineImage) {
+        final String brand = safeValue(brandName);
+        final String model = safeValue(request.getModel());
+        final String bodyType = escapeHtml(safeValue(bodyTypeName));
+        final String description = escapeHtml(previewDescription(request.getDescription())).replace("\n", "<br>");
         final String imageStatus = hasInlineImage ? "Con imagen" : "Sin imagen";
         final String carName = escapeHtml(brand + " " + model);
         final String preheader = escapeHtml("Nueva alta en el catálogo: " + brand + " " + model);
         final String intro = escapeHtml(
                 "Se registró un nuevo auto en La Posta Autos. El equipo ya puede revisarlo desde el catálogo."
         );
+        final String dashboardUrl = escapeHtml(appBaseUrl + "/admin");
+
         final String imageBlock = hasInlineImage
                 ? """
                                     <div style="margin-bottom:24px;">
@@ -204,8 +239,14 @@ public class EmailServiceImpl implements EmailService {
                                     <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
                                         Descripción enviada
                                     </div>
-                                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:20px 22px;font-size:15px;line-height:1.7;color:%s;font-family:%s;">
+                                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:20px 22px;font-size:15px;line-height:1.7;color:%s;font-family:%s;margin-bottom:28px;">
                                         %s
+                                    </div>
+
+                                    <div style="text-align:center;">
+                                        <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
+                                            Ir al dashboard
+                                        </a>
                                     </div>
 
                                 </div>
@@ -254,26 +295,141 @@ public class EmailServiceImpl implements EmailService {
                 COLOR_OUTLINE,
                 COLOR_ON_SURFACE,
                 BODY_FONT,
-                description
+                description,
+                dashboardUrl,
+                COLOR_PRIMARY_CONTAINER,
+                COLOR_ON_PRIMARY,
+                DISPLAY_FONT
         );
     }
 
-    private CarImage getInlineCarImage(final Car car) {
-        return carService.getCarImageByCarId(car.getId())
-                .filter(image -> image.getImageData() != null && image.getImageData().length > 0)
-                .filter(image -> image.getContentType() != null && !image.getContentType().isBlank())
-                .orElse(null);
+    // ── Approved notification helpers ─────────────────────────────────────────
+
+    private String buildApprovedSubject(final String brandName, final String model) {
+        return "[" + APP_NAME + "] Tu auto fue aprobado: "
+                + sanitizeHeaderValue(brandName) + " " + sanitizeHeaderValue(model);
     }
 
-    private String previewDescription(final Car car) {
-        if (car.getDescription() == null || car.getDescription().isBlank()) {
+    private String buildApprovedPlainTextBody(final String brandName, final String model) {
+        return """
+                ¡Buenas noticias!
+
+                Tu auto %s %s fue aprobado y ya está visible en el catálogo de %s.
+
+                Podés verlo en: %s
+                """.formatted(
+                safeValue(brandName),
+                safeValue(model),
+                APP_NAME,
+                appBaseUrl + "/cars"
+        );
+    }
+
+    private String buildApprovedHtmlBody(final String brandName, final String model) {
+        final String carName = escapeHtml(safeValue(brandName) + " " + safeValue(model));
+        final String catalogUrl = escapeHtml(appBaseUrl + "/cars");
+        final String preheader = escapeHtml("Tu auto " + safeValue(brandName) + " " + safeValue(model)
+                + " ya está en el catálogo");
+
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <body style="margin:0;padding:24px;background:%s;color:%s;font-family:%s;">
+                    <div style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;color:transparent;">
+                        %s
+                    </div>
+                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
+                        <tr>
+                            <td style="padding:0;">
+                                <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
+                                    <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
+                                        %s
+                                    </div>
+                                    <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
+                                        ¡Tu auto fue aprobado!
+                                    </h1>
+                                    <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
+                                        Ya está disponible para que todos lo vean en el catálogo.
+                                    </p>
+                                </div>
+
+                                <div style="background:%s;padding:32px;border:1px solid %s;border-top:none;border-radius:0 0 22px 22px;">
+                                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:28px;">
+                                        <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;font-weight:700;font-family:%s;">
+                                            Vehículo aprobado
+                                        </div>
+                                        <div style="font-size:28px;line-height:1.15;font-weight:700;color:%s;font-family:%s;">
+                                            %s
+                                        </div>
+                                        <div style="margin-top:12px;">
+                                            <span style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(100,200,100,0.14);border:1px solid rgba(100,200,100,0.3);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#88c888;font-family:%s;">
+                                                Aprobado
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div style="text-align:center;">
+                                        <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
+                                            Ver en el catálogo
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+                """.formatted(
+                COLOR_SURFACE_LOW,
+                COLOR_ON_SURFACE,
+                BODY_FONT,
+                preheader,
+                COLOR_PRIMARY_CONTAINER,
+                COLOR_PRIMARY_CONTAINER,
+                COLOR_PRIMARY,
+                COLOR_ON_PRIMARY,
+                BODY_FONT,
+                escapeHtml(APP_NAME),
+                DISPLAY_FONT,
+                BODY_FONT,
+                COLOR_SURFACE,
+                COLOR_OUTLINE,
+                COLOR_SURFACE_HIGH,
+                COLOR_OUTLINE,
+                COLOR_ON_SURFACE_VARIANT,
+                BODY_FONT,
+                COLOR_ON_SURFACE,
+                DISPLAY_FONT,
+                carName,
+                BODY_FONT,
+                catalogUrl,
+                COLOR_PRIMARY_CONTAINER,
+                COLOR_ON_PRIMARY,
+                DISPLAY_FONT
+        );
+    }
+
+    // ── Shared helpers ────────────────────────────────────────────────────────
+
+    private String sanitizeHeaderValue(final String value) {
+        return safeValue(value)
+                .chars()
+                .filter(ch -> !Character.isISOControl(ch))
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString()
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    private String previewDescription(final String description) {
+        if (description == null || description.isBlank()) {
             return "Sin descripción provista.";
         }
-        final String description = car.getDescription().trim();
-        if (description.length() <= DESCRIPTION_PREVIEW_LENGTH) {
-            return description;
+        final String trimmed = description.trim();
+        if (trimmed.length() <= DESCRIPTION_PREVIEW_LENGTH) {
+            return trimmed;
         }
-        return description.substring(0, DESCRIPTION_PREVIEW_LENGTH - 3).trim() + "...";
+        return trimmed.substring(0, DESCRIPTION_PREVIEW_LENGTH - 3).trim() + "...";
     }
 
     private String safeValue(final String value) {
@@ -288,4 +444,5 @@ public class EmailServiceImpl implements EmailService {
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;");
     }
+
 }

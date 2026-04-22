@@ -4,12 +4,14 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarService;
+import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.form.CarForm;
@@ -71,14 +73,16 @@ public class CarController {
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
     private final ReviewService reviewService;
+    private final EmailService emailService;
 
     @Autowired
     public CarController(final CarService carService, final BrandDao brandDao, final BodyTypeDao bodyTypeDao,
-                         final ReviewService reviewService) {
+                         final ReviewService reviewService, final EmailService emailService) {
         this.carService = carService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
         this.reviewService = reviewService;
+        this.emailService = emailService;
     }
 
     @InitBinder
@@ -111,12 +115,16 @@ public class CarController {
     @RequestMapping(value = "/cars", method = RequestMethod.GET)
     public String listCars(@ModelAttribute final CarSearchCriteria criteria,
                            @RequestParam(value = "createCar", required = false) final String createCar,
+                           @RequestParam(value = "submitted", required = false) final String submitted,
                            @ModelAttribute("carForm") final CarForm carForm,
                            final Model model) {
         populateCarsPageModel(model, criteria);
         if ("true".equalsIgnoreCase(createCar)) {
             model.addAttribute("openCarModal", true);
             model.addAttribute("openCreateCarModal", true);
+        }
+        if ("true".equalsIgnoreCase(submitted)) {
+            model.addAttribute("showSubmittedToast", true);
         }
         return "cars.jsp";
     }
@@ -195,11 +203,12 @@ public class CarController {
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
 
-        carService.requestCarCreation(
+        final CarRequest carRequest = carService.requestCarCreation(
                 resolvedBrand.getId(),
                 carForm.getModel(),
                 resolvedBodyType.getId(),
                 currentUser.getId(),
+                currentUser.getEmail(),
                 Optional.ofNullable(carForm.getDescription()).filter(value -> !value.isEmpty()),
                 imageContentType,
                 imageData,
@@ -210,8 +219,9 @@ public class CarController {
                 carForm.getFuelConsumption(),
                 carForm.getMaxSpeedKmh()
         );
+        emailService.sendNewCarRequestNotification(carRequest, resolvedBrand.getName(), resolvedBodyType.getName());
 
-        return "redirect:/cars";
+        return "redirect:/cars?submitted=true";
     }
 
     private void populateCarsPageModel(final Model model, final CarSearchCriteria criteria) {

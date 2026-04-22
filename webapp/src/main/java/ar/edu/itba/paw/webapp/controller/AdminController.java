@@ -8,6 +8,7 @@ import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
+import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,16 +56,19 @@ public class AdminController {
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
     private final UserService userService;
+    private final EmailService emailService;
 
     @Autowired
     public AdminController(final CarRequestService carRequestService, final CarService carService,
                            final BrandDao brandDao,
-                           final BodyTypeDao bodyTypeDao, final UserService userService) {
+                           final BodyTypeDao bodyTypeDao, final UserService userService,
+                           final EmailService emailService) {
         this.carRequestService = carRequestService;
         this.carService = carService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
         this.userService = userService;
+        this.emailService = emailService;
     }
 
     @RequestMapping(method = RequestMethod.GET)
@@ -118,7 +122,9 @@ public class AdminController {
         final Optional<String> imageContentType = resolveOptionalImageContentType(file);
         final Optional<byte[]> imageData = readOptionalImageData(file);
 
-        carRequestService.approvePendingRequest(
+        final CarRequest pendingRequest = carRequestService.getCarRequestById(requestId).orElse(null);
+
+        final boolean approved = carRequestService.approvePendingRequest(
                 requestId,
                 resolvedBrand.getId(),
                 carForm.getModel(),
@@ -133,6 +139,14 @@ public class AdminController {
                 carForm.getFuelConsumption(),
                 carForm.getMaxSpeedKmh()
         );
+
+        if (approved && pendingRequest != null) {
+            final String submitterEmail = resolveSubmitterEmail(pendingRequest);
+            if (submitterEmail != null) {
+                emailService.sendCarApprovedNotification(submitterEmail, resolvedBrand.getName(), carForm.getModel());
+            }
+        }
+
         return new ModelAndView("redirect:/admin");
     }
 
@@ -257,6 +271,19 @@ public class AdminController {
                     .orElse("Usuario #" + request.getSubmittedByUserId());
         }
         return "Usuario sin identificar";
+    }
+
+    private String resolveSubmitterEmail(final CarRequest request) {
+        if (request.getSubmitterEmail() != null && !request.getSubmitterEmail().isBlank()) {
+            return request.getSubmitterEmail();
+        }
+        if (request.getSubmittedByUserId() != null) {
+            return userService.getUserById(request.getSubmittedByUserId())
+                    .map(User::getEmail)
+                    .filter(email -> !email.isBlank())
+                    .orElse(null);
+        }
+        return null;
     }
 
     private String validateUploadedImage(final MultipartFile file, final boolean required) {

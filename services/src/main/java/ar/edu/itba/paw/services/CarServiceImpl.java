@@ -97,7 +97,7 @@ public class CarServiceImpl implements CarService {
     @Override
     @Transactional
     public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                         final long submittedByUserId,
+                                         final long submittedByUserId, final String submitterEmail,
                                          final Optional<String> description,
                                          final Optional<String> imageContentType,
                                          final Optional<byte[]> imageData,
@@ -117,6 +117,7 @@ public class CarServiceImpl implements CarService {
 
         return carRequestService.createPendingRequest(
                 submittedByUserId,
+                submitterEmail,
                 brandId,
                 bodyTypeId,
                 model,

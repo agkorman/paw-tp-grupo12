@@ -250,7 +250,8 @@ public class CarReviewControllerTest {
 
         @Override
         public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                             final long submittedByUserId, final Optional<String> description,
+                                             final long submittedByUserId, final String submitterEmail,
+                                             final Optional<String> description,
                                              final Optional<String> imageContentType,
                                              final Optional<byte[]> imageData,
                                              final String fuelType, final Integer horsepower,
