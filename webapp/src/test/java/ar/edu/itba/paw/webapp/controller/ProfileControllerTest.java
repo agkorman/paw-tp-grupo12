@@ -3,10 +3,12 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
@@ -110,6 +112,7 @@ public class ProfileControllerTest {
                 new FakeReviewLikeService(likedReply == null ? Collections.emptyList() : List.of(likedReply.getId())),
                 new FakeReviewReplyService(likedReply),
                 new FakeCarService(),
+                new FakeCarFavoriteService(),
                 new FakeUserService(),
                 new FakeUserFollowService()
         );
@@ -282,6 +285,11 @@ public class ProfileControllerTest {
         public List<Long> getLikedReplyIdsByUser(final long userId) {
             return likedReplyIds;
         }
+
+        @Override
+        public Map<Long, Long> countNewLikesPerReview(final long userId, final LocalDateTime since) {
+            return Collections.emptyMap();
+        }
     }
 
     private static final class FakeReviewReplyService implements ReviewReplyService {
@@ -323,17 +331,29 @@ public class ProfileControllerTest {
         public boolean deleteReply(final long id, final long userId) {
             return false;
         }
+
+        @Override
+        public Map<Long, Long> countNewRepliesPerReview(final long userId, final LocalDateTime since) {
+            return Collections.emptyMap();
+        }
     }
 
     private static final class FakeCarService implements CarService {
         @Override
         public List<Car> getAllCars() {
-            return List.of(new Car(10L, 1L, "Toyota", "Supra", 1L, "Coupe", "Desc", LocalDateTime.now()));
+            throw new UnsupportedOperationException("ProfileController should fetch only reviewed cars.");
         }
 
         @Override
         public Optional<Car> getCarById(final long id) {
             return Optional.empty();
+        }
+
+        @Override
+        public List<Car> getCarsByIds(final Collection<Long> ids) {
+            return ids.contains(10L)
+                    ? List.of(new Car(10L, 1L, "Toyota", "Supra", 1L, "Coupe", "Desc", LocalDateTime.now()))
+                    : Collections.emptyList();
         }
 
         @Override
@@ -352,7 +372,7 @@ public class ProfileControllerTest {
         }
 
         @Override
-        public List<Car> searchCars(final String query, final String brand, final String bodyType) {
+        public List<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
             return Collections.emptyList();
         }
 
@@ -380,17 +400,72 @@ public class ProfileControllerTest {
         }
 
         @Override
-        public Car createCar(final long brandId, final String model, final long bodyTypeId,
-                             final long submittedByUserId, final Optional<String> description,
-                             final Optional<String> imageContentType, final Optional<byte[]> imageData) {
+        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                             final long submittedByUserId, final String submitterEmail,
+                                             final Optional<String> description,
+                                             final Optional<String> imageContentType,
+                                             final Optional<byte[]> imageData,
+                                             final String fuelType, final Integer horsepower,
+                                             final Integer airbagCount, final String transmission,
+                                             final java.math.BigDecimal fuelConsumption,
+                                             final Integer maxSpeedKmh) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public Car createCar(final long brandId, final String model, final long bodyTypeId,
-                             final long submittedByUserId, final Optional<String> description,
-                             final List<CarImagePayload> images) {
+        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                             final long submittedByUserId, final String submitterEmail,
+                                             final Optional<String> description,
+                                             final List<CarImagePayload> images,
+                                             final String fuelType, final Integer horsepower,
+                                             final Integer airbagCount, final String transmission,
+                                             final java.math.BigDecimal fuelConsumption,
+                                             final Integer maxSpeedKmh) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<Car> updateCar(final long id, final long brandId, final String model,
+                                       final long bodyTypeId, final String description,
+                                       final Optional<String> imageContentType,
+                                       final Optional<byte[]> imageData,
+                                       final String fuelType, final Integer horsepower,
+                                       final Integer airbagCount, final String transmission,
+                                       final java.math.BigDecimal fuelConsumption,
+                                       final Integer maxSpeedKmh) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean deleteCar(final long id) {
+            return false;
+        }
+    }
+
+    private static final class FakeCarFavoriteService implements CarFavoriteService {
+        @Override
+        public List<Long> findFavoriteCarIdsByUser(final long userId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public boolean setFavorite(final long userId, final long carId, final boolean favorite) {
+            return false;
+        }
+
+        @Override
+        public boolean isFavorited(final long userId, final long carId) {
+            return false;
+        }
+
+        @Override
+        public List<Car> getFavoriteCars(final long userId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public java.util.Set<Long> getFavoritedCarIds(final long userId, final Collection<Long> carIds) {
+            return Collections.emptySet();
         }
     }
 
@@ -417,6 +492,11 @@ public class ProfileControllerTest {
 
         @Override
         public List<String> getModeratorsEmails() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<User> getAllUsers() {
             return Collections.emptyList();
         }
     }

@@ -1,7 +1,10 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.CarSearchCriteria;
 
+import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,6 +12,8 @@ public interface CarDao {
     List<Car> findAll();
 
     Optional<Car> findById(long id);
+
+    List<Car> findByIds(Collection<Long> ids);
 
     List<Car> findByBrandId(long brandId);
 
@@ -18,5 +23,15 @@ public interface CarDao {
 
     List<Car> search(String query, Long brandId, Long bodyTypeId);
 
-    Car create(long brandId, String model, long bodyTypeId, String description);
+    List<Car> findByCriteria(CarSearchCriteria criteria);
+
+    Car create(long brandId, String model, long bodyTypeId, String description,
+               String fuelType, Integer horsepower, Integer airbagCount,
+               String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+
+    Optional<Car> update(long id, long brandId, String model, long bodyTypeId, String description,
+                         String fuelType, Integer horsepower, Integer airbagCount,
+                         String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+
+    boolean delete(long id);
 }

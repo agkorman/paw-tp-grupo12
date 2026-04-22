@@ -41,46 +41,31 @@
                         likeCount="${reviewCard.likeCount}"
                         disabled="${not authenticated}"/>
                 <c:if test="${editable}">
-                    <div class="profile-review-menu" data-profile-review-menu>
+                    <pa:action-menu label="Abrir opciones de review" cssClass="profile-review-menu">
                         <button
                                 type="button"
-                                class="profile-review-menu-toggle"
-                                data-profile-review-menu-toggle
-                                aria-haspopup="true"
-                                aria-expanded="false"
-                                aria-label="Abrir opciones de review">
-                            <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true" focusable="false">
-                                <circle cx="9" cy="4" r="1.6"/>
-                                <circle cx="9" cy="9" r="1.6"/>
-                                <circle cx="9" cy="14" r="1.6"/>
-                            </svg>
+                                data-open-review-modal="edit"
+                                data-review-action="${fn:escapeXml(reviewEditUrl)}"
+                                data-review-id="${fn:escapeXml(reviewCard.review.id)}"
+                                data-review-car-id="${fn:escapeXml(reviewCard.review.carId)}"
+                                data-review-rating="${fn:escapeXml(reviewCard.review.rating)}"
+                                data-review-ownership-status="${fn:escapeXml(reviewCard.review.ownershipStatus)}"
+                                data-review-title="${fn:escapeXml(reviewCard.review.title)}"
+                                data-review-body="${fn:escapeXml(reviewCard.review.body)}"
+                                data-review-model-year="${fn:escapeXml(reviewCard.review.modelYear)}"
+                                data-review-mileage-km="${fn:escapeXml(reviewCard.review.mileageKm)}"
+                                data-review-would-recommend="${fn:escapeXml(reviewCard.review.wouldRecommend)}">
+                            Editar
                         </button>
-                        <div class="profile-review-menu-panel" data-profile-review-menu-panel hidden>
-                            <button
-                                    type="button"
-                                    data-open-review-modal="edit"
-                                    data-review-action="${fn:escapeXml(reviewEditUrl)}"
-                                    data-review-id="${fn:escapeXml(reviewCard.review.id)}"
-                                    data-review-car-id="${fn:escapeXml(reviewCard.review.carId)}"
-                                    data-review-rating="${fn:escapeXml(reviewCard.review.rating)}"
-                                    data-review-ownership-status="${fn:escapeXml(reviewCard.review.ownershipStatus)}"
-                                    data-review-title="${fn:escapeXml(reviewCard.review.title)}"
-                                    data-review-body="${fn:escapeXml(reviewCard.review.body)}"
-                                    data-review-model-year="${fn:escapeXml(reviewCard.review.modelYear)}"
-                                    data-review-mileage-km="${fn:escapeXml(reviewCard.review.mileageKm)}"
-                                    data-review-would-recommend="${fn:escapeXml(reviewCard.review.wouldRecommend)}">
-                                Editar
-                            </button>
-                            <button
-                                    type="button"
-                                    class="profile-review-menu-danger"
-                                    data-open-delete-review-modal
-                                    data-review-delete-action="${fn:escapeXml(reviewDeleteUrl)}"
-                                    data-review-title="${fn:escapeXml(reviewCard.review.title)}">
-                                Eliminar
-                            </button>
-                        </div>
-                    </div>
+                        <button
+                                type="button"
+                                class="action-menu-danger"
+                                data-open-delete-review-modal
+                                data-review-delete-action="${fn:escapeXml(reviewDeleteUrl)}"
+                                data-review-title="${fn:escapeXml(reviewCard.review.title)}">
+                            Eliminar
+                        </button>
+                    </pa:action-menu>
                 </c:if>
             </div>
         </div>

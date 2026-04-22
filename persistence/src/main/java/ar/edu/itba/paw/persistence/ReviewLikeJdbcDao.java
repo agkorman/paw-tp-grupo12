@@ -3,11 +3,14 @@ package ar.edu.itba.paw.persistence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -62,6 +65,22 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
     @Override
     public Map<Long, Long> countReviewLikesByReviewIds(final Collection<Long> reviewIds) {
         return countByIds("review_likes", "review_id", "reviewIds", reviewIds);
+    }
+
+    @Override
+    public Map<Long, Long> countNewLikesPerReview(final long userId, final LocalDateTime since) {
+        final Map<Long, Long> counts = new HashMap<>();
+        jdbcTemplate.query(
+                "SELECT r.review_id, COUNT(*) AS like_count "
+                        + "FROM reviews r "
+                        + "JOIN review_likes rl ON rl.review_id = r.review_id "
+                        + "WHERE r.user_id = ? AND rl.created_at >= ? "
+                        + "GROUP BY r.review_id",
+                (RowCallbackHandler) rs -> counts.put(rs.getLong("review_id"), rs.getLong("like_count")),
+                userId,
+                Timestamp.valueOf(since)
+        );
+        return counts;
     }
 
     @Override

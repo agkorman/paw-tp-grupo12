@@ -4,7 +4,8 @@
 <%@ attribute name="selectedBrand" required="false" %>
 <%@ attribute name="selectedBodyType" required="false" %>
 <%@ attribute name="searchQuery" required="false" %>
-<%@ attribute name="resultCount" required="true" %>
+<%@ attribute name="sortBy" required="false" %>
+<%@ attribute name="hasAdvancedFilters" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <c:url var="carsContentUrl" value="/cars/content"/>
@@ -100,8 +101,58 @@
             </select>
         </div>
 
-        <div class="cars-toolbar-meta">
-            <span class="cars-toolbar-count"><c:out value="${resultCount}"/> vehículos encontrados</span>
+        <button type="button"
+                id="filtersToggleBtn"
+                class="cars-toolbar-filters-btn${hasAdvancedFilters ? ' is-active' : ''}"
+                data-open-filters-panel
+                aria-expanded="false"
+                aria-controls="carsFiltersPanel"
+                aria-label="Filtros avanzados">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <line x1="4" y1="6" x2="20" y2="6"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+                <line x1="10" y1="18" x2="14" y2="18"></line>
+            </svg>
+            Filtros
+        </button>
+        <span class="cars-toolbar-count" hidden aria-live="polite"></span>
+
+        <div class="cars-toolbar-field">
+            <span class="cars-toolbar-field-ui" aria-hidden="true">
+                <span class="cars-toolbar-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                        <path d="M3 6h18M7 12h10M11 18h2"/>
+                    </svg>
+                </span>
+                <span class="cars-toolbar-field-copy">
+                    <span class="cars-toolbar-label">Ordenar por</span>
+                    <span class="cars-toolbar-value" data-toolbar-select-value="sortBy">
+                        <c:choose>
+                            <c:when test="${sortBy eq 'name_asc'}">Nombre A-Z</c:when>
+                            <c:when test="${sortBy eq 'name_desc'}">Nombre Z-A</c:when>
+                            <c:when test="${sortBy eq 'hp_desc'}">Mayor potencia</c:when>
+                            <c:when test="${sortBy eq 'hp_asc'}">Menor potencia</c:when>
+                            <c:when test="${sortBy eq 'speed_desc'}">Mayor velocidad</c:when>
+                            <c:when test="${sortBy eq 'consumption_asc'}">Menor consumo</c:when>
+                            <c:otherwise>Relevancia</c:otherwise>
+                        </c:choose>
+                    </span>
+                </span>
+                <span class="cars-toolbar-chevron" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </span>
+            </span>
+            <select class="cars-toolbar-select cars-toolbar-select-overlay" id="filter-sort" name="sortBy" aria-label="Ordenar resultados">
+                <option value="" <c:if test="${empty sortBy}">selected</c:if>>Relevancia</option>
+                <option value="name_asc" <c:if test="${sortBy eq 'name_asc'}">selected</c:if>>Nombre A-Z</option>
+                <option value="name_desc" <c:if test="${sortBy eq 'name_desc'}">selected</c:if>>Nombre Z-A</option>
+                <option value="hp_desc" <c:if test="${sortBy eq 'hp_desc'}">selected</c:if>>Mayor potencia</option>
+                <option value="hp_asc" <c:if test="${sortBy eq 'hp_asc'}">selected</c:if>>Menor potencia</option>
+                <option value="speed_desc" <c:if test="${sortBy eq 'speed_desc'}">selected</c:if>>Mayor velocidad</option>
+                <option value="consumption_asc" <c:if test="${sortBy eq 'consumption_asc'}">selected</c:if>>Menor consumo</option>
+            </select>
         </div>
     </div>
 </form>

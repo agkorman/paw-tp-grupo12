@@ -4,11 +4,15 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
+import ar.edu.itba.paw.persistence.BodyTypeDao;
+import ar.edu.itba.paw.persistence.BrandDao;
+import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.form.CarForm;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -51,18 +55,26 @@ public class CarReviewController {
             Set.of("", "Propietario actual", "Ex propietario");
 
     private final CarService carService;
+    private final CarFavoriteService carFavoriteService;
     private final ReviewService reviewService;
     private final ReviewReplyService reviewReplyService;
     private final ReviewLikeService reviewLikeService;
+    private final BrandDao brandDao;
+    private final BodyTypeDao bodyTypeDao;
 
     @Autowired
-    public CarReviewController(final CarService carService, final ReviewService reviewService,
+    public CarReviewController(final CarService carService, final CarFavoriteService carFavoriteService,
+                               final ReviewService reviewService,
                                final ReviewReplyService reviewReplyService,
-                               final ReviewLikeService reviewLikeService) {
+                               final ReviewLikeService reviewLikeService,
+                               final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
         this.carService = carService;
+        this.carFavoriteService = carFavoriteService;
         this.reviewService = reviewService;
         this.reviewReplyService = reviewReplyService;
         this.reviewLikeService = reviewLikeService;
+        this.brandDao = brandDao;
+        this.bodyTypeDao = bodyTypeDao;
     }
 
     @InitBinder
@@ -75,8 +87,8 @@ public class CarReviewController {
                              @RequestParam(value = "sort", required = false) final String sort,
                              @RequestParam(value = "reviewForm", required = false) final String reviewFormParam,
                              @ModelAttribute("reviewForm") final ReviewForm reviewForm,
-                             final Model model,
-                             @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+                             @AuthenticationPrincipal final AuthenticatedUser currentUser,
+                             final Model model) {
         if (carId == null) {
             return "redirect:/cars";
         }
@@ -89,7 +101,7 @@ public class CarReviewController {
         if (reviewForm.getCarId() == null) {
             reviewForm.setCarId(carId);
         }
-        populateCarReviewPageModel(model, pageData);
+        populateCarReviewPageModel(model, pageData, currentUser);
         if ("true".equalsIgnoreCase(reviewFormParam)) {
             model.addAttribute("openReviewModal", true);
         }
@@ -143,7 +155,7 @@ public class CarReviewController {
 
         if (errors.hasErrors()) {
             final ReviewPageData pageData = resolveReviewPageData(car.getId(), null, currentUserId(currentUser));
-            populateCarReviewPageModel(model, pageData);
+            populateCarReviewPageModel(model, pageData, currentUser);
             model.addAttribute("openReviewModal", true);
             return "car-review.jsp";
         }
@@ -163,23 +175,18 @@ public class CarReviewController {
     }
 
     private ModelAndView carReviewPage(final long carId, final String sort, final String error) {
-        return carReviewPage(carId, sort, error, false);
+        return carReviewPage(carId, sort, error, false, null);
     }
 
     private ModelAndView carReviewPage(final long carId, final String sort, final String error,
-                                       final boolean openReviewModal) {
-        return carReviewPage(carId, sort, error, openReviewModal, null);
-    }
-
-    private ModelAndView carReviewPage(final long carId, final String sort, final String error,
-                                       final boolean openReviewModal, final Long currentUserId) {
-        final ReviewPageData pageData = resolveReviewPageData(carId, sort, currentUserId);
+                                       final boolean openReviewModal, final AuthenticatedUser currentUser) {
+        final ReviewPageData pageData = resolveReviewPageData(carId, sort, currentUserId(currentUser));
         if (pageData == null) {
             return new ModelAndView("redirect:/cars");
         }
 
         final ModelAndView mav = new ModelAndView("car-review.jsp");
-        populateCarReviewPageModel(mav, pageData);
+        populateCarReviewPageModel(mav, pageData, currentUser);
         final ReviewForm reviewForm = new ReviewForm();
         reviewForm.setCarId(carId);
         mav.addObject("reviewForm", reviewForm);
@@ -191,8 +198,10 @@ public class CarReviewController {
         return mav;
     }
 
-    private void populateCarReviewPageModel(final Model model, final ReviewPageData pageData) {
+    private void populateCarReviewPageModel(final Model model, final ReviewPageData pageData,
+                                            final AuthenticatedUser currentUser) {
         model.addAttribute("selectedCar", pageData.selectedCar);
+        model.addAttribute("selectedCarFavorited", isSelectedCarFavorited(pageData.selectedCar, currentUser));
         model.addAttribute("reviews", pageData.reviews);
         model.addAttribute("reviewThreads", pageData.reviewThreads);
         model.addAttribute("averageRating", calculateAverageRating(pageData.reviews));
@@ -202,10 +211,15 @@ public class CarReviewController {
         model.addAttribute("latestReviewLikeCount", pageData.latestReviewLikeCount);
         model.addAttribute("latestReviewLiked", pageData.latestReviewLiked);
         model.addAttribute("carImages", pageData.carImages);
+        model.addAttribute("brands", brandDao.findAll());
+        model.addAttribute("bodyTypes", bodyTypeDao.findAll());
+        model.addAttribute("carForm", new CarForm());
     }
 
-    private void populateCarReviewPageModel(final ModelAndView mav, final ReviewPageData pageData) {
+    private void populateCarReviewPageModel(final ModelAndView mav, final ReviewPageData pageData,
+                                            final AuthenticatedUser currentUser) {
         mav.addObject("selectedCar", pageData.selectedCar);
+        mav.addObject("selectedCarFavorited", isSelectedCarFavorited(pageData.selectedCar, currentUser));
         mav.addObject("reviews", pageData.reviews);
         mav.addObject("reviewThreads", pageData.reviewThreads);
         mav.addObject("averageRating", calculateAverageRating(pageData.reviews));
@@ -215,6 +229,9 @@ public class CarReviewController {
         mav.addObject("latestReviewLikeCount", pageData.latestReviewLikeCount);
         mav.addObject("latestReviewLiked", pageData.latestReviewLiked);
         mav.addObject("carImages", pageData.carImages);
+        mav.addObject("brands", brandDao.findAll());
+        mav.addObject("bodyTypes", bodyTypeDao.findAll());
+        mav.addObject("carForm", new CarForm());
     }
 
     private ReviewPageData resolveReviewPageData(final long carId, final String sort, final Long currentUserId) {
@@ -288,6 +305,10 @@ public class CarReviewController {
                 .collect(Collectors.toList());
     }
 
+    private boolean isSelectedCarFavorited(final Car selectedCar, final AuthenticatedUser currentUser) {
+        return currentUser != null && carFavoriteService.isFavorited(currentUser.getId(), selectedCar.getId());
+    }
+
     private List<Review> getReviewsForCar(final long carId, final String sort) {
         if (SORT_RATING_ASC.equals(sort)) {
             return reviewService.getReviewsByCarOrderByRatingAsc(carId);
@@ -335,7 +356,7 @@ public class CarReviewController {
 
         final String validationError = validateReviewInput(rating, title, body, ownershipStatus, modelYear);
         if (validationError != null) {
-            return carReviewPage(existingReview.getCarId(), null, validationError, true);
+            return carReviewPage(existingReview.getCarId(), null, validationError, true, currentUser);
         }
 
         reviewService.updateReview(
@@ -376,7 +397,7 @@ public class CarReviewController {
 
         final String validationError = validateReplyInput(body);
         if (validationError != null) {
-            return carReviewPage(review.getCarId(), null, validationError, false, currentUser.getId());
+            return carReviewPage(review.getCarId(), null, validationError, false, currentUser);
         }
 
         try {
@@ -384,7 +405,7 @@ public class CarReviewController {
         } catch (final RuntimeException ignored) {
             return carReviewPage(review.getCarId(), null,
                     "No pudimos publicar la respuesta. Intentá de nuevo en unos segundos.",
-                    false, currentUser.getId());
+                    false, currentUser);
         }
         return new ModelAndView("redirect:/reviews?carId=" + review.getCarId() + "#review-" + reviewId);
     }
@@ -406,7 +427,7 @@ public class CarReviewController {
         } catch (final RuntimeException ignored) {
             return carReviewPage(review.getCarId(), null,
                     "No pudimos actualizar el like. Intentá de nuevo en unos segundos.",
-                    false, currentUser.getId());
+                    false, currentUser);
         }
         return new ModelAndView("redirect:/reviews?carId=" + review.getCarId() + "#review-" + reviewId);
     }
@@ -430,7 +451,7 @@ public class CarReviewController {
         } catch (final RuntimeException ignored) {
             return carReviewPage(review.getCarId(), null,
                     "No pudimos actualizar el like. Intentá de nuevo en unos segundos.",
-                    false, currentUser.getId());
+                    false, currentUser);
         }
         return new ModelAndView("redirect:/reviews?carId=" + review.getCarId() + "#review-" + review.getId());
     }

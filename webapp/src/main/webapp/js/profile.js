@@ -119,34 +119,46 @@
         }
     }
 
-    function closeReviewMenus(exceptMenu) {
-        var menus = document.querySelectorAll('[data-profile-review-menu]');
-        for (var i = 0; i < menus.length; i += 1) {
-            if (menus[i] === exceptMenu) {
-                continue;
-            }
-            var panel = menus[i].querySelector('[data-profile-review-menu-panel]');
-            var toggle = menus[i].querySelector('[data-profile-review-menu-toggle]');
-            if (panel) {
-                panel.hidden = true;
-            }
-            if (toggle) {
-                toggle.setAttribute('aria-expanded', 'false');
-            }
+    function closeActionMenus() {
+        if (window.PawActionMenus) {
+            window.PawActionMenus.close();
         }
     }
 
-    function toggleReviewMenu(button) {
-        var menu = closestByAttribute(button, 'data-profile-review-menu');
-        var panel = menu ? menu.querySelector('[data-profile-review-menu-panel]') : null;
-        if (!menu || !panel) {
-            return;
-        }
+    function setupCollapsibleSections() {
+        var sections = document.querySelectorAll('[data-collapsible-section]');
 
-        var willOpen = panel.hidden;
-        closeReviewMenus(menu);
-        panel.hidden = !willOpen;
-        button.setAttribute('aria-expanded', String(willOpen));
+        for (var i = 0; i < sections.length; i += 1) {
+            var extras = sections[i].querySelectorAll('[data-collapsible-extra]');
+            var toggle = sections[i].querySelector('[data-collapsible-toggle]');
+
+            if (!toggle || extras.length === 0) {
+                continue;
+            }
+
+            for (var j = 0; j < extras.length; j += 1) {
+                extras[j].hidden = true;
+            }
+            toggle.hidden = false;
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.setAttribute('data-expanded', 'false');
+            toggle.textContent = toggle.getAttribute('data-show-label') || 'Ver más';
+        }
+    }
+
+    function setCollapsibleSectionExpanded(toggle, expanded) {
+        var section = closestByAttribute(toggle, 'data-collapsible-section');
+        var extras = section ? section.querySelectorAll('[data-collapsible-extra]') : [];
+        var label = expanded
+            ? toggle.getAttribute('data-hide-label') || 'Ver menos'
+            : toggle.getAttribute('data-show-label') || 'Ver más';
+
+        for (var i = 0; i < extras.length; i += 1) {
+            extras[i].hidden = !expanded;
+        }
+        toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        toggle.setAttribute('data-expanded', expanded ? 'true' : 'false');
+        toggle.textContent = label;
     }
 
     function openDeleteReviewModal(button) {
@@ -161,18 +173,11 @@
         if (title) {
             title.textContent = button.getAttribute('data-review-title') || '';
         }
-        closeReviewMenus();
+        closeActionMenus();
         openModal(modal);
     }
 
     document.addEventListener('click', function (event) {
-        var reviewMenuToggle = closestByAttribute(event.target, 'data-profile-review-menu-toggle');
-        if (reviewMenuToggle) {
-            event.preventDefault();
-            toggleReviewMenu(reviewMenuToggle);
-            return;
-        }
-
         var deleteReviewButton = closestByAttribute(event.target, 'data-open-delete-review-modal');
         if (deleteReviewButton) {
             event.preventDefault();
@@ -181,9 +186,7 @@
         }
 
         if (closestByAttribute(event.target, 'data-open-review-modal')) {
-            closeReviewMenus();
-        } else if (!closestByClass(event.target, 'profile-review-menu')) {
-            closeReviewMenus();
+            closeActionMenus();
         }
 
         var editButton = closestByAttribute(event.target, 'data-open-edit-profile-modal');
@@ -219,6 +222,16 @@
         var linkedCard = closestByAttribute(event.target, 'data-profile-card-link');
         if (linkedCard && !isInteractiveCardTarget(event.target)) {
             window.location.href = linkedCard.getAttribute('data-profile-card-link');
+            return;
+        }
+
+        var sectionToggle = closestByAttribute(event.target, 'data-collapsible-toggle');
+        if (sectionToggle) {
+            event.preventDefault();
+            setCollapsibleSectionExpanded(
+                sectionToggle,
+                sectionToggle.getAttribute('data-expanded') !== 'true'
+            );
         }
     });
 
@@ -265,4 +278,6 @@
             reader.readAsDataURL(file);
         });
     }
+
+    setupCollapsibleSections();
 }());

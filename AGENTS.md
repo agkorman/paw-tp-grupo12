@@ -107,7 +107,7 @@ Important model behavior:
 - Reviews support guest submissions; `reviews.user_id` may be nullable and `reviewer_email` stores guest identity.
 - Review stats are derived from `reviews`, not stored in a separate table.
 - Car image bytes live in `car_images`; catalog views should avoid loading blobs except through image endpoints.
-- Car submission currently creates a public `cars` row and a pending `car_requests` row to preserve moderation intent.
+- Car submissions from users create only a pending `car_requests` row. The public `cars` row and its `car_images` bytes are created only when an admin approves the request.
 
 ## Maven Dependency Management
 
@@ -206,3 +206,20 @@ Before editing, inspect the relevant module and follow its existing patterns. Do
 Be careful with the current git state. There may be local untracked SQL or generated files. Do not revert or remove files you did not create unless explicitly asked.
 
 When modifying Maven files, enforce the centralized version policy above. When adding web features, preserve non-JavaScript fallback paths and keep route behavior compatible with existing JSP forms and fragments.
+
+## Image Uploads and Static Resource Policy
+
+The previous project-specific agent guide had stricter image rules that are still important. Keep these rules in force when adding or changing image-related behavior.
+
+- User-uploaded images must arrive as `multipart/form-data` and be received in Spring MVC with `MultipartFile`, either through individual `@RequestParam` values or a form-backing `@ModelAttribute` that includes the file.
+- Do not transport, persist, or render project images as Base64 unless there is an explicit, exceptional approval.
+- Keep Servlet 3 multipart parsing compatible. If upload initialization or `WebConfig` changes, preserve the configured multipart resolver behavior.
+- Validate uploaded images on the server even when client-side validation exists. Required checks are: file exists, file is not empty, maximum size, allowed `content-type`, and the referenced entity exists before storing bytes.
+- Store user-uploaded image bytes in dedicated image tables and expose them through backend endpoints. For cars, keep the established `cars` plus `car_images` pattern, where `car_images` owns binary data and `content_type`.
+- Image endpoints that return database-backed images should set `Content-Type`, `Content-Length`, and appropriate cache headers when possible.
+- `<img>` elements for uploaded images should point to internal project URLs, not inline blobs or Base64 strings.
+- Static UI images such as logos, icons, and decorative illustrations belong in webapp static asset folders, not in the database.
+- Reference static assets from JSPs and tag files with `c:url`.
+- If a new static folder such as `/images/**` is added, expose it from `WebConfig.addResourceHandlers(...)`.
+- Do not mix static assets and user uploads. Static images live in the repo and are served as resources; uploaded images are validated, persisted, and served through controller endpoints.
+- Some legacy views or seed data may still use external `imageUrl` values. Treat that as legacy compatibility, not the direction for new code.

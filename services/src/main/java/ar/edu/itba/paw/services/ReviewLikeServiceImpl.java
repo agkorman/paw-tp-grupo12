@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -152,6 +153,19 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
             return reviewLikeDao.findLikedReplyIdsByUserId(userId);
         } catch (final RuntimeException ignored) {
             return Collections.emptyList();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countNewLikesPerReview(final long userId, final LocalDateTime since) {
+        if (since == null) {
+            return Collections.emptyMap();
+        }
+        try {
+            return reviewLikeDao.countNewLikesPerReview(userId, since);
+        } catch (final RuntimeException ignored) {
+            return Collections.emptyMap();
         }
     }
 

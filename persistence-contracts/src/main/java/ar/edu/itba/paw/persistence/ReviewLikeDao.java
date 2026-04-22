@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ public interface ReviewLikeDao {
     boolean isReviewLikedByUser(long reviewId, long userId);
     long countReviewLikes(long reviewId);
     Map<Long, Long> countReviewLikesByReviewIds(Collection<Long> reviewIds);
+    Map<Long, Long> countNewLikesPerReview(long userId, LocalDateTime since);
     Set<Long> findLikedReviewIds(Collection<Long> reviewIds, long userId);
     List<Long> findLikedReviewIdsByUserId(long userId);
 

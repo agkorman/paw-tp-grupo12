@@ -4,12 +4,15 @@ import ar.edu.itba.paw.model.ReviewReply;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -100,6 +103,22 @@ public class ReviewReplyJdbcDao implements ReviewReplyDao {
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();
+    }
+
+    @Override
+    public Map<Long, Long> countNewRepliesPerReview(final long userId, final LocalDateTime since) {
+        final Map<Long, Long> counts = new HashMap<>();
+        jdbcTemplate.query(
+                "SELECT r.review_id, COUNT(*) AS reply_count "
+                        + "FROM reviews r "
+                        + "JOIN review_replies rr ON rr.review_id = r.review_id "
+                        + "WHERE r.user_id = ? AND rr.created_at >= ? "
+                        + "GROUP BY r.review_id",
+                (RowCallbackHandler) rs -> counts.put(rs.getLong("review_id"), rs.getLong("reply_count")),
+                userId,
+                Timestamp.valueOf(since)
+        );
+        return counts;
     }
 
     @Override

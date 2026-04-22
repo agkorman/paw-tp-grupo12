@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -18,4 +19,6 @@ public interface ReviewLikeService {
     Map<Long, Long> countReplyLikesByReplyIds(Collection<Long> replyIds);
     Set<Long> getLikedReplyIds(Collection<Long> replyIds, long userId);
     List<Long> getLikedReplyIdsByUser(long userId);
+
+    Map<Long, Long> countNewLikesPerReview(long userId, LocalDateTime since);
 }

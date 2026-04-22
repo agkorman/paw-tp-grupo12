@@ -94,6 +94,11 @@ public class UserServiceImpl implements UserService {
         return userDao.findEmailsByRoles(MODERATOR_EMAIL_ROLES);
     }
 
+    @Override
+    public List<User> getAllUsers() {
+        return userDao.findAll();
+    }
+
     private String normalizeEmail(final String value) {
         final String normalized = normalize(value);
         return normalized == null ? null : normalized.toLowerCase(Locale.ROOT);

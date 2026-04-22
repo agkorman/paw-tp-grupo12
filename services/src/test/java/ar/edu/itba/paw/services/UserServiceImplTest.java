@@ -143,6 +143,11 @@ class UserServiceImplTest {
         }
 
         @Override
+        public List<User> findAll() {
+            return List.copyOf(users);
+        }
+
+        @Override
         public List<String> findEmailsByRoles(final Collection<String> roles) {
             final List<String> normalizedRoles = roles.stream()
                     .map(role -> role.toLowerCase(Locale.ROOT))
@@ -254,6 +259,11 @@ class UserServiceImplTest {
         public boolean delete(final long id) {
             return false;
         }
+
+        @Override
+        public int deleteByCarId(final long carId) {
+            return 0;
+        }
     }
 
     private static final class FakeCarRequestDao implements CarRequestDao {
@@ -299,9 +309,13 @@ class UserServiceImplTest {
         }
 
         @Override
-        public CarRequest create(final long submittedByUserId, final long brandId, final long bodyTypeId,
+        public CarRequest create(final long submittedByUserId, final String submitterEmail,
+                                 final long brandId, final long bodyTypeId,
                                  final String model, final String description, final String imageContentType,
-                                 final byte[] imageData, final String status) {
+                                 final byte[] imageData, final String status,
+                                 final String fuelType, final Integer horsepower, final Integer airbagCount,
+                                 final String transmission, final java.math.BigDecimal fuelConsumption,
+                                 final Integer maxSpeedKmh) {
             throw new UnsupportedOperationException();
         }
 

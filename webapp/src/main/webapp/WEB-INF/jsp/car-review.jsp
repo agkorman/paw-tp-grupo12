@@ -1,6 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -58,12 +60,49 @@
                             <path d="M12 5v14M5 12l7 7 7-7"/>
                         </svg>
                     </a>
+                    <sec:authorize access="hasRole('ADMIN')">
+                        <c:url var="selectedCarEditUrl" value="/admin/cars/${selectedCar.id}"/>
+                        <c:url var="selectedCarDeleteUrl" value="/admin/cars/${selectedCar.id}/delete"/>
+                        <c:url var="selectedCarImageUrl" value="/car-image">
+                            <c:param name="carId" value="${selectedCar.id}"/>
+                        </c:url>
+                        <pa:action-menu label="Abrir opciones de auto">
+                            <button
+                                    type="button"
+                                    data-open-create-car-modal="edit-car"
+                                    data-car-action="${fn:escapeXml(selectedCarEditUrl)}"
+                                    data-car-id="${fn:escapeXml(selectedCar.id)}"
+                                    data-car-brand="${fn:escapeXml(selectedCar.brandName)}"
+                                    data-car-model="${fn:escapeXml(selectedCar.model)}"
+                                    data-car-body-type="${fn:escapeXml(selectedCar.bodyType)}"
+                                    data-car-description="${fn:escapeXml(selectedCar.description)}"
+                                    data-car-fuel-type="${fn:escapeXml(selectedCar.fuelType)}"
+                                    data-car-horsepower="${fn:escapeXml(selectedCar.horsepower)}"
+                                    data-car-airbag-count="${fn:escapeXml(selectedCar.airbagCount)}"
+                                    data-car-transmission="${fn:escapeXml(selectedCar.transmission)}"
+                                    data-car-fuel-consumption="${fn:escapeXml(selectedCar.fuelConsumption)}"
+                                    data-car-max-speed-kmh="${fn:escapeXml(selectedCar.maxSpeedKmh)}"
+                                    data-car-image-url="${selectedCar.hasImage ? fn:escapeXml(selectedCarImageUrl) : ''}">
+                                Editar
+                            </button>
+                            <button
+                                    type="button"
+                                    class="action-menu-danger"
+                                    data-open-delete-car-modal
+                                    data-car-delete-action="${fn:escapeXml(selectedCarDeleteUrl)}"
+                                    data-car-title="${fn:escapeXml(selectedCar.brandName)} ${fn:escapeXml(selectedCar.model)}">
+                                Eliminar
+                            </button>
+                        </pa:action-menu>
+                    </sec:authorize>
                 </div>
             </div>
         </section>
 
         <section class="review-layout review-detail-layout">
-            <pa:review-selected-car selectedCar="${selectedCar}" carImages="${carImages}"/>
+            <pa:review-selected-car selectedCar="${selectedCar}"
+                                    carImages="${carImages}"
+                                    favorited="${selectedCarFavorited}"/>
 
             <div class="review-side-column">
                 <pa:review-car-info selectedCar="${selectedCar}" averageRating="${averageRating}"/>
@@ -78,12 +117,21 @@
 
     <pa:create-review-modal carId="${selectedCar.id}" autoOpen="${openReviewModal}"/>
     <pa:auth-required-modal/>
+    <sec:authorize access="hasRole('ADMIN')">
+        <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
+        <pa:car-delete-modal/>
+    </sec:authorize>
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
+    <script src="<c:url value='/js/action-menu.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
     <script src="<c:url value='/js/car-image-carousel.js'/>"></script>
     <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
+    <sec:authorize access="hasRole('ADMIN')">
+        <script src="<c:url value='/js/create-car-modal.js?v=4'/>"></script>
+        <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
+    </sec:authorize>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

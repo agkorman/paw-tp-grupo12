@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class CarRequest implements Serializable {
@@ -16,6 +17,12 @@ public class CarRequest implements Serializable {
     private byte[] imageData;
     private String status;
     private LocalDateTime createdAt;
+    private String fuelType;
+    private Integer horsepower;
+    private Integer airbagCount;
+    private String transmission;
+    private BigDecimal fuelConsumption;
+    private Integer maxSpeedKmh;
 
     public CarRequest() {}
 
@@ -23,6 +30,16 @@ public class CarRequest implements Serializable {
                       final long bodyTypeId, final String model, final String description,
                       final String imageContentType, final byte[] imageData, final String status,
                       final LocalDateTime createdAt) {
+        this(id, submittedByUserId, submitterEmail, brandId, bodyTypeId, model, description,
+                imageContentType, imageData, status, createdAt, null, null, null, null, null, null);
+    }
+
+    public CarRequest(final long id, final Long submittedByUserId, final String submitterEmail, final long brandId,
+                      final long bodyTypeId, final String model, final String description,
+                      final String imageContentType, final byte[] imageData, final String status,
+                      final LocalDateTime createdAt, final String fuelType, final Integer horsepower,
+                      final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
+                      final Integer maxSpeedKmh) {
         this.id = id;
         this.submittedByUserId = submittedByUserId;
         this.submitterEmail = submitterEmail;
@@ -34,6 +51,12 @@ public class CarRequest implements Serializable {
         this.imageData = imageData;
         this.status = status;
         this.createdAt = createdAt;
+        this.fuelType = fuelType;
+        this.horsepower = horsepower;
+        this.airbagCount = airbagCount;
+        this.transmission = transmission;
+        this.fuelConsumption = fuelConsumption;
+        this.maxSpeedKmh = maxSpeedKmh;
     }
 
     public long getId() {
@@ -122,5 +145,53 @@ public class CarRequest implements Serializable {
 
     public void setCreatedAt(final LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getFuelType() {
+        return fuelType;
+    }
+
+    public void setFuelType(final String fuelType) {
+        this.fuelType = fuelType;
+    }
+
+    public Integer getHorsepower() {
+        return horsepower;
+    }
+
+    public void setHorsepower(final Integer horsepower) {
+        this.horsepower = horsepower;
+    }
+
+    public Integer getAirbagCount() {
+        return airbagCount;
+    }
+
+    public void setAirbagCount(final Integer airbagCount) {
+        this.airbagCount = airbagCount;
+    }
+
+    public String getTransmission() {
+        return transmission;
+    }
+
+    public void setTransmission(final String transmission) {
+        this.transmission = transmission;
+    }
+
+    public BigDecimal getFuelConsumption() {
+        return fuelConsumption;
+    }
+
+    public void setFuelConsumption(final BigDecimal fuelConsumption) {
+        this.fuelConsumption = fuelConsumption;
+    }
+
+    public Integer getMaxSpeedKmh() {
+        return maxSpeedKmh;
+    }
+
+    public void setMaxSpeedKmh(final Integer maxSpeedKmh) {
+        this.maxSpeedKmh = maxSpeedKmh;
     }
 }

@@ -55,17 +55,17 @@
 
             <div class="review-modal-grid car-modal-layout">
                 <c:if test="${adminMode}">
-                    <div class="review-modal-field review-modal-field-wide">
+                    <div id="modalCarSubmitterEmailField" class="review-modal-field review-modal-field-wide" hidden>
                         <label for="modalCarSubmitterEmail">Email</label>
                         <form:input id="modalCarSubmitterEmail" path="submitterEmail" type="email"
-                                    maxlength="100" placeholder="Usuario sin identificar" readonly="true"/>
+                                    maxlength="100" disabled="true"/>
                         <form:errors path="submitterEmail" cssClass="form-error" element="span"/>
                     </div>
                 </c:if>
 
                 <div class="review-modal-field">
                     <label for="modalCarBrand">Marca</label>
-                    <form:select id="modalCarBrand" path="brand" required="required" disabled="${adminMode}">
+                    <form:select id="modalCarBrand" path="brand" required="required">
                         <form:option value="" label="Seleccioná una marca"/>
                         <c:forEach items="${brands}" var="brand">
                             <form:option value="${brand.name}" label="${brand.name}"/>
@@ -76,7 +76,7 @@
 
                 <div class="review-modal-field">
                     <label for="modalCarBodyType">Tipo de carrocería</label>
-                    <form:select id="modalCarBodyType" path="bodyType" required="required" disabled="${adminMode}">
+                    <form:select id="modalCarBodyType" path="bodyType" required="required">
                         <form:option value="" label="Seleccioná un tipo"/>
                         <c:forEach items="${bodyTypes}" var="bodyType">
                             <form:option value="${bodyType.name}" label="${bodyType.name}"/>
@@ -89,7 +89,7 @@
                     <label for="modalCarModel">Modelo</label>
                     <form:input id="modalCarModel" path="model" type="text"
                                 maxlength="120" required="required"
-                                placeholder="Ej: 911 Carrera T" readonly="${adminMode}"/>
+                                placeholder="Ej: 911 Carrera T"/>
                     <form:errors path="model" cssClass="form-error" element="span"/>
                 </div>
 
@@ -97,9 +97,78 @@
                     <label for="modalCarDescription">Descripción</label>
                     <form:textarea id="modalCarDescription" path="description" rows="4" maxlength="1500"
                                    required="required"
-                                   placeholder="Describe el auto, su propuesta y cualquier detalle relevante."
-                                   readonly="${adminMode}"/>
+                                   placeholder="Describe el auto, su propuesta y cualquier detalle relevante."/>
                     <form:errors path="description" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="review-modal-field review-modal-field-wide">
+                    <span class="review-modal-section-label">Especificaciones técnicas</span>
+                </div>
+
+                <div class="review-modal-field">
+                    <label>Motorización</label>
+                    <div class="modal-radio-group">
+                        <label class="modal-radio-option">
+                            <form:radiobutton path="fuelType" value="combustion" required="required"/>
+                            <span>Combustión</span>
+                        </label>
+                        <label class="modal-radio-option">
+                            <form:radiobutton path="fuelType" value="hybrid"/>
+                            <span>Híbrido</span>
+                        </label>
+                        <label class="modal-radio-option">
+                            <form:radiobutton path="fuelType" value="electric"/>
+                            <span>Eléctrico</span>
+                        </label>
+                    </div>
+                    <form:errors path="fuelType" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="review-modal-field">
+                    <label>Transmisión</label>
+                    <div class="modal-radio-group">
+                        <label class="modal-radio-option">
+                            <form:radiobutton path="transmission" value="manual" required="required"/>
+                            <span>Manual</span>
+                        </label>
+                        <label class="modal-radio-option">
+                            <form:radiobutton path="transmission" value="automatic"/>
+                            <span>Automática</span>
+                        </label>
+                    </div>
+                    <form:errors path="transmission" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="review-modal-field">
+                    <label for="modalCarHorsepower">Potencia (HP)</label>
+                    <form:input id="modalCarHorsepower" path="horsepower" type="number"
+                                min="1" max="2000" required="required"
+                                placeholder="Ej: 150" readonly="${adminMode}"/>
+                    <form:errors path="horsepower" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="review-modal-field">
+                    <label for="modalCarAirbagCount">Airbags</label>
+                    <form:input id="modalCarAirbagCount" path="airbagCount" type="number"
+                                min="0" max="30" required="required"
+                                placeholder="Ej: 6" readonly="${adminMode}"/>
+                    <form:errors path="airbagCount" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="review-modal-field">
+                    <label for="modalCarFuelConsumption">Consumo (L/100km)</label>
+                    <form:input id="modalCarFuelConsumption" path="fuelConsumption" type="number"
+                                step="0.1" min="0" max="99.9" required="required"
+                                placeholder="Ej: 6.8" readonly="${adminMode}"/>
+                    <form:errors path="fuelConsumption" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="review-modal-field">
+                    <label for="modalCarMaxSpeed">Vel. máxima (km/h)</label>
+                    <form:input id="modalCarMaxSpeed" path="maxSpeedKmh" type="number"
+                                min="1" max="600" required="required"
+                                placeholder="Ej: 190" readonly="${adminMode}"/>
+                    <form:errors path="maxSpeedKmh" cssClass="form-error" element="span"/>
                 </div>
 
                 <div class="review-modal-field review-modal-field-wide car-image-field">
@@ -142,7 +211,7 @@
                                 <span id="modalCarImageCounter" class="car-image-upload-preview-counter">1 / 1</span>
                             </span>
                             <span class="car-image-upload-copy">
-                                <strong>
+                                <strong id="modalCarFileTitle">
                                     <c:choose>
                                         <c:when test="${adminMode}">Imágenes enviadas por el usuario</c:when>
                                         <c:otherwise>Arrastrá o elegí imágenes del auto</c:otherwise>
@@ -157,7 +226,7 @@
                                 <span id="modalCarFileStatus" class="car-image-upload-status">Ninguna imagen seleccionada</span>
                                 <span id="modalCarImageThumbnails" class="car-image-upload-thumbnails" hidden></span>
                             </span>
-                            <span class="car-image-upload-action">
+                            <span id="modalCarFileAction" class="car-image-upload-action">
                                 <c:choose>
                                     <c:when test="${adminMode}">Cargada</c:when>
                                     <c:otherwise>Buscar</c:otherwise>
@@ -177,15 +246,16 @@
                 <c:if test="${adminMode}">
                     <div id="createCarReviewActions" class="review-modal-action-group">
                         <button type="submit" class="btn-secondary admin-reject-btn" form="rejectCarRequestForm">Rechazar</button>
-                        <button type="submit" class="btn-primary" form="acceptCarRequestForm">Confirmar auto</button>
+                        <button id="createCarReviewSubmitButton" type="submit" class="btn-primary">Confirmar auto</button>
+                    </div>
+                    <div id="createCarEditActions" class="review-modal-action-group" hidden>
+                        <button type="button" class="btn-secondary" data-close-car-modal>Cancelar</button>
+                        <button id="createCarEditSubmitButton" type="submit" class="btn-primary">Guardar cambios</button>
                     </div>
                 </c:if>
             </div>
         </form:form>
         <c:if test="${adminMode}">
-            <form id="acceptCarRequestForm" method="post">
-                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-            </form>
             <form id="rejectCarRequestForm" method="post">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             </form>

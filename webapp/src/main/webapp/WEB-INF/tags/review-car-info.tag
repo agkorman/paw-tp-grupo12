@@ -30,6 +30,65 @@
                 </c:choose>
             </span>
         </div>
+        <div class="car-info-row">
+            <span class="car-info-label">Motorización</span>
+            <span class="car-info-value">
+                <c:choose>
+                    <c:when test="${selectedCar.fuelType eq 'combustion'}">Combustión</c:when>
+                    <c:when test="${selectedCar.fuelType eq 'hybrid'}">Híbrido</c:when>
+                    <c:when test="${selectedCar.fuelType eq 'electric'}">Eléctrico</c:when>
+                    <c:when test="${not empty selectedCar.fuelType}"><c:out value="${selectedCar.fuelType}"/></c:when>
+                    <c:otherwise>N/A</c:otherwise>
+                </c:choose>
+            </span>
+        </div>
+        <div class="car-info-row">
+            <span class="car-info-label">Transmisión</span>
+            <span class="car-info-value">
+                <c:choose>
+                    <c:when test="${selectedCar.transmission eq 'manual'}">Manual</c:when>
+                    <c:when test="${selectedCar.transmission eq 'automatic'}">Automática</c:when>
+                    <c:when test="${not empty selectedCar.transmission}"><c:out value="${selectedCar.transmission}"/></c:when>
+                    <c:otherwise>N/A</c:otherwise>
+                </c:choose>
+            </span>
+        </div>
+        <div class="car-info-row">
+            <span class="car-info-label">Potencia</span>
+            <span class="car-info-value">
+                <c:choose>
+                    <c:when test="${not empty selectedCar.horsepower}"><c:out value="${selectedCar.horsepower}"/> HP</c:when>
+                    <c:otherwise>N/A</c:otherwise>
+                </c:choose>
+            </span>
+        </div>
+        <div class="car-info-row">
+            <span class="car-info-label">Airbags</span>
+            <span class="car-info-value">
+                <c:choose>
+                    <c:when test="${not empty selectedCar.airbagCount}"><c:out value="${selectedCar.airbagCount}"/></c:when>
+                    <c:otherwise>N/A</c:otherwise>
+                </c:choose>
+            </span>
+        </div>
+        <div class="car-info-row">
+            <span class="car-info-label">Consumo</span>
+            <span class="car-info-value">
+                <c:choose>
+                    <c:when test="${not empty selectedCar.fuelConsumption}"><c:out value="${selectedCar.fuelConsumption}"/> L/100 km</c:when>
+                    <c:otherwise>N/A</c:otherwise>
+                </c:choose>
+            </span>
+        </div>
+        <div class="car-info-row">
+            <span class="car-info-label">Velocidad máxima</span>
+            <span class="car-info-value">
+                <c:choose>
+                    <c:when test="${not empty selectedCar.maxSpeedKmh}"><c:out value="${selectedCar.maxSpeedKmh}"/> km/h</c:when>
+                    <c:otherwise>N/A</c:otherwise>
+                </c:choose>
+            </span>
+        </div>
         <div class="car-info-row car-info-row-description">
             <span class="car-info-label">Descripción</span>
             <span class="car-info-value car-info-description">

@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=4'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=5'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-connections.css?v=1'/>">
@@ -24,6 +24,10 @@
 <body>
     <pa:nav activePage="profile"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
+
+    <c:set var="profileReviewsPreviewLimit" value="2"/>
+    <c:set var="favoriteCarsPreviewLimit" value="4"/>
+    <c:set var="likedReviewsPreviewLimit" value="2"/>
 
     <main class="profile-page">
         <section class="profile-hero" aria-labelledby="profileName">
@@ -116,11 +120,11 @@
             </c:choose>
         </section>
 
-        <section class="profile-reviews-section" aria-labelledby="profileReviewsTitle">
+        <section class="profile-reviews-section" aria-labelledby="profileReviewsTitle" data-collapsible-section>
             <div class="profile-section-heading">
                 <h2 id="profileReviewsTitle">
                     <c:choose>
-                        <c:when test="${ownProfile}">Mis reviews</c:when>
+                        <c:when test="${ownProfile}">Mis Reseñas</c:when>
                         <c:otherwise>Reviews</c:otherwise>
                     </c:choose>
                 </h2>
@@ -130,23 +134,31 @@
             <c:choose>
                 <c:when test="${empty profileReviews}">
                     <div class="profile-empty-state">
-                        <p>Todavía no hay reviews publicadas.</p>
+                        <p>Todavía no tienes reseñas publicadas.</p>
                     </div>
                 </c:when>
                 <c:otherwise>
                     <div class="profile-review-list">
-                        <c:forEach var="profileReview" items="${profileReviews}">
-                            <pa:profile-review-card
-                                    reviewCard="${profileReview}"
-                                    editable="${profileReview.ownedByCurrentUser}"/>
+                        <c:forEach var="profileReview" items="${profileReviews}" varStatus="profileReviewStatus">
+                            <div class="profile-collapsible-item"
+                                 <c:if test="${profileReviewStatus.index ge profileReviewsPreviewLimit}">data-collapsible-extra</c:if>>
+                                <pa:profile-review-card
+                                        reviewCard="${profileReview}"
+                                        editable="${profileReview.ownedByCurrentUser}"/>
+                            </div>
                         </c:forEach>
                     </div>
+                    <c:if test="${fn:length(profileReviews) gt profileReviewsPreviewLimit}">
+                        <div class="profile-collapsible-actions">
+                            <pa:collapsible-toggle/>
+                        </div>
+                    </c:if>
                 </c:otherwise>
             </c:choose>
         </section>
 
         <c:if test="${ownProfile}">
-            <section class="profile-favorites-section" aria-labelledby="profileFavoritesTitle">
+            <section class="profile-favorites-section" aria-labelledby="profileFavoritesTitle" data-collapsible-section>
                 <div class="profile-section-heading">
                     <h2 id="profileFavoritesTitle">Autos favoritos</h2>
                     <span><c:out value="${fn:length(favoriteCars)}"/></span>
@@ -160,46 +172,57 @@
                     </c:when>
                     <c:otherwise>
                         <div class="profile-favorites-grid">
-                            <c:forEach var="favoriteCar" items="${favoriteCars}">
+                            <c:forEach var="favoriteCar" items="${favoriteCars}" varStatus="favoriteCarStatus">
                                 <c:url var="favoriteReviewUrl" value="/reviews">
                                     <c:param name="carId" value="${favoriteCar.id}"/>
                                 </c:url>
-                                <pa:car-card
-                                        model="${favoriteCar.brandName} ${favoriteCar.model}"
-                                        bodyType="${favoriteCar.bodyType}"
-                                        carId="${favoriteCar.id}"
-                                        hasImage="${favoriteCar.hasImage}"
-                                        href="${favoriteReviewUrl}"
-                                        favorited="true"
-                                        averageRating="${reviewStatsByCarId[favoriteCar.id].averageRating}"
-                                        reviewCount="${reviewStatsByCarId[favoriteCar.id].reviewCount}"/>
+                                <div class="profile-collapsible-item"
+                                     <c:if test="${favoriteCarStatus.index ge favoriteCarsPreviewLimit}">data-collapsible-extra</c:if>>
+                                    <pa:car-card
+                                            model="${favoriteCar.brandName} ${favoriteCar.model}"
+                                            bodyType="${favoriteCar.bodyType}"
+                                            carId="${favoriteCar.id}"
+                                            hasImage="${favoriteCar.hasImage}"
+                                            href="${favoriteReviewUrl}"
+                                            favorited="${favoritedCarIds[favoriteCar.id] eq true}"
+                                            averageRating="${reviewStatsByCarId[favoriteCar.id].averageRating}"
+                                            reviewCount="${reviewStatsByCarId[favoriteCar.id].reviewCount}"/>
+                                </div>
                             </c:forEach>
                         </div>
+                        <c:if test="${fn:length(favoriteCars) gt favoriteCarsPreviewLimit}">
+                            <div class="profile-collapsible-actions">
+                                <pa:collapsible-toggle/>
+                            </div>
+                        </c:if>
                     </c:otherwise>
                 </c:choose>
             </section>
 
-            <section class="profile-liked-section" aria-labelledby="profileLikedTitle">
+            <section class="profile-liked-section" aria-labelledby="profileLikedTitle" data-collapsible-section>
                 <div class="profile-section-heading">
-                    <h2 id="profileLikedTitle">Reviews likeadas</h2>
+                    <h2 id="profileLikedTitle">Reseñas likeadas</h2>
                     <span><c:out value="${likedActivityCount}"/></span>
                 </div>
 
                 <c:choose>
                     <c:when test="${empty likedReviews and empty likedReplies}">
                         <div class="profile-empty-state">
-                            <p>Todavía no likeaste reviews ni respuestas.</p>
+                            <p>Todavía no le diste like a ninguna reseña o respuesta.</p>
                         </div>
                     </c:when>
                     <c:otherwise>
                         <c:if test="${not empty likedReviews}">
                             <div class="profile-liked-group">
-                                <h3>Reviews</h3>
+                                <h3>Reseñas</h3>
                                 <div class="profile-review-list">
-                                    <c:forEach var="likedReview" items="${likedReviews}">
-                                        <pa:profile-review-card
-                                                reviewCard="${likedReview}"
-                                                editable="${likedReview.ownedByCurrentUser}"/>
+                                    <c:forEach var="likedReview" items="${likedReviews}" varStatus="likedReviewStatus">
+                                        <div class="profile-collapsible-item"
+                                             <c:if test="${likedReviewStatus.index ge likedReviewsPreviewLimit}">data-collapsible-extra</c:if>>
+                                            <pa:profile-review-card
+                                                    reviewCard="${likedReview}"
+                                                    editable="${likedReview.ownedByCurrentUser}"/>
+                                        </div>
                                     </c:forEach>
                                 </div>
                             </div>
@@ -214,6 +237,11 @@
                                 </div>
                             </div>
                         </c:if>
+                        <c:if test="${fn:length(likedReviews) gt likedReviewsPreviewLimit}">
+                            <div class="profile-collapsible-actions">
+                                <pa:collapsible-toggle/>
+                            </div>
+                        </c:if>
                     </c:otherwise>
                 </c:choose>
             </section>
@@ -226,9 +254,10 @@
     <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
     <pa:auth-required-modal/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
+    <script src="<c:url value='/js/action-menu.js'/>"></script>
     <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/profile.js?v=4'/>"></script>
+    <script src="<c:url value='/js/profile.js?v=5'/>"></script>
 </body>
 </html>

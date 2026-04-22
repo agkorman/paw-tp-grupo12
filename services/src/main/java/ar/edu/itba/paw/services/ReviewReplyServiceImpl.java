@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -117,6 +118,19 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
             return reviewReplyDao.delete(id);
         } catch (final RuntimeException e) {
             throw new IllegalStateException("Failed to delete review reply.", e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countNewRepliesPerReview(final long userId, final LocalDateTime since) {
+        if (since == null) {
+            return Collections.emptyMap();
+        }
+        try {
+            return reviewReplyDao.countNewRepliesPerReview(userId, since);
+        } catch (final RuntimeException ignored) {
+            return Collections.emptyMap();
         }
     }
 
