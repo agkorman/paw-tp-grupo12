@@ -36,6 +36,8 @@ public class WebAuthConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(antMatcher("/css/**"), antMatcher("/js/**"), antMatcher("/favicon.ico"))
                             .permitAll()
+                        .requestMatchers(antMatcher("/error/**"))
+                            .permitAll()
                         .requestMatchers(
                                 antMatcher(HttpMethod.GET, "/"),
                                 antMatcher(HttpMethod.GET, "/cars"),
@@ -84,6 +86,8 @@ public class WebAuthConfig {
                         .clearAuthentication(true)
                         .deleteCookies("JSESSIONID", "remember-me")
                         .permitAll())
+                .exceptionHandling(exceptions -> exceptions
+                        .accessDeniedPage("/error/403"))
                 .rememberMe(rememberMe -> rememberMe
                         .rememberMeParameter("remember-me")
                         .key(rememberMeKey())

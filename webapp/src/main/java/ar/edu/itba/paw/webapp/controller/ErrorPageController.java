@@ -16,11 +16,39 @@ public class ErrorPageController {
                 "El formulario o la URL que enviaste no son válidos. Revisá los campos e intentá de nuevo.");
     }
 
+    @RequestMapping("/error/403")
+    public ModelAndView forbidden(final HttpServletRequest request) {
+        return errorPage(request, 403,
+                "Acceso restringido",
+                "No tenés permisos para entrar a esta sección.");
+    }
+
     @RequestMapping("/error/404")
     public ModelAndView notFound(final HttpServletRequest request) {
         return errorPage(request, 404,
                 "No encontrado",
                 "El recurso que buscás no existe o fue movido.");
+    }
+
+    @RequestMapping("/error/405")
+    public ModelAndView methodNotAllowed(final HttpServletRequest request) {
+        return errorPage(request, 405,
+                "Acción no permitida",
+                "La acción que intentaste realizar no está disponible para esta URL.");
+    }
+
+    @RequestMapping("/error/413")
+    public ModelAndView payloadTooLarge(final HttpServletRequest request) {
+        return errorPage(request, 413,
+                "Archivo demasiado grande",
+                "El contenido que intentaste subir supera el tamaño permitido.");
+    }
+
+    @RequestMapping("/error/415")
+    public ModelAndView unsupportedMediaType(final HttpServletRequest request) {
+        return errorPage(request, 415,
+                "Formato no compatible",
+                "El tipo de contenido enviado no es compatible con esta acción.");
     }
 
     @RequestMapping("/error/500")
