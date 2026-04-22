@@ -1,5 +1,6 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="cars" required="true" type="java.util.List" %>
+<%@ attribute name="resultCount" required="true" %>
 <%@ attribute name="reviewStatsByCarId" required="true" type="java.util.Map" %>
 <%@ attribute name="favoritedCarIds" required="false" type="java.util.Map" %>
 <%@ attribute name="showHp" required="false" %>
@@ -14,7 +15,7 @@
 
 <c:url var="newCarUrl" value="/cars/new"/>
 
-<div id="carsCatalogContent" class="catalog-content">
+<div id="carsCatalogContent" class="catalog-content" data-result-count="${resultCount}">
     <section class="catalog-section">
         <div class="cars-grid">
             <c:forEach var="car" items="${cars}">
