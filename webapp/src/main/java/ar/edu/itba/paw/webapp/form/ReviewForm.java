@@ -29,6 +29,7 @@ public class ReviewForm {
     private String title;
 
     @NotBlank(message = "La descripción es obligatoria.")
+    @Size(max = 2000, message = "La descripción debe tener como máximo 2000 caracteres.")
     private String body;
 
     @Size(max = 20, message = "Estado de propiedad no válido.")

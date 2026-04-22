@@ -49,6 +49,8 @@ public class CarReviewController {
     private static final String SORT_RATING_ASC = "rating_asc";
     private static final String SORT_RATING_DESC = "rating_desc";
     private static final int MAX_REPLY_BODY_LENGTH = 1000;
+    private static final int MAX_REVIEW_BODY_LENGTH = 2000;
+    private static final int MAX_REVIEW_MILEAGE_KM = 2_000_000;
 
     private static final BigDecimal RATING_STEP_DOUBLED = BigDecimal.valueOf(2);
     private static final Set<String> ALLOWED_OWNERSHIP_STATUSES =
@@ -354,7 +356,8 @@ public class CarReviewController {
         final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
         validateReviewOwnership(existingReview, currentUser);
 
-        final String validationError = validateReviewInput(rating, title, body, ownershipStatus, modelYear);
+        final String validationError = validateReviewInput(rating, title, body, ownershipStatus, modelYear,
+                mileageKm);
         if (validationError != null) {
             return carReviewPage(existingReview.getCarId(), null, validationError, true, currentUser);
         }
@@ -384,7 +387,7 @@ public class CarReviewController {
 
     @RequestMapping(value = "/reviews/{reviewId}/replies", method = RequestMethod.POST)
     public ModelAndView createReply(@PathVariable("reviewId") final long reviewId,
-                                    @RequestParam("body") final String body,
+                                    @RequestParam(value = "body", required = false) final String body,
                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
@@ -486,7 +489,8 @@ public class CarReviewController {
     }
 
     private String validateReviewInput(final BigDecimal rating, final String title, final String body,
-                                       final String ownershipStatus, final Integer modelYear) {
+                                       final String ownershipStatus, final Integer modelYear,
+                                       final Integer mileageKm) {
         if (rating == null || rating.compareTo(BigDecimal.ZERO) < 0 || rating.compareTo(BigDecimal.valueOf(5)) > 0) {
             return "La puntuación debe estar entre 0 y 5.";
         }
@@ -499,6 +503,9 @@ public class CarReviewController {
         if (body == null || body.isEmpty()) {
             return "La descripción es obligatoria.";
         }
+        if (body.length() > MAX_REVIEW_BODY_LENGTH) {
+            return "La descripción debe tener como máximo " + MAX_REVIEW_BODY_LENGTH + " caracteres.";
+        }
         final String ownership = ownershipStatus == null ? "" : ownershipStatus;
         if (!ALLOWED_OWNERSHIP_STATUSES.contains(ownership)) {
             return "Estado de propiedad no válido.";
@@ -508,6 +515,9 @@ public class CarReviewController {
             if (modelYear < 1886 || modelYear > maxModelYear) {
                 return "Ingresá un año entre 1886 y " + maxModelYear + ".";
             }
+        }
+        if (mileageKm != null && (mileageKm < 0 || mileageKm > MAX_REVIEW_MILEAGE_KM)) {
+            return "Ingresá un kilometraje entre 0 y 2.000.000 km.";
         }
         return null;
     }
