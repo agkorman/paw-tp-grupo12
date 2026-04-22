@@ -379,61 +379,61 @@ ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO cars (brand_id, model, body_type_id, description)
 SELECT b.brand_id, 'GR Supra', bt.body_type_id,
-       'The fifth-generation Supra, co-developed with BMW under the GR sub-brand, revived the iconic nameplate in 2019 after a 17-year hiatus. Powered by a turbocharged inline-six shared with the BMW Z4 G29.'
+       'La Supra de quinta generación, codesarrollada con BMW bajo la submarca GR, revivió el icónico nombre en 2019 tras 17 años de ausencia. Está propulsada por un turbo de seis cilindros en línea compartido con el BMW Z4 G29.'
 FROM brands b, body_types bt WHERE b.name = 'Toyota' AND bt.name = 'Coupe'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
 INSERT INTO cars (brand_id, model, body_type_id, description)
 SELECT b.brand_id, 'Mustang', bt.body_type_id,
-       'The sixth-generation Mustang was the first to offer independent rear suspension globally and introduced the turbocharged EcoBoost four-cylinder option alongside its iconic V8.'
+       'El Mustang de sexta generación fue el primero en ofrecer suspensión trasera independiente a nivel mundial e introdujo la opción de cuatro cilindros turbo EcoBoost junto a su icónico V8.'
 FROM brands b, body_types bt WHERE b.name = 'Ford' AND bt.name = 'Coupe'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
 INSERT INTO cars (brand_id, model, body_type_id, description)
 SELECT b.brand_id, 'MX-5 Miata', bt.body_type_id,
-       'The fourth-generation MX-5 shed over 100 kg versus its predecessor, returning to the original gram strategy of lightweight engineering. It remains the world''s best-selling two-seat roadster.'
+       'El MX-5 de cuarta generación redujo más de 100 kg respecto a su predecesor, volviendo a la estrategia original de ingeniería ligera. Sigue siendo el roadster de dos plazas más vendido del mundo.'
 FROM brands b, body_types bt WHERE b.name = 'Mazda' AND bt.name = 'Roadster'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
 INSERT INTO cars (brand_id, model, body_type_id, description)
 SELECT b.brand_id, 'M3', bt.body_type_id,
-       'The G80 M3 is powered by the S58 twin-turbocharged inline-six producing up to 503 hp in Competition trim. It was the first M3 offered with optional all-wheel drive and the first to spawn an M3 Touring variant.'
+       'El G80 M3 está propulsado por el S58 de seis cilindros en línea biturbo que desarrolla hasta 503 hp en versión Competition. Fue el primer M3 con tracción total opcional y el primero en dar origen a una variante M3 Touring.'
 FROM brands b, body_types bt WHERE b.name = 'BMW' AND bt.name = 'Sedan'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
 INSERT INTO cars (brand_id, model, body_type_id, description)
 SELECT b.brand_id, '911', bt.body_type_id,
-       'The 992-generation 911 is 45 mm wider than its predecessor and adopts an all-aluminium body structure. It retains the iconic rear-mounted flat-six engine while featuring electric pop-out door handles.'
+       'El 911 de generación 992 es 45 mm más ancho que su predecesor y adopta una carrocería íntegramente de aluminio. Conserva el icónico motor bóxer de seis cilindros trasero e incorpora manijas eléctricas retráctiles.'
 FROM brands b, body_types bt WHERE b.name = 'Porsche' AND bt.name = 'Coupe'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
 INSERT INTO cars (brand_id, model, body_type_id, description)
 SELECT b.brand_id, 'Civic Type R', bt.body_type_id,
-       'The FL5 Type R carries a 330 PS K20C1 turbocharged engine and introduces reshaped wider rear body panels. It features Honda''s LogR data logger for track use and a more refined design than its FK8 predecessor.'
+       'El FL5 Type R equipa el motor turbo K20C1 de 330 PS e incorpora paneles traseros más anchos. Incluye el registrador de datos LogR de Honda para uso en pista y un diseño más depurado respecto al FK8.'
 FROM brands b, body_types bt WHERE b.name = 'Honda' AND bt.name = 'Hatchback'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
 INSERT INTO cars (brand_id, model, body_type_id, description)
 SELECT b.brand_id, 'WRX STI', bt.body_type_id,
-       'The VA-generation WRX STI was the first offered only as a sedan, powered by the EJ257 turbocharged flat-four producing 305 hp paired with a 6-speed manual and symmetrical all-wheel drive.'
+       'El WRX STI de generación VA fue el primero en ofrecerse únicamente como sedán, con el motor bóxer de cuatro cilindros turbo EJ257 de 305 hp, caja de 6 velocidades manual y tracción total simétrica.'
 FROM brands b, body_types bt WHERE b.name = 'Subaru' AND bt.name = 'Sedan'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
 INSERT INTO cars (brand_id, model, body_type_id, description)
 SELECT b.brand_id, 'GT-R', bt.body_type_id,
-       'The R35 GT-R was built around a hand-assembled VR38DETT twin-turbocharged V6, with each engine signed by one of nine certified Takumi craftsmen. Its combination of all-wheel drive and launch control made it a benchmark supercar-slayer.'
+       'El R35 GT-R se construyó en torno al VR38DETT biturbo V6 ensamblado a mano, con cada motor firmado por uno de los nueve artesanos Takumi certificados. Su combinación de tracción total y control de largada lo convirtió en un referente destructor de supercars.'
 FROM brands b, body_types bt WHERE b.name = 'Nissan' AND bt.name = 'Coupe'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
 INSERT INTO cars (brand_id, model, body_type_id, description)
 SELECT b.brand_id, 'Camaro', bt.body_type_id,
-       'Built on GM''s Alpha platform shared with the Cadillac ATS, the sixth-gen Camaro shed over 200 lbs versus its predecessor. Available engines ranged from a turbocharged 2.0L four-cylinder to a supercharged 6.2L V8 in the ZL1.'
+       'Construido sobre la plataforma Alpha de GM compartida con el Cadillac ATS, el Camaro de sexta generación redujo más de 90 kg respecto a su predecesor. Los motores disponibles van desde un cuatro cilindros turbo de 2.0L hasta el V8 sobrealimentado de 6.2L del ZL1.'
 FROM brands b, body_types bt WHERE b.name = 'Chevrolet' AND bt.name = 'Coupe'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
 INSERT INTO cars (brand_id, model, body_type_id, description)
 SELECT b.brand_id, 'RS6 Avant', bt.body_type_id,
-       'The C8 RS6 Avant is powered by a 4.0L twin-turbo V8 with a 48V mild-hybrid system producing 600 PS. It was the first RS6 Avant sold in North America since the C5 generation and the first RS6 to use a hybrid drivetrain.'
+       'El C8 RS6 Avant está propulsado por un V8 biturbo de 4.0L con sistema mild-hybrid de 48V que desarrolla 600 PS. Fue el primer RS6 Avant vendido en Norteamérica desde la generación C5 y el primero en usar una transmisión híbrida.'
 FROM brands b, body_types bt WHERE b.name = 'Audi' AND bt.name = 'Estate'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
