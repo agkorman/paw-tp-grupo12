@@ -17,6 +17,7 @@ import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.form.CarForm;
+import ar.edu.itba.paw.webapp.validation.ImageSignatureValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.CacheControl;
@@ -221,10 +222,10 @@ public class CarController {
                 currentUser.getEmail(),
                 Optional.ofNullable(carForm.getDescription()).filter(value -> !value.isEmpty()),
                 imagePayloads,
-                carForm.getFuelType(),
+                normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),
                 carForm.getAirbagCount(),
-                carForm.getTransmission(),
+                normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
                 carForm.getMaxSpeedKmh()
         );
@@ -448,6 +449,13 @@ public class CarController {
         final String contentType = resolveImageContentType(file);
         if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
             return "Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.";
+        }
+        try {
+            if (!ImageSignatureValidator.hasMatchingImageSignature(file, contentType)) {
+                return "El archivo no coincide con una imagen JPEG, PNG o WEBP válida.";
+            }
+        } catch (final IOException e) {
+            return "No pudimos leer la imagen. Intentá con otro archivo.";
         }
         return null;
     }

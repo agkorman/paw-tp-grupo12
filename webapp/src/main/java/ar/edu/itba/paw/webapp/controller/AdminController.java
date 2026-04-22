@@ -13,6 +13,7 @@ import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.services.WeeklyDigestService;
 import ar.edu.itba.paw.webapp.form.CarForm;
+import ar.edu.itba.paw.webapp.validation.ImageSignatureValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -137,10 +138,10 @@ public class AdminController {
                 carForm.getDescription(),
                 imageContentType,
                 imageData,
-                carForm.getFuelType(),
+                normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),
                 carForm.getAirbagCount(),
-                carForm.getTransmission(),
+                normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
                 carForm.getMaxSpeedKmh()
         );
@@ -189,10 +190,10 @@ public class AdminController {
                 carForm.getDescription(),
                 resolveOptionalImageContentType(file),
                 readOptionalImageData(file),
-                carForm.getFuelType(),
+                normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),
                 carForm.getAirbagCount(),
-                carForm.getTransmission(),
+                normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
                 carForm.getMaxSpeedKmh()
         );
@@ -374,6 +375,13 @@ public class AdminController {
         if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
             return "Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.";
         }
+        try {
+            if (!ImageSignatureValidator.hasMatchingImageSignature(file, contentType)) {
+                return "El archivo no coincide con una imagen JPEG, PNG o WEBP válida.";
+            }
+        } catch (final IOException e) {
+            return "No pudimos leer la imagen. Intentá con otro archivo.";
+        }
         return null;
     }
 
@@ -395,13 +403,21 @@ public class AdminController {
 
     private void rejectInvalidSpecFields(final BindingResult errors, final CarForm carForm) {
         if (carForm.getFuelType() != null
-                && !Set.of("combustion", "hybrid", "electric").contains(carForm.getFuelType())) {
+                && !Set.of("combustion", "hybrid", "electric").contains(normalizeSpecValue(carForm.getFuelType()))) {
             errors.rejectValue("fuelType", "fuelType.invalid", "Tipo de motorización no válido.");
         }
         if (carForm.getTransmission() != null
-                && !Set.of("manual", "automatic").contains(carForm.getTransmission())) {
+                && !Set.of("manual", "automatic").contains(normalizeSpecValue(carForm.getTransmission()))) {
             errors.rejectValue("transmission", "transmission.invalid", "Transmisión no válida.");
         }
+    }
+
+    private static String normalizeSpecValue(final String value) {
+        if (value == null) {
+            return null;
+        }
+        final String normalized = value.trim().toLowerCase(Locale.ROOT);
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private Optional<String> resolveOptionalImageContentType(final MultipartFile file) {

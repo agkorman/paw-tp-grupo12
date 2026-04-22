@@ -61,7 +61,7 @@ public class UserJdbcDao implements UserDao {
     @Override
     public Optional<User> findByUsername(String username) {
         return jdbcTemplate.query(
-                "SELECT user_id, username, email, password, role, created_at FROM users WHERE username = ?",
+                "SELECT user_id, username, email, password, role, created_at FROM users WHERE LOWER(username) = LOWER(?)",
                 ROW_MAPPER, username
         ).stream().findFirst();
     }
