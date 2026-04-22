@@ -20,6 +20,7 @@
 </head>
 <body>
     <pa:nav activePage="reviews"/>
+    <c:set var="resultCount" value="${fn:length(cars)}"/>
 
     <pa:cars-toolbar
             brands="${brands}"
@@ -32,10 +33,11 @@
 
     <pa:cars-filters-panel
             criteria="${criteria}"
-            vehicleCount="${fn:length(cars)}"/>
+            vehicleCount="${resultCount}"/>
 
     <pa:cars-content
             cars="${cars}"
+            resultCount="${resultCount}"
             reviewStatsByCarId="${reviewStatsByCarId}"
             favoritedCarIds="${favoritedCarIds}"
             showHp="${showHp}"
