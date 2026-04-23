@@ -95,14 +95,6 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
-    public List<Review> findAll() {
-        return jdbcTemplate.query(
-                REVIEW_SELECT + "ORDER BY r.created_at DESC",
-                ROW_MAPPER
-        );
-    }
-
-    @Override
     public List<Review> findByCarId(long carId) {
         return findByCarIdOrdered(carId, "r.created_at DESC");
     }

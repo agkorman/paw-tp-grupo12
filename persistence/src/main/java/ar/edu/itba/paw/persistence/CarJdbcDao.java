@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -101,14 +100,6 @@ public class CarJdbcDao implements CarDao {
                 SELECT_COLUMNS + FROM_JOIN + "WHERE c.car_id IN (" + placeholders + ") ORDER BY c.car_id",
                 ROW_MAPPER,
                 normalizedIds.toArray()
-        );
-    }
-
-    @Override
-    public List<Car> findByBrandId(final long brandId) {
-        return jdbcTemplate.query(
-                SELECT_COLUMNS + FROM_JOIN + "WHERE c.brand_id = ? ORDER BY c.model",
-                ROW_MAPPER, brandId
         );
     }
 
@@ -267,14 +258,6 @@ public class CarJdbcDao implements CarDao {
     }
 
     @Override
-    public List<Car> findByBodyTypeId(final long bodyTypeId) {
-        return jdbcTemplate.query(
-                SELECT_COLUMNS + FROM_JOIN + "WHERE c.body_type_id = ? ORDER BY c.model",
-                ROW_MAPPER, bodyTypeId
-        );
-    }
-
-    @Override
     public List<Car> findByBrandIdAndBodyTypeId(final long brandId, final long bodyTypeId) {
         return jdbcTemplate.query(
                 SELECT_COLUMNS + FROM_JOIN + "WHERE c.brand_id = ? AND c.body_type_id = ? ORDER BY c.model",
@@ -282,54 +265,4 @@ public class CarJdbcDao implements CarDao {
         );
     }
 
-    @Override
-    public List<Car> search(final String query, final Long brandId, final Long bodyTypeId) {
-        final String trimmed = query.trim();
-        final String escaped = trimmed.toLowerCase().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-        final String likeQuery = "%" + escaped + "%";
-        final String tsQuery = trimmed.replaceAll("[%_\\\\]", " ").trim();
-        final StringBuilder sql = new StringBuilder(SELECT_COLUMNS).append(FROM_JOIN);
-        final boolean useTsQuery = tsQuery.matches(".*[a-zA-Z0-9]{2,}.*");
-        final List<Object> params = new ArrayList<>();
-        if (!useTsQuery) {
-            sql.append("WHERE (lower(b.name) LIKE ? ESCAPE '\\' ");
-            sql.append("   OR lower(c.model) LIKE ? ESCAPE '\\' ");
-            sql.append("   OR lower(COALESCE(c.description, '')) LIKE ? ESCAPE '\\') ");
-        } else {
-            sql.append("WHERE (c.search_vector @@ websearch_to_tsquery('simple', ?) ");
-            sql.append("   OR lower(b.name) LIKE ? ESCAPE '\\' ");
-            sql.append("   OR lower(c.model) LIKE ? ESCAPE '\\' ");
-            sql.append("   OR lower(COALESCE(c.description, '')) LIKE ? ESCAPE '\\') ");
-            params.add(tsQuery);
-        }
-        params.add(likeQuery);
-        params.add(likeQuery);
-        params.add(likeQuery);
-
-        if (brandId != null) {
-            sql.append("AND c.brand_id = ? ");
-            params.add(brandId);
-        }
-        if (bodyTypeId != null) {
-            sql.append("AND c.body_type_id = ? ");
-            params.add(bodyTypeId);
-        }
-
-        if (useTsQuery) {
-            sql.append("ORDER BY ts_rank(c.search_vector, websearch_to_tsquery('simple', ?)) DESC, ");
-            params.add(tsQuery);
-        } else {
-            sql.append("ORDER BY ");
-        }
-        sql.append("CASE WHEN lower(c.model) LIKE ? ESCAPE '\\' THEN 0 ");
-        sql.append("     WHEN lower(b.name) LIKE ? ESCAPE '\\' THEN 1 ");
-        sql.append("     WHEN lower(COALESCE(c.description, '')) LIKE ? ESCAPE '\\' THEN 2 ");
-        sql.append("     ELSE 3 END, ");
-        sql.append("c.car_id ASC");
-        params.add(likeQuery);
-        params.add(likeQuery);
-        params.add(likeQuery);
-
-        return jdbcTemplate.query(sql.toString(), ROW_MAPPER, params.toArray());
-    }
 }

@@ -182,28 +182,12 @@
     cursor: pointer;
 }
 
-.cars-toolbar-meta {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 1rem;
-    padding-left: 0.25rem;
-}
-
 .cars-toolbar-count {
     font-size: 0.82rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     white-space: nowrap;
     color: rgba(196, 198, 204, 0.62);
-}
-
-.cars-toolbar-submit {
-    min-width: 12.5rem;
-    min-height: 3.2rem;
-    padding-inline: 1.5rem;
-    font-size: 0.76rem;
-    letter-spacing: 0.14em;
 }
 
 /* ── CATALOG WRAP ── */
@@ -735,11 +719,6 @@ a.car-request-card {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .cars-toolbar-meta {
-        grid-column: 1 / -1;
-        justify-content: space-between;
-        padding-left: 0;
-    }
 }
 
 @media (max-width: 900px) {
@@ -761,9 +740,6 @@ a.car-request-card {
         grid-template-columns: 1fr;
     }
 
-    .cars-toolbar-meta {
-        flex-wrap: wrap;
-    }
 }
 
 @media (max-width: 560px) {
@@ -794,17 +770,7 @@ a.car-request-card {
         padding: 0.7rem 0.9rem;
     }
 
-    .cars-toolbar-meta {
-        align-items: stretch;
-        gap: 0.75rem;
-    }
-
-    .cars-toolbar-count,
-    .cars-toolbar-submit {
+    .cars-toolbar-count {
         width: 100%;
-    }
-
-    .cars-toolbar-submit {
-        min-width: 0;
     }
 }

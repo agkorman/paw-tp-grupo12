@@ -19,10 +19,6 @@ public interface CarService {
 
     List<Car> getCarsByIds(Collection<Long> ids);
 
-    List<Car> getCarsByBodyType(String bodyType);
-
-    List<Car> getCarsByBrand(String brand);
-
     List<Car> getCarsByBrandAndBodyType(String brand, String bodyType);
 
     List<Car> searchCars(CarSearchCriteria criteria);
@@ -33,15 +29,7 @@ public interface CarService {
 
     Optional<CarImage> getCarImageById(long carId, long imageId);
 
-    void saveCarImage(long carId, String contentType, byte[] imageData);
-
     void saveCarImages(long carId, List<CarImagePayload> images);
-
-    CarRequest requestCarCreation(long brandId, String model, long bodyTypeId, long submittedByUserId,
-                                  String submitterEmail, Optional<String> description,
-                                  Optional<String> imageContentType, Optional<byte[]> imageData,
-                                  String fuelType, Integer horsepower, Integer airbagCount,
-                                  String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
 
     CarRequest requestCarCreation(long brandId, String model, long bodyTypeId, long submittedByUserId,
                                   String submitterEmail, Optional<String> description,

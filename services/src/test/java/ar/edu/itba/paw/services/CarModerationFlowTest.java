@@ -52,8 +52,7 @@ class CarModerationFlowTest {
                 7L,
                 "user@example.com",
                 Optional.of("Desc"),
-                Optional.of("image/png"),
-                Optional.of(new byte[] {1, 2, 3}),
+                List.of(new CarImagePayload("image/png", new byte[] {1, 2, 3})),
                 "hybrid",
                 300,
                 8,
@@ -201,44 +200,8 @@ class CarModerationFlowTest {
         }
 
         @Override
-        public List<CarRequest> getAllCarRequests() {
-            return Collections.emptyList();
-        }
-
-        @Override
         public List<CarRequest> getCarRequestsByStatus(final String status) {
             return Collections.emptyList();
-        }
-
-        @Override
-        public CarRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
-                                               final long brandId, final long bodyTypeId, final String model,
-                                               final String description,
-                                               final Optional<String> imageContentType,
-                                               final Optional<byte[]> imageData,
-                                               final String fuelType, final Integer horsepower,
-                                               final Integer airbagCount, final String transmission,
-                                               final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
-            created = true;
-            return new CarRequest(
-                    10L,
-                    submittedByUserId,
-                    submitterEmail,
-                    brandId,
-                    bodyTypeId,
-                    model,
-                    description,
-                    imageContentType.orElse(null),
-                    imageData.orElse(null),
-                    STATUS_PENDING,
-                    LocalDateTime.now(),
-                    fuelType,
-                    horsepower,
-                    airbagCount,
-                    transmission,
-                    fuelConsumption,
-                    maxSpeedKmh
-            );
         }
 
         @Override
@@ -248,16 +211,20 @@ class CarModerationFlowTest {
                                                final String fuelType, final Integer horsepower,
                                                final Integer airbagCount, final String transmission,
                                                final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+            created = true;
             final CarImagePayload coverImage = images == null || images.isEmpty() ? null : images.get(0);
-            return createPendingRequest(
+            return new CarRequest(
+                    10L,
                     submittedByUserId,
                     submitterEmail,
                     brandId,
                     bodyTypeId,
                     model,
                     description,
-                    coverImage == null ? Optional.empty() : Optional.of(coverImage.getContentType()),
-                    coverImage == null ? Optional.empty() : Optional.of(coverImage.getImageData()),
+                    coverImage == null ? null : coverImage.getContentType(),
+                    coverImage == null ? null : coverImage.getImageData(),
+                    STATUS_PENDING,
+                    LocalDateTime.now(),
                     fuelType,
                     horsepower,
                     airbagCount,
@@ -305,11 +272,6 @@ class CarModerationFlowTest {
         @Override
         public Optional<CarRequest> findById(final long id) {
             return request != null && request.getId() == id ? Optional.of(request) : Optional.empty();
-        }
-
-        @Override
-        public List<CarRequest> findAll() {
-            return request == null ? Collections.emptyList() : List.of(request);
         }
 
         @Override
@@ -403,22 +365,7 @@ class CarModerationFlowTest {
         }
 
         @Override
-        public List<Car> findByBrandId(final long brandId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<Car> findByBodyTypeId(final long bodyTypeId) {
-            return Collections.emptyList();
-        }
-
-        @Override
         public List<Car> findByBrandIdAndBodyTypeId(final long brandId, final long bodyTypeId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<Car> search(final String query, final Long brandId, final Long bodyTypeId) {
             return Collections.emptyList();
         }
 
@@ -472,11 +419,6 @@ class CarModerationFlowTest {
 
         @Override
         public List<Review> findByIds(final Collection<Long> ids) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<Review> findAll() {
             return Collections.emptyList();
         }
 

@@ -197,11 +197,6 @@ class UserServiceImplTest {
         }
 
         @Override
-        public List<Review> findAll() {
-            return Collections.emptyList();
-        }
-
-        @Override
         public List<Review> findByCarId(final long carId) {
             return Collections.emptyList();
         }
@@ -296,11 +291,6 @@ class UserServiceImplTest {
         @Override
         public Optional<CarRequest> findById(final long id) {
             return Optional.empty();
-        }
-
-        @Override
-        public List<CarRequest> findAll() {
-            return Collections.emptyList();
         }
 
         @Override

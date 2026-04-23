@@ -50,7 +50,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<User> findByUsername(final String username) {
-        final String normalizedUsername = normalize(username);
+        final String normalizedUsername = StringUtils.normalize(username);
         if (normalizedUsername == null) {
             return Optional.empty();
         }
@@ -60,7 +60,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User createUser(final String username, final String email, final String rawPassword) {
-        final String normalizedUsername = normalize(username);
+        final String normalizedUsername = StringUtils.normalize(username);
         final String normalizedEmail = normalizeEmail(email);
         if (normalizedUsername == null) {
             throw new IllegalArgumentException("Username is required.");
@@ -100,15 +100,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private String normalizeEmail(final String value) {
-        final String normalized = normalize(value);
+        final String normalized = StringUtils.normalize(value);
         return normalized == null ? null : normalized.toLowerCase(Locale.ROOT);
-    }
-
-    private String normalize(final String value) {
-        if (value == null) {
-            return null;
-        }
-        final String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
     }
 }

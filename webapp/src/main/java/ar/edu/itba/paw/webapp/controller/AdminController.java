@@ -3,6 +3,7 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
@@ -13,7 +14,6 @@ import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.services.WeeklyDigestService;
 import ar.edu.itba.paw.webapp.form.CarForm;
-import ar.edu.itba.paw.webapp.validation.ImageSignatureValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -35,10 +35,8 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -46,13 +44,6 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
-
-    private static final long MAX_IMAGE_SIZE_BYTES = 10L * 1024 * 1024;
-    private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
-            MediaType.IMAGE_JPEG_VALUE,
-            MediaType.IMAGE_PNG_VALUE,
-            "image/webp"
-    );
 
     private final CarRequestService carRequestService;
     private final CarService carService;
@@ -138,10 +129,10 @@ public class AdminController {
                 carForm.getDescription(),
                 imageContentType,
                 imageData,
-                normalizeSpecValue(carForm.getFuelType()),
+                ControllerUtils.normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),
                 carForm.getAirbagCount(),
-                normalizeSpecValue(carForm.getTransmission()),
+                ControllerUtils.normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
                 carForm.getMaxSpeedKmh()
         );
@@ -190,10 +181,10 @@ public class AdminController {
                 carForm.getDescription(),
                 resolveOptionalImageContentType(file),
                 readOptionalImageData(file),
-                normalizeSpecValue(carForm.getFuelType()),
+                ControllerUtils.normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),
                 carForm.getAirbagCount(),
-                normalizeSpecValue(carForm.getTransmission()),
+                ControllerUtils.normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
                 carForm.getMaxSpeedKmh()
         );
@@ -339,14 +330,12 @@ public class AdminController {
     }
 
     private String submitterLabel(final CarRequest request) {
-        if (request.getSubmitterEmail() != null && !request.getSubmitterEmail().isBlank()) {
-            return request.getSubmitterEmail();
+        final String submitterEmail = resolveSubmitterEmail(request);
+        if (submitterEmail != null) {
+            return submitterEmail;
         }
         if (request.getSubmittedByUserId() != null) {
-            return userService.getUserById(request.getSubmittedByUserId())
-                    .map(User::getEmail)
-                    .filter(email -> !email.isBlank())
-                    .orElse("Usuario #" + request.getSubmittedByUserId());
+            return "Usuario #" + request.getSubmittedByUserId();
         }
         return "Usuario sin identificar";
     }
@@ -365,33 +354,16 @@ public class AdminController {
     }
 
     private String validateUploadedImage(final MultipartFile file, final boolean required) {
-        if (file == null || file.isEmpty()) {
-            return required ? "La imagen es obligatoria." : null;
-        }
-        if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-            return "La imagen no debe superar los 10 MB.";
-        }
-        final String contentType = resolveImageContentType(file);
-        if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
-            return "Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.";
-        }
-        try {
-            if (!ImageSignatureValidator.hasMatchingImageSignature(file, contentType)) {
-                return "El archivo no coincide con una imagen JPEG, PNG o WEBP válida.";
-            }
-        } catch (final IOException e) {
-            return "No pudimos leer la imagen. Intentá con otro archivo.";
-        }
-        return null;
+        return ControllerUtils.validateUploadedImage(file, required);
     }
 
     private String resolveImageContentType(final MultipartFile file) {
-        return normalizeContentType(file == null ? null : file.getContentType());
+        return ControllerUtils.normalizeContentType(file == null ? null : file.getContentType());
     }
 
     private boolean isDuplicateCar(final Brand brand, final BodyType bodyType, final String model,
                                    final long ignoredCarId) {
-        final String normalizedModel = normalizeText(model);
+        final String normalizedModel = ControllerUtils.normalize(model);
         if (normalizedModel == null) {
             return false;
         }
@@ -403,21 +375,15 @@ public class AdminController {
 
     private void rejectInvalidSpecFields(final BindingResult errors, final CarForm carForm) {
         if (carForm.getFuelType() != null
-                && !Set.of("combustion", "hybrid", "electric").contains(normalizeSpecValue(carForm.getFuelType()))) {
+                && !CarSearchCriteria.ALLOWED_FUEL_TYPES.contains(
+                        ControllerUtils.normalizeSpecValue(carForm.getFuelType()))) {
             errors.rejectValue("fuelType", "fuelType.invalid", "Tipo de motorización no válido.");
         }
         if (carForm.getTransmission() != null
-                && !Set.of("manual", "automatic").contains(normalizeSpecValue(carForm.getTransmission()))) {
+                && !CarSearchCriteria.ALLOWED_TRANSMISSIONS.contains(
+                        ControllerUtils.normalizeSpecValue(carForm.getTransmission()))) {
             errors.rejectValue("transmission", "transmission.invalid", "Transmisión no válida.");
         }
-    }
-
-    private static String normalizeSpecValue(final String value) {
-        if (value == null) {
-            return null;
-        }
-        final String normalized = value.trim().toLowerCase(Locale.ROOT);
-        return normalized.isEmpty() ? null : normalized;
     }
 
     private Optional<String> resolveOptionalImageContentType(final MultipartFile file) {
@@ -433,22 +399,6 @@ public class AdminController {
         } catch (final IOException e) {
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
-    }
-
-    private static String normalizeContentType(final String contentType) {
-        if (contentType == null) {
-            return null;
-        }
-        final String normalized = contentType.trim().toLowerCase(Locale.ROOT);
-        return normalized.isEmpty() ? null : normalized;
-    }
-
-    private static String normalizeText(final String value) {
-        if (value == null) {
-            return null;
-        }
-        final String normalized = value.trim();
-        return normalized.isEmpty() ? null : normalized;
     }
 
     private ModelAndView redirectBackToCatalog(final String referer) {

@@ -15,13 +15,7 @@ public interface CarDao {
 
     List<Car> findByIds(Collection<Long> ids);
 
-    List<Car> findByBrandId(long brandId);
-
-    List<Car> findByBodyTypeId(long bodyTypeId);
-
     List<Car> findByBrandIdAndBodyTypeId(long brandId, long bodyTypeId);
-
-    List<Car> search(String query, Long brandId, Long bodyTypeId);
 
     List<Car> findByCriteria(CarSearchCriteria criteria);
 

@@ -202,22 +202,7 @@ class CarFavoriteServiceImplTest {
         }
 
         @Override
-        public List<Car> findByBrandId(final long brandId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<Car> findByBodyTypeId(final long bodyTypeId) {
-            return Collections.emptyList();
-        }
-
-        @Override
         public List<Car> findByBrandIdAndBodyTypeId(final long brandId, final long bodyTypeId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<Car> search(final String query, final Long brandId, final Long bodyTypeId) {
             return Collections.emptyList();
         }
 

@@ -214,11 +214,6 @@ public class ProfileControllerTest {
         }
 
         @Override
-        public List<Review> getAllReviews() {
-            return Collections.emptyList();
-        }
-
-        @Override
         public Optional<ReviewStats> getReviewStatsByCar(final long carId) {
             return Optional.empty();
         }
@@ -357,16 +352,6 @@ public class ProfileControllerTest {
         }
 
         @Override
-        public List<Car> getCarsByBodyType(final String bodyType) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<Car> getCarsByBrand(final String brand) {
-            return Collections.emptyList();
-        }
-
-        @Override
         public List<Car> getCarsByBrandAndBodyType(final String brand, final String bodyType) {
             return Collections.emptyList();
         }
@@ -392,24 +377,7 @@ public class ProfileControllerTest {
         }
 
         @Override
-        public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
-        }
-
-        @Override
         public void saveCarImages(final long carId, final List<CarImagePayload> images) {
-        }
-
-        @Override
-        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                             final long submittedByUserId, final String submitterEmail,
-                                             final Optional<String> description,
-                                             final Optional<String> imageContentType,
-                                             final Optional<byte[]> imageData,
-                                             final String fuelType, final Integer horsepower,
-                                             final Integer airbagCount, final String transmission,
-                                             final java.math.BigDecimal fuelConsumption,
-                                             final Integer maxSpeedKmh) {
-            throw new UnsupportedOperationException();
         }
 
         @Override

@@ -85,11 +85,6 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<Review> getAllReviews() {
-        return reviewDao.findAll();
-    }
-
-    @Override
     public Optional<ReviewStats> getReviewStatsByCar(final long carId) {
         return reviewDao.findStatsByCarId(carId);
     }

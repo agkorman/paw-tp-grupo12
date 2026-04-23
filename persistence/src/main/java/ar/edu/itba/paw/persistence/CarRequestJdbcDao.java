@@ -88,17 +88,6 @@ public class CarRequestJdbcDao implements CarRequestDao {
     }
 
     @Override
-    public List<CarRequest> findAll() {
-        return jdbcTemplate.query(
-                "SELECT car_request_id, submitted_by_user_id, submitter_email, brand_id, body_type_id, model, "
-                        + "description, image_content_type, image_data, status, created_at, "
-                        + "fuel_type, horsepower, airbag_count, transmission, fuel_consumption, max_speed_kmh "
-                        + "FROM car_requests ORDER BY created_at DESC, car_request_id DESC",
-                ROW_MAPPER
-        );
-    }
-
-    @Override
     public List<CarRequest> findByStatus(final String status) {
         return jdbcTemplate.query(
                 "SELECT car_request_id, submitted_by_user_id, submitter_email, brand_id, body_type_id, model, "
