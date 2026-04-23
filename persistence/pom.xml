@@ -14,7 +14,6 @@
     <dependency>
       <groupId>ar.edu.itba.paw</groupId>
       <artifactId>persistence-contracts</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>

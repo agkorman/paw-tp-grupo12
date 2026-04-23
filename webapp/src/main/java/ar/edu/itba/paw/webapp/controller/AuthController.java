@@ -84,8 +84,8 @@ public class AuthController {
             return new ModelAndView("redirect:/");
         }
 
-        final String normalizedUsername = normalize(username);
-        final String normalizedEmail = normalizeEmail(email);
+        final String normalizedUsername = ControllerUtils.normalize(username);
+        final String normalizedEmail = ControllerUtils.normalizeEmail(email);
 
         try {
             final String validationError = validateRegistration(normalizedUsername, normalizedEmail, password, confirmPassword);
@@ -156,16 +156,4 @@ public class AuthController {
                 && !(authentication instanceof AnonymousAuthenticationToken);
     }
 
-    private String normalizeEmail(final String value) {
-        final String normalized = normalize(value);
-        return normalized == null ? null : normalized.toLowerCase(Locale.ROOT);
-    }
-
-    private String normalize(final String value) {
-        if (value == null) {
-            return null;
-        }
-        final String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
 }

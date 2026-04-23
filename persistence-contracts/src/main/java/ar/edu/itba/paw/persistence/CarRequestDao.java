@@ -11,8 +11,6 @@ import java.util.Optional;
 public interface CarRequestDao {
     Optional<CarRequest> findById(long id);
 
-    List<CarRequest> findAll();
-
     List<CarRequest> findByStatus(String status);
 
     CarRequest create(long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId,

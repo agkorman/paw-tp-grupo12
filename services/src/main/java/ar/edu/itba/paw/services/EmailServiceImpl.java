@@ -51,42 +51,28 @@ public class EmailServiceImpl implements EmailService {
     @Async("mailTaskExecutor")
     public void sendNewCarRequestNotification(final CarRequest request, final String brandName,
                                               final String bodyTypeName) {
-        try {
-            final List<String> moderators = userService.getModeratorsEmails();
-            if (moderators.isEmpty()) {
-                return;
-            }
-
-            final MimeMessage message = mailSender.createMimeMessage();
-            final MimeMessageHelper helper = new MimeMessageHelper(
-                    message,
-                    true,
-                    StandardCharsets.UTF_8.name()
-            );
-            helper.setTo(moderators.toArray(new String[0]));
-            helper.setSubject(buildRequestSubject(brandName, request.getModel()));
-
-            final boolean hasImage = request.getImageData() != null && request.getImageData().length > 0
-                    && request.getImageContentType() != null && !request.getImageContentType().isBlank();
-
-            helper.setText(
-                    buildRequestPlainTextBody(request, brandName, bodyTypeName),
-                    buildRequestHtmlBody(request, brandName, bodyTypeName, hasImage)
-            );
-
-            if (hasImage) {
-                helper.addInline(
-                        CAR_IMAGE_CID,
-                        new ByteArrayResource(request.getImageData()),
-                        request.getImageContentType()
-                );
-            }
-
-            mailSender.send(message);
-        } catch (final MessagingException | RuntimeException e) {
-            LOGGER.warning("Failed to send car request notification for request " + request.getId()
-                    + ": " + e.getMessage());
+        final List<String> moderators = userService.getModeratorsEmails();
+        if (moderators.isEmpty()) {
+            return;
         }
+
+        final boolean hasInlineImage = hasInlineRequestImage(request);
+        sendEmail(
+                buildRequestSubject(brandName, request.getModel()),
+                buildRequestPlainTextBody(request, brandName, bodyTypeName),
+                buildRequestHtmlBody(request, brandName, bodyTypeName, hasInlineImage),
+                "Failed to send car request notification for request " + request.getId(),
+                helper -> {
+                    helper.setTo(moderators.toArray(new String[0]));
+                    if (hasInlineImage) {
+                        helper.addInline(
+                                CAR_IMAGE_CID,
+                                new ByteArrayResource(request.getImageData()),
+                                request.getImageContentType()
+                        );
+                    }
+                }
+        );
     }
 
     @Override
@@ -96,25 +82,66 @@ public class EmailServiceImpl implements EmailService {
         if (recipientEmail == null || recipientEmail.isBlank()) {
             return;
         }
-        try {
-            final MimeMessage message = mailSender.createMimeMessage();
-            final MimeMessageHelper helper = new MimeMessageHelper(
-                    message,
-                    true,
-                    StandardCharsets.UTF_8.name()
-            );
-            helper.setTo(recipientEmail);
-            helper.setSubject(buildApprovedSubject(brandName, model));
-            helper.setText(
-                    buildApprovedPlainTextBody(brandName, model),
-                    buildApprovedHtmlBody(brandName, model)
-            );
 
-            mailSender.send(message);
-        } catch (final MessagingException | RuntimeException e) {
-            LOGGER.warning("Failed to send car approved notification to " + recipientEmail
-                    + ": " + e.getMessage());
+        sendEmail(
+                buildApprovedSubject(brandName, model),
+                buildApprovedPlainTextBody(brandName, model),
+                buildApprovedHtmlBody(brandName, model),
+                "Failed to send car approved notification to " + recipientEmail,
+                helper -> helper.setTo(recipientEmail)
+        );
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendWeeklyModeratorDigest(final List<String> moderatorEmails, final int pendingRequestCount) {
+        if (moderatorEmails == null || moderatorEmails.isEmpty()) {
+            return;
         }
+
+        sendEmail(
+                buildModeratorDigestSubject(pendingRequestCount),
+                buildModeratorDigestPlainText(pendingRequestCount),
+                buildModeratorDigestHtml(pendingRequestCount),
+                "Failed to send weekly moderator digest",
+                helper -> helper.setTo(moderatorEmails.toArray(new String[0]))
+        );
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendWeeklyUserDigest(final String recipientEmail, final String username,
+                                     final List<EmailService.ReviewActivityItem> reviewActivity,
+                                     final List<EmailService.FavoriteActivityItem> favoriteActivity) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+
+        sendEmail(
+                "[" + APP_NAME + "] Tu resumen semanal, " + sanitizeHeaderValue(safeValue(username)),
+                buildUserDigestPlainText(username, reviewActivity, favoriteActivity),
+                buildUserDigestHtml(username, reviewActivity, favoriteActivity),
+                "Failed to send weekly user digest to " + recipientEmail,
+                helper -> helper.setTo(recipientEmail)
+        );
+    }
+
+    private void sendEmail(final String subject, final String plainTextBody, final String htmlBody,
+                           final String failurePrefix, final EmailCustomization customization) {
+        try {
+            final MimeMessageHelper helper = newMimeMessageHelper();
+            customization.apply(helper);
+            helper.setSubject(subject);
+            helper.setText(plainTextBody, htmlBody);
+            mailSender.send(helper.getMimeMessage());
+        } catch (final MessagingException | RuntimeException e) {
+            LOGGER.warning(failurePrefix + ": " + e.getMessage());
+        }
+    }
+
+    private MimeMessageHelper newMimeMessageHelper() throws MessagingException {
+        final MimeMessage message = mailSender.createMimeMessage();
+        return new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
     }
 
     // ── New request notification helpers ──────────────────────────────────────
@@ -155,184 +182,105 @@ public class EmailServiceImpl implements EmailService {
                                         final String bodyTypeName, final boolean hasInlineImage) {
         final String brand = safeValue(brandName);
         final String model = safeValue(request.getModel());
+        final String carName = escapeHtml(brand + " " + model);
         final String bodyType = escapeHtml(safeValue(bodyTypeName));
         final String description = escapeHtml(previewDescription(request.getDescription())).replace("\n", "<br>");
         final String imageStatus = hasInlineImage ? "Con imagen" : "Sin imagen";
-        final String carName = escapeHtml(brand + " " + model);
-        final String preheader = escapeHtml("Nueva alta en el catálogo: " + brand + " " + model);
-        final String intro = escapeHtml(
-                "Se registró un nuevo auto en La Posta Autos. El equipo ya puede revisarlo desde el catálogo."
-        );
         final String dashboardUrl = escapeHtml(appBaseUrl + "/admin");
 
-        final String imageBlock = hasInlineImage
-                ? """
-                                    <div style="margin-bottom:24px;">
-                                        <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
-                                            Imagen enviada
-                                        </div>
-                                        <div style="background:%s;border:1px solid %s;border-radius:18px;padding:10px;">
-                                            <img src="cid:%s" alt="%s" style="display:block;width:100%%;max-width:596px;height:auto;border-radius:12px;">
-                                        </div>
-                                    </div>
-                                """.formatted(
-                        COLOR_ON_SURFACE_VARIANT,
-                        BODY_FONT,
-                        COLOR_SURFACE_HIGH,
-                        COLOR_OUTLINE,
-                        CAR_IMAGE_CID,
-                        carName
-                )
-                : "";
+        final String bodyHtml = buildRequestSummaryCard(carName, bodyType, imageStatus)
+                + buildRequestImageBlock(hasInlineImage, carName)
+                + buildRequestDescriptionBlock(description)
+                + buildCenteredAction(dashboardUrl, "Ir al dashboard");
 
+        return buildEmailShell(
+                escapeHtml("Nueva alta en el catálogo: " + brand + " " + model),
+                "Nueva alta en el catálogo",
+                "Se registró un nuevo auto en La Posta Autos. El equipo ya puede revisarlo desde el catálogo.",
+                bodyHtml
+        );
+    }
+
+    private String buildRequestSummaryCard(final String carName, final String bodyType, final String imageStatus) {
         return """
-                <!DOCTYPE html>
-                <html lang="es">
-                <body style="margin:0;padding:24px;background:%s;color:%s;font-family:%s;">
-                    <div style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;color:transparent;">
+                <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:24px;">
+                    %s
+                    <div style="font-size:28px;line-height:1.15;font-weight:700;color:%s;font-family:%s;">
                         %s
                     </div>
-                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
+                    <div style="margin-top:8px;font-size:15px;line-height:1.6;color:%s;font-family:%s;">
+                        %s
+                    </div>
+                    <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:18px;">
                         <tr>
-                            <td style="padding:0;">
-                                <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
-                                    <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
-                                        %s
-                                    </div>
-                                    <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
-                                        Nueva alta en el catálogo
-                                    </h1>
-                                    <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
-                                        %s
-                                    </p>
-                                </div>
-
-                                <div style="background:%s;padding:32px;border:1px solid %s;border-top:none;border-radius:0 0 22px 22px;">
-                                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:24px;">
-                                        <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;font-weight:700;font-family:%s;">
-                                            Resumen del vehículo
-                                        </div>
-                                        <div style="font-size:28px;line-height:1.15;font-weight:700;color:%s;font-family:%s;">
-                                            %s
-                                        </div>
-                                        <div style="margin-top:8px;font-size:15px;line-height:1.6;color:%s;font-family:%s;">
-                                            %s
-                                        </div>
-                                        <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:18px;">
-                                            <tr>
-                                                <td style="padding:0 10px 10px 0;">
-                                                    <span style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(255,87,25,0.14);border:1px solid rgba(255,181,158,0.16);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:%s;font-family:%s;">
-                                                        Pendiente
-                                                    </span>
-                                                </td>
-                                                <td style="padding:0 0 10px 0;">
-                                                    <span style="display:inline-block;padding:7px 12px;border-radius:999px;background:%s;border:1px solid %s;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:%s;font-family:%s;">
-                                                        %s
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </div>
-
-                                    %s
-
-                                    <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
-                                        Descripción enviada
-                                    </div>
-                                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:20px 22px;font-size:15px;line-height:1.7;color:%s;font-family:%s;margin-bottom:28px;">
-                                        %s
-                                    </div>
-
-                                    <div style="text-align:center;">
-                                        <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
-                                            Ir al dashboard
-                                        </a>
-                                    </div>
-
-                                </div>
+                            <td style="padding:0 10px 10px 0;">
+                                %s
+                            </td>
+                            <td style="padding:0 0 10px 0;">
+                                %s
                             </td>
                         </tr>
                     </table>
-                </body>
-                </html>
+                </div>
                 """.formatted(
-                COLOR_SURFACE_LOW,
-                COLOR_ON_SURFACE,
-                BODY_FONT,
-                preheader,
-                COLOR_PRIMARY_CONTAINER,
-                COLOR_PRIMARY_CONTAINER,
-                COLOR_PRIMARY,
-                COLOR_ON_PRIMARY,
-                BODY_FONT,
-                escapeHtml(APP_NAME),
-                DISPLAY_FONT,
-                BODY_FONT,
-                intro,
-                COLOR_SURFACE,
-                COLOR_OUTLINE,
                 COLOR_SURFACE_HIGH,
                 COLOR_OUTLINE,
-                COLOR_ON_SURFACE_VARIANT,
-                BODY_FONT,
+                buildSectionLabel("Resumen del vehículo"),
                 COLOR_ON_SURFACE,
                 DISPLAY_FONT,
                 carName,
                 COLOR_ON_SURFACE_VARIANT,
                 BODY_FONT,
                 bodyType,
-                COLOR_PRIMARY,
-                BODY_FONT,
-                COLOR_SURFACE_HIGHEST,
+                buildPill("Pendiente", "rgba(255,87,25,0.14)", "rgba(255,181,158,0.16)", COLOR_PRIMARY),
+                buildPill(imageStatus, COLOR_SURFACE_HIGHEST, COLOR_OUTLINE, COLOR_ON_SURFACE)
+        );
+    }
+
+    private String buildRequestImageBlock(final boolean hasInlineImage, final String carName) {
+        if (!hasInlineImage) {
+            return "";
+        }
+        return """
+                <div style="margin-bottom:24px;">
+                    %s
+                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:10px;">
+                        <img src="cid:%s" alt="%s" style="display:block;width:100%%;max-width:596px;height:auto;border-radius:12px;">
+                    </div>
+                </div>
+                """.formatted(
+                buildSectionLabel("Imagen enviada"),
+                COLOR_SURFACE_HIGH,
                 COLOR_OUTLINE,
-                COLOR_ON_SURFACE,
-                BODY_FONT,
-                escapeHtml(imageStatus),
-                imageBlock,
-                COLOR_ON_SURFACE_VARIANT,
-                BODY_FONT,
+                CAR_IMAGE_CID,
+                carName
+        );
+    }
+
+    private String buildRequestDescriptionBlock(final String description) {
+        return """
+                %s
+                <div style="background:%s;border:1px solid %s;border-radius:18px;padding:20px 22px;font-size:15px;line-height:1.7;color:%s;font-family:%s;margin-bottom:28px;">
+                    %s
+                </div>
+                """.formatted(
+                buildSectionLabel("Descripción enviada"),
                 COLOR_SURFACE_HIGH,
                 COLOR_OUTLINE,
                 COLOR_ON_SURFACE,
                 BODY_FONT,
-                description,
-                dashboardUrl,
-                COLOR_PRIMARY_CONTAINER,
-                COLOR_ON_PRIMARY,
-                DISPLAY_FONT
+                description
         );
     }
 
     // ── Weekly moderator digest ───────────────────────────────────────────────
 
-    @Override
-    @Async("mailTaskExecutor")
-    public void sendWeeklyModeratorDigest(final List<String> moderatorEmails, final int pendingRequestCount) {
-        if (moderatorEmails == null || moderatorEmails.isEmpty()) {
-            return;
-        }
-        try {
-            final MimeMessage message = mailSender.createMimeMessage();
-            final MimeMessageHelper helper = new MimeMessageHelper(
-                    message,
-                    true,
-                    StandardCharsets.UTF_8.name()
-            );
-            helper.setTo(moderatorEmails.toArray(new String[0]));
-            helper.setSubject(buildModeratorDigestSubject(pendingRequestCount));
-            helper.setText(
-                    buildModeratorDigestPlainText(pendingRequestCount),
-                    buildModeratorDigestHtml(pendingRequestCount)
-            );
-            mailSender.send(message);
-        } catch (final MessagingException | RuntimeException e) {
-            LOGGER.warning("Failed to send weekly moderator digest: " + e.getMessage());
-        }
-    }
-
     private String buildModeratorDigestSubject(final int pendingCount) {
         return "[" + APP_NAME + "] Resumen semanal — "
-                + (pendingCount == 0 ? "sin pedidos pendientes" : pendingCount + " pedido" + (pendingCount == 1 ? "" : "s") + " pendiente" + (pendingCount == 1 ? "" : "s"));
+                + (pendingCount == 0
+                ? "sin pedidos pendientes"
+                : pendingCount + " pedido" + (pendingCount == 1 ? "" : "s")
+                + " pendiente" + (pendingCount == 1 ? "" : "s"));
     }
 
     private String buildModeratorDigestPlainText(final int pendingCount) {
@@ -355,109 +303,64 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String buildModeratorDigestHtml(final int pendingCount) {
-        final String dashboardUrl = escapeHtml(appBaseUrl + "/admin");
         final boolean hasPending = pendingCount > 0;
         final String preheader = hasPending
-                ? escapeHtml(pendingCount + " pedido" + (pendingCount == 1 ? "" : "s") + " de autos esperan tu revisión")
+                ? escapeHtml(pendingCount + " pedido" + (pendingCount == 1 ? "" : "s")
+                + " de autos esperan tu revisión")
                 : escapeHtml("Todo al día — sin pedidos pendientes esta semana");
+        final String dashboardUrl = escapeHtml(appBaseUrl + "/admin");
 
-        final String bodySection = hasPending
-                ? """
-                            <div style="background:%s;border:1px solid %s;border-radius:18px;padding:28px 24px;margin-bottom:28px;text-align:center;">
-                                <div style="font-size:56px;line-height:1;font-weight:700;color:%s;font-family:%s;">
-                                    %d
-                                </div>
-                                <div style="margin-top:8px;font-size:16px;line-height:1.5;color:%s;font-family:%s;">
-                                    pedido%s pendiente%s de revisión
-                                </div>
-                            </div>
-                        """.formatted(
-                        COLOR_SURFACE_HIGH, COLOR_OUTLINE,
-                        COLOR_PRIMARY, DISPLAY_FONT,
-                        pendingCount,
-                        COLOR_ON_SURFACE_VARIANT, BODY_FONT,
-                        pendingCount == 1 ? "" : "s", pendingCount == 1 ? "" : "s"
-                )
-                : """
-                            <div style="background:%s;border:1px solid %s;border-radius:18px;padding:28px 24px;margin-bottom:28px;text-align:center;">
-                                <div style="font-size:40px;line-height:1;margin-bottom:12px;">✓</div>
-                                <div style="font-size:16px;line-height:1.5;color:%s;font-family:%s;">
-                                    Todo al día — sin pedidos pendientes esta semana.
-                                </div>
-                            </div>
-                        """.formatted(COLOR_SURFACE_HIGH, COLOR_OUTLINE, COLOR_ON_SURFACE_VARIANT, BODY_FONT);
+        final String bodyHtml = buildModeratorDigestStatusCard(pendingCount)
+                + buildCenteredAction(dashboardUrl, "Ir al dashboard");
+
+        return buildEmailShell(
+                preheader,
+                "Resumen semanal",
+                "Pedidos de autos pendientes de revisión en el catálogo.",
+                bodyHtml
+        );
+    }
+
+    private String buildModeratorDigestStatusCard(final int pendingCount) {
+        if (pendingCount > 0) {
+            return """
+                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:28px 24px;margin-bottom:28px;text-align:center;">
+                        <div style="font-size:56px;line-height:1;font-weight:700;color:%s;font-family:%s;">
+                            %d
+                        </div>
+                        <div style="margin-top:8px;font-size:16px;line-height:1.5;color:%s;font-family:%s;">
+                            pedido%s pendiente%s de revisión
+                        </div>
+                    </div>
+                    """.formatted(
+                    COLOR_SURFACE_HIGH,
+                    COLOR_OUTLINE,
+                    COLOR_PRIMARY,
+                    DISPLAY_FONT,
+                    pendingCount,
+                    COLOR_ON_SURFACE_VARIANT,
+                    BODY_FONT,
+                    pendingCount == 1 ? "" : "s",
+                    pendingCount == 1 ? "" : "s"
+            );
+        }
 
         return """
-                <!DOCTYPE html>
-                <html lang="es">
-                <body style="margin:0;padding:24px;background:%s;color:%s;font-family:%s;">
-                    <div style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;color:transparent;">%s</div>
-                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
-                        <tr><td style="padding:0;">
-                            <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
-                                <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
-                                    %s
-                                </div>
-                                <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
-                                    Resumen semanal
-                                </h1>
-                                <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
-                                    Pedidos de autos pendientes de revisión en el catálogo.
-                                </p>
-                            </div>
-                            <div style="background:%s;padding:32px;border:1px solid %s;border-top:none;border-radius:0 0 22px 22px;">
-                                %s
-                                <div style="text-align:center;">
-                                    <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
-                                        Ir al dashboard
-                                    </a>
-                                </div>
-                            </div>
-                        </td></tr>
-                    </table>
-                </body>
-                </html>
+                <div style="background:%s;border:1px solid %s;border-radius:18px;padding:28px 24px;margin-bottom:28px;text-align:center;">
+                    <div style="font-size:40px;line-height:1;margin-bottom:12px;">✓</div>
+                    <div style="font-size:16px;line-height:1.5;color:%s;font-family:%s;">
+                        Todo al día — sin pedidos pendientes esta semana.
+                    </div>
+                </div>
                 """.formatted(
-                COLOR_SURFACE_LOW, COLOR_ON_SURFACE, BODY_FONT,
-                preheader,
-                COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY, COLOR_ON_PRIMARY,
-                BODY_FONT, escapeHtml(APP_NAME),
-                DISPLAY_FONT,
-                BODY_FONT,
-                COLOR_SURFACE, COLOR_OUTLINE,
-                bodySection,
-                dashboardUrl, COLOR_PRIMARY_CONTAINER, COLOR_ON_PRIMARY, DISPLAY_FONT
+                COLOR_SURFACE_HIGH,
+                COLOR_OUTLINE,
+                COLOR_ON_SURFACE_VARIANT,
+                BODY_FONT
         );
     }
 
     // ── Weekly user digest ────────────────────────────────────────────────────
-
-    @Override
-    @Async("mailTaskExecutor")
-    public void sendWeeklyUserDigest(final String recipientEmail, final String username,
-                                     final List<EmailService.ReviewActivityItem> reviewActivity,
-                                     final List<EmailService.FavoriteActivityItem> favoriteActivity) {
-        if (recipientEmail == null || recipientEmail.isBlank()) {
-            return;
-        }
-        try {
-            final MimeMessage message = mailSender.createMimeMessage();
-            final MimeMessageHelper helper = new MimeMessageHelper(
-                    message,
-                    true,
-                    StandardCharsets.UTF_8.name()
-            );
-            helper.setTo(recipientEmail);
-            helper.setSubject("[" + APP_NAME + "] Tu resumen semanal, " + sanitizeHeaderValue(safeValue(username)));
-            helper.setText(
-                    buildUserDigestPlainText(username, reviewActivity, favoriteActivity),
-                    buildUserDigestHtml(username, reviewActivity, favoriteActivity)
-            );
-            mailSender.send(message);
-        } catch (final MessagingException | RuntimeException e) {
-            LOGGER.warning("Failed to send weekly user digest to " + recipientEmail + ": " + e.getMessage());
-        }
-    }
 
     private String buildUserDigestPlainText(final String username,
                                             final List<EmailService.ReviewActivityItem> reviewActivity,
@@ -474,10 +377,13 @@ public class EmailServiceImpl implements EmailService {
                 sb.append("• ").append(safeValue(item.reviewTitle))
                         .append(" (").append(safeValue(item.carName)).append(")");
                 if (item.newLikes > 0) {
-                    sb.append(" — ").append(item.newLikes).append(" me gusta nuevo").append(item.newLikes == 1 ? "" : "s");
+                    sb.append(" — ").append(item.newLikes).append(" me gusta nuevo")
+                            .append(item.newLikes == 1 ? "" : "s");
                 }
                 if (item.newReplies > 0) {
-                    sb.append(" — ").append(item.newReplies).append(" respuesta").append(item.newReplies == 1 ? "" : "s").append(" nueva").append(item.newReplies == 1 ? "" : "s");
+                    sb.append(" — ").append(item.newReplies).append(" respuesta")
+                            .append(item.newReplies == 1 ? "" : "s")
+                            .append(" nueva").append(item.newReplies == 1 ? "" : "s");
                 }
                 sb.append("\n");
             }
@@ -490,7 +396,9 @@ public class EmailServiceImpl implements EmailService {
             for (final EmailService.FavoriteActivityItem item : favoriteActivity) {
                 sb.append("• ").append(safeValue(item.carName))
                         .append(" — ").append(item.newReviewCount)
-                        .append(" reseña").append(item.newReviewCount == 1 ? "" : "s").append(" nueva").append(item.newReviewCount == 1 ? "" : "s").append("\n");
+                        .append(" reseña").append(item.newReviewCount == 1 ? "" : "s")
+                        .append(" nueva").append(item.newReviewCount == 1 ? "" : "s")
+                        .append("\n");
             }
         }
 
@@ -502,52 +410,15 @@ public class EmailServiceImpl implements EmailService {
                                        final List<EmailService.ReviewActivityItem> reviewActivity,
                                        final List<EmailService.FavoriteActivityItem> favoriteActivity) {
         final String displayName = escapeHtml(safeValue(username));
-        final String catalogUrl = escapeHtml(appBaseUrl + "/cars");
-        final String preheader = escapeHtml("Tu actividad semanal en " + APP_NAME);
+        final String bodyHtml = buildUserDigestReviewSection(reviewActivity)
+                + buildUserDigestFavoriteSection(favoriteActivity)
+                + buildCenteredAction(escapeHtml(appBaseUrl + "/cars"), "Ver catálogo");
 
-        final String reviewSection = buildUserDigestReviewSection(reviewActivity);
-        final String favoriteSection = buildUserDigestFavoriteSection(favoriteActivity);
-
-        return """
-                <!DOCTYPE html>
-                <html lang="es">
-                <body style="margin:0;padding:24px;background:%s;color:%s;font-family:%s;">
-                    <div style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;color:transparent;">%s</div>
-                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
-                        <tr><td style="padding:0;">
-                            <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
-                                <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
-                                    %s
-                                </div>
-                                <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
-                                    Hola, %s!
-                                </h1>
-                                <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
-                                    Esto es lo que pasó esta semana en tu cuenta.
-                                </p>
-                            </div>
-                            <div style="background:%s;padding:32px;border:1px solid %s;border-top:none;border-radius:0 0 22px 22px;">
-                                %s
-                                %s
-                                <div style="text-align:center;margin-top:8px;">
-                                    <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
-                                        Ver catálogo
-                                    </a>
-                                </div>
-                            </div>
-                        </td></tr>
-                    </table>
-                </body>
-                </html>
-                """.formatted(
-                COLOR_SURFACE_LOW, COLOR_ON_SURFACE, BODY_FONT,
-                preheader,
-                COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY, COLOR_ON_PRIMARY,
-                BODY_FONT, escapeHtml(APP_NAME),
-                DISPLAY_FONT, displayName, BODY_FONT,
-                COLOR_SURFACE, COLOR_OUTLINE,
-                reviewSection, favoriteSection,
-                catalogUrl, COLOR_PRIMARY_CONTAINER, COLOR_ON_PRIMARY, DISPLAY_FONT
+        return buildEmailShell(
+                escapeHtml("Tu actividad semanal en " + APP_NAME),
+                "Hola, " + displayName + "!",
+                "Esto es lo que pasó esta semana en tu cuenta.",
+                bodyHtml
         );
     }
 
@@ -563,8 +434,12 @@ public class EmailServiceImpl implements EmailService {
                 detail.append(item.newLikes).append(" me gusta nuevo").append(item.newLikes == 1 ? "" : "s");
             }
             if (item.newReplies > 0) {
-                if (detail.length() > 0) detail.append(" &amp; ");
-                detail.append(item.newReplies).append(" respuesta").append(item.newReplies == 1 ? "" : "s").append(" nueva").append(item.newReplies == 1 ? "" : "s");
+                if (detail.length() > 0) {
+                    detail.append(" &amp; ");
+                }
+                detail.append(item.newReplies).append(" respuesta")
+                        .append(item.newReplies == 1 ? "" : "s")
+                        .append(" nueva").append(item.newReplies == 1 ? "" : "s");
             }
             rows.append(buildDigestRow(
                     escapeHtml(safeValue(item.reviewTitle)),
@@ -582,7 +457,8 @@ public class EmailServiceImpl implements EmailService {
         }
         final StringBuilder rows = new StringBuilder();
         for (final EmailService.FavoriteActivityItem item : items) {
-            final String detail = item.newReviewCount + " reseña" + (item.newReviewCount == 1 ? "" : "s") + " nueva" + (item.newReviewCount == 1 ? "" : "s");
+            final String detail = item.newReviewCount + " reseña" + (item.newReviewCount == 1 ? "" : "s")
+                    + " nueva" + (item.newReviewCount == 1 ? "" : "s");
             rows.append(buildDigestRow(escapeHtml(safeValue(item.carName)), null, detail));
         }
         return buildDigestSection(sectionLabel, rows.toString());
@@ -591,17 +467,15 @@ public class EmailServiceImpl implements EmailService {
     private String buildDigestSection(final String label, final String rowsHtml) {
         return """
                 <div style="margin-bottom:24px;">
-                    <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
-                        %s
-                    </div>
+                    %s
                     <div style="background:%s;border:1px solid %s;border-radius:18px;overflow:hidden;">
                         %s
                     </div>
                 </div>
                 """.formatted(
-                COLOR_ON_SURFACE_VARIANT, BODY_FONT,
-                escapeHtml(label),
-                COLOR_SURFACE_HIGH, COLOR_OUTLINE,
+                buildSectionLabel(label),
+                COLOR_SURFACE_HIGH,
+                COLOR_OUTLINE,
                 rowsHtml
         );
     }
@@ -609,25 +483,25 @@ public class EmailServiceImpl implements EmailService {
     private String buildDigestEmptySection(final String label, final String message) {
         return """
                 <div style="margin-bottom:24px;">
-                    <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
-                        %s
-                    </div>
+                    %s
                     <div style="background:%s;border:1px solid %s;border-radius:18px;padding:20px 22px;font-size:15px;color:%s;font-family:%s;">
                         %s
                     </div>
                 </div>
                 """.formatted(
-                COLOR_ON_SURFACE_VARIANT, BODY_FONT,
-                escapeHtml(label),
-                COLOR_SURFACE_HIGH, COLOR_OUTLINE,
-                COLOR_ON_SURFACE_VARIANT, BODY_FONT,
+                buildSectionLabel(label),
+                COLOR_SURFACE_HIGH,
+                COLOR_OUTLINE,
+                COLOR_ON_SURFACE_VARIANT,
+                BODY_FONT,
                 escapeHtml(message)
         );
     }
 
     private String buildDigestRow(final String title, final String subtitle, final String detail) {
         final String subtitleHtml = subtitle != null
-                ? "<div style=\"font-size:13px;line-height:1.4;color:" + COLOR_ON_SURFACE_VARIANT + ";font-family:" + BODY_FONT + ";margin-top:2px;\">" + subtitle + "</div>"
+                ? "<div style=\"font-size:13px;line-height:1.4;color:" + COLOR_ON_SURFACE_VARIANT
+                + ";font-family:" + BODY_FONT + ";margin-top:2px;\">" + subtitle + "</div>"
                 : "";
         return """
                 <div style="padding:16px 22px;border-bottom:1px solid %s;">
@@ -637,9 +511,13 @@ public class EmailServiceImpl implements EmailService {
                 </div>
                 """.formatted(
                 COLOR_OUTLINE,
-                COLOR_ON_SURFACE, BODY_FONT, title,
+                COLOR_ON_SURFACE,
+                BODY_FONT,
+                title,
                 subtitleHtml,
-                COLOR_PRIMARY, BODY_FONT, detail
+                COLOR_PRIMARY,
+                BODY_FONT,
+                detail
         );
     }
 
@@ -667,10 +545,50 @@ public class EmailServiceImpl implements EmailService {
 
     private String buildApprovedHtmlBody(final String brandName, final String model) {
         final String carName = escapeHtml(safeValue(brandName) + " " + safeValue(model));
-        final String catalogUrl = escapeHtml(appBaseUrl + "/cars");
-        final String preheader = escapeHtml("Tu auto " + safeValue(brandName) + " " + safeValue(model)
-                + " ya está en el catálogo");
+        final String bodyHtml = buildApprovedSummaryCard(carName)
+                + buildCenteredAction(escapeHtml(appBaseUrl + "/cars"), "Ver en el catálogo");
 
+        return buildEmailShell(
+                escapeHtml("Tu auto " + safeValue(brandName) + " " + safeValue(model) + " ya está en el catálogo"),
+                "¡Tu auto fue aprobado!",
+                "Ya está disponible para que todos lo vean en el catálogo.",
+                bodyHtml
+        );
+    }
+
+    private String buildApprovedSummaryCard(final String carName) {
+        return """
+                <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:28px;">
+                    %s
+                    <div style="font-size:28px;line-height:1.15;font-weight:700;color:%s;font-family:%s;">
+                        %s
+                    </div>
+                    <div style="margin-top:12px;">
+                        %s
+                    </div>
+                </div>
+                """.formatted(
+                COLOR_SURFACE_HIGH,
+                COLOR_OUTLINE,
+                buildSectionLabel("Vehículo aprobado"),
+                COLOR_ON_SURFACE,
+                DISPLAY_FONT,
+                carName,
+                buildPill("Aprobado", "rgba(100,200,100,0.14)", "rgba(100,200,100,0.3)", "#88c888")
+        );
+    }
+
+    // ── Shared helpers ────────────────────────────────────────────────────────
+
+    private boolean hasInlineRequestImage(final CarRequest request) {
+        return request.getImageData() != null
+                && request.getImageData().length > 0
+                && request.getImageContentType() != null
+                && !request.getImageContentType().isBlank();
+    }
+
+    private String buildEmailShell(final String preheader, final String title,
+                                   final String intro, final String bodyHtml) {
         return """
                 <!DOCTYPE html>
                 <html lang="es">
@@ -681,38 +599,9 @@ public class EmailServiceImpl implements EmailService {
                     <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
                         <tr>
                             <td style="padding:0;">
-                                <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
-                                    <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
-                                        %s
-                                    </div>
-                                    <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
-                                        ¡Tu auto fue aprobado!
-                                    </h1>
-                                    <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
-                                        Ya está disponible para que todos lo vean en el catálogo.
-                                    </p>
-                                </div>
-
+                                %s
                                 <div style="background:%s;padding:32px;border:1px solid %s;border-top:none;border-radius:0 0 22px 22px;">
-                                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:28px;">
-                                        <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;font-weight:700;font-family:%s;">
-                                            Vehículo aprobado
-                                        </div>
-                                        <div style="font-size:28px;line-height:1.15;font-weight:700;color:%s;font-family:%s;">
-                                            %s
-                                        </div>
-                                        <div style="margin-top:12px;">
-                                            <span style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(100,200,100,0.14);border:1px solid rgba(100,200,100,0.3);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#88c888;font-family:%s;">
-                                                Aprobado
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div style="text-align:center;">
-                                        <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
-                                            Ver en el catálogo
-                                        </a>
-                                    </div>
+                                    %s
                                 </div>
                             </td>
                         </tr>
@@ -724,6 +613,27 @@ public class EmailServiceImpl implements EmailService {
                 COLOR_ON_SURFACE,
                 BODY_FONT,
                 preheader,
+                buildEmailHeader(title, intro),
+                COLOR_SURFACE,
+                COLOR_OUTLINE,
+                bodyHtml
+        );
+    }
+
+    private String buildEmailHeader(final String title, final String intro) {
+        return """
+                <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
+                    <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
+                        %s
+                    </div>
+                    <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
+                        %s
+                    </h1>
+                    <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
+                        %s
+                    </p>
+                </div>
+                """.formatted(
                 COLOR_PRIMARY_CONTAINER,
                 COLOR_PRIMARY_CONTAINER,
                 COLOR_PRIMARY,
@@ -731,25 +641,54 @@ public class EmailServiceImpl implements EmailService {
                 BODY_FONT,
                 escapeHtml(APP_NAME),
                 DISPLAY_FONT,
+                escapeHtml(title),
                 BODY_FONT,
-                COLOR_SURFACE,
-                COLOR_OUTLINE,
-                COLOR_SURFACE_HIGH,
-                COLOR_OUTLINE,
-                COLOR_ON_SURFACE_VARIANT,
-                BODY_FONT,
-                COLOR_ON_SURFACE,
-                DISPLAY_FONT,
-                carName,
-                BODY_FONT,
-                catalogUrl,
-                COLOR_PRIMARY_CONTAINER,
-                COLOR_ON_PRIMARY,
-                DISPLAY_FONT
+                escapeHtml(intro)
         );
     }
 
-    // ── Shared helpers ────────────────────────────────────────────────────────
+    private String buildSectionLabel(final String label) {
+        return """
+                <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
+                    %s
+                </div>
+                """.formatted(
+                COLOR_ON_SURFACE_VARIANT,
+                BODY_FONT,
+                escapeHtml(label)
+        );
+    }
+
+    private String buildPill(final String label, final String background, final String borderColor,
+                             final String textColor) {
+        return """
+                <span style="display:inline-block;padding:7px 12px;border-radius:999px;background:%s;border:1px solid %s;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:%s;font-family:%s;">
+                    %s
+                </span>
+                """.formatted(
+                background,
+                borderColor,
+                textColor,
+                BODY_FONT,
+                escapeHtml(label)
+        );
+    }
+
+    private String buildCenteredAction(final String url, final String label) {
+        return """
+                <div style="text-align:center;">
+                    <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
+                        %s
+                    </a>
+                </div>
+                """.formatted(
+                url,
+                COLOR_PRIMARY_CONTAINER,
+                COLOR_ON_PRIMARY,
+                DISPLAY_FONT,
+                escapeHtml(label)
+        );
+    }
 
     private String sanitizeHeaderValue(final String value) {
         return safeValue(value)
@@ -785,4 +724,8 @@ public class EmailServiceImpl implements EmailService {
                 .replace("'", "&#39;");
     }
 
+    @FunctionalInterface
+    private interface EmailCustomization {
+        void apply(MimeMessageHelper helper) throws MessagingException;
+    }
 }

@@ -39,6 +39,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Year;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -178,10 +179,6 @@ public class CarReviewController {
         return "redirect:/reviews?carId=" + car.getId();
     }
 
-    private ModelAndView carReviewPage(final long carId, final String sort, final String error) {
-        return carReviewPage(carId, sort, error, false, null);
-    }
-
     private ModelAndView carReviewPage(final long carId, final String sort, final String error,
                                        final boolean openReviewModal, final AuthenticatedUser currentUser) {
         final ReviewPageData pageData = resolveReviewPageData(carId, sort, currentUserId(currentUser));
@@ -204,38 +201,32 @@ public class CarReviewController {
 
     private void populateCarReviewPageModel(final Model model, final ReviewPageData pageData,
                                             final AuthenticatedUser currentUser) {
-        model.addAttribute("selectedCar", pageData.selectedCar);
-        model.addAttribute("selectedCarFavorited", isSelectedCarFavorited(pageData.selectedCar, currentUser));
-        model.addAttribute("reviews", pageData.reviews);
-        model.addAttribute("reviewThreads", pageData.reviewThreads);
-        model.addAttribute("averageRating", calculateAverageRating(pageData.reviews));
-        model.addAttribute("reviewCount", pageData.reviews.size());
-        model.addAttribute("currentSort", pageData.currentSort);
-        model.addAttribute("latestReview", pageData.latestReview.orElse(null));
-        model.addAttribute("latestReviewLikeCount", pageData.latestReviewLikeCount);
-        model.addAttribute("latestReviewLiked", pageData.latestReviewLiked);
-        model.addAttribute("carImages", pageData.carImages);
-        model.addAttribute("brands", brandDao.findAll());
-        model.addAttribute("bodyTypes", bodyTypeDao.findAll());
-        model.addAttribute("carForm", new CarForm());
+        buildCarReviewPageAttributes(pageData, currentUser).forEach(model::addAttribute);
     }
 
     private void populateCarReviewPageModel(final ModelAndView mav, final ReviewPageData pageData,
                                             final AuthenticatedUser currentUser) {
-        mav.addObject("selectedCar", pageData.selectedCar);
-        mav.addObject("selectedCarFavorited", isSelectedCarFavorited(pageData.selectedCar, currentUser));
-        mav.addObject("reviews", pageData.reviews);
-        mav.addObject("reviewThreads", pageData.reviewThreads);
-        mav.addObject("averageRating", calculateAverageRating(pageData.reviews));
-        mav.addObject("reviewCount", pageData.reviews.size());
-        mav.addObject("currentSort", pageData.currentSort);
-        mav.addObject("latestReview", pageData.latestReview.orElse(null));
-        mav.addObject("latestReviewLikeCount", pageData.latestReviewLikeCount);
-        mav.addObject("latestReviewLiked", pageData.latestReviewLiked);
-        mav.addObject("carImages", pageData.carImages);
-        mav.addObject("brands", brandDao.findAll());
-        mav.addObject("bodyTypes", bodyTypeDao.findAll());
-        mav.addObject("carForm", new CarForm());
+        buildCarReviewPageAttributes(pageData, currentUser).forEach(mav::addObject);
+    }
+
+    private Map<String, Object> buildCarReviewPageAttributes(final ReviewPageData pageData,
+                                                             final AuthenticatedUser currentUser) {
+        final Map<String, Object> attributes = new LinkedHashMap<>();
+        attributes.put("selectedCar", pageData.selectedCar);
+        attributes.put("selectedCarFavorited", isSelectedCarFavorited(pageData.selectedCar, currentUser));
+        attributes.put("reviews", pageData.reviews);
+        attributes.put("reviewThreads", pageData.reviewThreads);
+        attributes.put("averageRating", calculateAverageRating(pageData.reviews));
+        attributes.put("reviewCount", pageData.reviews.size());
+        attributes.put("currentSort", pageData.currentSort);
+        attributes.put("latestReview", pageData.latestReview.orElse(null));
+        attributes.put("latestReviewLikeCount", pageData.latestReviewLikeCount);
+        attributes.put("latestReviewLiked", pageData.latestReviewLiked);
+        attributes.put("carImages", pageData.carImages);
+        attributes.put("brands", brandDao.findAll());
+        attributes.put("bodyTypes", bodyTypeDao.findAll());
+        attributes.put("carForm", new CarForm());
+        return attributes;
     }
 
     private ReviewPageData resolveReviewPageData(final long carId, final String sort, final Long currentUserId) {
@@ -285,24 +276,18 @@ public class CarReviewController {
                 ? Collections.emptySet()
                 : reviewLikeService.getLikedReplyIds(replyIds, currentUserId);
 
-        final Map<Long, List<ReviewReply>> finalRepliesByReviewId = repliesByReviewId;
-        final Map<Long, Long> finalReviewLikeCounts = reviewLikeCounts;
-        final Set<Long> finalLikedReviewIds = likedReviewIds;
-        final Map<Long, Long> finalReplyLikeCounts = replyLikeCounts;
-        final Set<Long> finalLikedReplyIds = likedReplyIds;
-        final Long finalCurrentUserId = currentUserId;
         return reviews.stream()
                 .map(review -> new ReviewThread(
                         review,
-                        finalReviewLikeCounts.getOrDefault(review.getId(), 0L),
-                        finalLikedReviewIds.contains(review.getId()),
-                        finalRepliesByReviewId.getOrDefault(review.getId(), Collections.emptyList())
+                        reviewLikeCounts.getOrDefault(review.getId(), 0L),
+                        likedReviewIds.contains(review.getId()),
+                        repliesByReviewId.getOrDefault(review.getId(), Collections.emptyList())
                                 .stream()
                                 .map(reply -> new ReviewReplyCard(
                                         reply,
-                                        finalReplyLikeCounts.getOrDefault(reply.getId(), 0L),
-                                        finalLikedReplyIds.contains(reply.getId()),
-                                        finalCurrentUserId != null && reply.getUserId() == finalCurrentUserId
+                                        replyLikeCounts.getOrDefault(reply.getId(), 0L),
+                                        likedReplyIds.contains(reply.getId()),
+                                        currentUserId != null && reply.getUserId() == currentUserId
                                 ))
                                 .collect(Collectors.toList())
                 ))
@@ -419,7 +404,7 @@ public class CarReviewController {
     public Object toggleReviewLike(@PathVariable("reviewId") final long reviewId,
                                    @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
                                    @AuthenticationPrincipal final AuthenticatedUser currentUser) {
-        final boolean ajax = isAjaxRequest(requestedWith);
+        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
         if (currentUser == null) {
             if (ajax) {
                 return new ResponseEntity<String>("/login", HttpStatus.UNAUTHORIZED);
@@ -454,7 +439,7 @@ public class CarReviewController {
     public Object toggleReplyLike(@PathVariable("replyId") final long replyId,
                                   @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
                                   @AuthenticationPrincipal final AuthenticatedUser currentUser) {
-        final boolean ajax = isAjaxRequest(requestedWith);
+        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
         if (currentUser == null) {
             if (ajax) {
                 return new ResponseEntity<String>("/login", HttpStatus.UNAUTHORIZED);
@@ -485,10 +470,6 @@ public class CarReviewController {
             return new ResponseEntity<String>(liked + "|" + count, HttpStatus.OK);
         }
         return new ModelAndView("redirect:/reviews?carId=" + review.getCarId() + "#review-" + review.getId());
-    }
-
-    private boolean isAjaxRequest(final String requestedWith) {
-        return "XMLHttpRequest".equalsIgnoreCase(requestedWith);
     }
 
     private void validateReviewOwnership(final Review review, final AuthenticatedUser currentUser) {

@@ -10,9 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reseñas | La Posta Autos</title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
@@ -31,27 +29,7 @@
                 <div class="review-hero-actions">
                     <c:if test="${not empty averageRating}">
                         <div class="hero-stars-row" aria-label="${averageRating} de 5 estrellas">
-                            <c:forEach var="i" begin="1" end="5">
-                                <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true">
-                                    <c:choose>
-                                        <c:when test="${averageRating >= i}">
-                                            <path fill="#ff5719" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                        </c:when>
-                                        <c:when test="${averageRating >= i - 0.5}">
-                                            <defs>
-                                                <linearGradient id="hsg${i}" x1="0" x2="1" y1="0" y2="0">
-                                                    <stop offset="50%" stop-color="#ff5719"/>
-                                                    <stop offset="50%" stop-color="#3a3a3a"/>
-                                                </linearGradient>
-                                            </defs>
-                                            <path fill="url(#hsg${i})" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <path fill="#3a3a3a" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </svg>
-                            </c:forEach>
+                            <pa:rating-stars rating="${averageRating}" size="32" idPrefix="reviewHeroStar"/>
                         </div>
                     </c:if>
                     <a href="#reviewsFeed" class="btn-secondary hero-see-reviews-btn">

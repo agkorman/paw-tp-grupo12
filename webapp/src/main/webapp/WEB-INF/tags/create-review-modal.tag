@@ -3,6 +3,7 @@
 <%@ attribute name="autoOpen" required="false" type="java.lang.Boolean" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <c:url var="reviewCreateUrl" value="/reviews"/>
 
@@ -45,15 +46,11 @@
                         <div class="star-rating-stars">
                             <c:forEach var="i" begin="1" end="5">
                                 <div class="star-slot" data-star="${i}">
-                                    <svg viewBox="0 0 24 24" width="36" height="36">
-                                        <defs>
-                                            <linearGradient id="starGrad${i}">
-                                                <stop offset="0%" stop-color="#2e2e2e"/>
-                                                <stop offset="100%" stop-color="#2e2e2e"/>
-                                            </linearGradient>
-                                        </defs>
-                                        <path fill="url(#starGrad${i})" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                    </svg>
+                                    <pa:star-icon size="36"
+                                                  gradientId="starGrad${i}"
+                                                  fillPercent="0"
+                                                  filledColor="#ff5719"
+                                                  emptyColor="#2e2e2e"/>
                                     <button type="button" class="star-hit star-hit-left" data-star="${i}" data-half="true" aria-label="${i - 1} y media estrellas"></button>
                                     <button type="button" class="star-hit star-hit-right" data-star="${i}" data-half="false" aria-label="${i} estrellas"></button>
                                 </div>
