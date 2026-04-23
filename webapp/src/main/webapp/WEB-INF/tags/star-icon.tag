@@ -20,7 +20,7 @@
                     <stop offset="100%" stop-color="${resolvedEmptyColor}"/>
                 </c:when>
                 <c:when test="${resolvedFillPercent ge 100}">
-                    <stop offset="100%" stop-color="${resolvedFilledColor}"/>
+                    <stop offset="0%" stop-color="${resolvedFilledColor}"/>
                     <stop offset="100%" stop-color="${resolvedFilledColor}"/>
                 </c:when>
                 <c:otherwise>
