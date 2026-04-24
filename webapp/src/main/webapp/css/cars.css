@@ -1,3 +1,67 @@
+/* ── SUBMITTED TOAST ── */
+.submitted-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem 0.875rem 1.125rem;
+    background: var(--color-surface-highest, #2e2e2e);
+    border: 1px solid rgba(229, 226, 225, 0.1);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    max-width: min(640px, calc(100vw - 2rem));
+    width: max-content;
+    z-index: 1000;
+    animation: toast-in 0.25s ease;
+}
+
+.submitted-toast--hiding {
+    animation: toast-out 0.3s ease forwards;
+}
+
+.submitted-toast-icon {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.submitted-toast-text {
+    flex: 1;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--color-on-surface, #e5e2e1);
+}
+
+.submitted-toast-action {
+    flex-shrink: 0;
+    padding: 0.25rem 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--color-primary, #ffb59e);
+    text-transform: uppercase;
+}
+
+.submitted-toast-action:hover {
+    opacity: 0.8;
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(0.5rem); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes toast-out {
+    from { opacity: 1; transform: translateX(-50%) translateY(0); }
+    to   { opacity: 0; transform: translateX(-50%) translateY(0.5rem); }
+}
+
 /* ── TOP TOOLBAR ── */
 .cars-toolbar {
     padding: 1.1rem var(--spacing-12) 0;
@@ -5,7 +69,7 @@
 
 .cars-toolbar-shell {
     display: grid;
-    grid-template-columns: minmax(0, 2.2fr) minmax(12rem, 1.15fr) minmax(12rem, 1.15fr) auto;
+    grid-template-columns: minmax(0, 2.2fr) minmax(12rem, 1.15fr) minmax(12rem, 1.15fr) auto minmax(12rem, 1.15fr);
     align-items: center;
     gap: 0.875rem;
     padding: 0.85rem;
@@ -187,6 +251,10 @@
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
+a.car-request-card {
+    text-decoration: none;
+}
+
 .car-request-card:hover,
 .car-request-card:focus-visible {
     transform: translateY(-2px);
@@ -242,10 +310,425 @@
     pointer-events: none;
 }
 
+/* ── TOOLBAR FILTERS BUTTON ── */
+.cars-toolbar-filters-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 3.2rem;
+    padding: 0.75rem 1.1rem;
+    background: rgba(37, 37, 37, 0.88);
+    border: 1px solid rgba(229, 226, 225, 0.1);
+    border-radius: var(--radius-lg);
+    color: rgba(196, 198, 204, 0.82);
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    white-space: nowrap;
+}
+
+.cars-toolbar-filters-btn:hover {
+    border-color: rgba(229, 226, 225, 0.22);
+    color: var(--on-surface);
+}
+
+.cars-toolbar-filters-btn.is-active {
+    background: linear-gradient(180deg, rgba(255, 114, 60, 0.34), rgba(115, 53, 29, 0.92));
+    border-color: rgba(255, 138, 90, 0.55);
+    color: var(--primary);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 181, 158, 0.12),
+        0 8px 20px rgba(0, 0, 0, 0.22);
+}
+
+.cars-toolbar-filters-btn.is-active:hover,
+.cars-toolbar-filters-btn.is-active:focus-visible {
+    background: linear-gradient(180deg, rgba(255, 128, 77, 0.4), rgba(130, 58, 32, 0.96));
+    border-color: rgba(255, 181, 158, 0.68);
+    color: #ffd2c4;
+}
+
+.cars-toolbar-filters-btn.is-active svg {
+    color: inherit;
+}
+
+/* ── FILTERS PANEL (RIGHT-SIDE DRAWER) ── */
+.cars-filters-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 199;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+}
+
+.cars-filters-overlay.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.cars-filters-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 28rem;
+    z-index: 200;
+    transform: translateX(100%);
+    transition: transform 0.28s ease;
+    overflow: hidden;
+}
+
+.cars-filters-panel.is-open {
+    transform: translateX(0);
+}
+
+.cars-filters-panel-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+    background: var(--surface-container-high, #2a2a2a);
+    border-left: 1px solid rgba(229, 226, 225, 0.08);
+}
+
+.cars-filters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(229, 226, 225, 0.07);
+    position: sticky;
+    top: 0;
+    background: var(--surface-container-high, #2a2a2a);
+    z-index: 1;
+}
+
+.cars-filters-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--on-surface);
+}
+
+.cars-filters-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    background: transparent;
+    border: 1px solid rgba(229, 226, 225, 0.1);
+    border-radius: var(--radius-md);
+    color: rgba(196, 198, 204, 0.72);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cars-filters-close:hover {
+    background: rgba(229, 226, 225, 0.08);
+    color: var(--on-surface);
+}
+
+/* ── PANEL SECTIONS ── */
+.filters-panel-section {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(229, 226, 225, 0.07);
+}
+
+.filters-panel-section-title {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(196, 198, 204, 0.72);
+    margin: 0 0 0.9rem 0;
+}
+
+/* ── TOGGLE CHIPS (AIRBAGS) ── */
+.filter-toggle-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.filter-toggle-option {
+    padding: 0.6rem 1.35rem;
+    background: transparent;
+    border: 1.5px solid rgba(229, 226, 225, 0.18);
+    border-radius: var(--radius-full);
+    color: var(--on-surface-variant);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.filter-toggle-option:hover {
+    border-color: rgba(229, 226, 225, 0.38);
+    color: var(--on-surface);
+}
+
+.filter-toggle-option.is-selected {
+    background: var(--primary-container);
+    border-color: var(--primary-container);
+    color: #fff;
+}
+
+/* ── DUAL-RANGE SLIDER ── */
+.dual-range {
+    position: relative;
+    height: 2.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.dual-range-track {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    transform: translateY(-50%);
+    background: rgba(229, 226, 225, 0.14);
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+.dual-range-fill {
+    position: absolute;
+    height: 100%;
+    background: var(--tertiary);
+    border-radius: 2px;
+}
+
+.dual-range-thumb {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    pointer-events: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.dual-range-thumb::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    background: var(--tertiary);
+    border: 2px solid var(--surface-container-high, #2a2a2a);
+    box-shadow: 0 0 0 1px rgba(94, 212, 255, 0.4);
+    pointer-events: all;
+    cursor: grab;
+    transition: box-shadow 0.15s ease;
+}
+
+.dual-range-thumb::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    box-shadow: 0 0 0 4px rgba(94, 212, 255, 0.25);
+}
+
+.dual-range-thumb::-moz-range-thumb {
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    background: var(--tertiary);
+    border: 2px solid var(--surface-container-high, #2a2a2a);
+    pointer-events: all;
+    cursor: grab;
+}
+
+.dual-range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.range-number-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.45rem 0.65rem;
+    background: rgba(37, 37, 37, 0.88);
+    border: 1px solid rgba(229, 226, 225, 0.12);
+    border-radius: var(--radius-md);
+    color: var(--on-surface);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    text-align: center;
+    transition: border-color 0.15s ease;
+}
+
+.range-number-input:focus {
+    outline: none;
+    border-color: rgba(255, 181, 158, 0.35);
+}
+
+.range-number-input.is-invalid {
+    border-color: rgba(255, 181, 158, 0.85);
+}
+
+.range-separator {
+    color: rgba(196, 198, 204, 0.5);
+    flex: 0 0 auto;
+}
+
+.filters-panel-validation-message,
+.filters-field-error {
+    margin: 0.6rem 0 0;
+    color: var(--secondary);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+/* ── SINGLE-RANGE SLIDER ── */
+.single-range {
+    width: 100%;
+    height: 4px;
+    margin-bottom: 0.65rem;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(229, 226, 225, 0.14);
+    border-radius: 2px;
+    accent-color: var(--tertiary);
+}
+
+.single-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    background: var(--tertiary);
+    border: 2px solid var(--surface-container-high, #2a2a2a);
+    box-shadow: 0 0 0 1px rgba(94, 212, 255, 0.4);
+    cursor: grab;
+    transition: box-shadow 0.15s ease;
+}
+
+.single-range::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    box-shadow: 0 0 0 4px rgba(94, 212, 255, 0.25);
+}
+
+.single-range::-moz-range-thumb {
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    background: var(--tertiary);
+    border: 2px solid var(--surface-container-high, #2a2a2a);
+    cursor: grab;
+}
+
+/* ── RANGE HEADER (title + badge) ── */
+.filter-range-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+}
+
+.filter-range-header .filters-panel-section-title {
+    margin-bottom: 0;
+}
+
+/* ── RANGE VALUE DISPLAY (Hasta X / Desde X) ── */
+.filter-range-value-display {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--on-surface);
+    margin-bottom: 0.85rem;
+    min-height: 1.8rem;
+}
+
+/* ── SINGLE-RANGE LABELS ── */
+.single-range-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+}
+
+.single-range-label-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    font-size: 0.75rem;
+    color: rgba(196, 198, 204, 0.55);
+}
+
+.single-range-label-col--end {
+    text-align: right;
+}
+
+.single-range-sublabel {
+    font-size: 0.68rem;
+    color: rgba(196, 198, 204, 0.38);
+}
+
+/* ── PANEL FOOTER ── */
+.cars-filters-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid rgba(229, 226, 225, 0.07);
+    position: sticky;
+    bottom: 0;
+    background: var(--surface-container-high, #2a2a2a);
+    margin-top: auto;
+}
+
+.filters-clear-btn {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    background: transparent;
+    border: 1px solid rgba(229, 226, 225, 0.14);
+    border-radius: var(--radius-md);
+    color: rgba(196, 198, 204, 0.82);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.filters-clear-btn:hover {
+    background: rgba(229, 226, 225, 0.06);
+    border-color: rgba(229, 226, 225, 0.24);
+    color: var(--on-surface);
+}
+
+.filters-apply-btn {
+    flex: 2;
+    font-size: 0.88rem;
+}
+
+/* ── CREATE CAR MODAL — SPEC FIELDS ── */
+.review-modal-section-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(196, 198, 204, 0.72);
+    padding-top: 0.25rem;
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 1200px) {
     .cars-toolbar-shell {
-        grid-template-columns: minmax(0, 1.8fr) minmax(11rem, 1fr) minmax(11rem, 1fr);
+        grid-template-columns: minmax(0, 1.8fr) minmax(11rem, 1fr) minmax(11rem, 1fr) auto;
     }
 
     .cars-grid {

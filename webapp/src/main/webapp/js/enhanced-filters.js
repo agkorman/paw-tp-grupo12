@@ -11,8 +11,12 @@
             return;
         }
 
-        var carCards = root.querySelectorAll('.car-card-link');
-        countTarget.textContent = carCards.length + ' vehículos encontrados';
+        var resultCount = root.getAttribute('data-result-count');
+        if (resultCount == null) {
+            return;
+        }
+
+        countTarget.textContent = resultCount + ' vehículos encontrados';
     };
 
     var syncToolbarSelectValue = function (select) {

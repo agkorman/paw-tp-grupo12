@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class Car implements Serializable {
@@ -14,6 +15,12 @@ public class Car implements Serializable {
     private String description;
     private LocalDateTime createdAt;
     private boolean hasImage;
+    private String fuelType;
+    private Integer horsepower;
+    private Integer airbagCount;
+    private String transmission;
+    private BigDecimal fuelConsumption;
+    private Integer maxSpeedKmh;
 
     public Car() {}
 
@@ -25,6 +32,14 @@ public class Car implements Serializable {
     public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
                final String bodyType, final String description,
                final LocalDateTime createdAt, final boolean hasImage) {
+        this(id, brandId, brandName, model, bodyTypeId, bodyType, description, createdAt, hasImage,
+                null, null, null, null, null, null);
+    }
+
+    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
+               final String bodyType, final String description, final LocalDateTime createdAt, final boolean hasImage,
+               final String fuelType, final Integer horsepower, final Integer airbagCount, final String transmission,
+               final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
         this.id = id;
         this.brandId = brandId;
         this.brandName = brandName;
@@ -34,6 +49,12 @@ public class Car implements Serializable {
         this.description = description;
         this.createdAt = createdAt;
         this.hasImage = hasImage;
+        this.fuelType = fuelType;
+        this.horsepower = horsepower;
+        this.airbagCount = airbagCount;
+        this.transmission = transmission;
+        this.fuelConsumption = fuelConsumption;
+        this.maxSpeedKmh = maxSpeedKmh;
     }
 
     public long getId() {
@@ -106,5 +127,53 @@ public class Car implements Serializable {
 
     public void setHasImage(final boolean hasImage) {
         this.hasImage = hasImage;
+    }
+
+    public String getFuelType() {
+        return fuelType;
+    }
+
+    public void setFuelType(final String fuelType) {
+        this.fuelType = fuelType;
+    }
+
+    public Integer getHorsepower() {
+        return horsepower;
+    }
+
+    public void setHorsepower(final Integer horsepower) {
+        this.horsepower = horsepower;
+    }
+
+    public Integer getAirbagCount() {
+        return airbagCount;
+    }
+
+    public void setAirbagCount(final Integer airbagCount) {
+        this.airbagCount = airbagCount;
+    }
+
+    public String getTransmission() {
+        return transmission;
+    }
+
+    public void setTransmission(final String transmission) {
+        this.transmission = transmission;
+    }
+
+    public BigDecimal getFuelConsumption() {
+        return fuelConsumption;
+    }
+
+    public void setFuelConsumption(final BigDecimal fuelConsumption) {
+        this.fuelConsumption = fuelConsumption;
+    }
+
+    public Integer getMaxSpeedKmh() {
+        return maxSpeedKmh;
+    }
+
+    public void setMaxSpeedKmh(final Integer maxSpeedKmh) {
+        this.maxSpeedKmh = maxSpeedKmh;
     }
 }

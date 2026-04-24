@@ -31,7 +31,8 @@ nav {
     justify-self: center;
 }
 
-.nav-links a {
+.nav-links a,
+.nav-profile-link {
     font-family: var(--font-body);
     font-size: 0.875rem;
     font-weight: 500;
@@ -41,11 +42,13 @@ nav {
     transition: color 0.2s;
 }
 
-.nav-links a:hover {
+.nav-links a:hover,
+.nav-profile-link:hover {
     color: var(--on-surface);
 }
 
-.nav-links a.active {
+.nav-links a.active,
+.nav-profile-link.active {
     color: var(--primary-container);
     box-shadow: inset 0 -2px 0 var(--primary-container);
 }
@@ -67,6 +70,62 @@ nav {
     font-size: 0.6875rem;
     letter-spacing: 0.1em;
     white-space: nowrap;
+}
+
+.nav-auth-link {
+    color: var(--secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.nav-auth-link:hover {
+    color: var(--on-surface);
+}
+
+.nav-profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--on-surface);
+    white-space: nowrap;
+}
+
+.nav-profile-text:hover,
+.nav-profile-text:focus-visible,
+.nav-profile-text.active {
+    color: var(--on-surface);
+}
+
+.nav-register-link,
+.nav-logout-btn {
+    min-height: 2.4rem;
+    padding: 0.6rem 0.95rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+}
+
+.nav-user {
+    max-width: 12rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nav-profile-text {
+    color: var(--secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.nav-logout-form {
+    margin: 0;
 }
 
 .search-box {
@@ -104,10 +163,32 @@ nav {
     height: 32px;
     border-radius: 50%;
     background: var(--surface-container-highest);
+    border: 1px solid var(--outline-variant);
+    color: var(--secondary);
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    flex: 0 0 32px;
+}
+
+.nav-avatar-link {
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.nav-avatar-link:hover,
+.nav-avatar-link:focus-visible {
+    background: var(--surface-container-high);
+    border-color: rgba(229, 226, 225, 0.28);
+    color: var(--on-surface);
+    outline: none;
+}
+
+.avatar svg {
+    pointer-events: none;
 }
 
 /* ── FOOTER ── */
@@ -178,6 +259,12 @@ footer {
 @media (max-width: 560px) {
     .nav-right,
     .nav-action-btn {
+        width: 100%;
+    }
+
+    .nav-register-link,
+    .nav-logout-btn,
+    .nav-logout-form {
         width: 100%;
     }
 

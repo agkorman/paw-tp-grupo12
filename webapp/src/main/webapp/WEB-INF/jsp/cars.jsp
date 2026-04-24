@@ -14,12 +14,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/cars.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
 </head>
 <body>
     <pa:nav activePage="reviews"/>
+    <c:set var="resultCount" value="${fn:length(cars)}"/>
 
     <pa:cars-toolbar
             brands="${brands}"
@@ -27,16 +28,59 @@
             selectedBrand="${selectedBrand}"
             selectedBodyType="${selectedBodyType}"
             searchQuery="${searchQuery}"
-            resultCount="${fn:length(cars)}"/>
+            sortBy="${criteria.sortBy}"
+            hasAdvancedFilters="${hasAdvancedFilters}"/>
 
-    <pa:cars-content cars="${cars}" reviewStatsByCarId="${reviewStatsByCarId}"/>
+    <pa:cars-filters-panel
+            criteria="${criteria}"
+            vehicleCount="${resultCount}"/>
+
+    <pa:cars-content
+            cars="${cars}"
+            resultCount="${resultCount}"
+            reviewStatsByCarId="${reviewStatsByCarId}"
+            favoritedCarIds="${favoritedCarIds}"
+            showHp="${showHp}"
+            showSpeed="${showSpeed}"
+            showConsumption="${showConsumption}"
+            showAirbags="${showAirbags}"
+            showTransmission="${showTransmission}"
+            showFuelType="${showFuelType}"/>
     <pa:create-car-modal
             brands="${brands}"
             bodyTypes="${bodyTypes}"/>
+    <pa:auth-required-modal/>
 
-    <pa:footer/>
+    <c:if test="${showSubmittedToast}">
+        <div class="submitted-toast" id="submittedToast" role="status" aria-live="polite">
+            <svg class="submitted-toast-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" fill="#4caf7a"/>
+                <path d="M7.5 12.5l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="submitted-toast-text">Tu auto ha sido enviado correctamente y está en proceso de moderación.</span>
+            <button type="button" class="submitted-toast-action" onclick="document.getElementById('submittedToast').remove()">ENTENDIDO</button>
+        </div>
+    </c:if>
+
+    <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
+    <script src="<c:url value='/js/cars-filters-panel.js'/>"></script>
     <script src="<c:url value='/js/create-car-modal.js'/>"></script>
+    <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
+    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <c:if test="${showSubmittedToast}">
+        <script>
+            (function() {
+                var toast = document.getElementById('submittedToast');
+                if (toast) {
+                    setTimeout(function() {
+                        toast.classList.add('submitted-toast--hiding');
+                        setTimeout(function() { toast.remove(); }, 300);
+                    }, 6000);
+                }
+            })();
+        </script>
+    </c:if>
 
 </body>
 </html>

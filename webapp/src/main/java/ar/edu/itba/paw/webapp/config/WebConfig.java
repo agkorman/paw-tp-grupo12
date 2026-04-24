@@ -1,8 +1,10 @@
 package ar.edu.itba.paw.webapp.config;
 
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -11,6 +13,7 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.ViewResolver;
@@ -29,6 +32,7 @@ import java.util.concurrent.Executor;
 
 @EnableWebMvc
 @EnableAsync
+@EnableScheduling
 @EnableTransactionManagement
 @ComponentScan({ "ar.edu.itba.paw.webapp.controller", "ar.edu.itba.paw.services", "ar.edu.itba.paw.persistence" })
 @Configuration
@@ -55,6 +59,14 @@ public class WebConfig implements WebMvcConfigurer {
     @Bean(name = "multipartResolver")
     public StandardServletMultipartResolver multipartResolver() {
         return new StandardServletMultipartResolver();
+    }
+
+    @Bean
+    public MessageSource messageSource() {
+        final ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("messages");
+        messageSource.setDefaultEncoding("UTF-8");
+        return messageSource;
     }
 
     @Bean
@@ -154,6 +166,41 @@ public class WebConfig implements WebMvcConfigurer {
         props.put("mail.smtp.timeout", "10000");
         props.put("mail.smtp.writetimeout", "10000");
         return sender;
+    }
+
+    @Bean(name = "appBaseUrl")
+    public String appBaseUrl() {
+        final String envValue = normalizeBaseUrl(System.getenv("APP_BASE_URL"));
+        if (envValue != null) {
+            return envValue;
+        }
+
+        final ClassPathResource resource = new ClassPathResource(MAIL_PROPERTIES_RESOURCE);
+        if (resource.exists()) {
+            final Properties properties = new Properties();
+            try (InputStream is = resource.getInputStream()) {
+                properties.load(is);
+            } catch (final IOException e) {
+                throw new IllegalStateException("Failed to load " + MAIL_PROPERTIES_RESOURCE, e);
+            }
+            final String propValue = normalizeBaseUrl(properties.getProperty("app.baseUrl"));
+            if (propValue != null) {
+                return propValue;
+            }
+        }
+
+        return "http://localhost:8080";
+    }
+
+    private String normalizeBaseUrl(final String value) {
+        final String normalized = normalize(value);
+        if (normalized == null) {
+            return null;
+        }
+        if (normalized.endsWith("/") && !normalized.endsWith("://")) {
+            return normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     @Bean(name = "mailTaskExecutor")

@@ -1,6 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,16 +15,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
 </head>
 <body>
     <pa:nav activePage="reviews"/>
 
     <main class="reviews-page">
-        <c:if test="${not empty error}">
-            <div class="alert alert-error" role="alert"><c:out value="${error}"/></div>
-        </c:if>
         <section class="review-hero">
             <div class="review-hero-inner">
                 <div>
@@ -61,265 +60,80 @@
                             <path d="M12 5v14M5 12l7 7 7-7"/>
                         </svg>
                     </a>
+                    <sec:authorize access="hasRole('ADMIN')">
+                        <c:url var="selectedCarEditUrl" value="/admin/cars/${selectedCar.id}"/>
+                        <c:url var="selectedCarDeleteUrl" value="/admin/cars/${selectedCar.id}/delete"/>
+                        <c:url var="selectedCarImageUrl" value="/car-image">
+                            <c:param name="carId" value="${selectedCar.id}"/>
+                        </c:url>
+                        <pa:action-menu label="Abrir opciones de auto">
+                            <button
+                                    type="button"
+                                    data-open-create-car-modal="edit-car"
+                                    data-car-action="${fn:escapeXml(selectedCarEditUrl)}"
+                                    data-car-id="${fn:escapeXml(selectedCar.id)}"
+                                    data-car-brand="${fn:escapeXml(selectedCar.brandName)}"
+                                    data-car-model="${fn:escapeXml(selectedCar.model)}"
+                                    data-car-body-type="${fn:escapeXml(selectedCar.bodyType)}"
+                                    data-car-description="${fn:escapeXml(selectedCar.description)}"
+                                    data-car-fuel-type="${fn:escapeXml(selectedCar.fuelType)}"
+                                    data-car-horsepower="${fn:escapeXml(selectedCar.horsepower)}"
+                                    data-car-airbag-count="${fn:escapeXml(selectedCar.airbagCount)}"
+                                    data-car-transmission="${fn:escapeXml(selectedCar.transmission)}"
+                                    data-car-fuel-consumption="${fn:escapeXml(selectedCar.fuelConsumption)}"
+                                    data-car-max-speed-kmh="${fn:escapeXml(selectedCar.maxSpeedKmh)}"
+                                    data-car-image-url="${selectedCar.hasImage ? fn:escapeXml(selectedCarImageUrl) : ''}">
+                                Editar
+                            </button>
+                            <button
+                                    type="button"
+                                    class="action-menu-danger"
+                                    data-open-delete-car-modal
+                                    data-car-delete-action="${fn:escapeXml(selectedCarDeleteUrl)}"
+                                    data-car-title="${fn:escapeXml(selectedCar.brandName)} ${fn:escapeXml(selectedCar.model)}">
+                                Eliminar
+                            </button>
+                        </pa:action-menu>
+                    </sec:authorize>
                 </div>
             </div>
         </section>
 
         <section class="review-layout review-detail-layout">
-            <pa:review-selected-car selectedCar="${selectedCar}"/>
+            <div class="review-media-column">
+                <pa:review-selected-car selectedCar="${selectedCar}"
+                                        carImages="${carImages}"
+                                        favorited="${selectedCarFavorited}"/>
+                <pa:latest-review latestReview="${latestReview}"
+                                  liked="${latestReviewLiked}"
+                                  likeCount="${latestReviewLikeCount}"/>
+            </div>
 
             <div class="review-side-column">
                 <pa:review-car-info selectedCar="${selectedCar}" averageRating="${averageRating}"/>
-                <pa:latest-review latestReview="${latestReview}"/>
             </div>
         </section>
 
-        <pa:reviews-feed reviews="${reviews}" carId="${selectedCar.id}" currentSort="${currentSort}"/>
+        <pa:reviews-feed reviews="${reviews}" reviewThreads="${reviewThreads}" carId="${selectedCar.id}" currentSort="${currentSort}"/>
     </main>
 
-    <pa:create-review-modal carId="${selectedCar.id}"/>
+    <pa:create-review-modal carId="${selectedCar.id}" autoOpen="${openReviewModal}"/>
+    <pa:auth-required-modal/>
+    <sec:authorize access="hasRole('ADMIN')">
+        <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
+        <pa:car-delete-modal/>
+    </sec:authorize>
 
-    <pa:footer/>
+    <script src="<c:url value='/js/reactions.js'/>"></script>
+    <script src="<c:url value='/js/action-menu.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
-
-    <script>
-        (function () {
-            function $(id) { return document.getElementById(id); }
-            function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
-
-            var openButton = $('openReviewModalBtn');
-            var modal      = $('createReviewModal');
-            var form       = $('createReviewForm');
-            if (!openButton || !modal || !form) return;
-
-            /* ================================================================
-               STAR RATING — Interactive half-star (0.5 step) rating widget.
-               Each star SVG uses a <linearGradient> with two <stop> elements.
-               To show a half star we set stop 1 = filled at 50%, stop 2 = empty
-               at 50%. Full star = both stops filled. Empty = both stops empty.
-               Click the left half of a star for N-0.5, right half for N.
-               Clicking the same value again resets to 0.
-               ================================================================ */
-
-            /* -- Star colors ------------------------------------------------ */
-            var STAR_FILLED = '#ff5719';
-            var STAR_EMPTY  = '#2e2e2e';
-
-            /* -- Star label lookup ------------------------------------------ */
-            function starTextFor(v) {
-                if (v === 0) return 'Sin puntuación';
-                if (v <= 1)  return 'Malo';
-                if (v <= 2)  return 'Regular';
-                if (v <= 3)  return 'Bueno';
-                if (v <= 4)  return 'Muy bueno';
-                return 'Excelente';
-            }
-
-            /* -- Paint a single star's gradient to reflect the rating ------- */
-            function paintStar(slot, starNum, rating) {
-                var stops = slot.querySelector('linearGradient').querySelectorAll('stop');
-
-                if (rating >= starNum) {
-                    /* Full star */
-                    stops[0].setAttribute('stop-color', STAR_FILLED);
-                    stops[0].setAttribute('offset', '100%');
-                    stops[1].setAttribute('stop-color', STAR_FILLED);
-                    stops[1].setAttribute('offset', '100%');
-                } else if (rating >= starNum - 0.5) {
-                    /* Half star — left half filled, right half empty */
-                    stops[0].setAttribute('stop-color', STAR_FILLED);
-                    stops[0].setAttribute('offset', '50%');
-                    stops[1].setAttribute('stop-color', STAR_EMPTY);
-                    stops[1].setAttribute('offset', '50%');
-                } else {
-                    /* Empty star */
-                    stops[0].setAttribute('stop-color', STAR_EMPTY);
-                    stops[0].setAttribute('offset', '0%');
-                    stops[1].setAttribute('stop-color', STAR_EMPTY);
-                    stops[1].setAttribute('offset', '100%');
-                }
-            }
-
-            /* -- Render all 5 stars for a given rating ---------------------- */
-            var starSlots = $$('.star-slot', modal);
-
-            function renderStars(rating) {
-                starSlots.forEach(function (slot, i) { paintStar(slot, i + 1, rating); });
-            }
-
-            /* -- Set / reset the rating value ------------------------------- */
-            var starInput   = $('modalRating');
-            var starWrap    = modal.querySelector('.star-rating');
-            var starLabel   = modal.querySelector('.star-rating-value');
-            var currentRating = 0;
-
-            function setRating(value) {
-                currentRating = value;
-                starInput.value = value;
-                starLabel.textContent = value + '/5 — ' + starTextFor(value);
-                starLabel.style.color = '';
-                starWrap.setAttribute('aria-valuenow', value);
-                renderStars(value);
-            }
-
-            function resetRating() {
-                currentRating = 0;
-                starInput.value = '';
-                starLabel.textContent = starTextFor(0);
-                starLabel.style.color = '';
-                starWrap.setAttribute('aria-valuenow', 0);
-                renderStars(0);
-            }
-
-            /* -- Click: left half = N-0.5, right half = N. Toggle off on re-click */
-            $$('.star-hit', modal).forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var star   = parseInt(btn.getAttribute('data-star'), 10);
-                    var isHalf = btn.getAttribute('data-half') === 'true';
-                    var value  = isHalf ? star - 0.5 : star;
-                    if (value === currentRating) resetRating(); else setRating(value);
-                });
-            });
-
-            /* -- Keyboard: arrows step by 0.5 ------------------------------- */
-            starWrap.addEventListener('keydown', function (e) {
-                if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    setRating(Math.min(5, currentRating + 0.5));
-                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (currentRating <= 0.5) resetRating(); else setRating(currentRating - 0.5);
-                }
-            });
-
-            /* -- Validate: requires a rating before submit ------------------ */
-            function validateRating() {
-                if (!starInput.value) {
-                    starLabel.textContent = 'Seleccioná una puntuación';
-                    starLabel.style.color = '#ef9a9a';
-                    starWrap.focus();
-                    return false;
-                }
-                return true;
-            }
-
-            renderStars(0);
-
-            /* ================================================================
-               MODAL OPEN / CLOSE
-               ================================================================ */
-            var closeEls = $$('[data-close-modal]', modal);
-
-            function closeModal() {
-                modal.setAttribute('hidden', 'hidden');
-                document.body.classList.remove('modal-open');
-                openButton.focus();
-            }
-
-            function openModal() {
-                modal.removeAttribute('hidden');
-                document.body.classList.add('modal-open');
-                var first = $('modalReviewerEmail');
-                if (first) first.focus();
-            }
-
-            openButton.addEventListener('click', openModal);
-            closeEls.forEach(function (el) { el.addEventListener('click', closeModal); });
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape' && !modal.hasAttribute('hidden')) closeModal();
-            });
-
-            /* ================================================================
-               NUMERIC FIELD VALIDATION (model year & mileage)
-               ================================================================ */
-            var modelYearInput = $('modalModelYear');
-            var mileageInput   = $('modalMileageKm');
-            var requiredMessages = {
-                modalReviewerEmail: 'Ingresá tu email.',
-                modalTitle: 'Ingresá un título.',
-                modalBody: 'Ingresá una descripción.'
-            };
-
-            function isInt(s) { return /^\d+$/.test(s); }
-            function clearV(inp) { if (inp) inp.setCustomValidity(''); }
-
-            function validateRequiredField(inp) {
-                if (!inp) return true;
-
-                clearV(inp);
-                if (inp.required && (!inp.value || inp.value.trim() === '')) {
-                    inp.setCustomValidity(requiredMessages[inp.id] || 'Completá este campo.');
-                    return false;
-                }
-                if (inp.validity.typeMismatch && inp.type === 'email') {
-                    inp.setCustomValidity('Ingresá un email válido.');
-                    return false;
-                }
-                return inp.checkValidity();
-            }
-
-            function validateRequiredFields() {
-                return Array.prototype.slice.call(form.querySelectorAll('[required]')).reduce(function (isValid, inp) {
-                    return validateRequiredField(inp) && isValid;
-                }, true);
-            }
-
-            function validateNumerics() {
-                var maxYear = new Date().getFullYear() + 1;
-                var ok = true;
-                clearV(modelYearInput);
-                clearV(mileageInput);
-
-                if (modelYearInput) {
-                    var y = modelYearInput.value.trim();
-                    modelYearInput.value = y;
-                    if (y.length > 0) {
-                        if (!isInt(y)) {
-                            modelYearInput.setCustomValidity('El año del modelo debe ser numérico.');
-                            ok = false;
-                        } else {
-                            var py = Number(y);
-                            if (py < 1886 || py > maxYear) {
-                                modelYearInput.setCustomValidity('Ingresá un año entre 1886 y ' + maxYear + '.');
-                                ok = false;
-                            }
-                        }
-                    }
-                }
-                if (mileageInput) {
-                    var m = mileageInput.value.trim();
-                    mileageInput.value = m;
-                    if (m.length > 0) {
-                        if (!isInt(m)) {
-                            mileageInput.setCustomValidity('El kilometraje debe ser numérico.');
-                            ok = false;
-                        } else {
-                            var pm = Number(m);
-                            if (pm < 0 || pm > 2000000) {
-                                mileageInput.setCustomValidity('Ingresá un kilometraje entre 0 y 2.000.000 km.');
-                                ok = false;
-                            }
-                        }
-                    }
-                }
-                return ok;
-            }
-
-            if (modelYearInput) modelYearInput.addEventListener('input', function () { clearV(modelYearInput); });
-            if (mileageInput)   mileageInput.addEventListener('input', function () { clearV(mileageInput); });
-            Array.prototype.slice.call(form.querySelectorAll('[required]')).forEach(function (inp) {
-                inp.addEventListener('input', function () { validateRequiredField(inp); });
-            });
-
-            /* ================================================================
-               FORM SUBMIT — chain all validations
-               ================================================================ */
-            form.addEventListener('submit', function (e) {
-                if (!validateRating()) { e.preventDefault(); return; }
-                if (!validateRequiredFields()) { e.preventDefault(); form.reportValidity(); return; }
-                if (!validateNumerics()) { e.preventDefault(); form.reportValidity(); }
-            });
-        })();
-    </script>
+    <script src="<c:url value='/js/car-image-carousel.js'/>"></script>
+    <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
+    <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
+    <sec:authorize access="hasRole('ADMIN')">
+        <script src="<c:url value='/js/create-car-modal.js?v=4'/>"></script>
+        <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
+    </sec:authorize>
+    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

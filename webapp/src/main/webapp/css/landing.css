@@ -236,6 +236,16 @@
     box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.28);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
+    color: inherit;
+    display: block;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.hero-review-card:hover {
+    background: rgba(52, 52, 52, 0.68);
+    border-color: rgba(255, 181, 158, 0.28);
+    transform: translateY(-2px);
 }
 
 .hero-review-header {

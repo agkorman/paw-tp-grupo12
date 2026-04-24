@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/landing.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
 </head>
@@ -98,10 +98,14 @@
                 </div>
 
                 <c:if test="${not empty heroReview}">
+                    <c:url var="heroReviewUrl" value="/reviews">
+                        <c:param name="carId" value="${heroCar.id}"/>
+                    </c:url>
                     <pa:hero-review-card
                             heroReview="${heroReview}"
                             heroCarBrandName="${heroCar.brandName}"
-                            heroCarImageUrl="${heroCarImageUrl}"/>
+                            heroCarImageUrl="${heroCarImageUrl}"
+                            href="${heroReviewUrl}#review-${heroReview.id}"/>
                 </c:if>
             </div>
         </section>
@@ -135,6 +139,7 @@
                                 carId="${car.id}"
                                 hasImage="${car.hasImage}"
                                 href="${reviewUrl}"
+                                favorited="${favoritedCarIds[car.id] eq true}"
                                 averageRating="${reviewStatsByCarId[car.id].averageRating}"
                                 reviewCount="${reviewStatsByCarId[car.id].reviewCount}"/>
                         </c:forEach>
@@ -144,7 +149,7 @@
         </section>
     </main>
 
-    <pa:footer/>
+    <script src="<c:url value='/js/reactions.js'/>"></script>
 
 </body>
 </html>

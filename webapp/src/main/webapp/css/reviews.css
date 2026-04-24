@@ -52,6 +52,7 @@
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
 }
 
+.review-media-column,
 .review-side-column {
     display: grid;
     gap: var(--spacing-8);
@@ -72,6 +73,18 @@
 .feed-header h2 {
     font-family: var(--font-display);
     margin-bottom: 1rem;
+}
+
+.selected-car-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.selected-car-header h2 {
+    margin-bottom: 0;
 }
 
 .selected-car-image {
@@ -95,6 +108,102 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.car-image-carousel {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 0.75rem;
+}
+
+.car-image-carousel-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--surface-container);
+}
+
+.car-image-carousel-slide[hidden] {
+    display: none;
+}
+
+.car-image-carousel-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(229, 226, 225, 0.18);
+    border-radius: var(--radius-md);
+    background: rgba(12, 14, 18, 0.78);
+    color: var(--on-surface);
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.car-image-carousel-nav:hover,
+.car-image-carousel-nav:focus-visible {
+    border-color: var(--tertiary);
+    background: rgba(20, 27, 34, 0.92);
+    color: var(--tertiary);
+}
+
+.car-image-carousel-prev {
+    left: 0.75rem;
+}
+
+.car-image-carousel-next {
+    right: 0.75rem;
+}
+
+.car-image-carousel-count {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    z-index: 2;
+    padding: 0.35rem 0.55rem;
+    border-radius: var(--radius-md);
+    background: rgba(12, 14, 18, 0.78);
+    color: var(--on-surface);
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.car-image-carousel-thumbs {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.car-image-carousel-thumb {
+    aspect-ratio: 4 / 3;
+    padding: 0;
+    border: 1px solid rgba(229, 226, 225, 0.12);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--surface-container-high);
+    cursor: pointer;
+}
+
+.car-image-carousel-thumb.is-active {
+    border-color: var(--tertiary);
+    box-shadow: 0 0 0 2px rgba(94, 212, 255, 0.18);
+}
+
+.car-image-carousel-thumb img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
 }
 
 .car-info-panel {
@@ -132,6 +241,18 @@
 .car-info-value {
     font-weight: 600;
     text-align: right;
+}
+
+.car-info-row-description {
+    display: grid;
+    justify-content: stretch;
+}
+
+.car-info-description {
+    color: var(--on-surface);
+    font-weight: 500;
+    line-height: 1.55;
+    text-align: left;
 }
 
 .add-review-btn {
@@ -262,6 +383,13 @@
     background: var(--surface-container-high);
     border-radius: var(--radius-md);
     padding: 1rem;
+    scroll-margin-top: 72px;
+    transition: box-shadow 0.2s, background 0.2s;
+}
+
+.review-item:target {
+    background: var(--surface-container-highest);
+    box-shadow: inset 0 0 0 1px rgba(255, 181, 158, 0.42);
 }
 
 .review-item-top {
@@ -333,13 +461,140 @@
     color: var(--secondary);
     font-size: 0.8rem;
     display: flex;
+    align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
+}
+
+.review-like-form {
+    margin: 0;
+    display: inline-flex;
+}
+
+.review-like-toggle:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.review-author-link {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.review-author-link:hover,
+.review-author-link:focus-visible {
+    color: var(--primary);
 }
 
 .empty-state {
     padding: var(--spacing-6);
     color: var(--secondary);
+}
+
+.review-replies {
+    margin-top: 1rem;
+    display: grid;
+    gap: 0.875rem;
+    border-top: 1px solid rgba(229, 226, 225, 0.08);
+    padding-top: 0.875rem;
+}
+
+.review-reply-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.review-reply {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.75rem 0.875rem;
+    border-left: 2px solid rgba(255, 87, 25, 0.45);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.review-reply-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    color: var(--secondary);
+    font-size: 0.8rem;
+}
+
+.review-reply-body {
+    margin: 0;
+    color: var(--on-surface);
+}
+
+.review-reply-form {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.review-reply-form label {
+    color: var(--secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.review-reply-form-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.625rem;
+    align-items: stretch;
+}
+
+.review-reply-form textarea {
+    width: 100%;
+    min-height: 2.75rem;
+    resize: vertical;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-md);
+    background: var(--surface-container);
+    color: var(--on-surface);
+    padding: 0.625rem 0.75rem;
+    font: inherit;
+}
+
+.review-reply-form textarea:focus {
+    outline: none;
+    border-color: rgba(255, 181, 158, 0.58);
+}
+
+.review-reply-inline-error {
+    margin: 0;
+    color: #ff9f92;
+    font-size: 0.8rem;
+}
+
+.review-reply-login {
+    margin: 0;
+    color: var(--secondary);
+    font-size: 0.85rem;
+}
+
+.review-reply-login a,
+.review-reply-login-button {
+    color: var(--primary);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.review-reply-login-button {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+}
+
+@media (max-width: 640px) {
+    .review-reply-form-row {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* ── Review Modal — La Posta Autos ── */
@@ -378,6 +633,12 @@
     box-shadow:
         0 32px 64px rgba(0, 0, 0, 0.45),
         0 16px 48px rgba(229, 226, 225, 0.06);
+}
+
+.car-modal-dialog {
+    width: min(1120px, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    padding: 1.5rem;
 }
 
 .review-modal-header {
@@ -431,6 +692,11 @@
     gap: 1.25rem;
 }
 
+.car-modal-form {
+    display: grid;
+    gap: 0.85rem;
+}
+
 .review-modal-subtitle {
     margin: 0;
     color: var(--secondary);
@@ -438,10 +704,45 @@
     line-height: 1.65;
 }
 
+.car-modal-subtitle {
+    margin: 0;
+    color: var(--secondary);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
 .review-modal-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
+}
+
+.car-modal-layout {
+    grid-template-columns: minmax(24rem, 1.12fr) minmax(19rem, 0.88fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.car-modal-column {
+    display: grid;
+    gap: 0.85rem;
+    align-content: start;
+}
+
+.car-modal-inline-fields,
+.car-modal-spec-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.car-modal-spec-panel {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+    background: rgba(13, 13, 13, 0.48);
+    box-shadow: inset 0 0 0 1px rgba(229, 226, 225, 0.06);
 }
 
 .review-modal-field {
@@ -492,6 +793,20 @@
     min-height: 6rem;
 }
 
+.car-modal-layout .review-modal-field {
+    gap: 0.35rem;
+}
+
+.car-modal-layout .review-modal-field input,
+.car-modal-layout .review-modal-field textarea,
+.car-modal-layout .review-modal-field select {
+    padding: 0.58rem 0.75rem;
+}
+
+.car-modal-layout .review-modal-field textarea {
+    min-height: 8rem;
+}
+
 .review-modal-field input[readonly] {
     opacity: 0.75;
 }
@@ -525,6 +840,8 @@
 }
 
 .car-image-upload-card {
+    position: relative;
+    z-index: 3;
     min-height: 8.5rem;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -569,6 +886,11 @@
     border-color: rgba(255, 181, 158, 0.7);
 }
 
+.car-image-upload.has-preview .car-image-upload-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: flex-start;
+}
+
 .car-image-upload-icon {
     width: 3.5rem;
     height: 3.5rem;
@@ -579,6 +901,80 @@
     background: rgba(94, 212, 255, 0.14);
     color: var(--tertiary);
     flex: 0 0 auto;
+}
+
+.car-image-upload.has-preview .car-image-upload-icon {
+    display: none;
+}
+
+.car-image-upload-preview {
+    position: relative;
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 17rem;
+    aspect-ratio: 16 / 9;
+    display: block;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background:
+        linear-gradient(135deg, rgba(94, 212, 255, 0.08), transparent 48%),
+        var(--surface-container-high);
+    box-shadow:
+        inset 0 0 0 1px rgba(229, 226, 225, 0.08),
+        0 18px 36px rgba(0, 0, 0, 0.24);
+}
+
+.car-image-upload-preview[hidden] {
+    display: none;
+}
+
+.car-image-upload-preview img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.car-image-upload-preview-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 4;
+    width: 2.4rem;
+    height: 2.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(229, 226, 225, 0.18);
+    border-radius: var(--radius-md);
+    background: rgba(12, 14, 18, 0.82);
+    color: var(--on-surface);
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+
+.car-image-upload-preview-nav[hidden] {
+    display: none;
+}
+
+.car-image-upload-preview-prev {
+    left: 0.75rem;
+}
+
+.car-image-upload-preview-next {
+    right: 0.75rem;
+}
+
+.car-image-upload-preview-counter {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    z-index: 4;
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius-md);
+    background: rgba(12, 14, 18, 0.76);
+    color: var(--on-surface);
+    font-size: 0.75rem;
+    font-weight: 800;
 }
 
 .car-image-upload-copy {
@@ -598,7 +994,7 @@
     line-height: 1.45;
 }
 
-.car-image-upload-filename {
+.car-image-upload-status {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -607,8 +1003,41 @@
     font-weight: 700;
 }
 
-.car-image-upload.has-file .car-image-upload-filename {
+.car-image-upload.has-file .car-image-upload-status {
     color: var(--primary) !important;
+}
+
+.car-image-upload-thumbnails {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 4.5rem));
+    gap: 0.5rem;
+    margin-top: 0.45rem;
+}
+
+.car-image-upload-thumbnails[hidden] {
+    display: none;
+}
+
+.car-image-upload-thumb {
+    width: 4.5rem;
+    aspect-ratio: 4 / 3;
+    padding: 0;
+    border: 1px solid rgba(229, 226, 225, 0.12);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--surface-container-high);
+    cursor: pointer;
+}
+
+.car-image-upload-thumb.is-active {
+    border-color: var(--tertiary);
+}
+
+.car-image-upload-thumb img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
 }
 
 .car-image-upload-action {
@@ -624,6 +1053,58 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     white-space: nowrap;
+}
+
+.car-modal-layout .car-image-upload-card {
+    height: clamp(18rem, 43vh, 24rem);
+    min-height: 0;
+    gap: 0.75rem;
+    padding: 0.85rem;
+    overflow: hidden;
+}
+
+.car-modal-layout .car-image-upload.has-preview .car-image-upload-card {
+    grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.car-modal-layout .car-image-upload-preview {
+    height: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+}
+
+.car-modal-layout .car-image-upload-copy {
+    gap: 0.18rem;
+    align-self: center;
+}
+
+.car-modal-layout .car-image-upload.has-preview .car-image-upload-copy {
+    align-self: end;
+}
+
+.car-modal-layout .car-image-upload.has-preview .car-image-upload-copy strong,
+.car-modal-layout .car-image-upload.has-preview .car-image-upload-copy #modalCarFileHelp {
+    display: none;
+}
+
+.car-modal-layout .car-image-upload-copy span {
+    line-height: 1.35;
+}
+
+.car-modal-layout .car-image-upload-thumbnails {
+    display: flex;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+}
+
+.car-modal-layout .car-image-upload-thumbnails[hidden] {
+    display: none;
+}
+
+.car-modal-layout .car-image-upload-thumb {
+    width: 3.35rem;
+    flex: 0 0 3.35rem;
 }
 
 /* ── Star Rating (half-star via linearGradient) ── */
@@ -741,6 +1222,16 @@
     padding-top: 0.5rem;
 }
 
+.review-modal-action-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.review-modal-action-group[hidden] {
+    display: none;
+}
+
 body.modal-open {
     overflow: hidden;
 }
@@ -768,9 +1259,41 @@ body.modal-open {
         grid-template-columns: 1fr;
     }
 
+    .car-modal-dialog {
+        width: min(760px, 100%);
+        max-height: calc(100vh - 3rem);
+        padding: var(--spacing-8);
+    }
+
+    .car-modal-layout {
+        gap: 1rem;
+    }
+
+    .car-modal-inline-fields,
+    .car-modal-spec-grid {
+        grid-template-columns: 1fr;
+    }
+
     .car-image-upload-card {
         grid-template-columns: 1fr;
         align-items: flex-start;
+    }
+
+    .car-image-upload.has-preview .car-image-upload-card {
+        grid-template-columns: 1fr;
+    }
+
+    .car-image-upload-preview {
+        width: 100%;
+        min-height: 12rem;
+    }
+
+    .car-image-upload-thumbnails {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .car-image-upload-thumb {
+        width: 100%;
     }
 
     .car-image-upload-action {
@@ -780,6 +1303,11 @@ body.modal-open {
     .review-modal-actions {
         justify-content: stretch;
         flex-direction: column-reverse;
+    }
+
+    .review-modal-action-group {
+        flex-direction: column-reverse;
+        width: 100%;
     }
 
     .review-modal-actions .btn-primary,

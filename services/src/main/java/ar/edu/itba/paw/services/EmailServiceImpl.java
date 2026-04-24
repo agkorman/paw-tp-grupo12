@@ -1,8 +1,8 @@
 package ar.edu.itba.paw.services;
 
-import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -37,19 +37,20 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final UserService userService;
-    private final CarService carService;
+    private final String appBaseUrl;
 
     @Autowired
     public EmailServiceImpl(final JavaMailSender mailSender, final UserService userService,
-                            final CarService carService) {
+                            @Qualifier("appBaseUrl") final String appBaseUrl) {
         this.mailSender = mailSender;
         this.userService = userService;
-        this.carService = carService;
+        this.appBaseUrl = appBaseUrl;
     }
 
     @Override
     @Async("mailTaskExecutor")
-    public void sendCarCreatedNotification(final Car car) {
+    public void sendNewCarRequestNotification(final CarRequest request, final String brandName,
+                                              final String bodyTypeName) {
         try {
             final List<String> moderators = userService.getModeratorsEmails();
             if (moderators.isEmpty()) {
@@ -63,40 +64,68 @@ public class EmailServiceImpl implements EmailService {
                     StandardCharsets.UTF_8.name()
             );
             helper.setTo(moderators.toArray(new String[0]));
-            helper.setSubject(buildSubject(car));
-            final CarImage carImage = getInlineCarImage(car);
-            helper.setText(buildPlainTextBody(car), buildHtmlBody(car, carImage != null));
-            if (carImage != null) {
+            helper.setSubject(buildRequestSubject(brandName, request.getModel()));
+
+            final boolean hasImage = request.getImageData() != null && request.getImageData().length > 0
+                    && request.getImageContentType() != null && !request.getImageContentType().isBlank();
+
+            helper.setText(
+                    buildRequestPlainTextBody(request, brandName, bodyTypeName),
+                    buildRequestHtmlBody(request, brandName, bodyTypeName, hasImage)
+            );
+
+            if (hasImage) {
                 helper.addInline(
                         CAR_IMAGE_CID,
-                        new ByteArrayResource(carImage.getImageData()),
-                        carImage.getContentType()
+                        new ByteArrayResource(request.getImageData()),
+                        request.getImageContentType()
                 );
             }
 
             mailSender.send(message);
         } catch (final MessagingException | RuntimeException e) {
-            LOGGER.warning("Failed to send car creation notification for car " + car.getId() + ": " + e.getMessage());
+            LOGGER.warning("Failed to send car request notification for request " + request.getId()
+                    + ": " + e.getMessage());
         }
     }
 
-    private String buildSubject(final Car car) {
-        return "[" + APP_NAME + "] Nuevo auto para revisar: " + sanitizeHeaderValue(car.getBrandName())
-                + " " + sanitizeHeaderValue(car.getModel());
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendCarApprovedNotification(final String recipientEmail, final String brandName,
+                                            final String model) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+        try {
+            final MimeMessage message = mailSender.createMimeMessage();
+            final MimeMessageHelper helper = new MimeMessageHelper(
+                    message,
+                    true,
+                    StandardCharsets.UTF_8.name()
+            );
+            helper.setTo(recipientEmail);
+            helper.setSubject(buildApprovedSubject(brandName, model));
+            helper.setText(
+                    buildApprovedPlainTextBody(brandName, model),
+                    buildApprovedHtmlBody(brandName, model)
+            );
+
+            mailSender.send(message);
+        } catch (final MessagingException | RuntimeException e) {
+            LOGGER.warning("Failed to send car approved notification to " + recipientEmail
+                    + ": " + e.getMessage());
+        }
     }
 
-    private String sanitizeHeaderValue(final String value) {
-        final String sanitized = safeValue(value)
-                .chars()
-                .filter(ch -> !Character.isISOControl(ch))
-                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                .toString()
-                .replaceAll("\\s+", " ")
-                .trim();
+    // ── New request notification helpers ──────────────────────────────────────
 
-        return sanitized;
+    private String buildRequestSubject(final String brandName, final String model) {
+        return "[" + APP_NAME + "] Nuevo auto para revisar: "
+                + sanitizeHeaderValue(brandName) + " " + sanitizeHeaderValue(model);
     }
-    private String buildPlainTextBody(final Car car) {
+
+    private String buildRequestPlainTextBody(final CarRequest request, final String brandName,
+                                             final String bodyTypeName) {
         return """
                 Hola equipo,
 
@@ -109,27 +138,33 @@ public class EmailServiceImpl implements EmailService {
 
                 Descripción:
                 %s
+
+                Revisalo en el dashboard: %s
                 """.formatted(
                 APP_NAME,
-                safeValue(car.getBrandName()),
-                safeValue(car.getModel()),
-                safeValue(car.getBodyType()),
-                car.getHasImage() ? "Sí" : "No",
-                previewDescription(car)
+                safeValue(brandName),
+                safeValue(request.getModel()),
+                safeValue(bodyTypeName),
+                request.getImageData() != null && request.getImageData().length > 0 ? "Sí" : "No",
+                previewDescription(request.getDescription()),
+                appBaseUrl + "/admin"
         );
     }
 
-    private String buildHtmlBody(final Car car, final boolean hasInlineImage) {
-        final String brand = safeValue(car.getBrandName());
-        final String model = safeValue(car.getModel());
-        final String bodyType = escapeHtml(safeValue(car.getBodyType()));
-        final String description = escapeHtml(previewDescription(car)).replace("\n", "<br>");
+    private String buildRequestHtmlBody(final CarRequest request, final String brandName,
+                                        final String bodyTypeName, final boolean hasInlineImage) {
+        final String brand = safeValue(brandName);
+        final String model = safeValue(request.getModel());
+        final String bodyType = escapeHtml(safeValue(bodyTypeName));
+        final String description = escapeHtml(previewDescription(request.getDescription())).replace("\n", "<br>");
         final String imageStatus = hasInlineImage ? "Con imagen" : "Sin imagen";
         final String carName = escapeHtml(brand + " " + model);
         final String preheader = escapeHtml("Nueva alta en el catálogo: " + brand + " " + model);
         final String intro = escapeHtml(
                 "Se registró un nuevo auto en La Posta Autos. El equipo ya puede revisarlo desde el catálogo."
         );
+        final String dashboardUrl = escapeHtml(appBaseUrl + "/admin");
+
         final String imageBlock = hasInlineImage
                 ? """
                                     <div style="margin-bottom:24px;">
@@ -204,8 +239,14 @@ public class EmailServiceImpl implements EmailService {
                                     <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
                                         Descripción enviada
                                     </div>
-                                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:20px 22px;font-size:15px;line-height:1.7;color:%s;font-family:%s;">
+                                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:20px 22px;font-size:15px;line-height:1.7;color:%s;font-family:%s;margin-bottom:28px;">
                                         %s
+                                    </div>
+
+                                    <div style="text-align:center;">
+                                        <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
+                                            Ir al dashboard
+                                        </a>
                                     </div>
 
                                 </div>
@@ -254,26 +295,481 @@ public class EmailServiceImpl implements EmailService {
                 COLOR_OUTLINE,
                 COLOR_ON_SURFACE,
                 BODY_FONT,
-                description
+                description,
+                dashboardUrl,
+                COLOR_PRIMARY_CONTAINER,
+                COLOR_ON_PRIMARY,
+                DISPLAY_FONT
         );
     }
 
-    private CarImage getInlineCarImage(final Car car) {
-        return carService.getCarImageByCarId(car.getId())
-                .filter(image -> image.getImageData() != null && image.getImageData().length > 0)
-                .filter(image -> image.getContentType() != null && !image.getContentType().isBlank())
-                .orElse(null);
+    // ── Weekly moderator digest ───────────────────────────────────────────────
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendWeeklyModeratorDigest(final List<String> moderatorEmails, final int pendingRequestCount) {
+        if (moderatorEmails == null || moderatorEmails.isEmpty()) {
+            return;
+        }
+        try {
+            final MimeMessage message = mailSender.createMimeMessage();
+            final MimeMessageHelper helper = new MimeMessageHelper(
+                    message,
+                    true,
+                    StandardCharsets.UTF_8.name()
+            );
+            helper.setTo(moderatorEmails.toArray(new String[0]));
+            helper.setSubject(buildModeratorDigestSubject(pendingRequestCount));
+            helper.setText(
+                    buildModeratorDigestPlainText(pendingRequestCount),
+                    buildModeratorDigestHtml(pendingRequestCount)
+            );
+            mailSender.send(message);
+        } catch (final MessagingException | RuntimeException e) {
+            LOGGER.warning("Failed to send weekly moderator digest: " + e.getMessage());
+        }
     }
 
-    private String previewDescription(final Car car) {
-        if (car.getDescription() == null || car.getDescription().isBlank()) {
+    private String buildModeratorDigestSubject(final int pendingCount) {
+        return "[" + APP_NAME + "] Resumen semanal — "
+                + (pendingCount == 0 ? "sin pedidos pendientes" : pendingCount + " pedido" + (pendingCount == 1 ? "" : "s") + " pendiente" + (pendingCount == 1 ? "" : "s"));
+    }
+
+    private String buildModeratorDigestPlainText(final int pendingCount) {
+        if (pendingCount == 0) {
+            return """
+                    Resumen semanal — %s
+
+                    Todo al día: no hay pedidos de autos pendientes de revisión esta semana.
+
+                    Dashboard: %s
+                    """.formatted(APP_NAME, appBaseUrl + "/admin");
+        }
+        return """
+                Resumen semanal — %s
+
+                Esta semana hay %d pedido%s de autos esperando tu revisión.
+
+                Revisalos en el dashboard: %s
+                """.formatted(APP_NAME, pendingCount, pendingCount == 1 ? "" : "s", appBaseUrl + "/admin");
+    }
+
+    private String buildModeratorDigestHtml(final int pendingCount) {
+        final String dashboardUrl = escapeHtml(appBaseUrl + "/admin");
+        final boolean hasPending = pendingCount > 0;
+        final String preheader = hasPending
+                ? escapeHtml(pendingCount + " pedido" + (pendingCount == 1 ? "" : "s") + " de autos esperan tu revisión")
+                : escapeHtml("Todo al día — sin pedidos pendientes esta semana");
+
+        final String bodySection = hasPending
+                ? """
+                            <div style="background:%s;border:1px solid %s;border-radius:18px;padding:28px 24px;margin-bottom:28px;text-align:center;">
+                                <div style="font-size:56px;line-height:1;font-weight:700;color:%s;font-family:%s;">
+                                    %d
+                                </div>
+                                <div style="margin-top:8px;font-size:16px;line-height:1.5;color:%s;font-family:%s;">
+                                    pedido%s pendiente%s de revisión
+                                </div>
+                            </div>
+                        """.formatted(
+                        COLOR_SURFACE_HIGH, COLOR_OUTLINE,
+                        COLOR_PRIMARY, DISPLAY_FONT,
+                        pendingCount,
+                        COLOR_ON_SURFACE_VARIANT, BODY_FONT,
+                        pendingCount == 1 ? "" : "s", pendingCount == 1 ? "" : "s"
+                )
+                : """
+                            <div style="background:%s;border:1px solid %s;border-radius:18px;padding:28px 24px;margin-bottom:28px;text-align:center;">
+                                <div style="font-size:40px;line-height:1;margin-bottom:12px;">✓</div>
+                                <div style="font-size:16px;line-height:1.5;color:%s;font-family:%s;">
+                                    Todo al día — sin pedidos pendientes esta semana.
+                                </div>
+                            </div>
+                        """.formatted(COLOR_SURFACE_HIGH, COLOR_OUTLINE, COLOR_ON_SURFACE_VARIANT, BODY_FONT);
+
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <body style="margin:0;padding:24px;background:%s;color:%s;font-family:%s;">
+                    <div style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;color:transparent;">%s</div>
+                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
+                        <tr><td style="padding:0;">
+                            <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
+                                <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
+                                    %s
+                                </div>
+                                <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
+                                    Resumen semanal
+                                </h1>
+                                <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
+                                    Pedidos de autos pendientes de revisión en el catálogo.
+                                </p>
+                            </div>
+                            <div style="background:%s;padding:32px;border:1px solid %s;border-top:none;border-radius:0 0 22px 22px;">
+                                %s
+                                <div style="text-align:center;">
+                                    <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
+                                        Ir al dashboard
+                                    </a>
+                                </div>
+                            </div>
+                        </td></tr>
+                    </table>
+                </body>
+                </html>
+                """.formatted(
+                COLOR_SURFACE_LOW, COLOR_ON_SURFACE, BODY_FONT,
+                preheader,
+                COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY, COLOR_ON_PRIMARY,
+                BODY_FONT, escapeHtml(APP_NAME),
+                DISPLAY_FONT,
+                BODY_FONT,
+                COLOR_SURFACE, COLOR_OUTLINE,
+                bodySection,
+                dashboardUrl, COLOR_PRIMARY_CONTAINER, COLOR_ON_PRIMARY, DISPLAY_FONT
+        );
+    }
+
+    // ── Weekly user digest ────────────────────────────────────────────────────
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendWeeklyUserDigest(final String recipientEmail, final String username,
+                                     final List<EmailService.ReviewActivityItem> reviewActivity,
+                                     final List<EmailService.FavoriteActivityItem> favoriteActivity) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+        try {
+            final MimeMessage message = mailSender.createMimeMessage();
+            final MimeMessageHelper helper = new MimeMessageHelper(
+                    message,
+                    true,
+                    StandardCharsets.UTF_8.name()
+            );
+            helper.setTo(recipientEmail);
+            helper.setSubject("[" + APP_NAME + "] Tu resumen semanal, " + sanitizeHeaderValue(safeValue(username)));
+            helper.setText(
+                    buildUserDigestPlainText(username, reviewActivity, favoriteActivity),
+                    buildUserDigestHtml(username, reviewActivity, favoriteActivity)
+            );
+            mailSender.send(message);
+        } catch (final MessagingException | RuntimeException e) {
+            LOGGER.warning("Failed to send weekly user digest to " + recipientEmail + ": " + e.getMessage());
+        }
+    }
+
+    private String buildUserDigestPlainText(final String username,
+                                            final List<EmailService.ReviewActivityItem> reviewActivity,
+                                            final List<EmailService.FavoriteActivityItem> favoriteActivity) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Hola, ").append(safeValue(username)).append("!\n\n");
+        sb.append("Tu resumen semanal en ").append(APP_NAME).append(".\n\n");
+
+        sb.append("── Actividad en tus reseñas ──\n");
+        if (reviewActivity.isEmpty()) {
+            sb.append("Sin actividad nueva esta semana.\n");
+        } else {
+            for (final EmailService.ReviewActivityItem item : reviewActivity) {
+                sb.append("• ").append(safeValue(item.reviewTitle))
+                        .append(" (").append(safeValue(item.carName)).append(")");
+                if (item.newLikes > 0) {
+                    sb.append(" — ").append(item.newLikes).append(" me gusta nuevo").append(item.newLikes == 1 ? "" : "s");
+                }
+                if (item.newReplies > 0) {
+                    sb.append(" — ").append(item.newReplies).append(" respuesta").append(item.newReplies == 1 ? "" : "s").append(" nueva").append(item.newReplies == 1 ? "" : "s");
+                }
+                sb.append("\n");
+            }
+        }
+
+        sb.append("\n── Novedades en tus favoritos ──\n");
+        if (favoriteActivity.isEmpty()) {
+            sb.append("Sin novedades esta semana.\n");
+        } else {
+            for (final EmailService.FavoriteActivityItem item : favoriteActivity) {
+                sb.append("• ").append(safeValue(item.carName))
+                        .append(" — ").append(item.newReviewCount)
+                        .append(" reseña").append(item.newReviewCount == 1 ? "" : "s").append(" nueva").append(item.newReviewCount == 1 ? "" : "s").append("\n");
+            }
+        }
+
+        sb.append("\nVer catálogo: ").append(appBaseUrl).append("/cars\n");
+        return sb.toString();
+    }
+
+    private String buildUserDigestHtml(final String username,
+                                       final List<EmailService.ReviewActivityItem> reviewActivity,
+                                       final List<EmailService.FavoriteActivityItem> favoriteActivity) {
+        final String displayName = escapeHtml(safeValue(username));
+        final String catalogUrl = escapeHtml(appBaseUrl + "/cars");
+        final String preheader = escapeHtml("Tu actividad semanal en " + APP_NAME);
+
+        final String reviewSection = buildUserDigestReviewSection(reviewActivity);
+        final String favoriteSection = buildUserDigestFavoriteSection(favoriteActivity);
+
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <body style="margin:0;padding:24px;background:%s;color:%s;font-family:%s;">
+                    <div style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;color:transparent;">%s</div>
+                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
+                        <tr><td style="padding:0;">
+                            <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
+                                <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
+                                    %s
+                                </div>
+                                <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
+                                    Hola, %s!
+                                </h1>
+                                <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
+                                    Esto es lo que pasó esta semana en tu cuenta.
+                                </p>
+                            </div>
+                            <div style="background:%s;padding:32px;border:1px solid %s;border-top:none;border-radius:0 0 22px 22px;">
+                                %s
+                                %s
+                                <div style="text-align:center;margin-top:8px;">
+                                    <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
+                                        Ver catálogo
+                                    </a>
+                                </div>
+                            </div>
+                        </td></tr>
+                    </table>
+                </body>
+                </html>
+                """.formatted(
+                COLOR_SURFACE_LOW, COLOR_ON_SURFACE, BODY_FONT,
+                preheader,
+                COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY_CONTAINER, COLOR_PRIMARY, COLOR_ON_PRIMARY,
+                BODY_FONT, escapeHtml(APP_NAME),
+                DISPLAY_FONT, displayName, BODY_FONT,
+                COLOR_SURFACE, COLOR_OUTLINE,
+                reviewSection, favoriteSection,
+                catalogUrl, COLOR_PRIMARY_CONTAINER, COLOR_ON_PRIMARY, DISPLAY_FONT
+        );
+    }
+
+    private String buildUserDigestReviewSection(final List<EmailService.ReviewActivityItem> items) {
+        final String sectionLabel = "Actividad en tus reseñas";
+        if (items.isEmpty()) {
+            return buildDigestEmptySection(sectionLabel, "Sin actividad nueva esta semana.");
+        }
+        final StringBuilder rows = new StringBuilder();
+        for (final EmailService.ReviewActivityItem item : items) {
+            final StringBuilder detail = new StringBuilder();
+            if (item.newLikes > 0) {
+                detail.append(item.newLikes).append(" me gusta nuevo").append(item.newLikes == 1 ? "" : "s");
+            }
+            if (item.newReplies > 0) {
+                if (detail.length() > 0) detail.append(" &amp; ");
+                detail.append(item.newReplies).append(" respuesta").append(item.newReplies == 1 ? "" : "s").append(" nueva").append(item.newReplies == 1 ? "" : "s");
+            }
+            rows.append(buildDigestRow(
+                    escapeHtml(safeValue(item.reviewTitle)),
+                    escapeHtml(safeValue(item.carName)),
+                    detail.toString()
+            ));
+        }
+        return buildDigestSection(sectionLabel, rows.toString());
+    }
+
+    private String buildUserDigestFavoriteSection(final List<EmailService.FavoriteActivityItem> items) {
+        final String sectionLabel = "Novedades en tus favoritos";
+        if (items.isEmpty()) {
+            return buildDigestEmptySection(sectionLabel, "Sin novedades esta semana.");
+        }
+        final StringBuilder rows = new StringBuilder();
+        for (final EmailService.FavoriteActivityItem item : items) {
+            final String detail = item.newReviewCount + " reseña" + (item.newReviewCount == 1 ? "" : "s") + " nueva" + (item.newReviewCount == 1 ? "" : "s");
+            rows.append(buildDigestRow(escapeHtml(safeValue(item.carName)), null, detail));
+        }
+        return buildDigestSection(sectionLabel, rows.toString());
+    }
+
+    private String buildDigestSection(final String label, final String rowsHtml) {
+        return """
+                <div style="margin-bottom:24px;">
+                    <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
+                        %s
+                    </div>
+                    <div style="background:%s;border:1px solid %s;border-radius:18px;overflow:hidden;">
+                        %s
+                    </div>
+                </div>
+                """.formatted(
+                COLOR_ON_SURFACE_VARIANT, BODY_FONT,
+                escapeHtml(label),
+                COLOR_SURFACE_HIGH, COLOR_OUTLINE,
+                rowsHtml
+        );
+    }
+
+    private String buildDigestEmptySection(final String label, final String message) {
+        return """
+                <div style="margin-bottom:24px;">
+                    <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;font-weight:700;font-family:%s;">
+                        %s
+                    </div>
+                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:20px 22px;font-size:15px;color:%s;font-family:%s;">
+                        %s
+                    </div>
+                </div>
+                """.formatted(
+                COLOR_ON_SURFACE_VARIANT, BODY_FONT,
+                escapeHtml(label),
+                COLOR_SURFACE_HIGH, COLOR_OUTLINE,
+                COLOR_ON_SURFACE_VARIANT, BODY_FONT,
+                escapeHtml(message)
+        );
+    }
+
+    private String buildDigestRow(final String title, final String subtitle, final String detail) {
+        final String subtitleHtml = subtitle != null
+                ? "<div style=\"font-size:13px;line-height:1.4;color:" + COLOR_ON_SURFACE_VARIANT + ";font-family:" + BODY_FONT + ";margin-top:2px;\">" + subtitle + "</div>"
+                : "";
+        return """
+                <div style="padding:16px 22px;border-bottom:1px solid %s;">
+                    <div style="font-size:15px;font-weight:600;color:%s;font-family:%s;">%s</div>
+                    %s
+                    <div style="margin-top:6px;font-size:13px;color:%s;font-family:%s;">%s</div>
+                </div>
+                """.formatted(
+                COLOR_OUTLINE,
+                COLOR_ON_SURFACE, BODY_FONT, title,
+                subtitleHtml,
+                COLOR_PRIMARY, BODY_FONT, detail
+        );
+    }
+
+    // ── Approved notification helpers ─────────────────────────────────────────
+
+    private String buildApprovedSubject(final String brandName, final String model) {
+        return "[" + APP_NAME + "] Tu auto fue aprobado: "
+                + sanitizeHeaderValue(brandName) + " " + sanitizeHeaderValue(model);
+    }
+
+    private String buildApprovedPlainTextBody(final String brandName, final String model) {
+        return """
+                ¡Buenas noticias!
+
+                Tu auto %s %s fue aprobado y ya está visible en el catálogo de %s.
+
+                Podés verlo en: %s
+                """.formatted(
+                safeValue(brandName),
+                safeValue(model),
+                APP_NAME,
+                appBaseUrl + "/cars"
+        );
+    }
+
+    private String buildApprovedHtmlBody(final String brandName, final String model) {
+        final String carName = escapeHtml(safeValue(brandName) + " " + safeValue(model));
+        final String catalogUrl = escapeHtml(appBaseUrl + "/cars");
+        final String preheader = escapeHtml("Tu auto " + safeValue(brandName) + " " + safeValue(model)
+                + " ya está en el catálogo");
+
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <body style="margin:0;padding:24px;background:%s;color:%s;font-family:%s;">
+                    <div style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;color:transparent;">
+                        %s
+                    </div>
+                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
+                        <tr>
+                            <td style="padding:0;">
+                                <div style="background:%s;background-image:linear-gradient(135deg,%s 0%%,#ff8c64 56%%,%s 100%%);color:%s;padding:32px;border-radius:22px 22px 0 0;">
+                                    <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(26,8,0,0.14);font-size:11px;line-height:1;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:%s;">
+                                        %s
+                                    </div>
+                                    <h1 style="margin:16px 0 8px;font-size:30px;line-height:1.1;font-weight:700;font-family:%s;">
+                                        ¡Tu auto fue aprobado!
+                                    </h1>
+                                    <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(26,8,0,0.88);font-family:%s;">
+                                        Ya está disponible para que todos lo vean en el catálogo.
+                                    </p>
+                                </div>
+
+                                <div style="background:%s;padding:32px;border:1px solid %s;border-top:none;border-radius:0 0 22px 22px;">
+                                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:28px;">
+                                        <div style="font-size:12px;line-height:1;color:%s;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;font-weight:700;font-family:%s;">
+                                            Vehículo aprobado
+                                        </div>
+                                        <div style="font-size:28px;line-height:1.15;font-weight:700;color:%s;font-family:%s;">
+                                            %s
+                                        </div>
+                                        <div style="margin-top:12px;">
+                                            <span style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(100,200,100,0.14);border:1px solid rgba(100,200,100,0.3);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#88c888;font-family:%s;">
+                                                Aprobado
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div style="text-align:center;">
+                                        <a href="%s" style="display:inline-block;padding:14px 32px;background:%s;color:%s;font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;font-family:%s;letter-spacing:0.04em;">
+                                            Ver en el catálogo
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+                """.formatted(
+                COLOR_SURFACE_LOW,
+                COLOR_ON_SURFACE,
+                BODY_FONT,
+                preheader,
+                COLOR_PRIMARY_CONTAINER,
+                COLOR_PRIMARY_CONTAINER,
+                COLOR_PRIMARY,
+                COLOR_ON_PRIMARY,
+                BODY_FONT,
+                escapeHtml(APP_NAME),
+                DISPLAY_FONT,
+                BODY_FONT,
+                COLOR_SURFACE,
+                COLOR_OUTLINE,
+                COLOR_SURFACE_HIGH,
+                COLOR_OUTLINE,
+                COLOR_ON_SURFACE_VARIANT,
+                BODY_FONT,
+                COLOR_ON_SURFACE,
+                DISPLAY_FONT,
+                carName,
+                BODY_FONT,
+                catalogUrl,
+                COLOR_PRIMARY_CONTAINER,
+                COLOR_ON_PRIMARY,
+                DISPLAY_FONT
+        );
+    }
+
+    // ── Shared helpers ────────────────────────────────────────────────────────
+
+    private String sanitizeHeaderValue(final String value) {
+        return safeValue(value)
+                .chars()
+                .filter(ch -> !Character.isISOControl(ch))
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString()
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    private String previewDescription(final String description) {
+        if (description == null || description.isBlank()) {
             return "Sin descripción provista.";
         }
-        final String description = car.getDescription().trim();
-        if (description.length() <= DESCRIPTION_PREVIEW_LENGTH) {
-            return description;
+        final String trimmed = description.trim();
+        if (trimmed.length() <= DESCRIPTION_PREVIEW_LENGTH) {
+            return trimmed;
         }
-        return description.substring(0, DESCRIPTION_PREVIEW_LENGTH - 3).trim() + "...";
+        return trimmed.substring(0, DESCRIPTION_PREVIEW_LENGTH - 3).trim() + "...";
     }
 
     private String safeValue(final String value) {
@@ -288,4 +784,5 @@ public class EmailServiceImpl implements EmailService {
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;");
     }
+
 }

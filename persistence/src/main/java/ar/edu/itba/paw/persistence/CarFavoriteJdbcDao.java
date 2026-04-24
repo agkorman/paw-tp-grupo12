@@ -1,0 +1,128 @@
+package ar.edu.itba.paw.persistence;
+
+import ar.edu.itba.paw.model.Car;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+
+import javax.sql.DataSource;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Repository
+public class CarFavoriteJdbcDao implements CarFavoriteDao {
+
+    private static final String SELECT_COLUMNS =
+            "SELECT c.car_id, c.brand_id, b.name AS brand_name, c.model, c.body_type_id, bt.name AS body_type, "
+                    + "c.description, c.created_at, "
+                    + "EXISTS (SELECT 1 FROM car_images ci WHERE ci.car_id = c.car_id) AS has_image, "
+                    + "c.fuel_type, c.horsepower, c.airbag_count, c.transmission, c.fuel_consumption, c.max_speed_kmh ";
+
+    private static final String FROM_JOIN =
+            "FROM cars c "
+                    + "JOIN brands b ON c.brand_id = b.brand_id "
+                    + "JOIN body_types bt ON c.body_type_id = bt.body_type_id ";
+
+    private static final RowMapper<Car> CAR_ROW_MAPPER = (rs, rowNum) -> new Car(
+            rs.getLong("car_id"),
+            rs.getLong("brand_id"),
+            rs.getString("brand_name"),
+            rs.getString("model"),
+            rs.getLong("body_type_id"),
+            rs.getString("body_type"),
+            rs.getString("description"),
+            rs.getTimestamp("created_at").toLocalDateTime(),
+            rs.getBoolean("has_image"),
+            rs.getString("fuel_type"),
+            rs.getObject("horsepower", Integer.class),
+            rs.getObject("airbag_count", Integer.class),
+            rs.getString("transmission"),
+            rs.getBigDecimal("fuel_consumption"),
+            rs.getObject("max_speed_kmh", Integer.class)
+    );
+
+    private final JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    public CarFavoriteJdbcDao(final DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    }
+
+    @Override
+    public boolean favorite(final long userId, final long carId) {
+        try {
+            return jdbcTemplate.update(
+                    "INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)",
+                    userId,
+                    carId
+            ) > 0;
+        } catch (final DuplicateKeyException ignored) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean unfavorite(final long userId, final long carId) {
+        return jdbcTemplate.update(
+                "DELETE FROM car_favorites WHERE user_id = ? AND car_id = ?",
+                userId,
+                carId
+        ) > 0;
+    }
+
+    @Override
+    public boolean isFavorited(final long userId, final long carId) {
+        final Boolean exists = jdbcTemplate.queryForObject(
+                "SELECT EXISTS (SELECT 1 FROM car_favorites WHERE user_id = ? AND car_id = ?)",
+                Boolean.class,
+                userId,
+                carId
+        );
+        return Boolean.TRUE.equals(exists);
+    }
+
+    @Override
+    public List<Car> findFavoriteCars(final long userId) {
+        return jdbcTemplate.query(
+                SELECT_COLUMNS + FROM_JOIN
+                        + "JOIN car_favorites cf ON cf.car_id = c.car_id "
+                        + "WHERE cf.user_id = ? ORDER BY cf.created_at DESC, c.car_id DESC",
+                CAR_ROW_MAPPER,
+                userId
+        );
+    }
+
+    @Override
+    public Set<Long> findFavoritedCarIds(final long userId, final Collection<Long> carIds) {
+        final List<Long> normalizedCarIds = carIds == null
+                ? List.of()
+                : carIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (normalizedCarIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        final String placeholders = String.join(", ", Collections.nCopies(normalizedCarIds.size(), "?"));
+        final Object[] params = new Object[normalizedCarIds.size() + 1];
+        params[0] = userId;
+        for (int i = 0; i < normalizedCarIds.size(); i++) {
+            params[i + 1] = normalizedCarIds.get(i);
+        }
+
+        return jdbcTemplate.queryForList(
+                        "SELECT car_id FROM car_favorites WHERE user_id = ? AND car_id IN (" + placeholders + ")",
+                        Long.class,
+                        params
+                )
+                .stream()
+                .collect(Collectors.toSet());
+    }
+}

@@ -8,9 +8,16 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public class UserJdbcDao implements UserDao {
@@ -46,7 +53,7 @@ public class UserJdbcDao implements UserDao {
     @Override
     public Optional<User> findByEmail(String email) {
         return jdbcTemplate.query(
-                "SELECT user_id, username, email, password, role, created_at FROM users WHERE email = ?",
+                "SELECT user_id, username, email, password, role, created_at FROM users WHERE LOWER(email) = LOWER(?)",
                 ROW_MAPPER, email
         ).stream().findFirst();
     }
@@ -54,7 +61,7 @@ public class UserJdbcDao implements UserDao {
     @Override
     public Optional<User> findByUsername(String username) {
         return jdbcTemplate.query(
-                "SELECT user_id, username, email, password, role, created_at FROM users WHERE username = ?",
+                "SELECT user_id, username, email, password, role, created_at FROM users WHERE LOWER(username) = LOWER(?)",
                 ROW_MAPPER, username
         ).stream().findFirst();
     }
@@ -66,8 +73,43 @@ public class UserJdbcDao implements UserDao {
         params.put("email", email);
         params.put("password", password);
         params.put("role", role);
+        params.put("created_at", Timestamp.valueOf(LocalDateTime.now()));
 
         long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();
+    }
+
+    @Override
+    public List<User> findAll() {
+        return jdbcTemplate.query(
+                "SELECT user_id, username, email, password, role, created_at FROM users ORDER BY user_id",
+                ROW_MAPPER
+        );
+    }
+
+    @Override
+    public List<String> findEmailsByRoles(final Collection<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        final List<String> normalizedRoles = roles.stream()
+                .filter(role -> role != null && !role.trim().isEmpty())
+                .map(role -> role.trim().toLowerCase(Locale.ROOT))
+                .distinct()
+                .collect(Collectors.toList());
+        if (normalizedRoles.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        final String placeholders = normalizedRoles.stream()
+                .map(ignored -> "?")
+                .collect(Collectors.joining(", "));
+
+        return jdbcTemplate.queryForList(
+                "SELECT email FROM users WHERE LOWER(role) IN (" + placeholders + ") ORDER BY email",
+                String.class,
+                normalizedRoles.toArray()
+        );
     }
 }

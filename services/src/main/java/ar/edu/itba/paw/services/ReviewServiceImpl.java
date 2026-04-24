@@ -23,9 +23,35 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public Review createReview(Long userId, String reviewerEmail, long carId, BigDecimal rating, String title, String body,
+    public Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
                                String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend) {
-        return reviewDao.create(userId, reviewerEmail, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
+        return reviewDao.create(userId, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
+    }
+
+    @Override
+    public Optional<Review> getReviewById(final long id) {
+        return reviewDao.findById(id);
+    }
+
+    @Override
+    public List<Review> getReviewsByIds(final Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return reviewDao.findByIds(ids);
+    }
+
+    @Override
+    public Optional<Review> updateReview(final long id, final long carId,
+                                         final BigDecimal rating, final String title, final String body,
+                                         final String ownershipStatus, final Integer modelYear,
+                                         final Integer mileageKm, final Boolean wouldRecommend) {
+        return reviewDao.update(id, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
+    }
+
+    @Override
+    public boolean deleteReview(final long id) {
+        return reviewDao.delete(id);
     }
 
     @Override
@@ -51,6 +77,11 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public List<Review> getReviewsByCarOrderByRatingDesc(final long carId) {
         return reviewDao.findByCarIdOrderByRatingDesc(carId);
+    }
+
+    @Override
+    public List<Review> getReviewsByUser(final long userId) {
+        return reviewDao.findByUserId(userId);
     }
 
     @Override
