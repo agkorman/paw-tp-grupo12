@@ -4,8 +4,6 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
-import ar.edu.itba.paw.persistence.BodyTypeDao;
-import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
@@ -14,7 +12,6 @@ import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
-import ar.edu.itba.paw.webapp.form.CarForm;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -64,22 +61,17 @@ public class CarReviewController {
     private final ReviewService reviewService;
     private final ReviewReplyService reviewReplyService;
     private final ReviewLikeService reviewLikeService;
-    private final BrandDao brandDao;
-    private final BodyTypeDao bodyTypeDao;
 
     @Autowired
     public CarReviewController(final CarService carService, final CarFavoriteService carFavoriteService,
                                final ReviewService reviewService,
                                final ReviewReplyService reviewReplyService,
-                               final ReviewLikeService reviewLikeService,
-                               final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
+                               final ReviewLikeService reviewLikeService) {
         this.carService = carService;
         this.carFavoriteService = carFavoriteService;
         this.reviewService = reviewService;
         this.reviewReplyService = reviewReplyService;
         this.reviewLikeService = reviewLikeService;
-        this.brandDao = brandDao;
-        this.bodyTypeDao = bodyTypeDao;
     }
 
     @InitBinder
@@ -223,9 +215,6 @@ public class CarReviewController {
         attributes.put("latestReviewLikeCount", pageData.latestReviewLikeCount);
         attributes.put("latestReviewLiked", pageData.latestReviewLiked);
         attributes.put("carImages", pageData.carImages);
-        attributes.put("brands", brandDao.findAll());
-        attributes.put("bodyTypes", bodyTypeDao.findAll());
-        attributes.put("carForm", new CarForm());
         return attributes;
     }
 

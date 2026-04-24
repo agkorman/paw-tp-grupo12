@@ -69,9 +69,8 @@ public class AdminController {
     }
 
     @RequestMapping(method = RequestMethod.GET)
-    public ModelAndView admin() {
-        final List<Brand> brands = brandDao.findAll();
-        final List<BodyType> bodyTypes = bodyTypeDao.findAll();
+    public ModelAndView admin(@ModelAttribute("brands") final List<Brand> brands,
+                              @ModelAttribute("bodyTypes") final List<BodyType> bodyTypes) {
         final Map<Long, Brand> brandsById = brands.stream()
                 .collect(Collectors.toMap(Brand::getId, Function.identity()));
         final Map<Long, BodyType> bodyTypesById = bodyTypes.stream()
@@ -84,9 +83,6 @@ public class AdminController {
                 .toList();
         final ModelAndView mav = new ModelAndView("admin.jsp");
         mav.addObject("pendingRequests", pendingRequests);
-        mav.addObject("brands", brands);
-        mav.addObject("bodyTypes", bodyTypes);
-        mav.addObject("carForm", new CarForm());
         return mav;
     }
 

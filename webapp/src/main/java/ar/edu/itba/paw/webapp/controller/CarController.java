@@ -115,7 +115,6 @@ public class CarController {
     public String listCars(@ModelAttribute final CarSearchCriteria criteria,
                            @RequestParam(value = "createCar", required = false) final String createCar,
                            @RequestParam(value = "submitted", required = false) final String submitted,
-                           @ModelAttribute("carForm") final CarForm carForm,
                            @AuthenticationPrincipal final AuthenticatedUser currentUser,
                            final Model model) {
         populateCarsPageModel(model, criteria, currentUser);
@@ -258,8 +257,6 @@ public class CarController {
         model.addAttribute("cars", catalogData.cars);
         model.addAttribute("reviewStatsByCarId", catalogData.reviewStatsByCarId);
         model.addAttribute("favoritedCarIds", favoritedCarIdsById(catalogData.cars, currentUser));
-        model.addAttribute("brands", brandDao.findAll());
-        model.addAttribute("bodyTypes", bodyTypeDao.findAll());
         model.addAttribute("selectedBrand", criteria.getBrand());
         model.addAttribute("selectedBodyType", criteria.getBodyType());
         model.addAttribute("searchQuery", criteria.getQ());
