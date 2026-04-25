@@ -3,6 +3,8 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -97,6 +99,36 @@ public class CarRequestJdbcDao implements CarRequestDao {
                 ROW_MAPPER,
                 status
         );
+    }
+
+    @Override
+    public Page<CarRequest> findByStatus(final String status, final int page) {
+        final int normalizedPage = Pagination.normalizePage(page);
+        final int pageSize = Pagination.REQUESTS_PAGE_SIZE;
+        final int offset = Pagination.offsetFor(normalizedPage, pageSize);
+
+        final long totalItems = countByStatus(status);
+        if (totalItems == 0L) {
+            return Page.empty(normalizedPage, pageSize);
+        }
+
+        final List<CarRequest> items = jdbcTemplate.query(
+                "SELECT car_request_id, submitted_by_user_id, submitter_email, brand_id, body_type_id, model, "
+                        + "description, image_content_type, image_data, status, created_at, "
+                        + "fuel_type, horsepower, airbag_count, transmission, fuel_consumption, max_speed_kmh "
+                        + "FROM car_requests WHERE status = ? ORDER BY created_at DESC, car_request_id DESC "
+                        + "LIMIT ? OFFSET ?",
+                ROW_MAPPER,
+                status, pageSize, offset
+        );
+        return new Page<>(items, normalizedPage, pageSize, totalItems);
+    }
+
+    @Override
+    public long countByStatus(final String status) {
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM car_requests WHERE status = ?", Long.class, status);
+        return count == null ? 0L : count;
     }
 
     @Override

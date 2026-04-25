@@ -4,7 +4,7 @@
 
 <pa:cars-content
         cars="${cars}"
-        resultCount="${fn:length(cars)}"
+        resultCount="${empty totalItems ? fn:length(cars) : totalItems}"
         reviewStatsByCarId="${reviewStatsByCarId}"
         favoritedCarIds="${favoritedCarIds}"
         showHp="${showHp}"
@@ -12,4 +12,7 @@
         showConsumption="${showConsumption}"
         showAirbags="${showAirbags}"
         showTransmission="${showTransmission}"
-        showFuelType="${showFuelType}"/>
+        showFuelType="${showFuelType}"
+        currentPage="${currentPage}"
+        totalPages="${totalPages}"
+        criteria="${criteria}"/>

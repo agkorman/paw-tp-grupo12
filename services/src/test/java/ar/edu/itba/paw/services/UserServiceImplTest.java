@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.CarRequestDao;
@@ -202,6 +203,11 @@ class UserServiceImplTest {
         }
 
         @Override
+        public Page<Review> findByCarId(final long carId, final int page) {
+            return Page.empty(page, 0);
+        }
+
+        @Override
         public Optional<Review> findLatestByCarId(final long carId) {
             return Optional.empty();
         }
@@ -217,8 +223,23 @@ class UserServiceImplTest {
         }
 
         @Override
+        public Page<Review> findByCarIdOrderByRatingAsc(final long carId, final int page) {
+            return Page.empty(page, 0);
+        }
+
+        @Override
         public List<Review> findByCarIdOrderByRatingDesc(final long carId) {
             return Collections.emptyList();
+        }
+
+        @Override
+        public Page<Review> findByCarIdOrderByRatingDesc(final long carId, final int page) {
+            return Page.empty(page, 0);
+        }
+
+        @Override
+        public long countByCarId(final long carId) {
+            return 0L;
         }
 
         @Override
@@ -296,6 +317,16 @@ class UserServiceImplTest {
         @Override
         public List<CarRequest> findByStatus(final String status) {
             return Collections.emptyList();
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<CarRequest> findByStatus(final String status, final int page) {
+            return ar.edu.itba.paw.model.Page.empty(1, 0);
+        }
+
+        @Override
+        public long countByStatus(final String status) {
+            return 0L;
         }
 
         @Override

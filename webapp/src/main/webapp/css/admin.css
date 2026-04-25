@@ -1,5 +1,8 @@
 .admin-page {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 56px);
     background: linear-gradient(180deg, var(--surface), var(--surface-container-lowest));
     padding: var(--spacing-16) var(--spacing-12);
 }
@@ -85,8 +88,12 @@
 }
 
 .admin-requests-section {
-    display: grid;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
     gap: 1.5rem;
+    min-height: calc(100vh - 24rem);
+    width: 100%;
     max-width: 72rem;
     margin: 0 auto;
 }
@@ -122,6 +129,11 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.25rem;
+}
+
+.admin-requests-section .pagination {
+    margin-top: auto;
+    padding-top: 2rem;
 }
 
 .admin-empty-state {
@@ -201,6 +213,10 @@
 
     .admin-requests-grid {
         grid-template-columns: 1fr;
+    }
+
+    .admin-requests-section {
+        min-height: auto;
     }
 
     .admin-hero h1 {

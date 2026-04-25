@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.ReviewDao;
@@ -60,6 +61,11 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public Page<Review> getReviewsByCar(final long carId, final int page) {
+        return reviewDao.findByCarId(carId, page);
+    }
+
+    @Override
     public Optional<Review> getLatestReviewByCar(final long carId) {
         return reviewDao.findLatestByCarId(carId);
     }
@@ -75,8 +81,18 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public Page<Review> getReviewsByCarOrderByRatingAsc(final long carId, final int page) {
+        return reviewDao.findByCarIdOrderByRatingAsc(carId, page);
+    }
+
+    @Override
     public List<Review> getReviewsByCarOrderByRatingDesc(final long carId) {
         return reviewDao.findByCarIdOrderByRatingDesc(carId);
+    }
+
+    @Override
+    public Page<Review> getReviewsByCarOrderByRatingDesc(final long carId, final int page) {
+        return reviewDao.findByCarIdOrderByRatingDesc(carId, page);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,6 +102,11 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
+    public Page<Review> findByCarId(final long carId, final int page) {
+        return findByCarIdPaginated(carId, "r.created_at DESC", page);
+    }
+
+    @Override
     public Optional<Review> findLatestByCarId(final long carId) {
         return jdbcTemplate.query(
                 REVIEW_SELECT + "WHERE r.car_id = ? ORDER BY r.created_at DESC LIMIT 1",
@@ -121,8 +128,25 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
+    public Page<Review> findByCarIdOrderByRatingAsc(final long carId, final int page) {
+        return findByCarIdPaginated(carId, "r.rating ASC, r.created_at DESC", page);
+    }
+
+    @Override
     public List<Review> findByCarIdOrderByRatingDesc(final long carId) {
         return findByCarIdOrdered(carId, "r.rating DESC, r.created_at DESC");
+    }
+
+    @Override
+    public Page<Review> findByCarIdOrderByRatingDesc(final long carId, final int page) {
+        return findByCarIdPaginated(carId, "r.rating DESC, r.created_at DESC", page);
+    }
+
+    @Override
+    public long countByCarId(final long carId) {
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM reviews WHERE car_id = ?", Long.class, carId);
+        return count == null ? 0L : count;
     }
 
     private List<Review> findByCarIdOrdered(final long carId, final String orderByClause) {
@@ -130,6 +154,21 @@ public class ReviewJdbcDao implements ReviewDao {
                 REVIEW_SELECT + "WHERE r.car_id = ? ORDER BY " + orderByClause,
                 ROW_MAPPER, carId
         );
+    }
+
+    private Page<Review> findByCarIdPaginated(final long carId, final String orderByClause, final int page) {
+        final int normalizedPage = Pagination.normalizePage(page);
+        final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
+        final int offset = Pagination.offsetFor(normalizedPage, pageSize);
+        final long total = countByCarId(carId);
+        if (total == 0L) {
+            return Page.empty(normalizedPage, pageSize);
+        }
+        final List<Review> items = jdbcTemplate.query(
+                REVIEW_SELECT + "WHERE r.car_id = ? ORDER BY " + orderByClause + " LIMIT ? OFFSET ?",
+                ROW_MAPPER, carId, pageSize, offset
+        );
+        return new Page<>(items, normalizedPage, pageSize, total);
     }
 
     @Override

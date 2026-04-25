@@ -18,7 +18,7 @@
 </head>
 <body>
     <pa:nav activePage="reviews"/>
-    <c:set var="resultCount" value="${fn:length(cars)}"/>
+    <c:set var="resultCount" value="${empty totalItems ? fn:length(cars) : totalItems}"/>
 
     <pa:cars-toolbar
             brands="${brands}"
@@ -43,7 +43,10 @@
             showConsumption="${showConsumption}"
             showAirbags="${showAirbags}"
             showTransmission="${showTransmission}"
-            showFuelType="${showFuelType}"/>
+            showFuelType="${showFuelType}"
+            currentPage="${currentPage}"
+            totalPages="${totalPages}"
+            criteria="${criteria}"/>
     <pa:create-car-modal
             brands="${brands}"
             bodyTypes="${bodyTypes}"/>
@@ -61,7 +64,7 @@
     </c:if>
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
-    <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
+    <script src="<c:url value='/js/enhanced-filters.js?v=3'/>"></script>
     <script src="<c:url value='/js/cars-filters-panel.js'/>"></script>
     <script src="<c:url value='/js/create-car-modal.js'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>

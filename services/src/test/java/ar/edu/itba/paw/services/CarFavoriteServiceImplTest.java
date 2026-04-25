@@ -207,8 +207,8 @@ class CarFavoriteServiceImplTest {
         }
 
         @Override
-        public List<Car> findByCriteria(final CarSearchCriteria criteria) {
-            return Collections.emptyList();
+        public ar.edu.itba.paw.model.Page<Car> findByCriteria(final CarSearchCriteria criteria) {
+            return ar.edu.itba.paw.model.Page.empty(1, 0);
         }
 
         @Override

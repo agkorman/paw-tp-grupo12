@@ -3,6 +3,7 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.Page;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,6 +17,10 @@ public interface CarRequestService {
     Optional<CarRequest> getCarRequestById(long id);
 
     List<CarRequest> getCarRequestsByStatus(String status);
+
+    Page<CarRequest> getCarRequestsByStatus(String status, int page);
+
+    long countCarRequestsByStatus(String status);
 
     CarRequest createPendingRequest(long submittedByUserId, String submitterEmail, long brandId,
                                     long bodyTypeId, String model, String description,

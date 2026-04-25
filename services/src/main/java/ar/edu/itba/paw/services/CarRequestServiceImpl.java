@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
 import ar.edu.itba.paw.persistence.CarRequestDao;
@@ -42,6 +43,24 @@ public class CarRequestServiceImpl implements CarRequestService {
             return List.of();
         }
         return carRequestDao.findByStatus(normalizedStatus);
+    }
+
+    @Override
+    public Page<CarRequest> getCarRequestsByStatus(final String status, final int page) {
+        final String normalizedStatus = StringUtils.normalize(status);
+        if (normalizedStatus == null) {
+            return Page.empty(page < 1 ? 1 : page, 0);
+        }
+        return carRequestDao.findByStatus(normalizedStatus, page);
+    }
+
+    @Override
+    public long countCarRequestsByStatus(final String status) {
+        final String normalizedStatus = StringUtils.normalize(status);
+        if (normalizedStatus == null) {
+            return 0L;
+        }
+        return carRequestDao.countByStatus(normalizedStatus);
     }
 
     @Override

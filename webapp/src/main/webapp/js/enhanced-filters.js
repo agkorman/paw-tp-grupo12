@@ -65,6 +65,26 @@
         });
     };
 
+    var scrollToTarget = function (targetSelector, root) {
+        if (targetSelector === '#carsCatalogContent') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        if (!root) {
+            return;
+        }
+
+        var scrollTarget = root;
+        var stickyOffset = 88;
+        var top = scrollTarget.getBoundingClientRect().top + window.pageYOffset - stickyOffset;
+
+        window.scrollTo({
+            top: Math.max(top, 0),
+            behavior: 'smooth'
+        });
+    };
+
     var submitEnhancedForm = function (form) {
         if (!form || form.dataset.loading === 'true') {
             return;
@@ -117,6 +137,7 @@
             currentTarget.replaceWith(replacement);
             syncCatalogCount(replacement);
             window.history.replaceState({}, '', actionUrl.pathname + actionUrl.search);
+            scrollToTarget(targetSelector, document.querySelector(targetSelector));
         }).catch(function () {
             nativeSubmit.call(form);
         }).finally(function () {
@@ -172,6 +193,151 @@
 
         event.preventDefault();
         submitEnhancedForm(form);
+    });
+
+    var navigateFragment = function (link) {
+        var fragmentUrl = link.dataset.fragmentUrl;
+        var targetSelector = link.dataset.target;
+        var target = targetSelector ? document.querySelector(targetSelector) : null;
+
+        if (!fragmentUrl || !targetSelector || !target) {
+            return false;
+        }
+
+        var actionUrl = new URL(link.href, window.location.href);
+        var fetchUrl = new URL(fragmentUrl, window.location.href);
+        fetchUrl.search = actionUrl.search;
+
+        target.classList.add('is-loading');
+        target.setAttribute('aria-busy', 'true');
+
+        fetch(fetchUrl.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(function (response) {
+            if (!response.ok) {
+                throw new Error('Fragment request failed');
+            }
+            return response.text();
+        }).then(function (html) {
+            var parsed = new DOMParser().parseFromString(html, 'text/html');
+            var replacement = parsed.querySelector(targetSelector);
+            var currentTarget = document.querySelector(targetSelector);
+
+            if (!replacement || !currentTarget) {
+                throw new Error('Fragment target not found');
+            }
+
+            currentTarget.replaceWith(replacement);
+            syncCatalogCount(replacement);
+            window.history.replaceState({}, '', actionUrl.pathname + actionUrl.search);
+            scrollToTarget(targetSelector, document.querySelector(targetSelector));
+        }).catch(function () {
+            window.location.href = link.href;
+        }).finally(function () {
+            var currentTarget = document.querySelector(targetSelector);
+            if (currentTarget) {
+                currentTarget.classList.remove('is-loading');
+                currentTarget.removeAttribute('aria-busy');
+            }
+        });
+
+        return true;
+    };
+
+    var showMoreReviews = function (link) {
+        var fragmentUrl = link.dataset.fragmentUrl;
+        var targetSelector = link.dataset.target;
+        var feed = targetSelector ? document.querySelector(targetSelector) : null;
+        var reviewList = feed ? feed.querySelector('.review-list') : null;
+
+        if (!fragmentUrl || !targetSelector || !feed || !reviewList) {
+            return false;
+        }
+
+        var actionUrl = new URL(link.href, window.location.href);
+        var fetchUrl = new URL(fragmentUrl, window.location.href);
+        fetchUrl.search = actionUrl.search;
+
+        var controls = feed.querySelector('.reviews-feed-more');
+        if (controls) {
+            controls.classList.add('is-loading');
+            controls.setAttribute('aria-busy', 'true');
+        }
+
+        fetch(fetchUrl.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(function (response) {
+            if (!response.ok) {
+                throw new Error('Review fragment request failed');
+            }
+            return response.text();
+        }).then(function (html) {
+            var parsed = new DOMParser().parseFromString(html, 'text/html');
+            var replacement = parsed.querySelector(targetSelector);
+            var replacementItems = replacement ? replacement.querySelectorAll('.review-list > .review-item') : [];
+            var replacementControls = replacement ? replacement.querySelector('.reviews-feed-more') : null;
+            var currentControls = feed.querySelector('.reviews-feed-more');
+
+            if (!replacement || replacementItems.length === 0) {
+                throw new Error('Review fragment content not found');
+            }
+
+            Array.prototype.forEach.call(replacementItems, function (item) {
+                reviewList.appendChild(item);
+            });
+
+            if (currentControls && replacementControls) {
+                currentControls.replaceWith(replacementControls);
+            } else if (currentControls) {
+                currentControls.remove();
+            } else if (replacementControls) {
+                feed.appendChild(replacementControls);
+            }
+
+            window.history.replaceState({}, '', actionUrl.pathname + actionUrl.search);
+        }).catch(function () {
+            window.location.href = link.href;
+        }).finally(function () {
+            var currentControls = feed.querySelector('.reviews-feed-more');
+            if (currentControls) {
+                currentControls.classList.remove('is-loading');
+                currentControls.removeAttribute('aria-busy');
+            }
+        });
+
+        return true;
+    };
+
+    document.addEventListener('click', function (event) {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return;
+        }
+
+        var showMoreLink = event.target.closest && event.target.closest('a[data-review-show-more="true"]');
+        if (showMoreLink) {
+            if (showMoreReviews(showMoreLink)) {
+                event.preventDefault();
+            }
+            return;
+        }
+
+        var link = event.target.closest && event.target.closest('a[data-pagination-link="true"]');
+        if (!link) {
+            return;
+        }
+
+        if (link.classList.contains('is-disabled') || link.classList.contains('is-current')) {
+            event.preventDefault();
+            return;
+        }
+
+        if (navigateFragment(link)) {
+            event.preventDefault();
+        }
     });
 
     syncToolbarSelectValues(document);

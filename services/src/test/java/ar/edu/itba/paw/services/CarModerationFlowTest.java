@@ -205,6 +205,16 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public ar.edu.itba.paw.model.Page<CarRequest> getCarRequestsByStatus(final String status, final int page) {
+            return ar.edu.itba.paw.model.Page.empty(1, 0);
+        }
+
+        @Override
+        public long countCarRequestsByStatus(final String status) {
+            return 0L;
+        }
+
+        @Override
         public CarRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
                                                final long brandId, final long bodyTypeId, final String model,
                                                final String description, final List<CarImagePayload> images,
@@ -279,6 +289,17 @@ class CarModerationFlowTest {
             return request != null && status.equals(request.getStatus())
                     ? List.of(request)
                     : Collections.emptyList();
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<CarRequest> findByStatus(final String status, final int page) {
+            final List<CarRequest> items = findByStatus(status);
+            return new ar.edu.itba.paw.model.Page<>(items, 1, items.size(), items.size());
+        }
+
+        @Override
+        public long countByStatus(final String status) {
+            return findByStatus(status).size();
         }
 
         @Override
@@ -370,8 +391,8 @@ class CarModerationFlowTest {
         }
 
         @Override
-        public List<Car> findByCriteria(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
-            return Collections.emptyList();
+        public ar.edu.itba.paw.model.Page<Car> findByCriteria(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
+            return ar.edu.itba.paw.model.Page.empty(1, 0);
         }
 
         @Override
@@ -428,6 +449,11 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public ar.edu.itba.paw.model.Page<Review> findByCarId(final long carId, final int page) {
+            return ar.edu.itba.paw.model.Page.empty(page, 0);
+        }
+
+        @Override
         public Optional<Review> findLatestByCarId(final long carId) {
             return Optional.empty();
         }
@@ -443,8 +469,23 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public ar.edu.itba.paw.model.Page<Review> findByCarIdOrderByRatingAsc(final long carId, final int page) {
+            return ar.edu.itba.paw.model.Page.empty(page, 0);
+        }
+
+        @Override
         public List<Review> findByCarIdOrderByRatingDesc(final long carId) {
             return Collections.emptyList();
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<Review> findByCarIdOrderByRatingDesc(final long carId, final int page) {
+            return ar.edu.itba.paw.model.Page.empty(page, 0);
+        }
+
+        @Override
+        public long countByCarId(final long carId) {
+            return 0L;
         }
 
         @Override

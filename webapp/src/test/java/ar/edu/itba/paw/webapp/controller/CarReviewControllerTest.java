@@ -308,8 +308,8 @@ public class CarReviewControllerTest {
         }
 
         @Override
-        public List<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
-            return Collections.emptyList();
+        public ar.edu.itba.paw.model.Page<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
+            return ar.edu.itba.paw.model.Page.empty(1, 0);
         }
 
         @Override
@@ -442,6 +442,12 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public ar.edu.itba.paw.model.Page<Review> getReviewsByCar(final long carId, final int page) {
+            final List<Review> items = getReviewsByCar(carId);
+            return new ar.edu.itba.paw.model.Page<>(items, 1, items.isEmpty() ? 1 : items.size(), items.size());
+        }
+
+        @Override
         public Optional<Review> getLatestReviewByCar(final long carId) {
             return Optional.ofNullable(review);
         }
@@ -457,8 +463,18 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public ar.edu.itba.paw.model.Page<Review> getReviewsByCarOrderByRatingAsc(final long carId, final int page) {
+            return getReviewsByCar(carId, page);
+        }
+
+        @Override
         public List<Review> getReviewsByCarOrderByRatingDesc(final long carId) {
             return getReviewsByCar(carId);
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<Review> getReviewsByCarOrderByRatingDesc(final long carId, final int page) {
+            return getReviewsByCar(carId, page);
         }
 
         @Override
