@@ -20,16 +20,19 @@
    style="${activityReviewStyle}"
    aria-label="Ver reseña de ${fn:escapeXml(reviewCard.carName)}">
     <span class="activity-review-author">
-        <span class="activity-review-avatar" aria-hidden="true"><c:out value="${reviewCard.authorInitials}"/></span>
         <span class="activity-review-author-copy">
             <strong><c:out value="${reviewCard.authorName}"/></strong>
             <span><c:out value="${reviewCard.timeAgo}"/></span>
         </span>
     </span>
 
-    <span class="activity-review-score">
-        <strong><c:out value="${reviewCard.review.rating}"/></strong>
-        <span>/5</span>
+    <span class="card-rating-row activity-review-rating-row">
+        <span class="card-rating-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2.75l2.91 5.9 6.51.95-4.71 4.59 1.11 6.48L12 17.62l-5.82 3.05 1.11-6.48-4.71-4.59 6.51-.95L12 2.75z"/>
+            </svg>
+            <span class="card-rating-value"><c:out value="${reviewCard.review.rating}"/></span>
+        </span>
     </span>
 
     <span class="activity-review-copy">

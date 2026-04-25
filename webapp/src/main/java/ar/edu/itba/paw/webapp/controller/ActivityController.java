@@ -2,9 +2,14 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.services.UserFollowService;
+import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -16,6 +21,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -24,15 +30,21 @@ public class ActivityController {
 
     private final ReviewService reviewService;
     private final CarService carService;
+    private final UserFollowService userFollowService;
+    private final CarFavoriteService carFavoriteService;
 
     @Autowired
-    public ActivityController(final ReviewService reviewService, final CarService carService) {
+    public ActivityController(final ReviewService reviewService, final CarService carService,
+                              final UserFollowService userFollowService,
+                              final CarFavoriteService carFavoriteService) {
         this.reviewService = reviewService;
         this.carService = carService;
+        this.userFollowService = userFollowService;
+        this.carFavoriteService = carFavoriteService;
     }
 
     @RequestMapping(value = "/activity", method = RequestMethod.GET)
-    public ModelAndView activity() {
+    public ModelAndView activity(@AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final List<Review> reviews = reviewService.getAllReviews()
                 .stream()
                 .sorted(Comparator.comparing(
@@ -47,9 +59,26 @@ public class ActivityController {
                 .stream()
                 .map(review -> new ActivityReviewCard(review, carsById.get(review.getCarId()), timeAgo(review.getCreatedAt())))
                 .toList();
+        final Set<Long> followedUserIds = currentUser == null
+                ? Set.of()
+                : userFollowService.getFollowing(currentUser.getId())
+                    .stream()
+                    .map(User::getId)
+                    .collect(Collectors.toSet());
+        final Set<Long> favoriteCarIds = currentUser == null
+                ? Set.of()
+                : Set.copyOf(carFavoriteService.findFavoriteCarIdsByUser(currentUser.getId()));
 
         final ModelAndView mav = new ModelAndView("activity.jsp");
-        mav.addObject("activityReviews", activityReviews);
+        mav.addObject("latestActivityReviews", activityReviews);
+        mav.addObject("followedActivityReviews", activityReviews
+                .stream()
+                .filter(card -> card.getReview().getUserId() != null && followedUserIds.contains(card.getReview().getUserId()))
+                .toList());
+        mav.addObject("favoriteCarActivityReviews", activityReviews
+                .stream()
+                .filter(card -> favoriteCarIds.contains(card.getReview().getCarId()))
+                .toList());
         return mav;
     }
 

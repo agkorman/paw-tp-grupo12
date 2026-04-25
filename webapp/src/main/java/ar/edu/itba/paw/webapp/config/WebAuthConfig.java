@@ -42,6 +42,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.GET, "/"),
                                 antMatcher(HttpMethod.GET, "/cars"),
                                 antMatcher(HttpMethod.GET, "/cars/content"),
+                                antMatcher(HttpMethod.GET, "/activity"),
                                 antMatcher(HttpMethod.GET, "/reviews"),
                                 antMatcher(HttpMethod.GET, "/reviews/feed"),
                                 antMatcher(HttpMethod.GET, "/car-image"),
