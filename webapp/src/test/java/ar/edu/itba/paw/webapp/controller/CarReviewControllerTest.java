@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.ReviewStats;
@@ -238,6 +240,52 @@ public class CarReviewControllerTest {
         assertEquals(7L, likeService.toggledUserId);
     }
 
+    @Test
+    public void reviewPageUsesDefaultPageWhenPageIsMissing() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        reviewService.review = review(3L, 8L, 10L);
+        final CarReviewController controller = controller(reviewService);
+        final ExtendedModelMap model = new ExtendedModelMap();
+
+        final String view = controller.reviewForm(10L, null, null, null, new ReviewForm(), null, model);
+
+        assertEquals("car-review.jsp", view);
+        assertEquals(Pagination.DEFAULT_PAGE, reviewService.requestedPage);
+        assertEquals(Pagination.DEFAULT_PAGE, model.get("currentPage"));
+    }
+
+    @Test
+    public void reviewPageNormalizesInvalidPageToDefaultPage() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        reviewService.review = review(3L, 8L, 10L);
+        final CarReviewController controller = controller(reviewService);
+        final ExtendedModelMap model = new ExtendedModelMap();
+
+        final String view = controller.reviewForm(10L, null, 0, null, new ReviewForm(), null, model);
+
+        assertEquals("car-review.jsp", view);
+        assertEquals(Pagination.DEFAULT_PAGE, reviewService.requestedPage);
+        assertEquals(Pagination.DEFAULT_PAGE, model.get("currentPage"));
+    }
+
+    @Test
+    public void reviewPageUsesClampedPageMetadataFromService() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        final Review review = review(3L, 8L, 10L);
+        reviewService.review = review;
+        reviewService.pagedReviews = new Page<>(List.of(review), 2, Pagination.REVIEWS_PAGE_SIZE, 6L);
+        final CarReviewController controller = controller(reviewService);
+        final ExtendedModelMap model = new ExtendedModelMap();
+
+        final String view = controller.reviewForm(10L, null, 99, null, new ReviewForm(), null, model);
+
+        assertEquals("car-review.jsp", view);
+        assertEquals(99, reviewService.requestedPage);
+        assertEquals(2, model.get("currentPage"));
+        assertEquals(2, model.get("totalPages"));
+        assertEquals(6L, model.get("totalItems"));
+    }
+
     private CarReviewController controller(final FakeReviewService reviewService) {
         return new CarReviewController(
                 new FakeCarService(),
@@ -308,8 +356,8 @@ public class CarReviewControllerTest {
         }
 
         @Override
-        public List<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
-            return Collections.emptyList();
+        public ar.edu.itba.paw.model.Page<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
+            return ar.edu.itba.paw.model.Page.empty(1, 0);
         }
 
         @Override
@@ -396,6 +444,8 @@ public class CarReviewControllerTest {
         private long updatedCarId;
         private boolean deleted;
         private long deletedId;
+        private int requestedPage;
+        private Page<Review> pagedReviews;
 
         @Override
         public Review createReview(final long userId, final long carId, final BigDecimal rating, final String title,
@@ -442,6 +492,16 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public Page<Review> getReviewsByCar(final long carId, final int page) {
+            this.requestedPage = page;
+            if (pagedReviews != null) {
+                return pagedReviews;
+            }
+            final List<Review> items = getReviewsByCar(carId);
+            return new Page<>(items, Pagination.normalizePage(page), Pagination.REVIEWS_PAGE_SIZE, items.size());
+        }
+
+        @Override
         public Optional<Review> getLatestReviewByCar(final long carId) {
             return Optional.ofNullable(review);
         }
@@ -457,8 +517,18 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public Page<Review> getReviewsByCarOrderByRatingAsc(final long carId, final int page) {
+            return getReviewsByCar(carId, page);
+        }
+
+        @Override
         public List<Review> getReviewsByCarOrderByRatingDesc(final long carId) {
             return getReviewsByCar(carId);
+        }
+
+        @Override
+        public Page<Review> getReviewsByCarOrderByRatingDesc(final long carId, final int page) {
+            return getReviewsByCar(carId, page);
         }
 
         @Override

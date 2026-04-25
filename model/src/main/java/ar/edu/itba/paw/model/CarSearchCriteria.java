@@ -28,6 +28,7 @@ public class CarSearchCriteria {
     private BigDecimal fuelConsumptionMax;
     private Integer maxSpeedMin;
     private String sortBy;
+    private Integer page;
 
     public CarSearchCriteria() {}
 
@@ -163,5 +164,13 @@ public class CarSearchCriteria {
 
     public void setSortBy(final String sortBy) {
         this.sortBy = sortBy;
+    }
+
+    public Integer getPage() {
+        return page;
+    }
+
+    public void setPage(final Integer page) {
+        this.page = page;
     }
 }

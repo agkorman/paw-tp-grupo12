@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
+import ar.edu.itba.paw.model.Page;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -21,7 +22,7 @@ public interface CarService {
 
     List<Car> getCarsByBrandAndBodyType(String brand, String bodyType);
 
-    List<Car> searchCars(CarSearchCriteria criteria);
+    Page<Car> searchCars(CarSearchCriteria criteria);
 
     Optional<CarImage> getCarImageByCarId(long carId);
 

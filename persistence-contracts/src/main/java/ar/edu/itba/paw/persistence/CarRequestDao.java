@@ -3,6 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.Page;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -12,6 +13,10 @@ public interface CarRequestDao {
     Optional<CarRequest> findById(long id);
 
     List<CarRequest> findByStatus(String status);
+
+    Page<CarRequest> findByStatus(String status, int page);
+
+    long countByStatus(String status);
 
     CarRequest create(long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId,
                       String model, String description, String imageContentType, byte[] imageData,

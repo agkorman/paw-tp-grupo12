@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.services.BodyTypeService;
@@ -137,6 +138,10 @@ public class CarController {
         mav.addObject("cars", catalogData.cars);
         mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
         mav.addObject("favoritedCarIds", favoritedCarIdsById(catalogData.cars, currentUser));
+        mav.addObject("criteria", criteria);
+        mav.addObject("currentPage", catalogData.page.getPageNumber());
+        mav.addObject("totalPages", catalogData.page.getTotalPages());
+        mav.addObject("totalItems", catalogData.page.getTotalItems());
         addShowSpecFlags(mav, criteria);
         return mav;
     }
@@ -262,6 +267,9 @@ public class CarController {
         model.addAttribute("searchQuery", criteria.getQ());
         model.addAttribute("criteria", criteria);
         model.addAttribute("hasAdvancedFilters", criteria.hasAdvancedFilters());
+        model.addAttribute("currentPage", catalogData.page.getPageNumber());
+        model.addAttribute("totalPages", catalogData.page.getTotalPages());
+        model.addAttribute("totalItems", catalogData.page.getTotalItems());
         model.addAttribute("showHp", criteria.getHorsepowerMin() != null || criteria.getHorsepowerMax() != null);
         model.addAttribute("showSpeed", criteria.getMaxSpeedMin() != null);
         model.addAttribute("showConsumption", criteria.getFuelConsumptionMax() != null);
@@ -443,10 +451,11 @@ public class CarController {
 
     private CarCatalogData resolveCatalogData(final CarSearchCriteria criteria) {
         if (!criteria.isValid()) {
-            return new CarCatalogData(Collections.emptyList(), Collections.emptyMap());
+            return new CarCatalogData(Page.empty(1, 0), Collections.emptyMap());
         }
 
-        final List<Car> cars = carService.searchCars(criteria);
+        final Page<Car> carPage = carService.searchCars(criteria);
+        final List<Car> cars = carPage.getItems();
 
         final Map<Long, ReviewStats> reviewStatsByCarId;
         if (cars.isEmpty()) {
@@ -457,7 +466,7 @@ public class CarController {
                     .stream()
                     .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
         }
-        return new CarCatalogData(cars, reviewStatsByCarId);
+        return new CarCatalogData(carPage, reviewStatsByCarId);
     }
 
     private Map<Long, ReviewStats> getReviewStatsByCarId(final List<Car> cars) {
@@ -541,11 +550,13 @@ public class CarController {
     }
 
     private static final class CarCatalogData {
+        private final Page<Car> page;
         private final List<Car> cars;
         private final Map<Long, ReviewStats> reviewStatsByCarId;
 
-        private CarCatalogData(final List<Car> cars, final Map<Long, ReviewStats> reviewStatsByCarId) {
-            this.cars = cars;
+        private CarCatalogData(final Page<Car> page, final Map<Long, ReviewStats> reviewStatsByCarId) {
+            this.page = page;
+            this.cars = page.getItems();
             this.reviewStatsByCarId = reviewStatsByCarId;
         }
     }

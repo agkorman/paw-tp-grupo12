@@ -3,6 +3,9 @@
 <%@ attribute name="reviewThreads" required="true" type="java.util.List" %>
 <%@ attribute name="carId" required="true" type="java.lang.Long" %>
 <%@ attribute name="currentSort" required="false" type="java.lang.String" %>
+<%@ attribute name="currentPage" required="false" type="java.lang.Integer" %>
+<%@ attribute name="totalPages" required="false" type="java.lang.Integer" %>
+<%@ attribute name="totalItems" required="false" type="java.lang.Long" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -12,11 +15,12 @@
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 
 <section id="reviewsFeed" class="reviews-feed">
+    <c:set var="reviewTotalCount" value="${empty totalItems ? fn:length(reviews) : totalItems}"/>
     <div class="feed-header">
         <h2>Reseñas <span class="review-count-label">
             <c:choose>
-                <c:when test="${fn:length(reviews) >= 1000}">${fn:length(reviews) / 1000}k</c:when>
-                <c:otherwise>${fn:length(reviews)}</c:otherwise>
+                <c:when test="${reviewTotalCount >= 1000}">${reviewTotalCount / 1000}k</c:when>
+                <c:otherwise>${reviewTotalCount}</c:otherwise>
             </c:choose>
         </span></h2>
         <div class="feed-header-actions">
@@ -131,6 +135,25 @@
                     </article>
                 </c:forEach>
             </div>
+            <c:if test="${not empty totalPages and not empty currentPage and currentPage < totalPages}">
+                <c:url var="reviewsBaseUrl" value="/reviews"/>
+                <c:url var="showMoreUrl" value="${reviewsBaseUrl}">
+                    <c:param name="carId" value="${carId}"/>
+                    <c:if test="${not empty currentSort}">
+                        <c:param name="sort" value="${currentSort}"/>
+                    </c:if>
+                    <c:param name="page" value="${currentPage + 1}"/>
+                </c:url>
+                <div class="reviews-feed-more">
+                    <a class="btn-secondary reviews-show-more"
+                       href="${showMoreUrl}"
+                       data-review-show-more="true"
+                       data-fragment-url="${reviewsFeedUrl}"
+                       data-target="#reviewsFeed">
+                        Mostrar más reseñas
+                    </a>
+                </div>
+            </c:if>
         </c:otherwise>
     </c:choose>
 </section>

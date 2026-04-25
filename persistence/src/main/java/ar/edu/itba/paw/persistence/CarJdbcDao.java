@@ -2,6 +2,8 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarSearchCriteria;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -124,9 +126,38 @@ public class CarJdbcDao implements CarDao {
     }
 
     @Override
-    public List<Car> findByCriteria(final CarSearchCriteria criteria) {
-        final StringBuilder sql = new StringBuilder(SELECT_COLUMNS).append(FROM_JOIN);
+    public Page<Car> findByCriteria(final CarSearchCriteria criteria) {
         final MapSqlParameterSource params = new MapSqlParameterSource();
+        final String whereClause = buildWhereClause(criteria, params);
+        final String orderClause = buildOrderClause(criteria);
+
+        final int pageSize = Pagination.CARS_PAGE_SIZE;
+
+        final Long total = namedJdbcTemplate.queryForObject(
+                "SELECT count(*) " + FROM_JOIN + whereClause,
+                params, Long.class);
+        final long totalItems = total == null ? 0L : total;
+
+        if (totalItems == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+
+        final int page = Pagination.clampPage(Pagination.normalizePage(criteria.getPage()), totalItems, pageSize);
+        final long offset = Pagination.offsetFor(page, pageSize);
+
+        final MapSqlParameterSource pagedParams = new MapSqlParameterSource(params.getValues());
+        pagedParams.addValue("limit", pageSize);
+        pagedParams.addValue("offset", offset);
+
+        final List<Car> items = namedJdbcTemplate.query(
+                SELECT_COLUMNS + FROM_JOIN + whereClause + orderClause + " LIMIT :limit OFFSET :offset",
+                pagedParams, ROW_MAPPER);
+
+        return new Page<>(items, page, pageSize, totalItems);
+    }
+
+    private String buildWhereClause(final CarSearchCriteria criteria, final MapSqlParameterSource params) {
+        final StringBuilder sql = new StringBuilder();
         boolean hasWhere = false;
 
         if (criteria.getQ() != null) {
@@ -193,30 +224,27 @@ public class CarJdbcDao implements CarDao {
             sql.append(hasWhere ? "AND " : "WHERE ").append("c.max_speed_kmh >= :maxSpeedMin ");
             params.addValue("maxSpeedMin", criteria.getMaxSpeedMin());
         }
+        return sql.toString();
+    }
 
+    private String buildOrderClause(final CarSearchCriteria criteria) {
         final String sortBy = criteria.getSortBy();
         if (sortBy != null) {
             switch (sortBy) {
                 case "name_asc":
-                    sql.append("ORDER BY b.name ASC, c.model ASC");
-                    break;
+                    return "ORDER BY b.name ASC, c.model ASC";
                 case "name_desc":
-                    sql.append("ORDER BY b.name DESC, c.model DESC");
-                    break;
+                    return "ORDER BY b.name DESC, c.model DESC";
                 case "hp_desc":
-                    sql.append("ORDER BY c.horsepower DESC NULLS LAST, c.car_id ASC");
-                    break;
+                    return "ORDER BY c.horsepower DESC NULLS LAST, c.car_id ASC";
                 case "hp_asc":
-                    sql.append("ORDER BY c.horsepower ASC NULLS LAST, c.car_id ASC");
-                    break;
+                    return "ORDER BY c.horsepower ASC NULLS LAST, c.car_id ASC";
                 case "speed_desc":
-                    sql.append("ORDER BY c.max_speed_kmh DESC NULLS LAST, c.car_id ASC");
-                    break;
+                    return "ORDER BY c.max_speed_kmh DESC NULLS LAST, c.car_id ASC";
                 case "consumption_asc":
-                    sql.append("ORDER BY c.fuel_consumption ASC NULLS LAST, c.car_id ASC");
-                    break;
+                    return "ORDER BY c.fuel_consumption ASC NULLS LAST, c.car_id ASC";
                 default:
-                    sql.append("ORDER BY c.car_id ASC");
+                    return "ORDER BY c.car_id ASC";
             }
         } else if (criteria.getQ() != null) {
             final String tsQ = criteria.getQ().replaceAll("[%_\\\\]", " ").trim();
@@ -228,12 +256,10 @@ public class CarJdbcDao implements CarDao {
                     + "     WHEN lower(b.name) LIKE :likeQ ESCAPE '\\' THEN 1 "
                     + "     WHEN lower(COALESCE(c.description, '')) LIKE :likeQ ESCAPE '\\' THEN 2 "
                     + "     ELSE 3 END, c.car_id ASC");
-            sql.append(order);
+            return order.toString();
         } else {
-            sql.append("ORDER BY c.car_id ASC");
+            return "ORDER BY c.car_id ASC";
         }
-
-        return namedJdbcTemplate.query(sql.toString(), params, ROW_MAPPER);
     }
 
     @Override

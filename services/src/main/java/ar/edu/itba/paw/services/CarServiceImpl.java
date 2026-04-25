@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
@@ -67,7 +68,7 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public List<Car> searchCars(final CarSearchCriteria criteria) {
+    public Page<Car> searchCars(final CarSearchCriteria criteria) {
         return carDao.findByCriteria(criteria);
     }
 

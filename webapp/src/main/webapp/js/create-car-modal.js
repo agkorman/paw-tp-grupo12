@@ -106,10 +106,6 @@
     };
 
     var revokePreviewObjectUrls = function () {
-        if (!window.URL || typeof window.URL.revokeObjectURL !== 'function') {
-            previewObjectUrls = [];
-            return;
-        }
         previewObjectUrls.forEach(function (url) {
             window.URL.revokeObjectURL(url);
         });
@@ -182,10 +178,6 @@
     };
 
     var setPreviewFromFiles = function (files) {
-        if (!window.URL || typeof window.URL.createObjectURL !== 'function') {
-            clearPreviewImages();
-            return;
-        }
         setPreviewImages(files.map(function (file) {
             return window.URL.createObjectURL(file);
         }), true);

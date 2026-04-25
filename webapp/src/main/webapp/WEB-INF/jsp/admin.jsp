@@ -12,9 +12,9 @@
     <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=4'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/admin.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/admin.css?v=2'/>">
 </head>
 <body>
     <pa:nav activePage="admin"/>
@@ -42,7 +42,7 @@
                         </form>
                         <div class="admin-status" aria-label="Solicitudes pendientes">
                             <span>Pendientes</span>
-                            <strong><c:out value="${fn:length(pendingRequests)}"/></strong>
+                            <strong><c:out value="${empty totalItems ? fn:length(pendingRequests) : totalItems}"/></strong>
                         </div>
                     </div>
                 </div>
@@ -94,6 +94,13 @@
                                     requestMaxSpeedKmh="${request.maxSpeedKmh}"/>
                         </c:forEach>
                     </div>
+                    <c:if test="${not empty totalPages and totalPages > 1}">
+                        <c:url var="adminBaseUrl" value="/admin"/>
+                        <pa:pagination currentPage="${currentPage}"
+                                       totalPages="${totalPages}"
+                                       baseUrl="${adminBaseUrl}"
+                                       ariaLabel="Paginación de solicitudes"/>
+                    </c:if>
                 </c:otherwise>
             </c:choose>
         </section>

@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.BrandService;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -70,19 +72,23 @@ public class AdminController {
 
     @RequestMapping(method = RequestMethod.GET)
     public ModelAndView admin(@ModelAttribute("brands") final List<Brand> brands,
-                              @ModelAttribute("bodyTypes") final List<BodyType> bodyTypes) {
+                              @ModelAttribute("bodyTypes") final List<BodyType> bodyTypes,
+                              @RequestParam(value = "page", defaultValue = "1") final int page) {
         final Map<Long, Brand> brandsById = brands.stream()
                 .collect(Collectors.toMap(Brand::getId, Function.identity()));
         final Map<Long, BodyType> bodyTypesById = bodyTypes.stream()
                 .collect(Collectors.toMap(BodyType::getId, Function.identity()));
 
-        final List<AdminCarRequestCard> pendingRequests = carRequestService
-                .getCarRequestsByStatus(CarRequestService.STATUS_PENDING)
-                .stream()
+        final Page<CarRequest> requestPage = carRequestService
+                .getCarRequestsByStatus(CarRequestService.STATUS_PENDING, page);
+        final List<AdminCarRequestCard> pendingRequests = requestPage.getItems().stream()
                 .map(request -> toCard(request, brandsById, bodyTypesById))
                 .toList();
         final ModelAndView mav = new ModelAndView("admin.jsp");
         mav.addObject("pendingRequests", pendingRequests);
+        mav.addObject("currentPage", requestPage.getPageNumber());
+        mav.addObject("totalPages", requestPage.getTotalPages());
+        mav.addObject("totalItems", requestPage.getTotalItems());
         return mav;
     }
 
@@ -90,26 +96,27 @@ public class AdminController {
             consumes = "multipart/form-data")
     public ModelAndView acceptRequest(@PathVariable("requestId") final long requestId,
                                       @Valid @ModelAttribute("carForm") final CarForm carForm,
-                                      final BindingResult errors) {
+                                      final BindingResult errors,
+                                      @RequestHeader(value = "Referer", required = false) final String referer) {
         rejectInvalidSpecFields(errors, carForm);
         if (errors.hasErrors()) {
-            return new ModelAndView("redirect:/admin");
+            return redirectBackToAdmin(referer);
         }
 
         final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
         final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
         if (resolvedBrand == null || resolvedBodyType == null) {
-            return new ModelAndView("redirect:/admin");
+            return redirectBackToAdmin(referer);
         }
 
         final MultipartFile file = carForm.getFile();
         final String imageError = validateUploadedImage(file, false);
         if (imageError != null) {
-            return new ModelAndView("redirect:/admin");
+            return redirectBackToAdmin(referer);
         }
 
         if (isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), -1L)) {
-            return new ModelAndView("redirect:/admin");
+            return redirectBackToAdmin(referer);
         }
 
         final Optional<String> imageContentType = resolveOptionalImageContentType(file);
@@ -140,7 +147,7 @@ public class AdminController {
             }
         }
 
-        return new ModelAndView("redirect:/admin");
+        return redirectBackToAdmin(referer);
     }
 
     @RequestMapping(value = "/cars/{carId}", method = RequestMethod.POST, consumes = "multipart/form-data")
@@ -201,9 +208,10 @@ public class AdminController {
     }
 
     @RequestMapping(value = "/requests/{requestId}/reject", method = RequestMethod.POST)
-    public ModelAndView rejectRequest(@PathVariable("requestId") final long requestId) {
+    public ModelAndView rejectRequest(@PathVariable("requestId") final long requestId,
+                                      @RequestHeader(value = "Referer", required = false) final String referer) {
         carRequestService.rejectPendingRequest(requestId);
-        return new ModelAndView("redirect:/admin");
+        return redirectBackToAdmin(referer);
     }
 
     @RequestMapping(value = "/requests/{requestId}/image", method = RequestMethod.GET)
@@ -403,6 +411,23 @@ public class AdminController {
 
     private ModelAndView redirectBackAfterDelete(final String referer) {
         return redirectBackToCatalog(referer, false);
+    }
+
+    private ModelAndView redirectBackToAdmin(final String referer) {
+        final String fallback = "redirect:/admin";
+        if (referer == null || referer.isBlank()) {
+            return new ModelAndView(fallback);
+        }
+        try {
+            final URI uri = URI.create(referer);
+            if (!"/admin".equals(uri.getRawPath())) {
+                return new ModelAndView(fallback);
+            }
+            final String query = uri.getRawQuery();
+            return new ModelAndView("redirect:/admin" + (query == null ? "" : "?" + query));
+        } catch (final IllegalArgumentException ignored) {
+            return new ModelAndView(fallback);
+        }
     }
 
     private ModelAndView redirectBackToCatalog(final String referer, final boolean allowReviewsPage) {

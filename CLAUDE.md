@@ -109,10 +109,6 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - Always use `Locale.ROOT` when calling `.toLowerCase()` or `.toUpperCase()` on application strings (e.g. filter values, enum-like strings). Never use the default locale — it produces incorrect results for some system locales (Turkish, Greek).
 
-## Progressive Enhancement
-
-- Every feature that uses JavaScript must also work without it. Forms must submit via standard POST, and the server must handle the redirect correctly. Do not make a user flow depend exclusively on JS.
-
 ## `schema.sql` — Idempotency Rules
 
 `schema.sql` runs on every application startup against a live database that already has data. Every statement must be safe to run on an already-initialized database.
