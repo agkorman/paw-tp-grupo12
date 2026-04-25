@@ -9,8 +9,8 @@ import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
-import ar.edu.itba.paw.persistence.BodyTypeDao;
-import ar.edu.itba.paw.persistence.BrandDao;
+import ar.edu.itba.paw.services.BodyTypeService;
+import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
@@ -66,19 +66,19 @@ public class CarController {
 
     private final CarService carService;
     private final CarFavoriteService carFavoriteService;
-    private final BrandDao brandDao;
-    private final BodyTypeDao bodyTypeDao;
+    private final BrandService brandService;
+    private final BodyTypeService bodyTypeService;
     private final ReviewService reviewService;
     private final EmailService emailService;
 
     @Autowired
     public CarController(final CarService carService, final CarFavoriteService carFavoriteService,
-                         final BrandDao brandDao, final BodyTypeDao bodyTypeDao,
+                         final BrandService brandService, final BodyTypeService bodyTypeService,
                          final ReviewService reviewService, final EmailService emailService) {
         this.carService = carService;
         this.carFavoriteService = carFavoriteService;
-        this.brandDao = brandDao;
-        this.bodyTypeDao = bodyTypeDao;
+        this.brandService = brandService;
+        this.bodyTypeService = bodyTypeService;
         this.reviewService = reviewService;
         this.emailService = emailService;
     }
@@ -164,7 +164,7 @@ public class CarController {
 
         Brand resolvedBrand = null;
         if (!errors.hasFieldErrors("brand")) {
-            resolvedBrand = brandDao.findByName(carForm.getBrand()).orElse(null);
+            resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
             if (resolvedBrand == null) {
                 errors.rejectValue("brand", "brand.invalid", "Marca no válida.");
             }
@@ -172,7 +172,7 @@ public class CarController {
 
         BodyType resolvedBodyType = null;
         if (!errors.hasFieldErrors("bodyType")) {
-            resolvedBodyType = bodyTypeDao.findByName(carForm.getBodyType()).orElse(null);
+            resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
             if (resolvedBodyType == null) {
                 errors.rejectValue("bodyType", "bodyType.invalid", "Tipo de carrocería no válido.");
             }

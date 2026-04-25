@@ -8,8 +8,8 @@ import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
-import ar.edu.itba.paw.persistence.BodyTypeDao;
-import ar.edu.itba.paw.persistence.BrandDao;
+import ar.edu.itba.paw.services.BodyTypeService;
+import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
@@ -72,8 +72,8 @@ public class CarControllerFavoriteTest {
         return new CarController(
                 carService,
                 favoriteService,
-                new FakeBrandDao(),
-                new FakeBodyTypeDao(),
+                new FakeBrandService(),
+                new FakeBodyTypeService(),
                 new FakeReviewService(),
                 new FakeEmailService()
         );
@@ -270,47 +270,27 @@ public class CarControllerFavoriteTest {
         }
     }
 
-    private static final class FakeBrandDao implements BrandDao {
+    private static final class FakeBrandService implements BrandService {
         @Override
         public List<Brand> findAll() {
             return Collections.emptyList();
         }
 
         @Override
-        public Optional<Brand> findById(final long id) {
-            return Optional.empty();
-        }
-
-        @Override
         public Optional<Brand> findByName(final String name) {
             return Optional.empty();
         }
-
-        @Override
-        public Brand create(final String name) {
-            throw new UnsupportedOperationException();
-        }
     }
 
-    private static final class FakeBodyTypeDao implements BodyTypeDao {
+    private static final class FakeBodyTypeService implements BodyTypeService {
         @Override
         public List<BodyType> findAll() {
             return Collections.emptyList();
         }
 
         @Override
-        public Optional<BodyType> findById(final long id) {
-            return Optional.empty();
-        }
-
-        @Override
         public Optional<BodyType> findByName(final String name) {
             return Optional.empty();
-        }
-
-        @Override
-        public BodyType create(final String name) {
-            throw new UnsupportedOperationException();
         }
     }
 
