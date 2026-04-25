@@ -38,3 +38,6 @@ perso.md
 
 # Generated downloads
 tmp/seeded-car-images/
+
+.claude/
+.playwright-mcp/

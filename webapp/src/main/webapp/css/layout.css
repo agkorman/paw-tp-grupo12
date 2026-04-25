@@ -1,3 +1,32 @@
+/* ── NOSCRIPT ── */
+.noscript-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #131313;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.noscript-box {
+    text-align: center;
+    max-width: 420px;
+    padding: var(--spacing-8);
+    color: var(--color-text);
+}
+
+.noscript-box strong {
+    display: block;
+    font-size: 1.4rem;
+    margin-bottom: var(--spacing-4);
+}
+
+.noscript-box p {
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
 /* ── NAV ── */
 nav {
     position: sticky;

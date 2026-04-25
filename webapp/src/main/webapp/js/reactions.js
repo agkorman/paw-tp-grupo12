@@ -391,13 +391,13 @@
             return;
         }
 
-        if (form.dataset.enhancedReviewLike === 'true' && window.fetch && window.FormData) {
+        if (form.dataset.enhancedReviewLike === 'true') {
             event.preventDefault();
             submitEnhancedLikeForm(form);
             return;
         }
 
-        if (form.dataset.enhancedReviewReply === 'true' && window.fetch && window.FormData) {
+        if (form.dataset.enhancedReviewReply === 'true') {
             event.preventDefault();
             submitEnhancedReplyForm(form);
         }

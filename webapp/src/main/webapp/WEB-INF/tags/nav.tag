@@ -12,6 +12,14 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
+<noscript>
+    <div class="noscript-overlay">
+        <div class="noscript-box">
+            <strong>JavaScript requerido</strong>
+            <p>Esta aplicación requiere JavaScript para funcionar. Activalo en tu navegador para continuar.</p>
+        </div>
+    </div>
+</noscript>
 <nav>
     <a href="<c:url value='/'/>" class="nav-brand">La Posta Autos</a>
     <ul class="nav-links">
