@@ -13,15 +13,14 @@ import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.List;
@@ -82,7 +81,7 @@ public class ProfileController {
             return new ModelAndView("redirect:/profile");
         }
         if (userService.getUserById(userId).isEmpty()) {
-            throw new ProfileNotFoundException();
+            throw new ResourceNotFoundException();
         }
 
         if (userFollowService.isFollowing(currentUser.getId(), userId)) {
@@ -95,7 +94,7 @@ public class ProfileController {
 
     private ModelAndView profile(final long profileUserId, final AuthenticatedUser currentUser) {
         final User profileUser = userService.getUserById(profileUserId)
-                .orElseThrow(ProfileNotFoundException::new);
+                .orElseThrow(ResourceNotFoundException::new);
         final Long currentUserId = currentUser == null ? null : currentUser.getId();
         final boolean ownProfile = currentUserId != null && currentUserId == profileUser.getId();
 
@@ -496,7 +495,4 @@ public class ProfileController {
         }
     }
 
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    private static final class ProfileNotFoundException extends RuntimeException {
-    }
 }

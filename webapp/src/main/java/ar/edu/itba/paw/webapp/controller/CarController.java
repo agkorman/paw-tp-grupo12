@@ -28,7 +28,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,7 +35,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -117,7 +115,6 @@ public class CarController {
     public String listCars(@ModelAttribute final CarSearchCriteria criteria,
                            @RequestParam(value = "createCar", required = false) final String createCar,
                            @RequestParam(value = "submitted", required = false) final String submitted,
-                           @ModelAttribute("carForm") final CarForm carForm,
                            @AuthenticationPrincipal final AuthenticatedUser currentUser,
                            final Model model) {
         populateCarsPageModel(model, criteria, currentUser);
@@ -260,8 +257,6 @@ public class CarController {
         model.addAttribute("cars", catalogData.cars);
         model.addAttribute("reviewStatsByCarId", catalogData.reviewStatsByCarId);
         model.addAttribute("favoritedCarIds", favoritedCarIdsById(catalogData.cars, currentUser));
-        model.addAttribute("brands", brandDao.findAll());
-        model.addAttribute("bodyTypes", bodyTypeDao.findAll());
         model.addAttribute("selectedBrand", criteria.getBrand());
         model.addAttribute("selectedBodyType", criteria.getBodyType());
         model.addAttribute("searchQuery", criteria.getQ());
@@ -403,12 +398,6 @@ public class CarController {
         }
 
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<String> handleMaxUploadSizeExceeded(final MaxUploadSizeExceededException ignored) {
-        return ResponseEntity.badRequest()
-                .body("Cada imagen no debe superar los 10 MB y la carga total no debe superar los 50 MB.");
     }
 
     private String validateUploadedImages(final List<MultipartFile> files, final boolean required) {

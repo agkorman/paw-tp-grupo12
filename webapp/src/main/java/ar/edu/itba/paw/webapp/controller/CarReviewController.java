@@ -4,15 +4,14 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
-import ar.edu.itba.paw.persistence.BodyTypeDao;
-import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
-import ar.edu.itba.paw.webapp.form.CarForm;
+import ar.edu.itba.paw.webapp.exception.ForbiddenException;
+import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -30,8 +29,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
@@ -64,22 +61,17 @@ public class CarReviewController {
     private final ReviewService reviewService;
     private final ReviewReplyService reviewReplyService;
     private final ReviewLikeService reviewLikeService;
-    private final BrandDao brandDao;
-    private final BodyTypeDao bodyTypeDao;
 
     @Autowired
     public CarReviewController(final CarService carService, final CarFavoriteService carFavoriteService,
                                final ReviewService reviewService,
                                final ReviewReplyService reviewReplyService,
-                               final ReviewLikeService reviewLikeService,
-                               final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
+                               final ReviewLikeService reviewLikeService) {
         this.carService = carService;
         this.carFavoriteService = carFavoriteService;
         this.reviewService = reviewService;
         this.reviewReplyService = reviewReplyService;
         this.reviewLikeService = reviewLikeService;
-        this.brandDao = brandDao;
-        this.bodyTypeDao = bodyTypeDao;
     }
 
     @InitBinder
@@ -100,7 +92,7 @@ public class CarReviewController {
 
         final ReviewPageData pageData = resolveReviewPageData(carId, sort, currentUserId(currentUser));
         if (pageData == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El auto referenciado no existe.");
+            throw new ResourceNotFoundException("El auto referenciado no existe.");
         }
 
         if (reviewForm.getCarId() == null) {
@@ -127,7 +119,7 @@ public class CarReviewController {
                                    @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final ReviewPageData pageData = resolveReviewPageData(carId, sort, currentUserId(currentUser));
         if (pageData == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El auto referenciado no existe.");
+            throw new ResourceNotFoundException("El auto referenciado no existe.");
         }
 
         final ModelAndView mav = new ModelAndView("reviews-feed-fragment.jsp");
@@ -152,7 +144,7 @@ public class CarReviewController {
                 ? null
                 : carService.getCarById(reviewForm.getCarId()).orElse(null);
         if (car == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El auto referenciado no existe.");
+            throw new ResourceNotFoundException("El auto referenciado no existe.");
         }
 
         rejectInvalidReviewFields(errors, reviewForm.getRating(), reviewForm.getOwnershipStatus(),
@@ -223,9 +215,6 @@ public class CarReviewController {
         attributes.put("latestReviewLikeCount", pageData.latestReviewLikeCount);
         attributes.put("latestReviewLiked", pageData.latestReviewLiked);
         attributes.put("carImages", pageData.carImages);
-        attributes.put("brands", brandDao.findAll());
-        attributes.put("bodyTypes", bodyTypeDao.findAll());
-        attributes.put("carForm", new CarForm());
         return attributes;
     }
 
@@ -382,7 +371,7 @@ public class CarReviewController {
 
         final Review review = reviewService.getReviewById(reviewId).orElse(null);
         if (review == null) {
-            throw new ReviewNotFoundException();
+            throw new ResourceNotFoundException();
         }
 
         final String validationError = validateReplyInput(body);
@@ -414,7 +403,7 @@ public class CarReviewController {
 
         final Review review = reviewService.getReviewById(reviewId).orElse(null);
         if (review == null) {
-            throw new ReviewNotFoundException();
+            throw new ResourceNotFoundException();
         }
 
         final boolean liked;
@@ -449,10 +438,10 @@ public class CarReviewController {
 
         final ReviewReply reply = reviewReplyService.getReplyById(replyId).orElse(null);
         if (reply == null) {
-            throw new ReviewReplyNotFoundException();
+            throw new ResourceNotFoundException();
         }
         final Review review = reviewService.getReviewById(reply.getReviewId())
-                .orElseThrow(ReviewNotFoundException::new);
+                .orElseThrow(ResourceNotFoundException::new);
 
         final boolean liked;
         try {
@@ -474,10 +463,10 @@ public class CarReviewController {
 
     private void validateReviewOwnership(final Review review, final AuthenticatedUser currentUser) {
         if (review == null) {
-            throw new ReviewNotFoundException();
+            throw new ResourceNotFoundException();
         }
         if (currentUser == null || review.getUserId() == null || !review.getUserId().equals(currentUser.getId())) {
-            throw new ReviewForbiddenException();
+            throw new ForbiddenException();
         }
     }
 
@@ -640,15 +629,4 @@ public class CarReviewController {
         }
     }
 
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    private static final class ReviewNotFoundException extends RuntimeException {
-    }
-
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    private static final class ReviewReplyNotFoundException extends RuntimeException {
-    }
-
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    private static final class ReviewForbiddenException extends RuntimeException {
-    }
 }

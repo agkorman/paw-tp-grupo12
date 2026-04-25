@@ -1,7 +1,5 @@
 package ar.edu.itba.paw.webapp.controller;
 
-import ar.edu.itba.paw.model.BodyType;
-import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
@@ -9,21 +7,19 @@ import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.ReviewStats;
-import ar.edu.itba.paw.persistence.BodyTypeDao;
-import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.exception.ForbiddenException;
+import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.junit.Test;
-import org.springframework.http.HttpStatus;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.math.BigDecimal;
@@ -100,7 +96,7 @@ public class CarReviewControllerTest {
         reviewService.review = review(3L, 8L, 10L);
         final CarReviewController controller = controller(reviewService);
 
-        final RuntimeException exception = assertThrows(RuntimeException.class, () -> controller.updateReview(
+        assertThrows(ForbiddenException.class, () -> controller.updateReview(
                 3L,
                 BigDecimal.valueOf(4),
                 "Editada",
@@ -112,7 +108,6 @@ public class CarReviewControllerTest {
                 user(7L)
         ));
 
-        assertResponseStatus(exception, HttpStatus.FORBIDDEN);
         assertFalse(reviewService.updated);
     }
 
@@ -135,10 +130,8 @@ public class CarReviewControllerTest {
         reviewService.review = review(3L, 8L, 10L);
         final CarReviewController controller = controller(reviewService);
 
-        final RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> controller.deleteReview(3L, user(7L)));
+        assertThrows(ForbiddenException.class, () -> controller.deleteReview(3L, user(7L)));
 
-        assertResponseStatus(exception, HttpStatus.FORBIDDEN);
         assertFalse(reviewService.deleted);
     }
 
@@ -147,7 +140,7 @@ public class CarReviewControllerTest {
         final FakeReviewService reviewService = new FakeReviewService();
         final CarReviewController controller = controller(reviewService);
 
-        final RuntimeException exception = assertThrows(RuntimeException.class, () -> controller.updateReview(
+        assertThrows(ResourceNotFoundException.class, () -> controller.updateReview(
                 99L,
                 BigDecimal.valueOf(4),
                 "Editada",
@@ -159,7 +152,6 @@ public class CarReviewControllerTest {
                 user(7L)
         ));
 
-        assertResponseStatus(exception, HttpStatus.NOT_FOUND);
         assertFalse(reviewService.updated);
     }
 
@@ -173,9 +165,7 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 replyService,
-                new FakeReviewLikeService(),
-                new FakeBrandDao(),
-                new FakeBodyTypeDao()
+                new FakeReviewLikeService()
         );
 
         final ModelAndView mav = controller.createReply(3L, "Totalmente de acuerdo.", user(7L));
@@ -196,9 +186,7 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 replyService,
-                new FakeReviewLikeService(),
-                new FakeBrandDao(),
-                new FakeBodyTypeDao()
+                new FakeReviewLikeService()
         );
 
         final ModelAndView mav = controller.createReply(3L, "   ", user(7L));
@@ -217,9 +205,7 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 new FakeReviewReplyService(),
-                likeService,
-                new FakeBrandDao(),
-                new FakeBodyTypeDao()
+                likeService
         );
 
         final ModelAndView mav = (ModelAndView) controller.toggleReviewLike(3L, null, user(7L));
@@ -242,9 +228,7 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 replyService,
-                likeService,
-                new FakeBrandDao(),
-                new FakeBodyTypeDao()
+                likeService
         );
 
         final ModelAndView mav = (ModelAndView) controller.toggleReplyLike(4L, null, user(7L));
@@ -260,9 +244,7 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 new FakeReviewReplyService(),
-                new FakeReviewLikeService(),
-                new FakeBrandDao(),
-                new FakeBodyTypeDao()
+                new FakeReviewLikeService()
         );
     }
 
@@ -302,11 +284,6 @@ public class CarReviewControllerTest {
         form.setMileageKm(mileageKm);
         form.setWouldRecommend(wouldRecommend);
         return form;
-    }
-
-    private void assertResponseStatus(final RuntimeException exception, final HttpStatus expectedStatus) {
-        final ResponseStatus responseStatus = exception.getClass().getAnnotation(ResponseStatus.class);
-        assertEquals(expectedStatus, responseStatus.value());
     }
 
     private static final class FakeCarService implements CarService {
@@ -612,50 +589,6 @@ public class CarReviewControllerTest {
         @Override
         public Map<Long, Long> countNewLikesPerReview(final long userId, final LocalDateTime since) {
             return Collections.emptyMap();
-        }
-    }
-
-    private static final class FakeBrandDao implements BrandDao {
-        @Override
-        public List<Brand> findAll() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Optional<Brand> findById(final long id) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<Brand> findByName(final String name) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Brand create(final String name) {
-            throw new UnsupportedOperationException("Not needed by this test fake.");
-        }
-    }
-
-    private static final class FakeBodyTypeDao implements BodyTypeDao {
-        @Override
-        public List<BodyType> findAll() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Optional<BodyType> findById(final long id) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<BodyType> findByName(final String name) {
-            return Optional.empty();
-        }
-
-        @Override
-        public BodyType create(final String name) {
-            throw new UnsupportedOperationException("Not needed by this test fake.");
         }
     }
 }

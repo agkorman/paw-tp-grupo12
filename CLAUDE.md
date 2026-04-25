@@ -43,6 +43,9 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Access the authenticated user via `@AuthenticationPrincipal final AuthenticatedUser currentUser`.
 - All controllers register `StringTrimmerEditor(true)` via `@InitBinder` to trim and nullify blank string inputs before they reach the service.
 - Validate input at the controller boundary, then delegate to the service. Do not put validation logic inside services or JSPs.
+- Use `GlobalExceptionHandler` for exception handling that is shared across controllers. Prefer reusable web exceptions and centralized mappings over private controller exception classes or repeated controller-local `@ExceptionHandler` methods.
+- Shared model attributes used by multiple car/admin/review views belong in `SharedModelAttributesAdvice`. `brands`, `bodyTypes`, and the default `carForm` are already populated there; do not re-add them with repeated `model.addAttribute(...)` / `mav.addObject(...)` calls in individual controllers.
+- Keep `@ControllerAdvice` focused and narrow: use it only for cross-controller concerns that are genuinely reused. Page-specific model data, modal-open flags, validation errors, selected filters, review/profile data, and form attributes that need request-specific setup stay in the owning controller.
 
 ## Services & DAOs
 
