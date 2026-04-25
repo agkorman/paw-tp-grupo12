@@ -298,7 +298,6 @@
                 feed.appendChild(replacementControls);
             }
 
-            window.history.replaceState({}, '', actionUrl.pathname + actionUrl.search);
         }).catch(function () {
             window.location.href = link.href;
         }).finally(function () {

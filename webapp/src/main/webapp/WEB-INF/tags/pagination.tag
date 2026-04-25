@@ -10,18 +10,20 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <c:if test="${totalPages > 1}">
+    <c:set var="safeCurrentPage" value="${currentPage < 1 ? 1 : currentPage}"/>
+    <c:if test="${safeCurrentPage > totalPages}"><c:set var="safeCurrentPage" value="${totalPages}"/></c:if>
     <c:set var="windowSize" value="2"/>
-    <c:set var="windowStart" value="${currentPage - windowSize}"/>
-    <c:set var="windowEnd" value="${currentPage + windowSize}"/>
+    <c:set var="windowStart" value="${safeCurrentPage - windowSize}"/>
+    <c:set var="windowEnd" value="${safeCurrentPage + windowSize}"/>
     <c:if test="${windowStart < 1}"><c:set var="windowStart" value="1"/></c:if>
     <c:if test="${windowEnd > totalPages}"><c:set var="windowEnd" value="${totalPages}"/></c:if>
 
     <nav class="pagination" aria-label="${empty ariaLabel ? 'Paginación' : ariaLabel}">
         <ul class="pagination-list">
-            <c:set var="prevPage" value="${currentPage - 1}"/>
-            <li class="pagination-item ${currentPage <= 1 ? 'is-disabled' : ''}">
+            <c:set var="prevPage" value="${safeCurrentPage - 1}"/>
+            <li class="pagination-item ${safeCurrentPage <= 1 ? 'is-disabled' : ''}">
                 <c:choose>
-                    <c:when test="${currentPage <= 1}">
+                    <c:when test="${safeCurrentPage <= 1}">
                         <span class="pagination-link is-disabled" aria-disabled="true">«</span>
                     </c:when>
                     <c:otherwise>
@@ -67,9 +69,9 @@
             </c:if>
 
             <c:forEach var="p" begin="${windowStart}" end="${windowEnd}">
-                <li class="pagination-item ${p == currentPage ? 'is-current' : ''}">
+                <li class="pagination-item ${p == safeCurrentPage ? 'is-current' : ''}">
                     <c:choose>
-                        <c:when test="${p == currentPage}">
+                        <c:when test="${p == safeCurrentPage}">
                             <span class="pagination-link is-current" aria-current="page">${p}</span>
                         </c:when>
                         <c:otherwise>
@@ -114,10 +116,10 @@
                 </li>
             </c:if>
 
-            <c:set var="nextPage" value="${currentPage + 1}"/>
-            <li class="pagination-item ${currentPage >= totalPages ? 'is-disabled' : ''}">
+            <c:set var="nextPage" value="${safeCurrentPage + 1}"/>
+            <li class="pagination-item ${safeCurrentPage >= totalPages ? 'is-disabled' : ''}">
                 <c:choose>
-                    <c:when test="${currentPage >= totalPages}">
+                    <c:when test="${safeCurrentPage >= totalPages}">
                         <span class="pagination-link is-disabled" aria-disabled="true">»</span>
                     </c:when>
                     <c:otherwise>

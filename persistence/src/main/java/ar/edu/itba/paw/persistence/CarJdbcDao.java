@@ -131,9 +131,7 @@ public class CarJdbcDao implements CarDao {
         final String whereClause = buildWhereClause(criteria, params);
         final String orderClause = buildOrderClause(criteria);
 
-        final int page = Pagination.normalizePage(criteria.getPage());
         final int pageSize = Pagination.CARS_PAGE_SIZE;
-        final int offset = Pagination.offsetFor(page, pageSize);
 
         final Long total = namedJdbcTemplate.queryForObject(
                 "SELECT count(*) " + FROM_JOIN + whereClause,
@@ -141,8 +139,11 @@ public class CarJdbcDao implements CarDao {
         final long totalItems = total == null ? 0L : total;
 
         if (totalItems == 0L) {
-            return Page.empty(page, pageSize);
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
         }
+
+        final int page = Pagination.clampPage(Pagination.normalizePage(criteria.getPage()), totalItems, pageSize);
+        final long offset = Pagination.offsetFor(page, pageSize);
 
         final MapSqlParameterSource pagedParams = new MapSqlParameterSource(params.getValues());
         pagedParams.addValue("limit", pageSize);

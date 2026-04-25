@@ -39,10 +39,7 @@ public class Page<T> implements Serializable {
     }
 
     public int getTotalPages() {
-        if (pageSize <= 0 || totalItems <= 0) {
-            return 0;
-        }
-        return (int) ((totalItems + pageSize - 1) / pageSize);
+        return Pagination.totalPages(totalItems, pageSize);
     }
 
     public boolean hasPrevious() {

@@ -105,12 +105,14 @@ public class CarRequestJdbcDao implements CarRequestDao {
     public Page<CarRequest> findByStatus(final String status, final int page) {
         final int normalizedPage = Pagination.normalizePage(page);
         final int pageSize = Pagination.REQUESTS_PAGE_SIZE;
-        final int offset = Pagination.offsetFor(normalizedPage, pageSize);
 
         final long totalItems = countByStatus(status);
         if (totalItems == 0L) {
-            return Page.empty(normalizedPage, pageSize);
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
         }
+
+        final int effectivePage = Pagination.clampPage(normalizedPage, totalItems, pageSize);
+        final long offset = Pagination.offsetFor(effectivePage, pageSize);
 
         final List<CarRequest> items = jdbcTemplate.query(
                 "SELECT car_request_id, submitted_by_user_id, submitter_email, brand_id, body_type_id, model, "
@@ -121,7 +123,7 @@ public class CarRequestJdbcDao implements CarRequestDao {
                 ROW_MAPPER,
                 status, pageSize, offset
         );
-        return new Page<>(items, normalizedPage, pageSize, totalItems);
+        return new Page<>(items, effectivePage, pageSize, totalItems);
     }
 
     @Override

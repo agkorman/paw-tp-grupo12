@@ -159,16 +159,17 @@ public class ReviewJdbcDao implements ReviewDao {
     private Page<Review> findByCarIdPaginated(final long carId, final String orderByClause, final int page) {
         final int normalizedPage = Pagination.normalizePage(page);
         final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
-        final int offset = Pagination.offsetFor(normalizedPage, pageSize);
         final long total = countByCarId(carId);
         if (total == 0L) {
-            return Page.empty(normalizedPage, pageSize);
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
         }
+        final int effectivePage = Pagination.clampPage(normalizedPage, total, pageSize);
+        final long offset = Pagination.offsetFor(effectivePage, pageSize);
         final List<Review> items = jdbcTemplate.query(
                 REVIEW_SELECT + "WHERE r.car_id = ? ORDER BY " + orderByClause + " LIMIT ? OFFSET ?",
                 ROW_MAPPER, carId, pageSize, offset
         );
-        return new Page<>(items, normalizedPage, pageSize, total);
+        return new Page<>(items, effectivePage, pageSize, total);
     }
 
     @Override

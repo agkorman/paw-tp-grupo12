@@ -16,7 +16,28 @@ public final class Pagination {
         return page;
     }
 
-    public static int offsetFor(final int page, final int pageSize) {
-        return (page - 1) * pageSize;
+    public static int totalPages(final long totalItems, final int pageSize) {
+        if (pageSize <= 0 || totalItems <= 0L) {
+            return 0;
+        }
+        final long totalPages = ((totalItems - 1L) / pageSize) + 1L;
+        return totalPages > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) totalPages;
+    }
+
+    public static int clampPage(final int page, final long totalItems, final int pageSize) {
+        final int normalizedPage = normalizePage(page);
+        final int totalPages = totalPages(totalItems, pageSize);
+        if (totalPages == 0) {
+            return DEFAULT_PAGE;
+        }
+        return Math.min(normalizedPage, totalPages);
+    }
+
+    public static long offsetFor(final int page, final int pageSize) {
+        final int normalizedPage = Math.max(page, DEFAULT_PAGE);
+        if (pageSize <= 0) {
+            return 0L;
+        }
+        return ((long) normalizedPage - 1L) * (long) pageSize;
     }
 }
