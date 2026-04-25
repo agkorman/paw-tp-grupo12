@@ -6,8 +6,8 @@ import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.BodyTypeDao;
-import ar.edu.itba.paw.persistence.BrandDao;
+import ar.edu.itba.paw.services.BodyTypeService;
+import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
@@ -47,22 +47,22 @@ public class AdminController {
 
     private final CarRequestService carRequestService;
     private final CarService carService;
-    private final BrandDao brandDao;
-    private final BodyTypeDao bodyTypeDao;
+    private final BrandService brandService;
+    private final BodyTypeService bodyTypeService;
     private final UserService userService;
     private final EmailService emailService;
     private final WeeklyDigestService weeklyDigestService;
 
     @Autowired
     public AdminController(final CarRequestService carRequestService, final CarService carService,
-                           final BrandDao brandDao,
-                           final BodyTypeDao bodyTypeDao, final UserService userService,
+                           final BrandService brandService,
+                           final BodyTypeService bodyTypeService, final UserService userService,
                            final EmailService emailService,
                            final WeeklyDigestService weeklyDigestService) {
         this.carRequestService = carRequestService;
         this.carService = carService;
-        this.brandDao = brandDao;
-        this.bodyTypeDao = bodyTypeDao;
+        this.brandService = brandService;
+        this.bodyTypeService = bodyTypeService;
         this.userService = userService;
         this.emailService = emailService;
         this.weeklyDigestService = weeklyDigestService;
@@ -96,8 +96,8 @@ public class AdminController {
             return new ModelAndView("redirect:/admin");
         }
 
-        final Brand resolvedBrand = brandDao.findByName(carForm.getBrand()).orElse(null);
-        final BodyType resolvedBodyType = bodyTypeDao.findByName(carForm.getBodyType()).orElse(null);
+        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
+        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
         if (resolvedBrand == null || resolvedBodyType == null) {
             return new ModelAndView("redirect:/admin");
         }
@@ -153,8 +153,8 @@ public class AdminController {
             return redirectBackToCatalog(referer);
         }
 
-        final Brand resolvedBrand = brandDao.findByName(carForm.getBrand()).orElse(null);
-        final BodyType resolvedBodyType = bodyTypeDao.findByName(carForm.getBodyType()).orElse(null);
+        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
+        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
         if (resolvedBrand == null || resolvedBodyType == null) {
             return redirectBackToCatalog(referer);
         }
