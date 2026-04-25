@@ -212,14 +212,7 @@
                         </c:otherwise>
                     </c:choose>
                 </div>
-                <div class="card-footer">
-                    <span class="card-meta">
-                        <c:choose>
-                            <c:when test="${not empty footerText}"><c:out value="${footerText}"/></c:when>
-                            <c:when test="${reviewCount gt 0}">Puntaje de la comunidad sobre 5</c:when>
-                            <c:otherwise>Comparte la primera impresión</c:otherwise>
-                        </c:choose>
-                    </span>
+                <%-- <div class="card-footer">
                     <span class="card-specs-link">
                         <c:choose>
                             <c:when test="${not empty actionText}"><c:out value="${actionText}"/></c:when>
@@ -229,7 +222,7 @@
                             <path d="M5 12h14M12 5l7 7-7 7"/>
                         </svg>
                         </span>
-                </div>
+                </div> --%>
             </div>
         </div>
     </a>

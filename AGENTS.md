@@ -25,6 +25,8 @@ model -> contracts -> implementations -> webapp
 
 Do not make lower-level modules depend on `webapp`. Keep domain classes free of Spring MVC, servlet, JSP, and persistence framework concerns.
 
+Controllers must depend on service interfaces from `service-contracts`, not on DAOs from `persistence-contracts` or JDBC implementations from `persistence`. Business rules, authorization decisions, transaction boundaries, validation beyond request binding, and orchestration across repositories belong in services. Calling DAOs directly from controllers couples HTTP request handling to storage details, bypasses the service layer, duplicates business logic, makes controller tests heavier, and makes later persistence changes harder.
+
 ## Runtime Architecture
 
 `webapp/src/main/java/ar/edu/itba/paw/webapp/config/WebConfig.java` is the main runtime wiring. It enables Spring MVC, scans controllers/services/persistence packages, serves static resources, configures JSP view resolution, initializes the datasource, configures mail, and runs SQL initialization.
