@@ -226,9 +226,4 @@
             </div>
         </div>
     </a>
-    <c:if test="${showFavorite ne false}">
-        <div class="car-card-favorite">
-            <pa:car-favorite-button carId="${carId}" favorited="${favorited}"/>
-        </div>
-    </c:if>
 </div>

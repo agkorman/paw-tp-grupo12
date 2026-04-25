@@ -208,6 +208,19 @@
     transform: translateY(-1.1rem);
 }
 
+.hero-media-link {
+    display: block;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.hero-media-link:hover,
+.hero-media-link:focus-visible {
+    border-color: rgba(255, 181, 158, 0.34);
+    box-shadow: 0 2.75rem 5.5rem rgba(0, 0, 0, 0.42);
+    outline: none;
+}
+
 .hero-car-image {
     display: block;
     width: 100%;
