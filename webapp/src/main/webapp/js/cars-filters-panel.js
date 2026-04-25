@@ -28,6 +28,7 @@
     }
 
     function closePanel() {
+        window.clearTimeout(previewSubmitTimer);
         panel.classList.remove('is-open');
         if (overlay) { overlay.classList.remove('is-visible'); }
         if (toggleBtn) {
@@ -83,10 +84,20 @@
         var hiddenId = group.getAttribute('data-filter-target');
         var hidden   = document.getElementById(hiddenId);
         var options  = group.querySelectorAll('.filter-toggle-option, .filter-segment-option');
+        var isMultiple = group.getAttribute('data-filter-multiple') === 'true';
 
-        Array.prototype.forEach.call(options, function (opt) { opt.classList.remove('is-selected'); });
-        btn.classList.add('is-selected');
-        if (hidden) { hidden.value = btn.getAttribute('data-value') || ''; }
+        if (isMultiple) {
+            btn.classList.toggle('is-selected');
+            if (hidden) {
+                hidden.value = Array.prototype.map.call(options, function (opt) {
+                    return opt.classList.contains('is-selected') ? opt.getAttribute('data-value') : '';
+                }).filter(Boolean).join(',');
+            }
+        } else {
+            Array.prototype.forEach.call(options, function (opt) { opt.classList.remove('is-selected'); });
+            btn.classList.add('is-selected');
+            if (hidden) { hidden.value = btn.getAttribute('data-value') || ''; }
+        }
         clearValidationErrors();
         schedulePreviewSubmit();
     });
@@ -291,6 +302,15 @@
         return value === undefined || value === '' || allowedValues.indexOf(value) !== -1;
     }
 
+    function areAllowedCsvValues(value, allowedValues) {
+        if (value === undefined || value === '') {
+            return true;
+        }
+        return value.split(',').every(function (part) {
+            return allowedValues.indexOf(part) !== -1;
+        });
+    }
+
     function isValidNumberParam(value, min, max) {
         if (value === undefined || value === '') {
             return true;
@@ -302,7 +322,7 @@
     function validatePanelParams(panelParams, focusOnError) {
         clearValidationErrors();
 
-        if (!isAllowedValue(panelParams.fuelType, ['', 'combustion', 'hybrid', 'electric'])) {
+        if (!areAllowedCsvValues(panelParams.fuelType, ['combustion', 'hybrid', 'electric'])) {
             showPanelValidationError('Elegí una motorización válida.');
             return false;
         }
@@ -366,6 +386,9 @@
         }
         window.clearTimeout(previewSubmitTimer);
         previewSubmitTimer = window.setTimeout(function () {
+            if (!panel.classList.contains('is-open')) {
+                return;
+            }
             submitWithPanelFilters(false);
         }, 350);
     }

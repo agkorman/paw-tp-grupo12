@@ -274,8 +274,8 @@ public class CarController {
         model.addAttribute("showSpeed", criteria.getMaxSpeedMin() != null);
         model.addAttribute("showConsumption", criteria.getFuelConsumptionMax() != null);
         model.addAttribute("showAirbags", criteria.getAirbagMin() != null);
-        model.addAttribute("showTransmission", criteria.getTransmission() != null);
-        model.addAttribute("showFuelType", criteria.getFuelType() != null);
+        model.addAttribute("showTransmission", false);
+        model.addAttribute("showFuelType", criteria.getFuelTypes().size() > 1);
     }
 
     private void addShowSpecFlags(final ModelAndView mav, final CarSearchCriteria criteria) {
@@ -283,8 +283,8 @@ public class CarController {
         mav.addObject("showSpeed", criteria.getMaxSpeedMin() != null);
         mav.addObject("showConsumption", criteria.getFuelConsumptionMax() != null);
         mav.addObject("showAirbags", criteria.getAirbagMin() != null);
-        mav.addObject("showTransmission", criteria.getTransmission() != null);
-        mav.addObject("showFuelType", criteria.getFuelType() != null);
+        mav.addObject("showTransmission", false);
+        mav.addObject("showFuelType", criteria.getFuelTypes().size() > 1);
     }
 
     private Map<Long, Boolean> favoritedCarIdsById(final List<Car> cars, final AuthenticatedUser currentUser) {

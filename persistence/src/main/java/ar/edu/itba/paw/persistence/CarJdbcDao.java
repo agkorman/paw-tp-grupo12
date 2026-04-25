@@ -27,8 +27,10 @@ public class CarJdbcDao implements CarDao {
     private static final String FROM_JOIN =
             "FROM cars c "
                     + "JOIN brands b ON c.brand_id = b.brand_id "
-                    + "JOIN body_types bt ON c.body_type_id = bt.body_type_id "
-                    + "LEFT JOIN ("
+                    + "JOIN body_types bt ON c.body_type_id = bt.body_type_id ";
+
+    private static final String REVIEW_STATS_JOIN =
+            "LEFT JOIN ("
                     + "SELECT car_id, COUNT(review_id) AS review_count, AVG(rating) AS average_rating "
                     + "FROM reviews GROUP BY car_id"
                     + ") rs ON rs.car_id = c.car_id ";
@@ -133,6 +135,7 @@ public class CarJdbcDao implements CarDao {
     public Page<Car> findByCriteria(final CarSearchCriteria criteria) {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         final String whereClause = buildWhereClause(criteria, params);
+        final boolean requiresReviewStats = requiresReviewStatsJoin(criteria);
         final String orderClause = buildOrderClause(criteria);
 
         final int pageSize = Pagination.CARS_PAGE_SIZE;
@@ -153,11 +156,16 @@ public class CarJdbcDao implements CarDao {
         pagedParams.addValue("limit", pageSize);
         pagedParams.addValue("offset", offset);
 
+        final String fromClause = FROM_JOIN + (requiresReviewStats ? REVIEW_STATS_JOIN : "");
         final List<Car> items = namedJdbcTemplate.query(
-                SELECT_COLUMNS + FROM_JOIN + whereClause + orderClause + " LIMIT :limit OFFSET :offset",
+                SELECT_COLUMNS + fromClause + whereClause + orderClause + " LIMIT :limit OFFSET :offset",
                 pagedParams, ROW_MAPPER);
 
         return new Page<>(items, page, pageSize, totalItems);
+    }
+
+    private boolean requiresReviewStatsJoin(final CarSearchCriteria criteria) {
+        return criteria.getSortBy() == null;
     }
 
     private String buildWhereClause(final CarSearchCriteria criteria, final MapSqlParameterSource params) {
@@ -194,9 +202,9 @@ public class CarJdbcDao implements CarDao {
             params.addValue("bodyType", criteria.getBodyType());
             hasWhere = true;
         }
-        if (criteria.getFuelType() != null) {
-            sql.append(hasWhere ? "AND " : "WHERE ").append("c.fuel_type = :fuelType ");
-            params.addValue("fuelType", criteria.getFuelType());
+        if (!criteria.getFuelTypes().isEmpty()) {
+            sql.append(hasWhere ? "AND " : "WHERE ").append("c.fuel_type IN (:fuelTypes) ");
+            params.addValue("fuelTypes", criteria.getFuelTypes());
             hasWhere = true;
         }
         if (criteria.getHorsepowerMin() != null) {
@@ -248,9 +256,8 @@ public class CarJdbcDao implements CarDao {
                 default:
                     return "ORDER BY c.car_id ASC";
             }
-        } else {
-            return "ORDER BY COALESCE(rs.average_rating, 0) DESC, COALESCE(rs.review_count, 0) DESC, c.car_id ASC";
         }
+        return "ORDER BY COALESCE(rs.average_rating, 0) DESC, COALESCE(rs.review_count, 0) DESC, c.car_id ASC";
     }
 
     @Override
