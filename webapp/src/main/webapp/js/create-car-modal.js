@@ -29,6 +29,7 @@
         return;
     }
 
+    var isPageMode = modal.className.indexOf('form-page-embedded') >= 0;
     var closeElements = Array.prototype.slice.call(modal.querySelectorAll('[data-close-car-modal]'));
     var emptyFileStatus = 'Ninguna imagen seleccionada';
     var previewImages = [];
@@ -503,6 +504,9 @@
     };
 
     var closeModal = function () {
+        if (isPageMode) {
+            return;
+        }
         modal.setAttribute('hidden', 'hidden');
         document.body.classList.remove('modal-open');
         resetModalState();
@@ -595,7 +599,7 @@
     });
 
     document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
+        if (!isPageMode && event.key === 'Escape' && !modal.hasAttribute('hidden')) {
             closeModal();
         }
     });

@@ -96,6 +96,9 @@ public class CarReviewController {
         if (carId == null) {
             return "redirect:/cars";
         }
+        if ("true".equalsIgnoreCase(reviewFormParam)) {
+            return "redirect:/reviews/new?carId=" + carId;
+        }
 
         final ReviewPageData pageData = resolveReviewPageData(carId, sort, currentUserId(currentUser));
         if (pageData == null) {
@@ -106,18 +109,21 @@ public class CarReviewController {
             reviewForm.setCarId(carId);
         }
         populateCarReviewPageModel(model, pageData, currentUser);
-        if ("true".equalsIgnoreCase(reviewFormParam)) {
-            model.addAttribute("openReviewModal", true);
-        }
         return "car-review.jsp";
     }
 
     @RequestMapping(value = "/reviews/new", method = RequestMethod.GET)
     public ModelAndView newReview(@RequestParam(value = "carId", required = false) final Long carId) {
-        if (carId == null || carService.getCarById(carId).isEmpty()) {
+        final Optional<Car> car = carId == null ? Optional.empty() : carService.getCarById(carId);
+        if (car.isEmpty()) {
             return new ModelAndView("redirect:/cars");
         }
-        return new ModelAndView("redirect:/reviews?carId=" + carId + "&reviewForm=true");
+        final ReviewForm reviewForm = new ReviewForm();
+        reviewForm.setCarId(carId);
+        final ModelAndView mav = new ModelAndView("review-form.jsp");
+        mav.addObject("selectedCar", car.get());
+        mav.addObject("reviewForm", reviewForm);
+        return mav;
     }
 
     @RequestMapping(value = "/reviews/feed", method = RequestMethod.GET)
@@ -158,10 +164,8 @@ public class CarReviewController {
                 reviewForm.getModelYear());
 
         if (errors.hasErrors()) {
-            final ReviewPageData pageData = resolveReviewPageData(car.getId(), null, currentUserId(currentUser));
-            populateCarReviewPageModel(model, pageData, currentUser);
-            model.addAttribute("openReviewModal", true);
-            return "car-review.jsp";
+            model.addAttribute("selectedCar", car);
+            return "review-form.jsp";
         }
 
         reviewService.createReview(

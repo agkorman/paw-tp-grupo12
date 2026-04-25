@@ -46,7 +46,7 @@
             </c:forEach>
 
             <sec:authorize access="isAuthenticated()">
-                <button type="button" class="car-request-card" data-open-create-car-modal data-auth-resume-intent="create-car">
+                <a href="${newCarUrl}" class="car-request-card" data-auth-resume-intent="create-car">
                     <span class="car-request-card-icon" aria-hidden="true">
                         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
                             <path d="M12 5v14"/>
@@ -56,7 +56,7 @@
                     <strong class="car-request-card-title">¿No encontrás el auto?</strong>
                     <span class="car-request-card-copy">Ayudanos a completar la galería con el modelo que falta.</span>
                     <span class="btn-primary car-request-card-action">Agregar auto</span>
-                </button>
+                </a>
             </sec:authorize>
             <sec:authorize access="isAnonymous()">
                 <a href="${newCarUrl}"

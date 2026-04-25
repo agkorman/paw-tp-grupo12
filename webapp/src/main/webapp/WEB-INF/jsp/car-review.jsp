@@ -117,7 +117,6 @@
         <pa:reviews-feed reviews="${reviews}" reviewThreads="${reviewThreads}" carId="${selectedCar.id}" currentSort="${currentSort}"/>
     </main>
 
-    <pa:create-review-modal carId="${selectedCar.id}" autoOpen="${openReviewModal}"/>
     <pa:auth-required-modal/>
     <sec:authorize access="hasRole('ADMIN')">
         <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
@@ -128,7 +127,6 @@
     <script src="<c:url value='/js/action-menu.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
     <script src="<c:url value='/js/car-image-carousel.js'/>"></script>
-    <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <sec:authorize access="hasRole('ADMIN')">
         <script src="<c:url value='/js/create-car-modal.js?v=4'/>"></script>

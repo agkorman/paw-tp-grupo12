@@ -7,6 +7,7 @@
     if (!modal || !form) {
         return;
     }
+    var isPageMode = modal.className.indexOf('form-page-embedded') >= 0;
 
     var STAR_FILLED = '#ff5719';
     var STAR_EMPTY = '#2e2e2e';
@@ -216,6 +217,9 @@
     }
 
     function closeModal() {
+        if (isPageMode) {
+            return;
+        }
         modal.setAttribute('hidden', 'hidden');
         document.body.classList.remove('modal-open');
         if (lastTrigger && document.contains(lastTrigger)) {
@@ -353,7 +357,7 @@
     });
 
     document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
+        if (!isPageMode && event.key === 'Escape' && !modal.hasAttribute('hidden')) {
             closeModal();
         }
     });

@@ -4,6 +4,13 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
+<c:url var="newReviewUrl" value="/reviews/new">
+    <c:param name="carId" value="${selectedCar.id}"/>
+</c:url>
+<c:url var="newReviewLoginUrl" value="/login">
+    <c:param name="redirect" value="/reviews/new?carId=${selectedCar.id}"/>
+    <c:param name="intent" value="create-review"/>
+</c:url>
 
 <aside class="review-form-panel car-info-panel">
     <h2>Datos del auto</h2>
@@ -100,18 +107,24 @@
         </div>
     </div>
 
-    <button
-            id="openReviewModalBtn"
-            type="button"
-            class="btn-primary add-review-btn"
-            data-open-review-modal="create"
-            data-review-car-id="${selectedCar.id}"
-            data-auth-resume-intent="create-review"
-            <c:if test="${not authenticated}">
-                data-auth-required="true"
-                data-auth-required-action="publicar una reseña"
-                data-auth-required-intent="create-review"
-            </c:if>>
-        Agregar reseña
-    </button>
+    <c:choose>
+        <c:when test="${authenticated}">
+            <a id="openReviewModalBtn"
+               href="${newReviewUrl}"
+               class="btn-primary add-review-btn"
+               data-auth-resume-intent="create-review">
+                Agregar reseña
+            </a>
+        </c:when>
+        <c:otherwise>
+            <a id="openReviewModalBtn"
+               href="${newReviewLoginUrl}"
+               class="btn-primary add-review-btn"
+               data-auth-required="true"
+               data-auth-required-action="publicar una reseña"
+               data-auth-required-intent="create-review">
+                Agregar reseña
+            </a>
+        </c:otherwise>
+    </c:choose>
 </aside>

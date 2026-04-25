@@ -1,26 +1,39 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="carId" required="false" %>
 <%@ attribute name="autoOpen" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="pageMode" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="cancelHref" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 
 <c:url var="reviewCreateUrl" value="/reviews"/>
 
 <div id="createReviewModal"
-     class="review-modal"
-     hidden
+     class="review-modal ${pageMode ? 'form-page-embedded' : ''}"
+     <c:if test="${not pageMode}">hidden</c:if>
      data-default-car-id="${carId}"
      <c:if test="${autoOpen or openReviewModal}">data-auto-open="true"</c:if>>
-    <div class="review-modal-overlay" data-close-modal></div>
-    <section class="review-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createReviewTitle">
+    <c:if test="${not pageMode}">
+        <div class="review-modal-overlay" data-close-modal></div>
+    </c:if>
+    <section class="review-modal-dialog" <c:if test="${not pageMode}">role="dialog" aria-modal="true"</c:if> aria-labelledby="createReviewTitle">
         <div class="review-modal-header">
             <div>
                 <span class="review-modal-kicker" data-review-modal-kicker>Nueva reseña</span>
-                <h2 id="createReviewTitle" data-review-modal-title>Compartí tu experiencia</h2>
+                <h2 id="createReviewTitle" data-review-modal-title>Compartí tu experiencia con el <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/></h2>
             </div>
-            <button type="button" class="review-modal-close" data-close-modal aria-label="Cerrar modal">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/></svg>
-            </button>
+            <c:choose>
+                <c:when test="${pageMode}">
+                    <a class="review-modal-close" href="${cancelHref}" aria-label="Cancelar">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/></svg>
+                    </a>
+                </c:when>
+                <c:otherwise>
+                    <button type="button" class="review-modal-close" data-close-modal aria-label="Cerrar modal">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/></svg>
+                    </button>
+                </c:otherwise>
+            </c:choose>
         </div>
 
         <form:form id="createReviewForm" cssClass="review-modal-form" modelAttribute="reviewForm"
@@ -131,7 +144,14 @@
             </div>
 
             <div class="review-modal-actions">
-                <button id="reviewModalCancelButton" type="button" class="btn-secondary" data-close-modal>Cancelar</button>
+                <c:choose>
+                    <c:when test="${pageMode}">
+                        <a id="reviewModalCancelButton" href="${cancelHref}" class="btn-secondary">Cancelar</a>
+                    </c:when>
+                    <c:otherwise>
+                        <button id="reviewModalCancelButton" type="button" class="btn-secondary" data-close-modal>Cancelar</button>
+                    </c:otherwise>
+                </c:choose>
                 <button id="reviewModalSubmitButton" type="submit" class="btn-primary">Guardar reseña</button>
             </div>
         </form:form>

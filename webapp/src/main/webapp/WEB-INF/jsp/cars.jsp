@@ -46,9 +46,6 @@
             showAirbags="${showAirbags}"
             showTransmission="${showTransmission}"
             showFuelType="${showFuelType}"/>
-    <pa:create-car-modal
-            brands="${brands}"
-            bodyTypes="${bodyTypes}"/>
     <pa:auth-required-modal/>
 
     <c:if test="${showSubmittedToast}">
@@ -65,7 +62,6 @@
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
     <script src="<c:url value='/js/cars-filters-panel.js'/>"></script>
-    <script src="<c:url value='/js/create-car-modal.js'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <c:if test="${showSubmittedToast}">

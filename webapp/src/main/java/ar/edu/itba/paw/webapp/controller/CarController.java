@@ -128,11 +128,10 @@ public class CarController {
                            @ModelAttribute("carForm") final CarForm carForm,
                            @AuthenticationPrincipal final AuthenticatedUser currentUser,
                            final Model model) {
-        populateCarsPageModel(model, criteria, currentUser);
         if ("true".equalsIgnoreCase(createCar)) {
-            model.addAttribute("openCarModal", true);
-            model.addAttribute("openCreateCarModal", true);
+            return "redirect:/cars/new";
         }
+        populateCarsPageModel(model, criteria, currentUser);
         if ("true".equalsIgnoreCase(submitted)) {
             model.addAttribute("showSubmittedToast", true);
         }
@@ -154,7 +153,10 @@ public class CarController {
 
     @RequestMapping(value = "/cars/new", method = RequestMethod.GET)
     public ModelAndView newCarRequest() {
-        return new ModelAndView("redirect:/cars?createCar=true");
+        final ModelAndView mav = new ModelAndView("car-form.jsp");
+        mav.addObject("carForm", new CarForm());
+        populateCarFormPageModel(mav);
+        return mav;
     }
 
     @RequestMapping(value = "/cars", method = RequestMethod.POST, consumes = "multipart/form-data")
@@ -201,10 +203,9 @@ public class CarController {
         }
 
         if (errors.hasErrors()) {
-            populateCarsPageModel(model, new CarSearchCriteria(), currentUser);
-            model.addAttribute("openCarModal", true);
-            model.addAttribute("openCreateCarModal", true);
-            return "cars.jsp";
+            model.addAttribute("brands", brandDao.findAll());
+            model.addAttribute("bodyTypes", bodyTypeDao.findAll());
+            return "car-form.jsp";
         }
 
         final List<CarImagePayload> imagePayloads;
@@ -232,6 +233,11 @@ public class CarController {
         emailService.sendNewCarRequestNotification(carRequest, resolvedBrand.getName(), resolvedBodyType.getName());
 
         return "redirect:/cars?submitted=true";
+    }
+
+    private void populateCarFormPageModel(final ModelAndView mav) {
+        mav.addObject("brands", brandDao.findAll());
+        mav.addObject("bodyTypes", bodyTypeDao.findAll());
     }
 
     @RequestMapping(value = "/cars/{carId}/favorite", method = RequestMethod.POST)
