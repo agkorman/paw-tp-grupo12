@@ -27,7 +27,11 @@ public class CarJdbcDao implements CarDao {
     private static final String FROM_JOIN =
             "FROM cars c "
                     + "JOIN brands b ON c.brand_id = b.brand_id "
-                    + "JOIN body_types bt ON c.body_type_id = bt.body_type_id ";
+                    + "JOIN body_types bt ON c.body_type_id = bt.body_type_id "
+                    + "LEFT JOIN ("
+                    + "SELECT car_id, COUNT(review_id) AS review_count, AVG(rating) AS average_rating "
+                    + "FROM reviews GROUP BY car_id"
+                    + ") rs ON rs.car_id = c.car_id ";
 
     private static final String SELECT_COLUMNS =
             "SELECT c.car_id, c.brand_id, b.name AS brand_name, c.model, c.body_type_id, bt.name AS body_type, "
@@ -233,8 +237,6 @@ public class CarJdbcDao implements CarDao {
             switch (sortBy) {
                 case "name_asc":
                     return "ORDER BY b.name ASC, c.model ASC";
-                case "name_desc":
-                    return "ORDER BY b.name DESC, c.model DESC";
                 case "hp_desc":
                     return "ORDER BY c.horsepower DESC NULLS LAST, c.car_id ASC";
                 case "hp_asc":
@@ -246,19 +248,8 @@ public class CarJdbcDao implements CarDao {
                 default:
                     return "ORDER BY c.car_id ASC";
             }
-        } else if (criteria.getQ() != null) {
-            final String tsQ = criteria.getQ().replaceAll("[%_\\\\]", " ").trim();
-            final StringBuilder order = new StringBuilder("ORDER BY ");
-            if (tsQ.matches(".*[a-zA-Z0-9]{2,}.*")) {
-                order.append("ts_rank(c.search_vector, websearch_to_tsquery('simple', :q)) DESC, ");
-            }
-            order.append("CASE WHEN lower(c.model) LIKE :likeQ ESCAPE '\\' THEN 0 "
-                    + "     WHEN lower(b.name) LIKE :likeQ ESCAPE '\\' THEN 1 "
-                    + "     WHEN lower(COALESCE(c.description, '')) LIKE :likeQ ESCAPE '\\' THEN 2 "
-                    + "     ELSE 3 END, c.car_id ASC");
-            return order.toString();
         } else {
-            return "ORDER BY c.car_id ASC";
+            return "ORDER BY COALESCE(rs.average_rating, 0) DESC, COALESCE(rs.review_count, 0) DESC, c.car_id ASC";
         }
     }
 

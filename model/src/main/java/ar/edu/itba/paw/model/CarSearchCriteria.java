@@ -8,7 +8,7 @@ public class CarSearchCriteria {
 
     public static final Set<String> ALLOWED_FUEL_TYPES = Set.of("combustion", "hybrid", "electric");
     public static final Set<String> ALLOWED_TRANSMISSIONS = Set.of("manual", "automatic");
-    public static final Set<String> ALLOWED_SORT_BY = Set.of("name_asc", "name_desc", "hp_desc", "hp_asc", "speed_desc", "consumption_asc");
+    public static final Set<String> ALLOWED_SORT_BY = Set.of("name_asc", "hp_desc", "hp_asc", "speed_desc", "consumption_asc");
     private static final Set<Integer> ALLOWED_AIRBAG_MIN_VALUES = Set.of(2, 4, 6, 8, 10);
     private static final int HORSEPOWER_MIN_BOUND = 0;
     private static final int HORSEPOWER_MAX_BOUND = 1500;
@@ -163,7 +163,11 @@ public class CarSearchCriteria {
     }
 
     public void setSortBy(final String sortBy) {
-        this.sortBy = sortBy;
+        if (sortBy == null || sortBy.trim().isEmpty() || "name_desc".equals(sortBy.trim())) {
+            this.sortBy = null;
+        } else {
+            this.sortBy = sortBy.trim();
+        }
     }
 
     public Integer getPage() {

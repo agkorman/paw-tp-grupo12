@@ -129,7 +129,6 @@
                     <span class="cars-toolbar-value" data-toolbar-select-value="sortBy">
                         <c:choose>
                             <c:when test="${sortBy eq 'name_asc'}">Nombre A-Z</c:when>
-                            <c:when test="${sortBy eq 'name_desc'}">Nombre Z-A</c:when>
                             <c:when test="${sortBy eq 'hp_desc'}">Mayor potencia</c:when>
                             <c:when test="${sortBy eq 'hp_asc'}">Menor potencia</c:when>
                             <c:when test="${sortBy eq 'speed_desc'}">Mayor velocidad</c:when>
@@ -147,7 +146,6 @@
             <select class="cars-toolbar-select cars-toolbar-select-overlay" id="filter-sort" name="sortBy" aria-label="Ordenar resultados">
                 <option value="" <c:if test="${empty sortBy}">selected</c:if>>Relevancia</option>
                 <option value="name_asc" <c:if test="${sortBy eq 'name_asc'}">selected</c:if>>Nombre A-Z</option>
-                <option value="name_desc" <c:if test="${sortBy eq 'name_desc'}">selected</c:if>>Nombre Z-A</option>
                 <option value="hp_desc" <c:if test="${sortBy eq 'hp_desc'}">selected</c:if>>Mayor potencia</option>
                 <option value="hp_asc" <c:if test="${sortBy eq 'hp_asc'}">selected</c:if>>Menor potencia</option>
                 <option value="speed_desc" <c:if test="${sortBy eq 'speed_desc'}">selected</c:if>>Mayor velocidad</option>

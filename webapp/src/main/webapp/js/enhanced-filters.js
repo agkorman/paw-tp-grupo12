@@ -86,7 +86,11 @@
     };
 
     var submitEnhancedForm = function (form) {
-        if (!form || form.dataset.loading === 'true') {
+        if (!form) {
+            return;
+        }
+        if (form.dataset.loading === 'true') {
+            form.dataset.pendingSubmit = 'true';
             return;
         }
 
@@ -98,6 +102,13 @@
             nativeSubmit.call(form);
             return;
         }
+
+        var skipScroll = form.dataset.skipNextScroll === 'true';
+        var suppressFallbackSubmit = form.dataset.suppressFallbackSubmit === 'true';
+        var quietLoading = form.dataset.quietLoading === 'true';
+        delete form.dataset.skipNextScroll;
+        delete form.dataset.suppressFallbackSubmit;
+        delete form.dataset.quietLoading;
 
         var params = buildSearchParams(form);
         var actionUrl = new URL(form.action, window.location.href);
@@ -113,7 +124,9 @@
 
         form.dataset.loading = 'true';
         setControlsDisabled(form, true);
-        target.classList.add('is-loading');
+        if (!quietLoading) {
+            target.classList.add('is-loading');
+        }
         target.setAttribute('aria-busy', 'true');
 
         fetch(fetchUrl.toString(), {
@@ -137,13 +150,22 @@
             currentTarget.replaceWith(replacement);
             syncCatalogCount(replacement);
             window.history.replaceState({}, '', actionUrl.pathname + actionUrl.search);
-            scrollToTarget(targetSelector, document.querySelector(targetSelector));
+            if (!skipScroll) {
+                scrollToTarget(targetSelector, document.querySelector(targetSelector));
+            }
         }).catch(function () {
-            nativeSubmit.call(form);
+            if (!suppressFallbackSubmit) {
+                nativeSubmit.call(form);
+            }
         }).finally(function () {
             delete form.dataset.loading;
             if (document.contains(form)) {
                 setControlsDisabled(form, false);
+                if (form.dataset.pendingSubmit === 'true') {
+                    delete form.dataset.pendingSubmit;
+                    submitEnhancedForm(form);
+                    return;
+                }
             }
             var currentTarget = document.querySelector(targetSelector);
             if (currentTarget) {

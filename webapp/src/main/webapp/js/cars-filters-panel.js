@@ -9,6 +9,7 @@
     var toolbarForm  = document.getElementById('car-filter-form');
     var panelValidationMessage = document.getElementById('filtersPanelValidationMessage');
     var hpError = document.getElementById('panelHpError');
+    var previewSubmitTimer = null;
 
     if (!panel || !toolbarForm) {
         return;
@@ -51,8 +52,9 @@
     }
 
     document.addEventListener('click', function (event) {
-        if (event.target && event.target.hasAttribute('data-close-filters-panel')) { closePanel(); }
-        if (event.target && event.target.hasAttribute('data-open-filters-panel') && event.target !== toggleBtn)  { openPanel();  }
+        if (event.target && event.target.closest('[data-close-filters-panel]')) { closePanel(); }
+        var openTrigger = event.target && event.target.closest('[data-open-filters-panel]');
+        if (openTrigger && openTrigger !== toggleBtn)  { openPanel();  }
     });
 
     /* ── SYNC TOOLBAR → PANEL HIDDEN FIELDS ── */
@@ -86,6 +88,7 @@
         btn.classList.add('is-selected');
         if (hidden) { hidden.value = btn.getAttribute('data-value') || ''; }
         clearValidationErrors();
+        schedulePreviewSubmit();
     });
 
     /* ── SINGLE-RANGE SLIDERS with "Hasta / Desde" display ── */
@@ -269,7 +272,7 @@
         panelValidationMessage.removeAttribute('hidden');
     }
 
-    function showHpValidationError(message) {
+    function showHpValidationError(message, focusFirstField) {
         var hpMin = document.getElementById('panelHpMin');
         var hpMax = document.getElementById('panelHpMax');
         if (hpError) {
@@ -281,7 +284,7 @@
             field.classList.add('is-invalid');
             field.setAttribute('aria-invalid', 'true');
         });
-        if (hpMin) { hpMin.focus(); }
+        if (focusFirstField && hpMin) { hpMin.focus(); }
     }
 
     function isAllowedValue(value, allowedValues) {
@@ -296,7 +299,7 @@
         return Number.isFinite(parsed) && parsed >= min && parsed <= max;
     }
 
-    function validatePanelParams(panelParams) {
+    function validatePanelParams(panelParams, focusOnError) {
         clearValidationErrors();
 
         if (!isAllowedValue(panelParams.fuelType, ['', 'combustion', 'hybrid', 'electric'])) {
@@ -314,13 +317,13 @@
 
         if (!isValidNumberParam(panelParams.horsepowerMin, 0, 1500)
                 || !isValidNumberParam(panelParams.horsepowerMax, 0, 1500)) {
-            showHpValidationError('Usá valores de potencia entre 0 y 1500 HP.');
+            showHpValidationError('Usá valores de potencia entre 0 y 1500 HP.', focusOnError);
             return false;
         }
 
         if (panelParams.horsepowerMin !== undefined && panelParams.horsepowerMax !== undefined
                 && Number(panelParams.horsepowerMin) > Number(panelParams.horsepowerMax)) {
-            showHpValidationError('La potencia mínima no puede superar la máxima.');
+            showHpValidationError('La potencia mínima no puede superar la máxima.', focusOnError);
             return false;
         }
 
@@ -336,21 +339,60 @@
         return true;
     }
 
-    /* ── APPLY ── */
+    /* ── LIVE PREVIEW / APPLY ── */
 
-    function submitWithPanelFilters() {
+    function submitWithPanelFilters(closeAfterSubmit) {
         syncHiddenFieldsFromToolbar();
         var panelParams = collectPanelParams();
-        if (!validatePanelParams(panelParams)) {
+        if (!validatePanelParams(panelParams, closeAfterSubmit)) {
             return;
         }
         injectPanelParamsIntoForm(panelParams);
         syncFiltersToggleState(panelParams);
+        if (!closeAfterSubmit) {
+            toolbarForm.dataset.skipNextScroll = 'true';
+            toolbarForm.dataset.suppressFallbackSubmit = 'true';
+            toolbarForm.dataset.quietLoading = 'true';
+        }
         toolbarForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-        closePanel();
+        if (closeAfterSubmit) {
+            closePanel();
+        }
     }
 
-    if (applyBtn) { applyBtn.addEventListener('click', submitWithPanelFilters); }
+    function schedulePreviewSubmit() {
+        if (!panel.classList.contains('is-open')) {
+            return;
+        }
+        window.clearTimeout(previewSubmitTimer);
+        previewSubmitTimer = window.setTimeout(function () {
+            submitWithPanelFilters(false);
+        }, 350);
+    }
+
+    panel.addEventListener('input', function (event) {
+        var target = event.target;
+        if (!target || !target.matches('.single-range, .dual-range-thumb, .range-number-input')) {
+            return;
+        }
+        clearValidationErrors();
+        schedulePreviewSubmit();
+    });
+
+    panel.addEventListener('change', function (event) {
+        var target = event.target;
+        if (!target || !target.matches('.range-number-input')) {
+            return;
+        }
+        schedulePreviewSubmit();
+    });
+
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function () {
+            window.clearTimeout(previewSubmitTimer);
+            submitWithPanelFilters(true);
+        });
+    }
 
     /* ── RESET ALL FILTER GROUPS ── */
 
