@@ -39,7 +39,6 @@
             cars="${cars}"
             resultCount="${resultCount}"
             reviewStatsByCarId="${reviewStatsByCarId}"
-            favoritedCarIds="${favoritedCarIds}"
             showHp="${showHp}"
             showSpeed="${showSpeed}"
             showConsumption="${showConsumption}"

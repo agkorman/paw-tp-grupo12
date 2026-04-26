@@ -6,7 +6,6 @@
         cars="${cars}"
         resultCount="${fn:length(cars)}"
         reviewStatsByCarId="${reviewStatsByCarId}"
-        favoritedCarIds="${favoritedCarIds}"
         showHp="${showHp}"
         showSpeed="${showSpeed}"
         showConsumption="${showConsumption}"

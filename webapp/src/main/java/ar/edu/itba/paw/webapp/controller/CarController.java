@@ -99,11 +99,11 @@ public class CarController {
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    public ModelAndView home(@AuthenticationPrincipal final AuthenticatedUser currentUser) {
-        return landingPage(currentUser);
+    public ModelAndView home() {
+        return landingPage();
     }
 
-    private ModelAndView landingPage(final AuthenticatedUser currentUser) {
+    private ModelAndView landingPage() {
         final List<Car> allCars = carService.getAllCars();
         final Map<Long, ReviewStats> reviewStatsByCarId = getReviewStatsByCarId(allCars);
         final List<Car> featuredCars = selectFeaturedCars(allCars, reviewStatsByCarId);
@@ -115,7 +115,6 @@ public class CarController {
         final ModelAndView mav = new ModelAndView("landing.jsp");
         mav.addObject("featuredCars", featuredCars);
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
-        mav.addObject("favoritedCarIds", favoritedCarIdsById(featuredCars, currentUser));
         mav.addObject("heroCar", heroCar);
         mav.addObject("heroReview", heroReview);
         return mav;
@@ -126,12 +125,11 @@ public class CarController {
                            @RequestParam(value = "createCar", required = false) final String createCar,
                            @RequestParam(value = "submitted", required = false) final String submitted,
                            @ModelAttribute("carForm") final CarForm carForm,
-                           @AuthenticationPrincipal final AuthenticatedUser currentUser,
                            final Model model) {
         if ("true".equalsIgnoreCase(createCar)) {
             return "redirect:/cars/new";
         }
-        populateCarsPageModel(model, criteria, currentUser);
+        populateCarsPageModel(model, criteria);
         if ("true".equalsIgnoreCase(submitted)) {
             model.addAttribute("showSubmittedToast", true);
         }
@@ -139,14 +137,12 @@ public class CarController {
     }
 
     @RequestMapping(value = "/cars/content", method = RequestMethod.GET)
-    public ModelAndView listCarsContent(@ModelAttribute final CarSearchCriteria criteria,
-                                        @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+    public ModelAndView listCarsContent(@ModelAttribute final CarSearchCriteria criteria) {
         final CarCatalogData catalogData = resolveCatalogData(criteria);
 
         final ModelAndView mav = new ModelAndView("cars-content.jsp");
         mav.addObject("cars", catalogData.cars);
         mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
-        mav.addObject("favoritedCarIds", favoritedCarIdsById(catalogData.cars, currentUser));
         addShowSpecFlags(mav, criteria);
         return mav;
     }
@@ -267,13 +263,11 @@ public class CarController {
         return new ModelAndView("redirect:" + safeRedirectPath(referer));
     }
 
-    private void populateCarsPageModel(final Model model, final CarSearchCriteria criteria,
-                                       final AuthenticatedUser currentUser) {
+    private void populateCarsPageModel(final Model model, final CarSearchCriteria criteria) {
         final CarCatalogData catalogData = resolveCatalogData(criteria);
 
         model.addAttribute("cars", catalogData.cars);
         model.addAttribute("reviewStatsByCarId", catalogData.reviewStatsByCarId);
-        model.addAttribute("favoritedCarIds", favoritedCarIdsById(catalogData.cars, currentUser));
         model.addAttribute("brands", brandDao.findAll());
         model.addAttribute("bodyTypes", bodyTypeDao.findAll());
         model.addAttribute("selectedBrand", criteria.getBrand());
@@ -296,18 +290,6 @@ public class CarController {
         mav.addObject("showAirbags", criteria.getAirbagMin() != null);
         mav.addObject("showTransmission", criteria.getTransmission() != null);
         mav.addObject("showFuelType", criteria.getFuelType() != null);
-    }
-
-    private Map<Long, Boolean> favoritedCarIdsById(final List<Car> cars, final AuthenticatedUser currentUser) {
-        if (currentUser == null || cars.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        return carFavoriteService.getFavoritedCarIds(
-                        currentUser.getId(),
-                        cars.stream().map(Car::getId).collect(Collectors.toList())
-                )
-                .stream()
-                .collect(Collectors.toMap(Function.identity(), ignored -> Boolean.TRUE));
     }
 
     private boolean isAjaxRequest(final String requestedWith) {

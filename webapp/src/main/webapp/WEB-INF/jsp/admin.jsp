@@ -68,7 +68,6 @@
                                     hasImage="${request.hasImage}"
                                     imageUrl="${request.imageUrl}"
                                     href="#"
-                                    showFavorite="false"
                                     submitter="${request.submitter}"
                                     footerText="Solicitud pendiente"
                                     actionText="Revisar"

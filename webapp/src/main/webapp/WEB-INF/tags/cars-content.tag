@@ -2,7 +2,6 @@
 <%@ attribute name="cars" required="true" type="java.util.List" %>
 <%@ attribute name="resultCount" required="true" %>
 <%@ attribute name="reviewStatsByCarId" required="true" type="java.util.Map" %>
-<%@ attribute name="favoritedCarIds" required="false" type="java.util.Map" %>
 <%@ attribute name="showHp" required="false" %>
 <%@ attribute name="showSpeed" required="false" %>
 <%@ attribute name="showConsumption" required="false" %>
@@ -28,7 +27,6 @@
                     carId="${car.id}"
                     hasImage="${car.hasImage}"
                     href="${reviewUrl}"
-                    favorited="${favoritedCarIds[car.id] eq true}"
                     averageRating="${reviewStatsByCarId[car.id].averageRating}"
                     reviewCount="${reviewStatsByCarId[car.id].reviewCount}"
                     horsepower="${car.horsepower}"
@@ -63,7 +61,8 @@
                    class="car-request-card"
                    data-auth-required="true"
                    data-auth-required-action="agregar un auto"
-                   data-auth-required-intent="create-car">
+                   data-auth-required-intent="create-car"
+                   data-auth-return-url="/cars/new">
                     <span class="car-request-card-icon" aria-hidden="true">
                         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
                             <path d="M12 5v14"/>

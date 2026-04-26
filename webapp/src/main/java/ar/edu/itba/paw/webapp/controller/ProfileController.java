@@ -210,7 +210,6 @@ public class ProfileController {
         mav.addObject("likedActivityCount", likedReviewCards.size() + likedReplyCards.size());
         mav.addObject("favoriteCars", favoriteCars);
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
-        mav.addObject("favoritedCarIds", favoritedCarIdsById(favoriteCars, currentUserId));
         mav.addObject("followingUsers", toConnections(userFollowService.getFollowing(profileUser.getId()), currentUserId));
         mav.addObject("followerUsers", toConnections(userFollowService.getFollowers(profileUser.getId()), currentUserId));
         mav.addObject("ownProfile", ownProfile);
@@ -258,15 +257,6 @@ public class ProfileController {
                 && !currentUser
                 && userFollowService.isFollowing(currentUserId, user.getId());
         return new ProfileConnection(user.getId(), displayName(user), initials(user), following, !currentUser);
-    }
-
-    private Map<Long, Boolean> favoritedCarIdsById(final List<Car> cars, final Long currentUserId) {
-        if (currentUserId == null || cars.isEmpty()) {
-            return Map.of();
-        }
-        return carFavoriteService.getFavoritedCarIds(currentUserId, cars.stream().map(Car::getId).toList())
-                .stream()
-                .collect(Collectors.toMap(Function.identity(), ignored -> Boolean.TRUE));
     }
 
     private boolean isOwnedByCurrentUser(final Review review, final Long currentUserId) {

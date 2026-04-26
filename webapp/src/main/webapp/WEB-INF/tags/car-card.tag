@@ -10,8 +10,6 @@
 <%@ attribute name="submitter" required="false" %>
 <%@ attribute name="footerText" required="false" %>
 <%@ attribute name="actionText" required="false" %>
-<%@ attribute name="showFavorite" required="false" %>
-<%@ attribute name="favorited" required="false" %>
 <%@ attribute name="horsepower" required="false" %>
 <%@ attribute name="maxSpeedKmh" required="false" %>
 <%@ attribute name="fuelConsumption" required="false" %>
