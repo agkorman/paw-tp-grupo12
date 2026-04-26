@@ -1,5 +1,5 @@
 (function () {
-    var modal = document.getElementById('createCarModal');
+    var modal = document.getElementById('createCarModal') || document.getElementById('createCarFormPage');
     var form = document.getElementById('createCarForm');
     var fileInput = document.getElementById('modalCarFile');
     var fileStatus = document.getElementById('modalCarFileStatus');
@@ -29,7 +29,7 @@
         return;
     }
 
-    var isPageMode = modal.className.indexOf('form-page-embedded') >= 0;
+    var isPageMode = modal.id === 'createCarFormPage';
     var closeElements = Array.prototype.slice.call(modal.querySelectorAll('[data-close-car-modal]'));
     var emptyFileStatus = 'Ninguna imagen seleccionada';
     var previewImages = [];
@@ -41,6 +41,10 @@
         modalCarBodyType: 'Seleccioná un tipo de carrocería.',
         modalCarModel: 'Ingresá el modelo.',
         modalCarDescription: 'Ingresá una descripción.',
+        modalCarHorsepower: 'Ingresá la potencia.',
+        modalCarAirbagCount: 'Ingresá la cantidad de airbags.',
+        modalCarFuelConsumption: 'Ingresá el consumo.',
+        modalCarMaxSpeed: 'Ingresá la velocidad máxima.',
         modalCarFile: 'Seleccioná al menos una imagen del auto.'
     };
 
@@ -66,44 +70,229 @@
         return !field.value || field.value.trim() === '';
     };
 
-    var validateField = function (field) {
-        field.setCustomValidity('');
+    var fieldKey = function (field) {
+        if (field.type === 'radio') {
+            return field.name || field.id || 'field';
+        }
+        return field.id || field.name || 'field';
+    };
 
-        if (field.required && isMissingRequiredValue(field)) {
-            field.setCustomValidity(requiredMessages[field.id] || 'Completá este campo.');
-            return field.checkValidity();
+    var fieldContainer = function (field) {
+        var node = field;
+        while (node && node !== modal) {
+            if (node.classList && node.classList.contains('review-modal-field')) {
+                return node;
+            }
+            node = node.parentNode;
+        }
+        return field ? field.parentNode : form;
+    };
+
+    var clientErrorId = function (field) {
+        return fieldKey(field) + 'ClientError';
+    };
+
+    var setDescribedBy = function (field, errorId) {
+        if (!field || !errorId) {
+            return;
+        }
+        var ids = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+        if (ids.indexOf(errorId) === -1) {
+            ids.push(errorId);
+            field.setAttribute('aria-describedby', ids.join(' '));
+        }
+    };
+
+    var removeDescribedBy = function (field, errorId) {
+        if (!field || !errorId) {
+            return;
+        }
+        var ids = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(function (id) {
+            return id && id !== errorId;
+        });
+        if (ids.length) {
+            field.setAttribute('aria-describedby', ids.join(' '));
+        } else {
+            field.removeAttribute('aria-describedby');
+        }
+    };
+
+    var radioGroup = function (field) {
+        return Array.prototype.slice.call(form.querySelectorAll('input[type="radio"][name="' + field.name + '"]'));
+    };
+
+    var setInlineError = function (field, message) {
+        if (!field) {
+            return;
+        }
+        var container = fieldContainer(field);
+        var key = fieldKey(field);
+        var errorId = clientErrorId(field);
+        var error = container.querySelector('[data-client-error-for="' + key + '"]');
+        if (!error) {
+            error = document.createElement('span');
+            error.id = errorId;
+            error.className = 'form-error client-form-error';
+            error.setAttribute('data-client-error-for', key);
+            error.setAttribute('role', 'alert');
+            container.appendChild(error);
+        }
+        error.textContent = message;
+        error.hidden = false;
+
+        if (field.type === 'radio') {
+            radioGroup(field).forEach(function (radio) {
+                radio.setAttribute('aria-invalid', 'true');
+                setDescribedBy(radio, errorId);
+            });
+        } else {
+            field.classList.add('is-invalid');
+            field.setAttribute('aria-invalid', 'true');
+            setDescribedBy(field, errorId);
+        }
+    };
+
+    var clearInlineError = function (field) {
+        if (!field) {
+            return;
+        }
+        var container = fieldContainer(field);
+        var key = fieldKey(field);
+        var errorId = clientErrorId(field);
+        var error = container.querySelector('[data-client-error-for="' + key + '"]');
+        if (error) {
+            error.textContent = '';
+            error.hidden = true;
+        }
+
+        if (field.type === 'radio') {
+            radioGroup(field).forEach(function (radio) {
+                radio.removeAttribute('aria-invalid');
+                removeDescribedBy(radio, errorId);
+            });
+        } else {
+            field.classList.remove('is-invalid');
+            field.removeAttribute('aria-invalid');
+            removeDescribedBy(field, errorId);
+        }
+    };
+
+    var hasRequiredRadioGroup = function (field) {
+        return field.type === 'radio' && radioGroup(field).some(function (radio) {
+            return radio.required;
+        });
+    };
+
+    var isRadioGroupMissing = function (field) {
+        return !radioGroup(field).some(function (radio) {
+            return radio.checked;
+        });
+    };
+
+    var validateField = function (field) {
+        if (!field || field.disabled) {
+            return true;
+        }
+
+        clearInlineError(field);
+
+        if ((field.required || hasRequiredRadioGroup(field)) && isMissingRequiredValue(field)) {
+            setInlineError(field, requiredMessages[field.id] || 'Completá este campo.');
+            return false;
+        }
+
+        if (field.type === 'radio' && hasRequiredRadioGroup(field) && isRadioGroupMissing(field)) {
+            setInlineError(field, 'Seleccioná una opción.');
+            return false;
         }
 
         if (field.type === 'email' && field.value && !EMAIL_PATTERN.test(field.value.trim())) {
-            field.setCustomValidity('Ingresá un email válido.');
-            return field.checkValidity();
+            setInlineError(field, 'Ingresá un email válido.');
+            return false;
+        }
+
+        if (field.type === 'number' && field.value) {
+            var parsed = Number(field.value);
+            if (!Number.isFinite(parsed)) {
+                setInlineError(field, 'Ingresá un valor numérico.');
+                return false;
+            }
+            if (field.min !== '' && parsed < Number(field.min)) {
+                setInlineError(field, 'Ingresá un valor mayor o igual a ' + field.min + '.');
+                return false;
+            }
+            if (field.max !== '' && parsed > Number(field.max)) {
+                setInlineError(field, 'Ingresá un valor menor o igual a ' + field.max + '.');
+                return false;
+            }
         }
 
         if (field.type === 'file') {
             var files = selectedFiles(field);
             if (files.length > MAX_IMAGE_COUNT) {
-                field.setCustomValidity('Podés cargar hasta ' + MAX_IMAGE_COUNT + ' imágenes.');
-                return field.checkValidity();
+                setInlineError(field, 'Podés cargar hasta ' + MAX_IMAGE_COUNT + ' imágenes.');
+                return false;
             }
             for (var i = 0; i < files.length; i++) {
                 if (!files[i].type || ALLOWED_IMAGE_TYPES.indexOf(files[i].type) === -1) {
-                    field.setCustomValidity('Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.');
-                    return field.checkValidity();
+                    setInlineError(field, 'Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.');
+                    return false;
                 }
                 if (files[i].size > MAX_IMAGE_BYTES) {
-                    field.setCustomValidity('La imagen no debe superar los 10 MB.');
-                    return field.checkValidity();
+                    setInlineError(field, 'La imagen no debe superar los 10 MB.');
+                    return false;
                 }
             }
         }
 
-        return field.checkValidity();
+        return true;
     };
 
-    var validateRequiredFields = function () {
-        return Array.prototype.slice.call(form.querySelectorAll('[required]')).reduce(function (isValid, field) {
+    var validateFields = function () {
+        var seenRadioGroups = {};
+        return Array.prototype.slice.call(form.querySelectorAll('input, textarea, select')).reduce(function (isValid, field) {
+            if (field.type === 'hidden') {
+                return isValid;
+            }
+            if (field.type === 'radio') {
+                if (seenRadioGroups[field.name]) {
+                    return isValid;
+                }
+                seenRadioGroups[field.name] = true;
+            }
             return validateField(field) && isValid;
         }, true);
+    };
+
+    var focusFirstInvalid = function () {
+        var invalid = form.querySelector('[aria-invalid="true"]');
+        if (invalid && typeof invalid.focus === 'function') {
+            invalid.focus();
+        }
+    };
+
+    var clearAllClientErrors = function () {
+        var errorIds = Array.prototype.slice.call(form.querySelectorAll('.client-form-error')).map(function (error) {
+            return error.id;
+        }).filter(Boolean);
+        Array.prototype.slice.call(form.querySelectorAll('.client-form-error')).forEach(function (error) {
+            error.textContent = '';
+            error.hidden = true;
+        });
+        Array.prototype.slice.call(form.querySelectorAll('[aria-invalid="true"]')).forEach(function (field) {
+            field.classList.remove('is-invalid');
+            field.removeAttribute('aria-invalid');
+        });
+        Array.prototype.slice.call(form.querySelectorAll('[aria-describedby]')).forEach(function (field) {
+            var ids = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(function (id) {
+                return id && errorIds.indexOf(id) === -1;
+            });
+            if (ids.length) {
+                field.setAttribute('aria-describedby', ids.join(' '));
+            } else {
+                field.removeAttribute('aria-describedby');
+            }
+        });
     };
 
     var revokePreviewObjectUrls = function () {
@@ -216,11 +405,12 @@
             clearPreviewImages();
         }
 
-        validateField(fileInput);
+        clearInlineError(fileInput);
     };
 
     var resetModalState = function () {
         form.reset();
+        clearAllClientErrors();
         if (fileStatus) {
             fileStatus.textContent = emptyFileStatus;
         }
@@ -557,7 +747,10 @@
     });
 
     if (fileInput) {
-        fileInput.addEventListener('change', updateFileState);
+        fileInput.addEventListener('change', function () {
+            updateFileState();
+            validateField(fileInput);
+        });
     }
 
     if (filePreviewPrev) {
@@ -591,8 +784,13 @@
         });
     }
 
-    Array.prototype.slice.call(form.querySelectorAll('[required]')).forEach(function (field) {
-        var eventName = field.tagName === 'SELECT' || field.type === 'file' ? 'change' : 'input';
+    form.noValidate = true;
+
+    Array.prototype.slice.call(form.querySelectorAll('input, textarea, select')).forEach(function (field) {
+        if (field.type === 'hidden') {
+            return;
+        }
+        var eventName = field.tagName === 'SELECT' || field.type === 'file' || field.type === 'radio' ? 'change' : 'input';
         field.addEventListener(eventName, function () {
             validateField(field);
         });
@@ -605,13 +803,9 @@
     });
 
     form.addEventListener('submit', function (event) {
-        if (!validateRequiredFields()) {
+        if (!validateFields()) {
             event.preventDefault();
-            form.reportValidity();
-            return;
-        }
-        if (!form.reportValidity()) {
-            event.preventDefault();
+            focusFirstInvalid();
         }
     });
 

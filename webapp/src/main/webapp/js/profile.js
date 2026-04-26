@@ -276,10 +276,6 @@
             return;
         }
 
-        if (closestByAttribute(event.target, 'data-open-review-modal')) {
-            closeActionMenus();
-        }
-
         var editButton = closestByAttribute(event.target, 'data-open-edit-profile-modal');
         if (editButton) {
             openModal(document.getElementById('editProfileModal'));

@@ -270,7 +270,8 @@
     display: none;
 }
 
-.action-menu-panel button {
+.action-menu-panel button,
+.action-menu-panel a {
     appearance: none;
     -webkit-appearance: none;
     width: 100%;
@@ -285,9 +286,12 @@
     font-weight: 700;
     text-align: left;
     padding: 0.55rem 0.65rem;
+    display: block;
+    text-decoration: none;
 }
 
-.action-menu-panel button:hover {
+.action-menu-panel button:hover,
+.action-menu-panel a:hover {
     background: var(--surface-container-highest);
 }
 

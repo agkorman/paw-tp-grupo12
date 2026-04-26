@@ -126,7 +126,7 @@
             return;
         }
 
-        if (target.hasAttribute('data-open-create-car-modal') || target.hasAttribute('data-open-review-modal')) {
+        if (target.hasAttribute('data-open-create-car-modal')) {
             target.click();
             return;
         }

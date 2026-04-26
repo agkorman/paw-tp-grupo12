@@ -109,7 +109,7 @@
 
     <c:choose>
         <c:when test="${authenticated}">
-            <a id="openReviewModalBtn"
+            <a id="openReviewFormBtn"
                href="${newReviewUrl}"
                class="btn-primary add-review-btn"
                data-auth-resume-intent="create-review">
@@ -117,7 +117,7 @@
             </a>
         </c:when>
         <c:otherwise>
-            <a id="openReviewModalBtn"
+            <a id="openReviewFormBtn"
                href="${newReviewLoginUrl}"
                class="btn-primary add-review-btn"
                data-auth-required="true"

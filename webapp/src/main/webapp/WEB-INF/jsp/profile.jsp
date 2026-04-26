@@ -14,8 +14,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=3'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=4'/>">
+    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile.css?v=6'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
@@ -308,16 +308,14 @@
         </section>
     </main>
 
-    <pa:create-review-modal/>
     <pa:review-delete-modal/>
     <pa:edit-profile-modal profile="${profile}"/>
     <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
     <pa:auth-required-modal/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/action-menu.js'/>"></script>
-    <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/profile.js?v=7'/>"></script>
+    <script src="<c:url value='/js/profile.js?v=8'/>"></script>
 </body>
 </html>

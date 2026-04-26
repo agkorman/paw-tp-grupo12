@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
     <link rel="stylesheet" href="<c:url value='/css/admin.css'/>">
 </head>
 <body>
@@ -27,14 +27,6 @@
                 <div class="admin-hero-heading">
                     <h1>Panel de administración</h1>
 
-                    <%--
-                    <button type="button" class="btn-primary admin-hero-action" data-open-create-car-modal="create">
-                        Agregar auto
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                    --%>
                     <div class="admin-section-actions">
                         <form method="post" action="<c:url value='/admin/digest/preview'/>">
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
@@ -102,8 +94,8 @@
 
     </main>
 
-    <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
-    <script src="<c:url value='/js/create-car-modal.js?v=2'/>"></script>
+    <pa:admin-car-form brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
+    <script src="<c:url value='/js/car-form.js?v=1'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

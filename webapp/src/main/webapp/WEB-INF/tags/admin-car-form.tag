@@ -2,8 +2,6 @@
 <%@ attribute name="brands" required="true" type="java.util.Collection" %>
 <%@ attribute name="bodyTypes" required="true" type="java.util.Collection" %>
 <%@ attribute name="mode" required="false" %>
-<%@ attribute name="pageMode" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="cancelHref" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 
@@ -12,15 +10,13 @@
 <c:url var="adminBaseUrl" value="/admin"/>
 
 <div id="createCarModal"
-     class="review-modal ${pageMode ? 'form-page-embedded' : ''}"
-     <c:if test="${not pageMode}">hidden</c:if>
+     class="review-modal"
+     hidden
      data-admin-mode="${adminMode}"
      data-admin-base-url="${adminBaseUrl}"
      <c:if test="${openCarModal or openCreateCarModal or not empty carFormError}">data-auto-open="true"</c:if>>
-    <c:if test="${not pageMode}">
-        <div class="review-modal-overlay" data-close-car-modal></div>
-    </c:if>
-    <section class="review-modal-dialog car-modal-dialog" <c:if test="${not pageMode}">role="dialog" aria-modal="true"</c:if> aria-labelledby="createCarModalTitle">
+    <div class="review-modal-overlay" data-close-car-modal></div>
+    <section class="review-modal-dialog car-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="createCarModalTitle">
         <div class="review-modal-header">
             <div>
                 <span id="createCarModalKicker" class="review-modal-kicker">
@@ -36,24 +32,16 @@
                     </c:choose>
                 </h2>
             </div>
-            <c:choose>
-                <c:when test="${pageMode}">
-                    <a class="review-modal-close" href="${cancelHref}" aria-label="Cancelar">
-                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/></svg>
-                    </a>
-                </c:when>
-                <c:otherwise>
-                    <button type="button" class="review-modal-close" data-close-car-modal aria-label="Cerrar modal">
-                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/></svg>
-                    </button>
-                </c:otherwise>
-            </c:choose>
+            <button type="button" class="review-modal-close" data-close-car-modal aria-label="Cerrar modal">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/></svg>
+            </button>
         </div>
 
         <form:form id="createCarForm" cssClass="car-modal-form" modelAttribute="carForm"
                    method="post" action="${carCreateUrl}"
                    enctype="multipart/form-data"
-                   data-submit-lock="true">
+                   data-submit-lock="true"
+                   novalidate="novalidate">
             <form:errors cssClass="alert alert-error" element="div"/>
             <c:if test="${not empty carFormError}">
                 <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
@@ -263,14 +251,7 @@
 
             <div class="review-modal-actions">
                 <div id="createCarCreateActions" class="review-modal-action-group" <c:if test="${adminMode}">hidden</c:if>>
-                    <c:choose>
-                        <c:when test="${pageMode}">
-                            <a href="${cancelHref}" class="btn-secondary">Cancelar</a>
-                        </c:when>
-                        <c:otherwise>
-                            <button type="button" class="btn-secondary" data-close-car-modal>Cancelar</button>
-                        </c:otherwise>
-                    </c:choose>
+                    <button type="button" class="btn-secondary" data-close-car-modal>Cancelar</button>
                     <button id="createCarSubmitButton" type="submit" class="btn-primary">Confirmar auto</button>
                 </div>
                 <c:if test="${adminMode}">

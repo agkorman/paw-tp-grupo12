@@ -788,6 +788,24 @@
     background: var(--surface-container);
 }
 
+.review-modal-field .form-error {
+    color: #ffb4ab;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.review-modal-field .client-form-error[hidden] {
+    display: none;
+}
+
+.review-modal-field input.is-invalid,
+.review-modal-field textarea.is-invalid,
+.review-modal-field select.is-invalid {
+    border-bottom-color: #ffb4ab;
+    background: rgba(255, 180, 171, 0.08);
+}
+
 .review-modal-field textarea {
     resize: vertical;
     min-height: 6rem;
@@ -884,6 +902,13 @@
 .car-image-upload.has-file .car-image-upload-card {
     border-style: solid;
     border-color: rgba(255, 181, 158, 0.7);
+}
+
+.car-image-upload-input.is-invalid + .car-image-upload-card {
+    border-color: #ffb4ab;
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 180, 171, 0.18),
+        0 16px 38px rgba(0, 0, 0, 0.22);
 }
 
 .car-image-upload.has-preview .car-image-upload-card {
@@ -1113,6 +1138,12 @@
     align-items: center;
     gap: 1rem;
     padding: 0.5rem 0;
+    border-radius: var(--radius-sm);
+}
+
+.star-rating.is-invalid {
+    outline: 1px solid rgba(255, 180, 171, 0.48);
+    outline-offset: 0.35rem;
 }
 
 .star-rating-stars {
