@@ -117,12 +117,28 @@
     box-shadow: 0 0.9rem 1.6rem rgba(0, 0, 0, 0.18);
 }
 
+.auth-field input.is-invalid {
+    border-bottom-color: #ffb4ab;
+    background: rgba(255, 180, 171, 0.08);
+}
+
 .auth-field input:-webkit-autofill,
 .auth-field input:-webkit-autofill:hover,
 .auth-field input:-webkit-autofill:focus {
     -webkit-text-fill-color: var(--on-surface);
     box-shadow: 0 0 0 1000px var(--surface-container-lowest) inset;
     caret-color: var(--on-surface);
+}
+
+.auth-field .form-error {
+    color: #ffb4ab;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.auth-field .client-form-error[hidden] {
+    display: none;
 }
 
 .auth-check {
