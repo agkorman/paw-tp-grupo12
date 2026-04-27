@@ -1,4 +1,5 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <div id="deleteReviewModal" class="profile-modal" hidden>
     <div class="profile-modal-overlay" data-close-profile-modal></div>
@@ -6,7 +7,7 @@
         <div class="profile-modal-header">
             <h2 id="deleteReviewTitle">Eliminar review</h2>
             <button type="button" class="profile-modal-close" data-close-profile-modal aria-label="Cerrar modal">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/></svg>
+                <pa:icon name="close" size="18"/>
             </button>
         </div>
 

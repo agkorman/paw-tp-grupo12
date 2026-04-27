@@ -7,6 +7,7 @@
 <%@ attribute name="label" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <c:set var="likeLabel" value="${empty label ? 'Like' : label}"/>
 <c:set var="likeDisabled" value="${empty disabled ? false : disabled}"/>
@@ -23,9 +24,7 @@
                    data-auth-required-action="dar like"
                    data-auth-required-intent="like-${fn:escapeXml(reviewId)}"
                    aria-label="Iniciar sesión para dar like">
-                    <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path d="M12 21s-6.8-4.2-9.5-8.4C0.6 9.5 2.4 5 6.2 5c2 0 3.5 1 4.4 2.3C11.5 6 13 5 15 5c3.8 0 5.6 4.5 3.7 7.6C16.8 16.8 12 21 12 21z"/>
-                    </svg>
+                    <pa:icon name="heart" size="17"/>
                     <span class="review-like-label"><c:out value="${likeLabel}"/></span>
                     <span class="review-like-count" data-review-like-count><c:out value="${empty likeCount ? 0 : likeCount}"/></span>
                 </a>
@@ -45,9 +44,7 @@
                             data-liked="${liked}"
                             aria-pressed="${liked}"
                             aria-label="${liked ? 'Quitar like' : 'Dar like'}">
-                        <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                            <path d="M12 21s-6.8-4.2-9.5-8.4C0.6 9.5 2.4 5 6.2 5c2 0 3.5 1 4.4 2.3C11.5 6 13 5 15 5c3.8 0 5.6 4.5 3.7 7.6C16.8 16.8 12 21 12 21z"/>
-                        </svg>
+                        <pa:icon name="heart" size="17"/>
                         <span class="review-like-label"><c:out value="${likeLabel}"/></span>
                         <span class="review-like-count" data-review-like-count><c:out value="${empty likeCount ? 0 : likeCount}"/></span>
                     </button>
@@ -71,9 +68,7 @@
                     data-auth-required-action="dar like"
                     data-auth-required-intent="like-${fn:escapeXml(reviewId)}"
                 </c:if>>
-                <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M12 21s-6.8-4.2-9.5-8.4C0.6 9.5 2.4 5 6.2 5c2 0 3.5 1 4.4 2.3C11.5 6 13 5 15 5c3.8 0 5.6 4.5 3.7 7.6C16.8 16.8 12 21 12 21z"/>
-                </svg>
+                <pa:icon name="heart" size="17"/>
                 <span class="review-like-label"><c:out value="${likeLabel}"/></span>
                 <span class="review-like-count" data-review-like-count><c:out value="${empty likeCount ? 0 : likeCount}"/></span>
             </button>

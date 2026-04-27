@@ -101,9 +101,7 @@
                     </c:when>
                     <c:otherwise>
                         <div class="img-placeholder">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c4c6cc" stroke-width="1.5">
-                                <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-                            </svg>
+                            <pa:icon name="car-placeholder" size="48"/>
                         </div>
                     </c:otherwise>
                 </c:choose>
@@ -132,9 +130,7 @@
                     </c:if>
                     <c:if test="${showHp eq 'true'}">
                         <span class="card-spec-tag">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                            </svg>
+                            <pa:icon name="bolt" size="11"/>
                             <c:choose>
                                 <c:when test="${not empty horsepower}"><c:out value="${horsepower}"/> HP</c:when>
                                 <c:otherwise>-- HP</c:otherwise>
@@ -143,12 +139,7 @@
                     </c:if>
                     <c:if test="${showSpeed eq 'true'}">
                         <span class="card-spec-tag">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 12m-10 0a10 10 0 1 0 20 0a10 10 0 1 0-20 0"/>
-                                <path d="M12 12l4.5-4.5"/>
-                                <path d="M12 7v1"/>
-                                <path d="M17 12h-1"/>
-                            </svg>
+                            <pa:icon name="speedometer" size="11"/>
                             <c:choose>
                                 <c:when test="${not empty maxSpeedKmh}"><c:out value="${maxSpeedKmh}"/> km/h</c:when>
                                 <c:otherwise>-- km/h</c:otherwise>
@@ -157,9 +148,7 @@
                     </c:if>
                     <c:if test="${showConsumption eq 'true'}">
                         <span class="card-spec-tag">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>
-                            </svg>
+                            <pa:icon name="droplet" size="11"/>
                             <c:choose>
                                 <c:when test="${not empty fuelConsumption}"><c:out value="${fuelConsumption}"/>L/100km</c:when>
                                 <c:otherwise>--L/100km</c:otherwise>
@@ -168,9 +157,7 @@
                     </c:if>
                     <c:if test="${showAirbags eq 'true'}">
                         <span class="card-spec-tag">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                            </svg>
+                            <pa:icon name="shield" size="11"/>
                             <c:choose>
                                 <c:when test="${not empty airbagCount}"><c:out value="${airbagCount}"/> Airbags</c:when>
                                 <c:otherwise>-- Airbags</c:otherwise>
@@ -181,15 +168,15 @@
                         <span class="card-spec-tag">
                             <c:choose>
                                 <c:when test="${fuelType eq 'hybrid'}">
-                                    <span class="material-symbols-outlined card-spec-fuel-icon" aria-hidden="true">eco</span>
+                                    <pa:icon name="eco" size="11" cssClass="card-spec-fuel-icon"/>
                                     Híbrido
                                 </c:when>
                                 <c:when test="${fuelType eq 'electric'}">
-                                    <span class="material-symbols-outlined card-spec-fuel-icon" aria-hidden="true">bolt</span>
+                                    <pa:icon name="bolt" size="11" cssClass="card-spec-fuel-icon"/>
                                     Eléctrico
                                 </c:when>
                                 <c:when test="${fuelType eq 'combustion'}">
-                                    <span class="material-symbols-outlined card-spec-fuel-icon" aria-hidden="true">local_gas_station</span>
+                                    <pa:icon name="gas-pump" size="11" cssClass="card-spec-fuel-icon"/>
                                     Combustión
                                 </c:when>
                                 <c:otherwise>--</c:otherwise>
@@ -198,9 +185,7 @@
                     </c:if>
                     <c:if test="${showPrice eq 'true'}">
                         <span class="card-spec-tag">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                            </svg>
+                            <pa:icon name="dollar" size="11"/>
                             <c:choose>
                                 <c:when test="${not empty priceUsd}">USD <fmt:formatNumber value="${priceUsd}" groupingUsed="true" maxFractionDigits="0"/></c:when>
                                 <c:otherwise>-- USD</c:otherwise>
@@ -216,9 +201,7 @@
                         </c:when>
                         <c:when test="${reviewCount gt 0}">
                             <span class="card-rating-badge">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                    <path d="M12 2.75l2.91 5.9 6.51.95-4.71 4.59 1.11 6.48L12 17.62l-5.82 3.05 1.11-6.48-4.71-4.59 6.51-.95L12 2.75z"/>
-                                </svg>
+                                <pa:icon name="star-filled" size="12"/>
                                 <span class="card-rating-value"><c:out value="${averageRating}"/></span>
                             </span>
                             <span class="card-rating-count">
@@ -247,9 +230,7 @@
                             <c:when test="${not empty actionText}"><c:out value="${actionText}"/></c:when>
                             <c:otherwise>Ver reseñas</c:otherwise>
                         </c:choose>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
+                        <pa:icon name="arrow-right" size="12"/>
                         </span>
                 </div>
             </div>

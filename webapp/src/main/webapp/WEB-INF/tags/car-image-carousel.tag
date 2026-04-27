@@ -4,6 +4,7 @@
 <%@ attribute name="images" required="false" type="java.util.List" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <c:set var="imageCount" value="${empty images ? 0 : fn:length(images)}"/>
 
@@ -23,15 +24,11 @@
                 <c:if test="${imageCount gt 1}">
                     <button type="button" class="car-image-carousel-nav car-image-carousel-prev"
                             data-carousel-prev aria-label="Imagen anterior">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M15 18l-6-6 6-6"/>
-                        </svg>
+                        <pa:icon name="chevron-left" size="18"/>
                     </button>
                     <button type="button" class="car-image-carousel-nav car-image-carousel-next"
                             data-carousel-next aria-label="Imagen siguiente">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M9 6l6 6-6 6"/>
-                        </svg>
+                        <pa:icon name="chevron-right" size="18"/>
                     </button>
                     <span class="car-image-carousel-count" data-carousel-count>1 / ${imageCount}</span>
                 </c:if>
@@ -53,9 +50,7 @@
     </c:when>
     <c:otherwise>
         <div class="img-placeholder">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c4c6cc" stroke-width="1.5">
-                <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
+            <pa:icon name="car-placeholder" size="48"/>
         </div>
     </c:otherwise>
 </c:choose>

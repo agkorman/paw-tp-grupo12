@@ -504,11 +504,6 @@ a.car-request-card {
     box-shadow: 0 0 0 1px rgba(255, 87, 25, 0.18);
 }
 
-.fuel-type-symbol {
-    font-size: 28px;
-    font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 40;
-    line-height: 1;
-}
 
 /* ── DUAL-RANGE SLIDER ── */
 .dual-range {
