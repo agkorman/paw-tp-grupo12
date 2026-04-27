@@ -1,16 +1,32 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="selectedCar" required="true" type="ar.edu.itba.paw.model.Car" %>
 <%@ attribute name="averageRating" required="false" type="java.math.BigDecimal" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c"   uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 
 <aside class="review-form-panel car-info-panel">
     <h2>Datos del auto</h2>
     <div class="car-info-list">
+        <c:if test="${not empty selectedCar.priceUsd}">
+        <div class="car-info-row">
+            <span class="car-info-label">Precio 0 km</span>
+            <span class="car-info-value">USD <fmt:formatNumber value="${selectedCar.priceUsd}" groupingUsed="true" maxFractionDigits="0"/></span>
+        </div>
+        </c:if>
         <div class="car-info-row">
             <span class="car-info-label">Nombre</span>
             <span class="car-info-value"><c:out value="${selectedCar.model}"/></span>
+        </div>
+        <div class="car-info-row">
+            <span class="car-info-label">Año modelo</span>
+            <span class="car-info-value">
+                <c:choose>
+                    <c:when test="${not empty selectedCar.year}"><c:out value="${selectedCar.year}"/></c:when>
+                    <c:otherwise>N/A</c:otherwise>
+                </c:choose>
+            </span>
         </div>
         <div class="car-info-row">
             <span class="car-info-label">Marca</span>

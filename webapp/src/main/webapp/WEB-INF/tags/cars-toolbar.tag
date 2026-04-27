@@ -133,6 +133,8 @@
                             <c:when test="${sortBy eq 'hp_asc'}">Menor potencia</c:when>
                             <c:when test="${sortBy eq 'speed_desc'}">Mayor velocidad</c:when>
                             <c:when test="${sortBy eq 'consumption_asc'}">Menor consumo</c:when>
+                            <c:when test="${sortBy eq 'price_asc'}">Menor precio</c:when>
+                            <c:when test="${sortBy eq 'price_desc'}">Mayor precio</c:when>
                             <c:otherwise>Mejor puntuado</c:otherwise>
                         </c:choose>
                     </span>
@@ -150,6 +152,8 @@
                 <option value="hp_asc" <c:if test="${sortBy eq 'hp_asc'}">selected</c:if>>Menor potencia</option>
                 <option value="speed_desc" <c:if test="${sortBy eq 'speed_desc'}">selected</c:if>>Mayor velocidad</option>
                 <option value="consumption_asc" <c:if test="${sortBy eq 'consumption_asc'}">selected</c:if>>Menor consumo</option>
+                <option value="price_asc" <c:if test="${sortBy eq 'price_asc'}">selected</c:if>>Menor precio</option>
+                <option value="price_desc" <c:if test="${sortBy eq 'price_desc'}">selected</c:if>>Mayor precio</option>
             </select>
         </div>
     </div>

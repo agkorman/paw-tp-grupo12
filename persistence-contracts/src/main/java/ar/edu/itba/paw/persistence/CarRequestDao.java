@@ -18,10 +18,10 @@ public interface CarRequestDao {
 
     long countByStatus(String status);
 
-    CarRequest create(long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId,
+    CarRequest create(long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId, Integer year,
                       String model, String description, String imageContentType, byte[] imageData,
                       String status, String fuelType, Integer horsepower, Integer airbagCount,
-                      String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+                      String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh, BigDecimal priceUsd);
 
     List<CarRequestImage> findImagesByRequestId(long requestId);
 

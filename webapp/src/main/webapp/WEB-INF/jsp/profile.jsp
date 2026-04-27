@@ -181,6 +181,7 @@
                                      <c:if test="${favoriteCarStatus.index ge favoriteCarsPreviewLimit}">data-collapsible-extra</c:if>>
                                     <pa:car-card
                                             model="${favoriteCar.brandName} ${favoriteCar.model}"
+                                            year="${favoriteCar.year}"
                                             bodyType="${favoriteCar.bodyType}"
                                             carId="${favoriteCar.id}"
                                             hasImage="${favoriteCar.hasImage}"

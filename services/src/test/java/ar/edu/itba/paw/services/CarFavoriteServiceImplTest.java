@@ -212,17 +212,20 @@ class CarFavoriteServiceImplTest {
         }
 
         @Override
-        public Car create(final long brandId, final String model, final long bodyTypeId, final String description,
+        public Car create(final long brandId, final String model, final long bodyTypeId, final Integer year,
+                          final String description,
                           final String fuelType, final Integer horsepower, final Integer airbagCount,
-                          final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                          final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                          final BigDecimal priceUsd) {
             throw new UnsupportedOperationException();
         }
 
         @Override
         public Optional<Car> update(final long id, final long brandId, final String model, final long bodyTypeId,
-                                    final String description, final String fuelType, final Integer horsepower,
+                                    final Integer year, final String description, final String fuelType, final Integer horsepower,
                                     final Integer airbagCount, final String transmission,
-                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                    final BigDecimal priceUsd) {
             return Optional.empty();
         }
 

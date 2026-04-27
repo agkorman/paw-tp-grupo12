@@ -69,6 +69,7 @@
                         <c:forEach var="request" items="${pendingRequests}">
                             <pa:car-card
                                     model="${request.brandName} ${request.model}"
+                                    year="${request.year}"
                                     bodyType="${request.bodyTypeName}"
                                     carId="${request.id}"
                                     hasImage="${request.hasImage}"
@@ -82,6 +83,7 @@
                                     requestId="${request.id}"
                                     requestBrand="${request.brandName}"
                                     requestModel="${request.model}"
+                                    requestYear="${request.year}"
                                     requestBodyType="${request.bodyTypeName}"
                                     requestDescription="${request.description}"
                                     requestSubmitter="${request.submitter}"
@@ -91,7 +93,8 @@
                                     requestAirbagCount="${request.airbagCount}"
                                     requestTransmission="${request.transmission}"
                                     requestFuelConsumption="${request.fuelConsumption}"
-                                    requestMaxSpeedKmh="${request.maxSpeedKmh}"/>
+                                    requestMaxSpeedKmh="${request.maxSpeedKmh}"
+                                    requestPriceUsd="${request.priceUsd}"/>
                         </c:forEach>
                     </div>
                     <c:if test="${not empty totalPages and totalPages > 1}">

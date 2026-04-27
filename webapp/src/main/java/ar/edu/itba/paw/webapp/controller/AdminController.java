@@ -37,7 +37,9 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -115,7 +117,7 @@ public class AdminController {
             return redirectBackToAdmin(referer);
         }
 
-        if (isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), -1L)) {
+        if (isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carForm.getYear(), -1L)) {
             return redirectBackToAdmin(referer);
         }
 
@@ -129,6 +131,7 @@ public class AdminController {
                 resolvedBrand.getId(),
                 carForm.getModel(),
                 resolvedBodyType.getId(),
+                carForm.getYear(),
                 carForm.getDescription(),
                 imageContentType,
                 imageData,
@@ -137,7 +140,8 @@ public class AdminController {
                 carForm.getAirbagCount(),
                 ControllerUtils.normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
-                carForm.getMaxSpeedKmh()
+                carForm.getMaxSpeedKmh(),
+                carForm.getPriceUsd()
         );
 
         if (approved && pendingRequest != null) {
@@ -166,7 +170,7 @@ public class AdminController {
             return redirectBackToCatalog(referer);
         }
 
-        if (isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carId)) {
+        if (isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carForm.getYear(), carId)) {
             return redirectBackToCatalog(referer);
         }
 
@@ -181,6 +185,7 @@ public class AdminController {
                 resolvedBrand.getId(),
                 carForm.getModel(),
                 resolvedBodyType.getId(),
+                carForm.getYear(),
                 carForm.getDescription(),
                 resolveOptionalImageContentType(file),
                 readOptionalImageData(file),
@@ -189,7 +194,8 @@ public class AdminController {
                 carForm.getAirbagCount(),
                 ControllerUtils.normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
-                carForm.getMaxSpeedKmh()
+                carForm.getMaxSpeedKmh(),
+                carForm.getPriceUsd()
         );
         return redirectBackToCatalog(referer);
     }
@@ -305,6 +311,7 @@ public class AdminController {
                 request.getId(),
                 valueOrFallback(brandName, "Marca pendiente"),
                 request.getModel(),
+                request.getYear(),
                 valueOrFallback(bodyTypeName, "Carrocería pendiente"),
                 request.getDescription(),
                 submitterLabel(request),
@@ -316,7 +323,8 @@ public class AdminController {
                 request.getAirbagCount(),
                 request.getTransmission(),
                 request.getFuelConsumption(),
-                request.getMaxSpeedKmh()
+                request.getMaxSpeedKmh(),
+                request.getPriceUsd()
         );
     }
 
@@ -365,7 +373,7 @@ public class AdminController {
         return ControllerUtils.normalizeContentType(file == null ? null : file.getContentType());
     }
 
-    private boolean isDuplicateCar(final Brand brand, final BodyType bodyType, final String model,
+    private boolean isDuplicateCar(final Brand brand, final BodyType bodyType, final String model, final Integer year,
                                    final long ignoredCarId) {
         final String normalizedModel = ControllerUtils.normalize(model);
         if (normalizedModel == null) {
@@ -374,7 +382,9 @@ public class AdminController {
         return carService
                 .getCarsByBrandAndBodyType(brand.getName(), bodyType.getName())
                 .stream()
-                .anyMatch(car -> car.getId() != ignoredCarId && car.getModel().equalsIgnoreCase(normalizedModel));
+                .anyMatch(car -> car.getId() != ignoredCarId
+                        && sameModel(car.getModel(), normalizedModel)
+                        && Objects.equals(car.getYear(), year));
     }
 
     private void rejectInvalidSpecFields(final BindingResult errors, final CarForm carForm) {
@@ -455,10 +465,19 @@ public class AdminController {
         return value == null || value.isBlank() ? fallback : value;
     }
 
+    private boolean sameModel(final String existingModel, final String submittedModel) {
+        final String normalizedExistingModel = ControllerUtils.normalize(existingModel);
+        final String normalizedSubmittedModel = ControllerUtils.normalize(submittedModel);
+        return normalizedExistingModel != null && normalizedSubmittedModel != null
+                && normalizedExistingModel.toLowerCase(Locale.ROOT)
+                .equals(normalizedSubmittedModel.toLowerCase(Locale.ROOT));
+    }
+
     public static final class AdminCarRequestCard {
         private final long id;
         private final String brandName;
         private final String model;
+        private final Integer year;
         private final String bodyTypeName;
         private final String description;
         private final String submitter;
@@ -471,16 +490,19 @@ public class AdminController {
         private final String transmission;
         private final BigDecimal fuelConsumption;
         private final Integer maxSpeedKmh;
+        private final BigDecimal priceUsd;
 
         private AdminCarRequestCard(final long id, final String brandName, final String model,
-                                    final String bodyTypeName, final String description, final String submitter,
+                                    final Integer year, final String bodyTypeName, final String description, final String submitter,
                                     final boolean hasImage, final String imageUrl, final String imageUrls,
                                     final String fuelType, final Integer horsepower,
                                     final Integer airbagCount, final String transmission,
-                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                    final BigDecimal priceUsd) {
             this.id = id;
             this.brandName = brandName;
             this.model = model;
+            this.year = year;
             this.bodyTypeName = bodyTypeName;
             this.description = description;
             this.submitter = submitter;
@@ -493,6 +515,7 @@ public class AdminController {
             this.transmission = transmission;
             this.fuelConsumption = fuelConsumption;
             this.maxSpeedKmh = maxSpeedKmh;
+            this.priceUsd = priceUsd;
         }
 
         public long getId() {
@@ -505,6 +528,10 @@ public class AdminController {
 
         public String getModel() {
             return model;
+        }
+
+        public Integer getYear() {
+            return year;
         }
 
         public String getBodyTypeName() {
@@ -553,6 +580,10 @@ public class AdminController {
 
         public Integer getMaxSpeedKmh() {
             return maxSpeedKmh;
+        }
+
+        public BigDecimal getPriceUsd() {
+            return priceUsd;
         }
     }
 }

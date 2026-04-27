@@ -133,6 +133,7 @@
                             </c:url>
                             <pa:car-card
                                 model="${car.brandName} ${car.model}"
+                                year="${car.year}"
                                 bodyType="${car.bodyType}"
                                 carId="${car.id}"
                                 hasImage="${car.hasImage}"

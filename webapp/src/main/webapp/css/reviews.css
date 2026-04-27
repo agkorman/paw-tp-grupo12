@@ -28,6 +28,7 @@
     background: var(--surface-container-low);
     border-radius: var(--radius-lg);
     padding: var(--spacing-6);
+    overflow: hidden;
 }
 
 .review-hero h1 {
@@ -458,6 +459,67 @@
     text-transform: none;
     white-space: nowrap;
     min-height: unset;
+}
+
+.car-year-switcher {
+    position: relative;
+    top: auto;
+    z-index: auto;
+    display: block;
+    grid-template-columns: none;
+    margin-top: 1.5rem;
+    padding: 0;
+    height: auto;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.car-year-switcher-track {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0.125rem 0.125rem 0.25rem;
+    scroll-snap-type: x proximity;
+}
+
+.car-year-switcher-track::-webkit-scrollbar {
+    display: none;
+}
+
+.car-year-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 4.25rem;
+    min-height: 2.25rem;
+    padding: 0.45rem 1rem;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: transparent;
+    color: var(--on-surface);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    scroll-snap-align: start;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.car-year-pill:hover,
+.car-year-pill:focus-visible {
+    border-color: rgba(255, 181, 158, 0.42);
+    background: rgba(255, 87, 25, 0.12);
+    color: var(--on-surface);
+}
+
+.car-year-pill.is-active {
+    border-color: rgba(255, 181, 158, 0.62);
+    background: var(--primary);
+    color: #1b0d08;
+    font-weight: 800;
+    box-shadow: 0 0 22px rgba(255, 87, 25, 0.28);
 }
 
 .review-count-label {
