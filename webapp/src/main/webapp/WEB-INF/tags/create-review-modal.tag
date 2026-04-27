@@ -125,6 +125,13 @@
                     </div>
                     <form:errors path="wouldRecommend" cssClass="form-error" element="span"/>
                 </div>
+
+                <div class="review-modal-field review-modal-field-wide">
+                    <pa:review-tag-chips mode="edit"
+                                         tagsBySentiment="${reviewTagsBySentiment}"
+                                         selectedTagIds="${reviewForm.tagIds}"/>
+                    <form:errors path="tagIds" cssClass="form-error" element="span"/>
+                </div>
             </div>
 
             <div class="review-modal-actions">

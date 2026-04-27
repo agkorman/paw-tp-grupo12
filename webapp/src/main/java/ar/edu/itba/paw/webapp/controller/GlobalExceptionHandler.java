@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<String> handleMaxUploadSizeExceeded(final MaxUploadSizeExceededException ignored) {
         return ResponseEntity.badRequest().body(MAX_UPLOAD_SIZE_MESSAGE);
+    }
+
+    @ExceptionHandler(InvalidReviewTagSelectionException.class)
+    public ResponseEntity<String> handleInvalidReviewTagSelection(final InvalidReviewTagSelectionException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 
     private ModelAndView forwardToErrorPage(final HttpStatus status, final String errorPath) {

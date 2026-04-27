@@ -9,6 +9,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class ReviewForm {
 
@@ -44,6 +46,9 @@ public class ReviewForm {
     private Integer mileageKm;
 
     private Boolean wouldRecommend;
+
+    @Size(max = 6, message = "Podés elegir hasta 6 etiquetas.")
+    private Set<Short> tagIds = new LinkedHashSet<>();
 
     public Long getCarId() {
         return carId;
@@ -115,5 +120,13 @@ public class ReviewForm {
 
     public void setWouldRecommend(final Boolean wouldRecommend) {
         this.wouldRecommend = wouldRecommend;
+    }
+
+    public Set<Short> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(final Set<Short> tagIds) {
+        this.tagIds = tagIds == null ? new LinkedHashSet<>() : tagIds;
     }
 }
