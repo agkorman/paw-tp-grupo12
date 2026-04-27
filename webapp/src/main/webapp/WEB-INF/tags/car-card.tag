@@ -22,7 +22,6 @@
 <%@ attribute name="showSpeed" required="false" %>
 <%@ attribute name="showConsumption" required="false" %>
 <%@ attribute name="showAirbags" required="false" %>
-<%@ attribute name="showTransmission" required="false" %>
 <%@ attribute name="showFuelType" required="false" %>
 <%@ attribute name="openModal" required="false" %>
 <%@ attribute name="requestId" required="false" %>
@@ -110,7 +109,7 @@
                 <div class="card-title-row">
                     <span class="card-title"><c:out value="${model}"/></span>
                 </div>
-                <c:if test="${showHp eq 'true' or showSpeed eq 'true' or showConsumption eq 'true' or showAirbags eq 'true' or showTransmission eq 'true' or showFuelType eq 'true'}">
+                <c:if test="${showHp eq 'true' or showSpeed eq 'true' or showConsumption eq 'true' or showAirbags eq 'true' or showFuelType eq 'true'}">
                 <div class="card-spec-tags">
                     <c:if test="${showHp eq 'true'}">
                         <span class="card-spec-tag">
@@ -156,19 +155,6 @@
                             <c:choose>
                                 <c:when test="${not empty airbagCount}"><c:out value="${airbagCount}"/> Airbags</c:when>
                                 <c:otherwise>-- Airbags</c:otherwise>
-                            </c:choose>
-                        </span>
-                    </c:if>
-                    <c:if test="${showTransmission eq 'true'}">
-                        <span class="card-spec-tag">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-                                <path d="M4.93 4.93a10 10 0 0 0 0 14.14"/>
-                            </svg>
-                            <c:choose>
-                                <c:when test="${transmission eq 'automatic'}">Auto</c:when>
-                                <c:when test="${transmission eq 'manual'}">Manual</c:when>
-                                <c:otherwise>--</c:otherwise>
                             </c:choose>
                         </span>
                     </c:if>

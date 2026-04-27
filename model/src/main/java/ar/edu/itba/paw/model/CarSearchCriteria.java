@@ -111,7 +111,8 @@ public class CarSearchCriteria {
     }
 
     public void setFuelType(final String fuelType) {
-        if (fuelType == null) {
+        fuelTypes = new ArrayList<>();
+        if (fuelType == null || fuelType.trim().isEmpty()) {
             return;
         }
         for (final String value : fuelType.split(",")) {

@@ -42,7 +42,6 @@
             showSpeed="${showSpeed}"
             showConsumption="${showConsumption}"
             showAirbags="${showAirbags}"
-            showTransmission="${showTransmission}"
             showFuelType="${showFuelType}"
             currentPage="${currentPage}"
             totalPages="${totalPages}"

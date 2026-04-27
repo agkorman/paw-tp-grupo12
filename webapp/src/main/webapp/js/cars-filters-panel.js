@@ -75,7 +75,7 @@
     /* ── UNIFIED FILTER GROUP HANDLER (chips + segmented controls) ── */
 
     panel.addEventListener('click', function (event) {
-        var btn = event.target.closest('.filter-toggle-option, .filter-segment-option');
+        var btn = event.target instanceof Element && event.target.closest('.filter-toggle-option, .filter-segment-option');
         if (!btn) { return; }
 
         var group = btn.closest('[data-filter-target]');
