@@ -328,35 +328,8 @@ ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS fuel_consumption NUMERIC(4,1);
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS max_speed_kmh    INT;
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS price_usd        NUMERIC(12,2);
 
-CREATE TABLE IF NOT EXISTS schema_migrations (
-    migration_key VARCHAR(120) PRIMARY KEY,
-    applied_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS year INT;
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS year INT;
-
-UPDATE cars
-SET year = 2026
-WHERE year IS NULL
-  AND NOT EXISTS (
-      SELECT 1
-      FROM schema_migrations
-      WHERE migration_key = 'default_existing_car_year_2026'
-  );
-
-UPDATE car_requests
-SET year = 2026
-WHERE year IS NULL
-  AND NOT EXISTS (
-      SELECT 1
-      FROM schema_migrations
-      WHERE migration_key = 'default_existing_car_year_2026'
-  );
-
-INSERT INTO schema_migrations (migration_key)
-VALUES ('default_existing_car_year_2026')
-ON CONFLICT (migration_key) DO NOTHING;
 
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS uq_cars_brand_model_body_type;
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS uq_cars_brand_model_body_type_year;

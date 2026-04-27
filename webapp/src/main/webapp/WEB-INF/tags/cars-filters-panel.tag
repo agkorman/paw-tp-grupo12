@@ -103,12 +103,12 @@
             </div>
             <div class="dual-range-inputs">
                 <input type="number" id="panelPriceMin" name="priceMin" class="range-number-input"
-                       min="0" max="10000000" placeholder="Mín"
+                       min="0" max="5000000" placeholder="Mín"
                        aria-describedby="panelPriceError"
                        value="<c:out value='${criteria.priceMin}'/>">
                 <span class="range-separator">–</span>
                 <input type="number" id="panelPriceMax" name="priceMax" class="range-number-input"
-                       min="0" max="10000000" placeholder="Máx"
+                       min="0" max="5000000" placeholder="Máx"
                        aria-describedby="panelPriceError"
                        value="<c:out value='${criteria.priceMax}'/>">
             </div>

@@ -10,6 +10,7 @@
     var panelValidationMessage = document.getElementById('filtersPanelValidationMessage');
     var hpError = document.getElementById('panelHpError');
     var yearError = document.getElementById('panelYearError');
+    var priceError = document.getElementById('panelPriceError');
     var previewSubmitTimer = null;
 
     if (!panel || !toolbarForm) {
@@ -320,6 +321,10 @@
             yearError.textContent = '';
             yearError.setAttribute('hidden', '');
         }
+        if (priceError) {
+            priceError.textContent = '';
+            priceError.setAttribute('hidden', '');
+        }
         var invalidFields = panel.querySelectorAll('.is-invalid');
         Array.prototype.forEach.call(invalidFields, function (el) {
             el.classList.remove('is-invalid');
@@ -363,6 +368,21 @@
             field.setAttribute('aria-invalid', 'true');
         });
         if (focusFirstField && yearMin) { yearMin.focus(); }
+    }
+
+    function showPriceValidationError(message, focusFirstField) {
+        var priceMin = document.getElementById('panelPriceMin');
+        var priceMax = document.getElementById('panelPriceMax');
+        if (priceError) {
+            priceError.textContent = message;
+            priceError.removeAttribute('hidden');
+        }
+        [priceMin, priceMax].forEach(function (field) {
+            if (!field) { return; }
+            field.classList.add('is-invalid');
+            field.setAttribute('aria-invalid', 'true');
+        });
+        if (focusFirstField && priceMin) { priceMin.focus(); }
     }
 
     function isAllowedValue(value, allowedValues) {
@@ -410,6 +430,18 @@
         if (panelParams.yearMin !== undefined && panelParams.yearMax !== undefined
                 && Number(panelParams.yearMin) > Number(panelParams.yearMax)) {
             showYearValidationError('El año mínimo no puede superar al máximo.', focusOnError);
+            return false;
+        }
+
+        if (!isValidNumberParam(panelParams.priceMin, 0, 5000000)
+                || !isValidNumberParam(panelParams.priceMax, 0, 5000000)) {
+            showPriceValidationError('Usá precios entre USD 0 y USD 5.000.000.', focusOnError);
+            return false;
+        }
+
+        if (panelParams.priceMin !== undefined && panelParams.priceMax !== undefined
+                && Number(panelParams.priceMin) > Number(panelParams.priceMax)) {
+            showPriceValidationError('El precio mínimo no puede superar al máximo.', focusOnError);
             return false;
         }
 

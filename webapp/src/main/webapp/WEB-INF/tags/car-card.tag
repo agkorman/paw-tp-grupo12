@@ -42,6 +42,7 @@
 <%@ attribute name="requestTransmission" required="false" %>
 <%@ attribute name="requestFuelConsumption" required="false" %>
 <%@ attribute name="requestMaxSpeedKmh" required="false" %>
+<%@ attribute name="requestPriceUsd" required="false" %>
 <%@ taglib prefix="c"   uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn"  uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -79,6 +80,7 @@
        data-request-transmission="${fn:escapeXml(requestTransmission)}"
        data-request-fuel-consumption="${fn:escapeXml(requestFuelConsumption)}"
        data-request-max-speed-kmh="${fn:escapeXml(requestMaxSpeedKmh)}"
+       data-request-price-usd="${fn:escapeXml(requestPriceUsd)}"
        data-request-image-url="${fn:escapeXml(modalImageUrl)}"
        data-request-image-urls="${fn:escapeXml(modalImageUrls)}">
         <div class="car-card">

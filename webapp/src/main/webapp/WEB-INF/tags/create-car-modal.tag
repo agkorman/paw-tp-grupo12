@@ -149,6 +149,14 @@
                                             placeholder="Ej: 190" readonly="${adminMode}"/>
                                 <form:errors path="maxSpeedKmh" cssClass="form-error" element="span"/>
                             </div>
+
+                            <div class="review-modal-field">
+                                <label for="modalCarPriceUsd">Precio 0 km (USD)</label>
+                                <form:input id="modalCarPriceUsd" path="priceUsd" type="number"
+                                            step="0.01" min="0.01" max="5000000"
+                                            placeholder="Ej: 25000" readonly="${adminMode}"/>
+                                <form:errors path="priceUsd" cssClass="form-error" element="span"/>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -93,7 +93,8 @@
                                     requestAirbagCount="${request.airbagCount}"
                                     requestTransmission="${request.transmission}"
                                     requestFuelConsumption="${request.fuelConsumption}"
-                                    requestMaxSpeedKmh="${request.maxSpeedKmh}"/>
+                                    requestMaxSpeedKmh="${request.maxSpeedKmh}"
+                                    requestPriceUsd="${request.priceUsd}"/>
                         </c:forEach>
                     </div>
                     <c:if test="${not empty totalPages and totalPages > 1}">

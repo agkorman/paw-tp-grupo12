@@ -304,6 +304,7 @@
         setFieldReadonly('modalCarAirbagCount', readonly);
         setFieldReadonly('modalCarFuelConsumption', readonly);
         setFieldReadonly('modalCarMaxSpeed', readonly);
+        setFieldReadonly('modalCarPriceUsd', readonly);
     };
 
     var setActionMode = function (mode) {
@@ -452,6 +453,7 @@
         setFieldValue('modalCarAirbagCount', data.requestAirbagCount);
         setFieldValue('modalCarFuelConsumption', data.requestFuelConsumption);
         setFieldValue('modalCarMaxSpeed', data.requestMaxSpeedKmh);
+        setFieldValue('modalCarPriceUsd', data.requestPriceUsd);
         setAdminAction(data.requestId);
 
         if (fileStatus) {
@@ -484,6 +486,7 @@
         setFieldValue('modalCarAirbagCount', data.carAirbagCount);
         setFieldValue('modalCarFuelConsumption', data.carFuelConsumption);
         setFieldValue('modalCarMaxSpeed', data.carMaxSpeedKmh);
+        setFieldValue('modalCarPriceUsd', data.carPriceUsd);
         setCarEditAction(data.carAction);
 
         if (fileStatus) {

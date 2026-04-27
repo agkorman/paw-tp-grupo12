@@ -63,6 +63,7 @@
                                     data-car-transmission="${fn:escapeXml(selectedCar.transmission)}"
                                     data-car-fuel-consumption="${fn:escapeXml(selectedCar.fuelConsumption)}"
                                     data-car-max-speed-kmh="${fn:escapeXml(selectedCar.maxSpeedKmh)}"
+                                    data-car-price-usd="${fn:escapeXml(selectedCar.priceUsd)}"
                                     data-car-image-url="${selectedCar.hasImage ? fn:escapeXml(selectedCarImageUrl) : ''}">
                                 Editar
                             </button>
