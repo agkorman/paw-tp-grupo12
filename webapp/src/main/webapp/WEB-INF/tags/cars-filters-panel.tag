@@ -32,13 +32,22 @@
            role="alert"
            hidden></p>
 
-        <%-- Motorización — segmented control --%>
+        <%-- Motorización — icon picker (multi-select) --%>
         <section class="filters-panel-section">
             <h3 class="filters-panel-section-title">Motorización</h3>
-            <div class="segmented-control filter-segmented" data-filter-target="panelFuelType" data-filter-multiple="true">
-                <button type="button" class="segmented-control-option filter-segment-option${fn:contains(criteria.fuelType, 'combustion') ? ' is-selected' : ''}" data-value="combustion">Combustión</button>
-                <button type="button" class="segmented-control-option filter-segment-option${fn:contains(criteria.fuelType, 'hybrid') ? ' is-selected' : ''}" data-value="hybrid">Híbrido</button>
-                <button type="button" class="segmented-control-option filter-segment-option${fn:contains(criteria.fuelType, 'electric') ? ' is-selected' : ''}" data-value="electric">Eléctrico</button>
+            <div class="fuel-type-picker" data-filter-target="panelFuelType" data-filter-multiple="true">
+                <button type="button" class="fuel-type-option filter-segment-option${fn:contains(criteria.fuelType, 'combustion') ? ' is-selected' : ''}" data-value="combustion">
+                    <span class="material-symbols-outlined fuel-type-symbol" aria-hidden="true">local_gas_station</span>
+                    <span>Combustión</span>
+                </button>
+                <button type="button" class="fuel-type-option filter-segment-option${fn:contains(criteria.fuelType, 'hybrid') ? ' is-selected' : ''}" data-value="hybrid">
+                    <span class="material-symbols-outlined fuel-type-symbol" aria-hidden="true">eco</span>
+                    <span>Híbrido</span>
+                </button>
+                <button type="button" class="fuel-type-option filter-segment-option${fn:contains(criteria.fuelType, 'electric') ? ' is-selected' : ''}" data-value="electric">
+                    <span class="material-symbols-outlined fuel-type-symbol" aria-hidden="true">bolt</span>
+                    <span>Eléctrico</span>
+                </button>
             </div>
             <input type="hidden" id="panelFuelType" name="fuelType" value="<c:out value='${criteria.fuelType}'/>">
         </section>
