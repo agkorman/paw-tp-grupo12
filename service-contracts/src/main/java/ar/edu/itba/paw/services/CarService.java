@@ -36,12 +36,14 @@ public interface CarService {
                                   String submitterEmail, Optional<String> description,
                                   List<CarImagePayload> images,
                                   String fuelType, Integer horsepower, Integer airbagCount,
-                                  String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+                                  String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
+                                  BigDecimal priceUsd);
 
     Optional<Car> updateCar(long id, long brandId, String model, long bodyTypeId, String description,
                             Optional<String> imageContentType, Optional<byte[]> imageData,
                             String fuelType, Integer horsepower, Integer airbagCount,
-                            String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+                            String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
+                            BigDecimal priceUsd);
 
     boolean deleteCar(long id);
 }

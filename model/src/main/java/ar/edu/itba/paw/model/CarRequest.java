@@ -23,6 +23,7 @@ public class CarRequest implements Serializable {
     private String transmission;
     private BigDecimal fuelConsumption;
     private Integer maxSpeedKmh;
+    private BigDecimal priceUsd;
 
     public CarRequest() {}
 
@@ -31,7 +32,7 @@ public class CarRequest implements Serializable {
                       final String imageContentType, final byte[] imageData, final String status,
                       final LocalDateTime createdAt) {
         this(id, submittedByUserId, submitterEmail, brandId, bodyTypeId, model, description,
-                imageContentType, imageData, status, createdAt, null, null, null, null, null, null);
+                imageContentType, imageData, status, createdAt, null, null, null, null, null, null, null);
     }
 
     public CarRequest(final long id, final Long submittedByUserId, final String submitterEmail, final long brandId,
@@ -39,7 +40,7 @@ public class CarRequest implements Serializable {
                       final String imageContentType, final byte[] imageData, final String status,
                       final LocalDateTime createdAt, final String fuelType, final Integer horsepower,
                       final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
-                      final Integer maxSpeedKmh) {
+                      final Integer maxSpeedKmh, final BigDecimal priceUsd) {
         this.id = id;
         this.submittedByUserId = submittedByUserId;
         this.submitterEmail = submitterEmail;
@@ -57,6 +58,7 @@ public class CarRequest implements Serializable {
         this.transmission = transmission;
         this.fuelConsumption = fuelConsumption;
         this.maxSpeedKmh = maxSpeedKmh;
+        this.priceUsd = priceUsd;
     }
 
     public long getId() {
@@ -193,5 +195,13 @@ public class CarRequest implements Serializable {
 
     public void setMaxSpeedKmh(final Integer maxSpeedKmh) {
         this.maxSpeedKmh = maxSpeedKmh;
+    }
+
+    public BigDecimal getPriceUsd() {
+        return priceUsd;
+    }
+
+    public void setPriceUsd(final BigDecimal priceUsd) {
+        this.priceUsd = priceUsd;
     }
 }

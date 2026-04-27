@@ -62,6 +62,10 @@ public class CarForm {
     @Max(value = 600, message = "La velocidad no puede superar los 600 km/h.")
     private Integer maxSpeedKmh;
 
+    @DecimalMin(value = "0.01", message = "El precio debe ser mayor a 0.")
+    @DecimalMax(value = "5000000.00", message = "El precio no puede superar USD 5.000.000.")
+    private BigDecimal priceUsd;
+
     public String getBrand() {
         return brand;
     }
@@ -167,5 +171,13 @@ public class CarForm {
 
     public void setMaxSpeedKmh(final Integer maxSpeedKmh) {
         this.maxSpeedKmh = maxSpeedKmh;
+    }
+
+    public BigDecimal getPriceUsd() {
+        return priceUsd;
+    }
+
+    public void setPriceUsd(final BigDecimal priceUsd) {
+        this.priceUsd = priceUsd;
     }
 }

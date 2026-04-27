@@ -101,7 +101,8 @@ public class CarServiceImpl implements CarService {
                                          final List<CarImagePayload> images,
                                          final String fuelType, final Integer horsepower,
                                          final Integer airbagCount, final String transmission,
-                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                         final BigDecimal priceUsd) {
         final String normalizedDescription = description
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
@@ -124,7 +125,8 @@ public class CarServiceImpl implements CarService {
                 airbagCount,
                 transmission,
                 fuelConsumption,
-                maxSpeedKmh
+                maxSpeedKmh,
+                priceUsd
         );
     }
 
@@ -136,13 +138,14 @@ public class CarServiceImpl implements CarService {
                                    final Optional<byte[]> imageData,
                                    final String fuelType, final Integer horsepower,
                                    final Integer airbagCount, final String transmission,
-                                   final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                   final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                   final BigDecimal priceUsd) {
         final String normalizedModel = StringUtils.normalizeRequired(model, "Model is required for car update.");
         final String normalizedDescription = StringUtils.normalizeRequired(description, "Description is required for car update.");
         validateImagePair(imageContentType, imageData);
 
         final Optional<Car> updated = carDao.update(id, brandId, normalizedModel, bodyTypeId, normalizedDescription,
-                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh);
+                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
         if (updated.isPresent() && imageContentType.isPresent()) {
             carImageDao.saveOrReplace(id, imageContentType.get(), imageData.orElseThrow());
         }

@@ -39,7 +39,7 @@ public class CarJdbcDao implements CarDao {
             "SELECT c.car_id, c.brand_id, b.name AS brand_name, c.model, c.body_type_id, bt.name AS body_type, "
                     + "c.description, c.created_at, "
                     + "EXISTS (SELECT 1 FROM car_images ci WHERE ci.car_id = c.car_id) AS has_image, "
-                    + "c.fuel_type, c.horsepower, c.airbag_count, c.transmission, c.fuel_consumption, c.max_speed_kmh ";
+                    + "c.fuel_type, c.horsepower, c.airbag_count, c.transmission, c.fuel_consumption, c.max_speed_kmh, c.price_usd ";
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedJdbcTemplate;
@@ -60,7 +60,8 @@ public class CarJdbcDao implements CarDao {
             rs.getObject("airbag_count", Integer.class),
             rs.getString("transmission"),
             rs.getBigDecimal("fuel_consumption"),
-            rs.getObject("max_speed_kmh", Integer.class)
+            rs.getObject("max_speed_kmh", Integer.class),
+            rs.getBigDecimal("price_usd")
     );
 
     @Autowired
@@ -72,7 +73,7 @@ public class CarJdbcDao implements CarDao {
                 .usingGeneratedKeyColumns("car_id")
                 .usingColumns("brand_id", "model", "body_type_id", "description",
                         "fuel_type", "horsepower", "airbag_count", "transmission",
-                        "fuel_consumption", "max_speed_kmh");
+                        "fuel_consumption", "max_speed_kmh", "price_usd");
     }
 
     @Override
@@ -114,7 +115,8 @@ public class CarJdbcDao implements CarDao {
     @Override
     public Car create(final long brandId, final String model, final long bodyTypeId, final String description,
                       final String fuelType, final Integer horsepower, final Integer airbagCount,
-                      final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                      final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                      final BigDecimal priceUsd) {
         final Map<String, Object> params = new HashMap<>();
         params.put("brand_id", brandId);
         params.put("model", model);
@@ -126,6 +128,7 @@ public class CarJdbcDao implements CarDao {
         params.put("transmission", transmission);
         params.put("fuel_consumption", fuelConsumption);
         params.put("max_speed_kmh", maxSpeedKmh);
+        params.put("price_usd", priceUsd);
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();
@@ -235,6 +238,16 @@ public class CarJdbcDao implements CarDao {
         if (criteria.getMaxSpeedMin() != null) {
             sql.append(hasWhere ? "AND " : "WHERE ").append("c.max_speed_kmh >= :maxSpeedMin ");
             params.addValue("maxSpeedMin", criteria.getMaxSpeedMin());
+            hasWhere = true;
+        }
+        if (criteria.getPriceMin() != null) {
+            sql.append(hasWhere ? "AND " : "WHERE ").append("c.price_usd >= :priceMin ");
+            params.addValue("priceMin", criteria.getPriceMin());
+            hasWhere = true;
+        }
+        if (criteria.getPriceMax() != null) {
+            sql.append(hasWhere ? "AND " : "WHERE ").append("c.price_usd <= :priceMax ");
+            params.addValue("priceMax", criteria.getPriceMax());
         }
         return sql.toString();
     }
@@ -253,6 +266,10 @@ public class CarJdbcDao implements CarDao {
                     return "ORDER BY c.max_speed_kmh DESC NULLS LAST, c.car_id ASC";
                 case "consumption_asc":
                     return "ORDER BY c.fuel_consumption ASC NULLS LAST, c.car_id ASC";
+                case "price_asc":
+                    return "ORDER BY c.price_usd ASC NULLS LAST, c.car_id ASC";
+                case "price_desc":
+                    return "ORDER BY c.price_usd DESC NULLS LAST, c.car_id ASC";
                 default:
                     return "ORDER BY c.car_id ASC";
             }
@@ -265,13 +282,13 @@ public class CarJdbcDao implements CarDao {
                                 final long bodyTypeId, final String description,
                                 final String fuelType, final Integer horsepower, final Integer airbagCount,
                                 final String transmission, final BigDecimal fuelConsumption,
-                                final Integer maxSpeedKmh) {
+                                final Integer maxSpeedKmh, final BigDecimal priceUsd) {
         final int updated = jdbcTemplate.update(
                 "UPDATE cars SET brand_id = ?, model = ?, body_type_id = ?, description = ?, "
                         + "fuel_type = ?, horsepower = ?, airbag_count = ?, transmission = ?, "
-                        + "fuel_consumption = ?, max_speed_kmh = ? WHERE car_id = ?",
+                        + "fuel_consumption = ?, max_speed_kmh = ?, price_usd = ? WHERE car_id = ?",
                 brandId, model, bodyTypeId, description, fuelType, horsepower, airbagCount, transmission,
-                fuelConsumption, maxSpeedKmh, id
+                fuelConsumption, maxSpeedKmh, priceUsd, id
         );
         return updated > 0 ? findById(id) : Optional.empty();
     }

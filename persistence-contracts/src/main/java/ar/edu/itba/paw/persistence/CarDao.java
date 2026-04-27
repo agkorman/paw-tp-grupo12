@@ -22,11 +22,11 @@ public interface CarDao {
 
     Car create(long brandId, String model, long bodyTypeId, String description,
                String fuelType, Integer horsepower, Integer airbagCount,
-               String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+               String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh, BigDecimal priceUsd);
 
     Optional<Car> update(long id, long brandId, String model, long bodyTypeId, String description,
                          String fuelType, Integer horsepower, Integer airbagCount,
-                         String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+                         String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh, BigDecimal priceUsd);
 
     boolean delete(long id);
 }

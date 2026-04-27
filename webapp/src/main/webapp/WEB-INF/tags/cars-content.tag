@@ -8,6 +8,7 @@
 <%@ attribute name="showConsumption" required="false" %>
 <%@ attribute name="showAirbags" required="false" %>
 <%@ attribute name="showFuelType" required="false" %>
+<%@ attribute name="showPrice" required="false" %>
 <%@ attribute name="currentPage" required="false" type="java.lang.Integer" %>
 <%@ attribute name="totalPages" required="false" type="java.lang.Integer" %>
 <%@ attribute name="criteria" required="false" type="ar.edu.itba.paw.model.CarSearchCriteria" %>
@@ -40,11 +41,13 @@
                     airbagCount="${car.airbagCount}"
                     transmission="${car.transmission}"
                     fuelType="${car.fuelType}"
+                    priceUsd="${car.priceUsd}"
                     showHp="${showHp}"
                     showSpeed="${showSpeed}"
                     showConsumption="${showConsumption}"
                     showAirbags="${showAirbags}"
-                    showFuelType="${showFuelType}"/>
+                    showFuelType="${showFuelType}"
+                    showPrice="${showPrice}"/>
             </c:forEach>
 
             <c:if test="${showCarRequestCard}">
@@ -96,6 +99,8 @@
                 <c:if test="${not empty criteria.transmission}"><c:set target="${paginationParams}" property="transmission" value="${criteria.transmission}"/></c:if>
                 <c:if test="${not empty criteria.fuelConsumptionMax}"><c:set target="${paginationParams}" property="fuelConsumptionMax" value="${criteria.fuelConsumptionMax}"/></c:if>
                 <c:if test="${not empty criteria.maxSpeedMin}"><c:set target="${paginationParams}" property="maxSpeedMin" value="${criteria.maxSpeedMin}"/></c:if>
+                <c:if test="${not empty criteria.priceMin}"><c:set target="${paginationParams}" property="priceMin" value="${criteria.priceMin}"/></c:if>
+                <c:if test="${not empty criteria.priceMax}"><c:set target="${paginationParams}" property="priceMax" value="${criteria.priceMax}"/></c:if>
                 <c:if test="${not empty criteria.sortBy}"><c:set target="${paginationParams}" property="sortBy" value="${criteria.sortBy}"/></c:if>
             </c:if>
             <pa:pagination currentPage="${currentPage}"

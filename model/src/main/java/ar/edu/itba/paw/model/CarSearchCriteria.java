@@ -12,7 +12,7 @@ public class CarSearchCriteria {
 
     public static final Set<String> ALLOWED_FUEL_TYPES = Set.of("combustion", "hybrid", "electric");
     public static final Set<String> ALLOWED_TRANSMISSIONS = Set.of("manual", "automatic");
-    public static final Set<String> ALLOWED_SORT_BY = Set.of("name_asc", "hp_desc", "hp_asc", "speed_desc", "consumption_asc");
+    public static final Set<String> ALLOWED_SORT_BY = Set.of("name_asc", "hp_desc", "hp_asc", "speed_desc", "consumption_asc", "price_asc", "price_desc");
     private static final Set<Integer> ALLOWED_AIRBAG_MIN_VALUES = Set.of(2, 4, 6, 8, 10);
     private static final int HORSEPOWER_MIN_BOUND = 0;
     private static final int HORSEPOWER_MAX_BOUND = 1500;
@@ -20,6 +20,8 @@ public class CarSearchCriteria {
     private static final int MAX_SPEED_MAX_BOUND = 500;
     private static final BigDecimal FUEL_CONSUMPTION_MIN_BOUND = BigDecimal.ZERO;
     private static final BigDecimal FUEL_CONSUMPTION_MAX_BOUND = BigDecimal.valueOf(30);
+    private static final BigDecimal PRICE_MIN_BOUND = BigDecimal.ZERO;
+    private static final BigDecimal PRICE_MAX_BOUND = BigDecimal.valueOf(5_000_000);
 
     private String q;
     private String brand;
@@ -31,6 +33,8 @@ public class CarSearchCriteria {
     private String transmission;
     private BigDecimal fuelConsumptionMax;
     private Integer maxSpeedMin;
+    private BigDecimal priceMin;
+    private BigDecimal priceMax;
     private String sortBy;
     private Integer page;
 
@@ -43,7 +47,9 @@ public class CarSearchCriteria {
                 || airbagMin != null
                 || transmission != null && !transmission.isEmpty()
                 || fuelConsumptionMax != null
-                || maxSpeedMin != null;
+                || maxSpeedMin != null
+                || priceMin != null
+                || priceMax != null;
     }
 
     public boolean isValid() {
@@ -69,6 +75,15 @@ public class CarSearchCriteria {
             return false;
         }
         if (maxSpeedMin != null && !isWithinBounds(maxSpeedMin, MAX_SPEED_MIN_BOUND, MAX_SPEED_MAX_BOUND)) {
+            return false;
+        }
+        if (priceMin != null && !isWithinBounds(priceMin, PRICE_MIN_BOUND, PRICE_MAX_BOUND)) {
+            return false;
+        }
+        if (priceMax != null && !isWithinBounds(priceMax, PRICE_MIN_BOUND, PRICE_MAX_BOUND)) {
+            return false;
+        }
+        if (priceMin != null && priceMax != null && priceMin.compareTo(priceMax) > 0) {
             return false;
         }
         return sortBy == null || ALLOWED_SORT_BY.contains(sortBy);
@@ -204,6 +219,22 @@ public class CarSearchCriteria {
 
     public void setMaxSpeedMin(final Integer maxSpeedMin) {
         this.maxSpeedMin = maxSpeedMin;
+    }
+
+    public BigDecimal getPriceMin() {
+        return priceMin;
+    }
+
+    public void setPriceMin(final BigDecimal priceMin) {
+        this.priceMin = priceMin;
+    }
+
+    public BigDecimal getPriceMax() {
+        return priceMax;
+    }
+
+    public void setPriceMax(final BigDecimal priceMax) {
+        this.priceMax = priceMax;
     }
 
     public String getSortBy() {

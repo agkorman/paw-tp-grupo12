@@ -26,7 +26,8 @@ public interface CarRequestService {
                                     long bodyTypeId, String model, String description,
                                     List<CarImagePayload> images,
                                     String fuelType, Integer horsepower, Integer airbagCount,
-                                    String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+                                    String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
+                                    BigDecimal priceUsd);
 
     List<CarRequestImage> getCarRequestImages(long requestId);
 
@@ -37,7 +38,8 @@ public interface CarRequestService {
     boolean approvePendingRequest(long id, long brandId, String model, long bodyTypeId, String description,
                                   Optional<String> imageContentType, Optional<byte[]> imageData,
                                   String fuelType, Integer horsepower, Integer airbagCount,
-                                  String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh);
+                                  String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
+                                  BigDecimal priceUsd);
 
     boolean rejectPendingRequest(long id);
 }

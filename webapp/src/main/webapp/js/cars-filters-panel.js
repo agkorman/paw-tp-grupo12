@@ -214,10 +214,12 @@
 
     var PANEL_PARAM_KEYS = [
         'q', 'brand', 'bodyType',
+        'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
         'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
     ];
     var ADVANCED_PANEL_PARAM_KEYS = [
+        'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
         'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
     ];
@@ -436,16 +438,22 @@
         resetFilterGroup('panelTransmission');
         clearValidationErrors();
 
+        var priceMin = document.getElementById('panelPriceMin');
+        var priceMax = document.getElementById('panelPriceMax');
+        if (priceMin) { priceMin.value = ''; }
+        if (priceMax) { priceMax.value = ''; }
+
         var hpMin = document.getElementById('panelHpMin');
         var hpMax = document.getElementById('panelHpMax');
         if (hpMin) { hpMin.value = ''; }
         if (hpMax) { hpMax.value = ''; }
-        var lowThumb  = panel.querySelector('.dual-range-low');
-        var highThumb = panel.querySelector('.dual-range-high');
-        if (lowThumb)  { lowThumb.value  = lowThumb.min;  }
-        if (highThumb) { highThumb.value = highThumb.max; }
-        var fill = panel.querySelector('.dual-range-fill');
-        if (fill) { fill.style.left = '0%'; fill.style.width = '100%'; }
+
+        var lowThumbs  = panel.querySelectorAll('.dual-range-low');
+        var highThumbs = panel.querySelectorAll('.dual-range-high');
+        Array.prototype.forEach.call(lowThumbs,  function (t) { t.value = t.min; });
+        Array.prototype.forEach.call(highThumbs, function (t) { t.value = t.max; });
+        var fills = panel.querySelectorAll('.dual-range-fill');
+        Array.prototype.forEach.call(fills, function (f) { f.style.left = '0%'; f.style.width = '100%'; })
 
         var consumptionSlider = document.getElementById('panelConsumptionSlider');
         if (consumptionSlider) {

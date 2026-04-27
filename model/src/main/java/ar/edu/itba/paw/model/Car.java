@@ -21,6 +21,7 @@ public class Car implements Serializable {
     private String transmission;
     private BigDecimal fuelConsumption;
     private Integer maxSpeedKmh;
+    private BigDecimal priceUsd;
 
     public Car() {}
 
@@ -33,13 +34,13 @@ public class Car implements Serializable {
                final String bodyType, final String description,
                final LocalDateTime createdAt, final boolean hasImage) {
         this(id, brandId, brandName, model, bodyTypeId, bodyType, description, createdAt, hasImage,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
     }
 
     public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
                final String bodyType, final String description, final LocalDateTime createdAt, final boolean hasImage,
                final String fuelType, final Integer horsepower, final Integer airbagCount, final String transmission,
-               final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+               final BigDecimal fuelConsumption, final Integer maxSpeedKmh, final BigDecimal priceUsd) {
         this.id = id;
         this.brandId = brandId;
         this.brandName = brandName;
@@ -55,6 +56,7 @@ public class Car implements Serializable {
         this.transmission = transmission;
         this.fuelConsumption = fuelConsumption;
         this.maxSpeedKmh = maxSpeedKmh;
+        this.priceUsd = priceUsd;
     }
 
     public long getId() {
@@ -175,5 +177,13 @@ public class Car implements Serializable {
 
     public void setMaxSpeedKmh(final Integer maxSpeedKmh) {
         this.maxSpeedKmh = maxSpeedKmh;
+    }
+
+    public BigDecimal getPriceUsd() {
+        return priceUsd;
+    }
+
+    public void setPriceUsd(final BigDecimal priceUsd) {
+        this.priceUsd = priceUsd;
     }
 }

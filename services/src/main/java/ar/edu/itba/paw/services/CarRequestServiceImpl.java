@@ -70,7 +70,8 @@ public class CarRequestServiceImpl implements CarRequestService {
                                            final String description, final List<CarImagePayload> images,
                                            final String fuelType, final Integer horsepower,
                                            final Integer airbagCount, final String transmission,
-                                           final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                           final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                           final BigDecimal priceUsd) {
         final String normalizedModel = StringUtils.normalizeRequired(model, "Model is required for car requests.");
         final String normalizedDescription = StringUtils.normalizeRequired(description, "Description is required for car requests.");
         final List<CarImagePayload> normalizedImages = ImagePayloadUtils.normalizeImages(images);
@@ -92,7 +93,8 @@ public class CarRequestServiceImpl implements CarRequestService {
                     airbagCount,
                     transmission,
                     fuelConsumption,
-                    maxSpeedKmh
+                    maxSpeedKmh,
+                    priceUsd
             );
             if (!normalizedImages.isEmpty()) {
                 carRequestDao.replaceImages(request.getId(), normalizedImages);
@@ -134,7 +136,8 @@ public class CarRequestServiceImpl implements CarRequestService {
                 request.getAirbagCount(),
                 request.getTransmission(),
                 request.getFuelConsumption(),
-                request.getMaxSpeedKmh()
+                request.getMaxSpeedKmh(),
+                request.getPriceUsd()
         );
     }
 
@@ -146,7 +149,8 @@ public class CarRequestServiceImpl implements CarRequestService {
                                          final Optional<byte[]> imageData,
                                          final String fuelType, final Integer horsepower,
                                          final Integer airbagCount, final String transmission,
-                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                         final BigDecimal priceUsd) {
         final CarRequest request = carRequestDao.findById(id).orElse(null);
         if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
             return false;
@@ -176,7 +180,8 @@ public class CarRequestServiceImpl implements CarRequestService {
                 airbagCount,
                 transmission,
                 fuelConsumption,
-                maxSpeedKmh
+                maxSpeedKmh,
+                priceUsd
         );
         final String contentTypeToPersist = imageContentType.orElse(request.getImageContentType());
         final byte[] imageDataToPersist = imageData.orElse(request.getImageData());

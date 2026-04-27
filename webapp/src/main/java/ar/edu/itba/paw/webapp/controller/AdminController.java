@@ -137,7 +137,8 @@ public class AdminController {
                 carForm.getAirbagCount(),
                 ControllerUtils.normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
-                carForm.getMaxSpeedKmh()
+                carForm.getMaxSpeedKmh(),
+                carForm.getPriceUsd()
         );
 
         if (approved && pendingRequest != null) {
@@ -189,7 +190,8 @@ public class AdminController {
                 carForm.getAirbagCount(),
                 ControllerUtils.normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
-                carForm.getMaxSpeedKmh()
+                carForm.getMaxSpeedKmh(),
+                carForm.getPriceUsd()
         );
         return redirectBackToCatalog(referer);
     }
@@ -316,7 +318,8 @@ public class AdminController {
                 request.getAirbagCount(),
                 request.getTransmission(),
                 request.getFuelConsumption(),
-                request.getMaxSpeedKmh()
+                request.getMaxSpeedKmh(),
+                request.getPriceUsd()
         );
     }
 
@@ -471,13 +474,15 @@ public class AdminController {
         private final String transmission;
         private final BigDecimal fuelConsumption;
         private final Integer maxSpeedKmh;
+        private final BigDecimal priceUsd;
 
         private AdminCarRequestCard(final long id, final String brandName, final String model,
                                     final String bodyTypeName, final String description, final String submitter,
                                     final boolean hasImage, final String imageUrl, final String imageUrls,
                                     final String fuelType, final Integer horsepower,
                                     final Integer airbagCount, final String transmission,
-                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                    final BigDecimal priceUsd) {
             this.id = id;
             this.brandName = brandName;
             this.model = model;
@@ -493,6 +498,7 @@ public class AdminController {
             this.transmission = transmission;
             this.fuelConsumption = fuelConsumption;
             this.maxSpeedKmh = maxSpeedKmh;
+            this.priceUsd = priceUsd;
         }
 
         public long getId() {
@@ -553,6 +559,10 @@ public class AdminController {
 
         public Integer getMaxSpeedKmh() {
             return maxSpeedKmh;
+        }
+
+        public BigDecimal getPriceUsd() {
+            return priceUsd;
         }
     }
 }

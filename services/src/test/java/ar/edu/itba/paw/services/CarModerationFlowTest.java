@@ -58,7 +58,8 @@ class CarModerationFlowTest {
                 8,
                 "automatic",
                 BigDecimal.valueOf(8.2),
-                250
+                250,
+                null
         );
 
         assertEquals(CarRequestService.STATUS_PENDING, request.getStatus());
@@ -93,7 +94,8 @@ class CarModerationFlowTest {
                 8,
                 "automatic",
                 BigDecimal.valueOf(7.9),
-                260
+                260,
+                null
         );
 
         final boolean approved = carRequestService.approvePendingRequest(
@@ -109,7 +111,8 @@ class CarModerationFlowTest {
                 8,
                 "automatic",
                 BigDecimal.valueOf(0.0),
-                280
+                280,
+                null
         );
 
         assertTrue(approved);
@@ -177,7 +180,8 @@ class CarModerationFlowTest {
                 8,
                 "automatic",
                 BigDecimal.valueOf(0.0),
-                280
+                280,
+                null
         );
 
         assertTrue(updated.isPresent());
@@ -220,7 +224,8 @@ class CarModerationFlowTest {
                                                final String description, final List<CarImagePayload> images,
                                                final String fuelType, final Integer horsepower,
                                                final Integer airbagCount, final String transmission,
-                                               final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                               final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                               final BigDecimal priceUsd) {
             created = true;
             final CarImagePayload coverImage = images == null || images.isEmpty() ? null : images.get(0);
             return new CarRequest(
@@ -240,7 +245,8 @@ class CarModerationFlowTest {
                     airbagCount,
                     transmission,
                     fuelConsumption,
-                    maxSpeedKmh
+                    maxSpeedKmh,
+                    priceUsd
             );
         }
 
@@ -266,7 +272,8 @@ class CarModerationFlowTest {
                                              final Optional<byte[]> imageData,
                                              final String fuelType, final Integer horsepower,
                                              final Integer airbagCount, final String transmission,
-                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                             final BigDecimal priceUsd) {
             return false;
         }
 
@@ -308,7 +315,8 @@ class CarModerationFlowTest {
                                  final String model, final String description, final String imageContentType,
                                  final byte[] imageData, final String status, final String fuelType,
                                  final Integer horsepower, final Integer airbagCount, final String transmission,
-                                 final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                 final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                 final BigDecimal priceUsd) {
             request = new CarRequest(
                     20L,
                     submittedByUserId,
@@ -326,7 +334,8 @@ class CarModerationFlowTest {
                     airbagCount,
                     transmission,
                     fuelConsumption,
-                    maxSpeedKmh
+                    maxSpeedKmh,
+                    priceUsd
             );
             return request;
         }
@@ -399,24 +408,25 @@ class CarModerationFlowTest {
         public Car create(final long brandId, final String model, final long bodyTypeId, final String description,
                           final String fuelType, final Integer horsepower, final Integer airbagCount,
                           final String transmission, final BigDecimal fuelConsumption,
-                          final Integer maxSpeedKmh) {
+                          final Integer maxSpeedKmh, final BigDecimal priceUsd) {
             created = true;
             createdBrandId = brandId;
             createdModel = model;
             createdBodyTypeId = bodyTypeId;
             createdDescription = description;
             return new Car(100L, brandId, "Toyota", model, bodyTypeId, "Coupe", description, LocalDateTime.now(),
-                    true, fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh);
+                    true, fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
         }
 
         @Override
         public Optional<Car> update(final long id, final long brandId, final String model, final long bodyTypeId,
                                     final String description, final String fuelType, final Integer horsepower,
                                     final Integer airbagCount, final String transmission,
-                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                    final BigDecimal priceUsd) {
             existingCar = new Car(id, brandId, "Toyota", model, bodyTypeId, "Coupe", description,
                     LocalDateTime.now(), true, fuelType, horsepower, airbagCount, transmission,
-                    fuelConsumption, maxSpeedKmh);
+                    fuelConsumption, maxSpeedKmh, priceUsd);
             return Optional.of(existingCar);
         }
 

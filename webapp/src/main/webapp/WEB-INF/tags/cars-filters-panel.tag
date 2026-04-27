@@ -43,6 +43,36 @@
             <input type="hidden" id="panelFuelType" name="fuelType" value="<c:out value='${criteria.fuelType}'/>">
         </section>
 
+        <%-- Precio 0 km (USD) --%>
+        <section class="filters-panel-section">
+            <h3 class="filters-panel-section-title">Precio 0 km (USD)</h3>
+            <div class="dual-range"
+                 data-range-min="0"
+                 data-range-max="500000"
+                 data-input-low="panelPriceMin"
+                 data-input-high="panelPriceMax">
+                <div class="dual-range-track">
+                    <div class="dual-range-fill" id="panelPriceFill"></div>
+                </div>
+                <input type="range" class="dual-range-thumb dual-range-low"  min="0" max="500000" step="1000"
+                       value="<c:out value='${not empty criteria.priceMin ? criteria.priceMin : 0}'/>">
+                <input type="range" class="dual-range-thumb dual-range-high" min="0" max="500000" step="1000"
+                       value="<c:out value='${not empty criteria.priceMax ? criteria.priceMax : 500000}'/>">
+            </div>
+            <div class="dual-range-inputs">
+                <input type="number" id="panelPriceMin" name="priceMin" class="range-number-input"
+                       min="0" max="500000" placeholder="Mín"
+                       aria-describedby="panelPriceError"
+                       value="<c:out value='${criteria.priceMin}'/>">
+                <span class="range-separator">–</span>
+                <input type="number" id="panelPriceMax" name="priceMax" class="range-number-input"
+                       min="0" max="500000" placeholder="Máx"
+                       aria-describedby="panelPriceError"
+                       value="<c:out value='${criteria.priceMax}'/>">
+            </div>
+            <p id="panelPriceError" class="filters-field-error" hidden></p>
+        </section>
+
         <%-- Caballos de fuerza --%>
         <section class="filters-panel-section">
             <h3 class="filters-panel-section-title">Caballos de fuerza (HP)</h3>

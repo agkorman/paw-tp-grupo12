@@ -336,7 +336,7 @@ class UserServiceImplTest {
                                  final byte[] imageData, final String status,
                                  final String fuelType, final Integer horsepower, final Integer airbagCount,
                                  final String transmission, final java.math.BigDecimal fuelConsumption,
-                                 final Integer maxSpeedKmh) {
+                                 final Integer maxSpeedKmh, final java.math.BigDecimal priceUsd) {
             throw new UnsupportedOperationException();
         }
 

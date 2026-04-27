@@ -316,6 +316,7 @@ ALTER TABLE cars ADD COLUMN IF NOT EXISTS airbag_count     INT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS transmission     VARCHAR(20);
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS fuel_consumption NUMERIC(4,1);
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS max_speed_kmh    INT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS price_usd        NUMERIC(12,2);
 
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS fuel_type        VARCHAR(20);
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS horsepower       INT;
@@ -323,6 +324,17 @@ ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS airbag_count     INT;
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS transmission     VARCHAR(20);
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS fuel_consumption NUMERIC(4,1);
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS max_speed_kmh    INT;
+ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS price_usd        NUMERIC(12,2);
+
+ALTER TABLE cars DROP CONSTRAINT IF EXISTS chk_cars_price_usd;
+ALTER TABLE cars
+    ADD CONSTRAINT chk_cars_price_usd
+    CHECK (price_usd IS NULL OR price_usd > 0);
+
+ALTER TABLE car_requests DROP CONSTRAINT IF EXISTS chk_car_requests_price_usd;
+ALTER TABLE car_requests
+    ADD CONSTRAINT chk_car_requests_price_usd
+    CHECK (price_usd IS NULL OR price_usd > 0);
 
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS chk_cars_fuel_type;
 ALTER TABLE cars
@@ -438,32 +450,32 @@ FROM brands b, body_types bt WHERE b.name = 'Audi' AND bt.name = 'Estate'
 ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
 -- Populate spec fields for seed cars (idempotent UPDATEs)
-UPDATE cars SET fuel_type='combustion', horsepower=382, airbag_count=8,  transmission='automatic', fuel_consumption=9.8,  max_speed_kmh=250
+UPDATE cars SET fuel_type='combustion', horsepower=382, airbag_count=8,  transmission='automatic', fuel_consumption=9.8,  max_speed_kmh=250, price_usd=51290
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Toyota'    AND c.model='GR Supra');
 
-UPDATE cars SET fuel_type='combustion', horsepower=450, airbag_count=6,  transmission='automatic', fuel_consumption=12.4, max_speed_kmh=250
+UPDATE cars SET fuel_type='combustion', horsepower=450, airbag_count=6,  transmission='automatic', fuel_consumption=12.4, max_speed_kmh=250, price_usd=42995
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Ford'      AND c.model='Mustang');
 
-UPDATE cars SET fuel_type='combustion', horsepower=184, airbag_count=6,  transmission='manual',    fuel_consumption=7.4,  max_speed_kmh=214
+UPDATE cars SET fuel_type='combustion', horsepower=184, airbag_count=6,  transmission='manual',    fuel_consumption=7.4,  max_speed_kmh=214, price_usd=28050
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Mazda'     AND c.model='MX-5 Miata');
 
-UPDATE cars SET fuel_type='combustion', horsepower=503, airbag_count=10, transmission='automatic', fuel_consumption=10.5, max_speed_kmh=290
+UPDATE cars SET fuel_type='combustion', horsepower=503, airbag_count=10, transmission='automatic', fuel_consumption=10.5, max_speed_kmh=290, price_usd=76900
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='BMW'       AND c.model='M3');
 
-UPDATE cars SET fuel_type='combustion', horsepower=385, airbag_count=8,  transmission='automatic', fuel_consumption=10.2, max_speed_kmh=293
+UPDATE cars SET fuel_type='combustion', horsepower=385, airbag_count=8,  transmission='automatic', fuel_consumption=10.2, max_speed_kmh=293, price_usd=106100
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Porsche'   AND c.model='911');
 
-UPDATE cars SET fuel_type='combustion', horsepower=330, airbag_count=6,  transmission='manual',    fuel_consumption=8.9,  max_speed_kmh=272
+UPDATE cars SET fuel_type='combustion', horsepower=330, airbag_count=6,  transmission='manual',    fuel_consumption=8.9,  max_speed_kmh=272, price_usd=42895
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Honda'     AND c.model='Civic Type R');
 
-UPDATE cars SET fuel_type='combustion', horsepower=305, airbag_count=6,  transmission='manual',    fuel_consumption=10.7, max_speed_kmh=255
+UPDATE cars SET fuel_type='combustion', horsepower=305, airbag_count=6,  transmission='manual',    fuel_consumption=10.7, max_speed_kmh=255, price_usd=39995
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Subaru'    AND c.model='WRX STI');
 
-UPDATE cars SET fuel_type='combustion', horsepower=570, airbag_count=6,  transmission='automatic', fuel_consumption=12.4, max_speed_kmh=315
+UPDATE cars SET fuel_type='combustion', horsepower=570, airbag_count=6,  transmission='automatic', fuel_consumption=12.4, max_speed_kmh=315, price_usd=113540
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Nissan'    AND c.model='GT-R');
 
-UPDATE cars SET fuel_type='combustion', horsepower=650, airbag_count=6,  transmission='automatic', fuel_consumption=14.7, max_speed_kmh=290
+UPDATE cars SET fuel_type='combustion', horsepower=650, airbag_count=6,  transmission='automatic', fuel_consumption=14.7, max_speed_kmh=290, price_usd=62995
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Chevrolet' AND c.model='Camaro');
 
-UPDATE cars SET fuel_type='hybrid',     horsepower=600, airbag_count=10, transmission='automatic', fuel_consumption=11.5, max_speed_kmh=280
+UPDATE cars SET fuel_type='hybrid',     horsepower=600, airbag_count=10, transmission='automatic', fuel_consumption=11.5, max_speed_kmh=280, price_usd=118600
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Audi'      AND c.model='RS6 Avant');

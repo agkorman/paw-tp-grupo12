@@ -221,7 +221,8 @@ public class CarController {
                 carForm.getAirbagCount(),
                 ControllerUtils.normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
-                carForm.getMaxSpeedKmh()
+                carForm.getMaxSpeedKmh(),
+                carForm.getPriceUsd()
         );
         emailService.sendNewCarRequestNotification(carRequest, resolvedBrand.getName(), resolvedBodyType.getName());
 
@@ -275,6 +276,7 @@ public class CarController {
         model.addAttribute("showConsumption", criteria.getFuelConsumptionMax() != null);
         model.addAttribute("showAirbags", criteria.getAirbagMin() != null);
         model.addAttribute("showFuelType", criteria.getFuelTypes().size() > 1);
+        model.addAttribute("showPrice", criteria.getPriceMin() != null || criteria.getPriceMax() != null);
     }
 
     private void addShowSpecFlags(final ModelAndView mav, final CarSearchCriteria criteria) {
@@ -283,6 +285,7 @@ public class CarController {
         mav.addObject("showConsumption", criteria.getFuelConsumptionMax() != null);
         mav.addObject("showAirbags", criteria.getAirbagMin() != null);
         mav.addObject("showFuelType", criteria.getFuelTypes().size() > 1);
+        mav.addObject("showPrice", criteria.getPriceMin() != null || criteria.getPriceMax() != null);
     }
 
     private Map<Long, Boolean> favoritedCarIdsById(final List<Car> cars, final AuthenticatedUser currentUser) {

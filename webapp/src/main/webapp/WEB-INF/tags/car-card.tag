@@ -18,11 +18,13 @@
 <%@ attribute name="airbagCount" required="false" %>
 <%@ attribute name="transmission" required="false" %>
 <%@ attribute name="fuelType" required="false" %>
+<%@ attribute name="priceUsd" required="false" %>
 <%@ attribute name="showHp" required="false" %>
 <%@ attribute name="showSpeed" required="false" %>
 <%@ attribute name="showConsumption" required="false" %>
 <%@ attribute name="showAirbags" required="false" %>
 <%@ attribute name="showFuelType" required="false" %>
+<%@ attribute name="showPrice" required="false" %>
 <%@ attribute name="openModal" required="false" %>
 <%@ attribute name="requestId" required="false" %>
 <%@ attribute name="requestBrand" required="false" %>
@@ -37,9 +39,10 @@
 <%@ attribute name="requestTransmission" required="false" %>
 <%@ attribute name="requestFuelConsumption" required="false" %>
 <%@ attribute name="requestMaxSpeedKmh" required="false" %>
-<%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="c"   uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn"  uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="pa"  tagdir="/WEB-INF/tags" %>
 
 <c:set var="modalImageUrl" value=""/>
 <c:if test="${not empty imageUrl}">
@@ -109,7 +112,7 @@
                 <div class="card-title-row">
                     <span class="card-title"><c:out value="${model}"/></span>
                 </div>
-                <c:if test="${showHp eq 'true' or showSpeed eq 'true' or showConsumption eq 'true' or showAirbags eq 'true' or showFuelType eq 'true'}">
+                <c:if test="${showHp eq 'true' or showSpeed eq 'true' or showConsumption eq 'true' or showAirbags eq 'true' or showFuelType eq 'true' or showPrice eq 'true'}">
                 <div class="card-spec-tags">
                     <c:if test="${showHp eq 'true'}">
                         <span class="card-spec-tag">
@@ -168,6 +171,17 @@
                                 <c:when test="${fuelType eq 'electric'}">Eléctrico</c:when>
                                 <c:when test="${fuelType eq 'combustion'}">Combustión</c:when>
                                 <c:otherwise>--</c:otherwise>
+                            </c:choose>
+                        </span>
+                    </c:if>
+                    <c:if test="${showPrice eq 'true'}">
+                        <span class="card-spec-tag">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                            <c:choose>
+                                <c:when test="${not empty priceUsd}">USD <fmt:formatNumber value="${priceUsd}" groupingUsed="true" maxFractionDigits="0"/></c:when>
+                                <c:otherwise>-- USD</c:otherwise>
                             </c:choose>
                         </span>
                     </c:if>

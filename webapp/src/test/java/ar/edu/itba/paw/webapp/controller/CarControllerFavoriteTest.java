@@ -177,7 +177,7 @@ public class CarControllerFavoriteTest {
                                              final List<CarImagePayload> images, final String fuelType,
                                              final Integer horsepower, final Integer airbagCount,
                                              final String transmission, final BigDecimal fuelConsumption,
-                                             final Integer maxSpeedKmh) {
+                                             final Integer maxSpeedKmh, final BigDecimal priceUsd) {
             throw new UnsupportedOperationException();
         }
 
@@ -188,7 +188,7 @@ public class CarControllerFavoriteTest {
                                        final Optional<byte[]> imageData, final String fuelType,
                                        final Integer horsepower, final Integer airbagCount,
                                        final String transmission, final BigDecimal fuelConsumption,
-                                       final Integer maxSpeedKmh) {
+                                       final Integer maxSpeedKmh, final BigDecimal priceUsd) {
             return Optional.empty();
         }
 

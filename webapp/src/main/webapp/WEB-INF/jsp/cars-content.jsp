@@ -12,6 +12,7 @@
         showConsumption="${showConsumption}"
         showAirbags="${showAirbags}"
         showFuelType="${showFuelType}"
+        showPrice="${showPrice}"
         currentPage="${currentPage}"
         totalPages="${totalPages}"
         criteria="${criteria}"/>

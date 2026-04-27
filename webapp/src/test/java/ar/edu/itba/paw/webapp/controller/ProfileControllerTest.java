@@ -403,7 +403,7 @@ public class ProfileControllerTest {
                                              final String fuelType, final Integer horsepower,
                                              final Integer airbagCount, final String transmission,
                                              final java.math.BigDecimal fuelConsumption,
-                                             final Integer maxSpeedKmh) {
+                                             final Integer maxSpeedKmh, final java.math.BigDecimal priceUsd) {
             throw new UnsupportedOperationException();
         }
 
@@ -415,7 +415,7 @@ public class ProfileControllerTest {
                                        final String fuelType, final Integer horsepower,
                                        final Integer airbagCount, final String transmission,
                                        final java.math.BigDecimal fuelConsumption,
-                                       final Integer maxSpeedKmh) {
+                                       final Integer maxSpeedKmh, final java.math.BigDecimal priceUsd) {
             return Optional.empty();
         }
 
