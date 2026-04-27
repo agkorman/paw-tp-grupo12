@@ -124,7 +124,23 @@
     var updateConsumptionDisplay = initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', 'Hasta', 'L/100km');
     var updateSpeedDisplay       = initSingleRange('panelMaxSpeedSlider',    'panelMaxSpeedDisplay',    'Desde', 'km/h');
 
-    /* ── DUAL-RANGE SLIDER (HP) ── */
+    /* ── DUAL-RANGE SLIDER ── */
+
+    function logPosToValue(pos, sliderMax, realMax) {
+        if (pos <= 0) return 0;
+        if (pos >= sliderMax) return realMax;
+        // Map slider position to real value on a log scale (minimum anchor: 1000)
+        var minAnchor = 1000;
+        var raw = minAnchor * Math.pow(realMax / minAnchor, pos / sliderMax);
+        return Math.round(raw / 1000) * 1000;
+    }
+
+    function logValueToPos(value, sliderMax, realMax) {
+        if (value <= 0) return 0;
+        if (value >= realMax) return sliderMax;
+        var minAnchor = 1000;
+        return Math.round(Math.log(value / minAnchor) / Math.log(realMax / minAnchor) * sliderMax);
+    }
 
     var dualRanges = panel.querySelectorAll('.dual-range');
     Array.prototype.forEach.call(dualRanges, function (container) {
@@ -138,8 +154,17 @@
 
         if (!lowThumb || !highThumb) { return; }
 
-        var min = parseFloat(container.getAttribute('data-range-min') || 0);
-        var max = parseFloat(container.getAttribute('data-range-max') || 1500);
+        var isLog   = container.getAttribute('data-scale') === 'log';
+        var min     = parseFloat(container.getAttribute('data-range-min') || 0);
+        var max     = parseFloat(container.getAttribute('data-range-max') || 1500);
+        var realMax = isLog ? parseFloat(container.getAttribute('data-real-max') || max) : max;
+
+        function posToValue(pos) {
+            return isLog ? logPosToValue(pos, max, realMax) : pos;
+        }
+        function valueToPos(value) {
+            return isLog ? logValueToPos(value, max, realMax) : value;
+        }
 
         function updateFill() {
             var low  = parseFloat(lowThumb.value);
@@ -160,27 +185,47 @@
 
         lowThumb.addEventListener('input', function () {
             clamp(); updateFill();
-            if (lowInput) { lowInput.value = parseFloat(lowThumb.value) === min ? '' : lowThumb.value; }
+            var realValue = posToValue(parseFloat(lowThumb.value));
+            if (lowInput) { lowInput.value = realValue === 0 ? '' : realValue; }
         });
 
         highThumb.addEventListener('input', function () {
             clamp(); updateFill();
-            if (highInput) { highInput.value = parseFloat(highThumb.value) === max ? '' : highThumb.value; }
+            var realValue = posToValue(parseFloat(highThumb.value));
+            if (highInput) { highInput.value = realValue === realMax ? '' : realValue; }
         });
 
         if (lowInput) {
             lowInput.addEventListener('change', function () {
                 var v = parseFloat(lowInput.value);
-                if (!isNaN(v)) { lowThumb.value = Math.min(Math.max(v, min), parseFloat(highThumb.value)); updateFill(); }
+                if (!isNaN(v)) {
+                    var pos = valueToPos(v);
+                    lowThumb.value = Math.min(Math.max(pos, min), parseFloat(highThumb.value));
+                    updateFill();
+                }
                 clearValidationErrors();
             });
         }
         if (highInput) {
             highInput.addEventListener('change', function () {
                 var v = parseFloat(highInput.value);
-                if (!isNaN(v)) { highThumb.value = Math.max(Math.min(v, max), parseFloat(lowThumb.value)); updateFill(); }
+                if (!isNaN(v)) {
+                    var pos = valueToPos(v);
+                    highThumb.value = Math.max(Math.min(pos, max), parseFloat(lowThumb.value));
+                    updateFill();
+                }
                 clearValidationErrors();
             });
+        }
+
+        // Initialize slider positions from existing number input values (needed for log scale)
+        if (isLog) {
+            if (lowInput && lowInput.value !== '') {
+                lowThumb.value = valueToPos(parseFloat(lowInput.value));
+            }
+            if (highInput && highInput.value !== '') {
+                highThumb.value = valueToPos(parseFloat(highInput.value));
+            }
         }
 
         updateFill();

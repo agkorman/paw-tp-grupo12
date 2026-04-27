@@ -48,25 +48,28 @@
             <h3 class="filters-panel-section-title">Precio 0 km (USD)</h3>
             <div class="dual-range"
                  data-range-min="0"
-                 data-range-max="500000"
+                 data-range-max="1000"
+                 data-real-min="0"
+                 data-real-max="5000000"
+                 data-scale="log"
                  data-input-low="panelPriceMin"
                  data-input-high="panelPriceMax">
                 <div class="dual-range-track">
                     <div class="dual-range-fill" id="panelPriceFill"></div>
                 </div>
-                <input type="range" class="dual-range-thumb dual-range-low"  min="0" max="500000" step="1000"
-                       value="<c:out value='${not empty criteria.priceMin ? criteria.priceMin : 0}'/>">
-                <input type="range" class="dual-range-thumb dual-range-high" min="0" max="500000" step="1000"
-                       value="<c:out value='${not empty criteria.priceMax ? criteria.priceMax : 500000}'/>">
+                <input type="range" class="dual-range-thumb dual-range-low"  min="0" max="1000" step="1"
+                       value="0">
+                <input type="range" class="dual-range-thumb dual-range-high" min="0" max="1000" step="1"
+                       value="1000">
             </div>
             <div class="dual-range-inputs">
                 <input type="number" id="panelPriceMin" name="priceMin" class="range-number-input"
-                       min="0" max="500000" placeholder="Mín"
+                       min="0" max="10000000" placeholder="Mín"
                        aria-describedby="panelPriceError"
                        value="<c:out value='${criteria.priceMin}'/>">
                 <span class="range-separator">–</span>
                 <input type="number" id="panelPriceMax" name="priceMax" class="range-number-input"
-                       min="0" max="500000" placeholder="Máx"
+                       min="0" max="10000000" placeholder="Máx"
                        aria-describedby="panelPriceError"
                        value="<c:out value='${criteria.priceMax}'/>">
             </div>
