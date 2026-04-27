@@ -1,6 +1,10 @@
 package ar.edu.itba.paw.model;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -8,7 +12,7 @@ public class CarSearchCriteria {
 
     public static final Set<String> ALLOWED_FUEL_TYPES = Set.of("combustion", "hybrid", "electric");
     public static final Set<String> ALLOWED_TRANSMISSIONS = Set.of("manual", "automatic");
-    public static final Set<String> ALLOWED_SORT_BY = Set.of("name_asc", "name_desc", "hp_desc", "hp_asc", "speed_desc", "consumption_asc");
+    public static final Set<String> ALLOWED_SORT_BY = Set.of("name_asc", "hp_desc", "hp_asc", "speed_desc", "consumption_asc");
     private static final Set<Integer> ALLOWED_AIRBAG_MIN_VALUES = Set.of(2, 4, 6, 8, 10);
     private static final int HORSEPOWER_MIN_BOUND = 0;
     private static final int HORSEPOWER_MAX_BOUND = 1500;
@@ -20,7 +24,7 @@ public class CarSearchCriteria {
     private String q;
     private String brand;
     private String bodyType;
-    private String fuelType;
+    private List<String> fuelTypes = new ArrayList<>();
     private Integer horsepowerMin;
     private Integer horsepowerMax;
     private Integer airbagMin;
@@ -33,7 +37,7 @@ public class CarSearchCriteria {
     public CarSearchCriteria() {}
 
     public boolean hasAdvancedFilters() {
-        return fuelType != null && !fuelType.isEmpty()
+        return !fuelTypes.isEmpty()
                 || horsepowerMin != null
                 || horsepowerMax != null
                 || airbagMin != null
@@ -43,7 +47,7 @@ public class CarSearchCriteria {
     }
 
     public boolean isValid() {
-        if (fuelType != null && !ALLOWED_FUEL_TYPES.contains(fuelType)) {
+        if (!ALLOWED_FUEL_TYPES.containsAll(fuelTypes)) {
             return false;
         }
         if (transmission != null && !ALLOWED_TRANSMISSIONS.contains(transmission)) {
@@ -103,11 +107,55 @@ public class CarSearchCriteria {
     }
 
     public String getFuelType() {
-        return fuelType;
+        return fuelTypes.isEmpty() ? null : String.join(",", fuelTypes);
     }
 
     public void setFuelType(final String fuelType) {
-        this.fuelType = fuelType == null || fuelType.trim().isEmpty() ? null : fuelType.trim().toLowerCase(Locale.ROOT);
+        fuelTypes = new ArrayList<>();
+        if (fuelType == null || fuelType.trim().isEmpty()) {
+            return;
+        }
+        for (final String value : fuelType.split(",")) {
+            final String normalized = normalizeFuelType(value);
+            if (normalized != null && !fuelTypes.contains(normalized)) {
+                fuelTypes.add(normalized);
+            }
+        }
+    }
+
+    public List<String> getFuelTypes() {
+        return Collections.unmodifiableList(fuelTypes);
+    }
+
+    public void setFuelTypes(final List<String> fuelTypes) {
+        this.fuelTypes = normalizeFuelTypes(fuelTypes);
+    }
+
+    public void setFuelTypes(final String[] fuelTypes) {
+        this.fuelTypes = normalizeFuelTypes(fuelTypes == null ? null : Arrays.asList(fuelTypes));
+    }
+
+    private List<String> normalizeFuelTypes(final List<String> values) {
+        final List<String> normalizedValues = new ArrayList<>();
+        if (values == null) {
+            return normalizedValues;
+        }
+        for (final String value : values) {
+            if (value == null) {
+                continue;
+            }
+            for (final String part : value.split(",")) {
+                final String normalized = normalizeFuelType(part);
+                if (normalized != null && !normalizedValues.contains(normalized)) {
+                    normalizedValues.add(normalized);
+                }
+            }
+        }
+        return normalizedValues;
+    }
+
+    private String normalizeFuelType(final String fuelType) {
+        return fuelType == null || fuelType.trim().isEmpty() ? null : fuelType.trim().toLowerCase(Locale.ROOT);
     }
 
     public Integer getHorsepowerMin() {
@@ -163,7 +211,11 @@ public class CarSearchCriteria {
     }
 
     public void setSortBy(final String sortBy) {
-        this.sortBy = sortBy;
+        if (sortBy == null || sortBy.trim().isEmpty() || "name_desc".equals(sortBy.trim())) {
+            this.sortBy = null;
+        } else {
+            this.sortBy = sortBy.trim();
+        }
     }
 
     public Integer getPage() {

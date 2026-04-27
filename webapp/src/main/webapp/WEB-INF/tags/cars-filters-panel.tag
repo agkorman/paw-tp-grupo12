@@ -2,6 +2,7 @@
 <%@ attribute name="criteria" required="true" type="ar.edu.itba.paw.model.CarSearchCriteria" %>
 <%@ attribute name="vehicleCount" required="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <div id="carsFiltersOverlay" class="cars-filters-overlay" data-close-filters-panel></div>
 
 <aside id="carsFiltersPanel"
@@ -34,11 +35,10 @@
         <%-- Motorización — segmented control --%>
         <section class="filters-panel-section">
             <h3 class="filters-panel-section-title">Motorización</h3>
-            <div class="segmented-control filter-segmented" data-filter-target="panelFuelType">
-                <button type="button" class="segmented-control-option filter-segment-option${empty criteria.fuelType ? ' is-selected' : ''}" data-value="">Todos</button>
-                <button type="button" class="segmented-control-option filter-segment-option${'combustion' eq criteria.fuelType ? ' is-selected' : ''}" data-value="combustion">Combustión</button>
-                <button type="button" class="segmented-control-option filter-segment-option${'hybrid' eq criteria.fuelType ? ' is-selected' : ''}" data-value="hybrid">Híbrido</button>
-                <button type="button" class="segmented-control-option filter-segment-option${'electric' eq criteria.fuelType ? ' is-selected' : ''}" data-value="electric">Eléctrico</button>
+            <div class="segmented-control filter-segmented" data-filter-target="panelFuelType" data-filter-multiple="true">
+                <button type="button" class="segmented-control-option filter-segment-option${fn:contains(criteria.fuelType, 'combustion') ? ' is-selected' : ''}" data-value="combustion">Combustión</button>
+                <button type="button" class="segmented-control-option filter-segment-option${fn:contains(criteria.fuelType, 'hybrid') ? ' is-selected' : ''}" data-value="hybrid">Híbrido</button>
+                <button type="button" class="segmented-control-option filter-segment-option${fn:contains(criteria.fuelType, 'electric') ? ' is-selected' : ''}" data-value="electric">Eléctrico</button>
             </div>
             <input type="hidden" id="panelFuelType" name="fuelType" value="<c:out value='${criteria.fuelType}'/>">
         </section>

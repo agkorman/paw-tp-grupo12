@@ -7,7 +7,6 @@
 <%@ attribute name="showSpeed" required="false" %>
 <%@ attribute name="showConsumption" required="false" %>
 <%@ attribute name="showAirbags" required="false" %>
-<%@ attribute name="showTransmission" required="false" %>
 <%@ attribute name="showFuelType" required="false" %>
 <%@ attribute name="currentPage" required="false" type="java.lang.Integer" %>
 <%@ attribute name="totalPages" required="false" type="java.lang.Integer" %>
@@ -45,7 +44,6 @@
                     showSpeed="${showSpeed}"
                     showConsumption="${showConsumption}"
                     showAirbags="${showAirbags}"
-                    showTransmission="${showTransmission}"
                     showFuelType="${showFuelType}"/>
             </c:forEach>
 
