@@ -167,15 +167,15 @@
                         <label>Motorización</label>
                         <div class="segmented-control segmented-control-radio-group">
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="fuelType" value="combustion" required="required"/>
+                                <input type="radio" name="fuelType" value="combustion" required="required" <c:if test="${empty carForm.fuelType or carForm.fuelType eq 'combustion'}">checked="checked"</c:if>/>
                                 <span>Combustión</span>
                             </label>
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="fuelType" value="hybrid"/>
+                                <input type="radio" name="fuelType" value="hybrid" <c:if test="${carForm.fuelType eq 'hybrid'}">checked="checked"</c:if>/>
                                 <span>Híbrido</span>
                             </label>
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="fuelType" value="electric"/>
+                                <input type="radio" name="fuelType" value="electric" <c:if test="${carForm.fuelType eq 'electric'}">checked="checked"</c:if>/>
                                 <span>Eléctrico</span>
                             </label>
                         </div>
@@ -186,11 +186,11 @@
                         <label>Transmisión</label>
                         <div class="segmented-control segmented-control-radio-group">
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="transmission" value="manual" required="required"/>
+                                <input type="radio" name="transmission" value="manual" required="required" <c:if test="${empty carForm.transmission or carForm.transmission eq 'manual'}">checked="checked"</c:if>/>
                                 <span>Manual</span>
                             </label>
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="transmission" value="automatic"/>
+                                <input type="radio" name="transmission" value="automatic" <c:if test="${carForm.transmission eq 'automatic'}">checked="checked"</c:if>/>
                                 <span>Automática</span>
                             </label>
                         </div>

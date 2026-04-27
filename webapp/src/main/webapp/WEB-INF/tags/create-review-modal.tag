@@ -111,15 +111,15 @@
                     <label>¿Lo recomendarías?</label>
                     <div class="toggle-group">
                         <label class="toggle-option">
-                            <form:radiobutton path="wouldRecommend" value=""/>
+                            <input type="radio" name="wouldRecommend" value="" <c:if test="${empty reviewForm.wouldRecommend}">checked="checked"</c:if>/>
                             <span>No especificado</span>
                         </label>
                         <label class="toggle-option toggle-option--yes">
-                            <form:radiobutton path="wouldRecommend" value="true"/>
+                            <input type="radio" name="wouldRecommend" value="true" <c:if test="${reviewForm.wouldRecommend eq true}">checked="checked"</c:if>/>
                             <span>Sí</span>
                         </label>
                         <label class="toggle-option toggle-option--no">
-                            <form:radiobutton path="wouldRecommend" value="false"/>
+                            <input type="radio" name="wouldRecommend" value="false" <c:if test="${reviewForm.wouldRecommend eq false}">checked="checked"</c:if>/>
                             <span>No</span>
                         </label>
                     </div>
