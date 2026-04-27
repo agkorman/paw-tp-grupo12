@@ -172,7 +172,7 @@ public class CarControllerFavoriteTest {
 
         @Override
         public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                             final long submittedByUserId, final String submitterEmail,
+                                             final Integer year, final long submittedByUserId, final String submitterEmail,
                                              final Optional<String> description,
                                              final List<CarImagePayload> images, final String fuelType,
                                              final Integer horsepower, final Integer airbagCount,
@@ -183,7 +183,7 @@ public class CarControllerFavoriteTest {
 
         @Override
         public Optional<Car> updateCar(final long id, final long brandId, final String model,
-                                       final long bodyTypeId, final String description,
+                                       final long bodyTypeId, final Integer year, final String description,
                                        final Optional<String> imageContentType,
                                        final Optional<byte[]> imageData, final String fuelType,
                                        final Integer horsepower, final Integer airbagCount,

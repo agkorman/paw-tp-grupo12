@@ -23,7 +23,9 @@
         <section class="review-hero">
             <div class="review-hero-inner">
                 <div>
-                    <h1><c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/></h1>
+                    <h1>
+                        <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/>
+                    </h1>
                     <p class="subtitle">Datos sobre el vehículo y reseñas de los propietarios</p>
                 </div>
                 <div class="review-hero-actions">
@@ -52,6 +54,7 @@
                                     data-car-id="${fn:escapeXml(selectedCar.id)}"
                                     data-car-brand="${fn:escapeXml(selectedCar.brandName)}"
                                     data-car-model="${fn:escapeXml(selectedCar.model)}"
+                                    data-car-year="${fn:escapeXml(selectedCar.year)}"
                                     data-car-body-type="${fn:escapeXml(selectedCar.bodyType)}"
                                     data-car-description="${fn:escapeXml(selectedCar.description)}"
                                     data-car-fuel-type="${fn:escapeXml(selectedCar.fuelType)}"
@@ -68,13 +71,32 @@
                                     class="action-menu-danger"
                                     data-open-delete-car-modal
                                     data-car-delete-action="${fn:escapeXml(selectedCarDeleteUrl)}"
-                                    data-car-title="${fn:escapeXml(selectedCar.brandName)} ${fn:escapeXml(selectedCar.model)}">
+                                    data-car-title="${fn:escapeXml(selectedCar.brandName)} ${fn:escapeXml(selectedCar.model)}${not empty selectedCar.year ? ' ' : ''}${fn:escapeXml(selectedCar.year)}">
                                 Eliminar
                             </button>
                         </pa:action-menu>
                     </sec:authorize>
                 </div>
             </div>
+            <c:if test="${fn:length(yearVariants) gt 1}">
+                <nav class="car-year-switcher" aria-label="Años disponibles">
+                    <div class="car-year-switcher-track">
+                        <c:forEach var="yearVariant" items="${yearVariants}">
+                            <c:url var="yearVariantUrl" value="/reviews">
+                                <c:param name="carId" value="${yearVariant.carId}"/>
+                            </c:url>
+                            <a class="car-year-pill${yearVariant.selected ? ' is-active' : ''}"
+                               href="${yearVariantUrl}"
+                               <c:if test="${yearVariant.selected}">aria-current="page"</c:if>>
+                                <c:choose>
+                                    <c:when test="${not empty yearVariant.year}"><c:out value="${yearVariant.year}"/></c:when>
+                                    <c:otherwise>Sin año</c:otherwise>
+                                </c:choose>
+                            </a>
+                        </c:forEach>
+                    </div>
+                </nav>
+            </c:if>
         </section>
 
         <section class="review-layout review-detail-layout">

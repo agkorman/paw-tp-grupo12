@@ -32,14 +32,14 @@ public interface CarService {
 
     void saveCarImages(long carId, List<CarImagePayload> images);
 
-    CarRequest requestCarCreation(long brandId, String model, long bodyTypeId, long submittedByUserId,
+    CarRequest requestCarCreation(long brandId, String model, long bodyTypeId, Integer year, long submittedByUserId,
                                   String submitterEmail, Optional<String> description,
                                   List<CarImagePayload> images,
                                   String fuelType, Integer horsepower, Integer airbagCount,
                                   String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
                                   BigDecimal priceUsd);
 
-    Optional<Car> updateCar(long id, long brandId, String model, long bodyTypeId, String description,
+    Optional<Car> updateCar(long id, long brandId, String model, long bodyTypeId, Integer year, String description,
                             Optional<String> imageContentType, Optional<byte[]> imageData,
                             String fuelType, Integer horsepower, Integer airbagCount,
                             String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,

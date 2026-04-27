@@ -259,12 +259,12 @@
 
     var PANEL_PARAM_KEYS = [
         'q', 'brand', 'bodyType',
-        'priceMin', 'priceMax',
+        'year', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
         'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
     ];
     var ADVANCED_PANEL_PARAM_KEYS = [
-        'priceMin', 'priceMax',
+        'year', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
         'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
     ];
@@ -381,6 +381,10 @@
             showPanelValidationError('Elegí una cantidad de airbags válida.');
             return false;
         }
+        if (!isValidNumberParam(panelParams.year, 1886, 2100)) {
+            showPanelValidationError('Usá un año entre 1886 y 2100.');
+            return false;
+        }
 
         if (!isValidNumberParam(panelParams.horsepowerMin, 0, 1500)
                 || !isValidNumberParam(panelParams.horsepowerMax, 0, 1500)) {
@@ -487,6 +491,9 @@
         var priceMax = document.getElementById('panelPriceMax');
         if (priceMin) { priceMin.value = ''; }
         if (priceMax) { priceMax.value = ''; }
+
+        var year = document.getElementById('panelYear');
+        if (year) { year.value = ''; }
 
         var hpMin = document.getElementById('panelHpMin');
         var hpMax = document.getElementById('panelHpMax');

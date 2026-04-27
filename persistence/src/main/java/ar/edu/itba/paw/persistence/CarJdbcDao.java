@@ -37,7 +37,7 @@ public class CarJdbcDao implements CarDao {
 
     private static final String SELECT_COLUMNS =
             "SELECT c.car_id, c.brand_id, b.name AS brand_name, c.model, c.body_type_id, bt.name AS body_type, "
-                    + "c.description, c.created_at, "
+                    + "c.year, c.description, c.created_at, "
                     + "EXISTS (SELECT 1 FROM car_images ci WHERE ci.car_id = c.car_id) AS has_image, "
                     + "c.fuel_type, c.horsepower, c.airbag_count, c.transmission, c.fuel_consumption, c.max_speed_kmh, c.price_usd ";
 
@@ -51,6 +51,7 @@ public class CarJdbcDao implements CarDao {
             rs.getString("brand_name"),
             rs.getString("model"),
             rs.getLong("body_type_id"),
+            rs.getObject("year", Integer.class),
             rs.getString("body_type"),
             rs.getString("description"),
             rs.getTimestamp("created_at").toLocalDateTime(),
@@ -71,7 +72,7 @@ public class CarJdbcDao implements CarDao {
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("cars")
                 .usingGeneratedKeyColumns("car_id")
-                .usingColumns("brand_id", "model", "body_type_id", "description",
+                .usingColumns("brand_id", "model", "body_type_id", "year", "description",
                         "fuel_type", "horsepower", "airbag_count", "transmission",
                         "fuel_consumption", "max_speed_kmh", "price_usd");
     }
@@ -113,7 +114,8 @@ public class CarJdbcDao implements CarDao {
     }
 
     @Override
-    public Car create(final long brandId, final String model, final long bodyTypeId, final String description,
+    public Car create(final long brandId, final String model, final long bodyTypeId, final Integer year,
+                      final String description,
                       final String fuelType, final Integer horsepower, final Integer airbagCount,
                       final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
                       final BigDecimal priceUsd) {
@@ -121,6 +123,7 @@ public class CarJdbcDao implements CarDao {
         params.put("brand_id", brandId);
         params.put("model", model);
         params.put("body_type_id", bodyTypeId);
+        params.put("year", year);
         params.put("description", description);
         params.put("fuel_type", fuelType);
         params.put("horsepower", horsepower);
@@ -210,6 +213,11 @@ public class CarJdbcDao implements CarDao {
             params.addValue("fuelTypes", criteria.getFuelTypes());
             hasWhere = true;
         }
+        if (criteria.getYear() != null) {
+            sql.append(hasWhere ? "AND " : "WHERE ").append("c.year = :year ");
+            params.addValue("year", criteria.getYear());
+            hasWhere = true;
+        }
         if (criteria.getHorsepowerMin() != null) {
             sql.append(hasWhere ? "AND " : "WHERE ").append("c.horsepower >= :horsepowerMin ");
             params.addValue("horsepowerMin", criteria.getHorsepowerMin());
@@ -279,15 +287,15 @@ public class CarJdbcDao implements CarDao {
 
     @Override
     public Optional<Car> update(final long id, final long brandId, final String model,
-                                final long bodyTypeId, final String description,
+                                final long bodyTypeId, final Integer year, final String description,
                                 final String fuelType, final Integer horsepower, final Integer airbagCount,
                                 final String transmission, final BigDecimal fuelConsumption,
                                 final Integer maxSpeedKmh, final BigDecimal priceUsd) {
         final int updated = jdbcTemplate.update(
-                "UPDATE cars SET brand_id = ?, model = ?, body_type_id = ?, description = ?, "
+                "UPDATE cars SET brand_id = ?, model = ?, body_type_id = ?, year = ?, description = ?, "
                         + "fuel_type = ?, horsepower = ?, airbag_count = ?, transmission = ?, "
                         + "fuel_consumption = ?, max_speed_kmh = ?, price_usd = ? WHERE car_id = ?",
-                brandId, model, bodyTypeId, description, fuelType, horsepower, airbagCount, transmission,
+                brandId, model, bodyTypeId, year, description, fuelType, horsepower, airbagCount, transmission,
                 fuelConsumption, maxSpeedKmh, priceUsd, id
         );
         return updated > 0 ? findById(id) : Optional.empty();

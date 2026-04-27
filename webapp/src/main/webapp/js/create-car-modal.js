@@ -299,6 +299,7 @@
     };
 
     var setSpecFieldsReadonly = function (readonly) {
+        setFieldReadonly('modalCarYear', readonly);
         setFieldReadonly('modalCarHorsepower', readonly);
         setFieldReadonly('modalCarAirbagCount', readonly);
         setFieldReadonly('modalCarFuelConsumption', readonly);
@@ -443,6 +444,7 @@
         setFieldValue('modalCarBrand', data.requestBrand);
         setFieldValue('modalCarBodyType', data.requestBodyType);
         setFieldValue('modalCarModel', data.requestModel);
+        setFieldValue('modalCarYear', data.requestYear);
         setFieldValue('modalCarDescription', data.requestDescription);
         setRadioGroupValue('fuelType', data.requestFuelType);
         setRadioGroupValue('transmission', data.requestTransmission);
@@ -474,6 +476,7 @@
         setFieldValue('modalCarBrand', data.carBrand);
         setFieldValue('modalCarBodyType', data.carBodyType);
         setFieldValue('modalCarModel', data.carModel);
+        setFieldValue('modalCarYear', data.carYear);
         setFieldValue('modalCarDescription', data.carDescription);
         setRadioGroupValue('fuelType', data.carFuelType);
         setRadioGroupValue('transmission', data.carTransmission);

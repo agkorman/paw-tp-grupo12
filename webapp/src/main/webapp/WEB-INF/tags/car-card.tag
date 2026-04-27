@@ -1,5 +1,6 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="model"      required="true" %>
+<%@ attribute name="year"       required="false" %>
 <%@ attribute name="bodyType"   required="false" %>
 <%@ attribute name="carId"      required="true" %>
 <%@ attribute name="hasImage"   required="true" %>
@@ -25,10 +26,12 @@
 <%@ attribute name="showAirbags" required="false" %>
 <%@ attribute name="showFuelType" required="false" %>
 <%@ attribute name="showPrice" required="false" %>
+<%@ attribute name="showYear" required="false" %>
 <%@ attribute name="openModal" required="false" %>
 <%@ attribute name="requestId" required="false" %>
 <%@ attribute name="requestBrand" required="false" %>
 <%@ attribute name="requestModel" required="false" %>
+<%@ attribute name="requestYear" required="false" %>
 <%@ attribute name="requestBodyType" required="false" %>
 <%@ attribute name="requestDescription" required="false" %>
 <%@ attribute name="requestSubmitter" required="false" %>
@@ -66,6 +69,7 @@
        data-request-id="${fn:escapeXml(requestId)}"
        data-request-brand="${fn:escapeXml(requestBrand)}"
        data-request-model="${fn:escapeXml(requestModel)}"
+       data-request-year="${fn:escapeXml(requestYear)}"
        data-request-body-type="${fn:escapeXml(requestBodyType)}"
        data-request-description="${fn:escapeXml(requestDescription)}"
        data-request-submitter="${fn:escapeXml(requestSubmitter)}"
@@ -105,6 +109,8 @@
             <div class="card-body">
                 <span class="card-category">
                     <c:choose>
+                        <c:when test="${not empty year and not empty bodyType}"><c:out value="${year}"/> · <c:out value="${bodyType}"/></c:when>
+                        <c:when test="${not empty year}"><c:out value="${year}"/></c:when>
                         <c:when test="${not empty bodyType}"><c:out value="${bodyType}"/></c:when>
                         <c:otherwise>Vehículo</c:otherwise>
                     </c:choose>
@@ -112,8 +118,16 @@
                 <div class="card-title-row">
                     <span class="card-title"><c:out value="${model}"/></span>
                 </div>
-                <c:if test="${showHp eq 'true' or showSpeed eq 'true' or showConsumption eq 'true' or showAirbags eq 'true' or showFuelType eq 'true' or showPrice eq 'true'}">
+                <c:if test="${showHp eq 'true' or showSpeed eq 'true' or showConsumption eq 'true' or showAirbags eq 'true' or showFuelType eq 'true' or showPrice eq 'true' or showYear eq 'true'}">
                 <div class="card-spec-tags">
+                    <c:if test="${showYear eq 'true'}">
+                        <span class="card-spec-tag">
+                            <c:choose>
+                                <c:when test="${not empty year}"><c:out value="${year}"/></c:when>
+                                <c:otherwise>Año N/A</c:otherwise>
+                            </c:choose>
+                        </span>
+                    </c:if>
                     <c:if test="${showHp eq 'true'}">
                         <span class="card-spec-tag">
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">

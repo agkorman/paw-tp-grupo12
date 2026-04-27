@@ -32,6 +32,16 @@
            role="alert"
            hidden></p>
 
+        <%-- Año modelo --%>
+        <section class="filters-panel-section">
+            <h3 class="filters-panel-section-title">Año modelo</h3>
+            <div class="dual-range-inputs">
+                <input type="number" id="panelYear" name="year" class="range-number-input"
+                       min="1886" max="2100" placeholder="Ej: 2026"
+                       value="<c:out value='${criteria.year}'/>">
+            </div>
+        </section>
+
         <%-- Motorización — icon picker (multi-select) --%>
         <section class="filters-panel-section">
             <h3 class="filters-panel-section-title">Motorización</h3>

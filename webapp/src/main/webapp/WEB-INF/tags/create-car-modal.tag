@@ -97,6 +97,14 @@
                     </div>
 
                     <div class="review-modal-field review-modal-field-wide">
+                        <label for="modalCarYear">Año modelo</label>
+                        <form:input id="modalCarYear" path="year" type="number"
+                                    min="1886" max="2100"
+                                    placeholder="Ej: 2026" readonly="${adminMode}"/>
+                        <form:errors path="year" cssClass="form-error" element="span"/>
+                    </div>
+
+                    <div class="review-modal-field review-modal-field-wide">
                         <label for="modalCarDescription">Descripción</label>
                         <form:textarea id="modalCarDescription" path="description" rows="4" maxlength="1500"
                                        required="required"

@@ -66,8 +66,8 @@ public class CarRequestServiceImpl implements CarRequestService {
     @Override
     @Transactional
     public CarRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
-                                           final long brandId, final long bodyTypeId, final String model,
-                                           final String description, final List<CarImagePayload> images,
+                                           final long brandId, final long bodyTypeId, final Integer year,
+                                           final String model, final String description, final List<CarImagePayload> images,
                                            final String fuelType, final Integer horsepower,
                                            final Integer airbagCount, final String transmission,
                                            final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
@@ -83,6 +83,7 @@ public class CarRequestServiceImpl implements CarRequestService {
                     submitterEmail,
                     brandId,
                     bodyTypeId,
+                    year,
                     normalizedModel,
                     normalizedDescription,
                     coverImage == null ? null : coverImage.getContentType(),
@@ -128,6 +129,7 @@ public class CarRequestServiceImpl implements CarRequestService {
                 request.getBrandId(),
                 request.getModel(),
                 request.getBodyTypeId(),
+                request.getYear(),
                 request.getDescription(),
                 Optional.empty(),
                 Optional.empty(),
@@ -144,7 +146,7 @@ public class CarRequestServiceImpl implements CarRequestService {
     @Override
     @Transactional
     public boolean approvePendingRequest(final long id, final long brandId, final String model,
-                                         final long bodyTypeId, final String description,
+                                         final long bodyTypeId, final Integer year, final String description,
                                          final Optional<String> imageContentType,
                                          final Optional<byte[]> imageData,
                                          final String fuelType, final Integer horsepower,
@@ -174,6 +176,7 @@ public class CarRequestServiceImpl implements CarRequestService {
                 brandId,
                 normalizedModel,
                 bodyTypeId,
+                year,
                 normalizedDescription,
                 fuelType,
                 horsepower,
@@ -209,4 +212,3 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
 }
-

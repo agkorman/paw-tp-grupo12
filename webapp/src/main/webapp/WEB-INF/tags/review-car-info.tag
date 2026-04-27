@@ -20,6 +20,15 @@
             <span class="car-info-value"><c:out value="${selectedCar.model}"/></span>
         </div>
         <div class="car-info-row">
+            <span class="car-info-label">Año modelo</span>
+            <span class="car-info-value">
+                <c:choose>
+                    <c:when test="${not empty selectedCar.year}"><c:out value="${selectedCar.year}"/></c:when>
+                    <c:otherwise>N/A</c:otherwise>
+                </c:choose>
+            </span>
+        </div>
+        <div class="car-info-row">
             <span class="car-info-label">Marca</span>
             <span class="car-info-value">
                 <c:choose>

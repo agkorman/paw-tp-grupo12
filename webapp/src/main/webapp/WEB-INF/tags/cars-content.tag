@@ -9,6 +9,7 @@
 <%@ attribute name="showAirbags" required="false" %>
 <%@ attribute name="showFuelType" required="false" %>
 <%@ attribute name="showPrice" required="false" %>
+<%@ attribute name="showYear" required="false" %>
 <%@ attribute name="currentPage" required="false" type="java.lang.Integer" %>
 <%@ attribute name="totalPages" required="false" type="java.lang.Integer" %>
 <%@ attribute name="criteria" required="false" type="ar.edu.itba.paw.model.CarSearchCriteria" %>
@@ -28,6 +29,7 @@
                 </c:url>
                 <pa:car-card
                     model="${car.brandName} ${car.model}"
+                    year="${car.year}"
                     bodyType="${car.bodyType}"
                     carId="${car.id}"
                     hasImage="${car.hasImage}"
@@ -47,7 +49,8 @@
                     showConsumption="${showConsumption}"
                     showAirbags="${showAirbags}"
                     showFuelType="${showFuelType}"
-                    showPrice="${showPrice}"/>
+                    showPrice="${showPrice}"
+                    showYear="${showYear}"/>
             </c:forEach>
 
             <c:if test="${showCarRequestCard}">
@@ -92,6 +95,7 @@
                 <c:if test="${not empty criteria.q}"><c:set target="${paginationParams}" property="q" value="${criteria.q}"/></c:if>
                 <c:if test="${not empty criteria.brand}"><c:set target="${paginationParams}" property="brand" value="${criteria.brand}"/></c:if>
                 <c:if test="${not empty criteria.bodyType}"><c:set target="${paginationParams}" property="bodyType" value="${criteria.bodyType}"/></c:if>
+                <c:if test="${not empty criteria.year}"><c:set target="${paginationParams}" property="year" value="${criteria.year}"/></c:if>
                 <c:if test="${not empty criteria.fuelType}"><c:set target="${paginationParams}" property="fuelType" value="${criteria.fuelType}"/></c:if>
                 <c:if test="${not empty criteria.horsepowerMin}"><c:set target="${paginationParams}" property="horsepowerMin" value="${criteria.horsepowerMin}"/></c:if>
                 <c:if test="${not empty criteria.horsepowerMax}"><c:set target="${paginationParams}" property="horsepowerMax" value="${criteria.horsepowerMax}"/></c:if>

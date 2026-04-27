@@ -11,6 +11,7 @@ public class Car implements Serializable {
     private String brandName;
     private String model;
     private long bodyTypeId;
+    private Integer year;
     private String bodyType;
     private String description;
     private LocalDateTime createdAt;
@@ -33,7 +34,7 @@ public class Car implements Serializable {
     public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
                final String bodyType, final String description,
                final LocalDateTime createdAt, final boolean hasImage) {
-        this(id, brandId, brandName, model, bodyTypeId, bodyType, description, createdAt, hasImage,
+        this(id, brandId, brandName, model, bodyTypeId, null, bodyType, description, createdAt, hasImage,
                 null, null, null, null, null, null, null);
     }
 
@@ -41,11 +42,21 @@ public class Car implements Serializable {
                final String bodyType, final String description, final LocalDateTime createdAt, final boolean hasImage,
                final String fuelType, final Integer horsepower, final Integer airbagCount, final String transmission,
                final BigDecimal fuelConsumption, final Integer maxSpeedKmh, final BigDecimal priceUsd) {
+        this(id, brandId, brandName, model, bodyTypeId, null, bodyType, description, createdAt, hasImage,
+                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
+    }
+
+    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
+               final Integer year, final String bodyType, final String description, final LocalDateTime createdAt,
+               final boolean hasImage, final String fuelType, final Integer horsepower,
+               final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
+               final Integer maxSpeedKmh, final BigDecimal priceUsd) {
         this.id = id;
         this.brandId = brandId;
         this.brandName = brandName;
         this.model = model;
         this.bodyTypeId = bodyTypeId;
+        this.year = year;
         this.bodyType = bodyType;
         this.description = description;
         this.createdAt = createdAt;
@@ -97,6 +108,14 @@ public class Car implements Serializable {
 
     public void setBodyTypeId(final long bodyTypeId) {
         this.bodyTypeId = bodyTypeId;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(final Integer year) {
+        this.year = year;
     }
 
     public String getBodyType() {

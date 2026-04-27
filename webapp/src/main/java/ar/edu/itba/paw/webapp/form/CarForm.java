@@ -26,6 +26,10 @@ public class CarForm {
     @Size(max = 120, message = "El modelo debe tener como máximo 120 caracteres.")
     private String model;
 
+    @Min(value = 1886, message = "El año debe ser 1886 o posterior.")
+    @Max(value = 2100, message = "El año debe ser 2100 o anterior.")
+    private Integer year;
+
     @Email(message = "Ingresá un email válido.")
     @Size(max = 100, message = "El email debe tener como máximo 100 caracteres.")
     private String submitterEmail;
@@ -88,6 +92,14 @@ public class CarForm {
 
     public void setModel(final String model) {
         this.model = model;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(final Integer year) {
+        this.year = year;
     }
 
     public String getSubmitterEmail() {
