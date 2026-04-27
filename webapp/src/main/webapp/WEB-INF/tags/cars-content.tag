@@ -57,10 +57,7 @@
                 <sec:authorize access="isAuthenticated()">
                     <button type="button" class="car-request-card" data-open-create-car-modal data-auth-resume-intent="create-car">
                         <span class="car-request-card-icon" aria-hidden="true">
-                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                                <path d="M12 5v14"/>
-                                <path d="M5 12h14"/>
-                            </svg>
+                            <pa:icon name="plus" size="56"/>
                         </span>
                         <strong class="car-request-card-title">¿No encontrás el auto?</strong>
                         <span class="car-request-card-copy">Ayudanos a completar la galería con el modelo que falta.</span>
@@ -74,10 +71,7 @@
                        data-auth-required-action="agregar un auto"
                        data-auth-required-intent="create-car">
                         <span class="car-request-card-icon" aria-hidden="true">
-                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                                <path d="M12 5v14"/>
-                                <path d="M5 12h14"/>
-                            </svg>
+                            <pa:icon name="plus" size="56"/>
                         </span>
                         <strong class="car-request-card-title">¿No encontrás el auto?</strong>
                         <span class="car-request-card-copy">Iniciá sesión para sumar el modelo que falta.</span>

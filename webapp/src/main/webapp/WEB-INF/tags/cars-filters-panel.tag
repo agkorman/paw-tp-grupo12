@@ -3,6 +3,7 @@
 <%@ attribute name="vehicleCount" required="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <div id="carsFiltersOverlay" class="cars-filters-overlay" data-close-filters-panel></div>
 
 <aside id="carsFiltersPanel"
@@ -17,9 +18,7 @@
         <div class="cars-filters-header">
             <h2 id="filtersPanelTitle" class="cars-filters-title">Filtros Avanzados</h2>
             <button type="button" class="cars-filters-close" data-close-filters-panel aria-label="Cerrar filtros">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false">
-                    <line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/>
-                </svg>
+                <pa:icon name="close" size="18"/>
             </button>
         </div>
 
@@ -67,15 +66,15 @@
             <h3 class="filters-panel-section-title">Motorización</h3>
             <div class="fuel-type-picker" data-filter-target="panelFuelType" data-filter-multiple="true">
                 <button type="button" class="fuel-type-option filter-segment-option${fn:contains(criteria.fuelType, 'combustion') ? ' is-selected' : ''}" data-value="combustion">
-                    <span class="material-symbols-outlined fuel-type-symbol" aria-hidden="true">local_gas_station</span>
+                    <pa:icon name="gas-pump" size="28"/>
                     <span>Combustión</span>
                 </button>
                 <button type="button" class="fuel-type-option filter-segment-option${fn:contains(criteria.fuelType, 'hybrid') ? ' is-selected' : ''}" data-value="hybrid">
-                    <span class="material-symbols-outlined fuel-type-symbol" aria-hidden="true">eco</span>
+                    <pa:icon name="eco" size="28"/>
                     <span>Híbrido</span>
                 </button>
                 <button type="button" class="fuel-type-option filter-segment-option${fn:contains(criteria.fuelType, 'electric') ? ' is-selected' : ''}" data-value="electric">
-                    <span class="material-symbols-outlined fuel-type-symbol" aria-hidden="true">bolt</span>
+                    <pa:icon name="bolt" size="28"/>
                     <span>Eléctrico</span>
                 </button>
             </div>

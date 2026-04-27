@@ -70,6 +70,13 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Use Flexbox and Grid for layout. Do not use HTML layout tables or inline styles for positioning.
 - UI changes must follow the design language in `DESIGN.md` (dark showroom theme, color tokens, typography, component patterns). Prioritize clarity and usability over decoration.
 
+## Icons
+
+- All SVG icons are centralized in `WEB-INF/tags/icon.tag`. Never write inline SVGs in JSP or tag files — always use `<pa:icon name="..." size="..."/>`.
+- `star-icon.tag` is the only intentional exception: it has gradient fill-percent logic that cannot be expressed as a simple SVG.
+- Do not use external icon fonts (e.g. Material Symbols, Font Awesome). All icons are self-contained SVGs in `icon.tag`.
+- When adding a new icon, add it to `icon.tag` first, then reference it by name everywhere it is needed.
+
 ## Security
 
 - All routes are protected by Spring Security (`WebAuthConfig`). When adding a new endpoint, explicitly decide whether it is public or requires authentication/role, and add the corresponding `requestMatchers` rule.
