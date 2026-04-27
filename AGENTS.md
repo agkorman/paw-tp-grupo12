@@ -1,225 +1,161 @@
-# Repository Guidelines
+# Agent Context
 
-## Purpose
+Rules and non-obvious constraints for this codebase. These are things you cannot derive just by reading the code.
 
-This repository is an ITBA PAW course project: a server-rendered car listing and review web application. It is a multi-module Maven project using Spring MVC, Spring JDBC, JSP/JSTL, PostgreSQL, and Jetty for local execution. The UI is not a separate SPA; views, reusable tags, CSS, and JavaScript live inside `webapp`.
+---
 
-Use this file as the working guide for contributors and coding agents. Keep changes aligned with the existing layered architecture instead of introducing parallel patterns.
-
-## Project Structure & Module Organization
-
-The root `pom.xml` is the Maven reactor and defines these active modules:
-
-- `model`: domain objects such as `Car`, `Brand`, `BodyType`, `CarImage`, `CarRequest`, `Review`, `ReviewStats`, and `User`.
-- `persistence-contracts`: DAO interfaces. Controllers and services should not depend on JDBC implementation classes.
-- `service-contracts`: service interfaces exposed to the web layer.
-- `persistence`: Spring JDBC DAO implementations and database resources under `persistence/src/main/resources`.
-- `services`: business logic implementations that coordinate DAOs and service contracts.
-- `webapp`: Spring MVC controllers, configuration, JSPs, JSP tag files, CSS, JS, and WAR packaging.
-
-Expected dependency direction:
-
-```text
-model -> contracts -> implementations -> webapp
-```
-
-Do not make lower-level modules depend on `webapp`. Keep domain classes free of Spring MVC, servlet, JSP, and persistence framework concerns.
-
-## Runtime Architecture
-
-`webapp/src/main/java/ar/edu/itba/paw/webapp/config/WebConfig.java` is the main runtime wiring. It enables Spring MVC, scans controllers/services/persistence packages, serves static resources, configures JSP view resolution, initializes the datasource, configures mail, and runs SQL initialization.
-
-Controllers currently live in:
-
-- `webapp/src/main/java/ar/edu/itba/paw/webapp/controller/CarController.java`
-- `webapp/src/main/java/ar/edu/itba/paw/webapp/controller/CarReviewController.java`
-
-The main user flows are:
-
-- `/`: landing page.
-- `/cars`: catalog, filters, search, and car creation.
-- `/cars/content`: catalog fragment for progressive enhancement.
-- `/car-image` and `/cars/{carId}/image`: image retrieval/upload endpoints.
-- `/reviews`: car review page and review creation.
-- `/reviews/feed`: review feed fragment.
-
-Keep server-rendered fallback behavior working when adding JavaScript enhancements.
-
-## Web Assets, Views, and Tags
-
-JSP pages and fragments live under `webapp/src/main/webapp/WEB-INF/jsp`. Reusable JSP tags live under `webapp/src/main/webapp/WEB-INF/tags`. Static assets live under:
-
-- `webapp/src/main/webapp/css`
-- `webapp/src/main/webapp/js`
-
-Prefer reusable JSP tags for repeated UI pieces such as car cards, navigation, review panels, toolbars, and modals. Keep large CSS in stylesheet files and large behavior in JS files, not inline in JSPs.
-
-UI changes should respect `DESIGN.md`, especially the dark showroom-style visual direction, typography, spacing, and existing component language.
-
-## Build, Test, and Development Commands
-
-Common commands:
+## Commands
 
 ```bash
-mvn clean install
-mvn test
-mvn -pl services test
-mvn -pl webapp jetty:run
-bash run-project.sh
+mvn clean install        # build all modules
+mvn -pl webapp jetty:run # start dev server at http://localhost:8080/webapp
+mvn test                 # run all tests
+mvn -pl services test    # run only service tests (faster)
 ```
 
-Command meanings:
+Required env vars: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` (PostgreSQL 16). Mail: `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`.
 
-- `mvn clean install`: builds every module and installs artifacts into the local Maven repository.
-- `mvn test`: runs tests for all modules through Maven Surefire.
-- `mvn -pl services test`: runs only service module tests for faster feedback.
-- `mvn -pl webapp jetty:run`: starts the web application locally on port `8080`.
-- `bash run-project.sh`: resolves JDK 21, loads a root `.env` when present, builds, and starts Jetty.
+---
 
-The README documents the app at `http://localhost:8080/webapp`, but local Jetty behavior may mount the app at root in some setups. When verifying manually, check both `http://localhost:8080/` and `http://localhost:8080/webapp/` if needed.
+## Architecture & Layers
 
-## Environment and Configuration
+- Dependency direction is strict: `webapp → service-contracts → persistence-contracts → model`. Never skip layers. Controllers must not call DAO interfaces directly.
+- Business and application logic belongs exclusively in the service layer. Controllers receive input, validate, call a service, and choose a view. Logic in controllers or JSPs is a design violation.
+- The service layer is the business facade. Each service method should express a use case, not expose raw DAO operations.
+- All web and service components must be stateless and thread-safe. Never store shared mutable state in Spring-managed beans. Shared state lives in the database.
+- Use Spring-managed beans for all application components. Never instantiate services, DAOs, or repositories with `new` inside business flow code.
+- Use stereotypes correctly: `@Controller`, `@Service`, `@Repository`. Do not mix them.
+- Controllers depend on service interfaces from `service-contracts`. Services depend on DAO interfaces from `persistence-contracts`. Neither should import implementation classes from `persistence` or reference JDBC-specific types.
 
-The app expects Java 21, Maven 3.x, and PostgreSQL 16. Database configuration is read from environment variables first:
+## Module Naming
 
-```bash
-export DB_URL=jdbc:postgresql://localhost/pawdb
-export DB_USERNAME=pawuser
-export DB_PASSWORD=yourpassword
-```
+Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`, `services`, `webapp`. The contracts modules are not named `interfaces`.
 
-If environment variables are not available in the deploy target, `webapp/src/main/resources/db.properties` may be packaged with equivalent values. Do not commit real credentials. Use local, untracked configuration for secrets.
+## Transactions
 
-Mail configuration follows the same principle through environment variables or `mail.properties`. Car creation notification email is asynchronous; user-facing car creation must not block on SMTP success.
+- `@Transactional` goes on service methods only — never on DAO methods or controllers.
+- Use `@Transactional(readOnly = true)` for read-only service methods.
 
-## Database and Data Model Notes
+## Controllers
 
-Primary schema resources live in `persistence/src/main/resources`:
+- Use `@RequestMapping(value="...", method=RequestMethod.GET/POST)` — not `@GetMapping`/`@PostMapping`.
+- Standard page-rendering methods return `ModelAndView` or `String` (logical view name). Image and AJAX endpoints return `ResponseEntity`.
+- Access the authenticated user via `@AuthenticationPrincipal final AuthenticatedUser currentUser`.
+- All controllers register `StringTrimmerEditor(true)` via `@InitBinder` to trim and nullify blank string inputs before they reach the service.
+- Validate input at the controller boundary, then delegate to the service. Do not put validation logic inside services or JSPs.
+- Use `GlobalExceptionHandler` for exception handling that is shared across controllers. Prefer reusable web exceptions and centralized mappings over private controller exception classes or repeated controller-local `@ExceptionHandler` methods.
+- Shared model attributes used by multiple car/admin/review views belong in `SharedModelAttributesAdvice`. `brands`, `bodyTypes`, and the default `carForm` are already populated there; do not re-add them with repeated `model.addAttribute(...)` / `mav.addObject(...)` calls in individual controllers.
+- Keep `@ControllerAdvice` focused and narrow: use it only for cross-controller concerns that are genuinely reused. Page-specific model data, modal-open flags, validation errors, selected filters, review/profile data, and form attributes that need request-specific setup stay in the owning controller.
 
-- `schema.sql`: creates tables and seed data.
-- `schema-pg-trgm.sql`: PostgreSQL trigram/search-related schema support, when used.
-- `populate.sql`: supplemental seed data, when used.
+## Services & DAOs
 
-`schema.sql` uses `CREATE TABLE IF NOT EXISTS`, so changing a table definition there does not migrate an already-created local database. For local testing after schema changes, recreate the database or add an explicit migration step.
+- Services use constructor injection (`@Autowired` on constructor, `final` fields).
+- Return `Optional<T>` for single results; return empty collections (never `null`) for list results.
+- DAOs define SQL fragments and `RowMapper` instances as `private static final` constants.
+- Use `SimpleJdbcInsert` for INSERT; use `NamedParameterJdbcTemplate` for queries with many parameters.
 
-Important model behavior:
+## Views
 
-- Reviews support guest submissions; `reviews.user_id` may be nullable and `reviewer_email` stores guest identity.
-- Review stats are derived from `reviews`, not stored in a separate table.
-- Car image bytes live in `car_images`; catalog views should avoid loading blobs except through image endpoints.
-- Car submissions from users create only a pending `car_requests` row. The public `cars` row and its `car_images` bytes are created only when an admin approves the request.
+- JSPs live under `WEB-INF/jsp/` and are resolved by the configured `InternalResourceViewResolver`. Controllers return logical names, not full paths.
+- Views must not contain business logic. Use JSTL and EL only — no raw Java scriptlets.
+- Always escape user-visible output: `<c:out value="${...}"/>` for text, `fn:escapeXml()` for values inside HTML attributes. Never print raw `${...}` where user-controlled data can appear (XSS prevention).
+- Use `<c:url>` for all application URLs. Never hardcode context paths.
+- Custom tags use the `pa:` namespace prefix and live in `WEB-INF/tags/`.
+- Every JSP starts with `<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>`.
 
-## Maven Dependency Management
+## CSS & UI
 
-All dependency and plugin versions must be centralized in the root `pom.xml`.
+- CSS rules go in dedicated files — never inline styles on elements.
+- One CSS file per feature/page; shared design tokens live in `design-system.css` under `:root`.
+- Use Flexbox and Grid for layout. Do not use HTML layout tables or inline styles for positioning.
+- UI changes must follow the design language in `DESIGN.md` (dark showroom theme, color tokens, typography, component patterns). Prioritize clarity and usability over decoration.
 
-Rules:
+## Icons
 
-- Define version constants under the root `<properties>` section, for example `<spring.version>5.3.33</spring.version>`.
-- Reference versions from root-level `<dependencyManagement>` or `<pluginManagement>` using `${property.name}`.
-- Module `pom.xml` files must declare dependencies without `<version>`.
-- Internal module dependencies should also be managed centrally in the root, using `${project.version}` there, so child modules do not repeat versions.
-- Do not hard-code third-party versions inside module POMs.
-- Avoid duplicating plugin version declarations in child modules unless a module has a clearly different plugin configuration need.
+- All SVG icons are centralized in `WEB-INF/tags/icon.tag`. Never write inline SVGs in JSP or tag files — always use `<pa:icon name="..." size="..."/>`.
+- `star-icon.tag` is the only intentional exception: it has gradient fill-percent logic that cannot be expressed as a simple SVG.
+- Do not use external icon fonts (e.g. Material Symbols, Font Awesome). All icons are self-contained SVGs in `icon.tag`.
+- When adding a new icon, add it to `icon.tag` first, then reference it by name everywhere it is needed.
 
-Preferred root pattern:
+## Security
 
-```xml
-<properties>
-  <spring.version>5.3.33</spring.version>
-  <postgresql.version>42.7.3</postgresql.version>
-</properties>
+- All routes are protected by Spring Security (`WebAuthConfig`). When adding a new endpoint, explicitly decide whether it is public or requires authentication/role, and add the corresponding `requestMatchers` rule.
+- Password encoding uses `BCryptPasswordEncoder`. Do not use plaintext encoders.
+- Any user-supplied redirect URL must be validated through `LoginRedirectUtils.safeRedirect()` before use. Never trust raw redirect parameters — they are an open-redirect vector.
+- To gate UI sections by role in JSPs, use the Spring Security tag: `<sec:authorize access="hasRole('ADMIN')">`. Don't rely on a model attribute for role checks in views.
+- CSRF tokens must be included in every mutating form. The hidden input pattern is: `<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">`. Spring's `<form:form>` includes it automatically; plain HTML `<form>` elements require it explicitly.
 
-<dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>${postgresql.version}</version>
-    </dependency>
-  </dependencies>
-</dependencyManagement>
-```
+## Email
 
-Preferred module pattern:
+- All email sending is done from the service layer via `EmailService`. Controllers and JSPs must never send email directly.
+- Every `EmailService` method is annotated `@Async("mailTaskExecutor")`. Email must never block the HTTP response.
 
-```xml
-<dependency>
-  <groupId>org.postgresql</groupId>
-  <artifactId>postgresql</artifactId>
-</dependency>
-```
+## Images
 
-## Coding Style & Naming Conventions
+- Store uploaded image bytes in dedicated image tables (`car_images`, `car_request_images`). Never store images as Base64, never in the main entity table.
+- Validate uploads on the server regardless of client-side validation: file not null, not empty, within size limit, allowed content-type, magic-byte check via `ImageSignatureValidator`, and the referenced entity exists.
+- Expose stored images through backend controller endpoints, not inline in HTML. `<img>` tags point to internal URLs.
+- Static UI assets (logos, icons) belong in `webapp/css` or `webapp/js` resource folders, not in the database.
 
-Use package names under `ar.edu.itba.paw`. Follow the existing 4-space Java indentation style. Keep names descriptive and layer-specific:
+## Authentication Identity
 
-- Controllers: `*Controller`
-- Services: service interfaces in `service-contracts`, implementations as `*ServiceImpl`
-- DAOs: DAO interfaces in `persistence-contracts`, JDBC implementations as `*JdbcDao`
-- Tests: `*Test`
-- JSP tags: lowercase, hyphenated names such as `car-card.tag`
-- CSS/JS assets: lowercase, hyphenated names when adding new files
+- The login credential is the user's **email**, not their username. Spring Security's `UserDetailsService` receives an email in the `loadUserByUsername` parameter.
+- `AuthenticatedUser.getUsername()` returns the email (as required by the `UserDetails` contract). Use `AuthenticatedUser.getDisplayName()` to get the human-readable username for display.
+- Do not confuse email and username when rendering user identity in views or when querying users.
 
-Prefer Spring-managed dependencies over manual object construction. Keep validation rules close to the service/controller boundary that owns them, and keep SQL-specific mapping inside persistence classes.
+## AJAX / Dual-Response Endpoints
 
-## Testing Guidelines
+- Some endpoints serve both browser and AJAX clients from the same URL. They detect AJAX via the `X-Requested-With: XMLHttpRequest` request header and return a plain-text or JSON body instead of a redirect.
+- When adding a new endpoint that must support both, check the header explicitly: `"XMLHttpRequest".equals(request.getHeader("X-Requested-With"))`. Return `ResponseEntity` for AJAX, redirect for browser.
 
-Tests belong in each module's `src/test/java` tree and should mirror production packages. Current committed coverage is minimal, with service tests using JUnit Jupiter and Maven Surefire.
+## Post-Redirect-Get (PRG)
 
-When changing behavior:
+- After every successful mutating POST (create, update, delete, like, favorite, follow), redirect to a GET. Never render a page directly from a POST handler. Use `"redirect:/path"` return values.
 
-- Add service tests for business rules, validation, sorting, filtering, and moderation decisions.
-- Add persistence tests or focused DAO verification when changing SQL queries or mappings.
-- Add web-layer checks when changing controller routing, request parameters, redirects, or multipart handling.
-- Run `mvn test` before opening a PR.
-- Use `mvn -pl <module> test` during development for faster feedback.
+## String Normalization
 
-Do not rely only on browser checks for service or DAO behavior.
+- Always use `Locale.ROOT` when calling `.toLowerCase()` or `.toUpperCase()` on application strings (e.g. filter values, enum-like strings). Never use the default locale — it produces incorrect results for some system locales (Turkish, Greek).
 
-## Helper Scripts
+## `schema.sql` — Idempotency Rules
 
-Scripts under `scripts/` support local data and image workflows:
+`schema.sql` runs on every application startup against a live database that already has data. Every statement must be safe to run on an already-initialized database.
 
-- `download-seeded-car-images.sh`
-- `upload-car-images.sh`
-- `populate-reviews.sh`
-- `upload-reviews.sh`
+- Tables: always `CREATE TABLE IF NOT EXISTS`.
+- Columns: always `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`. New columns must be nullable or have a default so that existing rows are not broken.
+- Constraints: always `DROP CONSTRAINT IF EXISTS` before `ADD CONSTRAINT`, so re-runs do not fail on already-existing constraints.
+- Indexes: always `CREATE INDEX IF NOT EXISTS`.
+- Seed inserts: always use `ON CONFLICT (...) DO NOTHING` or `ON CONFLICT (...) DO UPDATE`.
+- Data updates (e.g., translating descriptions, populating new columns): use `UPDATE ... WHERE <condition>`, not an `INSERT`. The `INSERT ... ON CONFLICT DO NOTHING` will silently skip existing rows, so description changes must be `UPDATE` statements.
+- Never use `DROP TABLE`, `TRUNCATE`, or destructive column changes (`DROP COLUMN`, changing a nullable column to `NOT NULL` without a default and a backfill) unless explicitly authorized. The goal is always backwards-compatible, non-destructive evolution.
 
-Read the script before running it, confirm expected environment variables, and avoid committing generated local files. Some scripts assume a running local app and PostgreSQL database.
+## Image Caching
 
-## Commit & Pull Request Guidelines
+- When adding a new image endpoint, follow the ETag + `Cache-Control` pattern used in the existing image endpoints in `CarController`.
 
-Recent commit messages are short and direct, for example `remove rating from landing review` and `expand image upload limit`. Keep that style:
+## Domain Constraints to Know
 
-- Use an imperative or descriptive summary.
-- Keep each commit focused on one change.
-- Mention schema, dependency, or configuration changes explicitly.
-- Include tests run in the PR description.
-- Add screenshots or short screen recordings for visible JSP/CSS/UI changes.
-- Link the issue, task, or class requirement when applicable.
+- Review ratings are `BigDecimal` on a **0.0–5.0 scale** stored as `NUMERIC(3,1)`. Do not assume a 0–10 scale or integer type.
+- Car request statuses are plain strings: `"pending"`, `"approved"`, `"rejected"`. There is no Java enum — these values are enforced by a database CHECK constraint.
 
-## Agent-Specific Instructions
+## Search
 
-Before editing, inspect the relevant module and follow its existing patterns. Do not refactor unrelated code while implementing a requested change. Do not delete `AGENTS.md`; it contains additional project context and known quirks.
+- Full-text search uses a PostgreSQL `tsvector` column on `cars` maintained by a trigger. Short queries (under 2 chars) fall back to LIKE. When modifying search, both paths must stay consistent.
 
-Be careful with the current git state. There may be local untracked SQL or generated files. Do not revert or remove files you did not create unless explicitly asked.
+## Filters & Pagination
 
-When modifying Maven files, enforce the centralized version policy above. When adding web features, preserve non-JavaScript fallback paths and keep route behavior compatible with existing JSP forms and fragments.
+- Search/filter parameters are bound through `CarSearchCriteria` as a `@ModelAttribute`, not as individual `@RequestParam` fields. New filter parameters belong in `CarSearchCriteria`, not as extra controller arguments.
+- The app currently has no pagination. Do not add pagination infrastructure until explicitly asked.
 
-## Image Uploads and Static Resource Policy
+## Views & Tags
 
-The previous project-specific agent guide had stricter image rules that are still important. Keep these rules in force when adding or changing image-related behavior.
+- Prefer JSP tag files (`WEB-INF/tags/`) for any UI piece that is reused or complex enough to deserve isolation. When building new views, modularize into tags rather than writing monolithic JSPs.
+- Tag attributes are declared at the top of the tag file with `<%@ attribute name="..." required="..." %>` before any markup.
 
-- User-uploaded images must arrive as `multipart/form-data` and be received in Spring MVC with `MultipartFile`, either through individual `@RequestParam` values or a form-backing `@ModelAttribute` that includes the file.
-- Do not transport, persist, or render project images as Base64 unless there is an explicit, exceptional approval.
-- Keep Servlet 3 multipart parsing compatible. If upload initialization or `WebConfig` changes, preserve the configured multipart resolver behavior.
-- Validate uploaded images on the server even when client-side validation exists. Required checks are: file exists, file is not empty, maximum size, allowed `content-type`, and the referenced entity exists before storing bytes.
-- Store user-uploaded image bytes in dedicated image tables and expose them through backend endpoints. For cars, keep the established `cars` plus `car_images` pattern, where `car_images` owns binary data and `content_type`.
-- Image endpoints that return database-backed images should set `Content-Type`, `Content-Length`, and appropriate cache headers when possible.
-- `<img>` elements for uploaded images should point to internal project URLs, not inline blobs or Base64 strings.
-- Static UI images such as logos, icons, and decorative illustrations belong in webapp static asset folders, not in the database.
-- Reference static assets from JSPs and tag files with `c:url`.
-- If a new static folder such as `/images/**` is added, expose it from `WebConfig.addResourceHandlers(...)`.
-- Do not mix static assets and user uploads. Static images live in the repo and are served as resources; uploaded images are validated, persisted, and served through controller endpoints.
-- Some legacy views or seed data may still use external `imageUrl` values. Treat that as legacy compatibility, not the direction for new code.
+## Model Objects
+
+- Domain objects are plain POJOs: hand-written getters/setters, constructor delegation via `this()`, implement `Serializable`. Lombok is prohibited — do not introduce it.
+
+## Maven
+
+- All dependency versions are declared in the root `pom.xml` under `<dependencyManagement>`. Child modules declare dependencies without `<version>`.
+- Do not hard-code third-party versions in module POMs.
