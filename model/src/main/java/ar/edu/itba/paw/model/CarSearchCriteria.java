@@ -28,7 +28,8 @@ public class CarSearchCriteria {
     private String q;
     private String brand;
     private String bodyType;
-    private Integer year;
+    private Integer yearMin;
+    private Integer yearMax;
     private List<String> fuelTypes = new ArrayList<>();
     private Integer horsepowerMin;
     private Integer horsepowerMax;
@@ -47,7 +48,8 @@ public class CarSearchCriteria {
         return !fuelTypes.isEmpty()
                 || horsepowerMin != null
                 || horsepowerMax != null
-                || year != null
+                || yearMin != null
+                || yearMax != null
                 || airbagMin != null
                 || transmission != null && !transmission.isEmpty()
                 || fuelConsumptionMax != null
@@ -72,7 +74,13 @@ public class CarSearchCriteria {
         if (horsepowerMin != null && horsepowerMax != null && horsepowerMin > horsepowerMax) {
             return false;
         }
-        if (year != null && !isWithinBounds(year, YEAR_MIN_BOUND, YEAR_MAX_BOUND)) {
+        if (yearMin != null && !isWithinBounds(yearMin, YEAR_MIN_BOUND, YEAR_MAX_BOUND)) {
+            return false;
+        }
+        if (yearMax != null && !isWithinBounds(yearMax, YEAR_MIN_BOUND, YEAR_MAX_BOUND)) {
+            return false;
+        }
+        if (yearMin != null && yearMax != null && yearMin > yearMax) {
             return false;
         }
         if (airbagMin != null && !ALLOWED_AIRBAG_MIN_VALUES.contains(airbagMin)) {
@@ -128,12 +136,29 @@ public class CarSearchCriteria {
         this.bodyType = bodyType == null || bodyType.trim().isEmpty() ? null : bodyType.trim();
     }
 
+    public Integer getYearMin() {
+        return yearMin;
+    }
+
+    public void setYearMin(final Integer yearMin) {
+        this.yearMin = yearMin;
+    }
+
+    public Integer getYearMax() {
+        return yearMax;
+    }
+
+    public void setYearMax(final Integer yearMax) {
+        this.yearMax = yearMax;
+    }
+
     public Integer getYear() {
-        return year;
+        return yearMin != null && yearMin.equals(yearMax) ? yearMin : null;
     }
 
     public void setYear(final Integer year) {
-        this.year = year;
+        this.yearMin = year;
+        this.yearMax = year;
     }
 
     public String getFuelType() {

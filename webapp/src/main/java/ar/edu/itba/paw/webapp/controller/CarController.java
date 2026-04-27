@@ -281,7 +281,7 @@ public class CarController {
         model.addAttribute("showAirbags", criteria.getAirbagMin() != null);
         model.addAttribute("showFuelType", criteria.getFuelTypes().size() > 1);
         model.addAttribute("showPrice", criteria.getPriceMin() != null || criteria.getPriceMax() != null);
-        model.addAttribute("showYear", criteria.getYear() != null);
+        model.addAttribute("showYear", criteria.getYearMin() != null || criteria.getYearMax() != null);
     }
 
     private void addShowSpecFlags(final ModelAndView mav, final CarSearchCriteria criteria) {
@@ -291,7 +291,7 @@ public class CarController {
         mav.addObject("showAirbags", criteria.getAirbagMin() != null);
         mav.addObject("showFuelType", criteria.getFuelTypes().size() > 1);
         mav.addObject("showPrice", criteria.getPriceMin() != null || criteria.getPriceMax() != null);
-        mav.addObject("showYear", criteria.getYear() != null);
+        mav.addObject("showYear", criteria.getYearMin() != null || criteria.getYearMax() != null);
     }
 
     private Map<Long, Boolean> favoritedCarIdsById(final List<Car> cars, final AuthenticatedUser currentUser) {

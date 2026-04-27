@@ -9,6 +9,7 @@
     var toolbarForm  = document.getElementById('car-filter-form');
     var panelValidationMessage = document.getElementById('filtersPanelValidationMessage');
     var hpError = document.getElementById('panelHpError');
+    var yearError = document.getElementById('panelYearError');
     var previewSubmitTimer = null;
 
     if (!panel || !toolbarForm) {
@@ -186,7 +187,7 @@
         lowThumb.addEventListener('input', function () {
             clamp(); updateFill();
             var realValue = posToValue(parseFloat(lowThumb.value));
-            if (lowInput) { lowInput.value = realValue === 0 ? '' : realValue; }
+            if (lowInput) { lowInput.value = realValue === min ? '' : realValue; }
         });
 
         highThumb.addEventListener('input', function () {
@@ -259,12 +260,12 @@
 
     var PANEL_PARAM_KEYS = [
         'q', 'brand', 'bodyType',
-        'year', 'priceMin', 'priceMax',
+        'yearMin', 'yearMax', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
         'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
     ];
     var ADVANCED_PANEL_PARAM_KEYS = [
-        'year', 'priceMin', 'priceMax',
+        'yearMin', 'yearMax', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
         'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
     ];
@@ -315,6 +316,10 @@
             hpError.textContent = '';
             hpError.setAttribute('hidden', '');
         }
+        if (yearError) {
+            yearError.textContent = '';
+            yearError.setAttribute('hidden', '');
+        }
         var invalidFields = panel.querySelectorAll('.is-invalid');
         Array.prototype.forEach.call(invalidFields, function (el) {
             el.classList.remove('is-invalid');
@@ -343,6 +348,21 @@
             field.setAttribute('aria-invalid', 'true');
         });
         if (focusFirstField && hpMin) { hpMin.focus(); }
+    }
+
+    function showYearValidationError(message, focusFirstField) {
+        var yearMin = document.getElementById('panelYearMin');
+        var yearMax = document.getElementById('panelYearMax');
+        if (yearError) {
+            yearError.textContent = message;
+            yearError.removeAttribute('hidden');
+        }
+        [yearMin, yearMax].forEach(function (field) {
+            if (!field) { return; }
+            field.classList.add('is-invalid');
+            field.setAttribute('aria-invalid', 'true');
+        });
+        if (focusFirstField && yearMin) { yearMin.focus(); }
     }
 
     function isAllowedValue(value, allowedValues) {
@@ -381,8 +401,15 @@
             showPanelValidationError('Elegí una cantidad de airbags válida.');
             return false;
         }
-        if (!isValidNumberParam(panelParams.year, 1886, 2100)) {
-            showPanelValidationError('Usá un año entre 1886 y 2100.');
+        if (!isValidNumberParam(panelParams.yearMin, 1886, 2100)
+                || !isValidNumberParam(panelParams.yearMax, 1886, 2100)) {
+            showYearValidationError('Usá años entre 1886 y 2100.', focusOnError);
+            return false;
+        }
+
+        if (panelParams.yearMin !== undefined && panelParams.yearMax !== undefined
+                && Number(panelParams.yearMin) > Number(panelParams.yearMax)) {
+            showYearValidationError('El año mínimo no puede superar al máximo.', focusOnError);
             return false;
         }
 
@@ -492,8 +519,10 @@
         if (priceMin) { priceMin.value = ''; }
         if (priceMax) { priceMax.value = ''; }
 
-        var year = document.getElementById('panelYear');
-        if (year) { year.value = ''; }
+        var yearMin = document.getElementById('panelYearMin');
+        var yearMax = document.getElementById('panelYearMax');
+        if (yearMin) { yearMin.value = ''; }
+        if (yearMax) { yearMax.value = ''; }
 
         var hpMin = document.getElementById('panelHpMin');
         var hpMax = document.getElementById('panelHpMax');

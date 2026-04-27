@@ -213,9 +213,14 @@ public class CarJdbcDao implements CarDao {
             params.addValue("fuelTypes", criteria.getFuelTypes());
             hasWhere = true;
         }
-        if (criteria.getYear() != null) {
-            sql.append(hasWhere ? "AND " : "WHERE ").append("c.year = :year ");
-            params.addValue("year", criteria.getYear());
+        if (criteria.getYearMin() != null) {
+            sql.append(hasWhere ? "AND " : "WHERE ").append("c.year >= :yearMin ");
+            params.addValue("yearMin", criteria.getYearMin());
+            hasWhere = true;
+        }
+        if (criteria.getYearMax() != null) {
+            sql.append(hasWhere ? "AND " : "WHERE ").append("c.year <= :yearMax ");
+            params.addValue("yearMax", criteria.getYearMax());
             hasWhere = true;
         }
         if (criteria.getHorsepowerMin() != null) {

@@ -95,7 +95,8 @@
                 <c:if test="${not empty criteria.q}"><c:set target="${paginationParams}" property="q" value="${criteria.q}"/></c:if>
                 <c:if test="${not empty criteria.brand}"><c:set target="${paginationParams}" property="brand" value="${criteria.brand}"/></c:if>
                 <c:if test="${not empty criteria.bodyType}"><c:set target="${paginationParams}" property="bodyType" value="${criteria.bodyType}"/></c:if>
-                <c:if test="${not empty criteria.year}"><c:set target="${paginationParams}" property="year" value="${criteria.year}"/></c:if>
+                <c:if test="${not empty criteria.yearMin}"><c:set target="${paginationParams}" property="yearMin" value="${criteria.yearMin}"/></c:if>
+                <c:if test="${not empty criteria.yearMax}"><c:set target="${paginationParams}" property="yearMax" value="${criteria.yearMax}"/></c:if>
                 <c:if test="${not empty criteria.fuelType}"><c:set target="${paginationParams}" property="fuelType" value="${criteria.fuelType}"/></c:if>
                 <c:if test="${not empty criteria.horsepowerMin}"><c:set target="${paginationParams}" property="horsepowerMin" value="${criteria.horsepowerMin}"/></c:if>
                 <c:if test="${not empty criteria.horsepowerMax}"><c:set target="${paginationParams}" property="horsepowerMax" value="${criteria.horsepowerMax}"/></c:if>
