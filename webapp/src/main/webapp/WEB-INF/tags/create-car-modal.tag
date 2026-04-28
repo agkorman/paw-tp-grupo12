@@ -75,6 +75,12 @@
                                 </c:forEach>
                             </form:select>
                             <form:errors path="brand" cssClass="form-error" element="span"/>
+                            <c:if test="${not adminMode}">
+                                <button type="button" class="catalog-request-link"
+                                        data-open-catalog-request="brand">
+                                    No encuentro la marca
+                                </button>
+                            </c:if>
                         </div>
 
                         <div class="review-modal-field">
@@ -86,6 +92,12 @@
                                 </c:forEach>
                             </form:select>
                             <form:errors path="bodyType" cssClass="form-error" element="span"/>
+                            <c:if test="${not adminMode}">
+                                <button type="button" class="catalog-request-link"
+                                        data-open-catalog-request="body-type">
+                                    No encuentro la carrocería
+                                </button>
+                            </c:if>
                         </div>
                     </div>
 
@@ -285,3 +297,8 @@
         </c:if>
     </section>
 </div>
+
+<c:if test="${not adminMode}">
+    <pa:request-brand-modal/>
+    <pa:request-body-type-modal/>
+</c:if>

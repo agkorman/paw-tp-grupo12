@@ -68,6 +68,7 @@
     <script src="<c:url value='/js/enhanced-filters.js?v=5'/>"></script>
     <script src="<c:url value='/js/cars-filters-panel.js?v=5'/>"></script>
     <script src="<c:url value='/js/create-car-modal.js'/>"></script>
+    <script src="<c:url value='/js/catalog-request-modals.js'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/submitted-toast.js'/>"></script>
