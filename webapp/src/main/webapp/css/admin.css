@@ -131,6 +131,139 @@
     gap: 1.25rem;
 }
 
+.admin-catalog-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+    max-width: 72rem;
+    margin: var(--spacing-12) auto 0;
+}
+
+.admin-catalog-request-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.admin-catalog-request-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.95rem 1.05rem;
+    background: linear-gradient(180deg, rgba(46, 46, 46, 0.72), rgba(31, 31, 31, 0.94));
+    border: 1px solid rgba(229, 226, 225, 0.10);
+    border-radius: var(--radius-md);
+    color: var(--on-surface);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: var(--shadow-float);
+}
+
+.admin-catalog-request-card:hover,
+.admin-catalog-request-card:focus-visible {
+    border-color: rgba(255, 87, 25, 0.45);
+    transform: translateY(-1px);
+    outline: none;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.admin-catalog-request-card-kicker {
+    color: var(--primary);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.admin-catalog-request-card-name {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    line-height: 1.2;
+    color: var(--on-surface);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-catalog-request-card-submitter {
+    color: var(--secondary);
+    font-size: 0.78rem;
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-catalog-request-review-modal {
+    z-index: 230;
+}
+
+.admin-catalog-request-review-dialog {
+    width: min(560px, 100%);
+    padding: 1.5rem;
+}
+
+.admin-catalog-request-review-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.admin-catalog-request-review-grid .review-modal-field-wide {
+    grid-column: 1 / -1;
+}
+
+.admin-catalog-request-review-dialog .review-modal-field input[readonly],
+.admin-catalog-request-review-dialog .review-modal-field textarea[readonly] {
+    opacity: 1;
+    color: var(--on-surface);
+}
+
+.admin-catalog-request-review-dialog .review-modal-actions .btn-primary,
+.admin-catalog-request-review-dialog .review-modal-actions .btn-secondary {
+    min-width: 8.5rem;
+    min-height: 2.75rem;
+    padding: 0.75rem 2rem;
+}
+
+.admin-request-review-modal {
+    z-index: 230;
+}
+
+.admin-request-review-dialog {
+    width: min(640px, 100%);
+    padding: 1.5rem;
+}
+
+.admin-request-review-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.admin-request-review-fields textarea {
+    min-height: 6rem;
+    line-height: 1.45;
+    resize: vertical;
+}
+
+.admin-request-review-dialog .review-modal-field input[readonly],
+.admin-request-review-dialog .review-modal-field textarea[readonly] {
+    opacity: 1;
+    color: var(--on-surface);
+}
+
+.admin-request-review-dialog .review-modal-actions .btn-primary,
+.admin-request-review-dialog .review-modal-actions .btn-secondary {
+    min-width: 8.5rem;
+    min-height: 2.75rem;
+    padding: 0.75rem 2rem;
+}
+
 .admin-requests-section .pagination {
     margin-top: auto;
     padding-top: 2rem;
@@ -212,6 +345,14 @@
     }
 
     .admin-requests-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-catalog-request-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-catalog-request-review-grid {
         grid-template-columns: 1fr;
     }
 

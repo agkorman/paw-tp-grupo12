@@ -119,6 +119,11 @@ public class AuthControllerTest {
         public List<User> getAllUsers() {
             return List.of();
         }
+
+        @Override
+        public boolean updateRole(final long userId, final String role) {
+            return false;
+        }
     }
 
     private static final class FailingAuthenticationManager implements AuthenticationManager {

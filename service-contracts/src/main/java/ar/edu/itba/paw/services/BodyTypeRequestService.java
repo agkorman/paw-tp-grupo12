@@ -19,7 +19,11 @@ public interface BodyTypeRequestService {
 
     long countBodyTypeRequestsByStatus(String status);
 
-    BodyTypeRequest createPendingRequest(Long submittedByUserId, String submitterEmail, String name);
+    BodyTypeRequest createPendingRequest(Long submittedByUserId, String submitterEmail, String name, String comments);
+
+    boolean approvePendingRequest(long id);
+
+    boolean approvePendingRequest(long id, String overrideName);
 
     boolean rejectPendingRequest(long id);
 }

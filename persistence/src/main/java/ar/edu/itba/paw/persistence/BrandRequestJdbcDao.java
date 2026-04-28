@@ -32,6 +32,7 @@ public class BrandRequestJdbcDao implements BrandRequestDao {
             getNullableLong(rs, "submitted_by_user_id"),
             rs.getString("submitter_email"),
             rs.getString("name"),
+            rs.getString("comments"),
             rs.getString("status"),
             rs.getTimestamp("created_at").toLocalDateTime()
     );
@@ -42,13 +43,13 @@ public class BrandRequestJdbcDao implements BrandRequestDao {
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("brand_requests")
                 .usingGeneratedKeyColumns("brand_request_id")
-                .usingColumns("submitted_by_user_id", "submitter_email", "name", "status");
+                .usingColumns("submitted_by_user_id", "submitter_email", "name", "comments", "status");
     }
 
     @Override
     public Optional<BrandRequest> findById(final long id) {
         return jdbcTemplate.query(
-                "SELECT brand_request_id, submitted_by_user_id, submitter_email, name, status, created_at "
+                "SELECT brand_request_id, submitted_by_user_id, submitter_email, name, comments, status, created_at "
                         + "FROM brand_requests WHERE brand_request_id = ?",
                 ROW_MAPPER,
                 id
@@ -58,7 +59,7 @@ public class BrandRequestJdbcDao implements BrandRequestDao {
     @Override
     public List<BrandRequest> findByStatus(final String status) {
         return jdbcTemplate.query(
-                "SELECT brand_request_id, submitted_by_user_id, submitter_email, name, status, created_at "
+                "SELECT brand_request_id, submitted_by_user_id, submitter_email, name, comments, status, created_at "
                         + "FROM brand_requests WHERE status = ? ORDER BY created_at DESC, brand_request_id DESC",
                 ROW_MAPPER,
                 status
@@ -79,7 +80,7 @@ public class BrandRequestJdbcDao implements BrandRequestDao {
         final long offset = Pagination.offsetFor(effectivePage, pageSize);
 
         final List<BrandRequest> items = jdbcTemplate.query(
-                "SELECT brand_request_id, submitted_by_user_id, submitter_email, name, status, created_at "
+                "SELECT brand_request_id, submitted_by_user_id, submitter_email, name, comments, status, created_at "
                         + "FROM brand_requests WHERE status = ? ORDER BY created_at DESC, brand_request_id DESC "
                         + "LIMIT ? OFFSET ?",
                 ROW_MAPPER,
@@ -97,11 +98,12 @@ public class BrandRequestJdbcDao implements BrandRequestDao {
 
     @Override
     public BrandRequest create(final Long submittedByUserId, final String submitterEmail,
-                               final String name, final String status) {
+                               final String name, final String comments, final String status) {
         final Map<String, Object> params = new HashMap<>();
         params.put("submitted_by_user_id", submittedByUserId);
         params.put("submitter_email", submitterEmail);
         params.put("name", name);
+        params.put("comments", comments);
         params.put("status", status);
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();

@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.BodyTypeRequestService;
 import ar.edu.itba.paw.services.BrandRequestService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
@@ -22,12 +23,15 @@ public class CatalogRequestController {
 
     private final BrandRequestService brandRequestService;
     private final BodyTypeRequestService bodyTypeRequestService;
+    private final AdminRequestService adminRequestService;
 
     @Autowired
     public CatalogRequestController(final BrandRequestService brandRequestService,
-                                    final BodyTypeRequestService bodyTypeRequestService) {
+                                    final BodyTypeRequestService bodyTypeRequestService,
+                                    final AdminRequestService adminRequestService) {
         this.brandRequestService = brandRequestService;
         this.bodyTypeRequestService = bodyTypeRequestService;
+        this.adminRequestService = adminRequestService;
     }
 
     @InitBinder
@@ -37,6 +41,7 @@ public class CatalogRequestController {
 
     @RequestMapping(value = "/brand-requests", method = RequestMethod.POST)
     public ModelAndView requestBrand(@RequestParam(value = "name", required = false) final String name,
+                                     @RequestParam(value = "comments", required = false) final String comments,
                                      @RequestHeader(value = "Referer", required = false) final String referer,
                                      @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         if (currentUser == null) {
@@ -45,12 +50,13 @@ public class CatalogRequestController {
         if (name == null || name.isBlank()) {
             return redirectBack(referer);
         }
-        brandRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name);
+        brandRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
         return redirectBack(referer);
     }
 
     @RequestMapping(value = "/body-type-requests", method = RequestMethod.POST)
     public ModelAndView requestBodyType(@RequestParam(value = "name", required = false) final String name,
+                                        @RequestParam(value = "comments", required = false) final String comments,
                                         @RequestHeader(value = "Referer", required = false) final String referer,
                                         @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         if (currentUser == null) {
@@ -59,7 +65,29 @@ public class CatalogRequestController {
         if (name == null || name.isBlank()) {
             return redirectBack(referer);
         }
-        bodyTypeRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name);
+        bodyTypeRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
+        return redirectBack(referer);
+    }
+
+    @RequestMapping(value = "/admin-requests", method = RequestMethod.POST)
+    public ModelAndView requestAdmin(@RequestParam(value = "motivation", required = false) final String motivation,
+                                     @RequestParam(value = "bio", required = false) final String bio,
+                                     @RequestParam(value = "justification", required = false) final String justification,
+                                     @RequestHeader(value = "Referer", required = false) final String referer,
+                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        if (currentUser == null) {
+            return new ModelAndView("redirect:/login");
+        }
+        if (motivation == null || motivation.isBlank()
+                || bio == null || bio.isBlank()
+                || justification == null || justification.isBlank()) {
+            return redirectBack(referer);
+        }
+        if (adminRequestService.hasPendingRequest(currentUser.getId())) {
+            return redirectBack(referer);
+        }
+        adminRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(),
+                motivation, bio, justification);
         return redirectBack(referer);
     }
 

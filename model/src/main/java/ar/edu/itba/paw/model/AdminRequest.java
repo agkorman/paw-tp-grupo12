@@ -3,26 +3,28 @@ package ar.edu.itba.paw.model;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class BrandRequest implements Serializable {
+public class AdminRequest implements Serializable {
 
     private long id;
-    private Long submittedByUserId;
+    private long submittedByUserId;
     private String submitterEmail;
-    private String name;
-    private String comments;
+    private String motivation;
+    private String bio;
+    private String justification;
     private String status;
     private LocalDateTime createdAt;
 
-    public BrandRequest() {}
+    public AdminRequest() {}
 
-    public BrandRequest(final long id, final Long submittedByUserId, final String submitterEmail,
-                        final String name, final String comments, final String status,
-                        final LocalDateTime createdAt) {
+    public AdminRequest(final long id, final long submittedByUserId, final String submitterEmail,
+                        final String motivation, final String bio, final String justification,
+                        final String status, final LocalDateTime createdAt) {
         this.id = id;
         this.submittedByUserId = submittedByUserId;
         this.submitterEmail = submitterEmail;
-        this.name = name;
-        this.comments = comments;
+        this.motivation = motivation;
+        this.bio = bio;
+        this.justification = justification;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -35,11 +37,11 @@ public class BrandRequest implements Serializable {
         this.id = id;
     }
 
-    public Long getSubmittedByUserId() {
+    public long getSubmittedByUserId() {
         return submittedByUserId;
     }
 
-    public void setSubmittedByUserId(final Long submittedByUserId) {
+    public void setSubmittedByUserId(final long submittedByUserId) {
         this.submittedByUserId = submittedByUserId;
     }
 
@@ -51,20 +53,28 @@ public class BrandRequest implements Serializable {
         this.submitterEmail = submitterEmail;
     }
 
-    public String getName() {
-        return name;
+    public String getMotivation() {
+        return motivation;
     }
 
-    public void setName(final String name) {
-        this.name = name;
+    public void setMotivation(final String motivation) {
+        this.motivation = motivation;
     }
 
-    public String getComments() {
-        return comments;
+    public String getBio() {
+        return bio;
     }
 
-    public void setComments(final String comments) {
-        this.comments = comments;
+    public void setBio(final String bio) {
+        this.bio = bio;
+    }
+
+    public String getJustification() {
+        return justification;
+    }
+
+    public void setJustification(final String justification) {
+        this.justification = justification;
     }
 
     public String getStatus() {

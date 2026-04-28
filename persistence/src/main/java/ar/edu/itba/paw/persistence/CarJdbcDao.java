@@ -319,4 +319,18 @@ public class CarJdbcDao implements CarDao {
         );
     }
 
+    @Override
+    public long countByBrandId(final long brandId) {
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM cars WHERE brand_id = ?", Long.class, brandId);
+        return count == null ? 0L : count;
+    }
+
+    @Override
+    public long countByBodyTypeId(final long bodyTypeId) {
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM cars WHERE body_type_id = ?", Long.class, bodyTypeId);
+        return count == null ? 0L : count;
+    }
+
 }

@@ -177,6 +177,11 @@ class CarFavoriteServiceImplTest {
         public List<User> findAll() {
             return Collections.emptyList();
         }
+
+        @Override
+        public boolean updateRole(final long userId, final String role) {
+            return false;
+        }
     }
 
     private static final class FakeCarDao implements CarDao {
@@ -232,6 +237,16 @@ class CarFavoriteServiceImplTest {
         @Override
         public boolean delete(final long id) {
             return false;
+        }
+
+        @Override
+        public long countByBrandId(final long brandId) {
+            return 0L;
+        }
+
+        @Override
+        public long countByBodyTypeId(final long bodyTypeId) {
+            return 0L;
         }
     }
 

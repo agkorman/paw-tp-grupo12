@@ -292,8 +292,28 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
+        public Optional<Brand> findById(final long id) {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<Brand> findByName(final String name) {
             return Optional.empty();
+        }
+
+        @Override
+        public Brand createBrand(final String name) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<Brand> updateBrand(final long id, final String name) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean deleteBrand(final long id) {
+            return false;
         }
     }
 
@@ -304,8 +324,28 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
+        public Optional<BodyType> findById(final long id) {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<BodyType> findByName(final String name) {
             return Optional.empty();
+        }
+
+        @Override
+        public BodyType createBodyType(final String name) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<BodyType> updateBodyType(final long id, final String name) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean deleteBodyType(final long id) {
+            return false;
         }
     }
 

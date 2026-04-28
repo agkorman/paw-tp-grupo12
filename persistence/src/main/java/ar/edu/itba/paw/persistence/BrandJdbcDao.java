@@ -30,7 +30,8 @@ public class BrandJdbcDao implements BrandDao {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("brands")
-                .usingGeneratedKeyColumns("brand_id");
+                .usingGeneratedKeyColumns("brand_id")
+                .usingColumns("name");
     }
 
     @Override
@@ -64,5 +65,22 @@ public class BrandJdbcDao implements BrandDao {
 
         long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();
+    }
+
+    @Override
+    public Optional<Brand> update(final long id, final String name) {
+        final int updated = jdbcTemplate.update(
+                "UPDATE brands SET name = ? WHERE brand_id = ?",
+                name, id
+        );
+        if (updated == 0) {
+            return Optional.empty();
+        }
+        return findById(id);
+    }
+
+    @Override
+    public boolean delete(final long id) {
+        return jdbcTemplate.update("DELETE FROM brands WHERE brand_id = ?", id) > 0;
     }
 }

@@ -19,7 +19,11 @@ public interface BrandRequestService {
 
     long countBrandRequestsByStatus(String status);
 
-    BrandRequest createPendingRequest(Long submittedByUserId, String submitterEmail, String name);
+    BrandRequest createPendingRequest(Long submittedByUserId, String submitterEmail, String name, String comments);
+
+    boolean approvePendingRequest(long id);
+
+    boolean approvePendingRequest(long id, String overrideName);
 
     boolean rejectPendingRequest(long id);
 }

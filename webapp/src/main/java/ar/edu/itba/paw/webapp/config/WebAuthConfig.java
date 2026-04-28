@@ -73,7 +73,8 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/cars/*/favorite"),
                                 antMatcher(HttpMethod.POST, "/profiles/*/follow"),
                                 antMatcher(HttpMethod.POST, "/brand-requests"),
-                                antMatcher(HttpMethod.POST, "/body-type-requests"))
+                                antMatcher(HttpMethod.POST, "/body-type-requests"),
+                                antMatcher(HttpMethod.POST, "/admin-requests"))
                             .authenticated()
                         .anyRequest().authenticated())
                 .formLogin(form -> form

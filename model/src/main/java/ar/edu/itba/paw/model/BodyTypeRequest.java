@@ -9,17 +9,20 @@ public class BodyTypeRequest implements Serializable {
     private Long submittedByUserId;
     private String submitterEmail;
     private String name;
+    private String comments;
     private String status;
     private LocalDateTime createdAt;
 
     public BodyTypeRequest() {}
 
     public BodyTypeRequest(final long id, final Long submittedByUserId, final String submitterEmail,
-                           final String name, final String status, final LocalDateTime createdAt) {
+                           final String name, final String comments, final String status,
+                           final LocalDateTime createdAt) {
         this.id = id;
         this.submittedByUserId = submittedByUserId;
         this.submitterEmail = submitterEmail;
         this.name = name;
+        this.comments = comments;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -54,6 +57,14 @@ public class BodyTypeRequest implements Serializable {
 
     public void setName(final String name) {
         this.name = name;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(final String comments) {
+        this.comments = comments;
     }
 
     public String getStatus() {

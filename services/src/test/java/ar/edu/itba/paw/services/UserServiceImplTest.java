@@ -158,6 +158,11 @@ class UserServiceImplTest {
                     .map(User::getEmail)
                     .toList();
         }
+
+        @Override
+        public boolean updateRole(final long userId, final String role) {
+            return false;
+        }
     }
 
     private static final class FakeReviewDao implements ReviewDao {

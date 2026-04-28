@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=4'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/admin.css?v=2'/>">
+    <link rel="stylesheet" href="<c:url value='/css/admin.css?v=5'/>">
 </head>
 <body>
     <pa:nav activePage="admin"/>
@@ -53,7 +53,6 @@
         <section class="admin-requests-section" aria-label="Formularios pendientes">
             <div class="admin-section-heading">
                 <div>
-                    <span class="admin-kicker">Formularios</span>
                     <h2>Solicitudes de autos</h2>
                 </div>
             </div>
@@ -108,10 +107,104 @@
             </c:choose>
         </section>
 
+        <section class="admin-catalog-section" aria-label="Solicitudes de marcas">
+            <div class="admin-section-heading">
+                <div>
+                    <h2>Solicitudes de marcas</h2>
+                </div>
+            </div>
+            <c:choose>
+                <c:when test="${empty pendingBrandRequests}">
+                    <div class="admin-empty-state">
+                        <p>No hay solicitudes de marcas pendientes.</p>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <div class="admin-catalog-request-grid">
+                        <c:forEach var="brandRequest" items="${pendingBrandRequests}">
+                            <pa:admin-catalog-request-card
+                                    id="${brandRequest.id}"
+                                    name="${brandRequest.name}"
+                                    submitter="${brandRequest.submitter}"
+                                    comments="${brandRequest.comments}"
+                                    type="brand"
+                                    kicker="Marca"/>
+                        </c:forEach>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+        </section>
+
+        <section class="admin-catalog-section" aria-label="Solicitudes de carrocerías">
+            <div class="admin-section-heading">
+                <div>
+                    <h2>Solicitudes de carrocerías</h2>
+                </div>
+            </div>
+            <c:choose>
+                <c:when test="${empty pendingBodyTypeRequests}">
+                    <div class="admin-empty-state">
+                        <p>No hay solicitudes de carrocerías pendientes.</p>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <div class="admin-catalog-request-grid">
+                        <c:forEach var="bodyTypeRequest" items="${pendingBodyTypeRequests}">
+                            <pa:admin-catalog-request-card
+                                    id="${bodyTypeRequest.id}"
+                                    name="${bodyTypeRequest.name}"
+                                    submitter="${bodyTypeRequest.submitter}"
+                                    comments="${bodyTypeRequest.comments}"
+                                    type="body-type"
+                                    kicker="Carrocería"/>
+                        </c:forEach>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+        </section>
+
+        <section class="admin-catalog-section" aria-label="Solicitudes de moderador">
+            <div class="admin-section-heading">
+                <div>
+                    <h2>Solicitudes de moderador</h2>
+                </div>
+            </div>
+            <c:choose>
+                <c:when test="${empty pendingAdminRequests}">
+                    <div class="admin-empty-state">
+                        <p>No hay solicitudes de moderador pendientes.</p>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <div class="admin-catalog-request-grid">
+                        <c:forEach var="adminRequest" items="${pendingAdminRequests}">
+                            <button type="button"
+                                    class="admin-catalog-request-card"
+                                    data-open-admin-request-review
+                                    data-request-id="${adminRequest.id}"
+                                    data-request-submitter="${fn:escapeXml(adminRequest.label)}"
+                                    data-request-motivation="${fn:escapeXml(adminRequest.motivation)}"
+                                    data-request-bio="${fn:escapeXml(adminRequest.bio)}"
+                                    data-request-justification="${fn:escapeXml(adminRequest.justification)}">
+                                <span class="admin-catalog-request-card-kicker">Moderador</span>
+                                <span class="admin-catalog-request-card-name">
+                                    <c:out value="${adminRequest.username}"/>
+                                </span>
+                            </button>
+                        </c:forEach>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+        </section>
+
     </main>
 
     <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
+    <pa:admin-catalog-request-modal/>
+    <pa:admin-request-review-modal/>
     <script src="<c:url value='/js/create-car-modal.js?v=2'/>"></script>
+    <script src="<c:url value='/js/admin-catalog-modal.js'/>"></script>
+    <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>
