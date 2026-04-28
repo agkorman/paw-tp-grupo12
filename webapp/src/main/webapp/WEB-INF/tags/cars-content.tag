@@ -8,6 +8,8 @@
 <%@ attribute name="showConsumption" required="false" %>
 <%@ attribute name="showAirbags" required="false" %>
 <%@ attribute name="showFuelType" required="false" %>
+<%@ attribute name="showPrice" required="false" %>
+<%@ attribute name="showYear" required="false" %>
 <%@ attribute name="currentPage" required="false" type="java.lang.Integer" %>
 <%@ attribute name="totalPages" required="false" type="java.lang.Integer" %>
 <%@ attribute name="criteria" required="false" type="ar.edu.itba.paw.model.CarSearchCriteria" %>
@@ -27,6 +29,7 @@
                 </c:url>
                 <pa:car-card
                     model="${car.brandName} ${car.model}"
+                    year="${car.year}"
                     bodyType="${car.bodyType}"
                     carId="${car.id}"
                     hasImage="${car.hasImage}"
@@ -40,21 +43,21 @@
                     airbagCount="${car.airbagCount}"
                     transmission="${car.transmission}"
                     fuelType="${car.fuelType}"
+                    priceUsd="${car.priceUsd}"
                     showHp="${showHp}"
                     showSpeed="${showSpeed}"
                     showConsumption="${showConsumption}"
                     showAirbags="${showAirbags}"
-                    showFuelType="${showFuelType}"/>
+                    showFuelType="${showFuelType}"
+                    showPrice="${showPrice}"
+                    showYear="${showYear}"/>
             </c:forEach>
 
             <c:if test="${showCarRequestCard}">
                 <sec:authorize access="isAuthenticated()">
                     <button type="button" class="car-request-card" data-open-create-car-modal data-auth-resume-intent="create-car">
                         <span class="car-request-card-icon" aria-hidden="true">
-                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                                <path d="M12 5v14"/>
-                                <path d="M5 12h14"/>
-                            </svg>
+                            <pa:icon name="plus" size="56"/>
                         </span>
                         <strong class="car-request-card-title">¿No encontrás el auto?</strong>
                         <span class="car-request-card-copy">Ayudanos a completar la galería con el modelo que falta.</span>
@@ -68,10 +71,7 @@
                        data-auth-required-action="agregar un auto"
                        data-auth-required-intent="create-car">
                         <span class="car-request-card-icon" aria-hidden="true">
-                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                                <path d="M12 5v14"/>
-                                <path d="M5 12h14"/>
-                            </svg>
+                            <pa:icon name="plus" size="56"/>
                         </span>
                         <strong class="car-request-card-title">¿No encontrás el auto?</strong>
                         <span class="car-request-card-copy">Iniciá sesión para sumar el modelo que falta.</span>
@@ -89,6 +89,8 @@
                 <c:if test="${not empty criteria.q}"><c:set target="${paginationParams}" property="q" value="${criteria.q}"/></c:if>
                 <c:if test="${not empty criteria.brand}"><c:set target="${paginationParams}" property="brand" value="${criteria.brand}"/></c:if>
                 <c:if test="${not empty criteria.bodyType}"><c:set target="${paginationParams}" property="bodyType" value="${criteria.bodyType}"/></c:if>
+                <c:if test="${not empty criteria.yearMin}"><c:set target="${paginationParams}" property="yearMin" value="${criteria.yearMin}"/></c:if>
+                <c:if test="${not empty criteria.yearMax}"><c:set target="${paginationParams}" property="yearMax" value="${criteria.yearMax}"/></c:if>
                 <c:if test="${not empty criteria.fuelType}"><c:set target="${paginationParams}" property="fuelType" value="${criteria.fuelType}"/></c:if>
                 <c:if test="${not empty criteria.horsepowerMin}"><c:set target="${paginationParams}" property="horsepowerMin" value="${criteria.horsepowerMin}"/></c:if>
                 <c:if test="${not empty criteria.horsepowerMax}"><c:set target="${paginationParams}" property="horsepowerMax" value="${criteria.horsepowerMax}"/></c:if>
@@ -96,6 +98,8 @@
                 <c:if test="${not empty criteria.transmission}"><c:set target="${paginationParams}" property="transmission" value="${criteria.transmission}"/></c:if>
                 <c:if test="${not empty criteria.fuelConsumptionMax}"><c:set target="${paginationParams}" property="fuelConsumptionMax" value="${criteria.fuelConsumptionMax}"/></c:if>
                 <c:if test="${not empty criteria.maxSpeedMin}"><c:set target="${paginationParams}" property="maxSpeedMin" value="${criteria.maxSpeedMin}"/></c:if>
+                <c:if test="${not empty criteria.priceMin}"><c:set target="${paginationParams}" property="priceMin" value="${criteria.priceMin}"/></c:if>
+                <c:if test="${not empty criteria.priceMax}"><c:set target="${paginationParams}" property="priceMax" value="${criteria.priceMax}"/></c:if>
                 <c:if test="${not empty criteria.sortBy}"><c:set target="${paginationParams}" property="sortBy" value="${criteria.sortBy}"/></c:if>
             </c:if>
             <pa:pagination currentPage="${currentPage}"

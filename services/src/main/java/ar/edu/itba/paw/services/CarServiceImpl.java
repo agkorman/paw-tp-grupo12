@@ -96,12 +96,13 @@ public class CarServiceImpl implements CarService {
     @Override
     @Transactional
     public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                         final long submittedByUserId, final String submitterEmail,
+                                         final Integer year, final long submittedByUserId, final String submitterEmail,
                                          final Optional<String> description,
                                          final List<CarImagePayload> images,
                                          final String fuelType, final Integer horsepower,
                                          final Integer airbagCount, final String transmission,
-                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                         final BigDecimal priceUsd) {
         final String normalizedDescription = description
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
@@ -116,6 +117,7 @@ public class CarServiceImpl implements CarService {
                 submitterEmail,
                 brandId,
                 bodyTypeId,
+                year,
                 model,
                 normalizedDescription,
                 normalizedImages,
@@ -124,25 +126,27 @@ public class CarServiceImpl implements CarService {
                 airbagCount,
                 transmission,
                 fuelConsumption,
-                maxSpeedKmh
+                maxSpeedKmh,
+                priceUsd
         );
     }
 
     @Override
     @Transactional
     public Optional<Car> updateCar(final long id, final long brandId, final String model,
-                                   final long bodyTypeId, final String description,
+                                   final long bodyTypeId, final Integer year, final String description,
                                    final Optional<String> imageContentType,
                                    final Optional<byte[]> imageData,
                                    final String fuelType, final Integer horsepower,
                                    final Integer airbagCount, final String transmission,
-                                   final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                   final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                   final BigDecimal priceUsd) {
         final String normalizedModel = StringUtils.normalizeRequired(model, "Model is required for car update.");
         final String normalizedDescription = StringUtils.normalizeRequired(description, "Description is required for car update.");
         validateImagePair(imageContentType, imageData);
 
-        final Optional<Car> updated = carDao.update(id, brandId, normalizedModel, bodyTypeId, normalizedDescription,
-                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh);
+        final Optional<Car> updated = carDao.update(id, brandId, normalizedModel, bodyTypeId, year, normalizedDescription,
+                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
         if (updated.isPresent() && imageContentType.isPresent()) {
             carImageDao.saveOrReplace(id, imageContentType.get(), imageData.orElseThrow());
         }

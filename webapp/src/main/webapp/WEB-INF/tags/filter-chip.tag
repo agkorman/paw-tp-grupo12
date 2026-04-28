@@ -4,6 +4,7 @@
 <%@ attribute name="active" required="false" rtexprvalue="true" type="java.lang.Boolean" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <c:set var="chipClasses" value="filter-chip"/>
 <c:if test="${active}">
@@ -14,17 +15,13 @@
     <c:when test="${not empty href}">
         <a href="${fn:escapeXml(href)}" class="${chipClasses}">
             <c:out value="${label}"/>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <pa:icon name="chevron-down" size="12"/>
         </a>
     </c:when>
     <c:otherwise>
         <button type="button" class="${chipClasses}">
             <c:out value="${label}"/>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <pa:icon name="chevron-down" size="12"/>
         </button>
     </c:otherwise>
 </c:choose>

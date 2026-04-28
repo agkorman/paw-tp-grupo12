@@ -160,6 +160,7 @@ public class EmailServiceImpl implements EmailService {
 
                 Marca: %s
                 Modelo: %s
+                Año modelo: %s
                 Carrocería: %s
                 Imagen cargada: %s
 
@@ -171,6 +172,7 @@ public class EmailServiceImpl implements EmailService {
                 APP_NAME,
                 safeValue(brandName),
                 safeValue(request.getModel()),
+                request.getYear() == null ? "N/A" : request.getYear().toString(),
                 safeValue(bodyTypeName),
                 request.getImageData() != null && request.getImageData().length > 0 ? "Sí" : "No",
                 previewDescription(request.getDescription()),
@@ -182,7 +184,8 @@ public class EmailServiceImpl implements EmailService {
                                         final String bodyTypeName, final boolean hasInlineImage) {
         final String brand = safeValue(brandName);
         final String model = safeValue(request.getModel());
-        final String carName = escapeHtml(brand + " " + model);
+        final String year = request.getYear() == null ? "" : " " + request.getYear();
+        final String carName = escapeHtml(brand + " " + model + year);
         final String bodyType = escapeHtml(safeValue(bodyTypeName));
         final String description = escapeHtml(previewDescription(request.getDescription())).replace("\n", "<br>");
         final String imageStatus = hasInlineImage ? "Con imagen" : "Sin imagen";

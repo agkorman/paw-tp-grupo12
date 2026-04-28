@@ -11,6 +11,7 @@ public class CarRequest implements Serializable {
     private String submitterEmail;
     private long brandId;
     private long bodyTypeId;
+    private Integer year;
     private String model;
     private String description;
     private String imageContentType;
@@ -23,6 +24,7 @@ public class CarRequest implements Serializable {
     private String transmission;
     private BigDecimal fuelConsumption;
     private Integer maxSpeedKmh;
+    private BigDecimal priceUsd;
 
     public CarRequest() {}
 
@@ -30,8 +32,8 @@ public class CarRequest implements Serializable {
                       final long bodyTypeId, final String model, final String description,
                       final String imageContentType, final byte[] imageData, final String status,
                       final LocalDateTime createdAt) {
-        this(id, submittedByUserId, submitterEmail, brandId, bodyTypeId, model, description,
-                imageContentType, imageData, status, createdAt, null, null, null, null, null, null);
+        this(id, submittedByUserId, submitterEmail, brandId, bodyTypeId, null, model, description,
+                imageContentType, imageData, status, createdAt, null, null, null, null, null, null, null);
     }
 
     public CarRequest(final long id, final Long submittedByUserId, final String submitterEmail, final long brandId,
@@ -39,12 +41,24 @@ public class CarRequest implements Serializable {
                       final String imageContentType, final byte[] imageData, final String status,
                       final LocalDateTime createdAt, final String fuelType, final Integer horsepower,
                       final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
-                      final Integer maxSpeedKmh) {
+                      final Integer maxSpeedKmh, final BigDecimal priceUsd) {
+        this(id, submittedByUserId, submitterEmail, brandId, bodyTypeId, null, model, description,
+                imageContentType, imageData, status, createdAt, fuelType, horsepower, airbagCount, transmission,
+                fuelConsumption, maxSpeedKmh, priceUsd);
+    }
+
+    public CarRequest(final long id, final Long submittedByUserId, final String submitterEmail, final long brandId,
+                      final long bodyTypeId, final Integer year, final String model, final String description,
+                      final String imageContentType, final byte[] imageData, final String status,
+                      final LocalDateTime createdAt, final String fuelType, final Integer horsepower,
+                      final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
+                      final Integer maxSpeedKmh, final BigDecimal priceUsd) {
         this.id = id;
         this.submittedByUserId = submittedByUserId;
         this.submitterEmail = submitterEmail;
         this.brandId = brandId;
         this.bodyTypeId = bodyTypeId;
+        this.year = year;
         this.model = model;
         this.description = description;
         this.imageContentType = imageContentType;
@@ -57,6 +71,7 @@ public class CarRequest implements Serializable {
         this.transmission = transmission;
         this.fuelConsumption = fuelConsumption;
         this.maxSpeedKmh = maxSpeedKmh;
+        this.priceUsd = priceUsd;
     }
 
     public long getId() {
@@ -97,6 +112,14 @@ public class CarRequest implements Serializable {
 
     public void setBodyTypeId(final long bodyTypeId) {
         this.bodyTypeId = bodyTypeId;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(final Integer year) {
+        this.year = year;
     }
 
     public String getModel() {
@@ -193,5 +216,13 @@ public class CarRequest implements Serializable {
 
     public void setMaxSpeedKmh(final Integer maxSpeedKmh) {
         this.maxSpeedKmh = maxSpeedKmh;
+    }
+
+    public BigDecimal getPriceUsd() {
+        return priceUsd;
+    }
+
+    public void setPriceUsd(final BigDecimal priceUsd) {
+        this.priceUsd = priceUsd;
     }
 }

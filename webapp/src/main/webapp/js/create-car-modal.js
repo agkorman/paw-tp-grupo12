@@ -299,10 +299,12 @@
     };
 
     var setSpecFieldsReadonly = function (readonly) {
+        setFieldReadonly('modalCarYear', readonly);
         setFieldReadonly('modalCarHorsepower', readonly);
         setFieldReadonly('modalCarAirbagCount', readonly);
         setFieldReadonly('modalCarFuelConsumption', readonly);
         setFieldReadonly('modalCarMaxSpeed', readonly);
+        setFieldReadonly('modalCarPriceUsd', readonly);
     };
 
     var setActionMode = function (mode) {
@@ -443,6 +445,7 @@
         setFieldValue('modalCarBrand', data.requestBrand);
         setFieldValue('modalCarBodyType', data.requestBodyType);
         setFieldValue('modalCarModel', data.requestModel);
+        setFieldValue('modalCarYear', data.requestYear);
         setFieldValue('modalCarDescription', data.requestDescription);
         setRadioGroupValue('fuelType', data.requestFuelType);
         setRadioGroupValue('transmission', data.requestTransmission);
@@ -450,6 +453,7 @@
         setFieldValue('modalCarAirbagCount', data.requestAirbagCount);
         setFieldValue('modalCarFuelConsumption', data.requestFuelConsumption);
         setFieldValue('modalCarMaxSpeed', data.requestMaxSpeedKmh);
+        setFieldValue('modalCarPriceUsd', data.requestPriceUsd);
         setAdminAction(data.requestId);
 
         if (fileStatus) {
@@ -474,6 +478,7 @@
         setFieldValue('modalCarBrand', data.carBrand);
         setFieldValue('modalCarBodyType', data.carBodyType);
         setFieldValue('modalCarModel', data.carModel);
+        setFieldValue('modalCarYear', data.carYear);
         setFieldValue('modalCarDescription', data.carDescription);
         setRadioGroupValue('fuelType', data.carFuelType);
         setRadioGroupValue('transmission', data.carTransmission);
@@ -481,6 +486,7 @@
         setFieldValue('modalCarAirbagCount', data.carAirbagCount);
         setFieldValue('modalCarFuelConsumption', data.carFuelConsumption);
         setFieldValue('modalCarMaxSpeed', data.carMaxSpeedKmh);
+        setFieldValue('modalCarPriceUsd', data.carPriceUsd);
         setCarEditAction(data.carAction);
 
         if (fileStatus) {

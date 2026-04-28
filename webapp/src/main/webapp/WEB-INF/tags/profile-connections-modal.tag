@@ -3,6 +3,7 @@
 <%@ attribute name="followerUsers" required="true" type="java.util.List" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 
@@ -12,17 +13,12 @@
         <header class="profile-modal-header profile-connections-header">
             <h2 id="profileConnectionsTitle" data-connections-title>Seguidos</h2>
             <button type="button" class="profile-modal-close" data-close-profile-modal aria-label="Cerrar modal">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true">
-                    <path d="M18 6 6 18M6 6l12 12"/>
-                </svg>
+                <pa:icon name="close" size="20"/>
             </button>
         </header>
 
         <div class="profile-connections-search">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"></circle>
-                <path d="m20 20-3.5-3.5"></path>
-            </svg>
+            <pa:icon name="search" size="18"/>
             <input type="search" placeholder="Buscar" aria-label="Buscar usuarios" data-connections-search>
         </div>
 
@@ -31,10 +27,7 @@
                 <c:url var="connectionProfileUrl" value="/profiles/${user.id}"/>
                 <article class="profile-connection-row" data-connection-row data-search-text="${fn:escapeXml(user.username)}">
                     <a class="profile-connection-avatar" href="${connectionProfileUrl}" aria-hidden="true" tabindex="-1">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true" focusable="false">
-                            <circle cx="12" cy="8" r="4"></circle>
-                            <path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"></path>
-                        </svg>
+                        <pa:icon name="user-avatar" size="24"/>
                     </a>
                     <div class="profile-connection-copy">
                         <a class="profile-connection-name" href="${connectionProfileUrl}">
@@ -86,10 +79,7 @@
                 <c:url var="connectionProfileUrl" value="/profiles/${user.id}"/>
                 <article class="profile-connection-row" data-connection-row data-search-text="${fn:escapeXml(user.username)}">
                     <a class="profile-connection-avatar" href="${connectionProfileUrl}" aria-hidden="true" tabindex="-1">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true" focusable="false">
-                            <circle cx="12" cy="8" r="4"></circle>
-                            <path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"></path>
-                        </svg>
+                        <pa:icon name="user-avatar" size="24"/>
                     </a>
                     <div class="profile-connection-copy">
                         <a class="profile-connection-name" href="${connectionProfileUrl}">

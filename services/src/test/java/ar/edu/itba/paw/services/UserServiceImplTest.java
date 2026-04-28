@@ -331,12 +331,12 @@ class UserServiceImplTest {
 
         @Override
         public CarRequest create(final long submittedByUserId, final String submitterEmail,
-                                 final long brandId, final long bodyTypeId,
+                                 final long brandId, final long bodyTypeId, final Integer year,
                                  final String model, final String description, final String imageContentType,
                                  final byte[] imageData, final String status,
                                  final String fuelType, final Integer horsepower, final Integer airbagCount,
                                  final String transmission, final java.math.BigDecimal fuelConsumption,
-                                 final Integer maxSpeedKmh) {
+                                 final Integer maxSpeedKmh, final java.math.BigDecimal priceUsd) {
             throw new UnsupportedOperationException();
         }
 

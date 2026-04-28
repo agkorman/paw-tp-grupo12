@@ -546,6 +546,12 @@ a.filter-chip {
     opacity: 0.85;
 }
 
+.card-spec-fuel-icon {
+    flex: 0 0 auto;
+    color: var(--primary);
+    opacity: 0.85;
+}
+
 .card-footer {
     display: flex;
     align-items: center;

@@ -52,7 +52,9 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -187,10 +189,11 @@ public class CarController {
             final boolean duplicate = carService
                     .getCarsByBrandAndBodyType(resolvedBrand.getName(), resolvedBodyType.getName())
                     .stream()
-                    .anyMatch(car -> car.getModel().equalsIgnoreCase(carForm.getModel()));
+                    .anyMatch(car -> sameModel(car.getModel(), carForm.getModel())
+                            && Objects.equals(car.getYear(), carForm.getYear()));
             if (duplicate) {
                 errors.reject("car.duplicate",
-                        "Ya existe un auto con esa marca, modelo y tipo de carrocería.");
+                        "Ya existe un auto con esa marca, modelo, carrocería y año.");
             }
         }
 
@@ -212,6 +215,7 @@ public class CarController {
                 resolvedBrand.getId(),
                 carForm.getModel(),
                 resolvedBodyType.getId(),
+                carForm.getYear(),
                 currentUser.getId(),
                 currentUser.getEmail(),
                 Optional.ofNullable(carForm.getDescription()).filter(value -> !value.isEmpty()),
@@ -221,7 +225,8 @@ public class CarController {
                 carForm.getAirbagCount(),
                 ControllerUtils.normalizeSpecValue(carForm.getTransmission()),
                 carForm.getFuelConsumption(),
-                carForm.getMaxSpeedKmh()
+                carForm.getMaxSpeedKmh(),
+                carForm.getPriceUsd()
         );
         emailService.sendNewCarRequestNotification(carRequest, resolvedBrand.getName(), resolvedBodyType.getName());
 
@@ -275,6 +280,8 @@ public class CarController {
         model.addAttribute("showConsumption", criteria.getFuelConsumptionMax() != null);
         model.addAttribute("showAirbags", criteria.getAirbagMin() != null);
         model.addAttribute("showFuelType", criteria.getFuelTypes().size() > 1);
+        model.addAttribute("showPrice", criteria.getPriceMin() != null || criteria.getPriceMax() != null);
+        model.addAttribute("showYear", criteria.getYearMin() != null || criteria.getYearMax() != null);
     }
 
     private void addShowSpecFlags(final ModelAndView mav, final CarSearchCriteria criteria) {
@@ -283,6 +290,8 @@ public class CarController {
         mav.addObject("showConsumption", criteria.getFuelConsumptionMax() != null);
         mav.addObject("showAirbags", criteria.getAirbagMin() != null);
         mav.addObject("showFuelType", criteria.getFuelTypes().size() > 1);
+        mav.addObject("showPrice", criteria.getPriceMin() != null || criteria.getPriceMax() != null);
+        mav.addObject("showYear", criteria.getYearMin() != null || criteria.getYearMax() != null);
     }
 
     private Map<Long, Boolean> favoritedCarIdsById(final List<Car> cars, final AuthenticatedUser currentUser) {
@@ -533,6 +542,14 @@ public class CarController {
                         ControllerUtils.normalizeSpecValue(carForm.getTransmission()))) {
             errors.rejectValue("transmission", "transmission.invalid", "Transmisión no válida.");
         }
+    }
+
+    private boolean sameModel(final String existingModel, final String submittedModel) {
+        final String normalizedExistingModel = ControllerUtils.normalize(existingModel);
+        final String normalizedSubmittedModel = ControllerUtils.normalize(submittedModel);
+        return normalizedExistingModel != null && normalizedSubmittedModel != null
+                && normalizedExistingModel.toLowerCase(Locale.ROOT)
+                .equals(normalizedSubmittedModel.toLowerCase(Locale.ROOT));
     }
 
     private static String buildImageEtag(final CarImage carImage) {

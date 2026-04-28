@@ -9,6 +9,8 @@
     var toolbarForm  = document.getElementById('car-filter-form');
     var panelValidationMessage = document.getElementById('filtersPanelValidationMessage');
     var hpError = document.getElementById('panelHpError');
+    var yearError = document.getElementById('panelYearError');
+    var priceError = document.getElementById('panelPriceError');
     var previewSubmitTimer = null;
 
     if (!panel || !toolbarForm) {
@@ -124,7 +126,23 @@
     var updateConsumptionDisplay = initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', 'Hasta', 'L/100km');
     var updateSpeedDisplay       = initSingleRange('panelMaxSpeedSlider',    'panelMaxSpeedDisplay',    'Desde', 'km/h');
 
-    /* ── DUAL-RANGE SLIDER (HP) ── */
+    /* ── DUAL-RANGE SLIDER ── */
+
+    function logPosToValue(pos, sliderMax, realMax) {
+        if (pos <= 0) return 0;
+        if (pos >= sliderMax) return realMax;
+        // Map slider position to real value on a log scale (minimum anchor: 1000)
+        var minAnchor = 1000;
+        var raw = minAnchor * Math.pow(realMax / minAnchor, pos / sliderMax);
+        return Math.round(raw / 1000) * 1000;
+    }
+
+    function logValueToPos(value, sliderMax, realMax) {
+        if (value <= 0) return 0;
+        if (value >= realMax) return sliderMax;
+        var minAnchor = 1000;
+        return Math.round(Math.log(value / minAnchor) / Math.log(realMax / minAnchor) * sliderMax);
+    }
 
     var dualRanges = panel.querySelectorAll('.dual-range');
     Array.prototype.forEach.call(dualRanges, function (container) {
@@ -138,8 +156,17 @@
 
         if (!lowThumb || !highThumb) { return; }
 
-        var min = parseFloat(container.getAttribute('data-range-min') || 0);
-        var max = parseFloat(container.getAttribute('data-range-max') || 1500);
+        var isLog   = container.getAttribute('data-scale') === 'log';
+        var min     = parseFloat(container.getAttribute('data-range-min') || 0);
+        var max     = parseFloat(container.getAttribute('data-range-max') || 1500);
+        var realMax = isLog ? parseFloat(container.getAttribute('data-real-max') || max) : max;
+
+        function posToValue(pos) {
+            return isLog ? logPosToValue(pos, max, realMax) : pos;
+        }
+        function valueToPos(value) {
+            return isLog ? logValueToPos(value, max, realMax) : value;
+        }
 
         function updateFill() {
             var low  = parseFloat(lowThumb.value);
@@ -160,27 +187,47 @@
 
         lowThumb.addEventListener('input', function () {
             clamp(); updateFill();
-            if (lowInput) { lowInput.value = parseFloat(lowThumb.value) === min ? '' : lowThumb.value; }
+            var realValue = posToValue(parseFloat(lowThumb.value));
+            if (lowInput) { lowInput.value = realValue === min ? '' : realValue; }
         });
 
         highThumb.addEventListener('input', function () {
             clamp(); updateFill();
-            if (highInput) { highInput.value = parseFloat(highThumb.value) === max ? '' : highThumb.value; }
+            var realValue = posToValue(parseFloat(highThumb.value));
+            if (highInput) { highInput.value = realValue === realMax ? '' : realValue; }
         });
 
         if (lowInput) {
             lowInput.addEventListener('change', function () {
                 var v = parseFloat(lowInput.value);
-                if (!isNaN(v)) { lowThumb.value = Math.min(Math.max(v, min), parseFloat(highThumb.value)); updateFill(); }
+                if (!isNaN(v)) {
+                    var pos = valueToPos(v);
+                    lowThumb.value = Math.min(Math.max(pos, min), parseFloat(highThumb.value));
+                    updateFill();
+                }
                 clearValidationErrors();
             });
         }
         if (highInput) {
             highInput.addEventListener('change', function () {
                 var v = parseFloat(highInput.value);
-                if (!isNaN(v)) { highThumb.value = Math.max(Math.min(v, max), parseFloat(lowThumb.value)); updateFill(); }
+                if (!isNaN(v)) {
+                    var pos = valueToPos(v);
+                    highThumb.value = Math.max(Math.min(pos, max), parseFloat(lowThumb.value));
+                    updateFill();
+                }
                 clearValidationErrors();
             });
+        }
+
+        // Initialize slider positions from existing number input values (needed for log scale)
+        if (isLog) {
+            if (lowInput && lowInput.value !== '') {
+                lowThumb.value = valueToPos(parseFloat(lowInput.value));
+            }
+            if (highInput && highInput.value !== '') {
+                highThumb.value = valueToPos(parseFloat(highInput.value));
+            }
         }
 
         updateFill();
@@ -214,10 +261,12 @@
 
     var PANEL_PARAM_KEYS = [
         'q', 'brand', 'bodyType',
+        'yearMin', 'yearMax', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
         'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
     ];
     var ADVANCED_PANEL_PARAM_KEYS = [
+        'yearMin', 'yearMax', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
         'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
     ];
@@ -268,6 +317,14 @@
             hpError.textContent = '';
             hpError.setAttribute('hidden', '');
         }
+        if (yearError) {
+            yearError.textContent = '';
+            yearError.setAttribute('hidden', '');
+        }
+        if (priceError) {
+            priceError.textContent = '';
+            priceError.setAttribute('hidden', '');
+        }
         var invalidFields = panel.querySelectorAll('.is-invalid');
         Array.prototype.forEach.call(invalidFields, function (el) {
             el.classList.remove('is-invalid');
@@ -296,6 +353,36 @@
             field.setAttribute('aria-invalid', 'true');
         });
         if (focusFirstField && hpMin) { hpMin.focus(); }
+    }
+
+    function showYearValidationError(message, focusFirstField) {
+        var yearMin = document.getElementById('panelYearMin');
+        var yearMax = document.getElementById('panelYearMax');
+        if (yearError) {
+            yearError.textContent = message;
+            yearError.removeAttribute('hidden');
+        }
+        [yearMin, yearMax].forEach(function (field) {
+            if (!field) { return; }
+            field.classList.add('is-invalid');
+            field.setAttribute('aria-invalid', 'true');
+        });
+        if (focusFirstField && yearMin) { yearMin.focus(); }
+    }
+
+    function showPriceValidationError(message, focusFirstField) {
+        var priceMin = document.getElementById('panelPriceMin');
+        var priceMax = document.getElementById('panelPriceMax');
+        if (priceError) {
+            priceError.textContent = message;
+            priceError.removeAttribute('hidden');
+        }
+        [priceMin, priceMax].forEach(function (field) {
+            if (!field) { return; }
+            field.classList.add('is-invalid');
+            field.setAttribute('aria-invalid', 'true');
+        });
+        if (focusFirstField && priceMin) { priceMin.focus(); }
     }
 
     function isAllowedValue(value, allowedValues) {
@@ -332,6 +419,29 @@
         }
         if (!isAllowedValue(panelParams.airbagMin, ['', '2', '4', '6', '8', '10'])) {
             showPanelValidationError('Elegí una cantidad de airbags válida.');
+            return false;
+        }
+        if (!isValidNumberParam(panelParams.yearMin, 1886, 2100)
+                || !isValidNumberParam(panelParams.yearMax, 1886, 2100)) {
+            showYearValidationError('Usá años entre 1886 y 2100.', focusOnError);
+            return false;
+        }
+
+        if (panelParams.yearMin !== undefined && panelParams.yearMax !== undefined
+                && Number(panelParams.yearMin) > Number(panelParams.yearMax)) {
+            showYearValidationError('El año mínimo no puede superar al máximo.', focusOnError);
+            return false;
+        }
+
+        if (!isValidNumberParam(panelParams.priceMin, 0, 5000000)
+                || !isValidNumberParam(panelParams.priceMax, 0, 5000000)) {
+            showPriceValidationError('Usá precios entre USD 0 y USD 5.000.000.', focusOnError);
+            return false;
+        }
+
+        if (panelParams.priceMin !== undefined && panelParams.priceMax !== undefined
+                && Number(panelParams.priceMin) > Number(panelParams.priceMax)) {
+            showPriceValidationError('El precio mínimo no puede superar al máximo.', focusOnError);
             return false;
         }
 
@@ -436,16 +546,27 @@
         resetFilterGroup('panelTransmission');
         clearValidationErrors();
 
+        var priceMin = document.getElementById('panelPriceMin');
+        var priceMax = document.getElementById('panelPriceMax');
+        if (priceMin) { priceMin.value = ''; }
+        if (priceMax) { priceMax.value = ''; }
+
+        var yearMin = document.getElementById('panelYearMin');
+        var yearMax = document.getElementById('panelYearMax');
+        if (yearMin) { yearMin.value = ''; }
+        if (yearMax) { yearMax.value = ''; }
+
         var hpMin = document.getElementById('panelHpMin');
         var hpMax = document.getElementById('panelHpMax');
         if (hpMin) { hpMin.value = ''; }
         if (hpMax) { hpMax.value = ''; }
-        var lowThumb  = panel.querySelector('.dual-range-low');
-        var highThumb = panel.querySelector('.dual-range-high');
-        if (lowThumb)  { lowThumb.value  = lowThumb.min;  }
-        if (highThumb) { highThumb.value = highThumb.max; }
-        var fill = panel.querySelector('.dual-range-fill');
-        if (fill) { fill.style.left = '0%'; fill.style.width = '100%'; }
+
+        var lowThumbs  = panel.querySelectorAll('.dual-range-low');
+        var highThumbs = panel.querySelectorAll('.dual-range-high');
+        Array.prototype.forEach.call(lowThumbs,  function (t) { t.value = t.min; });
+        Array.prototype.forEach.call(highThumbs, function (t) { t.value = t.max; });
+        var fills = panel.querySelectorAll('.dual-range-fill');
+        Array.prototype.forEach.call(fills, function (f) { f.style.left = '0%'; f.style.width = '100%'; })
 
         var consumptionSlider = document.getElementById('panelConsumptionSlider');
         if (consumptionSlider) {
