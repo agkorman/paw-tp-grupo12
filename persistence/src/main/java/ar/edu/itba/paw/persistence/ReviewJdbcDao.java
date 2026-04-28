@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
+import ar.edu.itba.paw.model.ReviewTag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -15,10 +16,12 @@ import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public class ReviewJdbcDao implements ReviewDao {
@@ -36,6 +39,7 @@ public class ReviewJdbcDao implements ReviewDao {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
+    private final ReviewTagDao reviewTagDao;
 
     private static Long getNullableLong(final java.sql.ResultSet rs, final String columnName) throws java.sql.SQLException {
         final Number value = (Number) rs.getObject(columnName);
@@ -66,7 +70,7 @@ public class ReviewJdbcDao implements ReviewDao {
     );
 
     @Autowired
-    public ReviewJdbcDao(final DataSource dataSource) {
+    public ReviewJdbcDao(final DataSource dataSource, final ReviewTagDao reviewTagDao) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
@@ -74,14 +78,36 @@ public class ReviewJdbcDao implements ReviewDao {
                 .usingColumns("user_id", "reviewer_email", "car_id", "rating", "title", "body",
                         "ownership_status", "model_year", "mileage_km", "would_recommend")
                 .usingGeneratedKeyColumns("review_id");
+        this.reviewTagDao = reviewTagDao;
+    }
+
+    private void attachTags(final Collection<Review> reviews) {
+        if (reviews == null || reviews.isEmpty()) {
+            return;
+        }
+        final List<Long> ids = reviews.stream().map(Review::getId).collect(Collectors.toList());
+        final Map<Long, List<ReviewTag>> tagsByReview = reviewTagDao.findByReviewIds(ids);
+        for (final Review review : reviews) {
+            review.setTags(tagsByReview.getOrDefault(review.getId(), Collections.emptyList()));
+        }
+    }
+
+    private Optional<Review> attachTags(final Optional<Review> review) {
+        review.ifPresent(r -> attachTags(List.of(r)));
+        return review;
+    }
+
+    private List<Review> attachTagsToList(final List<Review> reviews) {
+        attachTags(reviews);
+        return reviews;
     }
 
     @Override
     public Optional<Review> findById(long id) {
-        return jdbcTemplate.query(
+        return attachTags(jdbcTemplate.query(
                 REVIEW_SELECT + "WHERE r.review_id = ?",
                 ROW_MAPPER, id
-        ).stream().findFirst();
+        ).stream().findFirst());
     }
 
     @Override
@@ -89,11 +115,11 @@ public class ReviewJdbcDao implements ReviewDao {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        return namedParameterJdbcTemplate.query(
+        return attachTagsToList(namedParameterJdbcTemplate.query(
                 REVIEW_SELECT + "WHERE r.review_id IN (:reviewIds)",
                 new MapSqlParameterSource("reviewIds", ids),
                 ROW_MAPPER
-        );
+        ));
     }
 
     @Override
@@ -108,18 +134,18 @@ public class ReviewJdbcDao implements ReviewDao {
 
     @Override
     public Optional<Review> findLatestByCarId(final long carId) {
-        return jdbcTemplate.query(
+        return attachTags(jdbcTemplate.query(
                 REVIEW_SELECT + "WHERE r.car_id = ? ORDER BY r.created_at DESC LIMIT 1",
                 ROW_MAPPER, carId
-        ).stream().findFirst();
+        ).stream().findFirst());
     }
 
     @Override
     public Optional<Review> findTopRatedLatestByCarId(final long carId) {
-        return jdbcTemplate.query(
+        return attachTags(jdbcTemplate.query(
                 REVIEW_SELECT + "WHERE r.car_id = ? ORDER BY r.rating DESC, r.created_at DESC, r.review_id DESC LIMIT 1",
                 ROW_MAPPER, carId
-        ).stream().findFirst();
+        ).stream().findFirst());
     }
 
     @Override
@@ -150,10 +176,10 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     private List<Review> findByCarIdOrdered(final long carId, final String orderByClause) {
-        return jdbcTemplate.query(
+        return attachTagsToList(jdbcTemplate.query(
                 REVIEW_SELECT + "WHERE r.car_id = ? ORDER BY " + orderByClause,
                 ROW_MAPPER, carId
-        );
+        ));
     }
 
     private Page<Review> findByCarIdPaginated(final long carId, final String orderByClause, final int page) {
@@ -165,19 +191,19 @@ public class ReviewJdbcDao implements ReviewDao {
         }
         final int effectivePage = Pagination.clampPage(normalizedPage, total, pageSize);
         final long offset = Pagination.offsetFor(effectivePage, pageSize);
-        final List<Review> items = jdbcTemplate.query(
+        final List<Review> items = attachTagsToList(jdbcTemplate.query(
                 REVIEW_SELECT + "WHERE r.car_id = ? ORDER BY " + orderByClause + " LIMIT ? OFFSET ?",
                 ROW_MAPPER, carId, pageSize, offset
-        );
+        ));
         return new Page<>(items, effectivePage, pageSize, total);
     }
 
     @Override
     public List<Review> findByUserId(long userId) {
-        return jdbcTemplate.query(
+        return attachTagsToList(jdbcTemplate.query(
                 REVIEW_SELECT + "WHERE r.user_id = ? ORDER BY r.created_at DESC",
                 ROW_MAPPER, userId
-        );
+        ));
     }
 
     @Override

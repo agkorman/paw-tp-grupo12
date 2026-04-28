@@ -4,8 +4,10 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.ReviewDao;
+import ar.edu.itba.paw.persistence.ReviewTagDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -17,16 +19,30 @@ import java.util.Optional;
 public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewDao reviewDao;
+    private final ReviewTagDao reviewTagDao;
+    private final ReviewTagService reviewTagService;
 
     @Autowired
-    public ReviewServiceImpl(final ReviewDao reviewDao) {
+    public ReviewServiceImpl(final ReviewDao reviewDao, final ReviewTagDao reviewTagDao,
+                             final ReviewTagService reviewTagService) {
         this.reviewDao = reviewDao;
+        this.reviewTagDao = reviewTagDao;
+        this.reviewTagService = reviewTagService;
     }
 
     @Override
+    @Transactional
     public Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
-                               String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend) {
-        return reviewDao.create(userId, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
+                               String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
+                               Collection<Short> tagIds) {
+        reviewTagService.validateSelection(tagIds);
+        final Review review = reviewDao.create(userId, carId, rating, title, body, ownershipStatus, modelYear,
+                mileageKm, wouldRecommend);
+        if (tagIds != null && !tagIds.isEmpty()) {
+            reviewTagDao.replaceAssignments(review.getId(), tagIds);
+            return reviewDao.findById(review.getId()).orElse(review);
+        }
+        return review;
     }
 
     @Override
@@ -43,11 +59,20 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional
     public Optional<Review> updateReview(final long id, final long carId,
                                          final BigDecimal rating, final String title, final String body,
                                          final String ownershipStatus, final Integer modelYear,
-                                         final Integer mileageKm, final Boolean wouldRecommend) {
-        return reviewDao.update(id, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend);
+                                         final Integer mileageKm, final Boolean wouldRecommend,
+                                         final Collection<Short> tagIds) {
+        reviewTagService.validateSelection(tagIds);
+        final Optional<Review> updated = reviewDao.update(id, carId, rating, title, body, ownershipStatus,
+                modelYear, mileageKm, wouldRecommend);
+        if (updated.isPresent()) {
+            reviewTagDao.replaceAssignments(id, tagIds == null ? Collections.emptyList() : tagIds);
+            return reviewDao.findById(id);
+        }
+        return updated;
     }
 
     @Override

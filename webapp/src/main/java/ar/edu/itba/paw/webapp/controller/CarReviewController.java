@@ -11,6 +11,7 @@ import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
@@ -165,16 +166,25 @@ public class CarReviewController {
             return "car-review.jsp";
         }
 
-        reviewService.createReview(
-                currentUser.getId(),
-                car.getId(),
-                reviewForm.getRating(),
-                reviewForm.getTitle(),
-                reviewForm.getBody(),
-                normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                reviewForm.getModelYear(),
-                reviewForm.getMileageKm(),
-                reviewForm.getWouldRecommend());
+        try {
+            reviewService.createReview(
+                    currentUser.getId(),
+                    car.getId(),
+                    reviewForm.getRating(),
+                    reviewForm.getTitle(),
+                    reviewForm.getBody(),
+                    normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
+                    reviewForm.getModelYear(),
+                    reviewForm.getMileageKm(),
+                    reviewForm.getWouldRecommend(),
+                    reviewForm.getTagIds());
+        } catch (final InvalidReviewTagSelectionException e) {
+            errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
+            final ReviewPageData pageData = resolveReviewPageData(car.getId(), null, null, currentUserId(currentUser));
+            populateCarReviewPageModel(model, pageData, currentUser);
+            model.addAttribute("openReviewModal", true);
+            return "car-review.jsp";
+        }
 
         return "redirect:/reviews?carId=" + car.getId();
     }
@@ -348,6 +358,7 @@ public class CarReviewController {
                                      @RequestParam(value = "modelYear", required = false) final Integer modelYear,
                                      @RequestParam(value = "mileageKm", required = false) final Integer mileageKm,
                                      @RequestParam(value = "wouldRecommend", required = false) final Boolean wouldRecommend,
+                                     @RequestParam(value = "tagIds", required = false) final Set<Short> tagIds,
                                      @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
         validateReviewOwnership(existingReview, currentUser);
@@ -358,17 +369,22 @@ public class CarReviewController {
             return carReviewPage(existingReview.getCarId(), null, validationError, true, currentUser);
         }
 
-        reviewService.updateReview(
-                reviewId,
-                existingReview.getCarId(),
-                rating,
-                title,
-                body,
-                normalizeOwnershipStatus(ownershipStatus),
-                modelYear,
-                mileageKm,
-                wouldRecommend
-        );
+        try {
+            reviewService.updateReview(
+                    reviewId,
+                    existingReview.getCarId(),
+                    rating,
+                    title,
+                    body,
+                    normalizeOwnershipStatus(ownershipStatus),
+                    modelYear,
+                    mileageKm,
+                    wouldRecommend,
+                    tagIds
+            );
+        } catch (final InvalidReviewTagSelectionException e) {
+            return carReviewPage(existingReview.getCarId(), null, e.getMessage(), true, currentUser);
+        }
         return new ModelAndView("redirect:/profile");
     }
 

@@ -72,5 +72,6 @@
         <p class="profile-review-car"><c:out value="${reviewCard.carName}"/></p>
         <h3><c:out value="${reviewCard.review.title}"/></h3>
         <p class="profile-review-body"><c:out value="${reviewCard.review.body}"/></p>
+        <pa:review-tag-chips mode="display" tags="${reviewCard.review.tags}"/>
     </div>
 </article>

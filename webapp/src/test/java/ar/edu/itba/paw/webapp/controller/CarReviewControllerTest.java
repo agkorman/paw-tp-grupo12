@@ -84,6 +84,7 @@ public class CarReviewControllerTest {
                 2021,
                 30000,
                 true,
+                null,
                 user(7L)
         );
 
@@ -103,6 +104,7 @@ public class CarReviewControllerTest {
                 BigDecimal.valueOf(4),
                 "Editada",
                 "Texto editado.",
+                null,
                 null,
                 null,
                 null,
@@ -147,6 +149,7 @@ public class CarReviewControllerTest {
                 BigDecimal.valueOf(4),
                 "Editada",
                 "Texto editado.",
+                null,
                 null,
                 null,
                 null,
@@ -450,7 +453,8 @@ public class CarReviewControllerTest {
         @Override
         public Review createReview(final long userId, final long carId, final BigDecimal rating, final String title,
                                    final String body, final String ownershipStatus, final Integer modelYear,
-                                   final Integer mileageKm, final Boolean wouldRecommend) {
+                                   final Integer mileageKm, final Boolean wouldRecommend,
+                                   final Collection<Short> tagIds) {
             this.createdUserId = userId;
             this.createdCarId = carId;
             return review == null ? new Review() : review;
@@ -473,7 +477,7 @@ public class CarReviewControllerTest {
         public Optional<Review> updateReview(final long id, final long carId, final BigDecimal rating,
                                              final String title, final String body, final String ownershipStatus,
                                              final Integer modelYear, final Integer mileageKm,
-                                             final Boolean wouldRecommend) {
+                                             final Boolean wouldRecommend, final Collection<Short> tagIds) {
             this.updated = true;
             this.updatedCarId = carId;
             return Optional.ofNullable(review);
