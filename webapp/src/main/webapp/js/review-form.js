@@ -2,58 +2,28 @@
     function $(id) { return document.getElementById(id); }
     function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
 
-    var modal = $('createReviewModal');
     var form = $('createReviewForm');
+    var modal = $('createReviewFormPage');
     if (!modal || !form) {
         return;
     }
 
     var STAR_FILLED = '#ff5719';
     var STAR_EMPTY = '#2e2e2e';
-    var lastTrigger = null;
-
     var starSlots = $$('.star-slot', modal);
     var starInput = $('modalRating');
     var starWrap = modal.querySelector('.star-rating');
     var starLabel = modal.querySelector('.star-rating-value');
     var currentRating = 0;
 
-    var modalKicker = modal.querySelector('[data-review-modal-kicker]');
-    var modalTitle = modal.querySelector('[data-review-modal-title]');
-    var modalSubtitle = modal.querySelector('[data-review-modal-subtitle]');
-    var reviewIdInput = $('modalReviewId');
-    var carIdInput = $('modalCarId');
-    var titleInput = $('modalTitle');
-    var bodyInput = $('modalBody');
     var modelYearInput = $('modalModelYear');
     var mileageInput = $('modalMileageKm');
-    var submitButton = $('reviewModalSubmitButton');
-    var cancelButton = $('reviewModalCancelButton');
-
-    var createTexts = {
-        kicker: 'Nueva reseña',
-        title: 'Compartí tu experiencia',
-        subtitle: 'Completá los campos de la reseña. La publicación quedará asociada a tu cuenta.',
-        submit: 'Guardar reseña',
-        cancel: 'Cancelar'
-    };
-    var editTexts = {
-        kicker: 'Editar reseña',
-        title: 'Editá tu experiencia',
-        subtitle: 'Modificá los datos de la reseña y confirmá los cambios.',
-        submit: 'Aceptar',
-        cancel: 'Cancelar'
-    };
     var requiredMessages = {
         modalTitle: 'Ingresá un título.',
-        modalBody: 'Ingresá una descripción.'
+        modalBody: 'Ingresá una descripción.',
+        modalModelYear: 'Ingresá el año del modelo.',
+        modalMileageKm: 'Ingresá el kilometraje.'
     };
-
-    function setText(node, value) {
-        if (node) {
-            node.textContent = value;
-        }
-    }
 
     function starTextFor(value) {
         if (value === 0) return 'Sin puntuación';
@@ -128,65 +98,6 @@
         renderStars(0);
     }
 
-    function setRadioValue(name, value) {
-        var normalized = value === null || typeof value === 'undefined' ? '' : String(value);
-        var radios = form.querySelectorAll('input[name="' + name + '"]');
-        for (var i = 0; i < radios.length; i += 1) {
-            radios[i].checked = radios[i].value === normalized;
-        }
-    }
-
-    function setModeTexts(texts) {
-        setText(modalKicker, texts.kicker);
-        setText(modalTitle, texts.title);
-        setText(modalSubtitle, texts.subtitle);
-        setText(submitButton, texts.submit);
-        setText(cancelButton, texts.cancel);
-    }
-
-    function setCreateMode(trigger) {
-        form.reset();
-        form.action = form.getAttribute('data-create-action') || form.action;
-        setModeTexts(createTexts);
-        if (reviewIdInput) {
-            reviewIdInput.value = '';
-        }
-        if (carIdInput) {
-            carIdInput.value = trigger.getAttribute('data-review-car-id') || modal.getAttribute('data-default-car-id') || carIdInput.value || '';
-        }
-        resetRating();
-    }
-
-    function setEditMode(trigger) {
-        var data = trigger.dataset;
-        form.reset();
-        form.action = data.reviewAction || form.action;
-        setModeTexts(editTexts);
-        if (reviewIdInput) reviewIdInput.value = data.reviewId || '';
-        if (carIdInput) carIdInput.value = data.reviewCarId || '';
-        if (titleInput) titleInput.value = data.reviewTitle || '';
-        if (bodyInput) bodyInput.value = data.reviewBody || '';
-        if (modelYearInput) modelYearInput.value = data.reviewModelYear || '';
-        if (mileageInput) mileageInput.value = data.reviewMileageKm || '';
-        setRadioValue('ownershipStatus', data.reviewOwnershipStatus || '');
-        setRadioValue('wouldRecommend', data.reviewWouldRecommend || '');
-        setRating(Number(data.reviewRating || 0));
-    }
-
-    function openModal(trigger) {
-        lastTrigger = trigger || lastTrigger;
-        if (trigger && trigger.getAttribute('data-open-review-modal') === 'edit') {
-            setEditMode(trigger);
-        } else {
-            setCreateMode(trigger || document.createElement('button'));
-        }
-        modal.removeAttribute('hidden');
-        document.body.classList.add('modal-open');
-        if (titleInput) {
-            titleInput.focus();
-        }
-    }
-
     function syncRatingFromInput() {
         var raw = starInput ? starInput.value : '';
         var value = raw ? Number(raw) : 0;
@@ -197,55 +108,150 @@
         }
     }
 
-    function openModalPreservingForm() {
-        lastTrigger = null;
-        form.action = form.getAttribute('data-create-action') || form.action;
-        setModeTexts(createTexts);
-        if (reviewIdInput) {
-            reviewIdInput.value = '';
+    function isInt(value) {
+        return /^\d+$/.test(value);
+    }
+
+    function fieldContainer(input) {
+        var node = input;
+        while (node && node !== modal) {
+            if (node.classList && node.classList.contains('review-modal-field')) {
+                return node;
+            }
+            node = node.parentNode;
         }
-        if (carIdInput && !carIdInput.value) {
-            carIdInput.value = modal.getAttribute('data-default-car-id') || '';
+        return input ? input.parentNode : form;
+    }
+
+    function clientErrorId(input) {
+        return input.id + 'ClientError';
+    }
+
+    function setDescribedBy(input, errorId) {
+        if (!input || !errorId) {
+            return;
         }
-        syncRatingFromInput();
-        modal.removeAttribute('hidden');
-        document.body.classList.add('modal-open');
-        if (titleInput) {
-            titleInput.focus();
+        var ids = (input.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+        if (ids.indexOf(errorId) === -1) {
+            ids.push(errorId);
+            input.setAttribute('aria-describedby', ids.join(' '));
         }
     }
 
-    function closeModal() {
-        modal.setAttribute('hidden', 'hidden');
-        document.body.classList.remove('modal-open');
-        if (lastTrigger && document.contains(lastTrigger)) {
-            lastTrigger.focus();
+    function removeDescribedBy(input, errorId) {
+        if (!input || !errorId) {
+            return;
         }
-        lastTrigger = null;
+        var ids = (input.getAttribute('aria-describedby') || '').split(/\s+/).filter(function (id) {
+            return id && id !== errorId;
+        });
+        if (ids.length) {
+            input.setAttribute('aria-describedby', ids.join(' '));
+        } else {
+            input.removeAttribute('aria-describedby');
+        }
+    }
+
+    function setInlineError(input, message) {
+        if (!input) {
+            return;
+        }
+        var container = fieldContainer(input);
+        var errorId = clientErrorId(input);
+        var error = container.querySelector('[data-client-error-for="' + input.id + '"]');
+        if (!error) {
+            error = document.createElement('span');
+            error.id = errorId;
+            error.className = 'form-error client-form-error';
+            error.setAttribute('data-client-error-for', input.id);
+            error.setAttribute('role', 'alert');
+            container.appendChild(error);
+        }
+        error.textContent = message;
+        error.hidden = false;
+        input.classList.add('is-invalid');
+        input.setAttribute('aria-invalid', 'true');
+        setDescribedBy(input, errorId);
+    }
+
+    function clearInlineError(input) {
+        if (!input) {
+            return;
+        }
+        var container = fieldContainer(input);
+        var errorId = clientErrorId(input);
+        var error = container.querySelector('[data-client-error-for="' + input.id + '"]');
+        if (error) {
+            error.textContent = '';
+            error.hidden = true;
+        }
+        input.classList.remove('is-invalid');
+        input.removeAttribute('aria-invalid');
+        removeDescribedBy(input, errorId);
+    }
+
+    function setRatingError(message) {
+        if (starWrap) {
+            starWrap.classList.add('is-invalid');
+            starWrap.setAttribute('aria-invalid', 'true');
+        }
+        if (starLabel) {
+            starLabel.textContent = message;
+            starLabel.style.color = '#ef9a9a';
+        }
+    }
+
+    function clearRatingError() {
+        if (starWrap) {
+            starWrap.classList.remove('is-invalid');
+            starWrap.removeAttribute('aria-invalid');
+        }
+        if (starLabel) {
+            starLabel.style.color = '';
+        }
     }
 
     function validateRating() {
         if (!starInput || !starInput.value) {
-            if (starLabel) {
-                starLabel.textContent = 'Seleccioná una puntuación';
-                starLabel.style.color = '#ef9a9a';
-            }
+            setRatingError('Seleccioná una puntuación.');
             if (starWrap) {
                 starWrap.focus();
             }
             return false;
         }
+        clearRatingError();
         return true;
     }
 
-    function isInt(value) {
-        return /^\d+$/.test(value);
+    function focusFirstInvalid() {
+        var invalid = form.querySelector('[aria-invalid="true"]:not([type="hidden"])');
+        if (invalid && typeof invalid.focus === 'function') {
+            invalid.focus();
+        }
     }
 
-    function clearValidity(input) {
-        if (input) {
-            input.setCustomValidity('');
-        }
+    function clearAllClientErrors() {
+        var errorIds = Array.prototype.slice.call(form.querySelectorAll('.client-form-error')).map(function (error) {
+            return error.id;
+        }).filter(Boolean);
+        Array.prototype.slice.call(form.querySelectorAll('.client-form-error')).forEach(function (error) {
+            error.textContent = '';
+            error.hidden = true;
+        });
+        Array.prototype.slice.call(form.querySelectorAll('[aria-invalid="true"]')).forEach(function (input) {
+            input.classList.remove('is-invalid');
+            input.removeAttribute('aria-invalid');
+        });
+        Array.prototype.slice.call(form.querySelectorAll('[aria-describedby]')).forEach(function (input) {
+            var ids = (input.getAttribute('aria-describedby') || '').split(/\s+/).filter(function (id) {
+                return id && errorIds.indexOf(id) === -1;
+            });
+            if (ids.length) {
+                input.setAttribute('aria-describedby', ids.join(' '));
+            } else {
+                input.removeAttribute('aria-describedby');
+            }
+        });
     }
 
     function validateRequiredField(input) {
@@ -253,12 +259,12 @@
             return true;
         }
 
-        clearValidity(input);
+        clearInlineError(input);
         if (input.required && (!input.value || input.value.trim() === '')) {
-            input.setCustomValidity(requiredMessages[input.id] || 'Completá este campo.');
+            setInlineError(input, requiredMessages[input.id] || 'Completá este campo.');
             return false;
         }
-        return input.checkValidity();
+        return true;
     }
 
     function validateRequiredFields() {
@@ -270,20 +276,20 @@
     function validateNumerics() {
         var maxYear = new Date().getFullYear() + 1;
         var ok = true;
-        clearValidity(modelYearInput);
-        clearValidity(mileageInput);
+        clearInlineError(modelYearInput);
+        clearInlineError(mileageInput);
 
         if (modelYearInput) {
             var year = modelYearInput.value.trim();
             modelYearInput.value = year;
             if (year.length > 0) {
                 if (!isInt(year)) {
-                    modelYearInput.setCustomValidity('El año del modelo debe ser numérico.');
+                    setInlineError(modelYearInput, 'El año del modelo debe ser numérico.');
                     ok = false;
                 } else {
                     var parsedYear = Number(year);
                     if (parsedYear < 1886 || parsedYear > maxYear) {
-                        modelYearInput.setCustomValidity('Ingresá un año entre 1886 y ' + maxYear + '.');
+                        setInlineError(modelYearInput, 'Ingresá un año entre 1886 y ' + maxYear + '.');
                         ok = false;
                     }
                 }
@@ -295,12 +301,12 @@
             mileageInput.value = mileage;
             if (mileage.length > 0) {
                 if (!isInt(mileage)) {
-                    mileageInput.setCustomValidity('El kilometraje debe ser numérico.');
+                    setInlineError(mileageInput, 'El kilometraje debe ser numérico.');
                     ok = false;
                 } else {
                     var parsedMileage = Number(mileage);
                     if (parsedMileage < 0 || parsedMileage > 2000000) {
-                        mileageInput.setCustomValidity('Ingresá un kilometraje entre 0 y 2.000.000 km.');
+                        setInlineError(mileageInput, 'Ingresá un kilometraje entre 0 y 2.000.000 km.');
                         ok = false;
                     }
                 }
@@ -320,6 +326,7 @@
             } else {
                 setRating(value);
             }
+            clearRatingError();
         });
     });
 
@@ -336,30 +343,14 @@
                     setRating(currentRating - 0.5);
                 }
             }
+            clearRatingError();
         });
     }
 
-    document.addEventListener('click', function (event) {
-        var trigger = event.target.closest('[data-open-review-modal]');
-        if (!trigger) {
-            return;
-        }
-        event.preventDefault();
-        openModal(trigger);
-    });
+    form.noValidate = true;
 
-    $$('.review-modal [data-close-modal]').forEach(function (element) {
-        element.addEventListener('click', closeModal);
-    });
-
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
-            closeModal();
-        }
-    });
-
-    if (modelYearInput) modelYearInput.addEventListener('input', function () { clearValidity(modelYearInput); });
-    if (mileageInput) mileageInput.addEventListener('input', function () { clearValidity(mileageInput); });
+    if (modelYearInput) modelYearInput.addEventListener('input', function () { clearInlineError(modelYearInput); });
+    if (mileageInput) mileageInput.addEventListener('input', function () { clearInlineError(mileageInput); });
     Array.prototype.slice.call(form.querySelectorAll('[required]')).forEach(function (input) {
         input.addEventListener('input', function () {
             validateRequiredField(input);
@@ -373,18 +364,14 @@
         }
         if (!validateRequiredFields()) {
             event.preventDefault();
-            form.reportValidity();
+            focusFirstInvalid();
             return;
         }
         if (!validateNumerics()) {
             event.preventDefault();
-            form.reportValidity();
+            focusFirstInvalid();
         }
     });
 
-    if (modal.dataset.autoOpen === 'true') {
-        openModalPreservingForm();
-    } else {
-        syncRatingFromInput();
-    }
+    syncRatingFromInput();
 }());

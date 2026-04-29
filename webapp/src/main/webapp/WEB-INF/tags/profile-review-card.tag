@@ -9,7 +9,7 @@
     <c:param name="carId" value="${reviewCard.review.carId}"/>
 </c:url>
 <c:set var="profileReviewHref" value="${profileReviewUrl}#review-${reviewCard.review.id}"/>
-<c:url var="reviewEditUrl" value="/reviews/${reviewCard.review.id}"/>
+<c:url var="reviewEditPageUrl" value="/reviews/${reviewCard.review.id}/edit"/>
 <c:url var="reviewDeleteUrl" value="/reviews/${reviewCard.review.id}/delete"/>
 <c:url var="reviewLikeUrl" value="/reviews/${reviewCard.review.id}/like"/>
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -42,21 +42,9 @@
                         disabled="${not authenticated}"/>
                 <c:if test="${editable}">
                     <pa:action-menu label="Abrir opciones de review" cssClass="profile-review-menu">
-                        <button
-                                type="button"
-                                data-open-review-modal="edit"
-                                data-review-action="${fn:escapeXml(reviewEditUrl)}"
-                                data-review-id="${fn:escapeXml(reviewCard.review.id)}"
-                                data-review-car-id="${fn:escapeXml(reviewCard.review.carId)}"
-                                data-review-rating="${fn:escapeXml(reviewCard.review.rating)}"
-                                data-review-ownership-status="${fn:escapeXml(reviewCard.review.ownershipStatus)}"
-                                data-review-title="${fn:escapeXml(reviewCard.review.title)}"
-                                data-review-body="${fn:escapeXml(reviewCard.review.body)}"
-                                data-review-model-year="${fn:escapeXml(reviewCard.review.modelYear)}"
-                                data-review-mileage-km="${fn:escapeXml(reviewCard.review.mileageKm)}"
-                                data-review-would-recommend="${fn:escapeXml(reviewCard.review.wouldRecommend)}">
+                        <a href="${reviewEditPageUrl}">
                             Editar
-                        </button>
+                        </a>
                         <button
                                 type="button"
                                 class="action-menu-danger"
@@ -72,5 +60,6 @@
         <p class="profile-review-car"><c:out value="${reviewCard.carName}"/></p>
         <h3><c:out value="${reviewCard.review.title}"/></h3>
         <p class="profile-review-body"><c:out value="${reviewCard.review.body}"/></p>
+        <pa:review-tag-chips mode="display" tags="${reviewCard.review.tags}"/>
     </div>
 </article>

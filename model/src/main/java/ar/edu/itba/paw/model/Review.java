@@ -3,6 +3,8 @@ package ar.edu.itba.paw.model;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Review implements Serializable {
 
@@ -20,6 +22,7 @@ public class Review implements Serializable {
     private Boolean wouldRecommend;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<ReviewTag> tags = new ArrayList<>();
 
     public Review() {}
 
@@ -90,4 +93,7 @@ public class Review implements Serializable {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public List<ReviewTag> getTags() { return tags; }
+    public void setTags(List<ReviewTag> tags) { this.tags = tags == null ? new ArrayList<>() : tags; }
 }

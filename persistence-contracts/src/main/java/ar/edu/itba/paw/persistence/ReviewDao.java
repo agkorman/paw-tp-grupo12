@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ReviewDao {
+    List<Review> findAll();
     Optional<Review> findById(long id);
     List<Review> findByIds(Collection<Long> ids);
     List<Review> findByCarId(long carId);

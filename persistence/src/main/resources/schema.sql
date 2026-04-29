@@ -284,6 +284,37 @@ CREATE TABLE IF NOT EXISTS review_reply_likes (
 
 CREATE INDEX IF NOT EXISTS idx_review_reply_likes_user_id ON review_reply_likes (user_id);
 
+-- Predefined chips users can attach to a review.
+-- Each tag belongs to a `dimension` (e.g. fuel_consumption); positive/negative tags
+-- in the same dimension form a pair. Asymmetric dimensions (positive-only or
+-- negative-only) are intentional — the future recommender simply has evidence in
+-- one direction for those.
+CREATE TABLE IF NOT EXISTS review_tags (
+    tag_id     SMALLSERIAL  PRIMARY KEY,
+    code       VARCHAR(40)  NOT NULL UNIQUE,
+    label_es   VARCHAR(80)  NOT NULL,
+    sentiment  VARCHAR(10)  NOT NULL,
+    dimension  VARCHAR(40)  NOT NULL,
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE review_tags DROP CONSTRAINT IF EXISTS chk_review_tags_sentiment;
+ALTER TABLE review_tags
+    ADD CONSTRAINT chk_review_tags_sentiment
+    CHECK (sentiment IN ('positive', 'negative'));
+
+CREATE INDEX IF NOT EXISTS idx_review_tags_dimension ON review_tags (dimension);
+
+CREATE TABLE IF NOT EXISTS review_tag_assignments (
+    review_id  INT         NOT NULL REFERENCES reviews(review_id)    ON DELETE CASCADE,
+    tag_id     SMALLINT    NOT NULL REFERENCES review_tags(tag_id)   ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_review_tag_assignments PRIMARY KEY (review_id, tag_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_tag_assignments_tag_id ON review_tag_assignments (tag_id);
+
 UPDATE reviews r
 SET user_id = u.user_id
 FROM (
@@ -559,5 +590,34 @@ WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id
 UPDATE cars SET fuel_type='combustion', horsepower=650, airbag_count=6,  transmission='automatic', fuel_consumption=14.7, max_speed_kmh=290, price_usd=62995, year=2026
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Chevrolet' AND c.model='Camaro' AND bt.name='Coupe' AND c.year=2026);
 
-UPDATE cars SET fuel_type='hybrid',     horsepower=600, airbag_count=10, transmission='automatic', fuel_consumption=11.5, max_speed_kmh=280, price_usd=118600, year=2026
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Audi'      AND c.model='RS6 Avant' AND bt.name='Estate' AND c.year=2026);
+UPDATE cars SET fuel_type='hybrid',     horsepower=600, airbag_count=10, transmission='automatic', fuel_consumption=11.5, max_speed_kmh=280
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Audi'      AND c.model='RS6 Avant');
+
+-- ============================================================
+-- Review tag seeds
+-- ============================================================
+
+INSERT INTO review_tags (code, label_es, sentiment, dimension) VALUES
+    ('low_fuel_consumption',  'Consume poco',           'positive', 'fuel_consumption'),
+    ('high_fuel_consumption', 'Consume mucho',          'negative', 'fuel_consumption'),
+    ('comfortable',           'Cómodo',                 'positive', 'comfort'),
+    ('uncomfortable',         'Incómodo',               'negative', 'comfort'),
+    ('cheap_maintenance',     'Barato de mantener',     'positive', 'maintenance_cost'),
+    ('expensive_maintenance', 'Mantenimiento caro',     'negative', 'maintenance_cost'),
+    ('hard_to_find_parts',    'Repuestos caros/difíciles', 'negative', 'parts_availability'),
+    ('safe',                  'Seguro',                 'positive', 'safety'),
+    ('big_trunk',             'Buen baúl',              'positive', 'trunk_size'),
+    ('small_trunk',           'Baúl chico',             'negative', 'trunk_size'),
+    ('good_for_city',         'Bueno para ciudad',      'positive', 'city'),
+    ('good_for_highway',      'Bueno para ruta',        'positive', 'highway'),
+    ('bad_for_highway',       'Malo para ruta',         'negative', 'highway'),
+    ('good_first_car',        'Buen primer auto',       'positive', 'first_car'),
+    ('good_resale',           'Buena reventa',          'positive', 'resale'),
+    ('bad_resale',            'Mala reventa',           'negative', 'resale'),
+    ('agile_engine',          'Motor ágil',             'positive', 'agility'),
+    ('underpowered',          'Le falta potencia',      'negative', 'agility'),
+    ('easy_to_park',          'Fácil de estacionar',    'positive', 'parking'),
+    ('hard_to_park',          'Difícil de estacionar',  'negative', 'parking'),
+    ('noisy_cabin',           'Mucho ruido interior',   'negative', 'cabin_noise'),
+    ('poor_tech',             'Tecnología pobre',       'negative', 'tech')
+ON CONFLICT (code) DO NOTHING;

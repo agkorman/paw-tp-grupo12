@@ -23,6 +23,7 @@
                     <span class="rating-pill"><c:out value="${latestReview.rating}"/>/5.0</span>
                 </div>
                 <p class="last-review-body"><c:out value="${latestReview.body}"/></p>
+                <pa:review-tag-chips mode="display" tags="${latestReview.tags}"/>
                 <div class="review-meta last-review-meta">
                     <pa:review-author-link review="${latestReview}"/>
                     <span><c:out value="${fn:substring(latestReview.createdAt, 0, 10)}"/></span>

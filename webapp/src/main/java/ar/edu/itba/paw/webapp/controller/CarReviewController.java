@@ -11,6 +11,7 @@ import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
@@ -52,9 +54,6 @@ public class CarReviewController {
     private static final String SORT_RATING_ASC = "rating_asc";
     private static final String SORT_RATING_DESC = "rating_desc";
     private static final int MAX_REPLY_BODY_LENGTH = 1000;
-    private static final int MAX_REVIEW_BODY_LENGTH = 2000;
-    private static final int MAX_REVIEW_MILEAGE_KM = 2_000_000;
-
     private static final BigDecimal RATING_STEP_DOUBLED = BigDecimal.valueOf(2);
     private static final Set<String> ALLOWED_OWNERSHIP_STATUSES =
             Set.of("", "Propietario actual", "Ex propietario");
@@ -93,6 +92,9 @@ public class CarReviewController {
         if (carId == null) {
             return "redirect:/cars";
         }
+        if ("true".equalsIgnoreCase(reviewFormParam)) {
+            return "redirect:/reviews/new?carId=" + carId;
+        }
 
         final ReviewPageData pageData = resolveReviewPageData(carId, sort, page, currentUserId(currentUser));
         if (pageData == null) {
@@ -103,18 +105,39 @@ public class CarReviewController {
             reviewForm.setCarId(carId);
         }
         populateCarReviewPageModel(model, pageData, currentUser);
-        if ("true".equalsIgnoreCase(reviewFormParam)) {
-            model.addAttribute("openReviewModal", true);
-        }
         return "car-review.jsp";
     }
 
     @RequestMapping(value = "/reviews/new", method = RequestMethod.GET)
     public ModelAndView newReview(@RequestParam(value = "carId", required = false) final Long carId) {
-        if (carId == null || carService.getCarById(carId).isEmpty()) {
+        final Optional<Car> car = carId == null ? Optional.empty() : carService.getCarById(carId);
+        if (car.isEmpty()) {
             return new ModelAndView("redirect:/cars");
         }
-        return new ModelAndView("redirect:/reviews?carId=" + carId + "&reviewForm=true");
+        final ReviewForm reviewForm = new ReviewForm();
+        reviewForm.setCarId(carId);
+        final ModelAndView mav = new ModelAndView("review-form.jsp");
+        mav.addObject("selectedCar", car.get());
+        mav.addObject("reviewForm", reviewForm);
+        return mav;
+    }
+
+    @RequestMapping(value = "/reviews/{reviewId}/edit", method = RequestMethod.GET)
+    public ModelAndView editReview(@PathVariable("reviewId") final long reviewId,
+                                   @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        final Review review = reviewService.getReviewById(reviewId).orElse(null);
+        validateReviewOwnership(review, currentUser);
+
+        final Car car = carService.getCarById(review.getCarId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "El auto referenciado no existe."));
+
+        final ModelAndView mav = new ModelAndView("review-form.jsp");
+        mav.addObject("selectedCar", car);
+        mav.addObject("reviewForm", toReviewForm(review));
+        mav.addObject("editMode", true);
+        mav.addObject("reviewId", reviewId);
+        return mav;
     }
 
     @RequestMapping(value = "/reviews/feed", method = RequestMethod.GET)
@@ -156,31 +179,40 @@ public class CarReviewController {
         }
 
         rejectInvalidReviewFields(errors, reviewForm.getRating(), reviewForm.getOwnershipStatus(),
-                reviewForm.getModelYear());
+                reviewForm.getModelYear(), reviewForm.getMileageKm());
 
         if (errors.hasErrors()) {
-            final ReviewPageData pageData = resolveReviewPageData(car.getId(), null, null, currentUserId(currentUser));
-            populateCarReviewPageModel(model, pageData, currentUser);
-            model.addAttribute("openReviewModal", true);
-            return "car-review.jsp";
+            model.addAttribute("selectedCar", car);
+            return "review-form.jsp";
         }
 
-        reviewService.createReview(
-                currentUser.getId(),
-                car.getId(),
-                reviewForm.getRating(),
-                reviewForm.getTitle(),
-                reviewForm.getBody(),
-                normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                reviewForm.getModelYear(),
-                reviewForm.getMileageKm(),
-                reviewForm.getWouldRecommend());
+        try {
+            reviewService.createReview(
+                    currentUser.getId(),
+                    car.getId(),
+                    reviewForm.getRating(),
+                    reviewForm.getTitle(),
+                    reviewForm.getBody(),
+                    normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
+                    reviewForm.getModelYear(),
+                    reviewForm.getMileageKm(),
+                    reviewForm.getWouldRecommend(),
+                    reviewForm.getTagIds());
+        } catch (final InvalidReviewTagSelectionException e) {
+            errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
+            model.addAttribute("selectedCar", car);
+            return "review-form.jsp";
+        }
 
         return "redirect:/reviews?carId=" + car.getId();
     }
 
+    private ModelAndView carReviewPage(final long carId, final String sort, final String error) {
+        return carReviewPage(carId, sort, error, null);
+    }
+
     private ModelAndView carReviewPage(final long carId, final String sort, final String error,
-                                       final boolean openReviewModal, final AuthenticatedUser currentUser) {
+                                       final AuthenticatedUser currentUser) {
         final ReviewPageData pageData = resolveReviewPageData(carId, sort, null, currentUserId(currentUser));
         if (pageData == null) {
             return new ModelAndView("redirect:/cars");
@@ -191,7 +223,6 @@ public class CarReviewController {
         final ReviewForm reviewForm = new ReviewForm();
         reviewForm.setCarId(carId);
         mav.addObject("reviewForm", reviewForm);
-        mav.addObject("openReviewModal", openReviewModal);
         if (error != null) {
             mav.addObject("error", error);
             mav.addObject("replyError", error);
@@ -340,36 +371,49 @@ public class CarReviewController {
     }
 
     @RequestMapping(value = "/reviews/{reviewId}", method = RequestMethod.POST)
-    public ModelAndView updateReview(@PathVariable("reviewId") final long reviewId,
-                                     @RequestParam("rating") final BigDecimal rating,
-                                     @RequestParam("title") final String title,
-                                     @RequestParam("body") final String body,
-                                     @RequestParam(value = "ownershipStatus", required = false) final String ownershipStatus,
-                                     @RequestParam(value = "modelYear", required = false) final Integer modelYear,
-                                     @RequestParam(value = "mileageKm", required = false) final Integer mileageKm,
-                                     @RequestParam(value = "wouldRecommend", required = false) final Boolean wouldRecommend,
-                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+    public String updateReview(@PathVariable("reviewId") final long reviewId,
+                               @Valid @ModelAttribute("reviewForm") final ReviewForm reviewForm,
+                               final BindingResult errors,
+                               final Model model,
+                               @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
         validateReviewOwnership(existingReview, currentUser);
 
-        final String validationError = validateReviewInput(rating, title, body, ownershipStatus, modelYear,
-                mileageKm);
-        if (validationError != null) {
-            return carReviewPage(existingReview.getCarId(), null, validationError, true, currentUser);
+        final Car car = carService.getCarById(existingReview.getCarId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "El auto referenciado no existe."));
+        reviewForm.setCarId(existingReview.getCarId());
+        rejectInvalidReviewFields(errors, reviewForm.getRating(), reviewForm.getOwnershipStatus(),
+                reviewForm.getModelYear(), reviewForm.getMileageKm());
+
+        if (errors.hasErrors()) {
+            model.addAttribute("selectedCar", car);
+            model.addAttribute("editMode", true);
+            model.addAttribute("reviewId", reviewId);
+            return "review-form.jsp";
         }
 
-        reviewService.updateReview(
-                reviewId,
-                existingReview.getCarId(),
-                rating,
-                title,
-                body,
-                normalizeOwnershipStatus(ownershipStatus),
-                modelYear,
-                mileageKm,
-                wouldRecommend
-        );
-        return new ModelAndView("redirect:/profile");
+        try {
+            reviewService.updateReview(
+                    reviewId,
+                    existingReview.getCarId(),
+                    reviewForm.getRating(),
+                    reviewForm.getTitle(),
+                    reviewForm.getBody(),
+                    normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
+                    reviewForm.getModelYear(),
+                    reviewForm.getMileageKm(),
+                    reviewForm.getWouldRecommend(),
+                    reviewForm.getTagIds()
+            );
+        } catch (final InvalidReviewTagSelectionException e) {
+            errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
+            model.addAttribute("selectedCar", car);
+            model.addAttribute("editMode", true);
+            model.addAttribute("reviewId", reviewId);
+            return "review-form.jsp";
+        }
+        return "redirect:/profile";
     }
 
     @RequestMapping(value = "/reviews/{reviewId}/delete", method = RequestMethod.POST)
@@ -396,7 +440,7 @@ public class CarReviewController {
 
         final String validationError = validateReplyInput(body);
         if (validationError != null) {
-            return carReviewPage(review.getCarId(), null, validationError, false, currentUser);
+            return carReviewPage(review.getCarId(), null, validationError, currentUser);
         }
 
         try {
@@ -404,7 +448,7 @@ public class CarReviewController {
         } catch (final RuntimeException ignored) {
             return carReviewPage(review.getCarId(), null,
                     "No pudimos publicar la respuesta. Intentá de nuevo en unos segundos.",
-                    false, currentUser);
+                    currentUser);
         }
         return new ModelAndView("redirect:/reviews?carId=" + review.getCarId() + "#review-" + reviewId);
     }
@@ -435,7 +479,7 @@ public class CarReviewController {
             }
             return carReviewPage(review.getCarId(), null,
                     "No pudimos actualizar el like. Intentá de nuevo en unos segundos.",
-                    false, currentUser);
+                    currentUser);
         }
         if (ajax) {
             final long count = reviewLikeService.countReviewLikes(reviewId);
@@ -472,7 +516,7 @@ public class CarReviewController {
             }
             return carReviewPage(review.getCarId(), null,
                     "No pudimos actualizar el like. Intentá de nuevo en unos segundos.",
-                    false, currentUser);
+                    currentUser);
         }
         if (ajax) {
             final long count = reviewLikeService.countReplyLikes(replyId);
@@ -491,7 +535,8 @@ public class CarReviewController {
     }
 
     private void rejectInvalidReviewFields(final BindingResult errors, final BigDecimal rating,
-                                           final String ownershipStatus, final Integer modelYear) {
+                                           final String ownershipStatus, final Integer modelYear,
+                                           final Integer mileageKm) {
         if (rating != null && rating.multiply(RATING_STEP_DOUBLED).remainder(BigDecimal.ONE).signum() != 0) {
             errors.rejectValue("rating", "rating.step", "La puntuación debe ser múltiplo de 0,5.");
         }
@@ -501,47 +546,21 @@ public class CarReviewController {
             errors.rejectValue("ownershipStatus", "ownership.invalid", "Estado de propiedad no válido.");
         }
 
-        if (modelYear != null) {
+        if (modelYear == null) {
+            if (!errors.hasFieldErrors("modelYear")) {
+                errors.rejectValue("modelYear", "modelYear.required", "El año del modelo es obligatorio.");
+            }
+        } else {
             final int maxModelYear = Year.now().getValue() + 1;
             if (modelYear > maxModelYear) {
                 errors.rejectValue("modelYear", "modelYear.range",
                         "Ingresá un año entre 1886 y " + maxModelYear + ".");
             }
         }
-    }
 
-    private String validateReviewInput(final BigDecimal rating, final String title, final String body,
-                                       final String ownershipStatus, final Integer modelYear,
-                                       final Integer mileageKm) {
-        if (rating == null || rating.compareTo(BigDecimal.ZERO) < 0 || rating.compareTo(BigDecimal.valueOf(5)) > 0) {
-            return "La puntuación debe estar entre 0 y 5.";
+        if (mileageKm == null && !errors.hasFieldErrors("mileageKm")) {
+            errors.rejectValue("mileageKm", "mileageKm.required", "El kilometraje es obligatorio.");
         }
-        if (rating.multiply(RATING_STEP_DOUBLED).remainder(BigDecimal.ONE).signum() != 0) {
-            return "La puntuación debe ser múltiplo de 0,5.";
-        }
-        if (title == null || title.isEmpty() || title.length() > 200) {
-            return "El título es obligatorio y debe tener como máximo 200 caracteres.";
-        }
-        if (body == null || body.isEmpty()) {
-            return "La descripción es obligatoria.";
-        }
-        if (body.length() > MAX_REVIEW_BODY_LENGTH) {
-            return "La descripción debe tener como máximo " + MAX_REVIEW_BODY_LENGTH + " caracteres.";
-        }
-        final String ownership = ownershipStatus == null ? "" : ownershipStatus;
-        if (!ALLOWED_OWNERSHIP_STATUSES.contains(ownership)) {
-            return "Estado de propiedad no válido.";
-        }
-        if (modelYear != null) {
-            final int maxModelYear = Year.now().getValue() + 1;
-            if (modelYear < 1886 || modelYear > maxModelYear) {
-                return "Ingresá un año entre 1886 y " + maxModelYear + ".";
-            }
-        }
-        if (mileageKm != null && (mileageKm < 0 || mileageKm > MAX_REVIEW_MILEAGE_KM)) {
-            return "Ingresá un kilometraje entre 0 y 2.000.000 km.";
-        }
-        return null;
     }
 
     private String validateReplyInput(final String body) {
@@ -556,6 +575,23 @@ public class CarReviewController {
 
     private String normalizeOwnershipStatus(final String ownershipStatus) {
         return ownershipStatus == null || ownershipStatus.isEmpty() ? null : ownershipStatus;
+    }
+
+    private ReviewForm toReviewForm(final Review review) {
+        final ReviewForm form = new ReviewForm();
+        form.setCarId(review.getCarId());
+        form.setRating(review.getRating());
+        form.setTitle(review.getTitle());
+        form.setBody(review.getBody());
+        form.setOwnershipStatus(review.getOwnershipStatus());
+        form.setModelYear(review.getModelYear());
+        form.setMileageKm(review.getMileageKm());
+        form.setWouldRecommend(review.getWouldRecommend());
+        form.setTagIds(review.getTags()
+                .stream()
+                .map(tag -> tag.getId())
+                .collect(Collectors.toSet()));
+        return form;
     }
 
     private Long currentUserId(final AuthenticatedUser currentUser) {

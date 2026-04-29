@@ -9,6 +9,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class ReviewForm {
 
@@ -35,15 +37,20 @@ public class ReviewForm {
     @Size(max = 20, message = "Estado de propiedad no válido.")
     private String ownershipStatus;
 
+    @NotNull(message = "El año del modelo es obligatorio.")
     @Min(value = 1886, message = "Ingresá un año válido.")
     @Max(value = 2100, message = "Ingresá un año válido.")
     private Integer modelYear;
 
+    @NotNull(message = "El kilometraje es obligatorio.")
     @Min(value = 0, message = "Ingresá un kilometraje entre 0 y 2.000.000 km.")
     @Max(value = 2_000_000, message = "Ingresá un kilometraje entre 0 y 2.000.000 km.")
     private Integer mileageKm;
 
     private Boolean wouldRecommend;
+
+    @Size(max = 6, message = "Podés elegir hasta 6 etiquetas.")
+    private Set<Short> tagIds = new LinkedHashSet<>();
 
     public Long getCarId() {
         return carId;
@@ -115,5 +122,13 @@ public class ReviewForm {
 
     public void setWouldRecommend(final Boolean wouldRecommend) {
         this.wouldRecommend = wouldRecommend;
+    }
+
+    public Set<Short> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(final Set<Short> tagIds) {
+        this.tagIds = tagIds == null ? new LinkedHashSet<>() : tagIds;
     }
 }

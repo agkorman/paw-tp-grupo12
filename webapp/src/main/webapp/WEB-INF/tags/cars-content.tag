@@ -2,11 +2,11 @@
 <%@ attribute name="cars" required="true" type="java.util.List" %>
 <%@ attribute name="resultCount" required="true" %>
 <%@ attribute name="reviewStatsByCarId" required="true" type="java.util.Map" %>
-<%@ attribute name="favoritedCarIds" required="false" type="java.util.Map" %>
 <%@ attribute name="showHp" required="false" %>
 <%@ attribute name="showSpeed" required="false" %>
 <%@ attribute name="showConsumption" required="false" %>
 <%@ attribute name="showAirbags" required="false" %>
+<%@ attribute name="showTransmission" required="false" %>
 <%@ attribute name="showFuelType" required="false" %>
 <%@ attribute name="showPrice" required="false" %>
 <%@ attribute name="showYear" required="false" %>
@@ -34,7 +34,6 @@
                     carId="${car.id}"
                     hasImage="${car.hasImage}"
                     href="${reviewUrl}"
-                    favorited="${favoritedCarIds[car.id] eq true}"
                     averageRating="${reviewStatsByCarId[car.id].averageRating}"
                     reviewCount="${reviewStatsByCarId[car.id].reviewCount}"
                     horsepower="${car.horsepower}"
@@ -48,6 +47,7 @@
                     showSpeed="${showSpeed}"
                     showConsumption="${showConsumption}"
                     showAirbags="${showAirbags}"
+                    showTransmission="${showTransmission}"
                     showFuelType="${showFuelType}"
                     showPrice="${showPrice}"
                     showYear="${showYear}"/>
@@ -55,21 +55,22 @@
 
             <c:if test="${showCarRequestCard}">
                 <sec:authorize access="isAuthenticated()">
-                    <button type="button" class="car-request-card" data-open-create-car-modal data-auth-resume-intent="create-car">
+                    <a href="${newCarUrl}" class="car-request-card" data-auth-resume-intent="create-car">
                         <span class="car-request-card-icon" aria-hidden="true">
                             <pa:icon name="plus" size="56"/>
                         </span>
                         <strong class="car-request-card-title">¿No encontrás el auto?</strong>
                         <span class="car-request-card-copy">Ayudanos a completar la galería con el modelo que falta.</span>
                         <span class="btn-primary car-request-card-action">Agregar auto</span>
-                    </button>
+                    </a>
                 </sec:authorize>
                 <sec:authorize access="isAnonymous()">
                     <a href="${newCarUrl}"
                        class="car-request-card"
                        data-auth-required="true"
                        data-auth-required-action="agregar un auto"
-                       data-auth-required-intent="create-car">
+                       data-auth-required-intent="create-car"
+                       data-auth-return-url="/cars/new">
                         <span class="car-request-card-icon" aria-hidden="true">
                             <pa:icon name="plus" size="56"/>
                         </span>

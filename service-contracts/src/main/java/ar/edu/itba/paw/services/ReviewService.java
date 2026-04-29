@@ -11,11 +11,14 @@ import java.util.Optional;
 
 public interface ReviewService {
     Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
-                        String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
+                        String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
+                        Collection<Short> tagIds);
+    List<Review> getAllReviews();
     Optional<Review> getReviewById(long id);
     List<Review> getReviewsByIds(Collection<Long> ids);
     Optional<Review> updateReview(long id, long carId, BigDecimal rating, String title, String body,
-                                  String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
+                                  String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
+                                  Collection<Short> tagIds);
     boolean deleteReview(long id);
     List<Review> getReviewsByCar(long carId);
     Page<Review> getReviewsByCar(long carId, int page);

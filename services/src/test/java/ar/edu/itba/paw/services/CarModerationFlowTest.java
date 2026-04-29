@@ -461,6 +461,11 @@ class CarModerationFlowTest {
         private long deletedCarId;
 
         @Override
+        public List<Review> findAll() {
+            return Collections.emptyList();
+        }
+
+        @Override
         public Optional<Review> findById(final long id) {
             return Optional.empty();
         }

@@ -155,8 +155,14 @@ public class ProfileControllerTest {
         @Override
         public Review createReview(final long userId, final long carId, final BigDecimal rating, final String title,
                                    final String body, final String ownershipStatus, final Integer modelYear,
-                                   final Integer mileageKm, final Boolean wouldRecommend) {
+                                   final Integer mileageKm, final Boolean wouldRecommend,
+                                   final Collection<Short> tagIds) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<Review> getAllReviews() {
+            return review == null ? Collections.emptyList() : List.of(review);
         }
 
         @Override
@@ -176,7 +182,7 @@ public class ProfileControllerTest {
         public Optional<Review> updateReview(final long id, final long carId, final BigDecimal rating,
                                              final String title, final String body, final String ownershipStatus,
                                              final Integer modelYear, final Integer mileageKm,
-                                             final Boolean wouldRecommend) {
+                                             final Boolean wouldRecommend, final Collection<Short> tagIds) {
             return Optional.empty();
         }
 

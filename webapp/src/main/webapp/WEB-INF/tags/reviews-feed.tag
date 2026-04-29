@@ -63,6 +63,7 @@
                             <span class="rating-pill"><c:out value="${review.rating}"/>/5.0</span>
                         </div>
                         <p class="review-body"><c:out value="${review.body}"/></p>
+                        <pa:review-tag-chips mode="display" tags="${review.tags}"/>
                         <div class="review-meta">
                             <pa:review-author-link review="${review}"/>
                             <span><c:out value="${fn:substring(review.createdAt, 0, 10)}"/></span>

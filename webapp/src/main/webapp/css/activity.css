@@ -1,0 +1,248 @@
+.activity-page {
+    width: min(1120px, calc(100% - 3rem));
+    margin: 0 auto;
+    padding: var(--spacing-8) 0 var(--spacing-16);
+    display: grid;
+    gap: var(--spacing-6);
+}
+
+.activity-tabs-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    padding: 0.35rem;
+    background: var(--surface-container-low);
+}
+
+.activity-tab {
+    appearance: none;
+    -webkit-appearance: none;
+    min-width: 0;
+    min-height: 3.25rem;
+    padding: 0.75rem 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 0;
+    border-radius: var(--radius-sm, 0.25rem);
+    background: transparent;
+    color: var(--secondary);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+}
+
+.activity-tab span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.activity-tab strong {
+    flex: 0 0 auto;
+    color: var(--primary);
+    font-family: var(--font-display);
+    font-size: 1rem;
+}
+
+.activity-tab:hover,
+.activity-tab:focus-visible {
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+    outline: none;
+}
+
+.activity-tab[aria-selected="true"] {
+    background: var(--surface-container-highest);
+    color: var(--on-surface);
+}
+
+.activity-tab-panel {
+    display: grid;
+    gap: var(--spacing-6);
+}
+
+.activity-tab-panel[hidden] {
+    display: none;
+}
+
+.activity-feed {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-6);
+}
+
+.activity-review-card {
+    position: relative;
+    min-height: 360px;
+    padding: var(--spacing-5);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--spacing-8);
+    overflow: hidden;
+    background:
+        linear-gradient(180deg, rgba(19, 19, 19, 0.74), rgba(19, 19, 19, 0.44) 34%, rgba(19, 19, 19, 0.96) 100%),
+        linear-gradient(135deg, rgba(94, 212, 255, 0.14), transparent 45%),
+        var(--surface-container-low);
+    background-position: center;
+    background-size: cover;
+    color: var(--on-surface);
+    text-decoration: none;
+    box-shadow: var(--shadow-float);
+    isolation: isolate;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.activity-review-card.has-image {
+    background-image:
+        linear-gradient(180deg, rgba(19, 19, 19, 0.74), rgba(19, 19, 19, 0.44) 34%, rgba(19, 19, 19, 0.96) 100%),
+        linear-gradient(135deg, rgba(94, 212, 255, 0.14), transparent 45%),
+        var(--activity-car-image);
+}
+
+.activity-review-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.16), transparent 60%);
+}
+
+.activity-review-card:hover,
+.activity-review-card:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+    outline: none;
+}
+
+.activity-review-author {
+    align-self: start;
+    justify-self: start;
+    margin: 0.25rem 0 0 0.25rem;
+    max-width: min(100%, 18rem);
+    padding: 0.625rem;
+    display: inline-grid;
+    background: rgba(13, 13, 13, 0.64);
+    color: var(--on-surface);
+}
+
+.activity-review-author-copy {
+    min-width: 0;
+    display: grid;
+    gap: 0.15rem;
+}
+
+.activity-review-author-copy strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.92rem;
+}
+
+.activity-review-author-copy span {
+    color: var(--secondary);
+    font-size: 0.78rem;
+}
+
+.activity-review-rating-row {
+    flex: 0 0 auto;
+}
+
+.activity-review-rating-row .card-rating-badge {
+    gap: 0.35rem;
+    padding: 0.32rem 0.65rem;
+    font-size: 0.82rem;
+}
+
+.activity-review-rating-row .card-rating-badge svg {
+    width: 12px;
+    height: 12px;
+}
+
+.activity-review-copy {
+    grid-column: 1 / -1;
+    align-self: end;
+    max-width: 100%;
+    display: grid;
+    gap: 0.7rem;
+}
+
+.activity-review-car-row {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+}
+
+.activity-review-car {
+    min-width: 0;
+    color: var(--secondary);
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+.activity-review-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.55rem, 2.6vw, 2.35rem);
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+}
+
+.activity-review-body {
+    max-width: 100%;
+    color: var(--on-surface-variant);
+    font-size: 1rem;
+    line-height: 1.55;
+    display: -webkit-box;
+    line-clamp: 3;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.activity-empty-state {
+    padding: var(--spacing-8);
+    background: var(--surface-container-low);
+    color: var(--secondary);
+}
+
+@media (max-width: 680px) {
+    .activity-page {
+        width: min(100% - 2rem, 1120px);
+        padding-top: var(--spacing-6);
+    }
+
+    .activity-feed {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-tabs-list {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-tab {
+        min-height: 3rem;
+    }
+
+    .activity-review-card {
+        min-height: 420px;
+        padding: var(--spacing-5);
+        grid-template-columns: 1fr;
+        gap: var(--spacing-5);
+    }
+
+    .activity-review-body {
+        font-size: 1rem;
+    }
+}
