@@ -152,9 +152,7 @@
 }
 
 .activity-review-rating-row {
-    align-self: start;
-    justify-self: end;
-    margin: 0.25rem 0.25rem 0 0;
+    flex: 0 0 auto;
 }
 
 .activity-review-rating-row .card-rating-badge {
@@ -176,12 +174,22 @@
     gap: 0.7rem;
 }
 
+.activity-review-car-row {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+}
+
 .activity-review-car {
+    min-width: 0;
     color: var(--secondary);
     font-size: 0.8rem;
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    overflow-wrap: anywhere;
 }
 
 .activity-review-title {
@@ -232,10 +240,6 @@
         padding: var(--spacing-5);
         grid-template-columns: 1fr;
         gap: var(--spacing-5);
-    }
-
-    .activity-review-rating-row {
-        justify-self: start;
     }
 
     .activity-review-body {
