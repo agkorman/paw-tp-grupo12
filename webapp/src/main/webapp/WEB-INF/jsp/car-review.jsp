@@ -10,9 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reseñas | La Posta Autos</title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
@@ -25,33 +23,15 @@
         <section class="review-hero">
             <div class="review-hero-inner">
                 <div>
-                    <h1><c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/></h1>
+                    <h1>
+                        <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/>
+                    </h1>
                     <p class="subtitle">Datos sobre el vehículo y reseñas de los propietarios</p>
                 </div>
                 <div class="review-hero-actions">
                     <c:if test="${not empty averageRating}">
                         <div class="hero-stars-row" aria-label="${averageRating} de 5 estrellas">
-                            <c:forEach var="i" begin="1" end="5">
-                                <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true">
-                                    <c:choose>
-                                        <c:when test="${averageRating >= i}">
-                                            <path fill="#ff5719" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                        </c:when>
-                                        <c:when test="${averageRating >= i - 0.5}">
-                                            <defs>
-                                                <linearGradient id="hsg${i}" x1="0" x2="1" y1="0" y2="0">
-                                                    <stop offset="50%" stop-color="#ff5719"/>
-                                                    <stop offset="50%" stop-color="#3a3a3a"/>
-                                                </linearGradient>
-                                            </defs>
-                                            <path fill="url(#hsg${i})" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <path fill="#3a3a3a" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </svg>
-                            </c:forEach>
+                            <pa:rating-stars rating="${averageRating}" size="32" idPrefix="reviewHeroStar"/>
                         </div>
                     </c:if>
                     <a href="#reviewsFeed" class="btn-secondary hero-see-reviews-btn">
@@ -74,6 +54,7 @@
                                     data-car-id="${fn:escapeXml(selectedCar.id)}"
                                     data-car-brand="${fn:escapeXml(selectedCar.brandName)}"
                                     data-car-model="${fn:escapeXml(selectedCar.model)}"
+                                    data-car-year="${fn:escapeXml(selectedCar.year)}"
                                     data-car-body-type="${fn:escapeXml(selectedCar.bodyType)}"
                                     data-car-description="${fn:escapeXml(selectedCar.description)}"
                                     data-car-fuel-type="${fn:escapeXml(selectedCar.fuelType)}"
@@ -82,6 +63,7 @@
                                     data-car-transmission="${fn:escapeXml(selectedCar.transmission)}"
                                     data-car-fuel-consumption="${fn:escapeXml(selectedCar.fuelConsumption)}"
                                     data-car-max-speed-kmh="${fn:escapeXml(selectedCar.maxSpeedKmh)}"
+                                    data-car-price-usd="${fn:escapeXml(selectedCar.priceUsd)}"
                                     data-car-image-url="${selectedCar.hasImage ? fn:escapeXml(selectedCarImageUrl) : ''}">
                                 Editar
                             </button>
@@ -90,13 +72,32 @@
                                     class="action-menu-danger"
                                     data-open-delete-car-modal
                                     data-car-delete-action="${fn:escapeXml(selectedCarDeleteUrl)}"
-                                    data-car-title="${fn:escapeXml(selectedCar.brandName)} ${fn:escapeXml(selectedCar.model)}">
+                                    data-car-title="${fn:escapeXml(selectedCar.brandName)} ${fn:escapeXml(selectedCar.model)}${not empty selectedCar.year ? ' ' : ''}${fn:escapeXml(selectedCar.year)}">
                                 Eliminar
                             </button>
                         </pa:action-menu>
                     </sec:authorize>
                 </div>
             </div>
+            <c:if test="${fn:length(yearVariants) gt 1}">
+                <nav class="car-year-switcher" aria-label="Años disponibles">
+                    <div class="car-year-switcher-track">
+                        <c:forEach var="yearVariant" items="${yearVariants}">
+                            <c:url var="yearVariantUrl" value="/reviews">
+                                <c:param name="carId" value="${yearVariant.carId}"/>
+                            </c:url>
+                            <a class="car-year-pill${yearVariant.selected ? ' is-active' : ''}"
+                               href="${yearVariantUrl}"
+                               <c:if test="${yearVariant.selected}">aria-current="page"</c:if>>
+                                <c:choose>
+                                    <c:when test="${not empty yearVariant.year}"><c:out value="${yearVariant.year}"/></c:when>
+                                    <c:otherwise>Sin año</c:otherwise>
+                                </c:choose>
+                            </a>
+                        </c:forEach>
+                    </div>
+                </nav>
+            </c:if>
         </section>
 
         <section class="review-layout review-detail-layout">
@@ -114,7 +115,9 @@
             </div>
         </section>
 
-        <pa:reviews-feed reviews="${reviews}" reviewThreads="${reviewThreads}" carId="${selectedCar.id}" currentSort="${currentSort}"/>
+        <pa:reviews-feed reviews="${reviews}" reviewThreads="${reviewThreads}" carId="${selectedCar.id}"
+                         currentSort="${currentSort}"
+                         currentPage="${currentPage}" totalPages="${totalPages}" totalItems="${totalItems}"/>
     </main>
 
     <pa:create-review-modal carId="${selectedCar.id}" autoOpen="${openReviewModal}"/>
@@ -126,7 +129,7 @@
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/action-menu.js'/>"></script>
-    <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
+    <script src="<c:url value='/js/enhanced-filters.js?v=5'/>"></script>
     <script src="<c:url value='/js/car-image-carousel.js'/>"></script>
     <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>

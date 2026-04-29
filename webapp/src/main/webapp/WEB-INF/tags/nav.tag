@@ -11,7 +11,16 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
+<noscript>
+    <div class="noscript-overlay">
+        <div class="noscript-box">
+            <strong>JavaScript requerido</strong>
+            <p>Esta aplicación requiere JavaScript para funcionar. Activalo en tu navegador para continuar.</p>
+        </div>
+    </div>
+</noscript>
 <nav>
     <a href="<c:url value='/'/>" class="nav-brand">La Posta Autos</a>
     <ul class="nav-links">
@@ -30,10 +39,7 @@
                 <c:if test="${not empty searchBodyType}">
                     <input type="hidden" name="bodyType" value="${fn:escapeXml(searchBodyType)}">
                 </c:if>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true">
-                    <circle cx="11" cy="11" r="7"></circle>
-                    <path d="m20 20-3.5-3.5"></path>
-                </svg>
+                <pa:icon name="search" size="16"/>
                 <input
                         type="search"
                         name="q"
@@ -56,10 +62,7 @@
             <span class="nav-profile">
                 <a class="nav-profile-text nav-auth-link" href="<c:url value='/login'/>">Iniciar sesión</a>
                 <span class="avatar" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="8" r="4"></circle>
-                        <path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"></path>
-                    </svg>
+                    <pa:icon name="user-avatar" size="18"/>
                 </span>
             </span>
         </sec:authorize>
@@ -70,10 +73,7 @@
                     <c:out value="${displayName}"/>
                 </a>
                 <a class="avatar nav-avatar-link" href="<c:url value='/profile'/>" aria-label="Ir al perfil">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="8" r="4"></circle>
-                        <path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"></path>
-                    </svg>
+                    <pa:icon name="user-avatar" size="18"/>
                 </a>
             </span>
         </sec:authorize>

@@ -78,32 +78,6 @@
     padding: var(--spacing-6);
 }
 
-.profile-photo-editor {
-    display: grid;
-    justify-items: center;
-    gap: 0.875rem;
-}
-
-.profile-avatar-preview {
-    align-self: auto;
-    background-size: cover;
-    background-position: center;
-}
-
-.profile-photo-button {
-    color: var(--on-surface);
-    border-color: var(--outline-variant);
-    padding: 0.625rem 1rem;
-}
-
-.profile-photo-input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-}
-
 .profile-edit-fields {
     display: grid;
     gap: 1rem;

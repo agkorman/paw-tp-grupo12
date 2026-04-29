@@ -177,6 +177,11 @@ class CarFavoriteServiceImplTest {
         public List<User> findAll() {
             return Collections.emptyList();
         }
+
+        @Override
+        public boolean updateRole(final long userId, final String role) {
+            return false;
+        }
     }
 
     private static final class FakeCarDao implements CarDao {
@@ -202,48 +207,46 @@ class CarFavoriteServiceImplTest {
         }
 
         @Override
-        public List<Car> findByBrandId(final long brandId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<Car> findByBodyTypeId(final long bodyTypeId) {
-            return Collections.emptyList();
-        }
-
-        @Override
         public List<Car> findByBrandIdAndBodyTypeId(final long brandId, final long bodyTypeId) {
             return Collections.emptyList();
         }
 
         @Override
-        public List<Car> search(final String query, final Long brandId, final Long bodyTypeId) {
-            return Collections.emptyList();
+        public ar.edu.itba.paw.model.Page<Car> findByCriteria(final CarSearchCriteria criteria) {
+            return ar.edu.itba.paw.model.Page.empty(1, 0);
         }
 
         @Override
-        public List<Car> findByCriteria(final CarSearchCriteria criteria) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Car create(final long brandId, final String model, final long bodyTypeId, final String description,
+        public Car create(final long brandId, final String model, final long bodyTypeId, final Integer year,
+                          final String description,
                           final String fuelType, final Integer horsepower, final Integer airbagCount,
-                          final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                          final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                          final BigDecimal priceUsd) {
             throw new UnsupportedOperationException();
         }
 
         @Override
         public Optional<Car> update(final long id, final long brandId, final String model, final long bodyTypeId,
-                                    final String description, final String fuelType, final Integer horsepower,
+                                    final Integer year, final String description, final String fuelType, final Integer horsepower,
                                     final Integer airbagCount, final String transmission,
-                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                    final BigDecimal priceUsd) {
             return Optional.empty();
         }
 
         @Override
         public boolean delete(final long id) {
             return false;
+        }
+
+        @Override
+        public long countByBrandId(final long brandId) {
+            return 0L;
+        }
+
+        @Override
+        public long countByBodyTypeId(final long bodyTypeId) {
+            return 0L;
         }
     }
 

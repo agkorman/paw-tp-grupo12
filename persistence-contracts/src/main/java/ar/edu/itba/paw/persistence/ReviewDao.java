@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 
@@ -11,12 +12,15 @@ import java.util.Optional;
 public interface ReviewDao {
     Optional<Review> findById(long id);
     List<Review> findByIds(Collection<Long> ids);
-    List<Review> findAll();
     List<Review> findByCarId(long carId);
+    Page<Review> findByCarId(long carId, int page);
     Optional<Review> findLatestByCarId(long carId);
     Optional<Review> findTopRatedLatestByCarId(long carId);
     List<Review> findByCarIdOrderByRatingAsc(long carId);
+    Page<Review> findByCarIdOrderByRatingAsc(long carId, int page);
     List<Review> findByCarIdOrderByRatingDesc(long carId);
+    Page<Review> findByCarIdOrderByRatingDesc(long carId, int page);
+    long countByCarId(long carId);
     List<Review> findByUserId(long userId);
     Optional<ReviewStats> findStatsByCarId(long carId);
     List<ReviewStats> findStatsByCarIds(Collection<Long> carIds);

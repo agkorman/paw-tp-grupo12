@@ -2,6 +2,8 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarSearchCriteria;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -12,7 +14,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -28,11 +29,17 @@ public class CarJdbcDao implements CarDao {
                     + "JOIN brands b ON c.brand_id = b.brand_id "
                     + "JOIN body_types bt ON c.body_type_id = bt.body_type_id ";
 
+    private static final String REVIEW_STATS_JOIN =
+            "LEFT JOIN ("
+                    + "SELECT car_id, COUNT(review_id) AS review_count, AVG(rating) AS average_rating "
+                    + "FROM reviews GROUP BY car_id"
+                    + ") rs ON rs.car_id = c.car_id ";
+
     private static final String SELECT_COLUMNS =
             "SELECT c.car_id, c.brand_id, b.name AS brand_name, c.model, c.body_type_id, bt.name AS body_type, "
-                    + "c.description, c.created_at, "
+                    + "c.year, c.description, c.created_at, "
                     + "EXISTS (SELECT 1 FROM car_images ci WHERE ci.car_id = c.car_id) AS has_image, "
-                    + "c.fuel_type, c.horsepower, c.airbag_count, c.transmission, c.fuel_consumption, c.max_speed_kmh ";
+                    + "c.fuel_type, c.horsepower, c.airbag_count, c.transmission, c.fuel_consumption, c.max_speed_kmh, c.price_usd ";
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedJdbcTemplate;
@@ -44,6 +51,7 @@ public class CarJdbcDao implements CarDao {
             rs.getString("brand_name"),
             rs.getString("model"),
             rs.getLong("body_type_id"),
+            rs.getObject("year", Integer.class),
             rs.getString("body_type"),
             rs.getString("description"),
             rs.getTimestamp("created_at").toLocalDateTime(),
@@ -53,7 +61,8 @@ public class CarJdbcDao implements CarDao {
             rs.getObject("airbag_count", Integer.class),
             rs.getString("transmission"),
             rs.getBigDecimal("fuel_consumption"),
-            rs.getObject("max_speed_kmh", Integer.class)
+            rs.getObject("max_speed_kmh", Integer.class),
+            rs.getBigDecimal("price_usd")
     );
 
     @Autowired
@@ -63,9 +72,9 @@ public class CarJdbcDao implements CarDao {
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("cars")
                 .usingGeneratedKeyColumns("car_id")
-                .usingColumns("brand_id", "model", "body_type_id", "description",
+                .usingColumns("brand_id", "model", "body_type_id", "year", "description",
                         "fuel_type", "horsepower", "airbag_count", "transmission",
-                        "fuel_consumption", "max_speed_kmh");
+                        "fuel_consumption", "max_speed_kmh", "price_usd");
     }
 
     @Override
@@ -105,21 +114,16 @@ public class CarJdbcDao implements CarDao {
     }
 
     @Override
-    public List<Car> findByBrandId(final long brandId) {
-        return jdbcTemplate.query(
-                SELECT_COLUMNS + FROM_JOIN + "WHERE c.brand_id = ? ORDER BY c.model",
-                ROW_MAPPER, brandId
-        );
-    }
-
-    @Override
-    public Car create(final long brandId, final String model, final long bodyTypeId, final String description,
+    public Car create(final long brandId, final String model, final long bodyTypeId, final Integer year,
+                      final String description,
                       final String fuelType, final Integer horsepower, final Integer airbagCount,
-                      final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                      final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                      final BigDecimal priceUsd) {
         final Map<String, Object> params = new HashMap<>();
         params.put("brand_id", brandId);
         params.put("model", model);
         params.put("body_type_id", bodyTypeId);
+        params.put("year", year);
         params.put("description", description);
         params.put("fuel_type", fuelType);
         params.put("horsepower", horsepower);
@@ -127,15 +131,51 @@ public class CarJdbcDao implements CarDao {
         params.put("transmission", transmission);
         params.put("fuel_consumption", fuelConsumption);
         params.put("max_speed_kmh", maxSpeedKmh);
+        params.put("price_usd", priceUsd);
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();
     }
 
     @Override
-    public List<Car> findByCriteria(final CarSearchCriteria criteria) {
-        final StringBuilder sql = new StringBuilder(SELECT_COLUMNS).append(FROM_JOIN);
+    public Page<Car> findByCriteria(final CarSearchCriteria criteria) {
         final MapSqlParameterSource params = new MapSqlParameterSource();
+        final String whereClause = buildWhereClause(criteria, params);
+        final boolean requiresReviewStats = requiresReviewStatsJoin(criteria);
+        final String orderClause = buildOrderClause(criteria);
+
+        final int pageSize = Pagination.CARS_PAGE_SIZE;
+
+        final Long total = namedJdbcTemplate.queryForObject(
+                "SELECT count(*) " + FROM_JOIN + whereClause,
+                params, Long.class);
+        final long totalItems = total == null ? 0L : total;
+
+        if (totalItems == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+
+        final int page = Pagination.clampPage(Pagination.normalizePage(criteria.getPage()), totalItems, pageSize);
+        final long offset = Pagination.offsetFor(page, pageSize);
+
+        final MapSqlParameterSource pagedParams = new MapSqlParameterSource(params.getValues());
+        pagedParams.addValue("limit", pageSize);
+        pagedParams.addValue("offset", offset);
+
+        final String fromClause = FROM_JOIN + (requiresReviewStats ? REVIEW_STATS_JOIN : "");
+        final List<Car> items = namedJdbcTemplate.query(
+                SELECT_COLUMNS + fromClause + whereClause + orderClause + " LIMIT :limit OFFSET :offset",
+                pagedParams, ROW_MAPPER);
+
+        return new Page<>(items, page, pageSize, totalItems);
+    }
+
+    private boolean requiresReviewStatsJoin(final CarSearchCriteria criteria) {
+        return criteria.getSortBy() == null;
+    }
+
+    private String buildWhereClause(final CarSearchCriteria criteria, final MapSqlParameterSource params) {
+        final StringBuilder sql = new StringBuilder();
         boolean hasWhere = false;
 
         if (criteria.getQ() != null) {
@@ -168,9 +208,19 @@ public class CarJdbcDao implements CarDao {
             params.addValue("bodyType", criteria.getBodyType());
             hasWhere = true;
         }
-        if (criteria.getFuelType() != null) {
-            sql.append(hasWhere ? "AND " : "WHERE ").append("c.fuel_type = :fuelType ");
-            params.addValue("fuelType", criteria.getFuelType());
+        if (!criteria.getFuelTypes().isEmpty()) {
+            sql.append(hasWhere ? "AND " : "WHERE ").append("c.fuel_type IN (:fuelTypes) ");
+            params.addValue("fuelTypes", criteria.getFuelTypes());
+            hasWhere = true;
+        }
+        if (criteria.getYearMin() != null) {
+            sql.append(hasWhere ? "AND " : "WHERE ").append("c.year >= :yearMin ");
+            params.addValue("yearMin", criteria.getYearMin());
+            hasWhere = true;
+        }
+        if (criteria.getYearMax() != null) {
+            sql.append(hasWhere ? "AND " : "WHERE ").append("c.year <= :yearMax ");
+            params.addValue("yearMax", criteria.getYearMax());
             hasWhere = true;
         }
         if (criteria.getHorsepowerMin() != null) {
@@ -201,62 +251,57 @@ public class CarJdbcDao implements CarDao {
         if (criteria.getMaxSpeedMin() != null) {
             sql.append(hasWhere ? "AND " : "WHERE ").append("c.max_speed_kmh >= :maxSpeedMin ");
             params.addValue("maxSpeedMin", criteria.getMaxSpeedMin());
+            hasWhere = true;
         }
+        if (criteria.getPriceMin() != null) {
+            sql.append(hasWhere ? "AND " : "WHERE ").append("c.price_usd >= :priceMin ");
+            params.addValue("priceMin", criteria.getPriceMin());
+            hasWhere = true;
+        }
+        if (criteria.getPriceMax() != null) {
+            sql.append(hasWhere ? "AND " : "WHERE ").append("c.price_usd <= :priceMax ");
+            params.addValue("priceMax", criteria.getPriceMax());
+        }
+        return sql.toString();
+    }
 
+    private String buildOrderClause(final CarSearchCriteria criteria) {
         final String sortBy = criteria.getSortBy();
         if (sortBy != null) {
             switch (sortBy) {
                 case "name_asc":
-                    sql.append("ORDER BY b.name ASC, c.model ASC");
-                    break;
-                case "name_desc":
-                    sql.append("ORDER BY b.name DESC, c.model DESC");
-                    break;
+                    return "ORDER BY b.name ASC, c.model ASC";
                 case "hp_desc":
-                    sql.append("ORDER BY c.horsepower DESC NULLS LAST, c.car_id ASC");
-                    break;
+                    return "ORDER BY c.horsepower DESC NULLS LAST, c.car_id ASC";
                 case "hp_asc":
-                    sql.append("ORDER BY c.horsepower ASC NULLS LAST, c.car_id ASC");
-                    break;
+                    return "ORDER BY c.horsepower ASC NULLS LAST, c.car_id ASC";
                 case "speed_desc":
-                    sql.append("ORDER BY c.max_speed_kmh DESC NULLS LAST, c.car_id ASC");
-                    break;
+                    return "ORDER BY c.max_speed_kmh DESC NULLS LAST, c.car_id ASC";
                 case "consumption_asc":
-                    sql.append("ORDER BY c.fuel_consumption ASC NULLS LAST, c.car_id ASC");
-                    break;
+                    return "ORDER BY c.fuel_consumption ASC NULLS LAST, c.car_id ASC";
+                case "price_asc":
+                    return "ORDER BY c.price_usd ASC NULLS LAST, c.car_id ASC";
+                case "price_desc":
+                    return "ORDER BY c.price_usd DESC NULLS LAST, c.car_id ASC";
                 default:
-                    sql.append("ORDER BY c.car_id ASC");
+                    return "ORDER BY c.car_id ASC";
             }
-        } else if (criteria.getQ() != null) {
-            final String tsQ = criteria.getQ().replaceAll("[%_\\\\]", " ").trim();
-            final StringBuilder order = new StringBuilder("ORDER BY ");
-            if (tsQ.matches(".*[a-zA-Z0-9]{2,}.*")) {
-                order.append("ts_rank(c.search_vector, websearch_to_tsquery('simple', :q)) DESC, ");
-            }
-            order.append("CASE WHEN lower(c.model) LIKE :likeQ ESCAPE '\\' THEN 0 "
-                    + "     WHEN lower(b.name) LIKE :likeQ ESCAPE '\\' THEN 1 "
-                    + "     WHEN lower(COALESCE(c.description, '')) LIKE :likeQ ESCAPE '\\' THEN 2 "
-                    + "     ELSE 3 END, c.car_id ASC");
-            sql.append(order);
-        } else {
-            sql.append("ORDER BY c.car_id ASC");
         }
-
-        return namedJdbcTemplate.query(sql.toString(), params, ROW_MAPPER);
+        return "ORDER BY COALESCE(rs.average_rating, 0) DESC, COALESCE(rs.review_count, 0) DESC, c.car_id ASC";
     }
 
     @Override
     public Optional<Car> update(final long id, final long brandId, final String model,
-                                final long bodyTypeId, final String description,
+                                final long bodyTypeId, final Integer year, final String description,
                                 final String fuelType, final Integer horsepower, final Integer airbagCount,
                                 final String transmission, final BigDecimal fuelConsumption,
-                                final Integer maxSpeedKmh) {
+                                final Integer maxSpeedKmh, final BigDecimal priceUsd) {
         final int updated = jdbcTemplate.update(
-                "UPDATE cars SET brand_id = ?, model = ?, body_type_id = ?, description = ?, "
+                "UPDATE cars SET brand_id = ?, model = ?, body_type_id = ?, year = ?, description = ?, "
                         + "fuel_type = ?, horsepower = ?, airbag_count = ?, transmission = ?, "
-                        + "fuel_consumption = ?, max_speed_kmh = ? WHERE car_id = ?",
-                brandId, model, bodyTypeId, description, fuelType, horsepower, airbagCount, transmission,
-                fuelConsumption, maxSpeedKmh, id
+                        + "fuel_consumption = ?, max_speed_kmh = ?, price_usd = ? WHERE car_id = ?",
+                brandId, model, bodyTypeId, year, description, fuelType, horsepower, airbagCount, transmission,
+                fuelConsumption, maxSpeedKmh, priceUsd, id
         );
         return updated > 0 ? findById(id) : Optional.empty();
     }
@@ -264,14 +309,6 @@ public class CarJdbcDao implements CarDao {
     @Override
     public boolean delete(final long id) {
         return jdbcTemplate.update("DELETE FROM cars WHERE car_id = ?", id) > 0;
-    }
-
-    @Override
-    public List<Car> findByBodyTypeId(final long bodyTypeId) {
-        return jdbcTemplate.query(
-                SELECT_COLUMNS + FROM_JOIN + "WHERE c.body_type_id = ? ORDER BY c.model",
-                ROW_MAPPER, bodyTypeId
-        );
     }
 
     @Override
@@ -283,53 +320,17 @@ public class CarJdbcDao implements CarDao {
     }
 
     @Override
-    public List<Car> search(final String query, final Long brandId, final Long bodyTypeId) {
-        final String trimmed = query.trim();
-        final String escaped = trimmed.toLowerCase().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-        final String likeQuery = "%" + escaped + "%";
-        final String tsQuery = trimmed.replaceAll("[%_\\\\]", " ").trim();
-        final StringBuilder sql = new StringBuilder(SELECT_COLUMNS).append(FROM_JOIN);
-        final boolean useTsQuery = tsQuery.matches(".*[a-zA-Z0-9]{2,}.*");
-        final List<Object> params = new ArrayList<>();
-        if (!useTsQuery) {
-            sql.append("WHERE (lower(b.name) LIKE ? ESCAPE '\\' ");
-            sql.append("   OR lower(c.model) LIKE ? ESCAPE '\\' ");
-            sql.append("   OR lower(COALESCE(c.description, '')) LIKE ? ESCAPE '\\') ");
-        } else {
-            sql.append("WHERE (c.search_vector @@ websearch_to_tsquery('simple', ?) ");
-            sql.append("   OR lower(b.name) LIKE ? ESCAPE '\\' ");
-            sql.append("   OR lower(c.model) LIKE ? ESCAPE '\\' ");
-            sql.append("   OR lower(COALESCE(c.description, '')) LIKE ? ESCAPE '\\') ");
-            params.add(tsQuery);
-        }
-        params.add(likeQuery);
-        params.add(likeQuery);
-        params.add(likeQuery);
-
-        if (brandId != null) {
-            sql.append("AND c.brand_id = ? ");
-            params.add(brandId);
-        }
-        if (bodyTypeId != null) {
-            sql.append("AND c.body_type_id = ? ");
-            params.add(bodyTypeId);
-        }
-
-        if (useTsQuery) {
-            sql.append("ORDER BY ts_rank(c.search_vector, websearch_to_tsquery('simple', ?)) DESC, ");
-            params.add(tsQuery);
-        } else {
-            sql.append("ORDER BY ");
-        }
-        sql.append("CASE WHEN lower(c.model) LIKE ? ESCAPE '\\' THEN 0 ");
-        sql.append("     WHEN lower(b.name) LIKE ? ESCAPE '\\' THEN 1 ");
-        sql.append("     WHEN lower(COALESCE(c.description, '')) LIKE ? ESCAPE '\\' THEN 2 ");
-        sql.append("     ELSE 3 END, ");
-        sql.append("c.car_id ASC");
-        params.add(likeQuery);
-        params.add(likeQuery);
-        params.add(likeQuery);
-
-        return jdbcTemplate.query(sql.toString(), ROW_MAPPER, params.toArray());
+    public long countByBrandId(final long brandId) {
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM cars WHERE brand_id = ?", Long.class, brandId);
+        return count == null ? 0L : count;
     }
+
+    @Override
+    public long countByBodyTypeId(final long bodyTypeId) {
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM cars WHERE body_type_id = ?", Long.class, bodyTypeId);
+        return count == null ? 0L : count;
+    }
+
 }

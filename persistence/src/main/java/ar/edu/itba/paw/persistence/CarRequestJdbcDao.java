@@ -3,6 +3,8 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -36,6 +38,7 @@ public class CarRequestJdbcDao implements CarRequestDao {
             rs.getString("submitter_email"),
             rs.getLong("brand_id"),
             rs.getLong("body_type_id"),
+            rs.getObject("year", Integer.class),
             rs.getString("model"),
             rs.getString("description"),
             rs.getString("image_content_type"),
@@ -47,7 +50,8 @@ public class CarRequestJdbcDao implements CarRequestDao {
             rs.getObject("airbag_count", Integer.class),
             rs.getString("transmission"),
             rs.getBigDecimal("fuel_consumption"),
-            rs.getObject("max_speed_kmh", Integer.class)
+            rs.getObject("max_speed_kmh", Integer.class),
+            rs.getBigDecimal("price_usd")
     );
 
     private static final RowMapper<CarRequestImage> IMAGE_ROW_MAPPER = (rs, rowNum) -> new CarRequestImage(
@@ -65,10 +69,10 @@ public class CarRequestJdbcDao implements CarRequestDao {
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("car_requests")
                 .usingGeneratedKeyColumns("car_request_id")
-                .usingColumns("submitted_by_user_id", "submitter_email", "brand_id", "body_type_id", "model",
+                .usingColumns("submitted_by_user_id", "submitter_email", "brand_id", "body_type_id", "year", "model",
                         "description", "image_content_type", "image_data", "status",
                         "fuel_type", "horsepower", "airbag_count", "transmission",
-                        "fuel_consumption", "max_speed_kmh");
+                        "fuel_consumption", "max_speed_kmh", "price_usd");
         this.imageJdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("car_request_images")
                 .usingGeneratedKeyColumns("image_id")
@@ -78,9 +82,9 @@ public class CarRequestJdbcDao implements CarRequestDao {
     @Override
     public Optional<CarRequest> findById(final long id) {
         return jdbcTemplate.query(
-                "SELECT car_request_id, submitted_by_user_id, submitter_email, brand_id, body_type_id, model, "
+                "SELECT car_request_id, submitted_by_user_id, submitter_email, brand_id, body_type_id, year, model, "
                         + "description, image_content_type, image_data, status, created_at, "
-                        + "fuel_type, horsepower, airbag_count, transmission, fuel_consumption, max_speed_kmh "
+                        + "fuel_type, horsepower, airbag_count, transmission, fuel_consumption, max_speed_kmh, price_usd "
                         + "FROM car_requests WHERE car_request_id = ?",
                 ROW_MAPPER,
                 id
@@ -88,22 +92,11 @@ public class CarRequestJdbcDao implements CarRequestDao {
     }
 
     @Override
-    public List<CarRequest> findAll() {
-        return jdbcTemplate.query(
-                "SELECT car_request_id, submitted_by_user_id, submitter_email, brand_id, body_type_id, model, "
-                        + "description, image_content_type, image_data, status, created_at, "
-                        + "fuel_type, horsepower, airbag_count, transmission, fuel_consumption, max_speed_kmh "
-                        + "FROM car_requests ORDER BY created_at DESC, car_request_id DESC",
-                ROW_MAPPER
-        );
-    }
-
-    @Override
     public List<CarRequest> findByStatus(final String status) {
         return jdbcTemplate.query(
-                "SELECT car_request_id, submitted_by_user_id, submitter_email, brand_id, body_type_id, model, "
+                "SELECT car_request_id, submitted_by_user_id, submitter_email, brand_id, body_type_id, year, model, "
                         + "description, image_content_type, image_data, status, created_at, "
-                        + "fuel_type, horsepower, airbag_count, transmission, fuel_consumption, max_speed_kmh "
+                        + "fuel_type, horsepower, airbag_count, transmission, fuel_consumption, max_speed_kmh, price_usd "
                         + "FROM car_requests WHERE status = ? ORDER BY created_at DESC, car_request_id DESC",
                 ROW_MAPPER,
                 status
@@ -111,16 +104,50 @@ public class CarRequestJdbcDao implements CarRequestDao {
     }
 
     @Override
+    public Page<CarRequest> findByStatus(final String status, final int page) {
+        final int normalizedPage = Pagination.normalizePage(page);
+        final int pageSize = Pagination.REQUESTS_PAGE_SIZE;
+
+        final long totalItems = countByStatus(status);
+        if (totalItems == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+
+        final int effectivePage = Pagination.clampPage(normalizedPage, totalItems, pageSize);
+        final long offset = Pagination.offsetFor(effectivePage, pageSize);
+
+        final List<CarRequest> items = jdbcTemplate.query(
+                "SELECT car_request_id, submitted_by_user_id, submitter_email, brand_id, body_type_id, year, model, "
+                        + "description, image_content_type, image_data, status, created_at, "
+                        + "fuel_type, horsepower, airbag_count, transmission, fuel_consumption, max_speed_kmh, price_usd "
+                        + "FROM car_requests WHERE status = ? ORDER BY created_at DESC, car_request_id DESC "
+                        + "LIMIT ? OFFSET ?",
+                ROW_MAPPER,
+                status, pageSize, offset
+        );
+        return new Page<>(items, effectivePage, pageSize, totalItems);
+    }
+
+    @Override
+    public long countByStatus(final String status) {
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM car_requests WHERE status = ?", Long.class, status);
+        return count == null ? 0L : count;
+    }
+
+    @Override
     public CarRequest create(final long submittedByUserId, final String submitterEmail, final long brandId,
-                             final long bodyTypeId, final String model, final String description,
+                             final long bodyTypeId, final Integer year, final String model, final String description,
                              final String imageContentType, final byte[] imageData, final String status,
                              final String fuelType, final Integer horsepower, final Integer airbagCount,
-                             final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                             final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                             final BigDecimal priceUsd) {
         final Map<String, Object> params = new HashMap<>();
         params.put("submitted_by_user_id", submittedByUserId);
         params.put("submitter_email", submitterEmail);
         params.put("brand_id", brandId);
         params.put("body_type_id", bodyTypeId);
+        params.put("year", year);
         params.put("model", model);
         params.put("description", description);
         params.put("image_content_type", imageContentType);
@@ -132,6 +159,7 @@ public class CarRequestJdbcDao implements CarRequestDao {
         params.put("transmission", transmission);
         params.put("fuel_consumption", fuelConsumption);
         params.put("max_speed_kmh", maxSpeedKmh);
+        params.put("price_usd", priceUsd);
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();

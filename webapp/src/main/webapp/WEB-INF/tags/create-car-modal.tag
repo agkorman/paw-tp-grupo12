@@ -4,6 +4,7 @@
 <%@ attribute name="mode" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <c:set var="adminMode" value="${mode eq 'admin'}"/>
 <c:url var="carCreateUrl" value="/cars"/>
@@ -33,7 +34,7 @@
                 </h2>
             </div>
             <button type="button" class="review-modal-close" data-close-car-modal aria-label="Cerrar modal">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/></svg>
+                <pa:icon name="close" size="18"/>
             </button>
         </div>
 
@@ -74,6 +75,12 @@
                                 </c:forEach>
                             </form:select>
                             <form:errors path="brand" cssClass="form-error" element="span"/>
+                            <c:if test="${not adminMode}">
+                                <button type="button" class="catalog-request-link"
+                                        data-open-catalog-request="brand">
+                                    No encuentro la marca
+                                </button>
+                            </c:if>
                         </div>
 
                         <div class="review-modal-field">
@@ -85,6 +92,12 @@
                                 </c:forEach>
                             </form:select>
                             <form:errors path="bodyType" cssClass="form-error" element="span"/>
+                            <c:if test="${not adminMode}">
+                                <button type="button" class="catalog-request-link"
+                                        data-open-catalog-request="body-type">
+                                    No encuentro la carrocería
+                                </button>
+                            </c:if>
                         </div>
                     </div>
 
@@ -94,6 +107,14 @@
                                     maxlength="120" required="required"
                                     placeholder="Ej: 911 Carrera T"/>
                         <form:errors path="model" cssClass="form-error" element="span"/>
+                    </div>
+
+                    <div class="review-modal-field review-modal-field-wide">
+                        <label for="modalCarYear">Año modelo</label>
+                        <form:input id="modalCarYear" path="year" type="number"
+                                    min="1886" max="2100"
+                                    placeholder="Ej: 2026" readonly="${adminMode}"/>
+                        <form:errors path="year" cssClass="form-error" element="span"/>
                     </div>
 
                     <div class="review-modal-field review-modal-field-wide">
@@ -141,6 +162,14 @@
                                             placeholder="Ej: 190" readonly="${adminMode}"/>
                                 <form:errors path="maxSpeedKmh" cssClass="form-error" element="span"/>
                             </div>
+
+                            <div class="review-modal-field">
+                                <label for="modalCarPriceUsd">Precio 0 km (USD)</label>
+                                <form:input id="modalCarPriceUsd" path="priceUsd" type="number"
+                                            step="0.01" min="0.01" max="5000000"
+                                            placeholder="Ej: 25000" readonly="${adminMode}"/>
+                                <form:errors path="priceUsd" cssClass="form-error" element="span"/>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -150,15 +179,15 @@
                         <label>Motorización</label>
                         <div class="segmented-control segmented-control-radio-group">
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="fuelType" value="combustion" required="required"/>
+                                <input type="radio" name="fuelType" value="combustion" required="required" <c:if test="${empty carForm.fuelType or carForm.fuelType eq 'combustion'}">checked="checked"</c:if>/>
                                 <span>Combustión</span>
                             </label>
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="fuelType" value="hybrid"/>
+                                <input type="radio" name="fuelType" value="hybrid" <c:if test="${carForm.fuelType eq 'hybrid'}">checked="checked"</c:if>/>
                                 <span>Híbrido</span>
                             </label>
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="fuelType" value="electric"/>
+                                <input type="radio" name="fuelType" value="electric" <c:if test="${carForm.fuelType eq 'electric'}">checked="checked"</c:if>/>
                                 <span>Eléctrico</span>
                             </label>
                         </div>
@@ -169,11 +198,11 @@
                         <label>Transmisión</label>
                         <div class="segmented-control segmented-control-radio-group">
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="transmission" value="manual" required="required"/>
+                                <input type="radio" name="transmission" value="manual" required="required" <c:if test="${empty carForm.transmission or carForm.transmission eq 'manual'}">checked="checked"</c:if>/>
                                 <span>Manual</span>
                             </label>
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="transmission" value="automatic"/>
+                                <input type="radio" name="transmission" value="automatic" <c:if test="${carForm.transmission eq 'automatic'}">checked="checked"</c:if>/>
                                 <span>Automática</span>
                             </label>
                         </div>
@@ -203,19 +232,15 @@
                             </c:choose>
                             <label class="car-image-upload-card" for="modalCarFile">
                                 <span class="car-image-upload-icon" aria-hidden="true">
-                                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M5.25 19.25L9.8 14.7a2 2 0 0 1 2.8 0l1.05 1.05 2.9-2.9a2 2 0 0 1 2.8 0L22.75 16.25"/>
-                                        <rect x="4.5" y="5.25" width="19" height="17.5" rx="3"/>
-                                        <circle cx="18.75" cy="9.75" r="1.75"/>
-                                    </svg>
+                                    <pa:icon name="image-upload" size="28"/>
                                 </span>
                                 <span id="modalCarImagePreview" class="car-image-upload-preview" hidden aria-hidden="true">
                                     <button id="modalCarImagePrev" class="car-image-upload-preview-nav car-image-upload-preview-prev" type="button" aria-label="Imagen anterior">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                                        <pa:icon name="chevron-left" size="14"/>
                                     </button>
                                     <img id="modalCarImagePreviewImg" alt="">
                                     <button id="modalCarImageNext" class="car-image-upload-preview-nav car-image-upload-preview-next" type="button" aria-label="Imagen siguiente">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                                        <pa:icon name="chevron-right" size="14"/>
                                     </button>
                                     <span id="modalCarImageCounter" class="car-image-upload-preview-counter">1 / 1</span>
                                 </span>
@@ -272,3 +297,8 @@
         </c:if>
     </section>
 </div>
+
+<c:if test="${not adminMode}">
+    <pa:request-brand-modal/>
+    <pa:request-body-type-modal/>
+</c:if>

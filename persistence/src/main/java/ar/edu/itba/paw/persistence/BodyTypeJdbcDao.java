@@ -30,7 +30,8 @@ public class BodyTypeJdbcDao implements BodyTypeDao {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("body_types")
-                .usingGeneratedKeyColumns("body_type_id");
+                .usingGeneratedKeyColumns("body_type_id")
+                .usingColumns("name");
     }
 
     @Override
@@ -64,5 +65,22 @@ public class BodyTypeJdbcDao implements BodyTypeDao {
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return findById(id).orElseThrow();
+    }
+
+    @Override
+    public Optional<BodyType> update(final long id, final String name) {
+        final int updated = jdbcTemplate.update(
+                "UPDATE body_types SET name = ? WHERE body_type_id = ?",
+                name, id
+        );
+        if (updated == 0) {
+            return Optional.empty();
+        }
+        return findById(id);
+    }
+
+    @Override
+    public boolean delete(final long id) {
+        return jdbcTemplate.update("DELETE FROM body_types WHERE body_type_id = ?", id) > 0;
     }
 }

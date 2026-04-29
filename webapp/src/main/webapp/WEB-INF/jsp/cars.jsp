@@ -9,9 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>La Posta Autos</title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
@@ -20,7 +18,7 @@
 </head>
 <body>
     <pa:nav activePage="reviews"/>
-    <c:set var="resultCount" value="${fn:length(cars)}"/>
+    <c:set var="resultCount" value="${empty totalItems ? fn:length(cars) : totalItems}"/>
 
     <pa:cars-toolbar
             brands="${brands}"
@@ -44,8 +42,12 @@
             showSpeed="${showSpeed}"
             showConsumption="${showConsumption}"
             showAirbags="${showAirbags}"
-            showTransmission="${showTransmission}"
-            showFuelType="${showFuelType}"/>
+            showFuelType="${showFuelType}"
+            showPrice="${showPrice}"
+            showYear="${showYear}"
+            currentPage="${currentPage}"
+            totalPages="${totalPages}"
+            criteria="${criteria}"/>
     <pa:create-car-modal
             brands="${brands}"
             bodyTypes="${bodyTypes}"/>
@@ -58,29 +60,18 @@
                 <path d="M7.5 12.5l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <span class="submitted-toast-text">Tu auto ha sido enviado correctamente y está en proceso de moderación.</span>
-            <button type="button" class="submitted-toast-action" onclick="document.getElementById('submittedToast').remove()">ENTENDIDO</button>
+            <button type="button" class="submitted-toast-action" data-dismiss-submitted-toast>ENTENDIDO</button>
         </div>
     </c:if>
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
-    <script src="<c:url value='/js/enhanced-filters.js'/>"></script>
-    <script src="<c:url value='/js/cars-filters-panel.js'/>"></script>
+    <script src="<c:url value='/js/enhanced-filters.js?v=5'/>"></script>
+    <script src="<c:url value='/js/cars-filters-panel.js?v=5'/>"></script>
     <script src="<c:url value='/js/create-car-modal.js'/>"></script>
+    <script src="<c:url value='/js/catalog-request-modals.js'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <c:if test="${showSubmittedToast}">
-        <script>
-            (function() {
-                var toast = document.getElementById('submittedToast');
-                if (toast) {
-                    setTimeout(function() {
-                        toast.classList.add('submitted-toast--hiding');
-                        setTimeout(function() { toast.remove(); }, 300);
-                    }, 6000);
-                }
-            })();
-        </script>
-    </c:if>
+    <script src="<c:url value='/js/submitted-toast.js'/>"></script>
 
 </body>
 </html>

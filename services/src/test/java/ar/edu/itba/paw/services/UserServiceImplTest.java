@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.CarRequestDao;
@@ -157,6 +158,11 @@ class UserServiceImplTest {
                     .map(User::getEmail)
                     .toList();
         }
+
+        @Override
+        public boolean updateRole(final long userId, final String role) {
+            return false;
+        }
     }
 
     private static final class FakeReviewDao implements ReviewDao {
@@ -197,13 +203,13 @@ class UserServiceImplTest {
         }
 
         @Override
-        public List<Review> findAll() {
+        public List<Review> findByCarId(final long carId) {
             return Collections.emptyList();
         }
 
         @Override
-        public List<Review> findByCarId(final long carId) {
-            return Collections.emptyList();
+        public Page<Review> findByCarId(final long carId, final int page) {
+            return Page.empty(page, 0);
         }
 
         @Override
@@ -222,8 +228,23 @@ class UserServiceImplTest {
         }
 
         @Override
+        public Page<Review> findByCarIdOrderByRatingAsc(final long carId, final int page) {
+            return Page.empty(page, 0);
+        }
+
+        @Override
         public List<Review> findByCarIdOrderByRatingDesc(final long carId) {
             return Collections.emptyList();
+        }
+
+        @Override
+        public Page<Review> findByCarIdOrderByRatingDesc(final long carId, final int page) {
+            return Page.empty(page, 0);
+        }
+
+        @Override
+        public long countByCarId(final long carId) {
+            return 0L;
         }
 
         @Override
@@ -299,23 +320,28 @@ class UserServiceImplTest {
         }
 
         @Override
-        public List<CarRequest> findAll() {
-            return Collections.emptyList();
-        }
-
-        @Override
         public List<CarRequest> findByStatus(final String status) {
             return Collections.emptyList();
         }
 
         @Override
+        public ar.edu.itba.paw.model.Page<CarRequest> findByStatus(final String status, final int page) {
+            return ar.edu.itba.paw.model.Page.empty(1, 0);
+        }
+
+        @Override
+        public long countByStatus(final String status) {
+            return 0L;
+        }
+
+        @Override
         public CarRequest create(final long submittedByUserId, final String submitterEmail,
-                                 final long brandId, final long bodyTypeId,
+                                 final long brandId, final long bodyTypeId, final Integer year,
                                  final String model, final String description, final String imageContentType,
                                  final byte[] imageData, final String status,
                                  final String fuelType, final Integer horsepower, final Integer airbagCount,
                                  final String transmission, final java.math.BigDecimal fuelConsumption,
-                                 final Integer maxSpeedKmh) {
+                                 final Integer maxSpeedKmh, final java.math.BigDecimal priceUsd) {
             throw new UnsupportedOperationException();
         }
 

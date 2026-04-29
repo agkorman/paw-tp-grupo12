@@ -4,7 +4,11 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.UserService;
 import org.junit.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.List;
@@ -16,9 +20,9 @@ public class AuthControllerTest {
 
     @Test
     public void createAccountWithMissingCurlFieldsReturnsRegistrationError() {
-        final AuthController controller = new AuthController(new FakeUserService());
+        final AuthController controller = new AuthController(new FakeUserService(), new FailingAuthenticationManager());
 
-        final ModelAndView mav = controller.createAccount(null, null, null, null, null);
+        final ModelAndView mav = controller.createAccount(null, null, null, null, null, null, null);
 
         assertEquals("register.jsp", mav.getViewName());
         assertEquals("El nombre de usuario es obligatorio.", mav.getModel().get("registrationError"));
@@ -28,10 +32,10 @@ public class AuthControllerTest {
     public void createAccountWithIntegrityFailureReturnsRegistrationError() {
         final FakeUserService userService = new FakeUserService();
         userService.throwIntegrityFailure = true;
-        final AuthController controller = new AuthController(userService);
+        final AuthController controller = new AuthController(userService, new FailingAuthenticationManager());
 
         final ModelAndView mav = controller.createAccount(
-                "driver", "driver@example.com", "password123", "password123", null);
+                "driver", "driver@example.com", "password123", "password123", null, null, null);
 
         assertEquals("register.jsp", mav.getViewName());
         assertEquals("Ese usuario o email ya está registrado.", mav.getModel().get("registrationError"));
@@ -39,17 +43,17 @@ public class AuthControllerTest {
 
     @Test
     public void createAccountWithValidFieldsRedirectsToLogin() {
-        final AuthController controller = new AuthController(new FakeUserService());
+        final AuthController controller = new AuthController(new FakeUserService(), new FailingAuthenticationManager());
 
         final ModelAndView mav = controller.createAccount(
-                "driver", "driver@example.com", "password123", "password123", null);
+                "driver", "driver@example.com", "password123", "password123", null, null, null);
 
         assertEquals("redirect:/login?registered", mav.getViewName());
     }
 
     @Test
     public void loginWithSafeRedirectKeepsRedirectAndIntent() {
-        final AuthController controller = new AuthController(new FakeUserService());
+        final AuthController controller = new AuthController(new FakeUserService(), new FailingAuthenticationManager());
 
         final ModelAndView mav = controller.login(null, null, null, "/reviews?carId=7", "create-review", null);
 
@@ -60,7 +64,7 @@ public class AuthControllerTest {
 
     @Test
     public void loginWithExternalRedirectIgnoresRedirect() {
-        final AuthController controller = new AuthController(new FakeUserService());
+        final AuthController controller = new AuthController(new FakeUserService(), new FailingAuthenticationManager());
 
         final ModelAndView mav = controller.login(null, null, null, "https://example.com", "create-review", null);
 
@@ -71,7 +75,7 @@ public class AuthControllerTest {
 
     @Test
     public void loggedInLoginWithSafeRedirectRedirectsBackWithIntent() {
-        final AuthController controller = new AuthController(new FakeUserService());
+        final AuthController controller = new AuthController(new FakeUserService(), new FailingAuthenticationManager());
         final UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken("driver@example.com", "password", List.of());
 
@@ -114,6 +118,18 @@ public class AuthControllerTest {
         @Override
         public List<User> getAllUsers() {
             return List.of();
+        }
+
+        @Override
+        public boolean updateRole(final long userId, final String role) {
+            return false;
+        }
+    }
+
+    private static final class FailingAuthenticationManager implements AuthenticationManager {
+        @Override
+        public Authentication authenticate(final Authentication authentication) throws AuthenticationException {
+            throw new BadCredentialsException("auto-login disabled in tests");
         }
     }
 }

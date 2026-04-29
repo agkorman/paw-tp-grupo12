@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
@@ -59,20 +60,6 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public List<Car> getCarsByBodyType(final String bodyType) {
-        return bodyTypeDao.findByName(bodyType)
-                .map(bt -> carDao.findByBodyTypeId(bt.getId()))
-                .orElse(Collections.emptyList());
-    }
-
-    @Override
-    public List<Car> getCarsByBrand(final String brand) {
-        return brandDao.findByName(brand)
-                .map(b -> carDao.findByBrandId(b.getId()))
-                .orElse(Collections.emptyList());
-    }
-
-    @Override
     public List<Car> getCarsByBrandAndBodyType(final String brand, final String bodyType) {
         return brandDao.findByName(brand)
                 .flatMap(b -> bodyTypeDao.findByName(bodyType)
@@ -81,7 +68,7 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public List<Car> searchCars(final CarSearchCriteria criteria) {
+    public Page<Car> searchCars(final CarSearchCriteria criteria) {
         return carDao.findByCriteria(criteria);
     }
 
@@ -102,121 +89,64 @@ public class CarServiceImpl implements CarService {
 
     @Override
     @Transactional
-    public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
-        carImageDao.saveOrReplace(carId, contentType, imageData);
-    }
-
-    @Override
-    @Transactional
     public void saveCarImages(final long carId, final List<CarImagePayload> images) {
-        carImageDao.replaceAll(carId, normalizeImages(images));
+        carImageDao.replaceAll(carId, ImagePayloadUtils.normalizeImages(images));
     }
 
     @Override
     @Transactional
     public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                         final long submittedByUserId, final String submitterEmail,
+                                         final Integer year, final long submittedByUserId, final String submitterEmail,
                                          final Optional<String> description,
-                                         final Optional<String> imageContentType,
-                                         final Optional<byte[]> imageData,
+                                         final List<CarImagePayload> images,
                                          final String fuelType, final Integer horsepower,
                                          final Integer airbagCount, final String transmission,
-                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
-        final List<CarImagePayload> images;
-        final boolean hasImageContentType = imageContentType.isPresent();
-        final boolean hasImageData = imageData.isPresent();
-        if (hasImageContentType != hasImageData) {
-            throw new IllegalArgumentException("Image metadata and payload must be provided together.");
+                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                         final BigDecimal priceUsd) {
+        final String normalizedDescription = description
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
+        final List<CarImagePayload> normalizedImages = ImagePayloadUtils.normalizeImages(images);
+        if (normalizedImages.isEmpty()) {
+            throw new IllegalArgumentException("At least one image is required for car creation.");
         }
-        if (hasImageContentType) {
-            images = List.of(new CarImagePayload(imageContentType.orElseThrow(), imageData.orElseThrow()));
-        } else {
-            images = Collections.emptyList();
-        }
-        return requestCarCreation(
-                brandId,
-                model,
-                bodyTypeId,
+
+        return carRequestService.createPendingRequest(
                 submittedByUserId,
                 submitterEmail,
-                description,
-                images,
+                brandId,
+                bodyTypeId,
+                year,
+                model,
+                normalizedDescription,
+                normalizedImages,
                 fuelType,
                 horsepower,
                 airbagCount,
                 transmission,
                 fuelConsumption,
-                maxSpeedKmh
+                maxSpeedKmh,
+                priceUsd
         );
     }
 
     @Override
     @Transactional
-    public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                         final long submittedByUserId, final String submitterEmail,
-                                         final Optional<String> description,
-                                         final List<CarImagePayload> images,
-                                         final String fuelType, final Integer horsepower,
-                                         final Integer airbagCount, final String transmission,
-                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
-        final String normalizedDescription = description
-                .map(String::trim)
-                .filter(value -> !value.isEmpty())
-                .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
-        final List<CarImagePayload> normalizedImages = normalizeImages(images);
-        if (normalizedImages.isEmpty()) {
-            throw new IllegalArgumentException("At least one image is required for car creation.");
-        }
-
-        try {
-            return carRequestService.createPendingRequest(
-                    submittedByUserId,
-                    submitterEmail,
-                    brandId,
-                    bodyTypeId,
-                    model,
-                    normalizedDescription,
-                    normalizedImages,
-                    fuelType,
-                    horsepower,
-                    airbagCount,
-                    transmission,
-                    fuelConsumption,
-                    maxSpeedKmh
-            );
-        } catch (final RuntimeException e) {
-            throw new IllegalStateException("Failed to request car creation with image gallery.", e);
-        }
-    }
-
-    private List<CarImagePayload> normalizeImages(final List<CarImagePayload> images) {
-        if (images == null) {
-            return Collections.emptyList();
-        }
-        for (final CarImagePayload image : images) {
-            if (image == null || image.getContentType() == null || image.getContentType().isBlank()
-                    || image.getImageData() == null || image.getImageData().length == 0) {
-                throw new IllegalArgumentException("Image metadata and payload must be provided together.");
-            }
-        }
-        return List.copyOf(images);
-    }
-
-    @Override
-    @Transactional
     public Optional<Car> updateCar(final long id, final long brandId, final String model,
-                                   final long bodyTypeId, final String description,
+                                   final long bodyTypeId, final Integer year, final String description,
                                    final Optional<String> imageContentType,
                                    final Optional<byte[]> imageData,
                                    final String fuelType, final Integer horsepower,
                                    final Integer airbagCount, final String transmission,
-                                   final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
-        final String normalizedModel = normalizeRequired(model, "Model is required for car update.");
-        final String normalizedDescription = normalizeRequired(description, "Description is required for car update.");
+                                   final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                   final BigDecimal priceUsd) {
+        final String normalizedModel = StringUtils.normalizeRequired(model, "Model is required for car update.");
+        final String normalizedDescription = StringUtils.normalizeRequired(description, "Description is required for car update.");
         validateImagePair(imageContentType, imageData);
 
-        final Optional<Car> updated = carDao.update(id, brandId, normalizedModel, bodyTypeId, normalizedDescription,
-                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh);
+        final Optional<Car> updated = carDao.update(id, brandId, normalizedModel, bodyTypeId, year, normalizedDescription,
+                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
         if (updated.isPresent() && imageContentType.isPresent()) {
             carImageDao.saveOrReplace(id, imageContentType.get(), imageData.orElseThrow());
         }
@@ -231,17 +161,6 @@ public class CarServiceImpl implements CarService {
         }
         reviewDao.deleteByCarId(id);
         return carDao.delete(id);
-    }
-
-    private String normalizeRequired(final String value, final String errorMessage) {
-        if (value == null) {
-            throw new IllegalArgumentException(errorMessage);
-        }
-        final String trimmed = value.trim();
-        if (trimmed.isEmpty()) {
-            throw new IllegalArgumentException(errorMessage);
-        }
-        return trimmed;
     }
 
     private void validateImagePair(final Optional<String> imageContentType, final Optional<byte[]> imageData) {

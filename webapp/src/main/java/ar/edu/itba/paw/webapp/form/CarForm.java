@@ -26,6 +26,10 @@ public class CarForm {
     @Size(max = 120, message = "El modelo debe tener como máximo 120 caracteres.")
     private String model;
 
+    @Min(value = 1886, message = "El año debe ser 1886 o posterior.")
+    @Max(value = 2100, message = "El año debe ser 2100 o anterior.")
+    private Integer year;
+
     @Email(message = "Ingresá un email válido.")
     @Size(max = 100, message = "El email debe tener como máximo 100 caracteres.")
     private String submitterEmail;
@@ -62,6 +66,10 @@ public class CarForm {
     @Max(value = 600, message = "La velocidad no puede superar los 600 km/h.")
     private Integer maxSpeedKmh;
 
+    @DecimalMin(value = "0.01", message = "El precio debe ser mayor a 0.")
+    @DecimalMax(value = "5000000.00", message = "El precio no puede superar USD 5.000.000.")
+    private BigDecimal priceUsd;
+
     public String getBrand() {
         return brand;
     }
@@ -84,6 +92,14 @@ public class CarForm {
 
     public void setModel(final String model) {
         this.model = model;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(final Integer year) {
+        this.year = year;
     }
 
     public String getSubmitterEmail() {
@@ -167,5 +183,13 @@ public class CarForm {
 
     public void setMaxSpeedKmh(final Integer maxSpeedKmh) {
         this.maxSpeedKmh = maxSpeedKmh;
+    }
+
+    public BigDecimal getPriceUsd() {
+        return priceUsd;
+    }
+
+    public void setPriceUsd(final BigDecimal priceUsd) {
+        this.priceUsd = priceUsd;
     }
 }
