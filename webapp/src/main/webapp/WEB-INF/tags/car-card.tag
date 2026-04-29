@@ -22,6 +22,7 @@
 <%@ attribute name="showSpeed" required="false" %>
 <%@ attribute name="showConsumption" required="false" %>
 <%@ attribute name="showAirbags" required="false" %>
+<%@ attribute name="showTransmission" required="false" %>
 <%@ attribute name="showFuelType" required="false" %>
 <%@ attribute name="showPrice" required="false" %>
 <%@ attribute name="showYear" required="false" %>
@@ -118,7 +119,7 @@
                 <div class="card-title-row">
                     <span class="card-title"><c:out value="${model}"/></span>
                 </div>
-                <c:if test="${showHp eq 'true' or showSpeed eq 'true' or showConsumption eq 'true' or showAirbags eq 'true' or showFuelType eq 'true' or showPrice eq 'true' or showYear eq 'true'}">
+                <c:if test="${showHp eq 'true' or showSpeed eq 'true' or showConsumption eq 'true' or showAirbags eq 'true' or showTransmission eq 'true' or showFuelType eq 'true' or showPrice eq 'true' or showYear eq 'true'}">
                 <div class="card-spec-tags">
                     <c:if test="${showYear eq 'true'}">
                         <span class="card-spec-tag">
@@ -161,6 +162,15 @@
                             <c:choose>
                                 <c:when test="${not empty airbagCount}"><c:out value="${airbagCount}"/> Airbags</c:when>
                                 <c:otherwise>-- Airbags</c:otherwise>
+                            </c:choose>
+                        </span>
+                    </c:if>
+                    <c:if test="${showTransmission eq 'true'}">
+                        <span class="card-spec-tag">
+                            <c:choose>
+                                <c:when test="${transmission eq 'manual'}">Manual</c:when>
+                                <c:when test="${transmission eq 'automatic'}">Automática</c:when>
+                                <c:otherwise>Transmisión N/A</c:otherwise>
                             </c:choose>
                         </span>
                     </c:if>

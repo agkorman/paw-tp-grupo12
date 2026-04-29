@@ -6,6 +6,7 @@
 <%@ attribute name="showSpeed" required="false" %>
 <%@ attribute name="showConsumption" required="false" %>
 <%@ attribute name="showAirbags" required="false" %>
+<%@ attribute name="showTransmission" required="false" %>
 <%@ attribute name="showFuelType" required="false" %>
 <%@ attribute name="showPrice" required="false" %>
 <%@ attribute name="showYear" required="false" %>
@@ -46,6 +47,7 @@
                     showSpeed="${showSpeed}"
                     showConsumption="${showConsumption}"
                     showAirbags="${showAirbags}"
+                    showTransmission="${showTransmission}"
                     showFuelType="${showFuelType}"
                     showPrice="${showPrice}"
                     showYear="${showYear}"/>

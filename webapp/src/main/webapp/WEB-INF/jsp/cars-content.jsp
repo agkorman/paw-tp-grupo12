@@ -10,6 +10,7 @@
         showSpeed="${showSpeed}"
         showConsumption="${showConsumption}"
         showAirbags="${showAirbags}"
+        showTransmission="${showTransmission}"
         showFuelType="${showFuelType}"
         showPrice="${showPrice}"
         showYear="${showYear}"
