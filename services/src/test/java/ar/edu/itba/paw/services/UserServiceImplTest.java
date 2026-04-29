@@ -163,6 +163,11 @@ class UserServiceImplTest {
     private static final class FakeReviewDao implements ReviewDao {
         private final List<LegacyIdentity> reviews = new ArrayList<>();
 
+        @Override
+        public List<Review> findAll() {
+            return Collections.emptyList();
+        }
+
         private void addReview(final Long userId, final String email) {
             reviews.add(new LegacyIdentity(userId, email));
         }

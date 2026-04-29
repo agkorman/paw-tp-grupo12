@@ -125,6 +125,97 @@
         }
     }
 
+    // funciones para recordar la pestaña en la que se encuentra el usuario en caso de un reload
+    function profileTabStorageKey() {
+        return 'paw.profile.activeTab.' + window.location.pathname;
+    }
+
+    function getStoredProfileTab() {
+        try {
+            return window.localStorage.getItem(profileTabStorageKey());
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function storeProfileTab(panelId) {
+        try {
+            window.localStorage.setItem(profileTabStorageKey(), panelId);
+        } catch (error) {
+            // Ignore storage failures so tab navigation keeps working.
+        }
+    }
+
+    function hasProfileTab(tabsRoot, panelId) {
+        return !!(tabsRoot && panelId && tabsRoot.querySelector('[data-profile-tab-target="' + panelId + '"]'));
+    }
+
+    function activateProfileTab(tabsRoot, panelId, shouldFocus) {
+        var tabs = tabsRoot ? tabsRoot.querySelectorAll('[data-profile-tab-target]') : [];
+        var panels = tabsRoot ? tabsRoot.querySelectorAll('.profile-tab-panel') : [];
+        var activeTab = null;
+
+        if (!hasProfileTab(tabsRoot, panelId)) {
+            return;
+        }
+
+        for (var i = 0; i < tabs.length; i += 1) {
+            var selected = tabs[i].getAttribute('data-profile-tab-target') === panelId;
+            tabs[i].setAttribute('aria-selected', selected ? 'true' : 'false');
+            tabs[i].setAttribute('tabindex', selected ? '0' : '-1');
+            if (selected) {
+                activeTab = tabs[i];
+            }
+        }
+
+        for (var j = 0; j < panels.length; j += 1) {
+            panels[j].hidden = panels[j].id !== panelId;
+        }
+
+        if (shouldFocus && activeTab) {
+            activeTab.focus();
+        }
+        storeProfileTab(panelId);
+    }
+
+    function setupProfileTabs() {
+        var tabsRoot = document.querySelector('[data-profile-tabs]');
+        var tabs = tabsRoot ? tabsRoot.querySelectorAll('[data-profile-tab-target]') : [];
+        var initialPanelId = null;
+
+        if (!tabsRoot || tabs.length === 0) {
+            return;
+        }
+
+        tabsRoot.setAttribute('data-tabs-ready', 'true');
+
+        if (window.location.hash) {
+            var hashPanel = document.getElementById(window.location.hash.substring(1));
+            if (hashPanel && hasClass(hashPanel, 'profile-tab-panel')) {
+                initialPanelId = hashPanel.id;
+            }
+        }
+
+        if (!initialPanelId) {
+            initialPanelId = getStoredProfileTab();
+        }
+
+        if (!hasProfileTab(tabsRoot, initialPanelId)) {
+            initialPanelId = null;
+        }
+
+        if (!initialPanelId) {
+            for (var i = 0; i < tabs.length; i += 1) {
+                if (tabs[i].getAttribute('aria-selected') === 'true') {
+                    initialPanelId = tabs[i].getAttribute('data-profile-tab-target');
+                    break;
+                }
+            }
+        }
+
+        activateProfileTab(tabsRoot, initialPanelId || tabs[0].getAttribute('data-profile-tab-target'), false);
+    }
+
     function setupCollapsibleSections() {
         var sections = document.querySelectorAll('[data-collapsible-section]');
 
@@ -185,10 +276,6 @@
             return;
         }
 
-        if (closestByAttribute(event.target, 'data-open-review-modal')) {
-            closeActionMenus();
-        }
-
         var editButton = closestByAttribute(event.target, 'data-open-edit-profile-modal');
         if (editButton) {
             openModal(document.getElementById('editProfileModal'));
@@ -212,10 +299,26 @@
 
         var reviewsButton = closestByAttribute(event.target, 'data-scroll-to-reviews');
         if (reviewsButton) {
-            var reviewsTitle = document.getElementById('profileReviewsTitle');
-            if (reviewsTitle) {
-                reviewsTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            var tabsRoot = document.querySelector('[data-profile-tabs]');
+            var reviewsPanel = document.getElementById('profileReviewsPanel');
+            var scrollTarget = document.querySelector('[data-profile-tabs]') || document.getElementById('profileReviewsTitle');
+            if (tabsRoot && reviewsPanel) {
+                activateProfileTab(tabsRoot, reviewsPanel.id, false);
             }
+            if (scrollTarget) {
+                scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            return;
+        }
+
+        var profileTab = closestByAttribute(event.target, 'data-profile-tab-target');
+        if (profileTab) {
+            event.preventDefault();
+            activateProfileTab(
+                closestByAttribute(profileTab, 'data-profile-tabs'),
+                profileTab.getAttribute('data-profile-tab-target'),
+                false
+            );
             return;
         }
 
@@ -242,6 +345,48 @@
         }
 
         if (event.key !== 'Enter' && event.key !== ' ') {
+            var currentTab = closestByAttribute(event.target, 'data-profile-tab-target');
+            if (!currentTab || ['ArrowLeft', 'ArrowRight', 'Home', 'End'].indexOf(event.key) < 0) {
+                return;
+            }
+
+            var tabsRoot = closestByAttribute(currentTab, 'data-profile-tabs');
+            var tabs = tabsRoot ? tabsRoot.querySelectorAll('[data-profile-tab-target]') : [];
+            var currentIndex = -1;
+            var nextIndex = 0;
+
+            for (var i = 0; i < tabs.length; i += 1) {
+                if (tabs[i] === currentTab) {
+                    currentIndex = i;
+                    break;
+                }
+            }
+
+            if (event.key === 'Home') {
+                nextIndex = 0;
+            } else if (event.key === 'End') {
+                nextIndex = tabs.length - 1;
+            } else if (event.key === 'ArrowLeft') {
+                nextIndex = currentIndex <= 0 ? tabs.length - 1 : currentIndex - 1;
+            } else {
+                nextIndex = currentIndex >= tabs.length - 1 ? 0 : currentIndex + 1;
+            }
+
+            if (tabs[nextIndex]) {
+                event.preventDefault();
+                activateProfileTab(tabsRoot, tabs[nextIndex].getAttribute('data-profile-tab-target'), true);
+            }
+            return;
+        }
+
+        var activeTab = closestByAttribute(event.target, 'data-profile-tab-target');
+        if (activeTab) {
+            event.preventDefault();
+            activateProfileTab(
+                closestByAttribute(activeTab, 'data-profile-tabs'),
+                activeTab.getAttribute('data-profile-tab-target'),
+                false
+            );
             return;
         }
 
@@ -261,5 +406,6 @@
         });
     }
 
+    setupProfileTabs();
     setupCollapsibleSections();
 }());

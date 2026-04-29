@@ -78,32 +78,54 @@
                     <c:param name="carId" value="${heroCar.id}"/>
                 </c:url>
             </c:if>
+            <c:if test="${not empty heroReview}">
+                <c:url var="heroReviewUrl" value="/reviews">
+                    <c:param name="carId" value="${heroCar.id}"/>
+                </c:url>
+                <c:set var="heroReviewHref" value="${heroReviewUrl}#review-${heroReview.id}"/>
+            </c:if>
 
             <div class="hero-stage">
                 <div class="hero-glow"></div>
-                <div class="hero-media-frame" aria-hidden="true">
-                    <c:choose>
-                        <c:when test="${not empty heroCarImageUrl}">
-                            <img
-                                src="${heroCarImageUrl}"
-                                alt=""
-                                class="hero-car-image">
-                        </c:when>
-                        <c:otherwise>
-                            <div class="hero-placeholder"></div>
-                        </c:otherwise>
-                    </c:choose>
-                </div>
+                <c:choose>
+                    <c:when test="${not empty heroReviewHref}">
+                        <a class="hero-media-frame hero-media-link" href="${heroReviewHref}" aria-label="Ver reseña destacada">
+                            <c:choose>
+                                <c:when test="${not empty heroCarImageUrl}">
+                                    <img
+                                        src="${heroCarImageUrl}"
+                                        alt=""
+                                        class="hero-car-image">
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="hero-placeholder"></div>
+                                </c:otherwise>
+                            </c:choose>
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="hero-media-frame" aria-hidden="true">
+                            <c:choose>
+                                <c:when test="${not empty heroCarImageUrl}">
+                                    <img
+                                        src="${heroCarImageUrl}"
+                                        alt=""
+                                        class="hero-car-image">
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="hero-placeholder"></div>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
 
                 <c:if test="${not empty heroReview}">
-                    <c:url var="heroReviewUrl" value="/reviews">
-                        <c:param name="carId" value="${heroCar.id}"/>
-                    </c:url>
                     <pa:hero-review-card
                             heroReview="${heroReview}"
                             heroCarBrandName="${heroCar.brandName}"
                             heroCarImageUrl="${heroCarImageUrl}"
-                            href="${heroReviewUrl}#review-${heroReview.id}"/>
+                            href="${heroReviewHref}"/>
                 </c:if>
             </div>
         </section>
@@ -138,7 +160,6 @@
                                 carId="${car.id}"
                                 hasImage="${car.hasImage}"
                                 href="${reviewUrl}"
-                                favorited="${favoritedCarIds[car.id] eq true}"
                                 averageRating="${reviewStatsByCarId[car.id].averageRating}"
                                 reviewCount="${reviewStatsByCarId[car.id].reviewCount}"/>
                         </c:forEach>
@@ -147,8 +168,8 @@
             </c:choose>
         </section>
     </main>
-
+    <pa:auth-required-modal/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
-
+    <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
 </body>
 </html>

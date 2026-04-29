@@ -157,6 +157,11 @@ public class ProfileControllerTest {
         }
 
         @Override
+        public List<Review> getAllReviews() {
+            return review == null ? Collections.emptyList() : List.of(review);
+        }
+
+        @Override
         public Optional<Review> getReviewById(final long id) {
             return review.getId() == id ? Optional.of(review) : Optional.empty();
         }

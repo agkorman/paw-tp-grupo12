@@ -121,10 +121,9 @@
                          currentPage="${currentPage}" totalPages="${totalPages}" totalItems="${totalItems}"/>
     </main>
 
-    <pa:create-review-modal carId="${selectedCar.id}" autoOpen="${openReviewModal}"/>
     <pa:auth-required-modal/>
     <sec:authorize access="hasRole('ADMIN')">
-        <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
+        <pa:admin-car-form brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
         <pa:car-delete-modal/>
     </sec:authorize>
 
@@ -132,11 +131,10 @@
     <script src="<c:url value='/js/action-menu.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js?v=5'/>"></script>
     <script src="<c:url value='/js/car-image-carousel.js'/>"></script>
-    <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
     <script src="<c:url value='/js/review-tag-chips.js'/>" defer></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <sec:authorize access="hasRole('ADMIN')">
-        <script src="<c:url value='/js/create-car-modal.js?v=4'/>"></script>
+        <script src="<c:url value='/js/car-form.js?v=1'/>"></script>
         <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
     </sec:authorize>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>

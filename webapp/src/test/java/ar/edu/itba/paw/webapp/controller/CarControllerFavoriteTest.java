@@ -208,6 +208,11 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
+        public List<Review> getAllReviews() {
+            return Collections.emptyList();
+        }
+
+        @Override
         public Optional<Review> getReviewById(final long id) {
             return Optional.empty();
         }

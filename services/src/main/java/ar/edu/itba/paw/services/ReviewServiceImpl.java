@@ -46,6 +46,11 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public List<Review> getAllReviews() {
+        return reviewDao.findAll();
+    }
+
+    @Override
     public Optional<Review> getReviewById(final long id) {
         return reviewDao.findById(id);
     }

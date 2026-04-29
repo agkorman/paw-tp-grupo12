@@ -70,27 +70,96 @@ public class CarReviewControllerTest {
     }
 
     @Test
+    public void createReviewRejectsMissingRequiredExperienceFields() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        final CarReviewController controller = controller(reviewService);
+        final ReviewForm reviewForm = reviewForm(
+                10L,
+                BigDecimal.valueOf(4.5),
+                "Gran auto",
+                "Muy buena experiencia.",
+                "",
+                null,
+                null,
+                null
+        );
+        final BindingResult errors = new BeanPropertyBindingResult(reviewForm, "reviewForm");
+
+        final String view = controller.createReview(
+                reviewForm,
+                errors,
+                new ExtendedModelMap(),
+                user(7L)
+        );
+
+        assertEquals("review-form.jsp", view);
+        assertTrue(errors.hasErrors());
+        assertTrue(errors.hasFieldErrors("modelYear"));
+        assertTrue(errors.hasFieldErrors("mileageKm"));
+        assertFalse(reviewService.created);
+    }
+
+    @Test
     public void authenticatedUserCanEditOwnReview() {
         final FakeReviewService reviewService = new FakeReviewService();
         reviewService.review = review(3L, 7L, 10L);
         final CarReviewController controller = controller(reviewService);
-
-        final ModelAndView mav = controller.updateReview(
-                3L,
+        final ReviewForm reviewForm = reviewForm(
+                10L,
                 BigDecimal.valueOf(4),
                 "Editada",
                 "Texto editado.",
                 "Propietario actual",
                 2021,
                 30000,
-                true,
-                null,
+                true
+        );
+        final BindingResult errors = new BeanPropertyBindingResult(reviewForm, "reviewForm");
+
+        final String view = controller.updateReview(
+                3L,
+                reviewForm,
+                errors,
+                new ExtendedModelMap(),
                 user(7L)
         );
 
-        assertEquals("redirect:/profile", mav.getViewName());
+        assertEquals("redirect:/profile", view);
+        assertFalse(errors.hasErrors());
         assertTrue(reviewService.updated);
         assertEquals(10L, reviewService.updatedCarId);
+    }
+
+    @Test
+    public void authenticatedUserCannotEditOwnReviewClearingRequiredExperienceFields() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        reviewService.review = review(3L, 7L, 10L);
+        final CarReviewController controller = controller(reviewService);
+        final ReviewForm reviewForm = reviewForm(
+                10L,
+                BigDecimal.valueOf(4),
+                "Editada",
+                "Texto editado.",
+                "",
+                null,
+                null,
+                null
+        );
+        final BindingResult errors = new BeanPropertyBindingResult(reviewForm, "reviewForm");
+
+        final String view = controller.updateReview(
+                3L,
+                reviewForm,
+                errors,
+                new ExtendedModelMap(),
+                user(7L)
+        );
+
+        assertEquals("review-form.jsp", view);
+        assertTrue(errors.hasErrors());
+        assertTrue(errors.hasFieldErrors("modelYear"));
+        assertTrue(errors.hasFieldErrors("mileageKm"));
+        assertFalse(reviewService.updated);
     }
 
     @Test
@@ -98,17 +167,22 @@ public class CarReviewControllerTest {
         final FakeReviewService reviewService = new FakeReviewService();
         reviewService.review = review(3L, 8L, 10L);
         final CarReviewController controller = controller(reviewService);
-
-        assertThrows(ForbiddenException.class, () -> controller.updateReview(
-                3L,
+        final ReviewForm reviewForm = reviewForm(
+                10L,
                 BigDecimal.valueOf(4),
                 "Editada",
                 "Texto editado.",
                 null,
                 null,
                 null,
-                null,
-                null,
+                null
+        );
+
+        assertThrows(ForbiddenException.class, () -> controller.updateReview(
+                3L,
+                reviewForm,
+                new BeanPropertyBindingResult(reviewForm, "reviewForm"),
+                new ExtendedModelMap(),
                 user(7L)
         ));
 
@@ -143,17 +217,22 @@ public class CarReviewControllerTest {
     public void missingReviewReturnsNotFoundOnUpdate() {
         final FakeReviewService reviewService = new FakeReviewService();
         final CarReviewController controller = controller(reviewService);
-
-        assertThrows(ResourceNotFoundException.class, () -> controller.updateReview(
-                99L,
+        final ReviewForm reviewForm = reviewForm(
+                10L,
                 BigDecimal.valueOf(4),
                 "Editada",
                 "Texto editado.",
                 null,
                 null,
                 null,
-                null,
-                null,
+                null
+        );
+
+        assertThrows(ResourceNotFoundException.class, () -> controller.updateReview(
+                99L,
+                reviewForm,
+                new BeanPropertyBindingResult(reviewForm, "reviewForm"),
+                new ExtendedModelMap(),
                 user(7L)
         ));
 
@@ -441,10 +520,19 @@ public class CarReviewControllerTest {
 
     private static final class FakeReviewService implements ReviewService {
         private Review review;
+        private boolean created;
         private long createdUserId;
         private long createdCarId;
+        private String createdOwnershipStatus;
+        private Integer createdModelYear;
+        private Integer createdMileageKm;
+        private Boolean createdWouldRecommend;
         private boolean updated;
         private long updatedCarId;
+        private String updatedOwnershipStatus;
+        private Integer updatedModelYear;
+        private Integer updatedMileageKm;
+        private Boolean updatedWouldRecommend;
         private boolean deleted;
         private long deletedId;
         private int requestedPage;
@@ -455,9 +543,19 @@ public class CarReviewControllerTest {
                                    final String body, final String ownershipStatus, final Integer modelYear,
                                    final Integer mileageKm, final Boolean wouldRecommend,
                                    final Collection<Short> tagIds) {
+            this.created = true;
             this.createdUserId = userId;
             this.createdCarId = carId;
+            this.createdOwnershipStatus = ownershipStatus;
+            this.createdModelYear = modelYear;
+            this.createdMileageKm = mileageKm;
+            this.createdWouldRecommend = wouldRecommend;
             return review == null ? new Review() : review;
+        }
+
+        @Override
+        public List<Review> getAllReviews() {
+            return review == null ? Collections.emptyList() : List.of(review);
         }
 
         @Override
@@ -480,6 +578,10 @@ public class CarReviewControllerTest {
                                              final Boolean wouldRecommend, final Collection<Short> tagIds) {
             this.updated = true;
             this.updatedCarId = carId;
+            this.updatedOwnershipStatus = ownershipStatus;
+            this.updatedModelYear = modelYear;
+            this.updatedMileageKm = mileageKm;
+            this.updatedWouldRecommend = wouldRecommend;
             return Optional.ofNullable(review);
         }
 

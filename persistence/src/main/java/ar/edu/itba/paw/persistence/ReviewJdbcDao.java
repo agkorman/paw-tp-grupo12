@@ -103,6 +103,14 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
+    public List<Review> findAll() {
+        return attachTagsToList(jdbcTemplate.query(
+                REVIEW_SELECT + "ORDER BY r.created_at DESC",
+                ROW_MAPPER
+        ));
+    }
+
+    @Override
     public Optional<Review> findById(long id) {
         return attachTags(jdbcTemplate.query(
                 REVIEW_SELECT + "WHERE r.review_id = ?",

@@ -4,6 +4,12 @@ Rules and non-obvious constraints for this codebase. These are things you cannot
 
 ---
 
+Use this file as the working guide for contributors and coding agents. Keep changes aligned with the existing layered architecture instead of introducing parallel patterns.
+
+## Purpose
+
+This repository is an ITBA PAW course project: a server-rendered car listing and review web application. It is a multi-module Maven project using Spring MVC, Spring JDBC, JSP/JSTL, PostgreSQL, and Jetty for local execution.
+
 ## Commands
 
 ```bash

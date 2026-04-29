@@ -31,7 +31,8 @@
                 <div class="alert alert-success" role="status"><c:out value="${loginMessage}"/></div>
             </c:if>
 
-            <form class="auth-form" method="post" action="<c:url value='/login'/>">
+            <form id="loginForm" class="auth-form" method="post" action="<c:url value='/login'/>"
+                  data-auth-form="login" data-submit-lock="true" novalidate="novalidate">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <c:if test="${not empty loginRedirect}">
                     <input type="hidden" name="redirect" value="<c:out value='${loginRedirect}'/>">
@@ -65,5 +66,7 @@
         </section>
     </main>
 
+    <script src="<c:url value='/js/auth-form.js'/>"></script>
+    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

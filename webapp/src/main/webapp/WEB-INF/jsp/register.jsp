@@ -28,7 +28,8 @@
                 <div class="alert alert-error" role="alert"><c:out value="${registrationError}"/></div>
             </c:if>
 
-            <form class="auth-form" method="post" action="<c:url value='/register'/>">
+            <form id="registerForm" class="auth-form" method="post" action="<c:url value='/register'/>"
+                  data-auth-form="register" data-submit-lock="true" novalidate="novalidate">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
                 <div class="auth-field">
@@ -89,5 +90,7 @@
         </section>
     </main>
 
+    <script src="<c:url value='/js/auth-form.js'/>"></script>
+    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

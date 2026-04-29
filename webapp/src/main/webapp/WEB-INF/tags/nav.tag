@@ -24,9 +24,9 @@
 <nav>
     <a href="<c:url value='/'/>" class="nav-brand">La Posta Autos</a>
     <ul class="nav-links">
-        <li><a href="<c:url value='/'/>" class="${activePage eq 'explore' ? 'active' : ''}">Explorar</a></li>
         <li><a href="<c:url value='/cars'/>" class="${activePage eq 'reviews' ? 'active' : ''}">Catálogo</a></li>
         <li><a href="<c:url value='/cars/recommend'/>" class="${activePage eq 'recommend' ? 'active' : ''}">Encontrá tu auto</a></li>
+        <li><a href="<c:url value='/activity'/>" class="${activePage eq 'activity' ? 'active' : ''}">Actividad</a></li>
         <sec:authorize access="hasRole('ADMIN')">
             <li><a href="<c:url value='/admin'/>" class="${activePage eq 'admin' ? 'active' : ''}">Administración</a></li>
         </sec:authorize>

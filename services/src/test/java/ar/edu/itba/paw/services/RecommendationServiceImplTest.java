@@ -138,7 +138,7 @@ class RecommendationServiceImplTest {
 
     private static Car car(final long id, final String bodyType, final String fuelType) {
         return new Car(id, 1L, "Brand", "Model " + id, 1L, bodyType, "Desc", LocalDateTime.now(), true,
-                fuelType, 100, 6, "automatic", BigDecimal.valueOf(7), 180);
+                fuelType, 100, 6, "automatic", BigDecimal.valueOf(7), 180, BigDecimal.valueOf(20000));
     }
 
     private static final class FakeCarService implements CarService {
@@ -183,21 +183,23 @@ class RecommendationServiceImplTest {
 
         @Override
         public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                             final long submittedByUserId, final String submitterEmail,
+                                             final Integer year, final long submittedByUserId, final String submitterEmail,
                                              final Optional<String> description, final List<CarImagePayload> images,
                                              final String fuelType, final Integer horsepower,
                                              final Integer airbagCount, final String transmission,
-                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                             final BigDecimal priceUsd) {
             throw new UnsupportedOperationException();
         }
 
         @Override
         public Optional<Car> updateCar(final long id, final long brandId, final String model,
-                                       final long bodyTypeId, final String description,
+                                       final long bodyTypeId, final Integer year, final String description,
                                        final Optional<String> imageContentType, final Optional<byte[]> imageData,
                                        final String fuelType, final Integer horsepower,
                                        final Integer airbagCount, final String transmission,
-                                       final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+                                       final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                       final BigDecimal priceUsd) {
             return Optional.empty();
         }
 
@@ -256,6 +258,9 @@ class RecommendationServiceImplTest {
         private FakeReviewDao(final Map<Long, ReviewStats> stats) {
             this.stats = stats;
         }
+
+        @Override
+        public List<Review> findAll() { return Collections.emptyList(); }
 
         @Override
         public Optional<Review> findById(final long id) { return Optional.empty(); }

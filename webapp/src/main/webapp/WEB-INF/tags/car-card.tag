@@ -11,8 +11,6 @@
 <%@ attribute name="submitter" required="false" %>
 <%@ attribute name="footerText" required="false" %>
 <%@ attribute name="actionText" required="false" %>
-<%@ attribute name="showFavorite" required="false" %>
-<%@ attribute name="favorited" required="false" %>
 <%@ attribute name="horsepower" required="false" %>
 <%@ attribute name="maxSpeedKmh" required="false" %>
 <%@ attribute name="fuelConsumption" required="false" %>
@@ -66,23 +64,25 @@
     <a href="${fn:escapeXml(href)}"
        class="car-card-link"
        aria-label="Ver ${fn:escapeXml(model)}"
-       data-open-create-car-modal="${openModal ? 'true' : 'false'}"
-       data-request-id="${fn:escapeXml(requestId)}"
-       data-request-brand="${fn:escapeXml(requestBrand)}"
-       data-request-model="${fn:escapeXml(requestModel)}"
-       data-request-year="${fn:escapeXml(requestYear)}"
-       data-request-body-type="${fn:escapeXml(requestBodyType)}"
-       data-request-description="${fn:escapeXml(requestDescription)}"
-       data-request-submitter="${fn:escapeXml(requestSubmitter)}"
-       data-request-fuel-type="${fn:escapeXml(requestFuelType)}"
-       data-request-horsepower="${fn:escapeXml(requestHorsepower)}"
-       data-request-airbag-count="${fn:escapeXml(requestAirbagCount)}"
-       data-request-transmission="${fn:escapeXml(requestTransmission)}"
-       data-request-fuel-consumption="${fn:escapeXml(requestFuelConsumption)}"
-       data-request-max-speed-kmh="${fn:escapeXml(requestMaxSpeedKmh)}"
-       data-request-price-usd="${fn:escapeXml(requestPriceUsd)}"
-       data-request-image-url="${fn:escapeXml(modalImageUrl)}"
-       data-request-image-urls="${fn:escapeXml(modalImageUrls)}">
+       <c:if test="${openModal}">
+           data-open-create-car-modal="true"
+           data-request-id="${fn:escapeXml(requestId)}"
+           data-request-brand="${fn:escapeXml(requestBrand)}"
+           data-request-model="${fn:escapeXml(requestModel)}"
+           data-request-year="${fn:escapeXml(requestYear)}"
+           data-request-body-type="${fn:escapeXml(requestBodyType)}"
+           data-request-description="${fn:escapeXml(requestDescription)}"
+           data-request-submitter="${fn:escapeXml(requestSubmitter)}"
+           data-request-fuel-type="${fn:escapeXml(requestFuelType)}"
+           data-request-horsepower="${fn:escapeXml(requestHorsepower)}"
+           data-request-airbag-count="${fn:escapeXml(requestAirbagCount)}"
+           data-request-transmission="${fn:escapeXml(requestTransmission)}"
+           data-request-fuel-consumption="${fn:escapeXml(requestFuelConsumption)}"
+           data-request-max-speed-kmh="${fn:escapeXml(requestMaxSpeedKmh)}"
+           data-request-price-usd="${fn:escapeXml(requestPriceUsd)}"
+           data-request-image-url="${fn:escapeXml(modalImageUrl)}"
+           data-request-image-urls="${fn:escapeXml(modalImageUrls)}"
+       </c:if>>
         <div class="car-card">
             <div class="card-image-wrap">
                 <c:choose>
@@ -217,14 +217,7 @@
                         </c:otherwise>
                     </c:choose>
                 </div>
-                <div class="card-footer">
-                    <span class="card-meta">
-                        <c:choose>
-                            <c:when test="${not empty footerText}"><c:out value="${footerText}"/></c:when>
-                            <c:when test="${reviewCount gt 0}">Puntaje de la comunidad sobre 5</c:when>
-                            <c:otherwise>Comparte la primera impresión</c:otherwise>
-                        </c:choose>
-                    </span>
+                <%-- <div class="card-footer">
                     <span class="card-specs-link">
                         <c:choose>
                             <c:when test="${not empty actionText}"><c:out value="${actionText}"/></c:when>
@@ -232,13 +225,8 @@
                         </c:choose>
                         <pa:icon name="arrow-right" size="12"/>
                         </span>
-                </div>
+                </div> --%>
             </div>
         </div>
     </a>
-    <c:if test="${showFavorite ne false}">
-        <div class="car-card-favorite">
-            <pa:car-favorite-button carId="${carId}" favorited="${favorited}"/>
-        </div>
-    </c:if>
 </div>

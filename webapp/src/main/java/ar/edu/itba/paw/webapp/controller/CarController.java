@@ -120,11 +120,10 @@ public class CarController {
                            @RequestParam(value = "submitted", required = false) final String submitted,
                            @AuthenticationPrincipal final AuthenticatedUser currentUser,
                            final Model model) {
-        populateCarsPageModel(model, criteria, currentUser);
         if ("true".equalsIgnoreCase(createCar)) {
-            model.addAttribute("openCarModal", true);
-            model.addAttribute("openCreateCarModal", true);
+            return "redirect:/cars/new";
         }
+        populateCarsPageModel(model, criteria, currentUser);
         if ("true".equalsIgnoreCase(submitted)) {
             model.addAttribute("showSubmittedToast", true);
         }
@@ -150,7 +149,10 @@ public class CarController {
 
     @RequestMapping(value = "/cars/new", method = RequestMethod.GET)
     public ModelAndView newCarRequest() {
-        return new ModelAndView("redirect:/cars?createCar=true");
+        final ModelAndView mav = new ModelAndView("car-form.jsp");
+        mav.addObject("carForm", new CarForm());
+        populateCarFormPageModel(mav);
+        return mav;
     }
 
     @RequestMapping(value = "/cars", method = RequestMethod.POST, consumes = "multipart/form-data")
@@ -198,10 +200,7 @@ public class CarController {
         }
 
         if (errors.hasErrors()) {
-            populateCarsPageModel(model, new CarSearchCriteria(), currentUser);
-            model.addAttribute("openCarModal", true);
-            model.addAttribute("openCreateCarModal", true);
-            return "cars.jsp";
+            return "car-form.jsp";
         }
 
         final List<CarImagePayload> imagePayloads;
@@ -231,6 +230,11 @@ public class CarController {
         emailService.sendNewCarRequestNotification(carRequest, resolvedBrand.getName(), resolvedBodyType.getName());
 
         return "redirect:/cars?submitted=true";
+    }
+
+    private void populateCarFormPageModel(final ModelAndView mav) {
+        mav.addObject("brands", brandService.findAll());
+        mav.addObject("bodyTypes", bodyTypeService.findAll());
     }
 
     @RequestMapping(value = "/cars/{carId}/favorite", method = RequestMethod.POST)
@@ -279,6 +283,7 @@ public class CarController {
         model.addAttribute("showSpeed", criteria.getMaxSpeedMin() != null);
         model.addAttribute("showConsumption", criteria.getFuelConsumptionMax() != null);
         model.addAttribute("showAirbags", criteria.getAirbagMin() != null);
+        model.addAttribute("showTransmission", criteria.getTransmission() != null);
         model.addAttribute("showFuelType", criteria.getFuelTypes().size() > 1);
         model.addAttribute("showPrice", criteria.getPriceMin() != null || criteria.getPriceMax() != null);
         model.addAttribute("showYear", criteria.getYearMin() != null || criteria.getYearMax() != null);
@@ -289,6 +294,7 @@ public class CarController {
         mav.addObject("showSpeed", criteria.getMaxSpeedMin() != null);
         mav.addObject("showConsumption", criteria.getFuelConsumptionMax() != null);
         mav.addObject("showAirbags", criteria.getAirbagMin() != null);
+        mav.addObject("showTransmission", criteria.getTransmission() != null);
         mav.addObject("showFuelType", criteria.getFuelTypes().size() > 1);
         mav.addObject("showPrice", criteria.getPriceMin() != null || criteria.getPriceMax() != null);
         mav.addObject("showYear", criteria.getYearMin() != null || criteria.getYearMax() != null);

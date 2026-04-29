@@ -41,7 +41,8 @@
         <form:form id="createCarForm" cssClass="car-modal-form" modelAttribute="carForm"
                    method="post" action="${carCreateUrl}"
                    enctype="multipart/form-data"
-                   data-submit-lock="true">
+                   data-submit-lock="true"
+                   novalidate="novalidate">
             <form:errors cssClass="alert alert-error" element="div"/>
             <c:if test="${not empty carFormError}">
                 <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
