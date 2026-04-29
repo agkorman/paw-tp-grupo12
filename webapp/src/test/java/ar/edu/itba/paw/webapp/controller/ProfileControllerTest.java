@@ -8,6 +8,9 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.AdminRequest;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
@@ -114,7 +117,8 @@ public class ProfileControllerTest {
                 new FakeCarService(),
                 new FakeCarFavoriteService(),
                 new FakeUserService(),
-                new FakeUserFollowService()
+                new FakeUserFollowService(),
+                new FakeAdminRequestService()
         );
     }
 
@@ -488,6 +492,11 @@ public class ProfileControllerTest {
         public List<User> getAllUsers() {
             return Collections.emptyList();
         }
+
+        @Override
+        public boolean updateRole(final long userId, final String role) {
+            return false;
+        }
     }
 
     private static final class FakeUserFollowService implements UserFollowService {
@@ -524,6 +533,50 @@ public class ProfileControllerTest {
         @Override
         public List<User> getFollowing(final long userId) {
             return Collections.emptyList();
+        }
+    }
+
+    private static final class FakeAdminRequestService implements AdminRequestService {
+        @Override
+        public Optional<AdminRequest> getAdminRequestById(final long id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<AdminRequest> getAdminRequestsByStatus(final String status) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Page<AdminRequest> getAdminRequestsByStatus(final String status, final int page) {
+            return Page.empty(1, 0);
+        }
+
+        @Override
+        public long countAdminRequestsByStatus(final String status) {
+            return 0L;
+        }
+
+        @Override
+        public boolean hasPendingRequest(final long userId) {
+            return false;
+        }
+
+        @Override
+        public AdminRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
+                                                 final String motivation, final String bio,
+                                                 final String justification) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean approvePendingRequest(final long id) {
+            return false;
+        }
+
+        @Override
+        public boolean rejectPendingRequest(final long id) {
+            return false;
         }
     }
 }

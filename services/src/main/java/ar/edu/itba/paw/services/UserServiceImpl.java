@@ -90,6 +90,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public boolean updateRole(final long userId, final String role) {
+        final String normalizedRole = StringUtils.normalize(role);
+        if (normalizedRole == null) {
+            throw new IllegalArgumentException("Role is required.");
+        }
+        return userDao.updateRole(userId, normalizedRole.toLowerCase(Locale.ROOT));
+    }
+
+    @Override
     public List<String> getModeratorsEmails() {
         return userDao.findEmailsByRoles(MODERATOR_EMAIL_ROLES);
     }

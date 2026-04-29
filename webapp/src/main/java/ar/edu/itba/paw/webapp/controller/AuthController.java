@@ -6,13 +6,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -28,11 +37,15 @@ public class AuthController {
     private static final Pattern USERNAME_PATTERN =
             Pattern.compile("^[A-Za-z0-9._-]+$");
 
+    private static final SecurityContextRepository SECURITY_CONTEXT_REPOSITORY = new HttpSessionSecurityContextRepository();
+
     private final UserService userService;
+    private final AuthenticationManager authenticationManager;
 
     @Autowired
-    public AuthController(final UserService userService) {
+    public AuthController(final UserService userService, final AuthenticationManager authenticationManager) {
         this.userService = userService;
+        this.authenticationManager = authenticationManager;
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
@@ -79,7 +92,9 @@ public class AuthController {
                                       @RequestParam(value = "email", required = false) final String email,
                                       @RequestParam(value = "password", required = false) final String password,
                                       @RequestParam(value = "confirmPassword", required = false) final String confirmPassword,
-                                      final Authentication authentication) {
+                                      final Authentication authentication,
+                                      final HttpServletRequest request,
+                                      final HttpServletResponse response) {
         if (isLoggedIn(authentication)) {
             return new ModelAndView("redirect:/");
         }
@@ -101,7 +116,25 @@ public class AuthController {
             return registerFormWithError("No pudimos crear la cuenta en este momento. Intentá nuevamente.", normalizedUsername, normalizedEmail);
         }
 
+        if (autoLogin(normalizedEmail, password, request, response)) {
+            return new ModelAndView("redirect:/");
+        }
         return new ModelAndView("redirect:/login?registered");
+    }
+
+    private boolean autoLogin(final String email, final String rawPassword,
+                              final HttpServletRequest request, final HttpServletResponse response) {
+        try {
+            final Authentication authentication = authenticationManager.authenticate(
+                    UsernamePasswordAuthenticationToken.unauthenticated(email, rawPassword));
+            final SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            SECURITY_CONTEXT_REPOSITORY.saveContext(context, request, response);
+            return true;
+        } catch (final AuthenticationException e) {
+            return false;
+        }
     }
 
     private String validateRegistration(final String username, final String email,

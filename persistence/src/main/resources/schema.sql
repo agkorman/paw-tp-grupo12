@@ -429,6 +429,67 @@ ALTER TABLE car_requests
     );
 
 -- ============================================================
+-- Catalog suggestion requests (brand / body type)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS brand_requests (
+    brand_request_id     BIGSERIAL    PRIMARY KEY,
+    submitted_by_user_id INT          REFERENCES users(user_id) ON DELETE SET NULL,
+    submitter_email      VARCHAR(100),
+    name                 VARCHAR(80)  NOT NULL,
+    comments             TEXT,
+    status               VARCHAR(20)  NOT NULL DEFAULT 'pending',
+    created_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_brand_requests_submitter_identity
+        CHECK (submitted_by_user_id IS NOT NULL OR submitter_email IS NOT NULL),
+    CONSTRAINT chk_brand_requests_status
+        CHECK (status IN ('pending', 'approved', 'rejected'))
+);
+
+ALTER TABLE brand_requests ADD COLUMN IF NOT EXISTS comments TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_brand_requests_status ON brand_requests (status);
+CREATE INDEX IF NOT EXISTS idx_brand_requests_submitted_by_user_id ON brand_requests (submitted_by_user_id);
+
+CREATE TABLE IF NOT EXISTS body_type_requests (
+    body_type_request_id BIGSERIAL    PRIMARY KEY,
+    submitted_by_user_id INT          REFERENCES users(user_id) ON DELETE SET NULL,
+    submitter_email      VARCHAR(100),
+    name                 VARCHAR(80)  NOT NULL,
+    comments             TEXT,
+    status               VARCHAR(20)  NOT NULL DEFAULT 'pending',
+    created_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_body_type_requests_submitter_identity
+        CHECK (submitted_by_user_id IS NOT NULL OR submitter_email IS NOT NULL),
+    CONSTRAINT chk_body_type_requests_status
+        CHECK (status IN ('pending', 'approved', 'rejected'))
+);
+
+ALTER TABLE body_type_requests ADD COLUMN IF NOT EXISTS comments TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_body_type_requests_status ON body_type_requests (status);
+CREATE INDEX IF NOT EXISTS idx_body_type_requests_submitted_by_user_id ON body_type_requests (submitted_by_user_id);
+
+CREATE TABLE IF NOT EXISTS admin_requests (
+    admin_request_id     BIGSERIAL    PRIMARY KEY,
+    submitted_by_user_id INT          NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    submitter_email      VARCHAR(100),
+    motivation           TEXT         NOT NULL,
+    bio                  TEXT         NOT NULL,
+    justification        TEXT         NOT NULL,
+    status               VARCHAR(20)  NOT NULL DEFAULT 'pending',
+    created_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_admin_requests_status
+        CHECK (status IN ('pending', 'approved', 'rejected'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_requests_status ON admin_requests (status);
+CREATE INDEX IF NOT EXISTS idx_admin_requests_submitted_by_user_id ON admin_requests (submitted_by_user_id);
+
+-- ============================================================
 -- Seed data
 -- ============================================================
 

@@ -76,6 +76,12 @@
                                 </c:forEach>
                             </form:select>
                             <form:errors path="brand" cssClass="form-error" element="span"/>
+                            <c:if test="${not adminMode}">
+                                <button type="button" class="catalog-request-link"
+                                        data-open-catalog-request="brand">
+                                    No encuentro la marca
+                                </button>
+                            </c:if>
                         </div>
 
                         <div class="review-modal-field">
@@ -87,6 +93,12 @@
                                 </c:forEach>
                             </form:select>
                             <form:errors path="bodyType" cssClass="form-error" element="span"/>
+                            <c:if test="${not adminMode}">
+                                <button type="button" class="catalog-request-link"
+                                        data-open-catalog-request="body-type">
+                                    No encuentro la carrocería
+                                </button>
+                            </c:if>
                         </div>
                     </div>
 
@@ -168,15 +180,15 @@
                         <label>Motorización</label>
                         <div class="segmented-control segmented-control-radio-group">
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="fuelType" value="combustion" required="required"/>
+                                <input type="radio" name="fuelType" value="combustion" required="required" <c:if test="${empty carForm.fuelType or carForm.fuelType eq 'combustion'}">checked="checked"</c:if>/>
                                 <span>Combustión</span>
                             </label>
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="fuelType" value="hybrid"/>
+                                <input type="radio" name="fuelType" value="hybrid" <c:if test="${carForm.fuelType eq 'hybrid'}">checked="checked"</c:if>/>
                                 <span>Híbrido</span>
                             </label>
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="fuelType" value="electric"/>
+                                <input type="radio" name="fuelType" value="electric" <c:if test="${carForm.fuelType eq 'electric'}">checked="checked"</c:if>/>
                                 <span>Eléctrico</span>
                             </label>
                         </div>
@@ -187,11 +199,11 @@
                         <label>Transmisión</label>
                         <div class="segmented-control segmented-control-radio-group">
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="transmission" value="manual" required="required"/>
+                                <input type="radio" name="transmission" value="manual" required="required" <c:if test="${empty carForm.transmission or carForm.transmission eq 'manual'}">checked="checked"</c:if>/>
                                 <span>Manual</span>
                             </label>
                             <label class="segmented-control-radio-option">
-                                <form:radiobutton path="transmission" value="automatic"/>
+                                <input type="radio" name="transmission" value="automatic" <c:if test="${carForm.transmission eq 'automatic'}">checked="checked"</c:if>/>
                                 <span>Automática</span>
                             </label>
                         </div>
@@ -286,3 +298,8 @@
         </c:if>
     </section>
 </div>
+
+<c:if test="${not adminMode}">
+    <pa:request-brand-modal/>
+    <pa:request-body-type-modal/>
+</c:if>

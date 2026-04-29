@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
+import ar.edu.itba.paw.persistence.CarDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +14,12 @@ import java.util.Optional;
 public class BodyTypeServiceImpl implements BodyTypeService {
 
     private final BodyTypeDao bodyTypeDao;
+    private final CarDao carDao;
 
     @Autowired
-    public BodyTypeServiceImpl(final BodyTypeDao bodyTypeDao) {
+    public BodyTypeServiceImpl(final BodyTypeDao bodyTypeDao, final CarDao carDao) {
         this.bodyTypeDao = bodyTypeDao;
+        this.carDao = carDao;
     }
 
     @Override
@@ -27,7 +30,39 @@ public class BodyTypeServiceImpl implements BodyTypeService {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<BodyType> findById(final long id) {
+        return bodyTypeDao.findById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<BodyType> findByName(final String name) {
         return bodyTypeDao.findByName(name);
+    }
+
+    @Override
+    @Transactional
+    public BodyType createBodyType(final String name) {
+        final String normalized = StringUtils.normalizeRequired(name, "Body type name is required.");
+        return bodyTypeDao.create(normalized);
+    }
+
+    @Override
+    @Transactional
+    public Optional<BodyType> updateBodyType(final long id, final String name) {
+        final String normalized = StringUtils.normalizeRequired(name, "Body type name is required.");
+        return bodyTypeDao.update(id, normalized);
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteBodyType(final long id) {
+        if (bodyTypeDao.findById(id).isEmpty()) {
+            return false;
+        }
+        if (carDao.countByBodyTypeId(id) > 0) {
+            return false;
+        }
+        return bodyTypeDao.delete(id);
     }
 }

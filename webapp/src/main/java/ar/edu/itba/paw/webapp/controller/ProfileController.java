@@ -11,6 +11,7 @@ import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
+import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
@@ -41,13 +42,15 @@ public class ProfileController {
     private final CarFavoriteService carFavoriteService;
     private final UserService userService;
     private final UserFollowService userFollowService;
+    private final AdminRequestService adminRequestService;
 
     @Autowired
     public ProfileController(final ReviewService reviewService, final ReviewLikeService reviewLikeService,
                              final ReviewReplyService reviewReplyService,
                              final CarService carService,
                              final CarFavoriteService carFavoriteService,
-                             final UserService userService, final UserFollowService userFollowService) {
+                             final UserService userService, final UserFollowService userFollowService,
+                             final AdminRequestService adminRequestService) {
         this.reviewService = reviewService;
         this.reviewLikeService = reviewLikeService;
         this.reviewReplyService = reviewReplyService;
@@ -55,6 +58,7 @@ public class ProfileController {
         this.carFavoriteService = carFavoriteService;
         this.userService = userService;
         this.userFollowService = userFollowService;
+        this.adminRequestService = adminRequestService;
     }
 
     @RequestMapping(value = "/profile", method = RequestMethod.GET)
@@ -122,7 +126,19 @@ public class ProfileController {
         mav.addObject("ownProfile", ownProfile);
         mav.addObject("followingProfile", followingProfile);
         mav.addObject("reviewForm", new ReviewForm());
+        mav.addObject("canRequestModerator", canRequestModerator(ownProfile, profileUser));
         return mav;
+    }
+
+    private boolean canRequestModerator(final boolean ownProfile, final User profileUser) {
+        if (!ownProfile) {
+            return false;
+        }
+        final String role = profileUser.getRole();
+        if (role != null && !"user".equalsIgnoreCase(role.trim())) {
+            return false;
+        }
+        return !adminRequestService.hasPendingRequest(profileUser.getId());
     }
 
     private Map<Long, Car> reviewedCarsById(final List<Review> reviews) {

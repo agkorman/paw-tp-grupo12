@@ -1,13 +1,19 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.BodyType;
+import ar.edu.itba.paw.model.BodyTypeRequest;
 import ar.edu.itba.paw.model.Brand;
+import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.services.AdminRequestService;
+import ar.edu.itba.paw.services.BodyTypeRequestService;
 import ar.edu.itba.paw.services.BodyTypeService;
+import ar.edu.itba.paw.services.BrandRequestService;
 import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
@@ -53,6 +59,9 @@ public class AdminController {
     private final CarService carService;
     private final BrandService brandService;
     private final BodyTypeService bodyTypeService;
+    private final BrandRequestService brandRequestService;
+    private final BodyTypeRequestService bodyTypeRequestService;
+    private final AdminRequestService adminRequestService;
     private final UserService userService;
     private final EmailService emailService;
     private final WeeklyDigestService weeklyDigestService;
@@ -60,13 +69,20 @@ public class AdminController {
     @Autowired
     public AdminController(final CarRequestService carRequestService, final CarService carService,
                            final BrandService brandService,
-                           final BodyTypeService bodyTypeService, final UserService userService,
+                           final BodyTypeService bodyTypeService,
+                           final BrandRequestService brandRequestService,
+                           final BodyTypeRequestService bodyTypeRequestService,
+                           final AdminRequestService adminRequestService,
+                           final UserService userService,
                            final EmailService emailService,
                            final WeeklyDigestService weeklyDigestService) {
         this.carRequestService = carRequestService;
         this.carService = carService;
         this.brandService = brandService;
         this.bodyTypeService = bodyTypeService;
+        this.brandRequestService = brandRequestService;
+        this.bodyTypeRequestService = bodyTypeRequestService;
+        this.adminRequestService = adminRequestService;
         this.userService = userService;
         this.emailService = emailService;
         this.weeklyDigestService = weeklyDigestService;
@@ -86,8 +102,26 @@ public class AdminController {
         final List<AdminCarRequestCard> pendingRequests = requestPage.getItems().stream()
                 .map(request -> toCard(request, brandsById, bodyTypesById))
                 .toList();
+
+        final List<AdminCatalogRequestCard> pendingBrandRequests = brandRequestService
+                .getBrandRequestsByStatus(BrandRequestService.STATUS_PENDING).stream()
+                .map(this::toBrandCard)
+                .toList();
+        final List<AdminCatalogRequestCard> pendingBodyTypeRequests = bodyTypeRequestService
+                .getBodyTypeRequestsByStatus(BodyTypeRequestService.STATUS_PENDING).stream()
+                .map(this::toBodyTypeCard)
+                .toList();
+
+        final List<AdminAdminRequestCard> pendingAdminRequests = adminRequestService
+                .getAdminRequestsByStatus(AdminRequestService.STATUS_PENDING).stream()
+                .map(this::toAdminRequestCard)
+                .toList();
+
         final ModelAndView mav = new ModelAndView("admin.jsp");
         mav.addObject("pendingRequests", pendingRequests);
+        mav.addObject("pendingBrandRequests", pendingBrandRequests);
+        mav.addObject("pendingBodyTypeRequests", pendingBodyTypeRequests);
+        mav.addObject("pendingAdminRequests", pendingAdminRequests);
         mav.addObject("currentPage", requestPage.getPageNumber());
         mav.addObject("totalPages", requestPage.getTotalPages());
         mav.addObject("totalItems", requestPage.getTotalItems());
@@ -217,6 +251,80 @@ public class AdminController {
     public ModelAndView rejectRequest(@PathVariable("requestId") final long requestId,
                                       @RequestHeader(value = "Referer", required = false) final String referer) {
         carRequestService.rejectPendingRequest(requestId);
+        return redirectBackToAdmin(referer);
+    }
+
+    @RequestMapping(value = "/brand-requests/{requestId}/accept", method = RequestMethod.POST)
+    public ModelAndView acceptBrandRequest(@PathVariable("requestId") final long requestId,
+                                           @RequestParam(value = "name", required = false) final String name,
+                                           @RequestHeader(value = "Referer", required = false) final String referer) {
+        brandRequestService.approvePendingRequest(requestId, name);
+        return redirectBackToAdmin(referer);
+    }
+
+    @RequestMapping(value = "/brand-requests/{requestId}/reject", method = RequestMethod.POST)
+    public ModelAndView rejectBrandRequest(@PathVariable("requestId") final long requestId,
+                                           @RequestHeader(value = "Referer", required = false) final String referer) {
+        brandRequestService.rejectPendingRequest(requestId);
+        return redirectBackToAdmin(referer);
+    }
+
+    @RequestMapping(value = "/brands/{brandId}", method = RequestMethod.POST)
+    public ModelAndView updateBrand(@PathVariable("brandId") final long brandId,
+                                    @RequestParam("name") final String name,
+                                    @RequestHeader(value = "Referer", required = false) final String referer) {
+        brandService.updateBrand(brandId, name);
+        return redirectBackToCatalog(referer);
+    }
+
+    @RequestMapping(value = "/brands/{brandId}/delete", method = RequestMethod.POST)
+    public ModelAndView deleteBrand(@PathVariable("brandId") final long brandId,
+                                    @RequestHeader(value = "Referer", required = false) final String referer) {
+        brandService.deleteBrand(brandId);
+        return redirectBackAfterDelete(referer);
+    }
+
+    @RequestMapping(value = "/body-type-requests/{requestId}/accept", method = RequestMethod.POST)
+    public ModelAndView acceptBodyTypeRequest(@PathVariable("requestId") final long requestId,
+                                              @RequestParam(value = "name", required = false) final String name,
+                                              @RequestHeader(value = "Referer", required = false) final String referer) {
+        bodyTypeRequestService.approvePendingRequest(requestId, name);
+        return redirectBackToAdmin(referer);
+    }
+
+    @RequestMapping(value = "/body-type-requests/{requestId}/reject", method = RequestMethod.POST)
+    public ModelAndView rejectBodyTypeRequest(@PathVariable("requestId") final long requestId,
+                                              @RequestHeader(value = "Referer", required = false) final String referer) {
+        bodyTypeRequestService.rejectPendingRequest(requestId);
+        return redirectBackToAdmin(referer);
+    }
+
+    @RequestMapping(value = "/body-types/{bodyTypeId}", method = RequestMethod.POST)
+    public ModelAndView updateBodyType(@PathVariable("bodyTypeId") final long bodyTypeId,
+                                       @RequestParam("name") final String name,
+                                       @RequestHeader(value = "Referer", required = false) final String referer) {
+        bodyTypeService.updateBodyType(bodyTypeId, name);
+        return redirectBackToCatalog(referer);
+    }
+
+    @RequestMapping(value = "/body-types/{bodyTypeId}/delete", method = RequestMethod.POST)
+    public ModelAndView deleteBodyType(@PathVariable("bodyTypeId") final long bodyTypeId,
+                                       @RequestHeader(value = "Referer", required = false) final String referer) {
+        bodyTypeService.deleteBodyType(bodyTypeId);
+        return redirectBackAfterDelete(referer);
+    }
+
+    @RequestMapping(value = "/admin-requests/{requestId}/accept", method = RequestMethod.POST)
+    public ModelAndView acceptAdminRequest(@PathVariable("requestId") final long requestId,
+                                           @RequestHeader(value = "Referer", required = false) final String referer) {
+        adminRequestService.approvePendingRequest(requestId);
+        return redirectBackToAdmin(referer);
+    }
+
+    @RequestMapping(value = "/admin-requests/{requestId}/reject", method = RequestMethod.POST)
+    public ModelAndView rejectAdminRequest(@PathVariable("requestId") final long requestId,
+                                           @RequestHeader(value = "Referer", required = false) final String referer) {
+        adminRequestService.rejectPendingRequest(requestId);
         return redirectBackToAdmin(referer);
     }
 
@@ -350,6 +458,59 @@ public class AdminController {
             return "Usuario #" + request.getSubmittedByUserId();
         }
         return "Usuario sin identificar";
+    }
+
+    private String submitterLabel(final String submitterEmail, final Long submittedByUserId) {
+        if (submitterEmail != null && !submitterEmail.isBlank()) {
+            return submitterEmail;
+        }
+        if (submittedByUserId != null) {
+            final String resolvedEmail = userService.getUserById(submittedByUserId)
+                    .map(User::getEmail)
+                    .filter(email -> !email.isBlank())
+                    .orElse(null);
+            if (resolvedEmail != null) {
+                return resolvedEmail;
+            }
+            return "Usuario #" + submittedByUserId;
+        }
+        return "Usuario sin identificar";
+    }
+
+    private AdminCatalogRequestCard toBrandCard(final BrandRequest request) {
+        return new AdminCatalogRequestCard(
+                request.getId(),
+                request.getName(),
+                submitterLabel(request.getSubmitterEmail(), request.getSubmittedByUserId()),
+                request.getComments()
+        );
+    }
+
+    private AdminCatalogRequestCard toBodyTypeCard(final BodyTypeRequest request) {
+        return new AdminCatalogRequestCard(
+                request.getId(),
+                request.getName(),
+                submitterLabel(request.getSubmitterEmail(), request.getSubmittedByUserId()),
+                request.getComments()
+        );
+    }
+
+    private AdminAdminRequestCard toAdminRequestCard(final AdminRequest request) {
+        final User submitter = userService.getUserById(request.getSubmittedByUserId()).orElse(null);
+        final String username = submitter != null && submitter.getUsername() != null
+                && !submitter.getUsername().isBlank()
+                ? submitter.getUsername()
+                : "Usuario sin identificar";
+        final String label = username + " · #" + request.getSubmittedByUserId();
+        return new AdminAdminRequestCard(
+                request.getId(),
+                request.getSubmittedByUserId(),
+                username,
+                label,
+                request.getMotivation(),
+                request.getBio(),
+                request.getJustification()
+        );
     }
 
     private String resolveSubmitterEmail(final CarRequest request) {
@@ -584,6 +745,87 @@ public class AdminController {
 
         public BigDecimal getPriceUsd() {
             return priceUsd;
+        }
+    }
+
+    public static final class AdminCatalogRequestCard {
+        private final long id;
+        private final String name;
+        private final String submitter;
+        private final String comments;
+
+        private AdminCatalogRequestCard(final long id, final String name, final String submitter,
+                                        final String comments) {
+            this.id = id;
+            this.name = name;
+            this.submitter = submitter;
+            this.comments = comments;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getSubmitter() {
+            return submitter;
+        }
+
+        public String getComments() {
+            return comments;
+        }
+    }
+
+    public static final class AdminAdminRequestCard {
+        private final long id;
+        private final long userId;
+        private final String username;
+        private final String label;
+        private final String motivation;
+        private final String bio;
+        private final String justification;
+
+        private AdminAdminRequestCard(final long id, final long userId, final String username,
+                                      final String label, final String motivation,
+                                      final String bio, final String justification) {
+            this.id = id;
+            this.userId = userId;
+            this.username = username;
+            this.label = label;
+            this.motivation = motivation;
+            this.bio = bio;
+            this.justification = justification;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public long getUserId() {
+            return userId;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public String getMotivation() {
+            return motivation;
+        }
+
+        public String getBio() {
+            return bio;
+        }
+
+        public String getJustification() {
+            return justification;
         }
     }
 }

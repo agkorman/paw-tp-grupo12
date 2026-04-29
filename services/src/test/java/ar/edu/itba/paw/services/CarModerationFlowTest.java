@@ -444,6 +444,16 @@ class CarModerationFlowTest {
             existingCar = null;
             return true;
         }
+
+        @Override
+        public long countByBrandId(final long brandId) {
+            return 0L;
+        }
+
+        @Override
+        public long countByBodyTypeId(final long bodyTypeId) {
+            return 0L;
+        }
     }
 
     private static final class FakeReviewDao implements ReviewDao {
@@ -616,6 +626,16 @@ class CarModerationFlowTest {
         public Brand create(final String name) {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public Optional<Brand> update(final long id, final String name) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean delete(final long id) {
+            return false;
+        }
     }
 
     private static final class FakeBodyTypeDao implements BodyTypeDao {
@@ -637,6 +657,16 @@ class CarModerationFlowTest {
         @Override
         public BodyType create(final String name) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<BodyType> update(final long id, final String name) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean delete(final long id) {
+            return false;
         }
     }
 }

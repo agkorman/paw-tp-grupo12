@@ -29,4 +29,8 @@ public interface CarDao {
                          String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh, BigDecimal priceUsd);
 
     boolean delete(long id);
+
+    long countByBrandId(long brandId);
+
+    long countByBodyTypeId(long bodyTypeId);
 }

@@ -7,5 +7,9 @@ import java.util.Optional;
 
 public interface BodyTypeService {
     List<BodyType> findAll();
+    Optional<BodyType> findById(long id);
     Optional<BodyType> findByName(String name);
+    BodyType createBodyType(String name);
+    Optional<BodyType> updateBodyType(long id, String name);
+    boolean deleteBodyType(long id);
 }

@@ -103,8 +103,28 @@ public class RecommendationControllerTest {
         }
 
         @Override
+        public Optional<BodyType> findById(final long id) {
+            return findAll().stream().filter(bodyType -> bodyType.getId() == id).findFirst();
+        }
+
+        @Override
         public Optional<BodyType> findByName(final String name) {
             return findAll().stream().filter(bodyType -> bodyType.getName().equals(name)).findFirst();
+        }
+
+        @Override
+        public BodyType createBodyType(final String name) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<BodyType> updateBodyType(final long id, final String name) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean deleteBodyType(final long id) {
+            return false;
         }
     }
 

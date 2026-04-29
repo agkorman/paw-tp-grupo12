@@ -10,6 +10,7 @@ public interface UserService {
     Optional<User> findByEmail(String email);
     Optional<User> findByUsername(String username);
     User createUser(String username, String email, String rawPassword);
+    boolean updateRole(long userId, String role);
     List<String> getModeratorsEmails();
     List<User> getAllUsers();
 }

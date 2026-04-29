@@ -82,6 +82,11 @@
             <c:choose>
                 <c:when test="${ownProfile}">
                     <button type="button" class="btn-primary profile-action-button" data-open-edit-profile-modal>Ajustes de perfil</button>
+                    <c:if test="${canRequestModerator}">
+                        <button type="button" class="profile-moderator-link" data-open-request-admin-modal>
+                            ¿Querés ser moderador?
+                        </button>
+                    </c:if>
                 </c:when>
                 <c:otherwise>
                     <c:url var="profileFollowUrl" value="/profiles/${profile.id}/follow"/>
@@ -310,10 +315,16 @@
     <pa:edit-profile-modal profile="${profile}"/>
     <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
     <pa:auth-required-modal/>
+    <c:if test="${ownProfile}">
+        <pa:request-admin-modal/>
+    </c:if>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/action-menu.js'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/profile.js?v=8'/>"></script>
+    <c:if test="${ownProfile}">
+        <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
+    </c:if>
 </body>
 </html>
