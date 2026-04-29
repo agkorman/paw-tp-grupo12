@@ -55,6 +55,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/admin")
 public class AdminController {
 
+    private static final String TAB_CARS = "cars";
+    private static final String TAB_BRANDS = "brands";
+    private static final String TAB_BODY_TYPES = "body-types";
+    private static final String TAB_MODERATORS = "moderators";
+
     private final CarRequestService carRequestService;
     private final CarService carService;
     private final BrandService brandService;
@@ -91,40 +96,91 @@ public class AdminController {
     @RequestMapping(method = RequestMethod.GET)
     public ModelAndView admin(@ModelAttribute("brands") final List<Brand> brands,
                               @ModelAttribute("bodyTypes") final List<BodyType> bodyTypes,
+                              @RequestParam(value = "tab", required = false) final String tab,
                               @RequestParam(value = "page", defaultValue = "1") final int page) {
-        final Map<Long, Brand> brandsById = brands.stream()
-                .collect(Collectors.toMap(Brand::getId, Function.identity()));
-        final Map<Long, BodyType> bodyTypesById = bodyTypes.stream()
-                .collect(Collectors.toMap(BodyType::getId, Function.identity()));
+        final String activeTab = normalizeAdminTab(tab);
+        final long carRequestCount = carRequestService.countCarRequestsByStatus(CarRequestService.STATUS_PENDING);
+        final long brandRequestCount = brandRequestService.countBrandRequestsByStatus(BrandRequestService.STATUS_PENDING);
+        final long bodyTypeRequestCount = bodyTypeRequestService
+                .countBodyTypeRequestsByStatus(BodyTypeRequestService.STATUS_PENDING);
+        final long adminRequestCount = adminRequestService.countAdminRequestsByStatus(AdminRequestService.STATUS_PENDING);
 
-        final Page<CarRequest> requestPage = carRequestService
-                .getCarRequestsByStatus(CarRequestService.STATUS_PENDING, page);
-        final List<AdminCarRequestCard> pendingRequests = requestPage.getItems().stream()
-                .map(request -> toCard(request, brandsById, bodyTypesById))
-                .toList();
+        int currentPage = 1;
+        int totalPages = 0;
+        long totalItems = 0L;
 
-        final List<AdminCatalogRequestCard> pendingBrandRequests = brandRequestService
-                .getBrandRequestsByStatus(BrandRequestService.STATUS_PENDING).stream()
-                .map(this::toBrandCard)
-                .toList();
-        final List<AdminCatalogRequestCard> pendingBodyTypeRequests = bodyTypeRequestService
-                .getBodyTypeRequestsByStatus(BodyTypeRequestService.STATUS_PENDING).stream()
-                .map(this::toBodyTypeCard)
-                .toList();
+        List<AdminCarRequestCard> pendingRequests = List.of();
+        List<AdminCatalogRequestCard> pendingBrandRequests = List.of();
+        List<AdminCatalogRequestCard> pendingBodyTypeRequests = List.of();
+        List<AdminAdminRequestCard> pendingAdminRequests = List.of();
 
-        final List<AdminAdminRequestCard> pendingAdminRequests = adminRequestService
-                .getAdminRequestsByStatus(AdminRequestService.STATUS_PENDING).stream()
-                .map(this::toAdminRequestCard)
-                .toList();
+        switch (activeTab) {
+            case TAB_BRANDS: {
+                final Page<BrandRequest> requestPage = brandRequestService
+                        .getBrandRequestsByStatus(BrandRequestService.STATUS_PENDING, page);
+                pendingBrandRequests = requestPage.getItems().stream()
+                        .map(this::toBrandCard)
+                        .toList();
+                currentPage = requestPage.getPageNumber();
+                totalPages = requestPage.getTotalPages();
+                totalItems = requestPage.getTotalItems();
+                break;
+            }
+            case TAB_BODY_TYPES: {
+                final Page<BodyTypeRequest> requestPage = bodyTypeRequestService
+                        .getBodyTypeRequestsByStatus(BodyTypeRequestService.STATUS_PENDING, page);
+                pendingBodyTypeRequests = requestPage.getItems().stream()
+                        .map(this::toBodyTypeCard)
+                        .toList();
+                currentPage = requestPage.getPageNumber();
+                totalPages = requestPage.getTotalPages();
+                totalItems = requestPage.getTotalItems();
+                break;
+            }
+            case TAB_MODERATORS: {
+                final Page<AdminRequest> requestPage = adminRequestService
+                        .getAdminRequestsByStatus(AdminRequestService.STATUS_PENDING, page);
+                pendingAdminRequests = requestPage.getItems().stream()
+                        .map(this::toAdminRequestCard)
+                        .toList();
+                currentPage = requestPage.getPageNumber();
+                totalPages = requestPage.getTotalPages();
+                totalItems = requestPage.getTotalItems();
+                break;
+            }
+            case TAB_CARS:
+            default: {
+                final Map<Long, Brand> brandsById = brands.stream()
+                        .collect(Collectors.toMap(Brand::getId, Function.identity()));
+                final Map<Long, BodyType> bodyTypesById = bodyTypes.stream()
+                        .collect(Collectors.toMap(BodyType::getId, Function.identity()));
+                final Page<CarRequest> requestPage = carRequestService
+                        .getCarRequestsByStatus(CarRequestService.STATUS_PENDING, page);
+                pendingRequests = requestPage.getItems().stream()
+                        .map(request -> toCard(request, brandsById, bodyTypesById))
+                        .toList();
+                currentPage = requestPage.getPageNumber();
+                totalPages = requestPage.getTotalPages();
+                totalItems = requestPage.getTotalItems();
+                break;
+            }
+        }
 
         final ModelAndView mav = new ModelAndView("admin.jsp");
+        mav.addObject("activeTab", activeTab);
+        mav.addObject("carRequestCount", carRequestCount);
+        mav.addObject("brandRequestCount", brandRequestCount);
+        mav.addObject("bodyTypeRequestCount", bodyTypeRequestCount);
+        mav.addObject("adminRequestCount", adminRequestCount);
+        mav.addObject("totalPendingItems",
+                carRequestCount + brandRequestCount + bodyTypeRequestCount + adminRequestCount);
         mav.addObject("pendingRequests", pendingRequests);
         mav.addObject("pendingBrandRequests", pendingBrandRequests);
         mav.addObject("pendingBodyTypeRequests", pendingBodyTypeRequests);
         mav.addObject("pendingAdminRequests", pendingAdminRequests);
-        mav.addObject("currentPage", requestPage.getPageNumber());
-        mav.addObject("totalPages", requestPage.getTotalPages());
-        mav.addObject("totalItems", requestPage.getTotalItems());
+        mav.addObject("currentPage", currentPage);
+        mav.addObject("totalPages", totalPages);
+        mav.addObject("totalItems", totalItems);
         return mav;
     }
 
@@ -624,6 +680,27 @@ public class AdminController {
 
     private String valueOrFallback(final String value, final String fallback) {
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private String normalizeAdminTab(final String tab) {
+        if (tab == null || tab.isBlank()) {
+            return TAB_CARS;
+        }
+        final String normalizedTab = tab.trim().toLowerCase(Locale.ROOT);
+        switch (normalizedTab) {
+            case TAB_BRANDS:
+                return TAB_BRANDS;
+            case TAB_BODY_TYPES:
+                return TAB_BODY_TYPES;
+            case TAB_MODERATORS:
+                return TAB_MODERATORS;
+            case "moderator":
+            case "admin-requests":
+                return TAB_MODERATORS;
+            case TAB_CARS:
+            default:
+                return TAB_CARS;
+        }
     }
 
     private boolean sameModel(final String existingModel, final String submittedModel) {
