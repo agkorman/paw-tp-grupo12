@@ -6,8 +6,6 @@ import ar.edu.itba.paw.webapp.auth.PawUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -71,10 +69,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/reviews/replies/*/like"),
                                 antMatcher(HttpMethod.POST, "/logout"),
                                 antMatcher(HttpMethod.POST, "/cars/*/favorite"),
-                                antMatcher(HttpMethod.POST, "/profiles/*/follow"),
-                                antMatcher(HttpMethod.POST, "/brand-requests"),
-                                antMatcher(HttpMethod.POST, "/body-type-requests"),
-                                antMatcher(HttpMethod.POST, "/admin-requests"))
+                                antMatcher(HttpMethod.POST, "/profiles/*/follow"))
                             .authenticated()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
@@ -111,11 +106,6 @@ public class WebAuthConfig {
     @Bean
     public UserDetailsService userDetailsService(final UserService userService) {
         return new PawUserDetailsService(userService);
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(final AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
     }
 
     private String rememberMeKey() {

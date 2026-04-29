@@ -43,4 +43,11 @@ mvn clean install
 mvn -pl webapp jetty:run
 ```
 
-The app starts on `http://localhost:8080`. The database schema and seed data are created automatically on first startup.
+The app starts on `http://localhost:8080/webapp`. The database schema and seed data are created automatically on first startup.
+
+## Useful endpoints
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost:8080/webapp/` | Home |
+| `http://localhost:8080/webapp/cars` | Car listing |

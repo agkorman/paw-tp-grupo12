@@ -2,8 +2,6 @@
 <%@ attribute name="criteria" required="true" type="ar.edu.itba.paw.model.CarSearchCriteria" %>
 <%@ attribute name="vehicleCount" required="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <div id="carsFiltersOverlay" class="cars-filters-overlay" data-close-filters-panel></div>
 
 <aside id="carsFiltersPanel"
@@ -18,7 +16,9 @@
         <div class="cars-filters-header">
             <h2 id="filtersPanelTitle" class="cars-filters-title">Filtros Avanzados</h2>
             <button type="button" class="cars-filters-close" data-close-filters-panel aria-label="Cerrar filtros">
-                <pa:icon name="close" size="18"/>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false">
+                    <line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/>
+                </svg>
             </button>
         </div>
 
@@ -31,87 +31,16 @@
            role="alert"
            hidden></p>
 
-        <%-- Año modelo --%>
-        <section class="filters-panel-section">
-            <h3 class="filters-panel-section-title">Año modelo</h3>
-            <div class="dual-range"
-                 data-range-min="1886"
-                 data-range-max="2100"
-                 data-input-low="panelYearMin"
-                 data-input-high="panelYearMax">
-                <div class="dual-range-track">
-                    <div class="dual-range-fill" id="panelYearFill"></div>
-                </div>
-                <input type="range" class="dual-range-thumb dual-range-low" min="1886" max="2100" step="1"
-                       value="<c:out value='${not empty criteria.yearMin ? criteria.yearMin : 1886}'/>">
-                <input type="range" class="dual-range-thumb dual-range-high" min="1886" max="2100" step="1"
-                       value="<c:out value='${not empty criteria.yearMax ? criteria.yearMax : 2100}'/>">
-            </div>
-            <div class="dual-range-inputs">
-                <input type="number" id="panelYearMin" name="yearMin" class="range-number-input"
-                       min="1886" max="2100" placeholder="Mín"
-                       aria-describedby="panelYearError"
-                       value="<c:out value='${criteria.yearMin}'/>">
-                <span class="range-separator">–</span>
-                <input type="number" id="panelYearMax" name="yearMax" class="range-number-input"
-                       min="1886" max="2100" placeholder="Máx"
-                       aria-describedby="panelYearError"
-                       value="<c:out value='${criteria.yearMax}'/>">
-            </div>
-            <p id="panelYearError" class="filters-field-error" hidden></p>
-        </section>
-
-        <%-- Motorización — icon picker (multi-select) --%>
+        <%-- Motorización — segmented control --%>
         <section class="filters-panel-section">
             <h3 class="filters-panel-section-title">Motorización</h3>
-            <div class="fuel-type-picker" data-filter-target="panelFuelType" data-filter-multiple="true">
-                <button type="button" class="fuel-type-option filter-segment-option${fn:contains(criteria.fuelType, 'combustion') ? ' is-selected' : ''}" data-value="combustion">
-                    <pa:icon name="gas-pump" size="28"/>
-                    <span>Combustión</span>
-                </button>
-                <button type="button" class="fuel-type-option filter-segment-option${fn:contains(criteria.fuelType, 'hybrid') ? ' is-selected' : ''}" data-value="hybrid">
-                    <pa:icon name="eco" size="28"/>
-                    <span>Híbrido</span>
-                </button>
-                <button type="button" class="fuel-type-option filter-segment-option${fn:contains(criteria.fuelType, 'electric') ? ' is-selected' : ''}" data-value="electric">
-                    <pa:icon name="bolt" size="28"/>
-                    <span>Eléctrico</span>
-                </button>
+            <div class="segmented-control filter-segmented" data-filter-target="panelFuelType">
+                <button type="button" class="segmented-control-option filter-segment-option${empty criteria.fuelType ? ' is-selected' : ''}" data-value="">Todos</button>
+                <button type="button" class="segmented-control-option filter-segment-option${'combustion' eq criteria.fuelType ? ' is-selected' : ''}" data-value="combustion">Combustión</button>
+                <button type="button" class="segmented-control-option filter-segment-option${'hybrid' eq criteria.fuelType ? ' is-selected' : ''}" data-value="hybrid">Híbrido</button>
+                <button type="button" class="segmented-control-option filter-segment-option${'electric' eq criteria.fuelType ? ' is-selected' : ''}" data-value="electric">Eléctrico</button>
             </div>
             <input type="hidden" id="panelFuelType" name="fuelType" value="<c:out value='${criteria.fuelType}'/>">
-        </section>
-
-        <%-- Precio 0 km (USD) --%>
-        <section class="filters-panel-section">
-            <h3 class="filters-panel-section-title">Precio 0 km (USD)</h3>
-            <div class="dual-range"
-                 data-range-min="0"
-                 data-range-max="1000"
-                 data-real-min="0"
-                 data-real-max="5000000"
-                 data-scale="log"
-                 data-input-low="panelPriceMin"
-                 data-input-high="panelPriceMax">
-                <div class="dual-range-track">
-                    <div class="dual-range-fill" id="panelPriceFill"></div>
-                </div>
-                <input type="range" class="dual-range-thumb dual-range-low"  min="0" max="1000" step="1"
-                       value="0">
-                <input type="range" class="dual-range-thumb dual-range-high" min="0" max="1000" step="1"
-                       value="1000">
-            </div>
-            <div class="dual-range-inputs">
-                <input type="number" id="panelPriceMin" name="priceMin" class="range-number-input"
-                       min="0" max="5000000" placeholder="Mín"
-                       aria-describedby="panelPriceError"
-                       value="<c:out value='${criteria.priceMin}'/>">
-                <span class="range-separator">–</span>
-                <input type="number" id="panelPriceMax" name="priceMax" class="range-number-input"
-                       min="0" max="5000000" placeholder="Máx"
-                       aria-describedby="panelPriceError"
-                       value="<c:out value='${criteria.priceMax}'/>">
-            </div>
-            <p id="panelPriceError" class="filters-field-error" hidden></p>
         </section>
 
         <%-- Caballos de fuerza --%>

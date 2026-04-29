@@ -11,7 +11,6 @@ public interface UserDao {
     Optional<User> findByEmail(String email);
     Optional<User> findByUsername(String username);
     User create(String username, String email, String password, String role);
-    boolean updateRole(long userId, String role);
     List<String> findEmailsByRoles(Collection<String> roles);
     List<User> findAll();
 }

@@ -49,18 +49,17 @@ class CarModerationFlowTest {
                 1L,
                 "Supra",
                 2L,
-                2026,
                 7L,
                 "user@example.com",
                 Optional.of("Desc"),
-                List.of(new CarImagePayload("image/png", new byte[] {1, 2, 3})),
+                Optional.of("image/png"),
+                Optional.of(new byte[] {1, 2, 3}),
                 "hybrid",
                 300,
                 8,
                 "automatic",
                 BigDecimal.valueOf(8.2),
-                250,
-                null
+                250
         );
 
         assertEquals(CarRequestService.STATUS_PENDING, request.getStatus());
@@ -85,7 +84,6 @@ class CarModerationFlowTest {
                 "user@example.com",
                 1L,
                 2L,
-                2026,
                 "Supra",
                 "Desc",
                 "image/png",
@@ -96,8 +94,7 @@ class CarModerationFlowTest {
                 8,
                 "automatic",
                 BigDecimal.valueOf(7.9),
-                260,
-                null
+                260
         );
 
         final boolean approved = carRequestService.approvePendingRequest(
@@ -105,7 +102,6 @@ class CarModerationFlowTest {
                 9L,
                 "GR86",
                 8L,
-                2026,
                 "Edited desc",
                 Optional.empty(),
                 Optional.empty(),
@@ -114,8 +110,7 @@ class CarModerationFlowTest {
                 8,
                 "automatic",
                 BigDecimal.valueOf(0.0),
-                280,
-                null
+                280
         );
 
         assertTrue(approved);
@@ -175,7 +170,6 @@ class CarModerationFlowTest {
                 3L,
                 "  GR86  ",
                 4L,
-                2026,
                 "  Edited desc  ",
                 Optional.of("image/webp"),
                 Optional.of(imageData),
@@ -184,8 +178,7 @@ class CarModerationFlowTest {
                 8,
                 "automatic",
                 BigDecimal.valueOf(0.0),
-                280,
-                null
+                280
         );
 
         assertTrue(updated.isPresent());
@@ -208,41 +201,35 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public List<CarRequest> getAllCarRequests() {
+            return Collections.emptyList();
+        }
+
+        @Override
         public List<CarRequest> getCarRequestsByStatus(final String status) {
             return Collections.emptyList();
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<CarRequest> getCarRequestsByStatus(final String status, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(1, 0);
-        }
-
-        @Override
-        public long countCarRequestsByStatus(final String status) {
-            return 0L;
-        }
-
-        @Override
         public CarRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
-                                               final long brandId, final long bodyTypeId, final Integer year, final String model,
-                                               final String description, final List<CarImagePayload> images,
+                                               final long brandId, final long bodyTypeId, final String model,
+                                               final String description,
+                                               final Optional<String> imageContentType,
+                                               final Optional<byte[]> imageData,
                                                final String fuelType, final Integer horsepower,
                                                final Integer airbagCount, final String transmission,
-                                               final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                                               final BigDecimal priceUsd) {
+                                               final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
             created = true;
-            final CarImagePayload coverImage = images == null || images.isEmpty() ? null : images.get(0);
             return new CarRequest(
                     10L,
                     submittedByUserId,
                     submitterEmail,
                     brandId,
                     bodyTypeId,
-                    year,
                     model,
                     description,
-                    coverImage == null ? null : coverImage.getContentType(),
-                    coverImage == null ? null : coverImage.getImageData(),
+                    imageContentType.orElse(null),
+                    imageData.orElse(null),
                     STATUS_PENDING,
                     LocalDateTime.now(),
                     fuelType,
@@ -250,8 +237,33 @@ class CarModerationFlowTest {
                     airbagCount,
                     transmission,
                     fuelConsumption,
-                    maxSpeedKmh,
-                    priceUsd
+                    maxSpeedKmh
+            );
+        }
+
+        @Override
+        public CarRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
+                                               final long brandId, final long bodyTypeId, final String model,
+                                               final String description, final List<CarImagePayload> images,
+                                               final String fuelType, final Integer horsepower,
+                                               final Integer airbagCount, final String transmission,
+                                               final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+            final CarImagePayload coverImage = images == null || images.isEmpty() ? null : images.get(0);
+            return createPendingRequest(
+                    submittedByUserId,
+                    submitterEmail,
+                    brandId,
+                    bodyTypeId,
+                    model,
+                    description,
+                    coverImage == null ? Optional.empty() : Optional.of(coverImage.getContentType()),
+                    coverImage == null ? Optional.empty() : Optional.of(coverImage.getImageData()),
+                    fuelType,
+                    horsepower,
+                    airbagCount,
+                    transmission,
+                    fuelConsumption,
+                    maxSpeedKmh
             );
         }
 
@@ -272,13 +284,12 @@ class CarModerationFlowTest {
 
         @Override
         public boolean approvePendingRequest(final long id, final long brandId, final String model,
-                                             final long bodyTypeId, final Integer year, final String description,
+                                             final long bodyTypeId, final String description,
                                              final Optional<String> imageContentType,
                                              final Optional<byte[]> imageData,
                                              final String fuelType, final Integer horsepower,
                                              final Integer airbagCount, final String transmission,
-                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                                             final BigDecimal priceUsd) {
+                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
             return false;
         }
 
@@ -297,6 +308,11 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public List<CarRequest> findAll() {
+            return request == null ? Collections.emptyList() : List.of(request);
+        }
+
+        @Override
         public List<CarRequest> findByStatus(final String status) {
             return request != null && status.equals(request.getStatus())
                     ? List.of(request)
@@ -304,31 +320,18 @@ class CarModerationFlowTest {
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<CarRequest> findByStatus(final String status, final int page) {
-            final List<CarRequest> items = findByStatus(status);
-            return new ar.edu.itba.paw.model.Page<>(items, 1, items.size(), items.size());
-        }
-
-        @Override
-        public long countByStatus(final String status) {
-            return findByStatus(status).size();
-        }
-
-        @Override
         public CarRequest create(final long submittedByUserId, final String submitterEmail,
-                                 final long brandId, final long bodyTypeId, final Integer year,
+                                 final long brandId, final long bodyTypeId,
                                  final String model, final String description, final String imageContentType,
                                  final byte[] imageData, final String status, final String fuelType,
                                  final Integer horsepower, final Integer airbagCount, final String transmission,
-                                 final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                                 final BigDecimal priceUsd) {
+                                 final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
             request = new CarRequest(
                     20L,
                     submittedByUserId,
                     submitterEmail,
                     brandId,
                     bodyTypeId,
-                    year,
                     model,
                     description,
                     imageContentType,
@@ -340,8 +343,7 @@ class CarModerationFlowTest {
                     airbagCount,
                     transmission,
                     fuelConsumption,
-                    maxSpeedKmh,
-                    priceUsd
+                    maxSpeedKmh
             );
             return request;
         }
@@ -401,39 +403,52 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public List<Car> findByBrandId(final long brandId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<Car> findByBodyTypeId(final long bodyTypeId) {
+            return Collections.emptyList();
+        }
+
+        @Override
         public List<Car> findByBrandIdAndBodyTypeId(final long brandId, final long bodyTypeId) {
             return Collections.emptyList();
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<Car> findByCriteria(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
-            return ar.edu.itba.paw.model.Page.empty(1, 0);
+        public List<Car> search(final String query, final Long brandId, final Long bodyTypeId) {
+            return Collections.emptyList();
         }
 
         @Override
-        public Car create(final long brandId, final String model, final long bodyTypeId, final Integer year,
-                          final String description,
+        public List<Car> findByCriteria(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Car create(final long brandId, final String model, final long bodyTypeId, final String description,
                           final String fuelType, final Integer horsepower, final Integer airbagCount,
                           final String transmission, final BigDecimal fuelConsumption,
-                          final Integer maxSpeedKmh, final BigDecimal priceUsd) {
+                          final Integer maxSpeedKmh) {
             created = true;
             createdBrandId = brandId;
             createdModel = model;
             createdBodyTypeId = bodyTypeId;
             createdDescription = description;
-            return new Car(100L, brandId, "Toyota", model, bodyTypeId, year, "Coupe", description, LocalDateTime.now(),
-                    true, fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
+            return new Car(100L, brandId, "Toyota", model, bodyTypeId, "Coupe", description, LocalDateTime.now(),
+                    true, fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh);
         }
 
         @Override
         public Optional<Car> update(final long id, final long brandId, final String model, final long bodyTypeId,
-                                    final Integer year, final String description, final String fuelType, final Integer horsepower,
+                                    final String description, final String fuelType, final Integer horsepower,
                                     final Integer airbagCount, final String transmission,
-                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                                    final BigDecimal priceUsd) {
-            existingCar = new Car(id, brandId, "Toyota", model, bodyTypeId, year, "Coupe", description,
+                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh) {
+            existingCar = new Car(id, brandId, "Toyota", model, bodyTypeId, "Coupe", description,
                     LocalDateTime.now(), true, fuelType, horsepower, airbagCount, transmission,
-                    fuelConsumption, maxSpeedKmh, priceUsd);
+                    fuelConsumption, maxSpeedKmh);
             return Optional.of(existingCar);
         }
 
@@ -443,16 +458,6 @@ class CarModerationFlowTest {
             deletedCarId = id;
             existingCar = null;
             return true;
-        }
-
-        @Override
-        public long countByBrandId(final long brandId) {
-            return 0L;
-        }
-
-        @Override
-        public long countByBodyTypeId(final long bodyTypeId) {
-            return 0L;
         }
     }
 
@@ -471,13 +476,13 @@ class CarModerationFlowTest {
         }
 
         @Override
-        public List<Review> findByCarId(final long carId) {
+        public List<Review> findAll() {
             return Collections.emptyList();
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<Review> findByCarId(final long carId, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(page, 0);
+        public List<Review> findByCarId(final long carId) {
+            return Collections.emptyList();
         }
 
         @Override
@@ -496,23 +501,8 @@ class CarModerationFlowTest {
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<Review> findByCarIdOrderByRatingAsc(final long carId, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(page, 0);
-        }
-
-        @Override
         public List<Review> findByCarIdOrderByRatingDesc(final long carId) {
             return Collections.emptyList();
-        }
-
-        @Override
-        public ar.edu.itba.paw.model.Page<Review> findByCarIdOrderByRatingDesc(final long carId, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(page, 0);
-        }
-
-        @Override
-        public long countByCarId(final long carId) {
-            return 0L;
         }
 
         @Override
@@ -621,16 +611,6 @@ class CarModerationFlowTest {
         public Brand create(final String name) {
             throw new UnsupportedOperationException();
         }
-
-        @Override
-        public Optional<Brand> update(final long id, final String name) {
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean delete(final long id) {
-            return false;
-        }
     }
 
     private static final class FakeBodyTypeDao implements BodyTypeDao {
@@ -652,16 +632,6 @@ class CarModerationFlowTest {
         @Override
         public BodyType create(final String name) {
             throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Optional<BodyType> update(final long id, final String name) {
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean delete(final long id) {
-            return false;
         }
     }
 }

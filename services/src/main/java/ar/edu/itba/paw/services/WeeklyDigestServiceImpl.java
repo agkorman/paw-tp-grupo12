@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -7,10 +9,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -66,58 +68,42 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
     }
 
     private void sendUserDigest(final User user, final LocalDateTime since) {
-        final List<EmailService.ReviewActivityItem> reviewActivities = buildReviewActivities(user.getId(), since);
-        final List<EmailService.FavoriteActivityItem> favoriteActivities = buildFavoriteActivities(user.getId(), since);
-        emailService.sendWeeklyUserDigest(user.getEmail(), user.getUsername(), reviewActivities, favoriteActivities);
-    }
+        final Map<Long, Long> likesPerReview = reviewLikeService.countNewLikesPerReview(user.getId(), since);
+        final Map<Long, Long> repliesPerReview = reviewReplyService.countNewRepliesPerReview(user.getId(), since);
 
-    private List<EmailService.ReviewActivityItem> buildReviewActivities(final long userId, final LocalDateTime since) {
-        final Map<Long, Long> likesPerReview = reviewLikeService.countNewLikesPerReview(userId, since);
-        final Map<Long, Long> repliesPerReview = reviewReplyService.countNewRepliesPerReview(userId, since);
         final Set<Long> activeReviewIds = new HashSet<>();
         activeReviewIds.addAll(likesPerReview.keySet());
         activeReviewIds.addAll(repliesPerReview.keySet());
 
-        return activeReviewIds.stream()
-                .map(reviewId -> toReviewActivityItem(reviewId, likesPerReview, repliesPerReview))
-                .flatMap(Optional::stream)
-                .toList();
-    }
-
-    private Optional<EmailService.ReviewActivityItem> toReviewActivityItem(final long reviewId,
-                                                                           final Map<Long, Long> likesPerReview,
-                                                                           final Map<Long, Long> repliesPerReview) {
-        return reviewService.getReviewById(reviewId)
-                .map(review -> new EmailService.ReviewActivityItem(
-                        review.getTitle(),
-                        carNameOrFallback(review.getCarId()),
-                        likesPerReview.getOrDefault(reviewId, 0L),
-                        repliesPerReview.getOrDefault(reviewId, 0L)
-                ));
-    }
-
-    private List<EmailService.FavoriteActivityItem> buildFavoriteActivities(final long userId,
-                                                                            final LocalDateTime since) {
-        return carFavoriteService.findFavoriteCarIdsByUser(userId).stream()
-                .map(carId -> toFavoriteActivityItem(carId, since))
-                .flatMap(Optional::stream)
-                .toList();
-    }
-
-    private Optional<EmailService.FavoriteActivityItem> toFavoriteActivityItem(final long carId,
-                                                                               final LocalDateTime since) {
-        final long newReviews = reviewService.getReviewsByCar(carId).stream()
-                .filter(review -> review.getCreatedAt() != null && review.getCreatedAt().isAfter(since))
-                .count();
-        if (newReviews == 0) {
-            return Optional.empty();
+        final List<EmailService.ReviewActivityItem> reviewActivities = new ArrayList<>();
+        for (final long reviewId : activeReviewIds) {
+            final Review review = reviewService.getReviewById(reviewId).orElse(null);
+            if (review == null) {
+                continue;
+            }
+            final Car car = carService.getCarById(review.getCarId()).orElse(null);
+            final String carName = car != null ? car.getBrandName() + " " + car.getModel() : "un auto";
+            reviewActivities.add(new EmailService.ReviewActivityItem(
+                    review.getTitle(),
+                    carName,
+                    likesPerReview.getOrDefault(reviewId, 0L),
+                    repliesPerReview.getOrDefault(reviewId, 0L)
+            ));
         }
-        return Optional.of(new EmailService.FavoriteActivityItem(carNameOrFallback(carId), newReviews));
-    }
 
-    private String carNameOrFallback(final long carId) {
-        return carService.getCarById(carId)
-                .map(car -> car.getBrandName() + " " + car.getModel())
-                .orElse("un auto");
+        final List<EmailService.FavoriteActivityItem> favoriteActivities = new ArrayList<>();
+        for (final long carId : carFavoriteService.findFavoriteCarIdsByUser(user.getId())) {
+            final long newReviews = reviewService.getReviewsByCar(carId).stream()
+                    .filter(r -> r.getCreatedAt() != null && r.getCreatedAt().isAfter(since))
+                    .count();
+            if (newReviews == 0) {
+                continue;
+            }
+            final Car car = carService.getCarById(carId).orElse(null);
+            final String carName = car != null ? car.getBrandName() + " " + car.getModel() : "un auto";
+            favoriteActivities.add(new EmailService.FavoriteActivityItem(carName, newReviews));
+        }
+
+        emailService.sendWeeklyUserDigest(user.getEmail(), user.getUsername(), reviewActivities, favoriteActivities);
     }
 }

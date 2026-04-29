@@ -4,16 +4,12 @@
 
 <pa:cars-content
         cars="${cars}"
-        resultCount="${empty totalItems ? fn:length(cars) : totalItems}"
+        resultCount="${fn:length(cars)}"
         reviewStatsByCarId="${reviewStatsByCarId}"
         favoritedCarIds="${favoritedCarIds}"
         showHp="${showHp}"
         showSpeed="${showSpeed}"
         showConsumption="${showConsumption}"
         showAirbags="${showAirbags}"
-        showFuelType="${showFuelType}"
-        showPrice="${showPrice}"
-        showYear="${showYear}"
-        currentPage="${currentPage}"
-        totalPages="${totalPages}"
-        criteria="${criteria}"/>
+        showTransmission="${showTransmission}"
+        showFuelType="${showFuelType}"/>

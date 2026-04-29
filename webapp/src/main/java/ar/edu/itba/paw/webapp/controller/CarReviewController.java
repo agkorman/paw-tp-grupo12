@@ -2,18 +2,17 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
-import ar.edu.itba.paw.model.Page;
-import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
+import ar.edu.itba.paw.persistence.BodyTypeDao;
+import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
-import ar.edu.itba.paw.webapp.exception.ForbiddenException;
-import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
+import ar.edu.itba.paw.webapp.form.CarForm;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -31,16 +30,16 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Year;
-import java.util.Comparator;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -64,17 +63,22 @@ public class CarReviewController {
     private final ReviewService reviewService;
     private final ReviewReplyService reviewReplyService;
     private final ReviewLikeService reviewLikeService;
+    private final BrandDao brandDao;
+    private final BodyTypeDao bodyTypeDao;
 
     @Autowired
     public CarReviewController(final CarService carService, final CarFavoriteService carFavoriteService,
                                final ReviewService reviewService,
                                final ReviewReplyService reviewReplyService,
-                               final ReviewLikeService reviewLikeService) {
+                               final ReviewLikeService reviewLikeService,
+                               final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
         this.carService = carService;
         this.carFavoriteService = carFavoriteService;
         this.reviewService = reviewService;
         this.reviewReplyService = reviewReplyService;
         this.reviewLikeService = reviewLikeService;
+        this.brandDao = brandDao;
+        this.bodyTypeDao = bodyTypeDao;
     }
 
     @InitBinder
@@ -85,7 +89,6 @@ public class CarReviewController {
     @RequestMapping(value = "/reviews", method = RequestMethod.GET)
     public String reviewForm(@RequestParam(value = "carId", required = false) final Long carId,
                              @RequestParam(value = "sort", required = false) final String sort,
-                             @RequestParam(value = "page", required = false) final Integer page,
                              @RequestParam(value = "reviewForm", required = false) final String reviewFormParam,
                              @ModelAttribute("reviewForm") final ReviewForm reviewForm,
                              @AuthenticationPrincipal final AuthenticatedUser currentUser,
@@ -94,9 +97,9 @@ public class CarReviewController {
             return "redirect:/cars";
         }
 
-        final ReviewPageData pageData = resolveReviewPageData(carId, sort, page, currentUserId(currentUser));
+        final ReviewPageData pageData = resolveReviewPageData(carId, sort, currentUserId(currentUser));
         if (pageData == null) {
-            throw new ResourceNotFoundException("El auto referenciado no existe.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El auto referenciado no existe.");
         }
 
         if (reviewForm.getCarId() == null) {
@@ -120,11 +123,10 @@ public class CarReviewController {
     @RequestMapping(value = "/reviews/feed", method = RequestMethod.GET)
     public ModelAndView reviewFeed(@RequestParam("carId") final long carId,
                                    @RequestParam(value = "sort", required = false) final String sort,
-                                   @RequestParam(value = "page", required = false) final Integer page,
                                    @AuthenticationPrincipal final AuthenticatedUser currentUser) {
-        final ReviewPageData pageData = resolveReviewPageData(carId, sort, page, currentUserId(currentUser));
+        final ReviewPageData pageData = resolveReviewPageData(carId, sort, currentUserId(currentUser));
         if (pageData == null) {
-            throw new ResourceNotFoundException("El auto referenciado no existe.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El auto referenciado no existe.");
         }
 
         final ModelAndView mav = new ModelAndView("reviews-feed-fragment.jsp");
@@ -132,9 +134,6 @@ public class CarReviewController {
         mav.addObject("reviews", pageData.reviews);
         mav.addObject("reviewThreads", pageData.reviewThreads);
         mav.addObject("currentSort", pageData.currentSort);
-        mav.addObject("currentPage", pageData.currentPage);
-        mav.addObject("totalPages", pageData.totalPages);
-        mav.addObject("totalItems", pageData.totalItems);
         return mav;
     }
 
@@ -152,14 +151,14 @@ public class CarReviewController {
                 ? null
                 : carService.getCarById(reviewForm.getCarId()).orElse(null);
         if (car == null) {
-            throw new ResourceNotFoundException("El auto referenciado no existe.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El auto referenciado no existe.");
         }
 
         rejectInvalidReviewFields(errors, reviewForm.getRating(), reviewForm.getOwnershipStatus(),
                 reviewForm.getModelYear());
 
         if (errors.hasErrors()) {
-            final ReviewPageData pageData = resolveReviewPageData(car.getId(), null, null, currentUserId(currentUser));
+            final ReviewPageData pageData = resolveReviewPageData(car.getId(), null, currentUserId(currentUser));
             populateCarReviewPageModel(model, pageData, currentUser);
             model.addAttribute("openReviewModal", true);
             return "car-review.jsp";
@@ -179,9 +178,13 @@ public class CarReviewController {
         return "redirect:/reviews?carId=" + car.getId();
     }
 
+    private ModelAndView carReviewPage(final long carId, final String sort, final String error) {
+        return carReviewPage(carId, sort, error, false, null);
+    }
+
     private ModelAndView carReviewPage(final long carId, final String sort, final String error,
                                        final boolean openReviewModal, final AuthenticatedUser currentUser) {
-        final ReviewPageData pageData = resolveReviewPageData(carId, sort, null, currentUserId(currentUser));
+        final ReviewPageData pageData = resolveReviewPageData(carId, sort, currentUserId(currentUser));
         if (pageData == null) {
             return new ModelAndView("redirect:/cars");
         }
@@ -201,65 +204,48 @@ public class CarReviewController {
 
     private void populateCarReviewPageModel(final Model model, final ReviewPageData pageData,
                                             final AuthenticatedUser currentUser) {
-        buildCarReviewPageAttributes(pageData, currentUser).forEach(model::addAttribute);
+        model.addAttribute("selectedCar", pageData.selectedCar);
+        model.addAttribute("selectedCarFavorited", isSelectedCarFavorited(pageData.selectedCar, currentUser));
+        model.addAttribute("reviews", pageData.reviews);
+        model.addAttribute("reviewThreads", pageData.reviewThreads);
+        model.addAttribute("averageRating", calculateAverageRating(pageData.reviews));
+        model.addAttribute("reviewCount", pageData.reviews.size());
+        model.addAttribute("currentSort", pageData.currentSort);
+        model.addAttribute("latestReview", pageData.latestReview.orElse(null));
+        model.addAttribute("latestReviewLikeCount", pageData.latestReviewLikeCount);
+        model.addAttribute("latestReviewLiked", pageData.latestReviewLiked);
+        model.addAttribute("carImages", pageData.carImages);
+        model.addAttribute("brands", brandDao.findAll());
+        model.addAttribute("bodyTypes", bodyTypeDao.findAll());
+        model.addAttribute("carForm", new CarForm());
     }
 
     private void populateCarReviewPageModel(final ModelAndView mav, final ReviewPageData pageData,
                                             final AuthenticatedUser currentUser) {
-        buildCarReviewPageAttributes(pageData, currentUser).forEach(mav::addObject);
+        mav.addObject("selectedCar", pageData.selectedCar);
+        mav.addObject("selectedCarFavorited", isSelectedCarFavorited(pageData.selectedCar, currentUser));
+        mav.addObject("reviews", pageData.reviews);
+        mav.addObject("reviewThreads", pageData.reviewThreads);
+        mav.addObject("averageRating", calculateAverageRating(pageData.reviews));
+        mav.addObject("reviewCount", pageData.reviews.size());
+        mav.addObject("currentSort", pageData.currentSort);
+        mav.addObject("latestReview", pageData.latestReview.orElse(null));
+        mav.addObject("latestReviewLikeCount", pageData.latestReviewLikeCount);
+        mav.addObject("latestReviewLiked", pageData.latestReviewLiked);
+        mav.addObject("carImages", pageData.carImages);
+        mav.addObject("brands", brandDao.findAll());
+        mav.addObject("bodyTypes", bodyTypeDao.findAll());
+        mav.addObject("carForm", new CarForm());
     }
 
-    private Map<String, Object> buildCarReviewPageAttributes(final ReviewPageData pageData,
-                                                             final AuthenticatedUser currentUser) {
-        final Map<String, Object> attributes = new LinkedHashMap<>();
-        attributes.put("selectedCar", pageData.selectedCar);
-        attributes.put("selectedCarFavorited", isSelectedCarFavorited(pageData.selectedCar, currentUser));
-        attributes.put("reviews", pageData.reviews);
-        attributes.put("reviewThreads", pageData.reviewThreads);
-        attributes.put("averageRating", pageData.averageRating);
-        attributes.put("reviewCount", pageData.totalItems);
-        attributes.put("currentSort", pageData.currentSort);
-        attributes.put("currentPage", pageData.currentPage);
-        attributes.put("totalPages", pageData.totalPages);
-        attributes.put("totalItems", pageData.totalItems);
-        attributes.put("latestReview", pageData.latestReview.orElse(null));
-        attributes.put("latestReviewLikeCount", pageData.latestReviewLikeCount);
-        attributes.put("latestReviewLiked", pageData.latestReviewLiked);
-        attributes.put("carImages", pageData.carImages);
-        attributes.put("yearVariants", buildYearVariants(pageData.selectedCar));
-        return attributes;
-    }
-
-    private List<CarYearVariant> buildYearVariants(final Car selectedCar) {
-        if (selectedCar.getBrandName() == null || selectedCar.getBodyType() == null || selectedCar.getModel() == null) {
-            return Collections.emptyList();
-        }
-        final String selectedModel = selectedCar.getModel().trim().toLowerCase(Locale.ROOT);
-        return carService.getCarsByBrandAndBodyType(selectedCar.getBrandName(), selectedCar.getBodyType())
-                .stream()
-                .filter(car -> car.getModel() != null
-                        && car.getModel().trim().toLowerCase(Locale.ROOT).equals(selectedModel))
-                .sorted(Comparator
-                        .comparing(Car::getYear, Comparator.nullsLast(Comparator.reverseOrder()))
-                        .thenComparingLong(Car::getId))
-                .map(car -> new CarYearVariant(car.getId(), car.getYear(), car.getId() == selectedCar.getId()))
-                .collect(Collectors.toList());
-    }
-
-    private ReviewPageData resolveReviewPageData(final long carId, final String sort, final Integer page,
-                                                 final Long currentUserId) {
+    private ReviewPageData resolveReviewPageData(final long carId, final String sort, final Long currentUserId) {
         final Car selectedCar = carService.getCarById(carId).orElse(null);
         if (selectedCar == null) {
             return null;
         }
 
         final String normalizedSort = normalizeSort(sort);
-        final int normalizedPage = Pagination.normalizePage(page);
-        final Page<Review> reviewPage = getReviewsForCar(selectedCar.getId(), normalizedSort, normalizedPage);
-        final List<Review> reviews = reviewPage.getItems();
-        final BigDecimal averageRating = reviewService.getReviewStatsByCar(selectedCar.getId())
-                .map(stats -> stats.getAverageRating())
-                .orElse(null);
+        final List<Review> reviews = getReviewsForCar(selectedCar.getId(), normalizedSort);
         final Optional<Review> latestReview = reviewService.getLatestReviewByCar(selectedCar.getId());
         final List<CarImage> carImages = carService.getCarImagesByCarId(selectedCar.getId());
         final List<ReviewThread> reviewThreads = buildReviewThreads(reviews, currentUserId);
@@ -272,8 +258,7 @@ public class CarReviewController {
                         .contains(review.getId()))
                 .orElse(false);
         return new ReviewPageData(selectedCar, reviews, reviewThreads, normalizedSort, latestReview, carImages,
-                latestReviewLikeCount, latestReviewLiked,
-                reviewPage.getPageNumber(), reviewPage.getTotalPages(), reviewPage.getTotalItems(), averageRating);
+                latestReviewLikeCount, latestReviewLiked);
     }
 
     private List<ReviewThread> buildReviewThreads(final List<Review> reviews, final Long currentUserId) {
@@ -300,18 +285,24 @@ public class CarReviewController {
                 ? Collections.emptySet()
                 : reviewLikeService.getLikedReplyIds(replyIds, currentUserId);
 
+        final Map<Long, List<ReviewReply>> finalRepliesByReviewId = repliesByReviewId;
+        final Map<Long, Long> finalReviewLikeCounts = reviewLikeCounts;
+        final Set<Long> finalLikedReviewIds = likedReviewIds;
+        final Map<Long, Long> finalReplyLikeCounts = replyLikeCounts;
+        final Set<Long> finalLikedReplyIds = likedReplyIds;
+        final Long finalCurrentUserId = currentUserId;
         return reviews.stream()
                 .map(review -> new ReviewThread(
                         review,
-                        reviewLikeCounts.getOrDefault(review.getId(), 0L),
-                        likedReviewIds.contains(review.getId()),
-                        repliesByReviewId.getOrDefault(review.getId(), Collections.emptyList())
+                        finalReviewLikeCounts.getOrDefault(review.getId(), 0L),
+                        finalLikedReviewIds.contains(review.getId()),
+                        finalRepliesByReviewId.getOrDefault(review.getId(), Collections.emptyList())
                                 .stream()
                                 .map(reply -> new ReviewReplyCard(
                                         reply,
-                                        replyLikeCounts.getOrDefault(reply.getId(), 0L),
-                                        likedReplyIds.contains(reply.getId()),
-                                        currentUserId != null && reply.getUserId() == currentUserId
+                                        finalReplyLikeCounts.getOrDefault(reply.getId(), 0L),
+                                        finalLikedReplyIds.contains(reply.getId()),
+                                        finalCurrentUserId != null && reply.getUserId() == finalCurrentUserId
                                 ))
                                 .collect(Collectors.toList())
                 ))
@@ -322,14 +313,14 @@ public class CarReviewController {
         return currentUser != null && carFavoriteService.isFavorited(currentUser.getId(), selectedCar.getId());
     }
 
-    private Page<Review> getReviewsForCar(final long carId, final String sort, final int page) {
+    private List<Review> getReviewsForCar(final long carId, final String sort) {
         if (SORT_RATING_ASC.equals(sort)) {
-            return reviewService.getReviewsByCarOrderByRatingAsc(carId, page);
+            return reviewService.getReviewsByCarOrderByRatingAsc(carId);
         }
         if (SORT_RATING_DESC.equals(sort)) {
-            return reviewService.getReviewsByCarOrderByRatingDesc(carId, page);
+            return reviewService.getReviewsByCarOrderByRatingDesc(carId);
         }
-        return reviewService.getReviewsByCar(carId, page);
+        return reviewService.getReviewsByCar(carId);
     }
 
     private String normalizeSort(final String sort) {
@@ -337,6 +328,21 @@ public class CarReviewController {
             return sort;
         }
         return null;
+    }
+
+    private BigDecimal calculateAverageRating(final List<Review> reviews) {
+        if (reviews.isEmpty()) {
+            return null;
+        }
+
+        BigDecimal sum = BigDecimal.ZERO;
+        for (Review review : reviews) {
+            if (review.getRating() != null) {
+                sum = sum.add(review.getRating());
+            }
+        }
+
+        return sum.divide(BigDecimal.valueOf(reviews.size()), 1, RoundingMode.HALF_UP);
     }
 
     @RequestMapping(value = "/reviews/{reviewId}", method = RequestMethod.POST)
@@ -391,7 +397,7 @@ public class CarReviewController {
 
         final Review review = reviewService.getReviewById(reviewId).orElse(null);
         if (review == null) {
-            throw new ResourceNotFoundException();
+            throw new ReviewNotFoundException();
         }
 
         final String validationError = validateReplyInput(body);
@@ -413,7 +419,7 @@ public class CarReviewController {
     public Object toggleReviewLike(@PathVariable("reviewId") final long reviewId,
                                    @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
                                    @AuthenticationPrincipal final AuthenticatedUser currentUser) {
-        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
+        final boolean ajax = isAjaxRequest(requestedWith);
         if (currentUser == null) {
             if (ajax) {
                 return new ResponseEntity<String>("/login", HttpStatus.UNAUTHORIZED);
@@ -423,7 +429,7 @@ public class CarReviewController {
 
         final Review review = reviewService.getReviewById(reviewId).orElse(null);
         if (review == null) {
-            throw new ResourceNotFoundException();
+            throw new ReviewNotFoundException();
         }
 
         final boolean liked;
@@ -448,7 +454,7 @@ public class CarReviewController {
     public Object toggleReplyLike(@PathVariable("replyId") final long replyId,
                                   @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
                                   @AuthenticationPrincipal final AuthenticatedUser currentUser) {
-        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
+        final boolean ajax = isAjaxRequest(requestedWith);
         if (currentUser == null) {
             if (ajax) {
                 return new ResponseEntity<String>("/login", HttpStatus.UNAUTHORIZED);
@@ -458,10 +464,10 @@ public class CarReviewController {
 
         final ReviewReply reply = reviewReplyService.getReplyById(replyId).orElse(null);
         if (reply == null) {
-            throw new ResourceNotFoundException();
+            throw new ReviewReplyNotFoundException();
         }
         final Review review = reviewService.getReviewById(reply.getReviewId())
-                .orElseThrow(ResourceNotFoundException::new);
+                .orElseThrow(ReviewNotFoundException::new);
 
         final boolean liked;
         try {
@@ -481,12 +487,16 @@ public class CarReviewController {
         return new ModelAndView("redirect:/reviews?carId=" + review.getCarId() + "#review-" + review.getId());
     }
 
+    private boolean isAjaxRequest(final String requestedWith) {
+        return "XMLHttpRequest".equalsIgnoreCase(requestedWith);
+    }
+
     private void validateReviewOwnership(final Review review, final AuthenticatedUser currentUser) {
         if (review == null) {
-            throw new ResourceNotFoundException();
+            throw new ReviewNotFoundException();
         }
         if (currentUser == null || review.getUserId() == null || !review.getUserId().equals(currentUser.getId())) {
-            throw new ForbiddenException();
+            throw new ReviewForbiddenException();
         }
     }
 
@@ -571,17 +581,11 @@ public class CarReviewController {
         private final List<CarImage> carImages;
         private final long latestReviewLikeCount;
         private final boolean latestReviewLiked;
-        private final int currentPage;
-        private final int totalPages;
-        private final long totalItems;
-        private final BigDecimal averageRating;
 
         private ReviewPageData(final Car selectedCar, final List<Review> reviews,
                                final List<ReviewThread> reviewThreads, final String currentSort,
                                final Optional<Review> latestReview, final List<CarImage> carImages,
-                               final long latestReviewLikeCount, final boolean latestReviewLiked,
-                               final int currentPage, final int totalPages, final long totalItems,
-                               final BigDecimal averageRating) {
+                               final long latestReviewLikeCount, final boolean latestReviewLiked) {
             this.selectedCar = selectedCar;
             this.reviews = reviews;
             this.reviewThreads = reviewThreads;
@@ -590,10 +594,6 @@ public class CarReviewController {
             this.carImages = carImages;
             this.latestReviewLikeCount = latestReviewLikeCount;
             this.latestReviewLiked = latestReviewLiked;
-            this.currentPage = currentPage;
-            this.totalPages = totalPages;
-            this.totalItems = totalItems;
-            this.averageRating = averageRating;
         }
     }
 
@@ -628,30 +628,6 @@ public class CarReviewController {
         }
     }
 
-    public static final class CarYearVariant {
-        private final long carId;
-        private final Integer year;
-        private final boolean selected;
-
-        private CarYearVariant(final long carId, final Integer year, final boolean selected) {
-            this.carId = carId;
-            this.year = year;
-            this.selected = selected;
-        }
-
-        public long getCarId() {
-            return carId;
-        }
-
-        public Integer getYear() {
-            return year;
-        }
-
-        public boolean isSelected() {
-            return selected;
-        }
-    }
-
     public static final class ReviewReplyCard {
         private final ReviewReply reply;
         private final long likeCount;
@@ -683,4 +659,15 @@ public class CarReviewController {
         }
     }
 
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    private static final class ReviewNotFoundException extends RuntimeException {
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    private static final class ReviewReplyNotFoundException extends RuntimeException {
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    private static final class ReviewForbiddenException extends RuntimeException {
+    }
 }

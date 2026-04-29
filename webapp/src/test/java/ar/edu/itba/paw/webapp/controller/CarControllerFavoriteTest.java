@@ -8,8 +8,8 @@ import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
-import ar.edu.itba.paw.services.BodyTypeService;
-import ar.edu.itba.paw.services.BrandService;
+import ar.edu.itba.paw.persistence.BodyTypeDao;
+import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
@@ -72,8 +72,8 @@ public class CarControllerFavoriteTest {
         return new CarController(
                 carService,
                 favoriteService,
-                new FakeBrandService(),
-                new FakeBodyTypeService(),
+                new FakeBrandDao(),
+                new FakeBodyTypeDao(),
                 new FakeReviewService(),
                 new FakeEmailService()
         );
@@ -142,13 +142,23 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
+        public List<Car> getCarsByBodyType(final String bodyType) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<Car> getCarsByBrand(final String brand) {
+            return Collections.emptyList();
+        }
+
+        @Override
         public List<Car> getCarsByBrandAndBodyType(final String brand, final String bodyType) {
             return Collections.emptyList();
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
-            return ar.edu.itba.paw.model.Page.empty(1, 0);
+        public List<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
+            return Collections.emptyList();
         }
 
         @Override
@@ -167,28 +177,44 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
+        public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
+        }
+
+        @Override
         public void saveCarImages(final long carId, final List<CarImagePayload> images) {
         }
 
         @Override
         public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                             final Integer year, final long submittedByUserId, final String submitterEmail,
+                                             final long submittedByUserId, final String submitterEmail,
+                                             final Optional<String> description,
+                                             final Optional<String> imageContentType,
+                                             final Optional<byte[]> imageData, final String fuelType,
+                                             final Integer horsepower, final Integer airbagCount,
+                                             final String transmission, final BigDecimal fuelConsumption,
+                                             final Integer maxSpeedKmh) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                             final long submittedByUserId, final String submitterEmail,
                                              final Optional<String> description,
                                              final List<CarImagePayload> images, final String fuelType,
                                              final Integer horsepower, final Integer airbagCount,
                                              final String transmission, final BigDecimal fuelConsumption,
-                                             final Integer maxSpeedKmh, final BigDecimal priceUsd) {
+                                             final Integer maxSpeedKmh) {
             throw new UnsupportedOperationException();
         }
 
         @Override
         public Optional<Car> updateCar(final long id, final long brandId, final String model,
-                                       final long bodyTypeId, final Integer year, final String description,
+                                       final long bodyTypeId, final String description,
                                        final Optional<String> imageContentType,
                                        final Optional<byte[]> imageData, final String fuelType,
                                        final Integer horsepower, final Integer airbagCount,
                                        final String transmission, final BigDecimal fuelConsumption,
-                                       final Integer maxSpeedKmh, final BigDecimal priceUsd) {
+                                       final Integer maxSpeedKmh) {
             return Optional.empty();
         }
 
@@ -235,11 +261,6 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<Review> getReviewsByCar(final long carId, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(page, 0);
-        }
-
-        @Override
         public Optional<Review> getLatestReviewByCar(final long carId) {
             return Optional.empty();
         }
@@ -255,22 +276,17 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<Review> getReviewsByCarOrderByRatingAsc(final long carId, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(page, 0);
-        }
-
-        @Override
         public List<Review> getReviewsByCarOrderByRatingDesc(final long carId) {
             return Collections.emptyList();
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<Review> getReviewsByCarOrderByRatingDesc(final long carId, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(page, 0);
+        public List<Review> getReviewsByUser(final long userId) {
+            return Collections.emptyList();
         }
 
         @Override
-        public List<Review> getReviewsByUser(final long userId) {
+        public List<Review> getAllReviews() {
             return Collections.emptyList();
         }
 
@@ -285,7 +301,7 @@ public class CarControllerFavoriteTest {
         }
     }
 
-    private static final class FakeBrandService implements BrandService {
+    private static final class FakeBrandDao implements BrandDao {
         @Override
         public List<Brand> findAll() {
             return Collections.emptyList();
@@ -302,22 +318,12 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
-        public Brand createBrand(final String name) {
+        public Brand create(final String name) {
             throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Optional<Brand> updateBrand(final long id, final String name) {
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean deleteBrand(final long id) {
-            return false;
         }
     }
 
-    private static final class FakeBodyTypeService implements BodyTypeService {
+    private static final class FakeBodyTypeDao implements BodyTypeDao {
         @Override
         public List<BodyType> findAll() {
             return Collections.emptyList();
@@ -334,18 +340,8 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
-        public BodyType createBodyType(final String name) {
+        public BodyType create(final String name) {
             throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Optional<BodyType> updateBodyType(final long id, final String name) {
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean deleteBodyType(final long id) {
-            return false;
         }
     }
 

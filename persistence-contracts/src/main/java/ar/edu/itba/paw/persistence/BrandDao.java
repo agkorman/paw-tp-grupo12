@@ -10,6 +10,4 @@ public interface BrandDao {
     Optional<Brand> findById(long id);
     Optional<Brand> findByName(String name);
     Brand create(String name);
-    Optional<Brand> update(long id, String name);
-    boolean delete(long id);
 }

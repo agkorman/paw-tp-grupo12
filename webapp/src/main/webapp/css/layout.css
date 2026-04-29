@@ -1,32 +1,3 @@
-/* ── NOSCRIPT ── */
-.noscript-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: #131313;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.noscript-box {
-    text-align: center;
-    max-width: 420px;
-    padding: var(--spacing-8);
-    color: var(--color-text);
-}
-
-.noscript-box strong {
-    display: block;
-    font-size: 1.4rem;
-    margin-bottom: var(--spacing-4);
-}
-
-.noscript-box p {
-    color: var(--color-text-muted);
-    line-height: 1.6;
-}
-
 /* ── NAV ── */
 nav {
     position: sticky;
@@ -60,7 +31,8 @@ nav {
     justify-self: center;
 }
 
-.nav-links a {
+.nav-links a,
+.nav-profile-link {
     font-family: var(--font-body);
     font-size: 0.875rem;
     font-weight: 500;
@@ -70,11 +42,13 @@ nav {
     transition: color 0.2s;
 }
 
-.nav-links a:hover {
+.nav-links a:hover,
+.nav-profile-link:hover {
     color: var(--on-surface);
 }
 
-.nav-links a.active {
+.nav-links a.active,
+.nav-profile-link.active {
     color: var(--primary-container);
     box-shadow: inset 0 -2px 0 var(--primary-container);
 }
@@ -126,6 +100,15 @@ nav {
     color: var(--on-surface);
 }
 
+.nav-register-link,
+.nav-logout-btn {
+    min-height: 2.4rem;
+    padding: 0.6rem 0.95rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+}
+
 .nav-user {
     max-width: 12rem;
     font-size: 0.82rem;
@@ -139,6 +122,10 @@ nav {
     color: var(--secondary);
     text-decoration: none;
     transition: color 0.2s;
+}
+
+.nav-logout-form {
+    margin: 0;
 }
 
 .search-box {
@@ -272,6 +259,12 @@ footer {
 @media (max-width: 560px) {
     .nav-right,
     .nav-action-btn {
+        width: 100%;
+    }
+
+    .nav-register-link,
+    .nav-logout-btn,
+    .nav-logout-form {
         width: 100%;
     }
 

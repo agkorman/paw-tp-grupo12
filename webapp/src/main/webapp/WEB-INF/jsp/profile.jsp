@@ -9,12 +9,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil | La Posta Autos</title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=6'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=5'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-connections.css?v=1'/>">
@@ -81,11 +83,6 @@
             <c:choose>
                 <c:when test="${ownProfile}">
                     <button type="button" class="btn-primary profile-action-button" data-open-edit-profile-modal>Ajustes de perfil</button>
-                    <c:if test="${canRequestModerator}">
-                        <button type="button" class="profile-moderator-link" data-open-request-admin-modal>
-                            ¿Querés ser moderador?
-                        </button>
-                    </c:if>
                 </c:when>
                 <c:otherwise>
                     <c:url var="profileFollowUrl" value="/profiles/${profile.id}/follow"/>
@@ -186,7 +183,6 @@
                                      <c:if test="${favoriteCarStatus.index ge favoriteCarsPreviewLimit}">data-collapsible-extra</c:if>>
                                     <pa:car-card
                                             model="${favoriteCar.brandName} ${favoriteCar.model}"
-                                            year="${favoriteCar.year}"
                                             bodyType="${favoriteCar.bodyType}"
                                             carId="${favoriteCar.id}"
                                             hasImage="${favoriteCar.hasImage}"
@@ -260,17 +256,11 @@
     <pa:edit-profile-modal profile="${profile}"/>
     <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
     <pa:auth-required-modal/>
-    <c:if test="${ownProfile}">
-        <pa:request-admin-modal/>
-    </c:if>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/action-menu.js'/>"></script>
     <script src="<c:url value='/js/review-modal.js?v=3'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/profile.js?v=5'/>"></script>
-    <c:if test="${ownProfile}">
-        <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
-    </c:if>
 </body>
 </html>

@@ -80,15 +80,6 @@ public class UserJdbcDao implements UserDao {
     }
 
     @Override
-    public boolean updateRole(final long userId, final String role) {
-        return jdbcTemplate.update(
-                "UPDATE users SET role = ? WHERE user_id = ?",
-                role,
-                userId
-        ) > 0;
-    }
-
-    @Override
     public List<User> findAll() {
         return jdbcTemplate.query(
                 "SELECT user_id, username, email, password, role, created_at FROM users ORDER BY user_id",

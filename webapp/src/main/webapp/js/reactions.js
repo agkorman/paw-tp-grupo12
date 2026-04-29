@@ -1,16 +1,6 @@
 (function () {
     var nativeSubmit = HTMLFormElement.prototype.submit;
 
-    function supportsFetchFormData() {
-        return typeof window.fetch === 'function'
-            && typeof window.FormData === 'function'
-            && typeof window.Promise === 'function';
-    }
-
-    function supportsEnhancedReplyForm() {
-        return supportsFetchFormData() && typeof window.DOMParser === 'function';
-    }
-
     function hasAttribute(node, attrName) {
         return node && node.nodeType === 1 && node.getAttribute(attrName) !== null;
     }
@@ -107,11 +97,6 @@
 
     function submitFavorite(form, button) {
         if (!form || !button || button.disabled) {
-            return;
-        }
-
-        if (!supportsFetchFormData()) {
-            nativeSubmit.call(form);
             return;
         }
 
@@ -406,19 +391,13 @@
             return;
         }
 
-        if (form.dataset.enhancedReviewLike === 'true') {
-            if (!supportsFetchFormData()) {
-                return;
-            }
+        if (form.dataset.enhancedReviewLike === 'true' && window.fetch && window.FormData) {
             event.preventDefault();
             submitEnhancedLikeForm(form);
             return;
         }
 
-        if (form.dataset.enhancedReviewReply === 'true') {
-            if (!supportsEnhancedReplyForm()) {
-                return;
-            }
+        if (form.dataset.enhancedReviewReply === 'true' && window.fetch && window.FormData) {
             event.preventDefault();
             submitEnhancedReplyForm(form);
         }
@@ -427,9 +406,6 @@
     document.addEventListener('click', function (event) {
         var favoriteButton = findActionButton(event.target, 'data-favorite-toggle');
         if (favoriteButton) {
-            if (!supportsFetchFormData()) {
-                return;
-            }
             event.preventDefault();
             event.stopPropagation();
             if (!favoriteButton.disabled) {
@@ -457,9 +433,6 @@
             return;
         }
         var button = form.querySelector('[data-favorite-toggle]');
-        if (!supportsFetchFormData()) {
-            return;
-        }
         event.preventDefault();
         if (button && !button.disabled) {
             submitFavorite(form, button);

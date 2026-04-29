@@ -11,17 +11,17 @@ import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
-import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
-import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.List;
@@ -42,15 +42,13 @@ public class ProfileController {
     private final CarFavoriteService carFavoriteService;
     private final UserService userService;
     private final UserFollowService userFollowService;
-    private final AdminRequestService adminRequestService;
 
     @Autowired
     public ProfileController(final ReviewService reviewService, final ReviewLikeService reviewLikeService,
                              final ReviewReplyService reviewReplyService,
                              final CarService carService,
                              final CarFavoriteService carFavoriteService,
-                             final UserService userService, final UserFollowService userFollowService,
-                             final AdminRequestService adminRequestService) {
+                             final UserService userService, final UserFollowService userFollowService) {
         this.reviewService = reviewService;
         this.reviewLikeService = reviewLikeService;
         this.reviewReplyService = reviewReplyService;
@@ -58,7 +56,6 @@ public class ProfileController {
         this.carFavoriteService = carFavoriteService;
         this.userService = userService;
         this.userFollowService = userFollowService;
-        this.adminRequestService = adminRequestService;
     }
 
     @RequestMapping(value = "/profile", method = RequestMethod.GET)
@@ -85,7 +82,7 @@ public class ProfileController {
             return new ModelAndView("redirect:/profile");
         }
         if (userService.getUserById(userId).isEmpty()) {
-            throw new ResourceNotFoundException();
+            throw new ProfileNotFoundException();
         }
 
         if (userFollowService.isFollowing(currentUser.getId(), userId)) {
@@ -98,23 +95,115 @@ public class ProfileController {
 
     private ModelAndView profile(final long profileUserId, final AuthenticatedUser currentUser) {
         final User profileUser = userService.getUserById(profileUserId)
-                .orElseThrow(ResourceNotFoundException::new);
+                .orElseThrow(ProfileNotFoundException::new);
         final Long currentUserId = currentUser == null ? null : currentUser.getId();
         final boolean ownProfile = currentUserId != null && currentUserId == profileUser.getId();
 
         final List<Review> userReviews = reviewService.getReviewsByUser(profileUser.getId());
-        final Map<Long, Car> carsById = reviewedCarsById(userReviews);
-        final List<ProfileReviewCard> reviews = buildProfileReviewCards(userReviews, carsById, currentUserId);
-        final List<ProfileReviewCard> likedReviewCards = buildLikedReviewCards(profileUser.getId(), carsById, currentUserId);
-        final List<ProfileLikedReplyCard> likedReplyCards = buildLikedReplyCards(profileUser.getId(), carsById, currentUserId);
+        final Set<Long> reviewedCarIds = userReviews
+                .stream()
+                .map(Review::getCarId)
+                .collect(Collectors.toSet());
+        final List<Car> cars = carService.getCarsByIds(reviewedCarIds);
+        final Map<Long, Car> carsById = cars
+                .stream()
+                .collect(Collectors.toMap(Car::getId, Function.identity()));
+        final List<Long> profileReviewIds = userReviews.stream()
+                .map(Review::getId)
+                .toList();
+        final Map<Long, Long> profileReviewLikeCounts = reviewLikeService.countReviewLikesByReviewIds(profileReviewIds);
+        final Set<Long> currentUserLikedReviewIds = currentUserId == null
+                ? Set.of()
+                : reviewLikeService.getLikedReviewIds(profileReviewIds, currentUserId);
+        final List<ProfileReviewCard> reviews = userReviews
+                .stream()
+                .map(review -> toProfileReviewCard(
+                        review,
+                        carsById,
+                        profileReviewLikeCounts,
+                        currentUserLikedReviewIds,
+                        currentUserId
+                ))
+                .toList();
+        final List<Long> likedReviewIds = reviewLikeService.getLikedReviewIdsByUser(profileUser.getId());
+        final Map<Long, Review> likedReviewsById = reviewService.getReviewsByIds(likedReviewIds)
+                .stream()
+                .collect(Collectors.toMap(Review::getId, Function.identity(), (left, right) -> left));
+        final List<Review> likedReviews = likedReviewIds
+                .stream()
+                .map(likedReviewsById::get)
+                .filter(Objects::nonNull)
+                .toList();
+        final List<Long> existingLikedReviewIds = likedReviews.stream()
+                .map(Review::getId)
+                .toList();
+        final Map<Long, Long> likedReviewLikeCounts = reviewLikeService.countReviewLikesByReviewIds(existingLikedReviewIds);
+        final Set<Long> likedByCurrentUserInLikedReviews = currentUserId == null
+                ? Set.of()
+                : reviewLikeService.getLikedReviewIds(existingLikedReviewIds, currentUserId);
+        final List<ProfileReviewCard> likedReviewCards = likedReviews
+                .stream()
+                .map(review -> toProfileReviewCard(
+                        review,
+                        carsById,
+                        likedReviewLikeCounts,
+                        likedByCurrentUserInLikedReviews,
+                        currentUserId
+                ))
+                .toList();
+        final List<Long> likedReplyIds = reviewLikeService.getLikedReplyIdsByUser(profileUser.getId());
+        final Map<Long, ReviewReply> likedRepliesById = reviewReplyService.getRepliesByIds(likedReplyIds)
+                .stream()
+                .collect(Collectors.toMap(ReviewReply::getId, Function.identity(), (left, right) -> left));
+        final List<ReviewReply> likedReplies = likedReplyIds
+                .stream()
+                .map(likedRepliesById::get)
+                .filter(Objects::nonNull)
+                .toList();
+        final List<Long> parentReviewIds = likedReplies.stream()
+                .map(ReviewReply::getReviewId)
+                .distinct()
+                .toList();
+        final Map<Long, Review> parentReviewsById = reviewService.getReviewsByIds(parentReviewIds)
+                .stream()
+                .collect(Collectors.toMap(Review::getId, Function.identity(), (left, right) -> left));
+        final List<Long> existingLikedReplyIds = likedReplies.stream()
+                .map(ReviewReply::getId)
+                .toList();
+        final Map<Long, Long> likedReplyLikeCounts = reviewLikeService.countReplyLikesByReplyIds(existingLikedReplyIds);
+        final Set<Long> likedByCurrentUserInLikedReplies = currentUserId == null
+                ? Set.of()
+                : reviewLikeService.getLikedReplyIds(existingLikedReplyIds, currentUserId);
+        final List<ProfileLikedReplyCard> likedReplyCards = likedReplies
+                .stream()
+                .map(reply -> toProfileLikedReplyCard(
+                        reply,
+                        parentReviewsById.get(reply.getReviewId()),
+                        carsById,
+                        likedReplyLikeCounts,
+                        likedByCurrentUserInLikedReplies
+                ))
+                .toList();
         final boolean followingProfile = currentUserId != null
                 && !ownProfile
                 && userFollowService.isFollowing(currentUserId, profileUser.getId());
         final List<Car> favoriteCars = carFavoriteService.getFavoriteCars(profileUser.getId());
-        final Map<Long, ReviewStats> reviewStatsByCarId = reviewStatsByCarId(favoriteCars);
+        final Map<Long, ReviewStats> reviewStatsByCarId = favoriteCars.isEmpty()
+                ? Map.of()
+                : reviewService.getReviewStatsByCarIds(favoriteCars.stream().map(Car::getId).toList())
+                .stream()
+                .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
 
         final ModelAndView mav = new ModelAndView("profile.jsp");
-        mav.addObject("profile", toProfileData(profileUser, reviews.size()));
+        mav.addObject("profile", new ProfileData(
+                profileUser.getId(),
+                displayName(profileUser),
+                profileUser.getEmail(),
+                initials(profileUser),
+                reviews.size(),
+                userFollowService.countFollowing(profileUser.getId()),
+                userFollowService.countFollowers(profileUser.getId())
+        ));
         mav.addObject("profileReviews", reviews);
         mav.addObject("likedReviews", likedReviewCards);
         mav.addObject("likedReplies", likedReplyCards);
@@ -127,128 +216,7 @@ public class ProfileController {
         mav.addObject("ownProfile", ownProfile);
         mav.addObject("followingProfile", followingProfile);
         mav.addObject("reviewForm", new ReviewForm());
-        mav.addObject("canRequestModerator", canRequestModerator(ownProfile, profileUser));
         return mav;
-    }
-
-    private boolean canRequestModerator(final boolean ownProfile, final User profileUser) {
-        if (!ownProfile) {
-            return false;
-        }
-        final String role = profileUser.getRole();
-        if (role != null && !"user".equalsIgnoreCase(role.trim())) {
-            return false;
-        }
-        return !adminRequestService.hasPendingRequest(profileUser.getId());
-    }
-
-    private Map<Long, Car> reviewedCarsById(final List<Review> reviews) {
-        final Set<Long> reviewedCarIds = reviews.stream()
-                .map(Review::getCarId)
-                .collect(Collectors.toSet());
-        return carService.getCarsByIds(reviewedCarIds).stream()
-                .collect(Collectors.toMap(Car::getId, Function.identity()));
-    }
-
-    private List<ProfileReviewCard> buildProfileReviewCards(final List<Review> reviews,
-                                                            final Map<Long, Car> carsById,
-                                                            final Long currentUserId) {
-        final List<Long> reviewIds = reviews.stream()
-                .map(Review::getId)
-                .toList();
-        final Map<Long, Long> likeCounts = reviewLikeService.countReviewLikesByReviewIds(reviewIds);
-        final Set<Long> likedByCurrentUser = likedReviewIds(reviewIds, currentUserId);
-        return reviews.stream()
-                .map(review -> toProfileReviewCard(review, carsById, likeCounts, likedByCurrentUser, currentUserId))
-                .toList();
-    }
-
-    private List<ProfileReviewCard> buildLikedReviewCards(final long profileUserId,
-                                                          final Map<Long, Car> carsById,
-                                                          final Long currentUserId) {
-        final List<Review> likedReviews = orderedExistingReviews(reviewLikeService.getLikedReviewIdsByUser(profileUserId));
-        final List<Long> likedReviewIds = likedReviews.stream()
-                .map(Review::getId)
-                .toList();
-        final Map<Long, Long> likeCounts = reviewLikeService.countReviewLikesByReviewIds(likedReviewIds);
-        final Set<Long> likedByCurrentUser = likedReviewIds(likedReviewIds, currentUserId);
-        return likedReviews.stream()
-                .map(review -> toProfileReviewCard(review, carsById, likeCounts, likedByCurrentUser, currentUserId))
-                .toList();
-    }
-
-    private List<Review> orderedExistingReviews(final List<Long> reviewIds) {
-        final Map<Long, Review> reviewsById = reviewService.getReviewsByIds(reviewIds).stream()
-                .collect(Collectors.toMap(Review::getId, Function.identity(), (left, right) -> left));
-        return reviewIds.stream()
-                .map(reviewsById::get)
-                .filter(Objects::nonNull)
-                .toList();
-    }
-
-    private List<ProfileLikedReplyCard> buildLikedReplyCards(final long profileUserId,
-                                                             final Map<Long, Car> carsById,
-                                                             final Long currentUserId) {
-        final List<ReviewReply> likedReplies = orderedExistingReplies(reviewLikeService.getLikedReplyIdsByUser(profileUserId));
-        final Map<Long, Review> parentReviewsById = parentReviewsById(likedReplies);
-        final List<Long> likedReplyIds = likedReplies.stream()
-                .map(ReviewReply::getId)
-                .toList();
-        final Map<Long, Long> likeCounts = reviewLikeService.countReplyLikesByReplyIds(likedReplyIds);
-        final Set<Long> likedByCurrentUser = currentUserId == null
-                ? Set.of()
-                : reviewLikeService.getLikedReplyIds(likedReplyIds, currentUserId);
-        return likedReplies.stream()
-                .map(reply -> toProfileLikedReplyCard(
-                        reply,
-                        parentReviewsById.get(reply.getReviewId()),
-                        carsById,
-                        likeCounts,
-                        likedByCurrentUser
-                ))
-                .toList();
-    }
-
-    private List<ReviewReply> orderedExistingReplies(final List<Long> replyIds) {
-        final Map<Long, ReviewReply> repliesById = reviewReplyService.getRepliesByIds(replyIds).stream()
-                .collect(Collectors.toMap(ReviewReply::getId, Function.identity(), (left, right) -> left));
-        return replyIds.stream()
-                .map(repliesById::get)
-                .filter(Objects::nonNull)
-                .toList();
-    }
-
-    private Map<Long, Review> parentReviewsById(final List<ReviewReply> replies) {
-        final List<Long> parentReviewIds = replies.stream()
-                .map(ReviewReply::getReviewId)
-                .distinct()
-                .toList();
-        return reviewService.getReviewsByIds(parentReviewIds).stream()
-                .collect(Collectors.toMap(Review::getId, Function.identity(), (left, right) -> left));
-    }
-
-    private Set<Long> likedReviewIds(final List<Long> reviewIds, final Long currentUserId) {
-        return currentUserId == null ? Set.of() : reviewLikeService.getLikedReviewIds(reviewIds, currentUserId);
-    }
-
-    private Map<Long, ReviewStats> reviewStatsByCarId(final List<Car> favoriteCars) {
-        if (favoriteCars.isEmpty()) {
-            return Map.of();
-        }
-        return reviewService.getReviewStatsByCarIds(favoriteCars.stream().map(Car::getId).toList()).stream()
-                .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
-    }
-
-    private ProfileData toProfileData(final User user, final int reviewCount) {
-        return new ProfileData(
-                user.getId(),
-                displayName(user),
-                user.getEmail(),
-                initials(user),
-                reviewCount,
-                userFollowService.countFollowing(user.getId()),
-                userFollowService.countFollowers(user.getId())
-        );
     }
 
     private ProfileReviewCard toProfileReviewCard(final Review review, final Map<Long, Car> carsById,
@@ -511,4 +479,7 @@ public class ProfileController {
         }
     }
 
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    private static final class ProfileNotFoundException extends RuntimeException {
+    }
 }

@@ -22,6 +22,7 @@ mvnw.cmd
 Thumbs.db
 target/
 
+CLAUDE.md
 perso.md
 
 # scripts 
@@ -38,6 +39,3 @@ perso.md
 
 # Generated downloads
 tmp/seeded-car-images/
-
-.claude/
-.playwright-mcp/

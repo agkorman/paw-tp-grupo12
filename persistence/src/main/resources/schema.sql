@@ -43,12 +43,11 @@ CREATE TABLE IF NOT EXISTS cars (
     brand_id       BIGINT       NOT NULL REFERENCES brands(brand_id)         ON DELETE RESTRICT,
     model          VARCHAR(120) NOT NULL,
     body_type_id   SMALLINT     NOT NULL REFERENCES body_types(body_type_id) ON DELETE RESTRICT,
-    year           INT,
     description    TEXT,
     search_vector  tsvector,
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT uq_cars_brand_model_body_type_year UNIQUE NULLS NOT DISTINCT (brand_id, model, body_type_id, year)
+    CONSTRAINT uq_cars_brand_model_body_type UNIQUE (brand_id, model, body_type_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_cars_brand_id        ON cars   (brand_id);
@@ -102,7 +101,6 @@ CREATE TABLE IF NOT EXISTS car_requests (
     submitter_email      VARCHAR(100),
     brand_id             BIGINT       NOT NULL REFERENCES brands(brand_id)         ON DELETE RESTRICT,
     body_type_id         SMALLINT     NOT NULL REFERENCES body_types(body_type_id) ON DELETE RESTRICT,
-    year                 INT,
     model                VARCHAR(120) NOT NULL,
     description          TEXT         NOT NULL,
     image_content_type   VARCHAR(100),
@@ -318,7 +316,6 @@ ALTER TABLE cars ADD COLUMN IF NOT EXISTS airbag_count     INT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS transmission     VARCHAR(20);
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS fuel_consumption NUMERIC(4,1);
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS max_speed_kmh    INT;
-ALTER TABLE cars ADD COLUMN IF NOT EXISTS price_usd        NUMERIC(12,2);
 
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS fuel_type        VARCHAR(20);
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS horsepower       INT;
@@ -326,36 +323,6 @@ ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS airbag_count     INT;
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS transmission     VARCHAR(20);
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS fuel_consumption NUMERIC(4,1);
 ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS max_speed_kmh    INT;
-ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS price_usd        NUMERIC(12,2);
-
-ALTER TABLE cars ADD COLUMN IF NOT EXISTS year INT;
-ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS year INT;
-
-ALTER TABLE cars DROP CONSTRAINT IF EXISTS uq_cars_brand_model_body_type;
-ALTER TABLE cars DROP CONSTRAINT IF EXISTS uq_cars_brand_model_body_type_year;
-ALTER TABLE cars
-    ADD CONSTRAINT uq_cars_brand_model_body_type_year
-    UNIQUE NULLS NOT DISTINCT (brand_id, model, body_type_id, year);
-
-ALTER TABLE cars DROP CONSTRAINT IF EXISTS chk_cars_price_usd;
-ALTER TABLE cars
-    ADD CONSTRAINT chk_cars_price_usd
-    CHECK (price_usd IS NULL OR price_usd > 0);
-
-ALTER TABLE car_requests DROP CONSTRAINT IF EXISTS chk_car_requests_price_usd;
-ALTER TABLE car_requests
-    ADD CONSTRAINT chk_car_requests_price_usd
-    CHECK (price_usd IS NULL OR price_usd > 0);
-
-ALTER TABLE cars DROP CONSTRAINT IF EXISTS chk_cars_year;
-ALTER TABLE cars
-    ADD CONSTRAINT chk_cars_year
-    CHECK (year IS NULL OR year BETWEEN 1886 AND 2100);
-
-ALTER TABLE car_requests DROP CONSTRAINT IF EXISTS chk_car_requests_year;
-ALTER TABLE car_requests
-    ADD CONSTRAINT chk_car_requests_year
-    CHECK (year IS NULL OR year BETWEEN 1886 AND 2100);
 
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS chk_cars_fuel_type;
 ALTER TABLE cars
@@ -398,67 +365,6 @@ ALTER TABLE car_requests
     );
 
 -- ============================================================
--- Catalog suggestion requests (brand / body type)
--- ============================================================
-
-CREATE TABLE IF NOT EXISTS brand_requests (
-    brand_request_id     BIGSERIAL    PRIMARY KEY,
-    submitted_by_user_id INT          REFERENCES users(user_id) ON DELETE SET NULL,
-    submitter_email      VARCHAR(100),
-    name                 VARCHAR(80)  NOT NULL,
-    comments             TEXT,
-    status               VARCHAR(20)  NOT NULL DEFAULT 'pending',
-    created_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT chk_brand_requests_submitter_identity
-        CHECK (submitted_by_user_id IS NOT NULL OR submitter_email IS NOT NULL),
-    CONSTRAINT chk_brand_requests_status
-        CHECK (status IN ('pending', 'approved', 'rejected'))
-);
-
-ALTER TABLE brand_requests ADD COLUMN IF NOT EXISTS comments TEXT;
-
-CREATE INDEX IF NOT EXISTS idx_brand_requests_status ON brand_requests (status);
-CREATE INDEX IF NOT EXISTS idx_brand_requests_submitted_by_user_id ON brand_requests (submitted_by_user_id);
-
-CREATE TABLE IF NOT EXISTS body_type_requests (
-    body_type_request_id BIGSERIAL    PRIMARY KEY,
-    submitted_by_user_id INT          REFERENCES users(user_id) ON DELETE SET NULL,
-    submitter_email      VARCHAR(100),
-    name                 VARCHAR(80)  NOT NULL,
-    comments             TEXT,
-    status               VARCHAR(20)  NOT NULL DEFAULT 'pending',
-    created_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT chk_body_type_requests_submitter_identity
-        CHECK (submitted_by_user_id IS NOT NULL OR submitter_email IS NOT NULL),
-    CONSTRAINT chk_body_type_requests_status
-        CHECK (status IN ('pending', 'approved', 'rejected'))
-);
-
-ALTER TABLE body_type_requests ADD COLUMN IF NOT EXISTS comments TEXT;
-
-CREATE INDEX IF NOT EXISTS idx_body_type_requests_status ON body_type_requests (status);
-CREATE INDEX IF NOT EXISTS idx_body_type_requests_submitted_by_user_id ON body_type_requests (submitted_by_user_id);
-
-CREATE TABLE IF NOT EXISTS admin_requests (
-    admin_request_id     BIGSERIAL    PRIMARY KEY,
-    submitted_by_user_id INT          NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    submitter_email      VARCHAR(100),
-    motivation           TEXT         NOT NULL,
-    bio                  TEXT         NOT NULL,
-    justification        TEXT         NOT NULL,
-    status               VARCHAR(20)  NOT NULL DEFAULT 'pending',
-    created_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT chk_admin_requests_status
-        CHECK (status IN ('pending', 'approved', 'rejected'))
-);
-
-CREATE INDEX IF NOT EXISTS idx_admin_requests_status ON admin_requests (status);
-CREATE INDEX IF NOT EXISTS idx_admin_requests_submitted_by_user_id ON admin_requests (submitted_by_user_id);
-
--- ============================================================
 -- Seed data
 -- ============================================================
 
@@ -471,93 +377,93 @@ INSERT INTO body_types (name) VALUES
     ('Coupe'), ('Sedan'), ('Roadster'), ('Hatchback'), ('Estate')
 ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO cars (brand_id, model, body_type_id, year, description)
-SELECT b.brand_id, 'GR Supra', bt.body_type_id, 2026,
+INSERT INTO cars (brand_id, model, body_type_id, description)
+SELECT b.brand_id, 'GR Supra', bt.body_type_id,
        'La Supra de quinta generación, codesarrollada con BMW bajo la submarca GR, revivió el icónico nombre en 2019 tras 17 años de ausencia. Está propulsada por un turbo de seis cilindros en línea compartido con el BMW Z4 G29.'
 FROM brands b, body_types bt WHERE b.name = 'Toyota' AND bt.name = 'Coupe'
-ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type_year DO NOTHING;
+ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
-INSERT INTO cars (brand_id, model, body_type_id, year, description)
-SELECT b.brand_id, 'Mustang', bt.body_type_id, 2026,
+INSERT INTO cars (brand_id, model, body_type_id, description)
+SELECT b.brand_id, 'Mustang', bt.body_type_id,
        'El Mustang de sexta generación fue el primero en ofrecer suspensión trasera independiente a nivel mundial e introdujo la opción de cuatro cilindros turbo EcoBoost junto a su icónico V8.'
 FROM brands b, body_types bt WHERE b.name = 'Ford' AND bt.name = 'Coupe'
-ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type_year DO NOTHING;
+ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
-INSERT INTO cars (brand_id, model, body_type_id, year, description)
-SELECT b.brand_id, 'MX-5 Miata', bt.body_type_id, 2026,
+INSERT INTO cars (brand_id, model, body_type_id, description)
+SELECT b.brand_id, 'MX-5 Miata', bt.body_type_id,
        'El MX-5 de cuarta generación redujo más de 100 kg respecto a su predecesor, volviendo a la estrategia original de ingeniería ligera. Sigue siendo el roadster de dos plazas más vendido del mundo.'
 FROM brands b, body_types bt WHERE b.name = 'Mazda' AND bt.name = 'Roadster'
-ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type_year DO NOTHING;
+ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
-INSERT INTO cars (brand_id, model, body_type_id, year, description)
-SELECT b.brand_id, 'M3', bt.body_type_id, 2026,
+INSERT INTO cars (brand_id, model, body_type_id, description)
+SELECT b.brand_id, 'M3', bt.body_type_id,
        'El G80 M3 está propulsado por el S58 de seis cilindros en línea biturbo que desarrolla hasta 503 hp en versión Competition. Fue el primer M3 con tracción total opcional y el primero en dar origen a una variante M3 Touring.'
 FROM brands b, body_types bt WHERE b.name = 'BMW' AND bt.name = 'Sedan'
-ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type_year DO NOTHING;
+ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
-INSERT INTO cars (brand_id, model, body_type_id, year, description)
-SELECT b.brand_id, '911', bt.body_type_id, 2026,
+INSERT INTO cars (brand_id, model, body_type_id, description)
+SELECT b.brand_id, '911', bt.body_type_id,
        'El 911 de generación 992 es 45 mm más ancho que su predecesor y adopta una carrocería íntegramente de aluminio. Conserva el icónico motor bóxer de seis cilindros trasero e incorpora manijas eléctricas retráctiles.'
 FROM brands b, body_types bt WHERE b.name = 'Porsche' AND bt.name = 'Coupe'
-ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type_year DO NOTHING;
+ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
-INSERT INTO cars (brand_id, model, body_type_id, year, description)
-SELECT b.brand_id, 'Civic Type R', bt.body_type_id, 2026,
+INSERT INTO cars (brand_id, model, body_type_id, description)
+SELECT b.brand_id, 'Civic Type R', bt.body_type_id,
        'El FL5 Type R equipa el motor turbo K20C1 de 330 PS e incorpora paneles traseros más anchos. Incluye el registrador de datos LogR de Honda para uso en pista y un diseño más depurado respecto al FK8.'
 FROM brands b, body_types bt WHERE b.name = 'Honda' AND bt.name = 'Hatchback'
-ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type_year DO NOTHING;
+ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
-INSERT INTO cars (brand_id, model, body_type_id, year, description)
-SELECT b.brand_id, 'WRX STI', bt.body_type_id, 2026,
+INSERT INTO cars (brand_id, model, body_type_id, description)
+SELECT b.brand_id, 'WRX STI', bt.body_type_id,
        'El WRX STI de generación VA fue el primero en ofrecerse únicamente como sedán, con el motor bóxer de cuatro cilindros turbo EJ257 de 305 hp, caja de 6 velocidades manual y tracción total simétrica.'
 FROM brands b, body_types bt WHERE b.name = 'Subaru' AND bt.name = 'Sedan'
-ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type_year DO NOTHING;
+ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
-INSERT INTO cars (brand_id, model, body_type_id, year, description)
-SELECT b.brand_id, 'GT-R', bt.body_type_id, 2026,
+INSERT INTO cars (brand_id, model, body_type_id, description)
+SELECT b.brand_id, 'GT-R', bt.body_type_id,
        'El R35 GT-R se construyó en torno al VR38DETT biturbo V6 ensamblado a mano, con cada motor firmado por uno de los nueve artesanos Takumi certificados. Su combinación de tracción total y control de largada lo convirtió en un referente destructor de supercars.'
 FROM brands b, body_types bt WHERE b.name = 'Nissan' AND bt.name = 'Coupe'
-ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type_year DO NOTHING;
+ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
-INSERT INTO cars (brand_id, model, body_type_id, year, description)
-SELECT b.brand_id, 'Camaro', bt.body_type_id, 2026,
+INSERT INTO cars (brand_id, model, body_type_id, description)
+SELECT b.brand_id, 'Camaro', bt.body_type_id,
        'Construido sobre la plataforma Alpha de GM compartida con el Cadillac ATS, el Camaro de sexta generación redujo más de 90 kg respecto a su predecesor. Los motores disponibles van desde un cuatro cilindros turbo de 2.0L hasta el V8 sobrealimentado de 6.2L del ZL1.'
 FROM brands b, body_types bt WHERE b.name = 'Chevrolet' AND bt.name = 'Coupe'
-ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type_year DO NOTHING;
+ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
-INSERT INTO cars (brand_id, model, body_type_id, year, description)
-SELECT b.brand_id, 'RS6 Avant', bt.body_type_id, 2026,
+INSERT INTO cars (brand_id, model, body_type_id, description)
+SELECT b.brand_id, 'RS6 Avant', bt.body_type_id,
        'El C8 RS6 Avant está propulsado por un V8 biturbo de 4.0L con sistema mild-hybrid de 48V que desarrolla 600 PS. Fue el primer RS6 Avant vendido en Norteamérica desde la generación C5 y el primero en usar una transmisión híbrida.'
 FROM brands b, body_types bt WHERE b.name = 'Audi' AND bt.name = 'Estate'
-ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type_year DO NOTHING;
+ON CONFLICT ON CONSTRAINT uq_cars_brand_model_body_type DO NOTHING;
 
 -- Populate spec fields for seed cars (idempotent UPDATEs)
-UPDATE cars SET fuel_type='combustion', horsepower=382, airbag_count=8,  transmission='automatic', fuel_consumption=9.8,  max_speed_kmh=250, price_usd=51290, year=2026
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Toyota'    AND c.model='GR Supra' AND bt.name='Coupe' AND c.year=2026);
+UPDATE cars SET fuel_type='combustion', horsepower=382, airbag_count=8,  transmission='automatic', fuel_consumption=9.8,  max_speed_kmh=250
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Toyota'    AND c.model='GR Supra');
 
-UPDATE cars SET fuel_type='combustion', horsepower=450, airbag_count=6,  transmission='automatic', fuel_consumption=12.4, max_speed_kmh=250, price_usd=42995, year=2026
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Ford'      AND c.model='Mustang' AND bt.name='Coupe' AND c.year=2026);
+UPDATE cars SET fuel_type='combustion', horsepower=450, airbag_count=6,  transmission='automatic', fuel_consumption=12.4, max_speed_kmh=250
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Ford'      AND c.model='Mustang');
 
-UPDATE cars SET fuel_type='combustion', horsepower=184, airbag_count=6,  transmission='manual',    fuel_consumption=7.4,  max_speed_kmh=214, price_usd=28050, year=2026
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Mazda'     AND c.model='MX-5 Miata' AND bt.name='Roadster' AND c.year=2026);
+UPDATE cars SET fuel_type='combustion', horsepower=184, airbag_count=6,  transmission='manual',    fuel_consumption=7.4,  max_speed_kmh=214
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Mazda'     AND c.model='MX-5 Miata');
 
-UPDATE cars SET fuel_type='combustion', horsepower=503, airbag_count=10, transmission='automatic', fuel_consumption=10.5, max_speed_kmh=290, price_usd=76900, year=2026
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='BMW'       AND c.model='M3' AND bt.name='Sedan' AND c.year=2026);
+UPDATE cars SET fuel_type='combustion', horsepower=503, airbag_count=10, transmission='automatic', fuel_consumption=10.5, max_speed_kmh=290
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='BMW'       AND c.model='M3');
 
-UPDATE cars SET fuel_type='combustion', horsepower=385, airbag_count=8,  transmission='automatic', fuel_consumption=10.2, max_speed_kmh=293, price_usd=106100, year=2026
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Porsche'   AND c.model='911' AND bt.name='Coupe' AND c.year=2026);
+UPDATE cars SET fuel_type='combustion', horsepower=385, airbag_count=8,  transmission='automatic', fuel_consumption=10.2, max_speed_kmh=293
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Porsche'   AND c.model='911');
 
-UPDATE cars SET fuel_type='combustion', horsepower=330, airbag_count=6,  transmission='manual',    fuel_consumption=8.9,  max_speed_kmh=272, price_usd=42895, year=2026
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Honda'     AND c.model='Civic Type R' AND bt.name='Hatchback' AND c.year=2026);
+UPDATE cars SET fuel_type='combustion', horsepower=330, airbag_count=6,  transmission='manual',    fuel_consumption=8.9,  max_speed_kmh=272
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Honda'     AND c.model='Civic Type R');
 
-UPDATE cars SET fuel_type='combustion', horsepower=305, airbag_count=6,  transmission='manual',    fuel_consumption=10.7, max_speed_kmh=255, price_usd=39995, year=2026
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Subaru'    AND c.model='WRX STI' AND bt.name='Sedan' AND c.year=2026);
+UPDATE cars SET fuel_type='combustion', horsepower=305, airbag_count=6,  transmission='manual',    fuel_consumption=10.7, max_speed_kmh=255
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Subaru'    AND c.model='WRX STI');
 
-UPDATE cars SET fuel_type='combustion', horsepower=570, airbag_count=6,  transmission='automatic', fuel_consumption=12.4, max_speed_kmh=315, price_usd=113540, year=2026
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Nissan'    AND c.model='GT-R' AND bt.name='Coupe' AND c.year=2026);
+UPDATE cars SET fuel_type='combustion', horsepower=570, airbag_count=6,  transmission='automatic', fuel_consumption=12.4, max_speed_kmh=315
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Nissan'    AND c.model='GT-R');
 
-UPDATE cars SET fuel_type='combustion', horsepower=650, airbag_count=6,  transmission='automatic', fuel_consumption=14.7, max_speed_kmh=290, price_usd=62995, year=2026
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Chevrolet' AND c.model='Camaro' AND bt.name='Coupe' AND c.year=2026);
+UPDATE cars SET fuel_type='combustion', horsepower=650, airbag_count=6,  transmission='automatic', fuel_consumption=14.7, max_speed_kmh=290
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Chevrolet' AND c.model='Camaro');
 
-UPDATE cars SET fuel_type='hybrid',     horsepower=600, airbag_count=10, transmission='automatic', fuel_consumption=11.5, max_speed_kmh=280, price_usd=118600, year=2026
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Audi'      AND c.model='RS6 Avant' AND bt.name='Estate' AND c.year=2026);
+UPDATE cars SET fuel_type='hybrid',     horsepower=600, airbag_count=10, transmission='automatic', fuel_consumption=11.5, max_speed_kmh=280
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Audi'      AND c.model='RS6 Avant');

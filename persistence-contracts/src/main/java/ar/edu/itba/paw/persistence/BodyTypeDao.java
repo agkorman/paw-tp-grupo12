@@ -13,8 +13,4 @@ public interface BodyTypeDao {
     Optional<BodyType> findByName(String name);
 
     BodyType create(String name);
-
-    Optional<BodyType> update(long id, String name);
-
-    boolean delete(long id);
 }

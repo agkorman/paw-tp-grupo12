@@ -2,7 +2,6 @@
 <%@ attribute name="profile" required="true" type="ar.edu.itba.paw.webapp.controller.ProfileController.ProfileData" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <div id="editProfileModal" class="profile-modal" hidden>
     <div class="profile-modal-overlay" data-close-profile-modal></div>
@@ -10,7 +9,9 @@
         <header class="profile-modal-header">
             <h2 id="editProfileTitle">Editar perfil</h2>
             <button type="button" class="profile-modal-close" data-close-profile-modal aria-label="Cerrar modal">
-                <pa:icon name="close" size="20"/>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true">
+                    <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
             </button>
         </header>
 

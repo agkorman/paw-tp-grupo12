@@ -91,7 +91,7 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
             throw new IllegalArgumentException("User not found.");
         }
 
-        final String normalizedBody = StringUtils.normalize(body);
+        final String normalizedBody = normalizeBody(body);
         if (normalizedBody == null) {
             throw new IllegalArgumentException("Reply body is required.");
         }
@@ -134,4 +134,11 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
         }
     }
 
+    private String normalizeBody(final String body) {
+        if (body == null) {
+            return null;
+        }
+        final String trimmed = body.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
 }

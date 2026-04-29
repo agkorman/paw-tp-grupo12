@@ -8,9 +8,6 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.AdminRequest;
-import ar.edu.itba.paw.model.Page;
-import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
@@ -117,8 +114,7 @@ public class ProfileControllerTest {
                 new FakeCarService(),
                 new FakeCarFavoriteService(),
                 new FakeUserService(),
-                new FakeUserFollowService(),
-                new FakeAdminRequestService()
+                new FakeUserFollowService()
         );
     }
 
@@ -191,11 +187,6 @@ public class ProfileControllerTest {
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<Review> getReviewsByCar(final long carId, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(page, 0);
-        }
-
-        @Override
         public Optional<Review> getLatestReviewByCar(final long carId) {
             return Optional.empty();
         }
@@ -211,18 +202,8 @@ public class ProfileControllerTest {
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<Review> getReviewsByCarOrderByRatingAsc(final long carId, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(page, 0);
-        }
-
-        @Override
         public List<Review> getReviewsByCarOrderByRatingDesc(final long carId) {
             return Collections.emptyList();
-        }
-
-        @Override
-        public ar.edu.itba.paw.model.Page<Review> getReviewsByCarOrderByRatingDesc(final long carId, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(page, 0);
         }
 
         @Override
@@ -230,6 +211,11 @@ public class ProfileControllerTest {
             return review.getUserId() != null && review.getUserId() == userId
                     ? List.of(review)
                     : Collections.emptyList();
+        }
+
+        @Override
+        public List<Review> getAllReviews() {
+            return Collections.emptyList();
         }
 
         @Override
@@ -371,13 +357,23 @@ public class ProfileControllerTest {
         }
 
         @Override
+        public List<Car> getCarsByBodyType(final String bodyType) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<Car> getCarsByBrand(final String brand) {
+            return Collections.emptyList();
+        }
+
+        @Override
         public List<Car> getCarsByBrandAndBodyType(final String brand, final String bodyType) {
             return Collections.emptyList();
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
-            return ar.edu.itba.paw.model.Page.empty(1, 0);
+        public List<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
+            return Collections.emptyList();
         }
 
         @Override
@@ -396,30 +392,47 @@ public class ProfileControllerTest {
         }
 
         @Override
+        public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
+        }
+
+        @Override
         public void saveCarImages(final long carId, final List<CarImagePayload> images) {
         }
 
         @Override
         public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                             final Integer year, final long submittedByUserId, final String submitterEmail,
+                                             final long submittedByUserId, final String submitterEmail,
+                                             final Optional<String> description,
+                                             final Optional<String> imageContentType,
+                                             final Optional<byte[]> imageData,
+                                             final String fuelType, final Integer horsepower,
+                                             final Integer airbagCount, final String transmission,
+                                             final java.math.BigDecimal fuelConsumption,
+                                             final Integer maxSpeedKmh) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                             final long submittedByUserId, final String submitterEmail,
                                              final Optional<String> description,
                                              final List<CarImagePayload> images,
                                              final String fuelType, final Integer horsepower,
                                              final Integer airbagCount, final String transmission,
                                              final java.math.BigDecimal fuelConsumption,
-                                             final Integer maxSpeedKmh, final java.math.BigDecimal priceUsd) {
+                                             final Integer maxSpeedKmh) {
             throw new UnsupportedOperationException();
         }
 
         @Override
         public Optional<Car> updateCar(final long id, final long brandId, final String model,
-                                       final long bodyTypeId, final Integer year, final String description,
+                                       final long bodyTypeId, final String description,
                                        final Optional<String> imageContentType,
                                        final Optional<byte[]> imageData,
                                        final String fuelType, final Integer horsepower,
                                        final Integer airbagCount, final String transmission,
                                        final java.math.BigDecimal fuelConsumption,
-                                       final Integer maxSpeedKmh, final java.math.BigDecimal priceUsd) {
+                                       final Integer maxSpeedKmh) {
             return Optional.empty();
         }
 
@@ -486,11 +499,6 @@ public class ProfileControllerTest {
         public List<User> getAllUsers() {
             return Collections.emptyList();
         }
-
-        @Override
-        public boolean updateRole(final long userId, final String role) {
-            return false;
-        }
     }
 
     private static final class FakeUserFollowService implements UserFollowService {
@@ -527,50 +535,6 @@ public class ProfileControllerTest {
         @Override
         public List<User> getFollowing(final long userId) {
             return Collections.emptyList();
-        }
-    }
-
-    private static final class FakeAdminRequestService implements AdminRequestService {
-        @Override
-        public Optional<AdminRequest> getAdminRequestById(final long id) {
-            return Optional.empty();
-        }
-
-        @Override
-        public List<AdminRequest> getAdminRequestsByStatus(final String status) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Page<AdminRequest> getAdminRequestsByStatus(final String status, final int page) {
-            return Page.empty(1, 0);
-        }
-
-        @Override
-        public long countAdminRequestsByStatus(final String status) {
-            return 0L;
-        }
-
-        @Override
-        public boolean hasPendingRequest(final long userId) {
-            return false;
-        }
-
-        @Override
-        public AdminRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
-                                                 final String motivation, final String bio,
-                                                 final String justification) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean approvePendingRequest(final long id) {
-            return false;
-        }
-
-        @Override
-        public boolean rejectPendingRequest(final long id) {
-            return false;
         }
     }
 }

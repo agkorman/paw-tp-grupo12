@@ -20,9 +20,9 @@ public class CarFavoriteJdbcDao implements CarFavoriteDao {
 
     private static final String SELECT_COLUMNS =
             "SELECT c.car_id, c.brand_id, b.name AS brand_name, c.model, c.body_type_id, bt.name AS body_type, "
-                    + "c.year, c.description, c.created_at, "
+                    + "c.description, c.created_at, "
                     + "EXISTS (SELECT 1 FROM car_images ci WHERE ci.car_id = c.car_id) AS has_image, "
-                    + "c.fuel_type, c.horsepower, c.airbag_count, c.transmission, c.fuel_consumption, c.max_speed_kmh, c.price_usd ";
+                    + "c.fuel_type, c.horsepower, c.airbag_count, c.transmission, c.fuel_consumption, c.max_speed_kmh ";
 
     private static final String FROM_JOIN =
             "FROM cars c "
@@ -35,7 +35,6 @@ public class CarFavoriteJdbcDao implements CarFavoriteDao {
             rs.getString("brand_name"),
             rs.getString("model"),
             rs.getLong("body_type_id"),
-            rs.getObject("year", Integer.class),
             rs.getString("body_type"),
             rs.getString("description"),
             rs.getTimestamp("created_at").toLocalDateTime(),
@@ -45,8 +44,7 @@ public class CarFavoriteJdbcDao implements CarFavoriteDao {
             rs.getObject("airbag_count", Integer.class),
             rs.getString("transmission"),
             rs.getBigDecimal("fuel_consumption"),
-            rs.getObject("max_speed_kmh", Integer.class),
-            rs.getBigDecimal("price_usd")
+            rs.getObject("max_speed_kmh", Integer.class)
     );
 
     private final JdbcTemplate jdbcTemplate;

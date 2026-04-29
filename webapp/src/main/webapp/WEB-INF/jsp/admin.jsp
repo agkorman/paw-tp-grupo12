@@ -9,12 +9,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin | La Posta Autos</title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=4'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/admin.css?v=5'/>">
+    <link rel="stylesheet" href="<c:url value='/css/admin.css'/>">
 </head>
 <body>
     <pa:nav activePage="admin"/>
@@ -42,7 +44,7 @@
                         </form>
                         <div class="admin-status" aria-label="Solicitudes pendientes">
                             <span>Pendientes</span>
-                            <strong><c:out value="${empty totalItems ? fn:length(pendingRequests) : totalItems}"/></strong>
+                            <strong><c:out value="${fn:length(pendingRequests)}"/></strong>
                         </div>
                     </div>
                 </div>
@@ -53,6 +55,7 @@
         <section class="admin-requests-section" aria-label="Formularios pendientes">
             <div class="admin-section-heading">
                 <div>
+                    <span class="admin-kicker">Formularios</span>
                     <h2>Solicitudes de autos</h2>
                 </div>
             </div>
@@ -68,7 +71,6 @@
                         <c:forEach var="request" items="${pendingRequests}">
                             <pa:car-card
                                     model="${request.brandName} ${request.model}"
-                                    year="${request.year}"
                                     bodyType="${request.bodyTypeName}"
                                     carId="${request.id}"
                                     hasImage="${request.hasImage}"
@@ -82,7 +84,6 @@
                                     requestId="${request.id}"
                                     requestBrand="${request.brandName}"
                                     requestModel="${request.model}"
-                                    requestYear="${request.year}"
                                     requestBodyType="${request.bodyTypeName}"
                                     requestDescription="${request.description}"
                                     requestSubmitter="${request.submitter}"
@@ -92,105 +93,7 @@
                                     requestAirbagCount="${request.airbagCount}"
                                     requestTransmission="${request.transmission}"
                                     requestFuelConsumption="${request.fuelConsumption}"
-                                    requestMaxSpeedKmh="${request.maxSpeedKmh}"
-                                    requestPriceUsd="${request.priceUsd}"/>
-                        </c:forEach>
-                    </div>
-                    <c:if test="${not empty totalPages and totalPages > 1}">
-                        <c:url var="adminBaseUrl" value="/admin"/>
-                        <pa:pagination currentPage="${currentPage}"
-                                       totalPages="${totalPages}"
-                                       baseUrl="${adminBaseUrl}"
-                                       ariaLabel="Paginación de solicitudes"/>
-                    </c:if>
-                </c:otherwise>
-            </c:choose>
-        </section>
-
-        <section class="admin-catalog-section" aria-label="Solicitudes de marcas">
-            <div class="admin-section-heading">
-                <div>
-                    <h2>Solicitudes de marcas</h2>
-                </div>
-            </div>
-            <c:choose>
-                <c:when test="${empty pendingBrandRequests}">
-                    <div class="admin-empty-state">
-                        <p>No hay solicitudes de marcas pendientes.</p>
-                    </div>
-                </c:when>
-                <c:otherwise>
-                    <div class="admin-catalog-request-grid">
-                        <c:forEach var="brandRequest" items="${pendingBrandRequests}">
-                            <pa:admin-catalog-request-card
-                                    id="${brandRequest.id}"
-                                    name="${brandRequest.name}"
-                                    submitter="${brandRequest.submitter}"
-                                    comments="${brandRequest.comments}"
-                                    type="brand"
-                                    kicker="Marca"/>
-                        </c:forEach>
-                    </div>
-                </c:otherwise>
-            </c:choose>
-        </section>
-
-        <section class="admin-catalog-section" aria-label="Solicitudes de carrocerías">
-            <div class="admin-section-heading">
-                <div>
-                    <h2>Solicitudes de carrocerías</h2>
-                </div>
-            </div>
-            <c:choose>
-                <c:when test="${empty pendingBodyTypeRequests}">
-                    <div class="admin-empty-state">
-                        <p>No hay solicitudes de carrocerías pendientes.</p>
-                    </div>
-                </c:when>
-                <c:otherwise>
-                    <div class="admin-catalog-request-grid">
-                        <c:forEach var="bodyTypeRequest" items="${pendingBodyTypeRequests}">
-                            <pa:admin-catalog-request-card
-                                    id="${bodyTypeRequest.id}"
-                                    name="${bodyTypeRequest.name}"
-                                    submitter="${bodyTypeRequest.submitter}"
-                                    comments="${bodyTypeRequest.comments}"
-                                    type="body-type"
-                                    kicker="Carrocería"/>
-                        </c:forEach>
-                    </div>
-                </c:otherwise>
-            </c:choose>
-        </section>
-
-        <section class="admin-catalog-section" aria-label="Solicitudes de moderador">
-            <div class="admin-section-heading">
-                <div>
-                    <h2>Solicitudes de moderador</h2>
-                </div>
-            </div>
-            <c:choose>
-                <c:when test="${empty pendingAdminRequests}">
-                    <div class="admin-empty-state">
-                        <p>No hay solicitudes de moderador pendientes.</p>
-                    </div>
-                </c:when>
-                <c:otherwise>
-                    <div class="admin-catalog-request-grid">
-                        <c:forEach var="adminRequest" items="${pendingAdminRequests}">
-                            <button type="button"
-                                    class="admin-catalog-request-card"
-                                    data-open-admin-request-review
-                                    data-request-id="${adminRequest.id}"
-                                    data-request-submitter="${fn:escapeXml(adminRequest.label)}"
-                                    data-request-motivation="${fn:escapeXml(adminRequest.motivation)}"
-                                    data-request-bio="${fn:escapeXml(adminRequest.bio)}"
-                                    data-request-justification="${fn:escapeXml(adminRequest.justification)}">
-                                <span class="admin-catalog-request-card-kicker">Moderador</span>
-                                <span class="admin-catalog-request-card-name">
-                                    <c:out value="${adminRequest.username}"/>
-                                </span>
-                            </button>
+                                    requestMaxSpeedKmh="${request.maxSpeedKmh}"/>
                         </c:forEach>
                     </div>
                 </c:otherwise>
@@ -200,11 +103,7 @@
     </main>
 
     <pa:create-car-modal brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
-    <pa:admin-catalog-request-modal/>
-    <pa:admin-request-review-modal/>
     <script src="<c:url value='/js/create-car-modal.js?v=2'/>"></script>
-    <script src="<c:url value='/js/admin-catalog-modal.js'/>"></script>
-    <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

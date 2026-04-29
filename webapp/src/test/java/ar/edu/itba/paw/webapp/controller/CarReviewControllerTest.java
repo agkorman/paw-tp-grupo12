@@ -1,27 +1,29 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.BodyType;
+import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.Page;
-import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.ReviewStats;
+import ar.edu.itba.paw.persistence.BodyTypeDao;
+import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
-import ar.edu.itba.paw.webapp.exception.ForbiddenException;
-import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.junit.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.math.BigDecimal;
@@ -98,7 +100,7 @@ public class CarReviewControllerTest {
         reviewService.review = review(3L, 8L, 10L);
         final CarReviewController controller = controller(reviewService);
 
-        assertThrows(ForbiddenException.class, () -> controller.updateReview(
+        final RuntimeException exception = assertThrows(RuntimeException.class, () -> controller.updateReview(
                 3L,
                 BigDecimal.valueOf(4),
                 "Editada",
@@ -110,6 +112,7 @@ public class CarReviewControllerTest {
                 user(7L)
         ));
 
+        assertResponseStatus(exception, HttpStatus.FORBIDDEN);
         assertFalse(reviewService.updated);
     }
 
@@ -132,8 +135,10 @@ public class CarReviewControllerTest {
         reviewService.review = review(3L, 8L, 10L);
         final CarReviewController controller = controller(reviewService);
 
-        assertThrows(ForbiddenException.class, () -> controller.deleteReview(3L, user(7L)));
+        final RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> controller.deleteReview(3L, user(7L)));
 
+        assertResponseStatus(exception, HttpStatus.FORBIDDEN);
         assertFalse(reviewService.deleted);
     }
 
@@ -142,7 +147,7 @@ public class CarReviewControllerTest {
         final FakeReviewService reviewService = new FakeReviewService();
         final CarReviewController controller = controller(reviewService);
 
-        assertThrows(ResourceNotFoundException.class, () -> controller.updateReview(
+        final RuntimeException exception = assertThrows(RuntimeException.class, () -> controller.updateReview(
                 99L,
                 BigDecimal.valueOf(4),
                 "Editada",
@@ -154,6 +159,7 @@ public class CarReviewControllerTest {
                 user(7L)
         ));
 
+        assertResponseStatus(exception, HttpStatus.NOT_FOUND);
         assertFalse(reviewService.updated);
     }
 
@@ -167,7 +173,9 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 replyService,
-                new FakeReviewLikeService()
+                new FakeReviewLikeService(),
+                new FakeBrandDao(),
+                new FakeBodyTypeDao()
         );
 
         final ModelAndView mav = controller.createReply(3L, "Totalmente de acuerdo.", user(7L));
@@ -188,7 +196,9 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 replyService,
-                new FakeReviewLikeService()
+                new FakeReviewLikeService(),
+                new FakeBrandDao(),
+                new FakeBodyTypeDao()
         );
 
         final ModelAndView mav = controller.createReply(3L, "   ", user(7L));
@@ -207,7 +217,9 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 new FakeReviewReplyService(),
-                likeService
+                likeService,
+                new FakeBrandDao(),
+                new FakeBodyTypeDao()
         );
 
         final ModelAndView mav = (ModelAndView) controller.toggleReviewLike(3L, null, user(7L));
@@ -230,7 +242,9 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 replyService,
-                likeService
+                likeService,
+                new FakeBrandDao(),
+                new FakeBodyTypeDao()
         );
 
         final ModelAndView mav = (ModelAndView) controller.toggleReplyLike(4L, null, user(7L));
@@ -240,59 +254,15 @@ public class CarReviewControllerTest {
         assertEquals(7L, likeService.toggledUserId);
     }
 
-    @Test
-    public void reviewPageUsesDefaultPageWhenPageIsMissing() {
-        final FakeReviewService reviewService = new FakeReviewService();
-        reviewService.review = review(3L, 8L, 10L);
-        final CarReviewController controller = controller(reviewService);
-        final ExtendedModelMap model = new ExtendedModelMap();
-
-        final String view = controller.reviewForm(10L, null, null, null, new ReviewForm(), null, model);
-
-        assertEquals("car-review.jsp", view);
-        assertEquals(Pagination.DEFAULT_PAGE, reviewService.requestedPage);
-        assertEquals(Pagination.DEFAULT_PAGE, model.get("currentPage"));
-    }
-
-    @Test
-    public void reviewPageNormalizesInvalidPageToDefaultPage() {
-        final FakeReviewService reviewService = new FakeReviewService();
-        reviewService.review = review(3L, 8L, 10L);
-        final CarReviewController controller = controller(reviewService);
-        final ExtendedModelMap model = new ExtendedModelMap();
-
-        final String view = controller.reviewForm(10L, null, 0, null, new ReviewForm(), null, model);
-
-        assertEquals("car-review.jsp", view);
-        assertEquals(Pagination.DEFAULT_PAGE, reviewService.requestedPage);
-        assertEquals(Pagination.DEFAULT_PAGE, model.get("currentPage"));
-    }
-
-    @Test
-    public void reviewPageUsesClampedPageMetadataFromService() {
-        final FakeReviewService reviewService = new FakeReviewService();
-        final Review review = review(3L, 8L, 10L);
-        reviewService.review = review;
-        reviewService.pagedReviews = new Page<>(List.of(review), 2, Pagination.REVIEWS_PAGE_SIZE, 6L);
-        final CarReviewController controller = controller(reviewService);
-        final ExtendedModelMap model = new ExtendedModelMap();
-
-        final String view = controller.reviewForm(10L, null, 99, null, new ReviewForm(), null, model);
-
-        assertEquals("car-review.jsp", view);
-        assertEquals(99, reviewService.requestedPage);
-        assertEquals(2, model.get("currentPage"));
-        assertEquals(2, model.get("totalPages"));
-        assertEquals(6L, model.get("totalItems"));
-    }
-
     private CarReviewController controller(final FakeReviewService reviewService) {
         return new CarReviewController(
                 new FakeCarService(),
                 new FakeCarFavoriteService(),
                 reviewService,
                 new FakeReviewReplyService(),
-                new FakeReviewLikeService()
+                new FakeReviewLikeService(),
+                new FakeBrandDao(),
+                new FakeBodyTypeDao()
         );
     }
 
@@ -334,6 +304,11 @@ public class CarReviewControllerTest {
         return form;
     }
 
+    private void assertResponseStatus(final RuntimeException exception, final HttpStatus expectedStatus) {
+        final ResponseStatus responseStatus = exception.getClass().getAnnotation(ResponseStatus.class);
+        assertEquals(expectedStatus, responseStatus.value());
+    }
+
     private static final class FakeCarService implements CarService {
         @Override
         public List<Car> getAllCars() {
@@ -351,13 +326,23 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public List<Car> getCarsByBodyType(final String bodyType) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<Car> getCarsByBrand(final String brand) {
+            return Collections.emptyList();
+        }
+
+        @Override
         public List<Car> getCarsByBrandAndBodyType(final String brand, final String bodyType) {
             return Collections.emptyList();
         }
 
         @Override
-        public ar.edu.itba.paw.model.Page<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
-            return ar.edu.itba.paw.model.Page.empty(1, 0);
+        public List<Car> searchCars(final ar.edu.itba.paw.model.CarSearchCriteria criteria) {
+            return Collections.emptyList();
         }
 
         @Override
@@ -376,30 +361,47 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public void saveCarImage(final long carId, final String contentType, final byte[] imageData) {
+        }
+
+        @Override
         public void saveCarImages(final long carId, final List<CarImagePayload> images) {
         }
 
         @Override
         public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                             final Integer year, final long submittedByUserId, final String submitterEmail,
+                                             final long submittedByUserId, final String submitterEmail,
+                                             final Optional<String> description,
+                                             final Optional<String> imageContentType,
+                                             final Optional<byte[]> imageData,
+                                             final String fuelType, final Integer horsepower,
+                                             final Integer airbagCount, final String transmission,
+                                             final java.math.BigDecimal fuelConsumption,
+                                             final Integer maxSpeedKmh) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
+                                             final long submittedByUserId, final String submitterEmail,
                                              final Optional<String> description,
                                              final List<CarImagePayload> images,
                                              final String fuelType, final Integer horsepower,
                                              final Integer airbagCount, final String transmission,
                                              final java.math.BigDecimal fuelConsumption,
-                                             final Integer maxSpeedKmh, final java.math.BigDecimal priceUsd) {
+                                             final Integer maxSpeedKmh) {
             throw new UnsupportedOperationException();
         }
 
         @Override
         public Optional<Car> updateCar(final long id, final long brandId, final String model,
-                                       final long bodyTypeId, final Integer year, final String description,
+                                       final long bodyTypeId, final String description,
                                        final Optional<String> imageContentType,
                                        final Optional<byte[]> imageData,
                                        final String fuelType, final Integer horsepower,
                                        final Integer airbagCount, final String transmission,
                                        final java.math.BigDecimal fuelConsumption,
-                                       final Integer maxSpeedKmh, final java.math.BigDecimal priceUsd) {
+                                       final Integer maxSpeedKmh) {
             return Optional.empty();
         }
 
@@ -444,8 +446,6 @@ public class CarReviewControllerTest {
         private long updatedCarId;
         private boolean deleted;
         private long deletedId;
-        private int requestedPage;
-        private Page<Review> pagedReviews;
 
         @Override
         public Review createReview(final long userId, final long carId, final BigDecimal rating, final String title,
@@ -492,16 +492,6 @@ public class CarReviewControllerTest {
         }
 
         @Override
-        public Page<Review> getReviewsByCar(final long carId, final int page) {
-            this.requestedPage = page;
-            if (pagedReviews != null) {
-                return pagedReviews;
-            }
-            final List<Review> items = getReviewsByCar(carId);
-            return new Page<>(items, Pagination.normalizePage(page), Pagination.REVIEWS_PAGE_SIZE, items.size());
-        }
-
-        @Override
         public Optional<Review> getLatestReviewByCar(final long carId) {
             return Optional.ofNullable(review);
         }
@@ -517,18 +507,8 @@ public class CarReviewControllerTest {
         }
 
         @Override
-        public Page<Review> getReviewsByCarOrderByRatingAsc(final long carId, final int page) {
-            return getReviewsByCar(carId, page);
-        }
-
-        @Override
         public List<Review> getReviewsByCarOrderByRatingDesc(final long carId) {
             return getReviewsByCar(carId);
-        }
-
-        @Override
-        public Page<Review> getReviewsByCarOrderByRatingDesc(final long carId, final int page) {
-            return getReviewsByCar(carId, page);
         }
 
         @Override
@@ -536,6 +516,11 @@ public class CarReviewControllerTest {
             return review != null && review.getUserId() != null && review.getUserId() == userId
                     ? List.of(review)
                     : Collections.emptyList();
+        }
+
+        @Override
+        public List<Review> getAllReviews() {
+            return review == null ? Collections.emptyList() : List.of(review);
         }
 
         @Override
@@ -659,6 +644,50 @@ public class CarReviewControllerTest {
         @Override
         public Map<Long, Long> countNewLikesPerReview(final long userId, final LocalDateTime since) {
             return Collections.emptyMap();
+        }
+    }
+
+    private static final class FakeBrandDao implements BrandDao {
+        @Override
+        public List<Brand> findAll() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<Brand> findById(final long id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Brand> findByName(final String name) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Brand create(final String name) {
+            throw new UnsupportedOperationException("Not needed by this test fake.");
+        }
+    }
+
+    private static final class FakeBodyTypeDao implements BodyTypeDao {
+        @Override
+        public List<BodyType> findAll() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<BodyType> findById(final long id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<BodyType> findByName(final String name) {
+            return Optional.empty();
+        }
+
+        @Override
+        public BodyType create(final String name) {
+            throw new UnsupportedOperationException("Not needed by this test fake.");
         }
     }
 }

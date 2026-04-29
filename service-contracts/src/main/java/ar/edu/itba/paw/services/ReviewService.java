@@ -1,6 +1,5 @@
 package ar.edu.itba.paw.services;
 
-import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 
@@ -18,14 +17,12 @@ public interface ReviewService {
                                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
     boolean deleteReview(long id);
     List<Review> getReviewsByCar(long carId);
-    Page<Review> getReviewsByCar(long carId, int page);
     Optional<Review> getLatestReviewByCar(long carId);
     Optional<Review> getTopRatedLatestReviewByCar(long carId);
     List<Review> getReviewsByCarOrderByRatingAsc(long carId);
-    Page<Review> getReviewsByCarOrderByRatingAsc(long carId, int page);
     List<Review> getReviewsByCarOrderByRatingDesc(long carId);
-    Page<Review> getReviewsByCarOrderByRatingDesc(long carId, int page);
     List<Review> getReviewsByUser(long userId);
+    List<Review> getAllReviews();
     Optional<ReviewStats> getReviewStatsByCar(long carId);
     List<ReviewStats> getReviewStatsByCarIds(Collection<Long> carIds);
 }

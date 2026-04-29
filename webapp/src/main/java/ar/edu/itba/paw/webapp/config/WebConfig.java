@@ -113,9 +113,16 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     private DbConfig loadFromProperties() {
-        final Properties properties = loadPropertiesIfExists(DB_PROPERTIES_RESOURCE);
-        if (properties == null) {
+        final ClassPathResource resource = new ClassPathResource(DB_PROPERTIES_RESOURCE);
+        if (!resource.exists()) {
             return null;
+        }
+
+        final Properties properties = new Properties();
+        try (InputStream inputStream = resource.getInputStream()) {
+            properties.load(inputStream);
+        } catch (final IOException e) {
+            throw new IllegalStateException("Failed to load " + DB_PROPERTIES_RESOURCE, e);
         }
 
         final String url = normalize(properties.getProperty("db.url"));
@@ -168,8 +175,14 @@ public class WebConfig implements WebMvcConfigurer {
             return envValue;
         }
 
-        final Properties properties = loadPropertiesIfExists(MAIL_PROPERTIES_RESOURCE);
-        if (properties != null) {
+        final ClassPathResource resource = new ClassPathResource(MAIL_PROPERTIES_RESOURCE);
+        if (resource.exists()) {
+            final Properties properties = new Properties();
+            try (InputStream is = resource.getInputStream()) {
+                properties.load(is);
+            } catch (final IOException e) {
+                throw new IllegalStateException("Failed to load " + MAIL_PROPERTIES_RESOURCE, e);
+            }
             final String propValue = normalizeBaseUrl(properties.getProperty("app.baseUrl"));
             if (propValue != null) {
                 return propValue;
@@ -202,28 +215,6 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     private MailConfig resolveMailConfig() {
-        final MailConfig envConfig = loadMailConfigFromEnvironment();
-        if (envConfig != null) {
-            return envConfig;
-        }
-
-        final Properties properties = loadPropertiesIfExists(MAIL_PROPERTIES_RESOURCE);
-        if (properties != null) {
-            return new MailConfig(
-                    normalize(properties.getProperty("mail.host")),
-                    Integer.parseInt(properties.getProperty("mail.port", "587").trim()),
-                    normalize(properties.getProperty("mail.username")),
-                    normalize(properties.getProperty("mail.password"))
-            );
-        }
-
-        throw new IllegalStateException(
-                "Mail configuration not found. Set MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD "
-                        + "or provide a classpath mail.properties file."
-        );
-    }
-
-    private MailConfig loadMailConfigFromEnvironment() {
         final String host = normalize(System.getenv("MAIL_HOST"));
         final String portStr = normalize(System.getenv("MAIL_PORT"));
         final String username = normalize(System.getenv("MAIL_USERNAME"));
@@ -231,22 +222,27 @@ public class WebConfig implements WebMvcConfigurer {
         if (host != null && portStr != null && username != null && password != null) {
             return new MailConfig(host, Integer.parseInt(portStr), username, password);
         }
-        return null;
-    }
 
-    private Properties loadPropertiesIfExists(final String resourceName) {
-        final ClassPathResource resource = new ClassPathResource(resourceName);
-        if (!resource.exists()) {
-            return null;
+        final ClassPathResource resource = new ClassPathResource(MAIL_PROPERTIES_RESOURCE);
+        if (resource.exists()) {
+            final Properties properties = new Properties();
+            try (InputStream is = resource.getInputStream()) {
+                properties.load(is);
+            } catch (final IOException e) {
+                throw new IllegalStateException("Failed to load " + MAIL_PROPERTIES_RESOURCE, e);
+            }
+            return new MailConfig(
+                    properties.getProperty("mail.host"),
+                    Integer.parseInt(properties.getProperty("mail.port", "587")),
+                    properties.getProperty("mail.username"),
+                    properties.getProperty("mail.password")
+            );
         }
 
-        final Properties properties = new Properties();
-        try (InputStream inputStream = resource.getInputStream()) {
-            properties.load(inputStream);
-        } catch (final IOException e) {
-            throw new IllegalStateException("Failed to load " + resourceName, e);
-        }
-        return properties;
+        throw new IllegalStateException(
+                "Mail configuration not found. Set MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD "
+                        + "or provide a classpath mail.properties file."
+        );
     }
 
     @Bean
