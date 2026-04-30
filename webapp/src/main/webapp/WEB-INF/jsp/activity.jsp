@@ -20,6 +20,10 @@
 <body>
     <pa:nav activePage="activity"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
+    <c:url var="activityBaseUrl" value="/activity"/>
+    <c:url var="activityLatestTabUrl" value="/activity">
+        <c:param name="tab" value="latest"/>
+    </c:url>
     <c:url var="activityFollowingLoginUrl" value="/login">
         <c:param name="redirect" value="/activity"/>
         <c:param name="intent" value="activity-following"/>
@@ -29,40 +33,46 @@
         <c:param name="intent" value="activity-favorites"/>
     </c:url>
 
-    <main class="activity-page" data-activity-tabs>
+    <main class="activity-page">
         <div class="activity-tabs-list" role="tablist" aria-label="Filtros de actividad">
-            <button type="button"
-                    id="activityNewsTab"
-                    class="activity-tab"
-                    role="tab"
-                    aria-selected="true"
-                    aria-controls="activityNewsPanel"
-                    data-activity-tab-target="activityNewsPanel">
+            <a id="activityNewsTab"
+               class="activity-tab"
+               href="${activityLatestTabUrl}"
+               role="tab"
+               aria-selected="${activeTab eq 'latest'}"
+               aria-controls="activityNewsPanel"
+               data-activity-tab-target="activityNewsPanel">
                 <span>Novedad</span>
-                <strong><c:out value="${fn:length(latestActivityReviews)}"/></strong>
-            </button>
+                <strong><c:out value="${latestCount}"/></strong>
+            </a>
             <c:choose>
                 <c:when test="${authenticated}">
-                    <button type="button"
-                            id="activityFollowingTab"
-                            class="activity-tab"
-                            role="tab"
-                            aria-selected="false"
-                            aria-controls="activityFollowingPanel"
-                            data-activity-tab-target="activityFollowingPanel">
+                    <c:url var="activityFollowingTabUrl" value="/activity">
+                        <c:param name="tab" value="following"/>
+                    </c:url>
+                    <c:url var="activityFavoritesTabUrl" value="/activity">
+                        <c:param name="tab" value="favorites"/>
+                    </c:url>
+                    <a id="activityFollowingTab"
+                       class="activity-tab"
+                       href="${activityFollowingTabUrl}"
+                       role="tab"
+                       aria-selected="${activeTab eq 'following'}"
+                       aria-controls="activityFollowingPanel"
+                       data-activity-tab-target="activityFollowingPanel">
                         <span>Seguidos</span>
-                        <strong><c:out value="${fn:length(followedActivityReviews)}"/></strong>
-                    </button>
-                    <button type="button"
-                            id="activityFavoritesTab"
-                            class="activity-tab"
-                            role="tab"
-                            aria-selected="false"
-                            aria-controls="activityFavoritesPanel"
-                            data-activity-tab-target="activityFavoritesPanel">
+                        <strong><c:out value="${followedCount}"/></strong>
+                    </a>
+                    <a id="activityFavoritesTab"
+                       class="activity-tab"
+                       href="${activityFavoritesTabUrl}"
+                       role="tab"
+                       aria-selected="${activeTab eq 'favorites'}"
+                       aria-controls="activityFavoritesPanel"
+                       data-activity-tab-target="activityFavoritesPanel">
                         <span>Autos favoritos</span>
-                        <strong><c:out value="${fn:length(favoriteCarActivityReviews)}"/></strong>
-                    </button>
+                        <strong><c:out value="${favoriteCount}"/></strong>
+                    </a>
                 </c:when>
                 <c:otherwise>
                     <a href="${activityFollowingLoginUrl}"
@@ -83,69 +93,125 @@
             </c:choose>
         </div>
 
-        <section id="activityNewsPanel"
-                 class="activity-tab-panel"
-                 role="tabpanel"
-                 aria-labelledby="activityNewsTab">
-            <c:choose>
-                <c:when test="${empty latestActivityReviews}">
-                    <div class="activity-empty-state">
-                        <p>No hay reseñas recientes para mostrar.</p>
-                    </div>
-                </c:when>
-                <c:otherwise>
-                    <div class="activity-feed" aria-label="Últimas reseñas">
-                        <c:forEach var="activityReview" items="${latestActivityReviews}">
-                            <pa:activity-review-card reviewCard="${activityReview}"/>
-                        </c:forEach>
-                    </div>
-                </c:otherwise>
-            </c:choose>
-        </section>
-
-        <c:if test="${authenticated}">
-            <section id="activityFollowingPanel"
-                     class="activity-tab-panel"
-                     role="tabpanel"
-                     aria-labelledby="activityFollowingTab">
-                <c:choose>
-                    <c:when test="${empty followedActivityReviews}">
-                        <div class="activity-empty-state">
-                            <p>No hay reseñas recientes de usuarios que sigues.</p>
-                        </div>
-                    </c:when>
-                    <c:otherwise>
-                        <div class="activity-feed" aria-label="Reseñas de usuarios seguidos">
-                            <c:forEach var="activityReview" items="${followedActivityReviews}">
-                                <pa:activity-review-card reviewCard="${activityReview}"/>
-                            </c:forEach>
-                        </div>
-                    </c:otherwise>
-                </c:choose>
-            </section>
-
-            <section id="activityFavoritesPanel"
-                     class="activity-tab-panel"
-                     role="tabpanel"
-                     aria-labelledby="activityFavoritesTab">
-                <c:choose>
-                    <c:when test="${empty favoriteCarActivityReviews}">
-                        <div class="activity-empty-state">
-                            <p>No hay reseñas recientes sobre tus autos favoritos.</p>
-                        </div>
-                    </c:when>
-                    <c:otherwise>
-                        <div class="activity-feed" aria-label="Reseñas de autos favoritos">
-                            <c:forEach var="activityReview" items="${favoriteCarActivityReviews}">
-                                <pa:activity-review-card reviewCard="${activityReview}"/>
-                            </c:forEach>
-                        </div>
-                    </c:otherwise>
-                </c:choose>
-            </section>
-        </c:if>
+        <c:choose>
+            <c:when test="${activeTab eq 'following'}">
+                <section id="activityFollowingPanel"
+                         class="activity-tab-panel"
+                         role="tabpanel"
+                         aria-labelledby="activityFollowingTab">
+                    <c:choose>
+                        <c:when test="${empty activityReviews}">
+                            <div class="activity-empty-state">
+                                <p>No hay reseñas recientes de usuarios que sigues.</p>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="activity-feed" aria-label="Reseñas de usuarios seguidos">
+                                <c:forEach var="activityReview" items="${activityReviews}">
+                                    <pa:activity-review-card reviewCard="${activityReview}"/>
+                                </c:forEach>
+                            </div>
+                            <c:if test="${activityCurrentPage < activityTotalPages}">
+                                <c:url var="activityShowMoreUrl" value="/activity">
+                                    <c:param name="tab" value="following"/>
+                                    <c:param name="page" value="${activityCurrentPage + 1}"/>
+                                </c:url>
+                                <div class="reviews-feed-more profile-show-more">
+                                    <a class="btn-secondary reviews-show-more"
+                                       href="${activityShowMoreUrl}"
+                                       data-review-show-more="true"
+                                       data-fragment-url="${activityBaseUrl}"
+                                       data-target="#activityFollowingPanel"
+                                       data-list-selector=".activity-feed"
+                                       data-item-selector=".activity-feed > .activity-review-card">
+                                        Mostrar más reseñas
+                                    </a>
+                                </div>
+                            </c:if>
+                        </c:otherwise>
+                    </c:choose>
+                </section>
+            </c:when>
+            <c:when test="${activeTab eq 'favorites'}">
+                <section id="activityFavoritesPanel"
+                         class="activity-tab-panel"
+                         role="tabpanel"
+                         aria-labelledby="activityFavoritesTab">
+                    <c:choose>
+                        <c:when test="${empty activityReviews}">
+                            <div class="activity-empty-state">
+                                <p>No hay reseñas recientes sobre tus autos favoritos.</p>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="activity-feed" aria-label="Reseñas de autos favoritos">
+                                <c:forEach var="activityReview" items="${activityReviews}">
+                                    <pa:activity-review-card reviewCard="${activityReview}"/>
+                                </c:forEach>
+                            </div>
+                            <c:if test="${activityCurrentPage < activityTotalPages}">
+                                <c:url var="activityShowMoreUrl" value="/activity">
+                                    <c:param name="tab" value="favorites"/>
+                                    <c:param name="page" value="${activityCurrentPage + 1}"/>
+                                </c:url>
+                                <div class="reviews-feed-more profile-show-more">
+                                    <a class="btn-secondary reviews-show-more"
+                                       href="${activityShowMoreUrl}"
+                                       data-review-show-more="true"
+                                       data-fragment-url="${activityBaseUrl}"
+                                       data-target="#activityFavoritesPanel"
+                                       data-list-selector=".activity-feed"
+                                       data-item-selector=".activity-feed > .activity-review-card">
+                                        Mostrar más reseñas
+                                    </a>
+                                </div>
+                            </c:if>
+                        </c:otherwise>
+                    </c:choose>
+                </section>
+            </c:when>
+            <c:otherwise>
+                <section id="activityNewsPanel"
+                         class="activity-tab-panel"
+                         role="tabpanel"
+                         aria-labelledby="activityNewsTab">
+                    <c:choose>
+                        <c:when test="${empty activityReviews}">
+                            <div class="activity-empty-state">
+                                <p>No hay reseñas recientes para mostrar.</p>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="activity-feed" aria-label="Últimas reseñas">
+                                <c:forEach var="activityReview" items="${activityReviews}">
+                                    <pa:activity-review-card reviewCard="${activityReview}"/>
+                                </c:forEach>
+                            </div>
+                            <c:if test="${activityCurrentPage < activityTotalPages}">
+                                <c:url var="activityShowMoreUrl" value="/activity">
+                                    <c:param name="tab" value="latest"/>
+                                    <c:param name="page" value="${activityCurrentPage + 1}"/>
+                                </c:url>
+                                <div class="reviews-feed-more profile-show-more">
+                                    <a class="btn-secondary reviews-show-more"
+                                       href="${activityShowMoreUrl}"
+                                       data-review-show-more="true"
+                                       data-fragment-url="${activityBaseUrl}"
+                                       data-target="#activityNewsPanel"
+                                       data-list-selector=".activity-feed"
+                                       data-item-selector=".activity-feed > .activity-review-card">
+                                        Mostrar más reseñas
+                                    </a>
+                                </div>
+                            </c:if>
+                        </c:otherwise>
+                    </c:choose>
+                </section>
+            </c:otherwise>
+        </c:choose>
     </main>
 
-    <script src="<c:url value='/js/activity.js?v=2'/>"></script>
+    <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
+    <script src="<c:url value='/js/activity.js?v=3'/>"></script>
 </body>
 </html>

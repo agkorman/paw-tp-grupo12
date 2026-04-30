@@ -40,10 +40,10 @@ public class ActivityControllerTest {
                 new FakeCarFavoriteService()
         );
 
-        final ModelAndView mav = controller.activity(user());
+        final ModelAndView mav = controller.activity(user(), null, 1);
 
         assertEquals("activity.jsp", mav.getViewName());
-        final List<ActivityController.ActivityReviewCard> cards = activityCards(mav, "latestActivityReviews");
+        final List<ActivityController.ActivityReviewCard> cards = activityCards(mav);
         assertEquals(1, cards.size());
         assertEquals("Porsche 911 GT3 RS", cards.get(0).getCarName());
         assertEquals("Alex Carrera", cards.get(0).getAuthorName());
@@ -62,13 +62,15 @@ public class ActivityControllerTest {
                 new FakeCarFavoriteService()
         );
 
-        final ModelAndView mav = controller.activity(user());
+        final ModelAndView latestMav = controller.activity(user(), "latest", 1);
+        final ModelAndView followingMav = controller.activity(user(), "following", 1);
+        final ModelAndView favoritesMav = controller.activity(user(), "favorites", 1);
 
-        assertEquals(3, activityCards(mav, "latestActivityReviews").size());
-        assertEquals(1, activityCards(mav, "followedActivityReviews").size());
-        assertEquals(followedReview.getId(), activityCards(mav, "followedActivityReviews").get(0).getReview().getId());
-        assertEquals(1, activityCards(mav, "favoriteCarActivityReviews").size());
-        assertEquals(favoriteCarReview.getId(), activityCards(mav, "favoriteCarActivityReviews").get(0).getReview().getId());
+        assertEquals(3, activityCards(latestMav).size());
+        assertEquals(1, activityCards(followingMav).size());
+        assertEquals(followedReview.getId(), activityCards(followingMav).get(0).getReview().getId());
+        assertEquals(1, activityCards(favoritesMav).size());
+        assertEquals(favoriteCarReview.getId(), activityCards(favoritesMav).get(0).getReview().getId());
     }
 
     @Test
@@ -81,12 +83,12 @@ public class ActivityControllerTest {
                 new FakeCarFavoriteService()
         );
 
-        final ModelAndView mav = controller.activity(null);
+        final ModelAndView mav = controller.activity(null, null, 1);
 
         assertEquals("activity.jsp", mav.getViewName());
-        assertEquals(1, activityCards(mav, "latestActivityReviews").size());
-        assertTrue(activityCards(mav, "followedActivityReviews").isEmpty());
-        assertTrue(activityCards(mav, "favoriteCarActivityReviews").isEmpty());
+        assertEquals(1, activityCards(mav).size());
+        assertEquals(0, (int) mav.getModel().get("followedCount"));
+        assertEquals(0, (int) mav.getModel().get("favoriteCount"));
     }
 
     @Test
@@ -106,9 +108,9 @@ public class ActivityControllerTest {
                 new FakeCarFavoriteService()
         );
 
-        final ModelAndView mav = controller.activity(user());
+        final ModelAndView mav = controller.activity(user(), null, 1);
 
-        assertEquals(2, activityCards(mav, "latestActivityReviews").stream()
+        assertEquals(2, activityCards(mav).stream()
                 .filter(card -> card.getReview().getId() == 6L)
                 .findFirst()
                 .orElseThrow()
@@ -139,8 +141,8 @@ public class ActivityControllerTest {
     }
 
     @SuppressWarnings("unchecked")
-    private List<ActivityController.ActivityReviewCard> activityCards(final ModelAndView mav, final String attribute) {
-        return (List<ActivityController.ActivityReviewCard>) mav.getModel().get(attribute);
+    private List<ActivityController.ActivityReviewCard> activityCards(final ModelAndView mav) {
+        return (List<ActivityController.ActivityReviewCard>) mav.getModel().get("activityReviews");
     }
 
     private static final class FakeReviewService implements ReviewService {
