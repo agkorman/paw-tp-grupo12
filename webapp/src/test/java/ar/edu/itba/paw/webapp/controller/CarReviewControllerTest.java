@@ -698,6 +698,11 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public boolean deleteReplyAsAdmin(final long id) {
+            return false;
+        }
+
+        @Override
         public Map<Long, Long> countNewRepliesPerReview(final long userId, final LocalDateTime since) {
             return Collections.emptyMap();
         }

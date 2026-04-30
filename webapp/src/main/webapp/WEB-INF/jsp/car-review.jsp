@@ -16,6 +16,9 @@
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
+    <sec:authorize access="hasRole('ADMIN')">
+        <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
+    </sec:authorize>
 </head>
 <body>
     <pa:nav activePage="reviews"/>
