@@ -1,5 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -98,6 +101,16 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
     }
 
     @Override
+    public Page<Long> findLikedReviewIdsByUserId(final long userId, final int page) {
+        return findLikedIdsByUserId("review_likes", "review_id", userId, page);
+    }
+
+    @Override
+    public long countLikedReviewsByUserId(final long userId) {
+        return countByUserId("review_likes", userId);
+    }
+
+    @Override
     public boolean likeReply(final long replyId, final long userId) {
         try {
             return jdbcTemplate.update(
@@ -165,6 +178,36 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
                 id
         );
         return count == null ? 0 : count;
+    }
+
+    private long countByUserId(final String tableName, final long userId) {
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM " + tableName + " WHERE user_id = ?",
+                Long.class,
+                userId
+        );
+        return count == null ? 0L : count;
+    }
+
+    private Page<Long> findLikedIdsByUserId(final String tableName, final String idColumn,
+                                            final long userId, final int page) {
+        final int normalizedPage = Pagination.normalizePage(page);
+        final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
+        final long total = countByUserId(tableName, userId);
+        if (total == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final int effectivePage = Pagination.clampPage(normalizedPage, total, pageSize);
+        final long offset = Pagination.offsetFor(effectivePage, pageSize);
+        final List<Long> items = jdbcTemplate.queryForList(
+                "SELECT " + idColumn + " FROM " + tableName
+                        + " WHERE user_id = ? ORDER BY created_at DESC, " + idColumn + " DESC LIMIT ? OFFSET ?",
+                Long.class,
+                userId,
+                pageSize,
+                offset
+        );
+        return new Page<>(items, effectivePage, pageSize, total);
     }
 
     private Map<Long, Long> countByIds(final String tableName, final String idColumn, final String paramName,

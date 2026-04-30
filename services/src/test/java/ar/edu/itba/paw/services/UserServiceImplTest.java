@@ -258,6 +258,16 @@ class UserServiceImplTest {
         }
 
         @Override
+        public Page<Review> findByUserId(final long userId, final int page) {
+            return Page.empty(page, 0);
+        }
+
+        @Override
+        public long countByUserId(final long userId) {
+            return 0L;
+        }
+
+        @Override
         public Optional<ReviewStats> findStatsByCarId(final long carId) {
             return Optional.empty();
         }

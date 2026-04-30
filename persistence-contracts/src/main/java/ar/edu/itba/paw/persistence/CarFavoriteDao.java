@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Page;
 
 import java.util.Collection;
 import java.util.List;
@@ -14,6 +15,10 @@ public interface CarFavoriteDao {
     boolean isFavorited(long userId, long carId);
 
     List<Car> findFavoriteCars(long userId);
+
+    Page<Car> findFavoriteCars(long userId, int page);
+
+    long countFavoriteCars(long userId);
 
     Set<Long> findFavoritedCarIds(long userId, Collection<Long> carIds);
 }

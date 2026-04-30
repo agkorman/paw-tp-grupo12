@@ -299,6 +299,12 @@ class RecommendationServiceImplTest {
         public List<Review> findByUserId(final long userId) { return Collections.emptyList(); }
 
         @Override
+        public Page<Review> findByUserId(final long userId, final int page) { return Page.empty(page, 0); }
+
+        @Override
+        public long countByUserId(final long userId) { return 0; }
+
+        @Override
         public Optional<ReviewStats> findStatsByCarId(final long carId) { return Optional.ofNullable(stats.get(carId)); }
 
         @Override

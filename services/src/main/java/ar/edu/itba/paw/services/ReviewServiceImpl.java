@@ -131,6 +131,16 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public Page<Review> getReviewsByUser(final long userId, final int page) {
+        return reviewDao.findByUserId(userId, page);
+    }
+
+    @Override
+    public long countReviewsByUser(final long userId) {
+        return reviewDao.countByUserId(userId);
+    }
+
+    @Override
     public Optional<ReviewStats> getReviewStatsByCar(final long carId) {
         return reviewDao.findStatsByCarId(carId);
     }

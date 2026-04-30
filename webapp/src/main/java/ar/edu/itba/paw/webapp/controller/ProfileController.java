@@ -1,14 +1,13 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
-import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.AdminRequestService;
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.List;
@@ -35,9 +35,12 @@ import java.util.stream.Collectors;
 @Controller
 public class ProfileController {
 
+    private static final String TAB_REVIEWS = "reviews";
+    private static final String TAB_FAVORITES = "favorites";
+    private static final String TAB_LIKED = "liked";
+
     private final ReviewService reviewService;
     private final ReviewLikeService reviewLikeService;
-    private final ReviewReplyService reviewReplyService;
     private final CarService carService;
     private final CarFavoriteService carFavoriteService;
     private final UserService userService;
@@ -46,14 +49,12 @@ public class ProfileController {
 
     @Autowired
     public ProfileController(final ReviewService reviewService, final ReviewLikeService reviewLikeService,
-                             final ReviewReplyService reviewReplyService,
                              final CarService carService,
                              final CarFavoriteService carFavoriteService,
                              final UserService userService, final UserFollowService userFollowService,
                              final AdminRequestService adminRequestService) {
         this.reviewService = reviewService;
         this.reviewLikeService = reviewLikeService;
-        this.reviewReplyService = reviewReplyService;
         this.carService = carService;
         this.carFavoriteService = carFavoriteService;
         this.userService = userService;
@@ -62,17 +63,29 @@ public class ProfileController {
     }
 
     @RequestMapping(value = "/profile", method = RequestMethod.GET)
-    public ModelAndView ownProfile(@AuthenticationPrincipal final AuthenticatedUser currentUser) {
+    public ModelAndView ownProfile(@AuthenticationPrincipal final AuthenticatedUser currentUser,
+                                   @RequestParam(value = "tab", required = false) final String tab,
+                                   @RequestParam(value = "page", defaultValue = "1") final int page) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
-        return profile(currentUser.getId(), currentUser);
+        return profile(currentUser.getId(), currentUser, tab, page);
+    }
+
+    ModelAndView ownProfile(final AuthenticatedUser currentUser) {
+        return ownProfile(currentUser, null, 1);
     }
 
     @RequestMapping(value = "/profiles/{userId}", method = RequestMethod.GET)
     public ModelAndView publicProfile(@PathVariable("userId") final long userId,
-                                      @AuthenticationPrincipal final AuthenticatedUser currentUser) {
-        return profile(userId, currentUser);
+                                      @AuthenticationPrincipal final AuthenticatedUser currentUser,
+                                      @RequestParam(value = "tab", required = false) final String tab,
+                                      @RequestParam(value = "page", defaultValue = "1") final int page) {
+        return profile(userId, currentUser, tab, page);
+    }
+
+    ModelAndView publicProfile(final long userId, final AuthenticatedUser currentUser) {
+        return publicProfile(userId, currentUser, null, 1);
     }
 
     @RequestMapping(value = "/profiles/{userId}/follow", method = RequestMethod.POST)
@@ -96,30 +109,65 @@ public class ProfileController {
         return new ModelAndView("redirect:/profiles/" + userId);
     }
 
-    private ModelAndView profile(final long profileUserId, final AuthenticatedUser currentUser) {
+    private ModelAndView profile(final long profileUserId, final AuthenticatedUser currentUser,
+                                 final String tab, final int page) {
         final User profileUser = userService.getUserById(profileUserId)
                 .orElseThrow(ResourceNotFoundException::new);
         final Long currentUserId = currentUser == null ? null : currentUser.getId();
         final boolean ownProfile = currentUserId != null && currentUserId == profileUser.getId();
+        final String activeTab = ownProfile ? normalizeProfileTab(tab) : TAB_REVIEWS;
+        final String profileBasePath = ownProfile ? "/profile" : "/profiles/" + profileUser.getId();
 
-        final List<Review> userReviews = reviewService.getReviewsByUser(profileUser.getId());
-        final Map<Long, Car> carsById = reviewedCarsById(userReviews);
-        final List<ProfileReviewCard> reviews = buildProfileReviewCards(userReviews, carsById, currentUserId);
-        final List<ProfileReviewCard> likedReviewCards = buildLikedReviewCards(profileUser.getId(), carsById, currentUserId);
-        final List<ProfileLikedReplyCard> likedReplyCards = buildLikedReplyCards(profileUser.getId(), carsById, currentUserId);
+        final long reviewCount = reviewService.countReviewsByUser(profileUser.getId());
+        final long favoriteCarCount = ownProfile ? carFavoriteService.countFavoriteCars(profileUser.getId()) : 0L;
+        final long likedReviewCount = ownProfile ? reviewLikeService.countLikedReviewsByUser(profileUser.getId()) : 0L;
+
+        Page<Review> userReviewPage = Page.empty(1, 0);
+        Page<Car> favoriteCarPage = Page.empty(1, 0);
+        Page<Long> likedReviewIdPage = Page.empty(1, 0);
+
+        List<ProfileReviewCard> reviews = List.of();
+        List<Car> favoriteCars = List.of();
+        List<ProfileReviewCard> likedReviewCards = List.of();
+        Map<Long, ReviewStats> reviewStatsByCarId = Map.of();
+
+        if (TAB_FAVORITES.equals(activeTab)) {
+            favoriteCarPage = carFavoriteService.getFavoriteCars(profileUser.getId(), page);
+            favoriteCars = favoriteCarPage.getItems();
+            reviewStatsByCarId = reviewStatsByCarId(favoriteCars);
+        } else if (TAB_LIKED.equals(activeTab)) {
+            likedReviewIdPage = reviewLikeService.getLikedReviewIdsByUser(profileUser.getId(), page);
+            likedReviewCards = buildLikedReviewCards(likedReviewIdPage.getItems(), currentUserId);
+        } else {
+            userReviewPage = reviewService.getReviewsByUser(profileUser.getId(), page);
+            reviews = buildProfileReviewCards(
+                    userReviewPage.getItems(),
+                    reviewedCarsById(userReviewPage.getItems()),
+                    currentUserId
+            );
+        }
+
         final boolean followingProfile = currentUserId != null
                 && !ownProfile
                 && userFollowService.isFollowing(currentUserId, profileUser.getId());
-        final List<Car> favoriteCars = carFavoriteService.getFavoriteCars(profileUser.getId());
-        final Map<Long, ReviewStats> reviewStatsByCarId = reviewStatsByCarId(favoriteCars);
 
         final ModelAndView mav = new ModelAndView("profile.jsp");
-        mav.addObject("profile", toProfileData(profileUser, reviews.size()));
+        mav.addObject("profile", toProfileData(profileUser, reviewCount));
+        mav.addObject("profileBasePath", profileBasePath);
+        mav.addObject("activeTab", activeTab);
+        mav.addObject("profileReviewCount", reviewCount);
+        mav.addObject("favoriteCarCount", favoriteCarCount);
+        mav.addObject("likedReviewCount", likedReviewCount);
         mav.addObject("profileReviews", reviews);
+        mav.addObject("profileReviewsCurrentPage", userReviewPage.getPageNumber());
+        mav.addObject("profileReviewsTotalPages", userReviewPage.getTotalPages());
         mav.addObject("likedReviews", likedReviewCards);
-        mav.addObject("likedReplies", likedReplyCards);
-        mav.addObject("likedActivityCount", likedReviewCards.size() + likedReplyCards.size());
+        mav.addObject("likedReviewsCurrentPage", likedReviewIdPage.getPageNumber());
+        mav.addObject("likedReviewsTotalPages", likedReviewIdPage.getTotalPages());
+        mav.addObject("likedActivityCount", likedReviewCount);
         mav.addObject("favoriteCars", favoriteCars);
+        mav.addObject("favoriteCarsCurrentPage", favoriteCarPage.getPageNumber());
+        mav.addObject("favoriteCarsTotalPages", favoriteCarPage.getTotalPages());
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
         mav.addObject("followingUsers", toConnections(userFollowService.getFollowing(profileUser.getId()), currentUserId));
         mav.addObject("followerUsers", toConnections(userFollowService.getFollowers(profileUser.getId()), currentUserId));
@@ -162,10 +210,10 @@ public class ProfileController {
                 .toList();
     }
 
-    private List<ProfileReviewCard> buildLikedReviewCards(final long profileUserId,
-                                                          final Map<Long, Car> carsById,
+    private List<ProfileReviewCard> buildLikedReviewCards(final List<Long> reviewIds,
                                                           final Long currentUserId) {
-        final List<Review> likedReviews = orderedExistingReviews(reviewLikeService.getLikedReviewIdsByUser(profileUserId));
+        final List<Review> likedReviews = orderedExistingReviews(reviewIds);
+        final Map<Long, Car> carsById = reviewedCarsById(likedReviews);
         final List<Long> likedReviewIds = likedReviews.stream()
                 .map(Review::getId)
                 .toList();
@@ -185,47 +233,6 @@ public class ProfileController {
                 .toList();
     }
 
-    private List<ProfileLikedReplyCard> buildLikedReplyCards(final long profileUserId,
-                                                             final Map<Long, Car> carsById,
-                                                             final Long currentUserId) {
-        final List<ReviewReply> likedReplies = orderedExistingReplies(reviewLikeService.getLikedReplyIdsByUser(profileUserId));
-        final Map<Long, Review> parentReviewsById = parentReviewsById(likedReplies);
-        final List<Long> likedReplyIds = likedReplies.stream()
-                .map(ReviewReply::getId)
-                .toList();
-        final Map<Long, Long> likeCounts = reviewLikeService.countReplyLikesByReplyIds(likedReplyIds);
-        final Set<Long> likedByCurrentUser = currentUserId == null
-                ? Set.of()
-                : reviewLikeService.getLikedReplyIds(likedReplyIds, currentUserId);
-        return likedReplies.stream()
-                .map(reply -> toProfileLikedReplyCard(
-                        reply,
-                        parentReviewsById.get(reply.getReviewId()),
-                        carsById,
-                        likeCounts,
-                        likedByCurrentUser
-                ))
-                .toList();
-    }
-
-    private List<ReviewReply> orderedExistingReplies(final List<Long> replyIds) {
-        final Map<Long, ReviewReply> repliesById = reviewReplyService.getRepliesByIds(replyIds).stream()
-                .collect(Collectors.toMap(ReviewReply::getId, Function.identity(), (left, right) -> left));
-        return replyIds.stream()
-                .map(repliesById::get)
-                .filter(Objects::nonNull)
-                .toList();
-    }
-
-    private Map<Long, Review> parentReviewsById(final List<ReviewReply> replies) {
-        final List<Long> parentReviewIds = replies.stream()
-                .map(ReviewReply::getReviewId)
-                .distinct()
-                .toList();
-        return reviewService.getReviewsByIds(parentReviewIds).stream()
-                .collect(Collectors.toMap(Review::getId, Function.identity(), (left, right) -> left));
-    }
-
     private Set<Long> likedReviewIds(final List<Long> reviewIds, final Long currentUserId) {
         return currentUserId == null ? Set.of() : reviewLikeService.getLikedReviewIds(reviewIds, currentUserId);
     }
@@ -238,7 +245,7 @@ public class ProfileController {
                 .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
     }
 
-    private ProfileData toProfileData(final User user, final int reviewCount) {
+    private ProfileData toProfileData(final User user, final long reviewCount) {
         return new ProfileData(
                 user.getId(),
                 displayName(user),
@@ -260,20 +267,6 @@ public class ProfileController {
                 likedByCurrentUser.contains(review.getId()),
                 likeCounts.getOrDefault(review.getId(), 0L),
                 isOwnedByCurrentUser(review, currentUserId)
-        );
-    }
-
-    private ProfileLikedReplyCard toProfileLikedReplyCard(final ReviewReply reply, final Review parentReview,
-                                                          final Map<Long, Car> carsById,
-                                                          final Map<Long, Long> likeCounts,
-                                                          final Set<Long> likedByCurrentUser) {
-        final Car car = parentReview == null ? null : carsById.get(parentReview.getCarId());
-        return new ProfileLikedReplyCard(
-                reply,
-                parentReview,
-                car,
-                likedByCurrentUser.contains(reply.getId()),
-                likeCounts.getOrDefault(reply.getId(), 0L)
         );
     }
 
@@ -314,17 +307,33 @@ public class ProfileController {
         return value.substring(0, Math.min(2, value.length())).toUpperCase(Locale.ROOT);
     }
 
+    private String normalizeProfileTab(final String tab) {
+        if (tab == null || tab.isBlank()) {
+            return TAB_REVIEWS;
+        }
+        final String normalizedTab = tab.trim().toLowerCase(Locale.ROOT);
+        switch (normalizedTab) {
+            case TAB_FAVORITES:
+                return TAB_FAVORITES;
+            case TAB_LIKED:
+                return TAB_LIKED;
+            case TAB_REVIEWS:
+            default:
+                return TAB_REVIEWS;
+        }
+    }
+
     public static final class ProfileData {
         private final long id;
         private final String name;
         private final String email;
         private final String initials;
-        private final int reviewCount;
+        private final long reviewCount;
         private final long followingCount;
         private final long followerCount;
 
         private ProfileData(final long id, final String name, final String email, final String initials,
-                            final int reviewCount,
+                            final long reviewCount,
                             final long followingCount, final long followerCount) {
             this.id = id;
             this.name = name;
@@ -351,7 +360,7 @@ public class ProfileController {
             return initials;
         }
 
-        public int getReviewCount() {
+        public long getReviewCount() {
             return reviewCount;
         }
 
@@ -409,58 +418,6 @@ public class ProfileController {
 
         public boolean getOwnedByCurrentUser() {
             return ownedByCurrentUser;
-        }
-    }
-
-    public static final class ProfileLikedReplyCard {
-        private final ReviewReply reply;
-        private final Review parentReview;
-        private final Car car;
-        private final boolean liked;
-        private final long likeCount;
-
-        private ProfileLikedReplyCard(final ReviewReply reply, final Review parentReview, final Car car,
-                                      final boolean liked, final long likeCount) {
-            this.reply = reply;
-            this.parentReview = parentReview;
-            this.car = car;
-            this.liked = liked;
-            this.likeCount = likeCount;
-        }
-
-        public ReviewReply getReply() {
-            return reply;
-        }
-
-        public Review getParentReview() {
-            return parentReview;
-        }
-
-        public Car getCar() {
-            return car;
-        }
-
-        public String getCarName() {
-            if (car == null) {
-                return "Auto no disponible";
-            }
-            return car.getBrandName() + " " + car.getModel();
-        }
-
-        public long getCarId() {
-            return parentReview == null ? 0 : parentReview.getCarId();
-        }
-
-        public String getParentReviewTitle() {
-            return parentReview == null ? "Review no disponible" : parentReview.getTitle();
-        }
-
-        public boolean getLiked() {
-            return liked;
-        }
-
-        public long getLikeCount() {
-            return likeCount;
         }
     }
 

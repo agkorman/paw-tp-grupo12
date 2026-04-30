@@ -272,7 +272,9 @@
         var fragmentUrl = link.dataset.fragmentUrl;
         var targetSelector = link.dataset.target;
         var feed = targetSelector ? document.querySelector(targetSelector) : null;
-        var reviewList = feed ? feed.querySelector('.review-list') : null;
+        var listSelector = link.dataset.listSelector || '.review-list';
+        var itemSelector = link.dataset.itemSelector || '.review-list > .review-item';
+        var reviewList = feed ? feed.querySelector(listSelector) : null;
 
         if (!fragmentUrl || !targetSelector || !feed || !reviewList) {
             return false;
@@ -300,7 +302,7 @@
         }).then(function (html) {
             var parsed = new DOMParser().parseFromString(html, 'text/html');
             var replacement = parsed.querySelector(targetSelector);
-            var replacementItems = replacement ? replacement.querySelectorAll('.review-list > .review-item') : [];
+            var replacementItems = replacement ? replacement.querySelectorAll(itemSelector) : [];
             var replacementControls = replacement ? replacement.querySelector('.reviews-feed-more') : null;
             var currentControls = feed.querySelector('.reviews-feed-more');
 

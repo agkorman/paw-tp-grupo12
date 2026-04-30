@@ -89,6 +89,32 @@ public class ActivityControllerTest {
         assertTrue(activityCards(mav, "favoriteCarActivityReviews").isEmpty());
     }
 
+    @Test
+    public void activityReviewCardIncludesTargetReviewPage() {
+        final List<Review> reviews = List.of(
+                review(1L, 7L, 10L),
+                review(2L, 7L, 10L),
+                review(3L, 7L, 10L),
+                review(4L, 7L, 10L),
+                review(5L, 7L, 10L),
+                review(6L, 7L, 10L)
+        );
+        final ActivityController controller = new ActivityController(
+                new FakeReviewService(reviews),
+                new FakeCarService(),
+                new FakeUserFollowService(),
+                new FakeCarFavoriteService()
+        );
+
+        final ModelAndView mav = controller.activity(user());
+
+        assertEquals(2, activityCards(mav, "latestActivityReviews").stream()
+                .filter(card -> card.getReview().getId() == 6L)
+                .findFirst()
+                .orElseThrow()
+                .getReviewPage());
+    }
+
     private Review review(final long id, final long userId, final long carId) {
         return new Review(
                 id,

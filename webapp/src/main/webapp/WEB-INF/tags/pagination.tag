@@ -3,6 +3,7 @@
 <%@ attribute name="totalPages" required="true" type="java.lang.Integer" %>
 <%@ attribute name="baseUrl" required="true" type="java.lang.String" %>
 <%@ attribute name="extraParams" required="false" type="java.util.Map" %>
+<%@ attribute name="pageParam" required="false" type="java.lang.String" %>
 <%@ attribute name="fragmentUrl" required="false" type="java.lang.String" %>
 <%@ attribute name="target" required="false" type="java.lang.String" %>
 <%@ attribute name="ariaLabel" required="false" type="java.lang.String" %>
@@ -10,6 +11,7 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <c:if test="${totalPages > 1}">
+    <c:set var="resolvedPageParam" value="${empty pageParam ? 'page' : pageParam}"/>
     <c:set var="safeCurrentPage" value="${currentPage < 1 ? 1 : currentPage}"/>
     <c:if test="${safeCurrentPage > totalPages}"><c:set var="safeCurrentPage" value="${totalPages}"/></c:if>
     <c:set var="windowSize" value="2"/>
@@ -35,7 +37,7 @@
                                     </c:if>
                                 </c:forEach>
                             </c:if>
-                            <c:param name="page" value="${prevPage}"/>
+                            <c:param name="${resolvedPageParam}" value="${prevPage}"/>
                         </c:url>
                         <a class="pagination-link" href="${prevHref}" rel="prev"
                            <c:if test="${not empty fragmentUrl}">data-fragment-url="${fragmentUrl}"</c:if>
@@ -56,7 +58,7 @@
                                 </c:if>
                             </c:forEach>
                         </c:if>
-                        <c:param name="page" value="1"/>
+                        <c:param name="${resolvedPageParam}" value="1"/>
                     </c:url>
                     <a class="pagination-link" href="${firstHref}"
                        <c:if test="${not empty fragmentUrl}">data-fragment-url="${fragmentUrl}"</c:if>
@@ -83,7 +85,7 @@
                                         </c:if>
                                     </c:forEach>
                                 </c:if>
-                                <c:param name="page" value="${p}"/>
+                                <c:param name="${resolvedPageParam}" value="${p}"/>
                             </c:url>
                             <a class="pagination-link" href="${pHref}"
                                <c:if test="${not empty fragmentUrl}">data-fragment-url="${fragmentUrl}"</c:if>
@@ -107,7 +109,7 @@
                                 </c:if>
                             </c:forEach>
                         </c:if>
-                        <c:param name="page" value="${totalPages}"/>
+                        <c:param name="${resolvedPageParam}" value="${totalPages}"/>
                     </c:url>
                     <a class="pagination-link" href="${lastHref}"
                        <c:if test="${not empty fragmentUrl}">data-fragment-url="${fragmentUrl}"</c:if>
@@ -131,7 +133,7 @@
                                     </c:if>
                                 </c:forEach>
                             </c:if>
-                            <c:param name="page" value="${nextPage}"/>
+                            <c:param name="${resolvedPageParam}" value="${nextPage}"/>
                         </c:url>
                         <a class="pagination-link" href="${nextHref}" rel="next"
                            <c:if test="${not empty fragmentUrl}">data-fragment-url="${fragmentUrl}"</c:if>

@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CarFavoriteService;
@@ -47,17 +48,20 @@ public class ActivityController {
     public ModelAndView activity(@AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final List<Review> reviews = reviewService.getAllReviews()
                 .stream()
-                .sorted(Comparator.comparing(
+                .sorted(Comparator.<Review, LocalDateTime>comparing(
                         review -> review.getCreatedAt() == null ? LocalDateTime.MIN : review.getCreatedAt(),
                         Comparator.reverseOrder()
-                ))
+                ).thenComparing((left, right) -> Long.compare(right.getId(), left.getId())))
                 .toList();
         final Map<Long, Car> carsById = carService.getCarsByIds(reviews.stream().map(Review::getCarId).distinct().toList())
                 .stream()
                 .collect(Collectors.toMap(Car::getId, Function.identity(), (left, right) -> left));
+        final Map<Long, Integer> reviewPagesById = reviewService.getDefaultPagesForReviews(reviews);
         final List<ActivityReviewCard> activityReviews = reviews
                 .stream()
-                .map(review -> new ActivityReviewCard(review, carsById.get(review.getCarId()), timeAgo(review.getCreatedAt())))
+                .map(review -> new ActivityReviewCard(review, carsById.get(review.getCarId()),
+                        reviewPagesById.getOrDefault(review.getId(), Pagination.DEFAULT_PAGE),
+                        timeAgo(review.getCreatedAt())))
                 .toList();
         final Set<Long> followedUserIds = currentUser == null
                 ? Set.of()
@@ -115,11 +119,13 @@ public class ActivityController {
     public static final class ActivityReviewCard {
         private final Review review;
         private final Car car;
+        private final int reviewPage;
         private final String timeAgo;
 
-        private ActivityReviewCard(final Review review, final Car car, final String timeAgo) {
+        private ActivityReviewCard(final Review review, final Car car, final int reviewPage, final String timeAgo) {
             this.review = review;
             this.car = car;
+            this.reviewPage = reviewPage;
             this.timeAgo = timeAgo;
         }
 
@@ -129,6 +135,10 @@ public class ActivityController {
 
         public Car getCar() {
             return car;
+        }
+
+        public int getReviewPage() {
+            return reviewPage;
         }
 
         public String getCarName() {

@@ -5,6 +5,9 @@
 
 <c:url var="activityReviewUrl" value="/reviews">
     <c:param name="carId" value="${reviewCard.review.carId}"/>
+    <c:if test="${reviewCard.reviewPage gt 1}">
+        <c:param name="page" value="${reviewCard.reviewPage}"/>
+    </c:if>
 </c:url>
 <c:set var="activityReviewHref" value="${activityReviewUrl}#review-${reviewCard.review.id}"/>
 <c:set var="activityReviewStyle" value=""/>

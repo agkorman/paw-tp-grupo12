@@ -23,6 +23,8 @@ public interface ReviewDao {
     Page<Review> findByCarIdOrderByRatingDesc(long carId, int page);
     long countByCarId(long carId);
     List<Review> findByUserId(long userId);
+    Page<Review> findByUserId(long userId, int page);
+    long countByUserId(long userId);
     Optional<ReviewStats> findStatsByCarId(long carId);
     List<ReviewStats> findStatsByCarIds(Collection<Long> carIds);
     Review create(long userId, long carId, BigDecimal rating, String title, String body,
