@@ -16,6 +16,7 @@ import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
+import ar.edu.itba.paw.webapp.util.RelativeTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.HttpStatus;
@@ -257,7 +258,7 @@ public class CarReviewController {
         attributes.put("latestReviewLikeCount", pageData.latestReviewLikeCount);
         attributes.put("latestReviewLiked", pageData.latestReviewLiked);
         attributes.put("latestReviewTimeAgo", pageData.latestReview
-                .map(review -> ActivityController.timeAgo(review.getCreatedAt()))
+                .map(review -> RelativeTimeFormatter.timeAgo(review.getCreatedAt()))
                 .orElse(""));
         attributes.put("carImages", pageData.carImages);
         attributes.put("yearVariants", buildYearVariants(pageData.selectedCar));
@@ -339,7 +340,7 @@ public class CarReviewController {
                         review,
                         reviewLikeCounts.getOrDefault(review.getId(), 0L),
                         likedReviewIds.contains(review.getId()),
-                        ActivityController.timeAgo(review.getCreatedAt()),
+                        RelativeTimeFormatter.timeAgo(review.getCreatedAt()),
                         repliesByReviewId.getOrDefault(review.getId(), Collections.emptyList())
                                 .stream()
                                 .map(reply -> new ReviewReplyCard(
@@ -347,7 +348,7 @@ public class CarReviewController {
                                         replyLikeCounts.getOrDefault(reply.getId(), 0L),
                                         likedReplyIds.contains(reply.getId()),
                                         currentUserId != null && reply.getUserId() == currentUserId,
-                                        ActivityController.timeAgo(reply.getCreatedAt())
+                                        RelativeTimeFormatter.timeAgo(reply.getCreatedAt())
                                 ))
                                 .collect(Collectors.toList())
                 ))

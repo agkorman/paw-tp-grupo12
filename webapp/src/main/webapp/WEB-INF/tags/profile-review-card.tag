@@ -4,6 +4,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <c:url var="profileReviewUrl" value="/reviews">
     <c:param name="carId" value="${reviewCard.review.carId}"/>
@@ -11,6 +12,7 @@
 <c:set var="profileReviewHref" value="${profileReviewUrl}#review-${reviewCard.review.id}"/>
 <c:url var="reviewEditPageUrl" value="/reviews/${reviewCard.review.id}/edit"/>
 <c:url var="reviewDeleteUrl" value="/reviews/${reviewCard.review.id}/delete"/>
+<c:url var="reviewAdminDeleteUrl" value="/admin/reviews/${reviewCard.review.id}/delete"/>
 <c:url var="reviewLikeUrl" value="/reviews/${reviewCard.review.id}/like"/>
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 
@@ -40,21 +42,37 @@
                         liked="${reviewCard.liked}"
                         likeCount="${reviewCard.likeCount}"
                         disabled="${not authenticated}"/>
-                <c:if test="${editable}">
-                    <pa:action-menu label="Abrir opciones de review" cssClass="profile-review-menu">
-                        <a href="${reviewEditPageUrl}">
-                            Editar
-                        </a>
-                        <button
-                                type="button"
-                                class="action-menu-danger"
-                                data-open-delete-review-modal
-                                data-review-delete-action="${fn:escapeXml(reviewDeleteUrl)}"
-                                data-review-title="${fn:escapeXml(reviewCard.review.title)}">
-                            Eliminar
-                        </button>
-                    </pa:action-menu>
-                </c:if>
+                <c:choose>
+                    <c:when test="${editable}">
+                        <pa:action-menu label="Abrir opciones de review" cssClass="profile-review-menu">
+                            <a href="${reviewEditPageUrl}">
+                                Editar
+                            </a>
+                            <button
+                                    type="button"
+                                    class="action-menu-danger"
+                                    data-open-delete-review-modal
+                                    data-review-delete-action="${fn:escapeXml(reviewDeleteUrl)}"
+                                    data-review-title="${fn:escapeXml(reviewCard.review.title)}">
+                                Eliminar
+                            </button>
+                        </pa:action-menu>
+                    </c:when>
+                    <c:otherwise>
+                        <sec:authorize access="hasRole('ADMIN')">
+                            <pa:action-menu label="Abrir opciones de review" cssClass="profile-review-menu">
+                                <button
+                                        type="button"
+                                        class="action-menu-danger"
+                                        data-open-delete-review-modal
+                                        data-review-delete-action="${fn:escapeXml(reviewAdminDeleteUrl)}"
+                                        data-review-title="${fn:escapeXml(reviewCard.review.title)}">
+                                    Eliminar
+                                </button>
+                            </pa:action-menu>
+                        </sec:authorize>
+                    </c:otherwise>
+                </c:choose>
             </div>
         </div>
         <p class="profile-review-car"><c:out value="${reviewCard.carName}"/></p>

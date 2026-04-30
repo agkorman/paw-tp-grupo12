@@ -15,6 +15,7 @@ public interface ReviewReplyService {
     Map<Long, List<ReviewReply>> getRepliesByReviewIds(Collection<Long> reviewIds);
     ReviewReply createReply(long reviewId, long userId, String body);
     boolean deleteReply(long id, long userId);
+    boolean deleteReplyAsAdmin(long id);
 
     Map<Long, Long> countNewRepliesPerReview(long userId, LocalDateTime since);
 }

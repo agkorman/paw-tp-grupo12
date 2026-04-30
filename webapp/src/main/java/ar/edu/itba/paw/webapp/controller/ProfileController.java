@@ -16,6 +16,7 @@ import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
+import ar.edu.itba.paw.webapp.util.RelativeTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -260,7 +261,7 @@ public class ProfileController {
                 likedByCurrentUser.contains(review.getId()),
                 likeCounts.getOrDefault(review.getId(), 0L),
                 isOwnedByCurrentUser(review, currentUserId),
-                ActivityController.timeAgo(review.getCreatedAt())
+                RelativeTimeFormatter.timeAgo(review.getCreatedAt())
         );
     }
 
@@ -275,7 +276,7 @@ public class ProfileController {
                 car,
                 likedByCurrentUser.contains(reply.getId()),
                 likeCounts.getOrDefault(reply.getId(), 0L),
-                ActivityController.timeAgo(reply.getCreatedAt())
+                RelativeTimeFormatter.timeAgo(reply.getCreatedAt())
         );
     }
 

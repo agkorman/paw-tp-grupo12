@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -312,6 +313,9 @@
     </main>
 
     <pa:review-delete-modal/>
+    <sec:authorize access="hasRole('ADMIN')">
+        <pa:reply-delete-modal/>
+    </sec:authorize>
     <pa:edit-profile-modal profile="${profile}"/>
     <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
     <pa:auth-required-modal/>
@@ -323,6 +327,9 @@
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/profile.js?v=8'/>"></script>
+    <sec:authorize access="hasRole('ADMIN')">
+        <script src="<c:url value='/js/admin-review-actions.js'/>"></script>
+    </sec:authorize>
     <c:if test="${ownProfile}">
         <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     </c:if>

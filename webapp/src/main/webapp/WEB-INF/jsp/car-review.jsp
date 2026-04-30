@@ -126,6 +126,8 @@
     <sec:authorize access="hasRole('ADMIN')">
         <pa:admin-car-form brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
         <pa:car-delete-modal/>
+        <pa:review-delete-modal/>
+        <pa:reply-delete-modal/>
     </sec:authorize>
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
@@ -137,6 +139,7 @@
     <sec:authorize access="hasRole('ADMIN')">
         <script src="<c:url value='/js/car-form.js?v=1'/>"></script>
         <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
+        <script src="<c:url value='/js/admin-review-actions.js'/>"></script>
     </sec:authorize>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>

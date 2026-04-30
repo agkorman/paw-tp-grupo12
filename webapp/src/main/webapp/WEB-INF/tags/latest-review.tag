@@ -6,6 +6,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 
@@ -18,10 +19,23 @@
             </div>
         </c:when>
         <c:otherwise>
+            <c:url var="latestReviewAdminDeleteUrl" value="/admin/reviews/${latestReview.id}/delete"/>
             <article class="last-review-item">
                 <div class="last-review-top">
                     <strong><c:out value="${latestReview.title}"/></strong>
                     <span class="rating-pill"><c:out value="${latestReview.rating}"/>/5.0</span>
+                    <sec:authorize access="hasRole('ADMIN')">
+                        <pa:action-menu label="Abrir opciones de review" cssClass="review-admin-menu">
+                            <button
+                                    type="button"
+                                    class="action-menu-danger"
+                                    data-open-delete-review-modal
+                                    data-review-delete-action="${fn:escapeXml(latestReviewAdminDeleteUrl)}"
+                                    data-review-title="${fn:escapeXml(latestReview.title)}">
+                                Eliminar
+                            </button>
+                        </pa:action-menu>
+                    </sec:authorize>
                 </div>
                 <p class="last-review-body"><c:out value="${latestReview.body}"/></p>
                 <pa:review-tag-chips mode="display" tags="${latestReview.tags}"/>

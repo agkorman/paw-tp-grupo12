@@ -122,6 +122,16 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     }
 
     @Override
+    @Transactional
+    public boolean deleteReplyAsAdmin(final long id) {
+        try {
+            return reviewReplyDao.delete(id);
+        } catch (final RuntimeException e) {
+            throw new IllegalStateException("Failed to delete review reply.", e);
+        }
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Map<Long, Long> countNewRepliesPerReview(final long userId, final LocalDateTime since) {
         if (since == null) {

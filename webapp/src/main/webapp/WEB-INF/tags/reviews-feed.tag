@@ -9,6 +9,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 
 <c:url var="reviewsFeedUrl" value="/reviews/feed"/>
@@ -57,10 +58,23 @@
                     <c:set var="review" value="${thread.review}"/>
                     <c:url var="reviewLikeUrl" value="/reviews/${review.id}/like"/>
                     <c:url var="replyCreateUrl" value="/reviews/${review.id}/replies"/>
+                    <c:url var="adminReviewDeleteUrl" value="/admin/reviews/${review.id}/delete"/>
                     <article class="review-item" id="review-${review.id}">
                         <div class="review-item-top">
                             <strong><c:out value="${review.title}"/></strong>
                             <span class="rating-pill"><c:out value="${review.rating}"/>/5.0</span>
+                            <sec:authorize access="hasRole('ADMIN')">
+                                <pa:action-menu label="Abrir opciones de review" cssClass="review-admin-menu">
+                                    <button
+                                            type="button"
+                                            class="action-menu-danger"
+                                            data-open-delete-review-modal
+                                            data-review-delete-action="${fn:escapeXml(adminReviewDeleteUrl)}"
+                                            data-review-title="${fn:escapeXml(review.title)}">
+                                        Eliminar
+                                    </button>
+                                </pa:action-menu>
+                            </sec:authorize>
                         </div>
                         <p class="review-body"><c:out value="${review.body}"/></p>
                         <pa:review-tag-chips mode="display" tags="${review.tags}"/>
@@ -81,12 +95,25 @@
                                         <c:set var="reply" value="${replyCard.reply}"/>
                                         <c:url var="replyLikeUrl" value="/reviews/replies/${reply.id}/like"/>
                                         <c:url var="replyAuthorProfileUrl" value="/profiles/${reply.userId}"/>
+                                        <c:url var="adminReplyDeleteUrl" value="/admin/reviews/replies/${reply.id}/delete"/>
                                         <article class="review-reply" id="reply-${reply.id}">
                                             <div class="review-reply-header">
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">
                                                     <c:out value="${empty reply.authorUsername ? 'Usuario' : reply.authorUsername}"/>
                                                 </a>
                                                 <span><c:out value="${replyCard.timeAgo}"/></span>
+                                                <sec:authorize access="hasRole('ADMIN')">
+                                                    <pa:action-menu label="Abrir opciones de respuesta" cssClass="reply-admin-menu">
+                                                        <button
+                                                                type="button"
+                                                                class="action-menu-danger"
+                                                                data-open-delete-reply-modal
+                                                                data-reply-delete-action="${fn:escapeXml(adminReplyDeleteUrl)}"
+                                                                data-reply-body="${fn:escapeXml(reply.body)}">
+                                                            Eliminar
+                                                        </button>
+                                                    </pa:action-menu>
+                                                </sec:authorize>
                                             </div>
                                             <p class="review-reply-body"><c:out value="${reply.body}"/></p>
                                             <pa:review-like-button

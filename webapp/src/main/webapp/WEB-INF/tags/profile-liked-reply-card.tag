@@ -3,18 +3,32 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <c:url var="replyReviewUrl" value="/reviews">
     <c:param name="carId" value="${replyCard.carId}"/>
 </c:url>
 <c:set var="replyReviewHref" value="${replyReviewUrl}#reply-${replyCard.reply.id}"/>
 <c:url var="replyLikeUrl" value="/reviews/replies/${replyCard.reply.id}/like"/>
+<c:url var="replyAdminDeleteUrl" value="/admin/reviews/replies/${replyCard.reply.id}/delete"/>
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 
 <article class="profile-liked-reply-card" data-profile-card-link="${fn:escapeXml(replyReviewHref)}" role="link" tabindex="0">
     <div class="profile-liked-reply-meta">
         <span>Respuesta likeada</span>
         <span><c:out value="${replyCard.timeAgo}"/></span>
+        <sec:authorize access="hasRole('ADMIN')">
+            <pa:action-menu label="Abrir opciones de respuesta" cssClass="reply-admin-menu">
+                <button
+                        type="button"
+                        class="action-menu-danger"
+                        data-open-delete-reply-modal
+                        data-reply-delete-action="${fn:escapeXml(replyAdminDeleteUrl)}"
+                        data-reply-body="${fn:escapeXml(replyCard.reply.body)}">
+                    Eliminar
+                </button>
+            </pa:action-menu>
+        </sec:authorize>
     </div>
 
     <p class="profile-liked-reply-body"><c:out value="${replyCard.reply.body}"/></p>

@@ -18,6 +18,8 @@ import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
+import ar.edu.itba.paw.services.ReviewReplyService;
+import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.services.WeeklyDigestService;
 import ar.edu.itba.paw.webapp.form.CarForm;
@@ -65,6 +67,8 @@ public class AdminController {
     private final UserService userService;
     private final EmailService emailService;
     private final WeeklyDigestService weeklyDigestService;
+    private final ReviewService reviewService;
+    private final ReviewReplyService reviewReplyService;
 
     @Autowired
     public AdminController(final CarRequestService carRequestService, final CarService carService,
@@ -75,7 +79,9 @@ public class AdminController {
                            final AdminRequestService adminRequestService,
                            final UserService userService,
                            final EmailService emailService,
-                           final WeeklyDigestService weeklyDigestService) {
+                           final WeeklyDigestService weeklyDigestService,
+                           final ReviewService reviewService,
+                           final ReviewReplyService reviewReplyService) {
         this.carRequestService = carRequestService;
         this.carService = carService;
         this.brandService = brandService;
@@ -86,6 +92,8 @@ public class AdminController {
         this.userService = userService;
         this.emailService = emailService;
         this.weeklyDigestService = weeklyDigestService;
+        this.reviewService = reviewService;
+        this.reviewReplyService = reviewReplyService;
     }
 
     @RequestMapping(method = RequestMethod.GET)
@@ -326,6 +334,20 @@ public class AdminController {
                                            @RequestHeader(value = "Referer", required = false) final String referer) {
         adminRequestService.rejectPendingRequest(requestId);
         return redirectBackToAdmin(referer);
+    }
+
+    @RequestMapping(value = "/reviews/{reviewId}/delete", method = RequestMethod.POST)
+    public ModelAndView deleteReviewAsAdmin(@PathVariable("reviewId") final long reviewId,
+                                            @RequestHeader(value = "Referer", required = false) final String referer) {
+        reviewService.deleteReview(reviewId);
+        return redirectBackToReferer(referer);
+    }
+
+    @RequestMapping(value = "/reviews/replies/{replyId}/delete", method = RequestMethod.POST)
+    public ModelAndView deleteReplyAsAdmin(@PathVariable("replyId") final long replyId,
+                                           @RequestHeader(value = "Referer", required = false) final String referer) {
+        reviewReplyService.deleteReplyAsAdmin(replyId);
+        return redirectBackToReferer(referer);
     }
 
     @RequestMapping(value = "/requests/{requestId}/image", method = RequestMethod.GET)
@@ -596,6 +618,24 @@ public class AdminController {
             }
             final String query = uri.getRawQuery();
             return new ModelAndView("redirect:/admin" + (query == null ? "" : "?" + query));
+        } catch (final IllegalArgumentException ignored) {
+            return new ModelAndView(fallback);
+        }
+    }
+
+    private ModelAndView redirectBackToReferer(final String referer) {
+        final String fallback = "redirect:/";
+        if (referer == null || referer.isBlank()) {
+            return new ModelAndView(fallback);
+        }
+        try {
+            final URI uri = URI.create(referer);
+            final String path = uri.getRawPath();
+            if (path == null || path.isBlank() || !path.startsWith("/")) {
+                return new ModelAndView(fallback);
+            }
+            final String query = uri.getRawQuery();
+            return new ModelAndView("redirect:" + path + (query == null ? "" : "?" + query));
         } catch (final IllegalArgumentException ignored) {
             return new ModelAndView(fallback);
         }

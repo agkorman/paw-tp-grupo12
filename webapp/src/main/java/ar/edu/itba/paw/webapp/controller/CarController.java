@@ -18,6 +18,7 @@ import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.form.CarForm;
+import ar.edu.itba.paw.webapp.util.RelativeTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.CacheControl;
@@ -113,7 +114,7 @@ public class CarController {
         mav.addObject("heroReview", heroReview);
         mav.addObject("heroReviewTimeAgo", heroReview == null
                 ? ""
-                : ActivityController.timeAgo(heroReview.getCreatedAt()));
+                : RelativeTimeFormatter.timeAgo(heroReview.getCreatedAt()));
         return mav;
     }
 
