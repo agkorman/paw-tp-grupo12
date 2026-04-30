@@ -59,7 +59,9 @@
                     <c:url var="reviewLikeUrl" value="/reviews/${review.id}/like"/>
                     <c:url var="replyCreateUrl" value="/reviews/${review.id}/replies"/>
                     <c:url var="adminReviewDeleteUrl" value="/admin/reviews/${review.id}/delete"/>
-                    <article class="review-item" id="review-${review.id}">
+                    <article class="review-item" id="review-${review.id}"
+                             data-open-review-detail
+                             data-review-id="${review.id}">
                         <div class="review-item-top">
                             <strong><c:out value="${review.title}"/></strong>
                             <span class="rating-pill"><c:out value="${review.rating}"/>/5.0</span>

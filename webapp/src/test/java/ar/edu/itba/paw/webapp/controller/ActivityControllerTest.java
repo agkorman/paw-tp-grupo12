@@ -3,7 +3,6 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
-import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
@@ -279,17 +278,6 @@ public class ActivityControllerTest {
 
         @Override
         public void saveCarImages(final long carId, final List<CarImagePayload> images) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                             final Integer year, final long submittedByUserId, final String submitterEmail,
-                                             final Optional<String> description, final List<CarImagePayload> images,
-                                             final String fuelType, final Integer horsepower,
-                                             final Integer airbagCount, final String transmission,
-                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                                             final BigDecimal priceUsd) {
             throw new UnsupportedOperationException();
         }
 

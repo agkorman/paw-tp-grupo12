@@ -1178,19 +1178,28 @@
     object-fit: cover;
 }
 
-.car-image-upload-action {
+.car-image-upload-add-more {
+    width: 4.5rem;
+    aspect-ratio: 4 / 3;
+    margin-left: auto;
+    padding: 0;
+    border: 1px dashed rgba(229, 226, 225, 0.32);
+    border-radius: var(--radius-md);
+    background: rgba(255, 181, 158, 0.08);
+    color: var(--primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.7rem 0.85rem;
-    border-radius: var(--radius-md);
-    background: rgba(255, 181, 158, 0.12);
-    color: var(--primary);
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    white-space: nowrap;
+}
+
+.car-image-upload-add-more:hover,
+.car-image-upload-add-more:focus-visible {
+    background: rgba(255, 181, 158, 0.18);
+    outline: none;
 }
 
 .car-modal-layout .car-image-upload-card {
@@ -1243,6 +1252,12 @@
 .car-modal-layout .car-image-upload-thumb {
     width: 3.35rem;
     flex: 0 0 3.35rem;
+}
+
+.car-modal-layout .car-image-upload-add-more {
+    width: 3.35rem;
+    flex: 0 0 3.35rem;
+    font-size: 1.25rem;
 }
 
 /* ── Star Rating (half-star via linearGradient) ── */
@@ -1437,10 +1452,6 @@ body.modal-open {
     }
 
     .car-image-upload-thumb {
-        width: 100%;
-    }
-
-    .car-image-upload-action {
         width: 100%;
     }
 

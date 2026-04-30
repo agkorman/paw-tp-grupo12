@@ -3,7 +3,6 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
-import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.ReviewStats;
@@ -408,18 +407,6 @@ public class ProfileControllerTest {
 
         @Override
         public void saveCarImages(final long carId, final List<CarImagePayload> images) {
-        }
-
-        @Override
-        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                             final Integer year, final long submittedByUserId, final String submitterEmail,
-                                             final Optional<String> description,
-                                             final List<CarImagePayload> images,
-                                             final String fuelType, final Integer horsepower,
-                                             final Integer airbagCount, final String transmission,
-                                             final java.math.BigDecimal fuelConsumption,
-                                             final Integer maxSpeedKmh, final java.math.BigDecimal priceUsd) {
-            throw new UnsupportedOperationException();
         }
 
         @Override

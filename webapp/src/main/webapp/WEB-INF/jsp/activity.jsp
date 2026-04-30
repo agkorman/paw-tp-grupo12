@@ -16,6 +16,8 @@
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/activity.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/review-detail-modal.css'/>">
 </head>
 <body>
     <pa:nav activePage="activity"/>
@@ -146,6 +148,10 @@
         </c:if>
     </main>
 
+    <pa:review-detail-modal/>
+
     <script src="<c:url value='/js/activity.js?v=2'/>"></script>
+    <script src="<c:url value='/js/reactions.js'/>"></script>
+    <script src="<c:url value='/js/review-detail-modal.js'/>"></script>
 </body>
 </html>

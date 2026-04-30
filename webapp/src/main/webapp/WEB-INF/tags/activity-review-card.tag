@@ -18,6 +18,8 @@
 <a class="activity-review-card ${reviewCard.hasCarImage ? 'has-image' : ''}"
    href="${activityReviewHref}"
    style="${activityReviewStyle}"
+   data-open-review-detail
+   data-review-id="${reviewCard.review.id}"
    aria-label="Ver reseña de ${fn:escapeXml(reviewCard.carName)}">
     <span class="activity-review-author">
         <span class="activity-review-author-copy">

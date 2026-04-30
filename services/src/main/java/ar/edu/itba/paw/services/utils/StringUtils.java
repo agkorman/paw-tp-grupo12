@@ -1,9 +1,9 @@
-package ar.edu.itba.paw.services;
+package ar.edu.itba.paw.services.utils;
 
-final class StringUtils {
+public final class StringUtils {
     private StringUtils() {}
 
-    static String normalize(final String value) {
+    public static String normalize(final String value) {
         if (value == null) {
             return null;
         }
@@ -11,7 +11,7 @@ final class StringUtils {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    static String normalizeRequired(final String value, final String errorMessage) {
+    public static String normalizeRequired(final String value, final String errorMessage) {
         final String trimmed = normalize(value);
         if (trimmed == null) {
             throw new IllegalArgumentException(errorMessage);

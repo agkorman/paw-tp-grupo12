@@ -13,6 +13,7 @@ import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarFavoriteService;
+import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
@@ -56,7 +57,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -66,9 +66,10 @@ import java.util.stream.Collectors;
 public class CarController {
 
     private static final int FEATURED_REVIEW_COUNT = 3;
-    private static final int MAX_IMAGE_COUNT = 5;
+    private static final int MAX_IMAGE_COUNT = 6;
 
     private final CarService carService;
+    private final CarRequestService carRequestService;
     private final CarFavoriteService carFavoriteService;
     private final BrandService brandService;
     private final BodyTypeService bodyTypeService;
@@ -76,10 +77,12 @@ public class CarController {
     private final EmailService emailService;
 
     @Autowired
-    public CarController(final CarService carService, final CarFavoriteService carFavoriteService,
+    public CarController(final CarService carService, final CarRequestService carRequestService,
+                         final CarFavoriteService carFavoriteService,
                          final BrandService brandService, final BodyTypeService bodyTypeService,
                          final ReviewService reviewService, final EmailService emailService) {
         this.carService = carService;
+        this.carRequestService = carRequestService;
         this.carFavoriteService = carFavoriteService;
         this.brandService = brandService;
         this.bodyTypeService = bodyTypeService;
@@ -214,14 +217,14 @@ public class CarController {
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
 
-        final CarRequest carRequest = carService.requestCarCreation(
-                resolvedBrand.getId(),
-                carForm.getModel(),
-                resolvedBodyType.getId(),
-                carForm.getYear(),
+        final CarRequest carRequest = carRequestService.createPendingRequest(
                 currentUser.getId(),
                 currentUser.getEmail(),
-                Optional.ofNullable(carForm.getDescription()).filter(value -> !value.isEmpty()),
+                resolvedBrand.getId(),
+                resolvedBodyType.getId(),
+                carForm.getYear(),
+                carForm.getModel(),
+                carForm.getDescription(),
                 imagePayloads,
                 ControllerUtils.normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),

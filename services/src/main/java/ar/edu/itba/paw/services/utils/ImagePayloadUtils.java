@@ -1,14 +1,14 @@
-package ar.edu.itba.paw.services;
+package ar.edu.itba.paw.services.utils;
 
 import ar.edu.itba.paw.model.CarImagePayload;
 
 import java.util.Collections;
 import java.util.List;
 
-final class ImagePayloadUtils {
+public final class ImagePayloadUtils {
     private ImagePayloadUtils() {}
 
-    static List<CarImagePayload> normalizeImages(final List<CarImagePayload> images) {
+    public static List<CarImagePayload> normalizeImages(final List<CarImagePayload> images) {
         if (images == null) {
             return Collections.emptyList();
         }

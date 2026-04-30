@@ -33,26 +33,23 @@ class CarModerationFlowTest {
 
     @Test
     void userCarSubmissionOnlyCreatesPendingRequest() {
+        final FakeCarRequestDao carRequestDao = new FakeCarRequestDao();
         final FakeCarDao carDao = new FakeCarDao();
         final FakeCarImageDao carImageDao = new FakeCarImageDao();
-        final FakeCarRequestService carRequestService = new FakeCarRequestService();
-        final CarService carService = new CarServiceImpl(
+        final CarRequestService carRequestService = new CarRequestServiceImpl(
+                carRequestDao,
                 carDao,
-                carImageDao,
-                new FakeReviewDao(),
-                carRequestService,
-                new FakeBrandDao(),
-                new FakeBodyTypeDao()
+                carImageDao
         );
 
-        final CarRequest request = carService.requestCarCreation(
-                1L,
-                "Supra",
-                2L,
-                2026,
+        final CarRequest request = carRequestService.createPendingRequest(
                 7L,
                 "user@example.com",
-                Optional.of("Desc"),
+                1L,
+                2L,
+                2026,
+                "Supra",
+                "Desc",
                 List.of(new CarImagePayload("image/png", new byte[] {1, 2, 3})),
                 "hybrid",
                 300,
@@ -66,7 +63,6 @@ class CarModerationFlowTest {
         assertEquals(CarRequestService.STATUS_PENDING, request.getStatus());
         assertFalse(carDao.created);
         assertFalse(carImageDao.saved);
-        assertTrue(carRequestService.created);
     }
 
     @Test
@@ -133,7 +129,6 @@ class CarModerationFlowTest {
 
     @Test
     void deletingCarRemovesReviewsBeforeCar() {
-        final FakeCarRequestDao carRequestDao = new FakeCarRequestDao();
         final FakeCarDao carDao = new FakeCarDao();
         carDao.existingCar = new Car(20L, 1L, "Toyota", "Supra", 2L, "Coupe", "Desc", LocalDateTime.now());
         final FakeReviewDao reviewDao = new FakeReviewDao();
@@ -141,7 +136,6 @@ class CarModerationFlowTest {
                 carDao,
                 new FakeCarImageDao(),
                 reviewDao,
-                new CarRequestServiceImpl(carRequestDao, carDao, new FakeCarImageDao()),
                 new FakeBrandDao(),
                 new FakeBodyTypeDao()
         );
@@ -164,7 +158,6 @@ class CarModerationFlowTest {
                 carDao,
                 carImageDao,
                 new FakeReviewDao(),
-                new FakeCarRequestService(),
                 new FakeBrandDao(),
                 new FakeBodyTypeDao()
         );
@@ -197,95 +190,6 @@ class CarModerationFlowTest {
         assertEquals(20L, carImageDao.savedCarId);
         assertEquals("image/webp", carImageDao.savedContentType);
         assertArrayEquals(imageData, carImageDao.savedImageData);
-    }
-
-    private static final class FakeCarRequestService implements CarRequestService {
-        private boolean created;
-
-        @Override
-        public Optional<CarRequest> getCarRequestById(final long id) {
-            return Optional.empty();
-        }
-
-        @Override
-        public List<CarRequest> getCarRequestsByStatus(final String status) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public ar.edu.itba.paw.model.Page<CarRequest> getCarRequestsByStatus(final String status, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(1, 0);
-        }
-
-        @Override
-        public long countCarRequestsByStatus(final String status) {
-            return 0L;
-        }
-
-        @Override
-        public CarRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
-                                               final long brandId, final long bodyTypeId, final Integer year, final String model,
-                                               final String description, final List<CarImagePayload> images,
-                                               final String fuelType, final Integer horsepower,
-                                               final Integer airbagCount, final String transmission,
-                                               final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                                               final BigDecimal priceUsd) {
-            created = true;
-            final CarImagePayload coverImage = images == null || images.isEmpty() ? null : images.get(0);
-            return new CarRequest(
-                    10L,
-                    submittedByUserId,
-                    submitterEmail,
-                    brandId,
-                    bodyTypeId,
-                    year,
-                    model,
-                    description,
-                    coverImage == null ? null : coverImage.getContentType(),
-                    coverImage == null ? null : coverImage.getImageData(),
-                    STATUS_PENDING,
-                    LocalDateTime.now(),
-                    fuelType,
-                    horsepower,
-                    airbagCount,
-                    transmission,
-                    fuelConsumption,
-                    maxSpeedKmh,
-                    priceUsd
-            );
-        }
-
-        @Override
-        public List<CarRequestImage> getCarRequestImages(final long requestId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Optional<CarRequestImage> getCarRequestImageById(final long requestId, final long imageId) {
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean approvePendingRequest(final long id) {
-            return false;
-        }
-
-        @Override
-        public boolean approvePendingRequest(final long id, final long brandId, final String model,
-                                             final long bodyTypeId, final Integer year, final String description,
-                                             final Optional<String> imageContentType,
-                                             final Optional<byte[]> imageData,
-                                             final String fuelType, final Integer horsepower,
-                                             final Integer airbagCount, final String transmission,
-                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                                             final BigDecimal priceUsd) {
-            return false;
-        }
-
-        @Override
-        public boolean rejectPendingRequest(final long id) {
-            return false;
-        }
     }
 
     private static final class FakeCarRequestDao implements CarRequestDao {

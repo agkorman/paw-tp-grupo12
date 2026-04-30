@@ -162,6 +162,27 @@ public class CarReviewController {
         return mav;
     }
 
+    @RequestMapping(value = "/reviews/{reviewId}/detail", method = RequestMethod.GET)
+    public ModelAndView reviewDetailFragment(@PathVariable("reviewId") final long reviewId,
+                                             @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        final Review review = reviewService.getReviewById(reviewId)
+                .orElseThrow(ResourceNotFoundException::new);
+        final Car car = carService.getCarById(review.getCarId())
+                .orElseThrow(ResourceNotFoundException::new);
+
+        final long likeCount = reviewLikeService.countReviewLikes(reviewId);
+        final boolean liked = currentUser != null
+                && reviewLikeService.getLikedReviewIds(List.of(reviewId), currentUser.getId()).contains(reviewId);
+
+        final ModelAndView mav = new ModelAndView("review-detail-fragment.jsp");
+        mav.addObject("review", review);
+        mav.addObject("car", car);
+        mav.addObject("likeCount", likeCount);
+        mav.addObject("liked", liked);
+        mav.addObject("timeAgo", RelativeTimeFormatter.timeAgo(review.getCreatedAt()));
+        return mav;
+    }
+
     @RequestMapping(value = "/reviews", method = RequestMethod.POST)
     public String createReview(@Valid @ModelAttribute("reviewForm") final ReviewForm reviewForm,
                                final BindingResult errors,

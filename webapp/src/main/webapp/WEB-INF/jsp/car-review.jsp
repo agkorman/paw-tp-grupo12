@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/review-detail-modal.css'/>">
     <sec:authorize access="hasRole('ADMIN')">
         <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
     </sec:authorize>
@@ -126,6 +127,7 @@
     </main>
 
     <pa:auth-required-modal/>
+    <pa:review-detail-modal/>
     <sec:authorize access="hasRole('ADMIN')">
         <pa:admin-car-form brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
         <pa:car-delete-modal/>
@@ -139,6 +141,7 @@
     <script src="<c:url value='/js/car-image-carousel.js'/>"></script>
     <script src="<c:url value='/js/review-tag-chips.js'/>" defer></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
+    <script src="<c:url value='/js/review-detail-modal.js'/>"></script>
     <sec:authorize access="hasRole('ADMIN')">
         <script src="<c:url value='/js/car-form.js?v=1'/>"></script>
         <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>

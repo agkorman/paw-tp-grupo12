@@ -3,7 +3,6 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
-import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
@@ -11,6 +10,8 @@ import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
+import ar.edu.itba.paw.services.utils.ImagePayloadUtils;
+import ar.edu.itba.paw.services.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,19 +28,16 @@ public class CarServiceImpl implements CarService {
     private final CarDao carDao;
     private final CarImageDao carImageDao;
     private final ReviewDao reviewDao;
-    private final CarRequestService carRequestService;
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
 
     @Autowired
     public CarServiceImpl(final CarDao carDao, final CarImageDao carImageDao,
                           final ReviewDao reviewDao,
-                          final CarRequestService carRequestService,
                           final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
         this.carDao = carDao;
         this.carImageDao = carImageDao;
         this.reviewDao = reviewDao;
-        this.carRequestService = carRequestService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
     }
@@ -91,44 +89,6 @@ public class CarServiceImpl implements CarService {
     @Transactional
     public void saveCarImages(final long carId, final List<CarImagePayload> images) {
         carImageDao.replaceAll(carId, ImagePayloadUtils.normalizeImages(images));
-    }
-
-    @Override
-    @Transactional
-    public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                         final Integer year, final long submittedByUserId, final String submitterEmail,
-                                         final Optional<String> description,
-                                         final List<CarImagePayload> images,
-                                         final String fuelType, final Integer horsepower,
-                                         final Integer airbagCount, final String transmission,
-                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                                         final BigDecimal priceUsd) {
-        final String normalizedDescription = description
-                .map(String::trim)
-                .filter(value -> !value.isEmpty())
-                .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
-        final List<CarImagePayload> normalizedImages = ImagePayloadUtils.normalizeImages(images);
-        if (normalizedImages.isEmpty()) {
-            throw new IllegalArgumentException("At least one image is required for car creation.");
-        }
-
-        return carRequestService.createPendingRequest(
-                submittedByUserId,
-                submitterEmail,
-                brandId,
-                bodyTypeId,
-                year,
-                model,
-                normalizedDescription,
-                normalizedImages,
-                fuelType,
-                horsepower,
-                airbagCount,
-                transmission,
-                fuelConsumption,
-                maxSpeedKmh,
-                priceUsd
-        );
     }
 
     @Override

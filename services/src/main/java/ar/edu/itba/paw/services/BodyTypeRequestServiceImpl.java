@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.BodyTypeRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BodyTypeRequestDao;
+import ar.edu.itba.paw.services.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

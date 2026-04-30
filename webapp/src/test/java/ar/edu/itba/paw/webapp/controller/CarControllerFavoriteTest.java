@@ -6,11 +6,13 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarFavoriteService;
+import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
@@ -71,6 +73,7 @@ public class CarControllerFavoriteTest {
     private CarController controller(final CarService carService, final CarFavoriteService favoriteService) {
         return new CarController(
                 carService,
+                new FakeCarRequestService(),
                 favoriteService,
                 new FakeBrandService(),
                 new FakeBodyTypeService(),
@@ -171,17 +174,6 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
-        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                             final Integer year, final long submittedByUserId, final String submitterEmail,
-                                             final Optional<String> description,
-                                             final List<CarImagePayload> images, final String fuelType,
-                                             final Integer horsepower, final Integer airbagCount,
-                                             final String transmission, final BigDecimal fuelConsumption,
-                                             final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public Optional<Car> updateCar(final long id, final long brandId, final String model,
                                        final long bodyTypeId, final Integer year, final String description,
                                        final Optional<String> imageContentType,
@@ -194,6 +186,72 @@ public class CarControllerFavoriteTest {
 
         @Override
         public boolean deleteCar(final long id) {
+            return false;
+        }
+    }
+
+    private static final class FakeCarRequestService implements CarRequestService {
+        @Override
+        public Optional<CarRequest> getCarRequestById(final long id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<CarRequest> getCarRequestsByStatus(final String status) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<CarRequest> getCarRequestsByStatus(final String status, final int page) {
+            return ar.edu.itba.paw.model.Page.empty(page, 0);
+        }
+
+        @Override
+        public long countCarRequestsByStatus(final String status) {
+            return 0L;
+        }
+
+        @Override
+        public CarRequest createPendingRequest(final long submittedByUserId, final String submitterEmail,
+                                               final long brandId, final long bodyTypeId, final Integer year,
+                                               final String model, final String description,
+                                               final List<CarImagePayload> images,
+                                               final String fuelType, final Integer horsepower,
+                                               final Integer airbagCount, final String transmission,
+                                               final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                               final BigDecimal priceUsd) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<CarRequestImage> getCarRequestImages(final long requestId) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Optional<CarRequestImage> getCarRequestImageById(final long requestId, final long imageId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean approvePendingRequest(final long id) {
+            return false;
+        }
+
+        @Override
+        public boolean approvePendingRequest(final long id, final long brandId, final String model,
+                                             final long bodyTypeId, final Integer year, final String description,
+                                             final Optional<String> imageContentType,
+                                             final Optional<byte[]> imageData,
+                                             final String fuelType, final Integer horsepower,
+                                             final Integer airbagCount, final String transmission,
+                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                             final BigDecimal priceUsd) {
+            return false;
+        }
+
+        @Override
+        public boolean rejectPendingRequest(final long id) {
             return false;
         }
     }
