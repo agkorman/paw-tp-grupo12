@@ -66,7 +66,7 @@
                         <pa:review-tag-chips mode="display" tags="${review.tags}"/>
                         <div class="review-meta">
                             <pa:review-author-link review="${review}"/>
-                            <span><c:out value="${fn:substring(review.createdAt, 0, 10)}"/></span>
+                            <span><c:out value="${thread.timeAgo}"/></span>
                             <pa:review-like-button
                                     reviewId="${review.id}"
                                     action="${reviewLikeUrl}"
@@ -86,7 +86,7 @@
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">
                                                     <c:out value="${empty reply.authorUsername ? 'Usuario' : reply.authorUsername}"/>
                                                 </a>
-                                                <span><c:out value="${fn:substring(reply.createdAt, 0, 10)}"/></span>
+                                                <span><c:out value="${replyCard.timeAgo}"/></span>
                                             </div>
                                             <p class="review-reply-body"><c:out value="${reply.body}"/></p>
                                             <pa:review-like-button

@@ -14,7 +14,7 @@
 <article class="profile-liked-reply-card" data-profile-card-link="${fn:escapeXml(replyReviewHref)}" role="link" tabindex="0">
     <div class="profile-liked-reply-meta">
         <span>Respuesta likeada</span>
-        <span><c:out value="${fn:substring(replyCard.reply.createdAt, 0, 10)}"/></span>
+        <span><c:out value="${replyCard.timeAgo}"/></span>
     </div>
 
     <p class="profile-liked-reply-body"><c:out value="${replyCard.reply.body}"/></p>

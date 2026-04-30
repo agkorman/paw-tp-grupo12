@@ -125,7 +125,8 @@
                             heroReview="${heroReview}"
                             heroCarBrandName="${heroCar.brandName}"
                             heroCarImageUrl="${heroCarImageUrl}"
-                            href="${heroReviewHref}"/>
+                            href="${heroReviewHref}"
+                            timeAgo="${heroReviewTimeAgo}"/>
                 </c:if>
             </div>
         </section>

@@ -23,14 +23,14 @@
         </header>
 
         <div class="admin-catalog-request-review-grid">
-            <div class="review-modal-field">
-                <label for="adminCatalogRequestName">Nombre</label>
-                <input id="adminCatalogRequestName" type="text" readonly>
-            </div>
-
-            <div class="review-modal-field">
+            <div class="review-modal-field review-modal-field-wide review-modal-field-inline">
                 <label for="adminCatalogRequestSubmitter">Enviado por</label>
                 <input id="adminCatalogRequestSubmitter" type="text" readonly>
+            </div>
+
+            <div class="review-modal-field review-modal-field-wide review-modal-field-inline">
+                <label for="adminCatalogRequestName">Nombre</label>
+                <input id="adminCatalogRequestName" type="text" readonly>
             </div>
 
             <div class="review-modal-field review-modal-field-wide">

@@ -108,7 +108,8 @@
                                         favorited="${selectedCarFavorited}"/>
                 <pa:latest-review latestReview="${latestReview}"
                                   liked="${latestReviewLiked}"
-                                  likeCount="${latestReviewLikeCount}"/>
+                                  likeCount="${latestReviewLikeCount}"
+                                  timeAgo="${latestReviewTimeAgo}"/>
             </div>
 
             <div class="review-side-column">

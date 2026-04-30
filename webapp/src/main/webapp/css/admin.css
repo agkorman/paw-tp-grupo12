@@ -216,6 +216,22 @@
     grid-column: 1 / -1;
 }
 
+.admin-catalog-request-review-grid .review-modal-field-inline {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.admin-catalog-request-review-grid .review-modal-field-inline label {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.admin-catalog-request-review-grid .review-modal-field-inline input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .admin-catalog-request-review-dialog .review-modal-field input[readonly],
 .admin-catalog-request-review-dialog .review-modal-field textarea[readonly] {
     opacity: 1;

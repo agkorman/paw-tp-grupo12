@@ -365,9 +365,17 @@ ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS year INT;
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS uq_cars_brand_model_body_type;
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS uq_cars_brand_model_body_type_year;
 
-UPDATE cars
+UPDATE cars c
 SET year = 2026
-WHERE year IS NULL;
+WHERE c.year IS NULL
+  AND NOT EXISTS (
+      SELECT 1 FROM cars c2
+      WHERE c2.car_id <> c.car_id
+        AND c2.brand_id = c.brand_id
+        AND c2.model = c.model
+        AND c2.body_type_id = c.body_type_id
+        AND c2.year = 2026
+  );
 
 ALTER TABLE cars
     ADD CONSTRAINT uq_cars_brand_model_body_type_year

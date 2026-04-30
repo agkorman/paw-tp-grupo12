@@ -2,6 +2,7 @@
 <%@ attribute name="latestReview" required="false" type="ar.edu.itba.paw.model.Review" %>
 <%@ attribute name="liked" required="false" %>
 <%@ attribute name="likeCount" required="false" %>
+<%@ attribute name="timeAgo" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -26,7 +27,7 @@
                 <pa:review-tag-chips mode="display" tags="${latestReview.tags}"/>
                 <div class="review-meta last-review-meta">
                     <pa:review-author-link review="${latestReview}"/>
-                    <span><c:out value="${fn:substring(latestReview.createdAt, 0, 10)}"/></span>
+                    <span><c:out value="${timeAgo}"/></span>
                     <c:url var="latestReviewLikeUrl" value="/reviews/${latestReview.id}/like"/>
                     <pa:review-like-button
                             reviewId="${latestReview.id}"

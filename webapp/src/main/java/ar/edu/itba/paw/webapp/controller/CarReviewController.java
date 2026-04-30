@@ -256,6 +256,9 @@ public class CarReviewController {
         attributes.put("latestReview", pageData.latestReview.orElse(null));
         attributes.put("latestReviewLikeCount", pageData.latestReviewLikeCount);
         attributes.put("latestReviewLiked", pageData.latestReviewLiked);
+        attributes.put("latestReviewTimeAgo", pageData.latestReview
+                .map(review -> ActivityController.timeAgo(review.getCreatedAt()))
+                .orElse(""));
         attributes.put("carImages", pageData.carImages);
         attributes.put("yearVariants", buildYearVariants(pageData.selectedCar));
         return attributes;
@@ -336,13 +339,15 @@ public class CarReviewController {
                         review,
                         reviewLikeCounts.getOrDefault(review.getId(), 0L),
                         likedReviewIds.contains(review.getId()),
+                        ActivityController.timeAgo(review.getCreatedAt()),
                         repliesByReviewId.getOrDefault(review.getId(), Collections.emptyList())
                                 .stream()
                                 .map(reply -> new ReviewReplyCard(
                                         reply,
                                         replyLikeCounts.getOrDefault(reply.getId(), 0L),
                                         likedReplyIds.contains(reply.getId()),
-                                        currentUserId != null && reply.getUserId() == currentUserId
+                                        currentUserId != null && reply.getUserId() == currentUserId,
+                                        ActivityController.timeAgo(reply.getCreatedAt())
                                 ))
                                 .collect(Collectors.toList())
                 ))
@@ -637,13 +642,15 @@ public class CarReviewController {
         private final Review review;
         private final long likeCount;
         private final boolean liked;
+        private final String timeAgo;
         private final List<ReviewReplyCard> replies;
 
         private ReviewThread(final Review review, final long likeCount, final boolean liked,
-                             final List<ReviewReplyCard> replies) {
+                             final String timeAgo, final List<ReviewReplyCard> replies) {
             this.review = review;
             this.likeCount = likeCount;
             this.liked = liked;
+            this.timeAgo = timeAgo;
             this.replies = replies;
         }
 
@@ -657,6 +664,10 @@ public class CarReviewController {
 
         public boolean getLiked() {
             return liked;
+        }
+
+        public String getTimeAgo() {
+            return timeAgo;
         }
 
         public List<ReviewReplyCard> getReplies() {
@@ -693,13 +704,15 @@ public class CarReviewController {
         private final long likeCount;
         private final boolean liked;
         private final boolean ownedByCurrentUser;
+        private final String timeAgo;
 
         private ReviewReplyCard(final ReviewReply reply, final long likeCount, final boolean liked,
-                                final boolean ownedByCurrentUser) {
+                                final boolean ownedByCurrentUser, final String timeAgo) {
             this.reply = reply;
             this.likeCount = likeCount;
             this.liked = liked;
             this.ownedByCurrentUser = ownedByCurrentUser;
+            this.timeAgo = timeAgo;
         }
 
         public ReviewReply getReply() {
@@ -716,6 +729,10 @@ public class CarReviewController {
 
         public boolean getOwnedByCurrentUser() {
             return ownedByCurrentUser;
+        }
+
+        public String getTimeAgo() {
+            return timeAgo;
         }
     }
 

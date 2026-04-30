@@ -259,7 +259,8 @@ public class ProfileController {
                 carsById.get(review.getCarId()),
                 likedByCurrentUser.contains(review.getId()),
                 likeCounts.getOrDefault(review.getId(), 0L),
-                isOwnedByCurrentUser(review, currentUserId)
+                isOwnedByCurrentUser(review, currentUserId),
+                ActivityController.timeAgo(review.getCreatedAt())
         );
     }
 
@@ -273,7 +274,8 @@ public class ProfileController {
                 parentReview,
                 car,
                 likedByCurrentUser.contains(reply.getId()),
-                likeCounts.getOrDefault(reply.getId(), 0L)
+                likeCounts.getOrDefault(reply.getId(), 0L),
+                ActivityController.timeAgo(reply.getCreatedAt())
         );
     }
 
@@ -370,14 +372,20 @@ public class ProfileController {
         private final boolean liked;
         private final long likeCount;
         private final boolean ownedByCurrentUser;
+        private final String timeAgo;
 
         private ProfileReviewCard(final Review review, final Car car, final boolean liked, final long likeCount,
-                                  final boolean ownedByCurrentUser) {
+                                  final boolean ownedByCurrentUser, final String timeAgo) {
             this.review = review;
             this.car = car;
             this.liked = liked;
             this.likeCount = likeCount;
             this.ownedByCurrentUser = ownedByCurrentUser;
+            this.timeAgo = timeAgo;
+        }
+
+        public String getTimeAgo() {
+            return timeAgo;
         }
 
         public Review getReview() {
@@ -418,14 +426,20 @@ public class ProfileController {
         private final Car car;
         private final boolean liked;
         private final long likeCount;
+        private final String timeAgo;
 
         private ProfileLikedReplyCard(final ReviewReply reply, final Review parentReview, final Car car,
-                                      final boolean liked, final long likeCount) {
+                                      final boolean liked, final long likeCount, final String timeAgo) {
             this.reply = reply;
             this.parentReview = parentReview;
             this.car = car;
             this.liked = liked;
             this.likeCount = likeCount;
+            this.timeAgo = timeAgo;
+        }
+
+        public String getTimeAgo() {
+            return timeAgo;
         }
 
         public ReviewReply getReply() {

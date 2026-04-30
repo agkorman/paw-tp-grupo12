@@ -111,6 +111,9 @@ public class CarController {
         mav.addObject("favoritedCarIds", favoritedCarIdsById(featuredCars, currentUser));
         mav.addObject("heroCar", heroCar);
         mav.addObject("heroReview", heroReview);
+        mav.addObject("heroReviewTimeAgo", heroReview == null
+                ? ""
+                : ActivityController.timeAgo(heroReview.getCreatedAt()));
         return mav;
     }
 

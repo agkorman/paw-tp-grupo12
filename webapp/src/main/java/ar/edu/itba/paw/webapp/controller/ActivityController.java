@@ -82,13 +82,13 @@ public class ActivityController {
         return mav;
     }
 
-    private String timeAgo(final LocalDateTime createdAt) {
+    public static String timeAgo(final LocalDateTime createdAt) {
         if (createdAt == null) {
             return "";
         }
 
         final Duration elapsed = Duration.between(createdAt, LocalDateTime.now());
-        if (elapsed.toMinutes() < 1) {
+        if (elapsed.isNegative() || elapsed.toMinutes() < 1) {
             return "recién";
         }
         if (elapsed.toHours() < 1) {

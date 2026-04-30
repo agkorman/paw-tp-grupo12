@@ -31,7 +31,7 @@
 
     <div class="profile-review-content">
         <div class="profile-review-meta-row">
-            <span class="profile-review-date"><c:out value="${fn:substring(reviewCard.review.createdAt, 0, 10)}"/></span>
+            <span class="profile-review-date"><c:out value="${reviewCard.timeAgo}"/></span>
             <div class="profile-review-actions">
                 <span class="profile-review-score"><c:out value="${reviewCard.review.rating}"/></span>
                 <pa:review-like-button
