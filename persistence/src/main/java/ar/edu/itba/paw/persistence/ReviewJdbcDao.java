@@ -215,6 +215,30 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
+    public Page<Review> findByUserId(final long userId, final int page) {
+        final int normalizedPage = Pagination.normalizePage(page);
+        final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
+        final long total = countByUserId(userId);
+        if (total == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final int effectivePage = Pagination.clampPage(normalizedPage, total, pageSize);
+        final long offset = Pagination.offsetFor(effectivePage, pageSize);
+        final List<Review> items = attachTagsToList(jdbcTemplate.query(
+                REVIEW_SELECT + "WHERE r.user_id = ? ORDER BY r.created_at DESC, r.review_id DESC LIMIT ? OFFSET ?",
+                ROW_MAPPER, userId, pageSize, offset
+        ));
+        return new Page<>(items, effectivePage, pageSize, total);
+    }
+
+    @Override
+    public long countByUserId(final long userId) {
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM reviews WHERE user_id = ?", Long.class, userId);
+        return count == null ? 0L : count;
+    }
+
+    @Override
     public Optional<ReviewStats> findStatsByCarId(final long carId) {
         return jdbcTemplate.query(
                 REVIEW_STATS_SELECT + "WHERE c.car_id = ? GROUP BY c.car_id",

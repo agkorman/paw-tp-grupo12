@@ -12,20 +12,16 @@
     border-bottom: 1px solid var(--outline-variant);
 }
 
-.profile-review-card[data-profile-card-link],
-.profile-liked-reply-card[data-profile-card-link] {
+.profile-review-card[data-profile-card-link] {
     cursor: pointer;
 }
 
 .profile-review-card[data-profile-card-link]:hover h3,
-.profile-review-card[data-profile-card-link]:focus-visible h3,
-.profile-liked-reply-card[data-profile-card-link]:hover .profile-liked-reply-context strong,
-.profile-liked-reply-card[data-profile-card-link]:focus-visible .profile-liked-reply-context strong {
+.profile-review-card[data-profile-card-link]:focus-visible h3 {
     color: var(--primary);
 }
 
-.profile-review-card[data-profile-card-link]:focus-visible,
-.profile-liked-reply-card[data-profile-card-link]:focus-visible {
+.profile-review-card[data-profile-card-link]:focus-visible {
     outline: 2px solid rgba(255, 181, 158, 0.62);
     outline-offset: 4px;
 }
@@ -116,77 +112,6 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-}
-
-.profile-liked-group {
-    display: grid;
-    gap: var(--spacing-4);
-}
-
-.profile-liked-group h3 {
-    margin: 0;
-    color: var(--secondary);
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.profile-liked-reply-list {
-    display: grid;
-    gap: var(--spacing-4);
-}
-
-.profile-liked-reply-card {
-    display: grid;
-    gap: 0.75rem;
-    padding: var(--spacing-5);
-    border-left: 2px solid rgba(255, 87, 25, 0.45);
-    background: var(--surface-container-low);
-}
-
-.profile-liked-reply-meta,
-.profile-liked-reply-context,
-.profile-liked-reply-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    flex-wrap: wrap;
-}
-
-.profile-liked-reply-meta {
-    color: var(--secondary);
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.profile-liked-reply-body {
-    margin: 0;
-    color: var(--on-surface);
-    line-height: 1.65;
-}
-
-.profile-liked-reply-context {
-    color: var(--secondary);
-    font-size: 0.875rem;
-}
-
-.profile-liked-reply-context a {
-    color: var(--primary);
-    font-weight: 800;
-    text-decoration: none;
-}
-
-.profile-liked-reply-context a:hover,
-.profile-liked-reply-context a:focus-visible {
-    text-decoration: underline;
-}
-
-.profile-liked-reply-context strong {
-    color: var(--on-surface);
-    font-weight: 800;
 }
 
 @media (max-width: 900px) {

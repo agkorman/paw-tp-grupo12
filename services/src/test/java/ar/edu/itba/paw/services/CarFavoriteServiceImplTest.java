@@ -124,6 +124,17 @@ class CarFavoriteServiceImplTest {
         }
 
         @Override
+        public ar.edu.itba.paw.model.Page<Car> findFavoriteCars(final long userId, final int page) {
+            final List<Car> cars = findFavoriteCars(userId);
+            return new ar.edu.itba.paw.model.Page<>(cars, 1, 16, cars.size());
+        }
+
+        @Override
+        public long countFavoriteCars(final long userId) {
+            return findFavoriteCars(userId).size();
+        }
+
+        @Override
         public Set<Long> findFavoritedCarIds(final long userId, final Collection<Long> carIds) {
             final Set<Long> result = new LinkedHashSet<>();
             for (final Long carId : carIds) {

@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -98,6 +100,35 @@ public class CarFavoriteJdbcDao implements CarFavoriteDao {
                 CAR_ROW_MAPPER,
                 userId
         );
+    }
+
+    @Override
+    public Page<Car> findFavoriteCars(final long userId, final int page) {
+        final int normalizedPage = Pagination.normalizePage(page);
+        final int pageSize = Pagination.CARS_PAGE_SIZE;
+        final long total = countFavoriteCars(userId);
+        if (total == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final int effectivePage = Pagination.clampPage(normalizedPage, total, pageSize);
+        final long offset = Pagination.offsetFor(effectivePage, pageSize);
+        final List<Car> items = jdbcTemplate.query(
+                SELECT_COLUMNS + FROM_JOIN
+                        + "JOIN car_favorites cf ON cf.car_id = c.car_id "
+                        + "WHERE cf.user_id = ? ORDER BY cf.created_at DESC, c.car_id DESC LIMIT ? OFFSET ?",
+                CAR_ROW_MAPPER,
+                userId,
+                pageSize,
+                offset
+        );
+        return new Page<>(items, effectivePage, pageSize, total);
+    }
+
+    @Override
+    public long countFavoriteCars(final long userId) {
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM car_favorites WHERE user_id = ?", Long.class, userId);
+        return count == null ? 0L : count;
     }
 
     @Override

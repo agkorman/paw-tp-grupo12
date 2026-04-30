@@ -160,7 +160,12 @@
     cursor: pointer;
     font: inherit;
     text-align: left;
+    text-decoration: none;
     transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.profile-tab:visited {
+    color: var(--secondary);
 }
 
 .profile-tab span {
@@ -231,6 +236,10 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--spacing-6);
+}
+
+.profile-show-more {
+    margin-top: 0.25rem;
 }
 
 .profile-collapsible-item {

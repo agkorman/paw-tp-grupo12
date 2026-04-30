@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewLikeDao;
 import ar.edu.itba.paw.persistence.ReviewReplyDao;
@@ -107,6 +108,26 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
             return reviewLikeDao.findLikedReviewIdsByUserId(userId);
         } catch (final RuntimeException ignored) {
             return Collections.emptyList();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Long> getLikedReviewIdsByUser(final long userId, final int page) {
+        try {
+            return reviewLikeDao.findLikedReviewIdsByUserId(userId, page);
+        } catch (final RuntimeException ignored) {
+            return Page.empty(page < 1 ? 1 : page, 0);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countLikedReviewsByUser(final long userId) {
+        try {
+            return reviewLikeDao.countLikedReviewsByUserId(userId);
+        } catch (final RuntimeException ignored) {
+            return 0L;
         }
     }
 

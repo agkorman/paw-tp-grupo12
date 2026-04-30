@@ -526,6 +526,16 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public ar.edu.itba.paw.model.Page<Review> findByUserId(final long userId, final int page) {
+            return ar.edu.itba.paw.model.Page.empty(page, 0);
+        }
+
+        @Override
+        public long countByUserId(final long userId) {
+            return 0L;
+        }
+
+        @Override
         public Optional<ReviewStats> findStatsByCarId(final long carId) {
             return Optional.empty();
         }

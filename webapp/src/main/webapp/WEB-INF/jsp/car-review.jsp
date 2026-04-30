@@ -129,7 +129,7 @@
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/action-menu.js'/>"></script>
-    <script src="<c:url value='/js/enhanced-filters.js?v=5'/>"></script>
+    <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
     <script src="<c:url value='/js/car-image-carousel.js'/>"></script>
     <script src="<c:url value='/js/review-tag-chips.js'/>" defer></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>

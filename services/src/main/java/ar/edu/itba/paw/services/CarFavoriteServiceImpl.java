@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarFavoriteDao;
 import ar.edu.itba.paw.persistence.UserDao;
@@ -53,6 +54,18 @@ public class CarFavoriteServiceImpl implements CarFavoriteService {
     @Transactional(readOnly = true)
     public List<Car> getFavoriteCars(final long userId) {
         return carFavoriteDao.findFavoriteCars(userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Car> getFavoriteCars(final long userId, final int page) {
+        return carFavoriteDao.findFavoriteCars(userId, page);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countFavoriteCars(final long userId) {
+        return carFavoriteDao.countFavoriteCars(userId);
     }
 
     @Override
