@@ -7,7 +7,11 @@ import ar.edu.itba.paw.model.ReviewStats;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public interface ReviewService {
@@ -23,6 +27,33 @@ public interface ReviewService {
     boolean deleteReview(long id);
     List<Review> getReviewsByCar(long carId);
     Page<Review> getReviewsByCar(long carId, int page);
+    default Optional<Integer> getDefaultPageForReview(final long carId, final long reviewId) {
+        return Optional.ofNullable(getDefaultPagesForReviews(getReviewsByCar(carId)).get(reviewId));
+    }
+
+    default Map<Long, Integer> getDefaultPagesForReviews(final Collection<Review> reviews) {
+        final Map<Long, Integer> pagesByReviewId = new HashMap<>();
+        if (reviews == null || reviews.isEmpty()) {
+            return pagesByReviewId;
+        }
+
+        final Map<Long, Integer> positionsByCarId = new HashMap<>();
+        reviews.stream()
+                .filter(Objects::nonNull)
+                .sorted(Comparator
+                        .comparing(
+                                Review::getCreatedAt,
+                                Comparator.nullsLast(Comparator.reverseOrder())
+                        )
+                        .thenComparing(Review::getId, Comparator.reverseOrder()))
+                .forEach(review -> {
+                    final int position = positionsByCarId.getOrDefault(review.getCarId(), 0);
+                    pagesByReviewId.put(review.getId(), (position / Pagination.REVIEWS_PAGE_SIZE)
+                            + Pagination.DEFAULT_PAGE);
+                    positionsByCarId.put(review.getCarId(), position + 1);
+                });
+        return pagesByReviewId;
+    }
     Optional<Review> getLatestReviewByCar(long carId);
     Optional<Review> getTopRatedLatestReviewByCar(long carId);
     List<Review> getReviewsByCarOrderByRatingAsc(long carId);

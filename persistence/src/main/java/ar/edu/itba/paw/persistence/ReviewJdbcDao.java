@@ -35,6 +35,9 @@ public class ReviewJdbcDao implements ReviewDao {
     private static final String REVIEW_STATS_SELECT =
             "SELECT c.car_id, COUNT(r.review_id) AS review_count, ROUND(AVG(r.rating), 1) AS average_rating "
                     + "FROM cars c LEFT JOIN reviews r ON r.car_id = c.car_id ";
+    private static final String DEFAULT_REVIEW_ORDER = "r.created_at DESC, r.review_id DESC";
+    private static final String RATING_ASC_REVIEW_ORDER = "r.rating ASC, r.created_at DESC, r.review_id DESC";
+    private static final String RATING_DESC_REVIEW_ORDER = "r.rating DESC, r.created_at DESC, r.review_id DESC";
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -105,7 +108,7 @@ public class ReviewJdbcDao implements ReviewDao {
     @Override
     public List<Review> findAll() {
         return attachTagsToList(jdbcTemplate.query(
-                REVIEW_SELECT + "ORDER BY r.created_at DESC",
+                REVIEW_SELECT + "ORDER BY " + DEFAULT_REVIEW_ORDER,
                 ROW_MAPPER
         ));
     }
@@ -132,12 +135,12 @@ public class ReviewJdbcDao implements ReviewDao {
 
     @Override
     public List<Review> findByCarId(long carId) {
-        return findByCarIdOrdered(carId, "r.created_at DESC");
+        return findByCarIdOrdered(carId, DEFAULT_REVIEW_ORDER);
     }
 
     @Override
     public Page<Review> findByCarId(final long carId, final int page) {
-        return findByCarIdPaginated(carId, "r.created_at DESC", page);
+        return findByCarIdPaginated(carId, DEFAULT_REVIEW_ORDER, page);
     }
 
     @Override
@@ -158,22 +161,22 @@ public class ReviewJdbcDao implements ReviewDao {
 
     @Override
     public List<Review> findByCarIdOrderByRatingAsc(final long carId) {
-        return findByCarIdOrdered(carId, "r.rating ASC, r.created_at DESC");
+        return findByCarIdOrdered(carId, RATING_ASC_REVIEW_ORDER);
     }
 
     @Override
     public Page<Review> findByCarIdOrderByRatingAsc(final long carId, final int page) {
-        return findByCarIdPaginated(carId, "r.rating ASC, r.created_at DESC", page);
+        return findByCarIdPaginated(carId, RATING_ASC_REVIEW_ORDER, page);
     }
 
     @Override
     public List<Review> findByCarIdOrderByRatingDesc(final long carId) {
-        return findByCarIdOrdered(carId, "r.rating DESC, r.created_at DESC");
+        return findByCarIdOrdered(carId, RATING_DESC_REVIEW_ORDER);
     }
 
     @Override
     public Page<Review> findByCarIdOrderByRatingDesc(final long carId, final int page) {
-        return findByCarIdPaginated(carId, "r.rating DESC, r.created_at DESC", page);
+        return findByCarIdPaginated(carId, RATING_DESC_REVIEW_ORDER, page);
     }
 
     @Override
