@@ -364,6 +364,11 @@ ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS year INT;
 
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS uq_cars_brand_model_body_type;
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS uq_cars_brand_model_body_type_year;
+
+UPDATE cars
+SET year = 2026
+WHERE year IS NULL;
+
 ALTER TABLE cars
     ADD CONSTRAINT uq_cars_brand_model_body_type_year
     UNIQUE NULLS NOT DISTINCT (brand_id, model, body_type_id, year);
@@ -590,8 +595,8 @@ WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id
 UPDATE cars SET fuel_type='combustion', horsepower=650, airbag_count=6,  transmission='automatic', fuel_consumption=14.7, max_speed_kmh=290, price_usd=62995, year=2026
 WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Chevrolet' AND c.model='Camaro' AND bt.name='Coupe' AND c.year=2026);
 
-UPDATE cars SET fuel_type='hybrid',     horsepower=600, airbag_count=10, transmission='automatic', fuel_consumption=11.5, max_speed_kmh=280
-WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id WHERE b.name='Audi'      AND c.model='RS6 Avant');
+UPDATE cars SET fuel_type='hybrid',     horsepower=600, airbag_count=10, transmission='automatic', fuel_consumption=11.5, max_speed_kmh=280, price_usd=118600, year=2026
+WHERE car_id=(SELECT c.car_id FROM cars c JOIN brands b ON c.brand_id=b.brand_id JOIN body_types bt ON c.body_type_id=bt.body_type_id WHERE b.name='Audi'      AND c.model='RS6 Avant' AND bt.name='Estate' AND c.year=2026);
 
 -- ============================================================
 -- Review tag seeds
