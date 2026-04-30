@@ -138,8 +138,7 @@
             <div class="profile-tabs-list ${ownProfile ? '' : 'profile-tabs-list-single'}" aria-label="Secciones del perfil">
                 <a id="profileReviewsTab"
                    class="profile-tab"
-                   href="${profileReviewsTabUrl}"
-                   aria-selected="${activeTab eq 'reviews'}">
+                   href="${profileReviewsTabUrl}">
                     <span>
                         <c:choose>
                             <c:when test="${ownProfile}">Mis reseñas</c:when>
@@ -151,15 +150,13 @@
                 <c:if test="${ownProfile}">
                     <a id="profileFavoritesTab"
                        class="profile-tab"
-                       href="${profileFavoritesTabUrl}"
-                       aria-selected="${activeTab eq 'favorites'}">
+                       href="${profileFavoritesTabUrl}">
                         <span>Autos favoritos</span>
                         <strong><c:out value="${favoriteCarCount}"/></strong>
                     </a>
                     <a id="profileLikedTab"
                        class="profile-tab"
-                       href="${profileLikedTabUrl}"
-                       aria-selected="${activeTab eq 'liked'}">
+                       href="${profileLikedTabUrl}">
                         <span>Reseñas likeadas</span>
                         <strong><c:out value="${likedActivityCount}"/></strong>
                     </a>

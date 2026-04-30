@@ -57,23 +57,19 @@
                     <c:param name="tab" value="moderators"/>
                 </c:url>
 
-                <a class="admin-request-tab" href="${carsTabUrl}"
-                   aria-selected="${activeTab eq 'cars'}">
+                <a class="admin-request-tab" href="${carsTabUrl}">
                     <span>Autos</span>
                     <strong><c:out value="${carRequestCount}"/></strong>
                 </a>
-                <a class="admin-request-tab" href="${brandsTabUrl}"
-                   aria-selected="${activeTab eq 'brands'}">
+                <a class="admin-request-tab" href="${brandsTabUrl}">
                     <span>Marcas</span>
                     <strong><c:out value="${brandRequestCount}"/></strong>
                 </a>
-                <a class="admin-request-tab" href="${bodyTypesTabUrl}"
-                   aria-selected="${activeTab eq 'body-types'}">
+                <a class="admin-request-tab" href="${bodyTypesTabUrl}">
                     <span>Carrocerías</span>
                     <strong><c:out value="${bodyTypeRequestCount}"/></strong>
                 </a>
-                <a class="admin-request-tab" href="${moderatorsTabUrl}"
-                   aria-selected="${activeTab eq 'moderators'}">
+                <a class="admin-request-tab" href="${moderatorsTabUrl}">
                     <span>Moderador</span>
                     <strong><c:out value="${adminRequestCount}"/></strong>
                 </a>

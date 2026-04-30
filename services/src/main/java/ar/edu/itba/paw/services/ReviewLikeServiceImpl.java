@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewLikeDao;
 import ar.edu.itba.paw.persistence.ReviewReplyDao;
@@ -117,7 +118,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         try {
             return reviewLikeDao.findLikedReviewIdsByUserId(userId, page);
         } catch (final RuntimeException ignored) {
-            return Page.empty(page < 1 ? 1 : page, 0);
+            return Page.empty(Pagination.normalizePage(page), Pagination.REVIEWS_PAGE_SIZE);
         }
     }
 
