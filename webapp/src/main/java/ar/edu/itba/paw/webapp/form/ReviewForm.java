@@ -38,8 +38,8 @@ public class ReviewForm {
     private String ownershipStatus;
 
     @NotNull(message = "El año del modelo es obligatorio.")
-    @Min(value = 1886, message = "Ingresá un año válido.")
-    @Max(value = 2100, message = "Ingresá un año válido.")
+    @Min(value = 1950, message = "Ingresá un año válido.")
+    @Max(value = 2026, message = "Ingresá un año válido.")
     private Integer modelYear;
 
     @NotNull(message = "El kilometraje es obligatorio.")

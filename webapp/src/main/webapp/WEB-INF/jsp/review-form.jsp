@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
@@ -179,7 +179,7 @@
         </section>
     </main>
 
-    <script src="<c:url value='/js/review-form.js?v=1'/>"></script>
+    <script src="<c:url value='/js/review-form.js?v=2'/>"></script>
     <script src="<c:url value='/js/review-tag-chips.js'/>" defer></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>

@@ -113,7 +113,7 @@
                     <div class="review-modal-field review-modal-field-wide">
                         <label for="modalCarYear">Año modelo</label>
                         <form:input id="modalCarYear" path="year" type="number"
-                                    min="1886" max="2100"
+                                    min="1950" max="2026"
                                     placeholder="Ej: 2026" readonly="${adminMode}"/>
                         <form:errors path="year" cssClass="form-error" element="span"/>
                     </div>
