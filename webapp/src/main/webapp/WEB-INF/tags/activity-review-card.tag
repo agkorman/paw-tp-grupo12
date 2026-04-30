@@ -1,7 +1,9 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="reviewCard" required="true" type="ar.edu.itba.paw.webapp.controller.ActivityController.ActivityReviewCard" %>
+<%@ attribute name="idPrefix" required="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <c:url var="activityReviewUrl" value="/reviews">
     <c:param name="carId" value="${reviewCard.review.carId}"/>
@@ -17,11 +19,16 @@
     </c:url>
     <c:set var="activityReviewStyle" value="--activity-car-image: url('${activityCarImageUrl}');"/>
 </c:if>
+<c:set var="activityPreviewModalId" value="${idPrefix}-${reviewCard.review.id}"/>
 
 <a class="activity-review-card ${reviewCard.hasCarImage ? 'has-image' : ''}"
    href="${activityReviewHref}"
+   data-open-review-preview
+   data-review-preview-target="${fn:escapeXml(activityPreviewModalId)}"
+   aria-haspopup="dialog"
+   aria-controls="${fn:escapeXml(activityPreviewModalId)}"
    style="${activityReviewStyle}"
-   aria-label="Ver reseña de ${fn:escapeXml(reviewCard.carName)}">
+   aria-label="Vista previa de reseña de ${fn:escapeXml(reviewCard.carName)}">
     <span class="activity-review-author">
         <span class="activity-review-author-copy">
             <strong><c:out value="${reviewCard.authorName}"/></strong>
@@ -45,3 +52,10 @@
         <span class="activity-review-body"><c:out value="${reviewCard.review.body}"/></span>
     </span>
 </a>
+
+<c:if test="${not empty reviewCard.car}">
+    <pa:review-preview-modal selectedCar="${reviewCard.car}"
+                             review="${reviewCard.review}"
+                             reviewUrl="${activityReviewHref}"
+                             idPrefix="${idPrefix}"/>
+</c:if>
