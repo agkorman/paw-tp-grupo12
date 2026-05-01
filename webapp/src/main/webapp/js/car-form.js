@@ -21,7 +21,6 @@
     var submitterEmailField = document.getElementById('modalCarSubmitterEmailField');
     var fileTitle = document.getElementById('modalCarFileTitle');
     var fileHelp = document.getElementById('modalCarFileHelp');
-    var fileAction = document.getElementById('modalCarFileAction');
     var currentMode = isAdminMode ? 'review' : 'create';
     var createAction = form ? form.getAttribute('action') : '';
 
@@ -35,6 +34,7 @@
     var previewImages = [];
     var previewObjectUrls = [];
     var previewIndex = 0;
+    var accumulatedFiles = [];
     var lastTrigger = null;
     var requiredMessages = {
         modalCarBrand: 'Seleccioná una marca.',
@@ -295,6 +295,48 @@
         });
     };
 
+    var fileKey = function (file) {
+        return file.name + '|' + file.size + '|' + file.lastModified;
+    };
+
+    var syncInputFromAccumulator = function () {
+        if (!fileInput || typeof window.DataTransfer !== 'function') {
+            return;
+        }
+        var dt = new DataTransfer();
+        accumulatedFiles.forEach(function (file) {
+            dt.items.add(file);
+        });
+        fileInput.files = dt.files;
+    };
+
+    var appendToAccumulator = function (newFiles) {
+        var existing = {};
+        accumulatedFiles.forEach(function (file) {
+            existing[fileKey(file)] = true;
+        });
+        var added = false;
+        newFiles.forEach(function (file) {
+            if (accumulatedFiles.length >= MAX_IMAGE_COUNT) {
+                return;
+            }
+            var key = fileKey(file);
+            if (existing[key]) {
+                return;
+            }
+            existing[key] = true;
+            accumulatedFiles.push(file);
+            added = true;
+        });
+        if (added) {
+            syncInputFromAccumulator();
+        }
+    };
+
+    var clearAccumulator = function () {
+        accumulatedFiles = [];
+    };
+
     var revokePreviewObjectUrls = function () {
         previewObjectUrls.forEach(function (url) {
             window.URL.revokeObjectURL(url);
@@ -349,7 +391,22 @@
                 button.appendChild(img);
                 filePreviewThumbnails.appendChild(button);
             });
-            filePreviewThumbnails.toggleAttribute('hidden', previewImages.length <= 1);
+
+            var showAddMore = currentMode === 'create'
+                    && accumulatedFiles.length >= 1
+                    && accumulatedFiles.length < MAX_IMAGE_COUNT;
+            if (showAddMore) {
+                var addMore = document.createElement('button');
+                addMore.type = 'button';
+                addMore.className = 'car-image-upload-add-more';
+                addMore.id = 'modalCarImageAddMore';
+                addMore.setAttribute('aria-label', 'Agregar más imágenes');
+                addMore.textContent = '+';
+                filePreviewThumbnails.appendChild(addMore);
+            }
+
+            var stripVisible = previewImages.length > 1 || showAddMore;
+            filePreviewThumbnails.toggleAttribute('hidden', !stripVisible);
         }
     };
 
@@ -406,6 +463,7 @@
         if (fileStatus) {
             fileStatus.textContent = emptyFileStatus;
         }
+        clearAccumulator();
         clearPreviewImages();
         updateFileState();
     };
@@ -543,9 +601,8 @@
         if (fileInput) {
             fileInput.setAttribute('required', 'required');
         }
-        setText(fileTitle, 'Arrastrá o elegí una imagen del auto');
-        setText(fileHelp, 'JPEG, PNG o WEBP. Máximo 10 MB.');
-        setText(fileAction, 'Buscar');
+        setText(fileTitle, 'Arrastrá o elegí imágenes del auto');
+        setText(fileHelp, 'JPEG, PNG o WEBP. Máximo 5 imágenes, 10 MB cada una.');
         if (fileUpload) {
             fileUpload.classList.remove('is-readonly', 'has-file');
         }
@@ -578,7 +635,6 @@
         }
         setText(fileTitle, 'Imagen enviada por el usuario');
         setText(fileHelp, 'Podés reemplazarla cargando una imagen nueva.');
-        setText(fileAction, 'Buscar');
         if (fileUpload) {
             fileUpload.classList.remove('is-readonly');
         }
@@ -607,7 +663,6 @@
         }
         setText(fileTitle, 'Imagen actual del auto');
         setText(fileHelp, 'Opcional: cargá una nueva imagen para reemplazarla.');
-        setText(fileAction, 'Buscar');
         if (fileUpload) {
             fileUpload.classList.remove('is-readonly');
         }
@@ -745,7 +800,13 @@
     });
 
     if (fileInput) {
-        fileInput.addEventListener('change', function () {
+        fileInput.addEventListener('change', function (event) {
+            if (currentMode === 'create') {
+                var picked = Array.prototype.slice.call(event.target.files || []).filter(function (file) {
+                    return file && file.size > 0;
+                });
+                appendToAccumulator(picked);
+            }
             updateFileState();
             validateField(fileInput);
         });
@@ -771,6 +832,15 @@
 
     if (filePreviewThumbnails) {
         filePreviewThumbnails.addEventListener('click', function (event) {
+            var addMore = event.target.closest('.car-image-upload-add-more');
+            if (addMore) {
+                event.preventDefault();
+                event.stopPropagation();
+                if (fileInput) {
+                    fileInput.click();
+                }
+                return;
+            }
             var thumb = event.target.closest('[data-upload-preview-index]');
             if (!thumb) {
                 return;

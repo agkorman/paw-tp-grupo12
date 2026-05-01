@@ -219,7 +219,6 @@
                                         <span id="modalCarFileStatus" class="car-image-upload-status">Ninguna imagen seleccionada</span>
                                         <span id="modalCarImageThumbnails" class="car-image-upload-thumbnails" hidden></span>
                                     </span>
-                                    <span id="modalCarFileAction" class="car-image-upload-action">Buscar</span>
                                 </label>
                             </div>
                             <form:errors path="files" cssClass="form-error" element="span"/>
@@ -240,7 +239,7 @@
     <pa:request-brand-modal/>
     <pa:request-body-type-modal/>
 
-    <script src="<c:url value='/js/car-form.js?v=1'/>"></script>
+    <script src="<c:url value='/js/car-form.js?v=2'/>"></script>
     <script src="<c:url value='/js/catalog-request-modals.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>

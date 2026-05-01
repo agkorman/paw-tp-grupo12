@@ -134,7 +134,7 @@
     <script src="<c:url value='/js/review-tag-chips.js'/>" defer></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <sec:authorize access="hasRole('ADMIN')">
-        <script src="<c:url value='/js/car-form.js?v=1'/>"></script>
+        <script src="<c:url value='/js/car-form.js?v=2'/>"></script>
         <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
     </sec:authorize>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
