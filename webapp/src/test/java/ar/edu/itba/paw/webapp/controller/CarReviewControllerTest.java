@@ -513,6 +513,16 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public Page<Car> getFavoriteCars(final long userId, final int page) {
+            return Page.empty(page, 0);
+        }
+
+        @Override
+        public long countFavoriteCars(final long userId) {
+            return 0L;
+        }
+
+        @Override
         public java.util.Set<Long> getFavoritedCarIds(final long userId, final Collection<Long> carIds) {
             return Collections.emptySet();
         }
@@ -556,6 +566,36 @@ public class CarReviewControllerTest {
         @Override
         public List<Review> getAllReviews() {
             return review == null ? Collections.emptyList() : List.of(review);
+        }
+
+        @Override
+        public long countAllReviews() {
+            return getAllReviews().size();
+        }
+
+        @Override
+        public Page<Review> getLatestReviews(final int page, final int pageSize) {
+            return new Page<>(getAllReviews(), 1, pageSize, getAllReviews().size());
+        }
+
+        @Override
+        public Page<Review> getReviewsByFollowedUsers(final long followerId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFollowedUsers(final long followerId) {
+            return 0L;
+        }
+
+        @Override
+        public Page<Review> getReviewsByFavoriteCars(final long userId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFavoriteCars(final long userId) {
+            return 0L;
         }
 
         @Override
@@ -642,6 +682,22 @@ public class CarReviewControllerTest {
             return review != null && review.getUserId() != null && review.getUserId() == userId
                     ? List.of(review)
                     : Collections.emptyList();
+        }
+
+        @Override
+        public Page<Review> getReviewsByUser(final long userId, final int page) {
+            final List<Review> items = getReviewsByUser(userId);
+            return new Page<>(items, 1, Pagination.REVIEWS_PAGE_SIZE, items.size());
+        }
+
+        @Override
+        public long countReviewsByUser(final long userId) {
+            return getReviewsByUser(userId).size();
+        }
+
+        @Override
+        public Map<Long, Integer> getDefaultPagesForReviewIds(final Collection<Long> reviewIds) {
+            return Collections.emptyMap();
         }
 
         @Override
@@ -740,6 +796,16 @@ public class CarReviewControllerTest {
         @Override
         public List<Long> getLikedReviewIdsByUser(final long userId) {
             return Collections.emptyList();
+        }
+
+        @Override
+        public Page<Long> getLikedReviewIdsByUser(final long userId, final int page) {
+            return Page.empty(page, 0);
+        }
+
+        @Override
+        public long countLikedReviewsByUser(final long userId) {
+            return 0L;
         }
 
         @Override

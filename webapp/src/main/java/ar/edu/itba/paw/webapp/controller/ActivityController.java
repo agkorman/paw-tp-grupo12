@@ -4,11 +4,8 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
-import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,11 +17,9 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,17 +33,11 @@ public class ActivityController {
 
     private final ReviewService reviewService;
     private final CarService carService;
-    private final UserFollowService userFollowService;
-    private final CarFavoriteService carFavoriteService;
 
     @Autowired
-    public ActivityController(final ReviewService reviewService, final CarService carService,
-                              final UserFollowService userFollowService,
-                              final CarFavoriteService carFavoriteService) {
+    public ActivityController(final ReviewService reviewService, final CarService carService) {
         this.reviewService = reviewService;
         this.carService = carService;
-        this.userFollowService = userFollowService;
-        this.carFavoriteService = carFavoriteService;
     }
 
     @RequestMapping(value = "/activity", method = RequestMethod.GET)
@@ -57,71 +46,60 @@ public class ActivityController {
                                  @RequestParam(value = "page", defaultValue = "1") final int page) {
         final boolean authenticated = currentUser != null;
         final String activeTab = normalizeActivityTab(tab, authenticated);
+        final int pageSize = ACTIVITY_PAGE_SIZE;
 
-        final List<Review> reviews = reviewService.getAllReviews()
-                .stream()
-                .sorted(Comparator.<Review, LocalDateTime>comparing(
-                        review -> review.getCreatedAt() == null ? LocalDateTime.MIN : review.getCreatedAt(),
-                        Comparator.reverseOrder()
-                ).thenComparing((left, right) -> Long.compare(right.getId(), left.getId())))
-                .toList();
+        final Page<Review> reviewsPage;
+        if (TAB_FOLLOWING.equals(activeTab)) {
+            reviewsPage = reviewService.getReviewsByFollowedUsers(currentUser.getId(), page, pageSize);
+        } else if (TAB_FAVORITES.equals(activeTab)) {
+            reviewsPage = reviewService.getReviewsByFavoriteCars(currentUser.getId(), page, pageSize);
+        } else {
+            reviewsPage = reviewService.getLatestReviews(page, pageSize);
+        }
+
+        final List<Review> reviews = reviewsPage.getItems();
         final Map<Long, Car> carsById = carService.getCarsByIds(reviews.stream().map(Review::getCarId).distinct().toList())
                 .stream()
                 .collect(Collectors.toMap(Car::getId, Function.identity(), (left, right) -> left));
-        final Map<Long, Integer> reviewPagesById = reviewService.getDefaultPagesForReviews(reviews);
-        final List<ActivityReviewCard> allCards = reviews
+        final Map<Long, Integer> reviewPagesById = reviewService.getDefaultPagesForReviewIds(
+                reviews.stream().map(Review::getId).toList());
+        final List<ActivityReviewCard> activityReviews = reviews
                 .stream()
                 .map(review -> new ActivityReviewCard(review, carsById.get(review.getCarId()),
                         reviewPagesById.getOrDefault(review.getId(), Pagination.DEFAULT_PAGE),
                         timeAgo(review.getCreatedAt())))
                 .toList();
 
-        final Set<Long> followedUserIds = currentUser == null
-                ? Set.of()
-                : userFollowService.getFollowing(currentUser.getId())
-                    .stream()
-                    .map(User::getId)
-                    .collect(Collectors.toSet());
-        final Set<Long> favoriteCarIds = currentUser == null
-                ? Set.of()
-                : Set.copyOf(carFavoriteService.findFavoriteCarIdsByUser(currentUser.getId()));
-
-        final List<ActivityReviewCard> followedCards = allCards.stream()
-                .filter(card -> card.getReview().getUserId() != null && followedUserIds.contains(card.getReview().getUserId()))
-                .toList();
-        final List<ActivityReviewCard> favoriteCards = allCards.stream()
-                .filter(card -> favoriteCarIds.contains(card.getReview().getCarId()))
-                .toList();
-
-        final int pageSize = ACTIVITY_PAGE_SIZE;
-        final Page<ActivityReviewCard> activePage;
+        final long latestCount;
+        final long followedCount;
+        final long favoriteCount;
         if (TAB_FOLLOWING.equals(activeTab)) {
-            activePage = paginateList(followedCards, page, pageSize);
+            latestCount = reviewService.countAllReviews();
+            followedCount = reviewsPage.getTotalItems();
+            favoriteCount = reviewService.countReviewsByFavoriteCars(currentUser.getId());
         } else if (TAB_FAVORITES.equals(activeTab)) {
-            activePage = paginateList(favoriteCards, page, pageSize);
+            latestCount = reviewService.countAllReviews();
+            followedCount = reviewService.countReviewsByFollowedUsers(currentUser.getId());
+            favoriteCount = reviewsPage.getTotalItems();
+        } else if (authenticated) {
+            latestCount = reviewsPage.getTotalItems();
+            followedCount = reviewService.countReviewsByFollowedUsers(currentUser.getId());
+            favoriteCount = reviewService.countReviewsByFavoriteCars(currentUser.getId());
         } else {
-            activePage = paginateList(allCards, page, pageSize);
+            latestCount = reviewsPage.getTotalItems();
+            followedCount = 0L;
+            favoriteCount = 0L;
         }
 
         final ModelAndView mav = new ModelAndView("activity.jsp");
         mav.addObject("activeTab", activeTab);
-        mav.addObject("latestCount", allCards.size());
-        mav.addObject("followedCount", followedCards.size());
-        mav.addObject("favoriteCount", favoriteCards.size());
-        mav.addObject("activityReviews", activePage.getItems());
-        mav.addObject("activityCurrentPage", activePage.getPageNumber());
-        mav.addObject("activityTotalPages", activePage.getTotalPages());
+        mav.addObject("latestCount", latestCount);
+        mav.addObject("followedCount", followedCount);
+        mav.addObject("favoriteCount", favoriteCount);
+        mav.addObject("activityReviews", activityReviews);
+        mav.addObject("activityCurrentPage", reviewsPage.getPageNumber());
+        mav.addObject("activityTotalPages", reviewsPage.getTotalPages());
         return mav;
-    }
-
-    private Page<ActivityReviewCard> paginateList(final List<ActivityReviewCard> list, final int page, final int pageSize) {
-        if (list.isEmpty()) {
-            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
-        }
-        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), list.size(), pageSize);
-        final int fromIndex = (int) Pagination.offsetFor(effectivePage, pageSize);
-        final int toIndex = Math.min(fromIndex + pageSize, list.size());
-        return new Page<>(list.subList(fromIndex, toIndex), effectivePage, pageSize, list.size());
     }
 
     private String normalizeActivityTab(final String tab, final boolean authenticated) {

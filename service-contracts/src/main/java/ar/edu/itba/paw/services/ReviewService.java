@@ -19,6 +19,12 @@ public interface ReviewService {
                         String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                         Collection<Short> tagIds);
     List<Review> getAllReviews();
+    long countAllReviews();
+    Page<Review> getLatestReviews(int page, int pageSize);
+    Page<Review> getReviewsByFollowedUsers(long followerId, int page, int pageSize);
+    long countReviewsByFollowedUsers(long followerId);
+    Page<Review> getReviewsByFavoriteCars(long userId, int page, int pageSize);
+    long countReviewsByFavoriteCars(long userId);
     Optional<Review> getReviewById(long id);
     List<Review> getReviewsByIds(Collection<Long> ids);
     Optional<Review> updateReview(long id, long carId, BigDecimal rating, String title, String body,
@@ -54,6 +60,9 @@ public interface ReviewService {
                 });
         return pagesByReviewId;
     }
+
+    Map<Long, Integer> getDefaultPagesForReviewIds(Collection<Long> reviewIds);
+
     Optional<Review> getLatestReviewByCar(long carId);
     Optional<Review> getTopRatedLatestReviewByCar(long carId);
     List<Review> getReviewsByCarOrderByRatingAsc(long carId);
@@ -61,21 +70,9 @@ public interface ReviewService {
     List<Review> getReviewsByCarOrderByRatingDesc(long carId);
     Page<Review> getReviewsByCarOrderByRatingDesc(long carId, int page);
     List<Review> getReviewsByUser(long userId);
-    default Page<Review> getReviewsByUser(final long userId, final int page) {
-        final List<Review> reviews = getReviewsByUser(userId);
-        final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
-        if (reviews.isEmpty()) {
-            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
-        }
-        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), reviews.size(), pageSize);
-        final int fromIndex = (int) Pagination.offsetFor(effectivePage, pageSize);
-        final int toIndex = Math.min(fromIndex + pageSize, reviews.size());
-        return new Page<>(reviews.subList(fromIndex, toIndex), effectivePage, pageSize, reviews.size());
-    }
+    Page<Review> getReviewsByUser(long userId, int page);
 
-    default long countReviewsByUser(final long userId) {
-        return getReviewsByUser(userId).size();
-    }
+    long countReviewsByUser(long userId);
     Optional<ReviewStats> getReviewStatsByCar(long carId);
     List<ReviewStats> getReviewStatsByCarIds(Collection<Long> carIds);
 }

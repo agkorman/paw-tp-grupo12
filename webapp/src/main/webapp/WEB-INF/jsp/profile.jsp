@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=4'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=8'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=9'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-connections.css?v=1'/>">
@@ -138,7 +138,8 @@
             <div class="profile-tabs-list ${ownProfile ? '' : 'profile-tabs-list-single'}" aria-label="Secciones del perfil">
                 <a id="profileReviewsTab"
                    class="profile-tab"
-                   href="${profileReviewsTabUrl}">
+                   href="${profileReviewsTabUrl}"
+                   <c:if test="${activeTab eq 'reviews'}">aria-current="page"</c:if>>
                     <span>
                         <c:choose>
                             <c:when test="${ownProfile}">Mis reseñas</c:when>
@@ -150,13 +151,15 @@
                 <c:if test="${ownProfile}">
                     <a id="profileFavoritesTab"
                        class="profile-tab"
-                       href="${profileFavoritesTabUrl}">
+                       href="${profileFavoritesTabUrl}"
+                       <c:if test="${activeTab eq 'favorites'}">aria-current="page"</c:if>>
                         <span>Autos favoritos</span>
                         <strong><c:out value="${favoriteCarCount}"/></strong>
                     </a>
                     <a id="profileLikedTab"
                        class="profile-tab"
-                       href="${profileLikedTabUrl}">
+                       href="${profileLikedTabUrl}"
+                       <c:if test="${activeTab eq 'liked'}">aria-current="page"</c:if>>
                         <span>Reseñas likeadas</span>
                         <strong><c:out value="${likedActivityCount}"/></strong>
                     </a>

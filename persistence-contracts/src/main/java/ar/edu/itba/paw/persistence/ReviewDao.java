@@ -7,10 +7,18 @@ import ar.edu.itba.paw.model.ReviewStats;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface ReviewDao {
     List<Review> findAll();
+    Page<Review> findLatest(int page, int pageSize);
+    long countAll();
+    Page<Review> findByFollowedUsers(long followerId, int page, int pageSize);
+    long countByFollowedUsers(long followerId);
+    Page<Review> findByFavoriteCars(long userId, int page, int pageSize);
+    long countByFavoriteCars(long userId);
+    Map<Long, Integer> findDefaultPagesByReviewIds(Collection<Long> reviewIds);
     Optional<Review> findById(long id);
     List<Review> findByIds(Collection<Long> ids);
     List<Review> findByCarId(long carId);

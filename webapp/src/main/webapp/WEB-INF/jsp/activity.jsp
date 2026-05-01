@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/activity.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/activity.css?v=1'/>">
 </head>
 <body>
     <pa:nav activePage="activity"/>
@@ -25,23 +25,20 @@
         <c:param name="tab" value="latest"/>
     </c:url>
     <c:url var="activityFollowingLoginUrl" value="/login">
-        <c:param name="redirect" value="/activity"/>
+        <c:param name="redirect" value="/activity?tab=following"/>
         <c:param name="intent" value="activity-following"/>
     </c:url>
     <c:url var="activityFavoritesLoginUrl" value="/login">
-        <c:param name="redirect" value="/activity"/>
+        <c:param name="redirect" value="/activity?tab=favorites"/>
         <c:param name="intent" value="activity-favorites"/>
     </c:url>
 
     <main class="activity-page">
-        <div class="activity-tabs-list" role="tablist" aria-label="Filtros de actividad">
+        <nav class="activity-tabs-list" aria-label="Filtros de actividad">
             <a id="activityNewsTab"
                class="activity-tab"
                href="${activityLatestTabUrl}"
-               role="tab"
-               aria-selected="${activeTab eq 'latest'}"
-               aria-controls="activityNewsPanel"
-               data-activity-tab-target="activityNewsPanel">
+               <c:if test="${activeTab eq 'latest'}">aria-current="page"</c:if>>
                 <span>Novedad</span>
                 <strong><c:out value="${latestCount}"/></strong>
             </a>
@@ -56,20 +53,14 @@
                     <a id="activityFollowingTab"
                        class="activity-tab"
                        href="${activityFollowingTabUrl}"
-                       role="tab"
-                       aria-selected="${activeTab eq 'following'}"
-                       aria-controls="activityFollowingPanel"
-                       data-activity-tab-target="activityFollowingPanel">
+                       <c:if test="${activeTab eq 'following'}">aria-current="page"</c:if>>
                         <span>Seguidos</span>
                         <strong><c:out value="${followedCount}"/></strong>
                     </a>
                     <a id="activityFavoritesTab"
                        class="activity-tab"
                        href="${activityFavoritesTabUrl}"
-                       role="tab"
-                       aria-selected="${activeTab eq 'favorites'}"
-                       aria-controls="activityFavoritesPanel"
-                       data-activity-tab-target="activityFavoritesPanel">
+                       <c:if test="${activeTab eq 'favorites'}">aria-current="page"</c:if>>
                         <span>Autos favoritos</span>
                         <strong><c:out value="${favoriteCount}"/></strong>
                     </a>
@@ -91,14 +82,12 @@
                     </a>
                 </c:otherwise>
             </c:choose>
-        </div>
+        </nav>
 
         <c:choose>
             <c:when test="${activeTab eq 'following'}">
                 <section id="activityFollowingPanel"
-                         class="activity-tab-panel"
-                         role="tabpanel"
-                         aria-labelledby="activityFollowingTab">
+                         class="activity-tab-panel">
                     <c:choose>
                         <c:when test="${empty activityReviews}">
                             <div class="activity-empty-state">
@@ -134,9 +123,7 @@
             </c:when>
             <c:when test="${activeTab eq 'favorites'}">
                 <section id="activityFavoritesPanel"
-                         class="activity-tab-panel"
-                         role="tabpanel"
-                         aria-labelledby="activityFavoritesTab">
+                         class="activity-tab-panel">
                     <c:choose>
                         <c:when test="${empty activityReviews}">
                             <div class="activity-empty-state">
@@ -172,9 +159,7 @@
             </c:when>
             <c:otherwise>
                 <section id="activityNewsPanel"
-                         class="activity-tab-panel"
-                         role="tabpanel"
-                         aria-labelledby="activityNewsTab">
+                         class="activity-tab-panel">
                     <c:choose>
                         <c:when test="${empty activityReviews}">
                             <div class="activity-empty-state">
@@ -212,6 +197,5 @@
     </main>
 
     <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
-    <script src="<c:url value='/js/activity.js?v=3'/>"></script>
 </body>
 </html>

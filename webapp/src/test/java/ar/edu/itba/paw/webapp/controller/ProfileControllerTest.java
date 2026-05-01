@@ -131,6 +131,36 @@ public class ProfileControllerTest {
         }
 
         @Override
+        public long countAllReviews() {
+            return getAllReviews().size();
+        }
+
+        @Override
+        public Page<Review> getLatestReviews(final int page, final int pageSize) {
+            return new Page<>(getAllReviews(), 1, pageSize, getAllReviews().size());
+        }
+
+        @Override
+        public Page<Review> getReviewsByFollowedUsers(final long followerId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFollowedUsers(final long followerId) {
+            return 0L;
+        }
+
+        @Override
+        public Page<Review> getReviewsByFavoriteCars(final long userId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFavoriteCars(final long userId) {
+            return 0L;
+        }
+
+        @Override
         public Optional<Review> getReviewById(final long id) {
             return review.getId() == id ? Optional.of(review) : Optional.empty();
         }
@@ -212,6 +242,11 @@ public class ProfileControllerTest {
         @Override
         public long countReviewsByUser(final long userId) {
             return getReviewsByUser(userId).size();
+        }
+
+        @Override
+        public Map<Long, Integer> getDefaultPagesForReviewIds(final Collection<Long> reviewIds) {
+            return Collections.emptyMap();
         }
 
         @Override

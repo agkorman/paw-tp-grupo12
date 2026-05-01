@@ -112,6 +112,16 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
+        public ar.edu.itba.paw.model.Page<Car> getFavoriteCars(final long userId, final int page) {
+            return ar.edu.itba.paw.model.Page.empty(page, 0);
+        }
+
+        @Override
+        public long countFavoriteCars(final long userId) {
+            return 0L;
+        }
+
+        @Override
         public Set<Long> getFavoritedCarIds(final long userId, final Collection<Long> carIds) {
             return Collections.emptySet();
         }
@@ -213,6 +223,38 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
+        public long countAllReviews() {
+            return 0L;
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<Review> getLatestReviews(final int page, final int pageSize) {
+            return ar.edu.itba.paw.model.Page.empty(page, pageSize);
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<Review> getReviewsByFollowedUsers(final long followerId, final int page,
+                                                                            final int pageSize) {
+            return ar.edu.itba.paw.model.Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFollowedUsers(final long followerId) {
+            return 0L;
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<Review> getReviewsByFavoriteCars(final long userId, final int page,
+                                                                           final int pageSize) {
+            return ar.edu.itba.paw.model.Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFavoriteCars(final long userId) {
+            return 0L;
+        }
+
+        @Override
         public Optional<Review> getReviewById(final long id) {
             return Optional.empty();
         }
@@ -278,6 +320,21 @@ public class CarControllerFavoriteTest {
         @Override
         public List<Review> getReviewsByUser(final long userId) {
             return Collections.emptyList();
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<Review> getReviewsByUser(final long userId, final int page) {
+            return ar.edu.itba.paw.model.Page.empty(page, 0);
+        }
+
+        @Override
+        public long countReviewsByUser(final long userId) {
+            return 0L;
+        }
+
+        @Override
+        public java.util.Map<Long, Integer> getDefaultPagesForReviewIds(final Collection<Long> reviewIds) {
+            return Collections.emptyMap();
         }
 
         @Override

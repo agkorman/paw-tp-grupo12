@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -51,6 +52,42 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public long countAllReviews() {
+        return reviewDao.countAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Review> getLatestReviews(final int page, final int pageSize) {
+        return reviewDao.findLatest(page, pageSize);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Review> getReviewsByFollowedUsers(final long followerId, final int page, final int pageSize) {
+        return reviewDao.findByFollowedUsers(followerId, page, pageSize);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countReviewsByFollowedUsers(final long followerId) {
+        return reviewDao.countByFollowedUsers(followerId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Review> getReviewsByFavoriteCars(final long userId, final int page, final int pageSize) {
+        return reviewDao.findByFavoriteCars(userId, page, pageSize);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countReviewsByFavoriteCars(final long userId) {
+        return reviewDao.countByFavoriteCars(userId);
+    }
+
+    @Override
     public Optional<Review> getReviewById(final long id) {
         return reviewDao.findById(id);
     }
@@ -61,6 +98,12 @@ public class ReviewServiceImpl implements ReviewService {
             return Collections.emptyList();
         }
         return reviewDao.findByIds(ids);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Integer> getDefaultPagesForReviewIds(final Collection<Long> reviewIds) {
+        return reviewDao.findDefaultPagesByReviewIds(reviewIds);
     }
 
     @Override
