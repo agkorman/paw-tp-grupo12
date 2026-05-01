@@ -56,11 +56,6 @@
             return;
         }
 
-        if (closestByAttribute(event.target, 'data-open-create-car-modal')) {
-            closeActionMenus();
-            return;
-        }
-
         if (closestByAttribute(event.target, 'data-close-delete-car-modal')) {
             event.preventDefault();
             closeDeleteModal();

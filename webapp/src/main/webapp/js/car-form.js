@@ -1,5 +1,5 @@
 (function () {
-    var modal = document.getElementById('createCarModal') || document.getElementById('createCarFormPage');
+    var page = document.getElementById('createCarFormPage');
     var form = document.getElementById('createCarForm');
     var fileInput = document.getElementById('modalCarFile');
     var fileStatus = document.getElementById('modalCarFileStatus');
@@ -10,32 +10,21 @@
     var filePreviewCounter = document.getElementById('modalCarImageCounter');
     var filePreviewThumbnails = document.getElementById('modalCarImageThumbnails');
     var fileUpload = fileInput ? fileInput.closest('.car-image-upload') : null;
-    var isAdminMode = modal ? modal.dataset.adminMode === 'true' : false;
-    var rejectForm = document.getElementById('rejectCarRequestForm');
-    var modalKicker = document.getElementById('createCarModalKicker');
-    var modalTitle = document.getElementById('createCarModalTitle');
-    var modalSubtitle = document.getElementById('createCarModalSubtitle');
-    var createActions = document.getElementById('createCarCreateActions');
-    var reviewActions = document.getElementById('createCarReviewActions');
-    var editActions = document.getElementById('createCarEditActions');
-    var submitterEmailField = document.getElementById('modalCarSubmitterEmailField');
-    var fileTitle = document.getElementById('modalCarFileTitle');
-    var fileHelp = document.getElementById('modalCarFileHelp');
-    var currentMode = isAdminMode ? 'review' : 'create';
-    var createAction = form ? form.getAttribute('action') : '';
 
-    if (!modal || !form) {
+    if (!page || !form) {
         return;
     }
 
-    var isPageMode = modal.id === 'createCarFormPage';
-    var closeElements = Array.prototype.slice.call(modal.querySelectorAll('[data-close-car-modal]'));
     var emptyFileStatus = 'Ninguna imagen seleccionada';
+    var existingImageUrls = (page.dataset.existingImageUrls || '').split('|').filter(function (url) {
+        return !!url;
+    });
+    var existingImageCount = existingImageUrls.length;
+    var existingImageStatus = page.dataset.existingImageStatus || '';
     var previewImages = [];
     var previewObjectUrls = [];
     var previewIndex = 0;
     var accumulatedFiles = [];
-    var lastTrigger = null;
     var requiredMessages = {
         modalCarBrand: 'Seleccioná una marca.',
         modalCarBodyType: 'Seleccioná un tipo de carrocería.',
@@ -48,7 +37,7 @@
         modalCarFile: 'Seleccioná al menos una imagen del auto.'
     };
 
-    // Must mirror validateUploadedImages in CarController.java.
+    // Must mirror server-side uploaded image validation.
     var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     var ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
     var MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -63,13 +52,6 @@
         });
     };
 
-    var isMissingRequiredValue = function (field) {
-        if (field.type === 'file') {
-            return selectedFiles(field).length === 0;
-        }
-        return !field.value || field.value.trim() === '';
-    };
-
     var fieldKey = function (field) {
         if (field.type === 'radio') {
             return field.name || field.id || 'field';
@@ -79,7 +61,7 @@
 
     var fieldContainer = function (field) {
         var node = field;
-        while (node && node !== modal) {
+        while (node && node !== page) {
             if (node.classList && node.classList.contains('review-modal-field')) {
                 return node;
             }
@@ -93,9 +75,6 @@
     };
 
     var setDescribedBy = function (field, errorId) {
-        if (!field || !errorId) {
-            return;
-        }
         var ids = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
         if (ids.indexOf(errorId) === -1) {
             ids.push(errorId);
@@ -104,9 +83,6 @@
     };
 
     var removeDescribedBy = function (field, errorId) {
-        if (!field || !errorId) {
-            return;
-        }
         var ids = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(function (id) {
             return id && id !== errorId;
         });
@@ -183,10 +159,11 @@
         });
     };
 
-    var isRadioGroupMissing = function (field) {
-        return !radioGroup(field).some(function (radio) {
-            return radio.checked;
-        });
+    var isMissingRequiredValue = function (field) {
+        if (field.type === 'file') {
+            return selectedFiles(field).length === 0;
+        }
+        return !field.value || field.value.trim() === '';
     };
 
     var validateField = function (field) {
@@ -201,7 +178,8 @@
             return false;
         }
 
-        if (field.type === 'radio' && hasRequiredRadioGroup(field) && isRadioGroupMissing(field)) {
+        if (field.type === 'radio' && hasRequiredRadioGroup(field)
+                && !radioGroup(field).some(function (radio) { return radio.checked; })) {
             setInlineError(field, 'Seleccioná una opción.');
             return false;
         }
@@ -229,7 +207,7 @@
 
         if (field.type === 'file') {
             var files = selectedFiles(field);
-            if (files.length > MAX_IMAGE_COUNT) {
+            if (existingImageCount + files.length > MAX_IMAGE_COUNT) {
                 setInlineError(field, 'Podés cargar hasta ' + MAX_IMAGE_COUNT + ' imágenes.');
                 return false;
             }
@@ -264,37 +242,6 @@
         }, true);
     };
 
-    var focusFirstInvalid = function () {
-        var invalid = form.querySelector('[aria-invalid="true"]');
-        if (invalid && typeof invalid.focus === 'function') {
-            invalid.focus();
-        }
-    };
-
-    var clearAllClientErrors = function () {
-        var errorIds = Array.prototype.slice.call(form.querySelectorAll('.client-form-error')).map(function (error) {
-            return error.id;
-        }).filter(Boolean);
-        Array.prototype.slice.call(form.querySelectorAll('.client-form-error')).forEach(function (error) {
-            error.textContent = '';
-            error.hidden = true;
-        });
-        Array.prototype.slice.call(form.querySelectorAll('[aria-invalid="true"]')).forEach(function (field) {
-            field.classList.remove('is-invalid');
-            field.removeAttribute('aria-invalid');
-        });
-        Array.prototype.slice.call(form.querySelectorAll('[aria-describedby]')).forEach(function (field) {
-            var ids = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(function (id) {
-                return id && errorIds.indexOf(id) === -1;
-            });
-            if (ids.length) {
-                field.setAttribute('aria-describedby', ids.join(' '));
-            } else {
-                field.removeAttribute('aria-describedby');
-            }
-        });
-    };
-
     var fileKey = function (file) {
         return file.name + '|' + file.size + '|' + file.lastModified;
     };
@@ -317,7 +264,7 @@
         });
         var added = false;
         newFiles.forEach(function (file) {
-            if (accumulatedFiles.length >= MAX_IMAGE_COUNT) {
+            if (existingImageCount + accumulatedFiles.length >= MAX_IMAGE_COUNT) {
                 return;
             }
             var key = fileKey(file);
@@ -331,10 +278,6 @@
         if (added) {
             syncInputFromAccumulator();
         }
-    };
-
-    var clearAccumulator = function () {
-        accumulatedFiles = [];
     };
 
     var revokePreviewObjectUrls = function () {
@@ -376,58 +319,53 @@
         if (filePreviewNext) {
             filePreviewNext.toggleAttribute('hidden', previewImages.length <= 1);
         }
-        if (filePreviewThumbnails) {
-            filePreviewThumbnails.textContent = '';
-            previewImages.forEach(function (url, index) {
-                var button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'car-image-upload-thumb' + (index === previewIndex ? ' is-active' : '');
-                button.setAttribute('data-upload-preview-index', String(index));
-                button.setAttribute('aria-label', 'Ver imagen ' + (index + 1));
-
-                var img = document.createElement('img');
-                img.src = url;
-                img.alt = '';
-                button.appendChild(img);
-                filePreviewThumbnails.appendChild(button);
-            });
-
-            var showAddMore = currentMode === 'create'
-                    && accumulatedFiles.length >= 1
-                    && accumulatedFiles.length < MAX_IMAGE_COUNT;
-            if (showAddMore) {
-                var addMore = document.createElement('button');
-                addMore.type = 'button';
-                addMore.className = 'car-image-upload-add-more';
-                addMore.id = 'modalCarImageAddMore';
-                addMore.setAttribute('aria-label', 'Agregar más imágenes');
-                addMore.textContent = '+';
-                filePreviewThumbnails.appendChild(addMore);
-            }
-
-            var stripVisible = previewImages.length > 1 || showAddMore;
-            filePreviewThumbnails.toggleAttribute('hidden', !stripVisible);
+        if (!filePreviewThumbnails) {
+            return;
         }
+
+        filePreviewThumbnails.textContent = '';
+        previewImages.forEach(function (url, index) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'car-image-upload-thumb' + (index === previewIndex ? ' is-active' : '');
+            button.setAttribute('data-upload-preview-index', String(index));
+            button.setAttribute('aria-label', 'Ver imagen ' + (index + 1));
+
+            var img = document.createElement('img');
+            img.src = url;
+            img.alt = '';
+            button.appendChild(img);
+            filePreviewThumbnails.appendChild(button);
+        });
+
+        var totalVisibleImages = existingImageCount + accumulatedFiles.length;
+        var showAddMore = totalVisibleImages >= 1 && totalVisibleImages < MAX_IMAGE_COUNT;
+        if (showAddMore) {
+            var addMore = document.createElement('button');
+            addMore.type = 'button';
+            addMore.className = 'car-image-upload-add-more';
+            addMore.id = 'modalCarImageAddMore';
+            addMore.setAttribute('aria-label', 'Agregar más imágenes');
+            addMore.textContent = '+';
+            filePreviewThumbnails.appendChild(addMore);
+        }
+
+        filePreviewThumbnails.toggleAttribute('hidden', !(previewImages.length > 1 || showAddMore));
     };
 
-    var setPreviewImages = function (imageUrls, shouldRevoke) {
+    var setPreviewImages = function (imageUrls, objectUrls) {
         revokePreviewObjectUrls();
         previewImages = imageUrls || [];
         previewIndex = 0;
-        if (shouldRevoke) {
-            previewObjectUrls = previewImages.slice();
-        }
+        previewObjectUrls = objectUrls || [];
         renderPreview();
     };
 
-    var clearPreviewImages = function () {
-        setPreviewImages([], false);
-    };
-
     var setPreviewFromFiles = function (files) {
-        setPreviewImages(files.map(function (file) {
+        var objectUrls = files.map(function (file) {
             return window.URL.createObjectURL(file);
-        }), true);
+        });
+        setPreviewImages(existingImageUrls.concat(objectUrls), objectUrls);
     };
 
     var updateFileState = function () {
@@ -435,378 +373,33 @@
             return;
         }
 
-        if (currentMode === 'review') {
-            fileUpload.classList.toggle('has-file', previewImages.length > 0);
-            return;
-        }
-
         var files = selectedFiles(fileInput);
-        fileUpload.classList.toggle('has-file', files.length > 0);
+        fileUpload.classList.toggle('has-file', files.length > 0 || existingImageUrls.length > 0);
 
         if (files.length === 1) {
-            fileStatus.textContent = files[0].name;
+            fileStatus.textContent = existingImageCount > 0 ? files[0].name + ' para agregar' : files[0].name;
             setPreviewFromFiles(files);
         } else if (files.length > 1) {
-            fileStatus.textContent = files.length + ' imágenes seleccionadas';
+            fileStatus.textContent = files.length + ' imágenes seleccionadas'
+                    + (existingImageCount > 0 ? ' para agregar' : '');
             setPreviewFromFiles(files);
+        } else if (existingImageUrls.length > 0) {
+            fileStatus.textContent = existingImageStatus || (existingImageUrls.length + ' imágenes cargadas');
+            setPreviewImages(existingImageUrls, []);
         } else {
             fileStatus.textContent = emptyFileStatus;
-            clearPreviewImages();
+            setPreviewImages([], []);
         }
 
         clearInlineError(fileInput);
     };
 
-    var resetModalState = function () {
-        form.reset();
-        clearAllClientErrors();
-        if (fileStatus) {
-            fileStatus.textContent = emptyFileStatus;
-        }
-        clearAccumulator();
-        clearPreviewImages();
-        updateFileState();
-    };
-
-    var setText = function (element, value) {
-        if (element) {
-            element.textContent = value;
-        }
-    };
-
-    var setFieldValue = function (id, value) {
-        var field = document.getElementById(id);
-        if (field) {
-            field.value = value || '';
-        }
-    };
-
-    var setAdminAction = function (requestId) {
-        if (!isAdminMode || !requestId) {
-            return;
-        }
-
-        var baseUrl = modal.dataset.adminBaseUrl || '/admin';
-        form.setAttribute('action', baseUrl + '/requests/' + requestId + '/accept');
-        if (rejectForm) {
-            rejectForm.setAttribute('action', baseUrl + '/requests/' + requestId + '/reject');
-        }
-    };
-
-    var setCarEditAction = function (action) {
-        if (!isAdminMode || !action) {
-            return;
-        }
-
-        form.setAttribute('action', action);
-    };
-
-    var setFieldReadonly = function (id, readonly) {
-        var field = document.getElementById(id);
-        if (!field) {
-            return;
-        }
-        if (readonly) {
-            field.setAttribute('readonly', 'readonly');
-        } else {
-            field.removeAttribute('readonly');
-        }
-    };
-
-    var setFieldDisabled = function (id, disabled) {
-        var field = document.getElementById(id);
-        if (!field) {
-            return;
-        }
-        if (disabled) {
-            field.setAttribute('disabled', 'disabled');
-        } else {
-            field.removeAttribute('disabled');
-        }
-    };
-
-    var setRadioGroupReadonly = function (name, readonly) {
-        var fields = form.querySelectorAll('input[type="radio"][name="' + name + '"]');
-        if (!fields.length) { return; }
-        var group = fields[0].closest('.segmented-control-radio-group');
-        if (!group) { return; }
-        group.classList.toggle('modal-radio-group--readonly', readonly);
-        Array.prototype.forEach.call(fields, function (field) {
-            if (readonly) {
-                field.setAttribute('tabindex', '-1');
-            } else {
-                field.removeAttribute('tabindex');
-            }
-        });
-    };
-
-    var setRadioGroupValue = function (name, value) {
-        var fields = form.querySelectorAll('input[type="radio"][name="' + name + '"]');
-        Array.prototype.forEach.call(fields, function (field) {
-            field.checked = field.value === value;
-        });
-    };
-
-    var setSpecFieldsReadonly = function (readonly) {
-        setFieldReadonly('modalCarYear', readonly);
-        setFieldReadonly('modalCarHorsepower', readonly);
-        setFieldReadonly('modalCarAirbagCount', readonly);
-        setFieldReadonly('modalCarFuelConsumption', readonly);
-        setFieldReadonly('modalCarMaxSpeed', readonly);
-        setFieldReadonly('modalCarPriceUsd', readonly);
-    };
-
-    var setActionMode = function (mode) {
-        if (createActions) {
-            createActions.toggleAttribute('hidden', mode !== 'create');
-        }
-        if (reviewActions) {
-            reviewActions.toggleAttribute('hidden', mode !== 'review');
-        }
-        if (editActions) {
-            editActions.toggleAttribute('hidden', mode !== 'edit');
-        }
-    };
-
-    var setSubmitterEmailVisibility = function (visible) {
-        if (submitterEmailField) {
-            submitterEmailField.toggleAttribute('hidden', !visible);
-            submitterEmailField.style.display = visible ? '' : 'none';
-        }
-    };
-
-    var hasSubmitterEmail = function (value) {
-        return !!value && EMAIL_PATTERN.test(value.trim());
-    };
-
-    var setCreateMode = function () {
-        currentMode = 'create';
-        form.setAttribute('action', createAction);
-        setText(modalKicker, 'Nuevo vehículo');
-        setText(modalTitle, 'Agregá un auto');
-        setText(modalSubtitle, 'Completá los datos del auto. Esta carga se registrará desde el panel de administración.');
-        setActionMode('create');
-        setSubmitterEmailVisibility(false);
-
-        setFieldReadonly('modalCarSubmitterEmail', false);
-        setFieldDisabled('modalCarSubmitterEmail', false);
-        setFieldReadonly('modalCarModel', false);
-        setFieldReadonly('modalCarDescription', false);
-        setSpecFieldsReadonly(false);
-        setFieldDisabled('modalCarBrand', false);
-        setFieldDisabled('modalCarBodyType', false);
-        setFieldDisabled('modalCarFile', false);
-        setRadioGroupReadonly('fuelType', false);
-        setRadioGroupReadonly('transmission', false);
-        if (fileInput) {
-            fileInput.setAttribute('required', 'required');
-        }
-        setText(fileTitle, 'Arrastrá o elegí imágenes del auto');
-        setText(fileHelp, 'JPEG, PNG o WEBP. Máximo 5 imágenes, 10 MB cada una.');
-        if (fileUpload) {
-            fileUpload.classList.remove('is-readonly', 'has-file');
-        }
-        if (fileStatus) {
-            fileStatus.textContent = emptyFileStatus;
-        }
-        clearPreviewImages();
-    };
-
-    var setReviewMode = function () {
-        currentMode = 'review';
-        setText(modalKicker, 'Solicitud pendiente');
-        setText(modalTitle, 'Revisar y editar formulario');
-        setText(modalSubtitle, 'Corregí los datos que haga falta antes de aprobar la solicitud.');
-        setActionMode('review');
-        setSubmitterEmailVisibility(false);
-
-        setFieldReadonly('modalCarSubmitterEmail', true);
-        setFieldDisabled('modalCarSubmitterEmail', true);
-        setFieldReadonly('modalCarModel', false);
-        setFieldReadonly('modalCarDescription', false);
-        setSpecFieldsReadonly(false);
-        setFieldDisabled('modalCarBrand', false);
-        setFieldDisabled('modalCarBodyType', false);
-        setFieldDisabled('modalCarFile', false);
-        setRadioGroupReadonly('fuelType', false);
-        setRadioGroupReadonly('transmission', false);
-        if (fileInput) {
-            fileInput.removeAttribute('required');
-        }
-        setText(fileTitle, 'Imagen enviada por el usuario');
-        setText(fileHelp, 'Podés reemplazarla cargando una imagen nueva.');
-        if (fileUpload) {
-            fileUpload.classList.remove('is-readonly');
-        }
-    };
-
-    var setEditCarMode = function () {
-        currentMode = 'edit-car';
-        setText(modalKicker, 'Catálogo');
-        setText(modalTitle, 'Editar auto');
-        setText(modalSubtitle, 'Modificá los datos del auto publicado. Si no cargás una imagen nueva, se conserva la actual.');
-        setActionMode('edit');
-        setSubmitterEmailVisibility(false);
-
-        setFieldReadonly('modalCarSubmitterEmail', true);
-        setFieldDisabled('modalCarSubmitterEmail', true);
-        setFieldReadonly('modalCarModel', false);
-        setFieldReadonly('modalCarDescription', false);
-        setSpecFieldsReadonly(false);
-        setFieldDisabled('modalCarBrand', false);
-        setFieldDisabled('modalCarBodyType', false);
-        setFieldDisabled('modalCarFile', false);
-        setRadioGroupReadonly('fuelType', false);
-        setRadioGroupReadonly('transmission', false);
-        if (fileInput) {
-            fileInput.removeAttribute('required');
-        }
-        setText(fileTitle, 'Imagen actual del auto');
-        setText(fileHelp, 'Opcional: cargá una nueva imagen para reemplazarla.');
-        if (fileUpload) {
-            fileUpload.classList.remove('is-readonly');
-        }
-    };
-
-    var parseImageUrls = function (data) {
-        var imageUrls = data.requestImageUrls || data.requestImageUrl || '';
-        if (!imageUrls) {
-            return [];
-        }
-        return imageUrls.split('|').filter(function (url) {
-            return !!url;
-        });
-    };
-
-    var populateAdminForm = function (trigger) {
-        if (!isAdminMode || !trigger) {
-            return;
-        }
-
-        var data = trigger.dataset;
-        var imageUrls = parseImageUrls(data);
-        var submitterEmail = hasSubmitterEmail(data.requestSubmitter) ? data.requestSubmitter : '';
-        setFieldValue('modalCarSubmitterEmail', submitterEmail);
-        setSubmitterEmailVisibility(!!submitterEmail);
-        setFieldValue('modalCarBrand', data.requestBrand);
-        setFieldValue('modalCarBodyType', data.requestBodyType);
-        setFieldValue('modalCarModel', data.requestModel);
-        setFieldValue('modalCarYear', data.requestYear);
-        setFieldValue('modalCarDescription', data.requestDescription);
-        setRadioGroupValue('fuelType', data.requestFuelType);
-        setRadioGroupValue('transmission', data.requestTransmission);
-        setFieldValue('modalCarHorsepower', data.requestHorsepower);
-        setFieldValue('modalCarAirbagCount', data.requestAirbagCount);
-        setFieldValue('modalCarFuelConsumption', data.requestFuelConsumption);
-        setFieldValue('modalCarMaxSpeed', data.requestMaxSpeedKmh);
-        setFieldValue('modalCarPriceUsd', data.requestPriceUsd);
-        setAdminAction(data.requestId);
-
-        if (fileStatus) {
-            fileStatus.textContent = imageUrls.length > 0
-                    ? imageUrls.length + ' imagen' + (imageUrls.length === 1 ? '' : 'es') + ' cargada' + (imageUrls.length === 1 ? '' : 's') + ' en la solicitud #' + data.requestId
-                    : 'Sin imágenes cargadas';
-        }
-        if (fileUpload) {
-            fileUpload.classList.toggle('has-file', imageUrls.length > 0);
-        }
-        setPreviewImages(imageUrls, false);
-    };
-
-    var populateCarForm = function (trigger) {
-        if (!isAdminMode || !trigger) {
-            return;
-        }
-
-        var data = trigger.dataset;
-        setFieldValue('modalCarSubmitterEmail', '');
-        setSubmitterEmailVisibility(false);
-        setFieldValue('modalCarBrand', data.carBrand);
-        setFieldValue('modalCarBodyType', data.carBodyType);
-        setFieldValue('modalCarModel', data.carModel);
-        setFieldValue('modalCarYear', data.carYear);
-        setFieldValue('modalCarDescription', data.carDescription);
-        setRadioGroupValue('fuelType', data.carFuelType);
-        setRadioGroupValue('transmission', data.carTransmission);
-        setFieldValue('modalCarHorsepower', data.carHorsepower);
-        setFieldValue('modalCarAirbagCount', data.carAirbagCount);
-        setFieldValue('modalCarFuelConsumption', data.carFuelConsumption);
-        setFieldValue('modalCarMaxSpeed', data.carMaxSpeedKmh);
-        setFieldValue('modalCarPriceUsd', data.carPriceUsd);
-        setCarEditAction(data.carAction);
-
-        if (fileStatus) {
-            fileStatus.textContent = data.carImageUrl
-                    ? 'Imagen actual del auto #' + data.carId
-                    : 'Sin imagen cargada';
-        }
-        if (fileUpload) {
-            fileUpload.classList.toggle('has-file', !!data.carImageUrl);
-        }
-        setPreviewImages(data.carImageUrl ? [data.carImageUrl] : [], false);
-    };
-
-    var closeModal = function () {
-        if (isPageMode) {
-            return;
-        }
-        modal.setAttribute('hidden', 'hidden');
-        document.body.classList.remove('modal-open');
-        resetModalState();
-        if (lastTrigger && document.contains(lastTrigger)) {
-            lastTrigger.focus();
-        }
-        lastTrigger = null;
-    };
-
-    var openModal = function (trigger) {
-        var triggerMode = trigger ? trigger.getAttribute('data-open-create-car-modal') : '';
-        lastTrigger = trigger || lastTrigger;
-        if (isAdminMode && (!trigger || triggerMode === 'create')) {
-            setCreateMode();
-            resetModalState();
-        } else if (isAdminMode && triggerMode === 'edit-car') {
-            setEditCarMode();
-            resetModalState();
-            populateCarForm(trigger);
-        } else if (isAdminMode) {
-            setReviewMode();
-            resetModalState();
-            populateAdminForm(trigger);
-        } else {
-            currentMode = 'create';
-            resetModalState();
-        }
-        modal.removeAttribute('hidden');
-        document.body.classList.add('modal-open');
-        var firstInput = modal.querySelector('#modalCarBrand');
-        if (firstInput) {
-            firstInput.focus();
-        }
-    };
-
-    document.addEventListener('click', function (event) {
-        var trigger = event.target.closest('[data-open-create-car-modal]');
-        if (!trigger || trigger.getAttribute('data-open-create-car-modal') === 'false') {
-            return;
-        }
-
-        event.preventDefault();
-        openModal(trigger);
-    });
-
-    closeElements.forEach(function (element) {
-        element.addEventListener('click', closeModal);
-    });
-
     if (fileInput) {
         fileInput.addEventListener('change', function (event) {
-            if (currentMode === 'create') {
-                var picked = Array.prototype.slice.call(event.target.files || []).filter(function (file) {
-                    return file && file.size > 0;
-                });
-                appendToAccumulator(picked);
-            }
+            var picked = Array.prototype.slice.call(event.target.files || []).filter(function (file) {
+                return file && file.size > 0;
+            });
+            appendToAccumulator(picked);
             updateFileState();
             validateField(fileInput);
         });
@@ -864,22 +457,15 @@
         });
     });
 
-    document.addEventListener('keydown', function (event) {
-        if (!isPageMode && event.key === 'Escape' && !modal.hasAttribute('hidden')) {
-            closeModal();
-        }
-    });
-
     form.addEventListener('submit', function (event) {
         if (!validateFields()) {
             event.preventDefault();
-            focusFirstInvalid();
+            var invalid = form.querySelector('[aria-invalid="true"]');
+            if (invalid && typeof invalid.focus === 'function') {
+                invalid.focus();
+            }
         }
     });
 
-    if (modal.dataset.autoOpen === 'true') {
-        openModal(null);
-    } else {
-        updateFileState();
-    }
+    updateFileState();
 })();

@@ -182,6 +182,9 @@ class RecommendationServiceImplTest {
         public void saveCarImages(final long carId, final List<CarImagePayload> images) {}
 
         @Override
+        public void appendCarImages(final long carId, final List<CarImagePayload> images) {}
+
+        @Override
         public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
                                              final Integer year, final long submittedByUserId, final String submitterEmail,
                                              final Optional<String> description, final List<CarImagePayload> images,

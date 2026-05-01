@@ -182,6 +182,7 @@
                         <c:otherwise>
                             <div class="admin-requests-grid">
                                 <c:forEach var="request" items="${pendingRequests}">
+                                    <c:url var="requestReviewUrl" value="/admin/requests/${request.id}/review"/>
                                     <pa:car-card
                                             model="${request.brandName} ${request.model}"
                                             year="${request.year}"
@@ -189,26 +190,10 @@
                                             carId="${request.id}"
                                             hasImage="${request.hasImage}"
                                             imageUrl="${request.imageUrl}"
-                                            href="#"
+                                            href="${requestReviewUrl}"
                                             submitter="${request.submitter}"
                                             footerText="Solicitud pendiente"
-                                            actionText="Revisar"
-                                            openModal="true"
-                                            requestId="${request.id}"
-                                            requestBrand="${request.brandName}"
-                                            requestModel="${request.model}"
-                                            requestYear="${request.year}"
-                                            requestBodyType="${request.bodyTypeName}"
-                                            requestDescription="${request.description}"
-                                            requestSubmitter="${request.submitter}"
-                                            requestImageUrls="${request.imageUrls}"
-                                            requestFuelType="${request.fuelType}"
-                                            requestHorsepower="${request.horsepower}"
-                                            requestAirbagCount="${request.airbagCount}"
-                                            requestTransmission="${request.transmission}"
-                                            requestFuelConsumption="${request.fuelConsumption}"
-                                            requestMaxSpeedKmh="${request.maxSpeedKmh}"
-                                            requestPriceUsd="${request.priceUsd}"/>
+                                            actionText="Revisar"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -227,10 +212,8 @@
 
     </main>
 
-    <pa:admin-car-form brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
     <pa:admin-catalog-request-modal/>
     <pa:admin-request-review-modal/>
-    <script src="<c:url value='/js/car-form.js?v=2'/>"></script>
     <script src="<c:url value='/js/admin-catalog-modal.js'/>"></script>
     <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
