@@ -23,9 +23,8 @@
 
 <a class="activity-review-card ${reviewCard.hasCarImage ? 'has-image' : ''}"
    href="${activityReviewHref}"
-   data-open-review-preview
-   data-review-preview-target="${fn:escapeXml(activityPreviewModalId)}"
-   aria-haspopup="dialog"
+   data-activity-review-card
+   data-activity-preview-target="${fn:escapeXml(activityPreviewModalId)}"
    aria-controls="${fn:escapeXml(activityPreviewModalId)}"
    style="${activityReviewStyle}"
    aria-label="Vista previa de reseña de ${fn:escapeXml(reviewCard.carName)}">
@@ -52,10 +51,3 @@
         <span class="activity-review-body"><c:out value="${reviewCard.review.body}"/></span>
     </span>
 </a>
-
-<c:if test="${not empty reviewCard.car}">
-    <pa:review-preview-modal selectedCar="${reviewCard.car}"
-                             review="${reviewCard.review}"
-                             reviewUrl="${activityReviewHref}"
-                             idPrefix="${idPrefix}"/>
-</c:if>

@@ -1,34 +1,39 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
-<%@ attribute name="selectedCar" required="true" type="ar.edu.itba.paw.model.Car" %>
-<%@ attribute name="review" required="true" type="ar.edu.itba.paw.model.Review" %>
-<%@ attribute name="reviewUrl" required="true" %>
-<%@ attribute name="idPrefix" required="false" %>
+<%@ attribute name="reviewCard" required="true" type="ar.edu.itba.paw.webapp.controller.ActivityController.ActivityReviewCard" %>
+<%@ attribute name="idPrefix" required="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
-<c:set var="modalPrefix" value="${empty idPrefix ? 'reviewPreviewModal' : idPrefix}"/>
-<c:set var="modalId" value="${modalPrefix}-${review.id}"/>
-<c:set var="modalTitleId" value="${modalId}-title"/>
+<c:url var="activityReviewUrl" value="/reviews">
+    <c:param name="carId" value="${reviewCard.review.carId}"/>
+    <c:if test="${reviewCard.reviewPage gt 1}">
+        <c:param name="page" value="${reviewCard.reviewPage}"/>
+    </c:if>
+</c:url>
+<c:set var="activityReviewHref" value="${activityReviewUrl}#review-${reviewCard.review.id}"/>
+<c:set var="panelId" value="${idPrefix}-${reviewCard.review.id}"/>
+<c:set var="panelTitleId" value="${panelId}-title"/>
+<c:set var="selectedCar" value="${reviewCard.car}"/>
 <c:set var="carTitle">
     <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/>
 </c:set>
 
-<div id="${fn:escapeXml(modalId)}" class="review-modal review-preview-modal" hidden>
-    <div class="review-modal-overlay" data-close-review-preview></div>
-    <section class="review-modal-dialog review-preview-dialog"
-             role="dialog"
-             aria-modal="true"
-             aria-labelledby="${fn:escapeXml(modalTitleId)}">
+<c:if test="${not empty selectedCar}">
+    <section id="${fn:escapeXml(panelId)}"
+             class="activity-review-preview-panel"
+             data-activity-preview-panel
+             aria-labelledby="${fn:escapeXml(panelTitleId)}"
+             hidden>
         <button type="button"
-                class="review-modal-close review-preview-close"
-                data-close-review-preview
+                class="review-modal-close review-preview-close activity-preview-close"
+                data-close-activity-preview
                 aria-label="Cerrar preview">
             <pa:icon name="close" size="20"/>
         </button>
 
-        <div class="review-preview-layout">
+        <div class="review-preview-layout activity-preview-layout">
             <aside class="review-preview-car" aria-label="Información del auto">
                 <div class="review-preview-image">
                     <c:choose>
@@ -125,51 +130,51 @@
                             <pa:icon name="user-avatar" size="22"/>
                         </span>
                         <div>
-                            <pa:review-author-link review="${review}"/>
-                            <span>Publicado el <c:out value="${fn:substring(review.createdAt, 0, 10)}"/></span>
+                            <pa:review-author-link review="${reviewCard.review}"/>
+                            <span>Publicado el <c:out value="${fn:substring(reviewCard.review.createdAt, 0, 10)}"/></span>
                         </div>
                     </div>
-                    <div class="review-preview-rating" aria-label="${review.rating} de 5 estrellas">
+                    <div class="review-preview-rating" aria-label="${reviewCard.review.rating} de 5 estrellas">
                         <span class="review-preview-stars">
-                            <pa:rating-stars rating="${review.rating}" size="18" idPrefix="${modalId}Star"/>
+                            <pa:rating-stars rating="${reviewCard.review.rating}" size="18" idPrefix="${panelId}Star"/>
                         </span>
                         <span class="review-preview-score">
-                            <strong><c:out value="${review.rating}"/></strong>
+                            <strong><c:out value="${reviewCard.review.rating}"/></strong>
                             <span>/ 5</span>
                         </span>
                     </div>
                 </header>
 
                 <div class="review-preview-body">
-                    <h3 id="${fn:escapeXml(modalTitleId)}"><c:out value="${review.title}"/></h3>
-                    <p><c:out value="${review.body}"/></p>
+                    <h3 id="${fn:escapeXml(panelTitleId)}"><c:out value="${reviewCard.review.title}"/></h3>
+                    <p><c:out value="${reviewCard.review.body}"/></p>
                 </div>
 
                 <dl class="review-preview-review-facts" aria-label="Datos de la experiencia">
-                    <c:if test="${not empty review.ownershipStatus}">
+                    <c:if test="${not empty reviewCard.review.ownershipStatus}">
                         <div>
                             <dt>Relación con el auto</dt>
-                            <dd><c:out value="${review.ownershipStatus}"/></dd>
+                            <dd><c:out value="${reviewCard.review.ownershipStatus}"/></dd>
                         </div>
                     </c:if>
-                    <c:if test="${not empty review.modelYear}">
+                    <c:if test="${not empty reviewCard.review.modelYear}">
                         <div>
                             <dt>Año manejado</dt>
-                            <dd><c:out value="${review.modelYear}"/></dd>
+                            <dd><c:out value="${reviewCard.review.modelYear}"/></dd>
                         </div>
                     </c:if>
-                    <c:if test="${not empty review.mileageKm}">
+                    <c:if test="${not empty reviewCard.review.mileageKm}">
                         <div>
                             <dt>Kilometraje</dt>
-                            <dd><fmt:formatNumber value="${review.mileageKm}" groupingUsed="true" maxFractionDigits="0"/> km</dd>
+                            <dd><fmt:formatNumber value="${reviewCard.review.mileageKm}" groupingUsed="true" maxFractionDigits="0"/> km</dd>
                         </div>
                     </c:if>
-                    <c:if test="${not empty review.wouldRecommend}">
+                    <c:if test="${not empty reviewCard.review.wouldRecommend}">
                         <div>
                             <dt>Recomendación</dt>
                             <dd>
                                 <c:choose>
-                                    <c:when test="${review.wouldRecommend}">Lo recomienda</c:when>
+                                    <c:when test="${reviewCard.review.wouldRecommend}">Lo recomienda</c:when>
                                     <c:otherwise>No lo recomienda</c:otherwise>
                                 </c:choose>
                             </dd>
@@ -177,10 +182,10 @@
                     </c:if>
                 </dl>
 
-                <pa:review-tag-chips mode="display" tags="${review.tags}"/>
+                <pa:review-tag-chips mode="display" tags="${reviewCard.review.tags}"/>
 
                 <div class="review-preview-actions">
-                    <a class="btn-primary" href="${reviewUrl}">
+                    <a class="btn-primary" href="${activityReviewHref}">
                         Ver Reseña
                         <pa:icon name="arrow-right" size="14"/>
                     </a>
@@ -188,4 +193,4 @@
             </article>
         </div>
     </section>
-</div>
+</c:if>
