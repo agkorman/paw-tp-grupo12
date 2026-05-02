@@ -659,7 +659,7 @@
 .review-reply-form textarea {
     width: 100%;
     min-height: 2.75rem;
-    resize: vertical;
+    resize: none;
     border: 1px solid var(--outline-variant);
     border-radius: var(--radius-md);
     background: var(--surface-container);
@@ -1241,7 +1241,7 @@
 }
 
 .review-modal-field textarea {
-    resize: vertical;
+    resize: none;
     min-height: 6rem;
 }
 

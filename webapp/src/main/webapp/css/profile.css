@@ -300,5 +300,5 @@
 .admin-request-submit-form textarea {
     min-height: 7rem;
     line-height: 1.45;
-    resize: vertical;
+    resize: none;
 }

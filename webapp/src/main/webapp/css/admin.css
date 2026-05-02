@@ -243,7 +243,7 @@
 .admin-request-review-fields textarea {
     min-height: 6rem;
     line-height: 1.45;
-    resize: vertical;
+    resize: none;
 }
 
 .admin-request-review-dialog .review-modal-field input[readonly],
