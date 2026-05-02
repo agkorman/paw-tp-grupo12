@@ -13,7 +13,7 @@
     <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=5'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=6'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile.css?v=10'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
@@ -315,6 +315,9 @@
     <c:if test="${ownProfile}">
         <pa:request-admin-modal/>
     </c:if>
+    <c:if test="${showSubmittedToast}">
+        <pa:submitted-toast messageCode="${submittedToastMessageCode}"/>
+    </c:if>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
     <script src="<c:url value='/js/action-menu.js'/>"></script>
@@ -324,6 +327,7 @@
     <c:if test="${ownProfile}">
         <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     </c:if>
+    <script src="<c:url value='/js/submitted-toast.js'/>"></script>
     <pa:footer/>
 </body>
 </html>

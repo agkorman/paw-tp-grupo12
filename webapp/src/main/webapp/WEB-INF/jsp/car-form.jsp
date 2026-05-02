@@ -60,7 +60,7 @@
     <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=6'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=5'/>">
     <link rel="stylesheet" href="<c:url value='/css/form-pages.css'/>">
 </head>
@@ -333,12 +333,16 @@
         <pa:request-brand-modal/>
         <pa:request-body-type-modal/>
     </c:if>
+    <c:if test="${showSubmittedToast}">
+        <pa:submitted-toast messageCode="${submittedToastMessageCode}"/>
+    </c:if>
 
     <script src="<c:url value='/js/car-form.js?v=3'/>"></script>
     <c:if test="${catalogRequestLinksEnabled}">
         <script src="<c:url value='/js/catalog-request-modals.js'/>"></script>
     </c:if>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <script src="<c:url value='/js/submitted-toast.js'/>"></script>
     <pa:footer/>
 </body>
 </html>
