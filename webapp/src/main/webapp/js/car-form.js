@@ -12,6 +12,7 @@
     var filePreviewThumbnails = document.getElementById('modalCarImageThumbnails');
     var retainedImageInputs = document.getElementById('modalCarRetainedImageInputs');
     var fileUpload = fileInput ? fileInput.closest('.car-image-upload') : null;
+    var canSyncFileInput = fileInput && typeof window.DataTransfer === 'function';
 
     if (!page || !form) {
         return;
@@ -26,6 +27,7 @@
     });
     var existingImageCount = existingImageUrls.length;
     var existingImageStatus = page.dataset.existingImageStatus || '';
+    var adminMode = page.dataset.adminMode === 'true';
     var previewImages = [];
     var previewObjectUrls = [];
     var previewIndex = 0;
@@ -212,6 +214,11 @@
 
         if (field.type === 'file') {
             var files = selectedFiles(field);
+            if ((field.required || adminMode || existingImageCount === 0)
+                    && existingImageCount + files.length === 0) {
+                setInlineError(field, requiredMessages[field.id] || 'Seleccioná al menos una imagen.');
+                return false;
+            }
             if (existingImageCount + files.length > MAX_IMAGE_COUNT) {
                 setInlineError(field, 'Podés cargar hasta ' + MAX_IMAGE_COUNT + ' imágenes.');
                 return false;
@@ -252,7 +259,7 @@
     };
 
     var syncInputFromAccumulator = function () {
-        if (!fileInput || typeof window.DataTransfer !== 'function') {
+        if (!canSyncFileInput) {
             return;
         }
         var dt = new DataTransfer();
@@ -277,6 +284,11 @@
     };
 
     var appendToAccumulator = function (newFiles) {
+        if (!canSyncFileInput) {
+            accumulatedFiles = newFiles.slice(0, Math.max(0, MAX_IMAGE_COUNT - existingImageCount));
+            return;
+        }
+
         var existing = {};
         accumulatedFiles.forEach(function (file) {
             existing[fileKey(file)] = true;
@@ -339,7 +351,7 @@
             filePreviewNext.toggleAttribute('hidden', previewImages.length <= 1);
         }
         if (filePreviewRemove) {
-            filePreviewRemove.toggleAttribute('hidden', false);
+            filePreviewRemove.toggleAttribute('hidden', !canSyncFileInput && previewIndex >= existingImageCount);
         }
         if (!filePreviewThumbnails) {
             return;
@@ -361,7 +373,7 @@
         });
 
         var totalVisibleImages = existingImageCount + accumulatedFiles.length;
-        var showAddMore = totalVisibleImages >= 1 && totalVisibleImages < MAX_IMAGE_COUNT;
+        var showAddMore = canSyncFileInput && totalVisibleImages >= 1 && totalVisibleImages < MAX_IMAGE_COUNT;
         if (showAddMore) {
             var addMore = document.createElement('button');
             addMore.type = 'button';
@@ -461,6 +473,9 @@
                 existingImageCount = existingImageUrls.length;
                 syncRetainedImageInputs();
             } else {
+                if (!canSyncFileInput) {
+                    return;
+                }
                 if (fileIndex < 0 || fileIndex >= accumulatedFiles.length) {
                     return;
                 }
