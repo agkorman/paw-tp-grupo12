@@ -27,12 +27,6 @@
                     <h1><spring:message code="admin.heading"/></h1>
 
                     <div class="admin-section-actions">
-                        <form method="post" action="<c:url value='/admin/digest/preview'/>">
-                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                            <button type="submit" class="btn-secondary">
-                                <spring:message code="admin.digest.send"/>
-                            </button>
-                        </form>
                         <spring:message var="pendingLabel" code="admin.pending"/>
                         <div class="admin-status" aria-label="${pendingLabel}">
                             <span><c:out value="${pendingLabel}"/></span>
