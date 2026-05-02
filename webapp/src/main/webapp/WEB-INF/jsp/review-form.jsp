@@ -187,5 +187,6 @@
     <script src="<c:url value='/js/review-form.js?v=2'/>"></script>
     <script src="<c:url value='/js/review-tag-chips.js'/>" defer></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>

@@ -212,5 +212,6 @@
     <pa:auth-required-modal/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>

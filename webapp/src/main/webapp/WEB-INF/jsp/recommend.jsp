@@ -116,5 +116,6 @@
     </main>
 
     <script src="<c:url value='/js/recommend-wizard.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>

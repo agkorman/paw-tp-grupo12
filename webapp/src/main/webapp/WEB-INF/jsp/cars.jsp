@@ -68,5 +68,6 @@
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/submitted-toast.js'/>"></script>
 
+    <pa:footer/>
 </body>
 </html>

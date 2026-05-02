@@ -333,5 +333,6 @@
     <c:if test="${ownProfile}">
         <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     </c:if>
+    <pa:footer/>
 </body>
 </html>

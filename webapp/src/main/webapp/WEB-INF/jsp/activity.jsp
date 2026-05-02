@@ -215,5 +215,6 @@
 
     <script src="<c:url value='/js/enhanced-filters.js?v=7'/>"></script>
     <script src="<c:url value='/js/activity.js?v=3'/>"></script>
+    <pa:footer/>
 </body>
 </html>

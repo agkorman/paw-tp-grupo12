@@ -207,5 +207,6 @@
     <script src="<c:url value='/js/admin-catalog-modal.js'/>"></script>
     <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>

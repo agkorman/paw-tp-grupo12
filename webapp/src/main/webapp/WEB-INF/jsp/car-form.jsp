@@ -339,5 +339,6 @@
         <script src="<c:url value='/js/catalog-request-modals.js'/>"></script>
     </c:if>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>

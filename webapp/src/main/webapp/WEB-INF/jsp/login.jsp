@@ -69,5 +69,6 @@
 
     <script src="<c:url value='/js/auth-form.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>

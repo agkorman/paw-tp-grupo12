@@ -140,5 +140,6 @@
         <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
     </sec:authorize>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>

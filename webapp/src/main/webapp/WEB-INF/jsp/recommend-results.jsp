@@ -70,5 +70,6 @@
     </main>
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>
