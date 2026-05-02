@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=5'/>">
     <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
 </head>
 <body>

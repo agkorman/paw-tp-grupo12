@@ -28,7 +28,7 @@
     background: var(--surface-container-low);
     border-radius: var(--radius-lg);
     padding: var(--spacing-6);
-    overflow: hidden;
+    overflow: visible;
 }
 
 .review-hero h1 {
@@ -442,6 +442,10 @@
     align-items: center;
     gap: 1.25rem;
     flex-shrink: 0;
+}
+
+.review-hero-actions .action-menu {
+    z-index: 30;
 }
 
 .hero-stars-row {
