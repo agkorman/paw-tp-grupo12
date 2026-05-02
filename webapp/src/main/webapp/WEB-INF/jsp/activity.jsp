@@ -87,6 +87,25 @@
                                         <pa:activity-review-card reviewCard="${activityReview}"
                                                                  idPrefix="activityFollowingReviewPreview-${activityCurrentPage}-${status.index}"/>
                                     </c:forEach>
+                                    <c:if test="${activityCurrentPage < activityTotalPages}">
+                                        <c:url var="activityShowMoreUrl" value="/activity">
+                                            <c:param name="tab" value="following"/>
+                                            <c:param name="page" value="${activityCurrentPage + 1}"/>
+                                        </c:url>
+                                        <div class="reviews-feed-more profile-show-more">
+                                            <a class="btn-secondary reviews-show-more"
+                                               href="${activityShowMoreUrl}"
+                                               data-review-show-more="true"
+                                               data-fragment-url="${activityBaseUrl}"
+                                               data-target="#activityFollowingPanel"
+                                               data-list-selector=".activity-feed"
+                                               data-item-selector=".activity-feed > .activity-review-card"
+                                               data-preview-list-selector=".activity-preview-column"
+                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
+                                                <spring:message code="common.action.showMoreReviews"/>
+                                            </a>
+                                        </div>
+                                    </c:if>
                                 </div>
                                 <aside class="activity-preview-column" aria-label="${activityPreviewAria}">
                                     <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
@@ -95,25 +114,6 @@
                                     </c:forEach>
                                 </aside>
                             </div>
-                            <c:if test="${activityCurrentPage < activityTotalPages}">
-                                <c:url var="activityShowMoreUrl" value="/activity">
-                                    <c:param name="tab" value="following"/>
-                                    <c:param name="page" value="${activityCurrentPage + 1}"/>
-                                </c:url>
-                                <div class="reviews-feed-more profile-show-more">
-                                    <a class="btn-secondary reviews-show-more"
-                                       href="${activityShowMoreUrl}"
-                                       data-review-show-more="true"
-                                       data-fragment-url="${activityBaseUrl}"
-                                       data-target="#activityFollowingPanel"
-                                       data-list-selector=".activity-feed"
-                                       data-item-selector=".activity-feed > .activity-review-card"
-                                       data-preview-list-selector=".activity-preview-column"
-                                       data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                        <spring:message code="common.action.showMoreReviews"/>
-                                    </a>
-                                </div>
-                            </c:if>
                         </c:otherwise>
                     </c:choose>
                 </section>
@@ -133,6 +133,25 @@
                                         <pa:activity-review-card reviewCard="${activityReview}"
                                                                  idPrefix="activityFavoriteReviewPreview-${activityCurrentPage}-${status.index}"/>
                                     </c:forEach>
+                                    <c:if test="${activityCurrentPage < activityTotalPages}">
+                                        <c:url var="activityShowMoreUrl" value="/activity">
+                                            <c:param name="tab" value="favorites"/>
+                                            <c:param name="page" value="${activityCurrentPage + 1}"/>
+                                        </c:url>
+                                        <div class="reviews-feed-more profile-show-more">
+                                            <a class="btn-secondary reviews-show-more"
+                                               href="${activityShowMoreUrl}"
+                                               data-review-show-more="true"
+                                               data-fragment-url="${activityBaseUrl}"
+                                               data-target="#activityFavoritesPanel"
+                                               data-list-selector=".activity-feed"
+                                               data-item-selector=".activity-feed > .activity-review-card"
+                                               data-preview-list-selector=".activity-preview-column"
+                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
+                                                <spring:message code="common.action.showMoreReviews"/>
+                                            </a>
+                                        </div>
+                                    </c:if>
                                 </div>
                                 <aside class="activity-preview-column" aria-label="${activityPreviewAria}">
                                     <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
@@ -141,25 +160,6 @@
                                     </c:forEach>
                                 </aside>
                             </div>
-                            <c:if test="${activityCurrentPage < activityTotalPages}">
-                                <c:url var="activityShowMoreUrl" value="/activity">
-                                    <c:param name="tab" value="favorites"/>
-                                    <c:param name="page" value="${activityCurrentPage + 1}"/>
-                                </c:url>
-                                <div class="reviews-feed-more profile-show-more">
-                                    <a class="btn-secondary reviews-show-more"
-                                       href="${activityShowMoreUrl}"
-                                       data-review-show-more="true"
-                                       data-fragment-url="${activityBaseUrl}"
-                                       data-target="#activityFavoritesPanel"
-                                       data-list-selector=".activity-feed"
-                                       data-item-selector=".activity-feed > .activity-review-card"
-                                       data-preview-list-selector=".activity-preview-column"
-                                       data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                        <spring:message code="common.action.showMoreReviews"/>
-                                    </a>
-                                </div>
-                            </c:if>
                         </c:otherwise>
                     </c:choose>
                 </section>
@@ -179,6 +179,25 @@
                                         <pa:activity-review-card reviewCard="${activityReview}"
                                                                  idPrefix="activityNewsReviewPreview-${activityCurrentPage}-${status.index}"/>
                                     </c:forEach>
+                                    <c:if test="${activityCurrentPage < activityTotalPages}">
+                                        <c:url var="activityShowMoreUrl" value="/activity">
+                                            <c:param name="tab" value="latest"/>
+                                            <c:param name="page" value="${activityCurrentPage + 1}"/>
+                                        </c:url>
+                                        <div class="reviews-feed-more profile-show-more">
+                                            <a class="btn-secondary reviews-show-more"
+                                               href="${activityShowMoreUrl}"
+                                               data-review-show-more="true"
+                                               data-fragment-url="${activityBaseUrl}"
+                                               data-target="#activityNewsPanel"
+                                               data-list-selector=".activity-feed"
+                                               data-item-selector=".activity-feed > .activity-review-card"
+                                               data-preview-list-selector=".activity-preview-column"
+                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
+                                                <spring:message code="common.action.showMoreReviews"/>
+                                            </a>
+                                        </div>
+                                    </c:if>
                                 </div>
                                 <aside class="activity-preview-column" aria-label="${activityPreviewAria}">
                                     <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
@@ -187,25 +206,6 @@
                                     </c:forEach>
                                 </aside>
                             </div>
-                            <c:if test="${activityCurrentPage < activityTotalPages}">
-                                <c:url var="activityShowMoreUrl" value="/activity">
-                                    <c:param name="tab" value="latest"/>
-                                    <c:param name="page" value="${activityCurrentPage + 1}"/>
-                                </c:url>
-                                <div class="reviews-feed-more profile-show-more">
-                                    <a class="btn-secondary reviews-show-more"
-                                       href="${activityShowMoreUrl}"
-                                       data-review-show-more="true"
-                                       data-fragment-url="${activityBaseUrl}"
-                                       data-target="#activityNewsPanel"
-                                       data-list-selector=".activity-feed"
-                                       data-item-selector=".activity-feed > .activity-review-card"
-                                       data-preview-list-selector=".activity-preview-column"
-                                       data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                        <spring:message code="common.action.showMoreReviews"/>
-                                    </a>
-                                </div>
-                            </c:if>
                         </c:otherwise>
                     </c:choose>
                 </section>
@@ -213,7 +213,7 @@
         </c:choose>
     </main>
 
-    <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
+    <script src="<c:url value='/js/enhanced-filters.js?v=7'/>"></script>
     <script src="<c:url value='/js/activity.js?v=3'/>"></script>
 </body>
 </html>
