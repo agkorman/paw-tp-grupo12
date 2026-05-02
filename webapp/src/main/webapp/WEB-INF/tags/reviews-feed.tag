@@ -154,7 +154,9 @@
                     <a href="${showMoreUrl}"
                        data-review-show-more="true"
                        data-fragment-url="${reviewsFeedUrl}"
-                       data-target="#reviewsFeed"></a>
+                       data-target="#reviewsFeed">
+                        <span class="visually-hidden"><spring:message code="common.action.showMoreReviews"/></span>
+                    </a>
                 </div>
             </c:if>
         </c:otherwise>

@@ -100,7 +100,9 @@
                                                data-list-selector=".activity-feed"
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
-                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel"></a>
+                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
+                                                <span class="visually-hidden"><spring:message code="common.action.showMoreReviews"/></span>
+                                            </a>
                                         </div>
                                     </c:if>
                                 </div>
@@ -143,7 +145,9 @@
                                                data-list-selector=".activity-feed"
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
-                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel"></a>
+                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
+                                                <span class="visually-hidden"><spring:message code="common.action.showMoreReviews"/></span>
+                                            </a>
                                         </div>
                                     </c:if>
                                 </div>
@@ -186,7 +190,9 @@
                                                data-list-selector=".activity-feed"
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
-                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel"></a>
+                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
+                                                <span class="visually-hidden"><spring:message code="common.action.showMoreReviews"/></span>
+                                            </a>
                                         </div>
                                     </c:if>
                                 </div>

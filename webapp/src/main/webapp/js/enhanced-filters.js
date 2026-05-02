@@ -148,6 +148,7 @@
             }
 
             currentTarget.replaceWith(replacement);
+            observeShowMoreSentinels(replacement);
             syncCatalogCount(replacement);
             window.history.replaceState({}, '', actionUrl.pathname + actionUrl.search);
             if (!skipScroll) {
@@ -252,6 +253,7 @@
             }
 
             currentTarget.replaceWith(replacement);
+            observeShowMoreSentinels(replacement);
             syncCatalogCount(replacement);
             window.history.replaceState({}, '', actionUrl.pathname + actionUrl.search);
             scrollToTarget(targetSelector, document.querySelector(targetSelector));
@@ -337,6 +339,8 @@
                 feed.appendChild(replacementControls);
             }
 
+            observeShowMoreSentinels(feed);
+
         }).catch(function () {
             window.location.href = link.href;
         }).finally(function () {
@@ -380,12 +384,13 @@
 
     syncToolbarSelectValues(document);
 
-    var observeShowMoreSentinels = function () {
+    var observeShowMoreSentinels = function (scope) {
         if (!('IntersectionObserver' in window)) {
             return;
         }
 
-        var sentinels = document.querySelectorAll('.reviews-feed-more');
+        var root = scope || document;
+        var sentinels = root.querySelectorAll ? root.querySelectorAll('.reviews-feed-more') : [];
         Array.prototype.forEach.call(sentinels, function (sentinel) {
             if (sentinel.dataset.infiniteScrollObserved === 'true') {
                 return;
@@ -409,11 +414,6 @@
             observer.observe(sentinel);
         });
     };
-
-    var domObserver = new MutationObserver(function () {
-        observeShowMoreSentinels();
-    });
-    domObserver.observe(document.body, { childList: true, subtree: true });
 
     observeShowMoreSentinels();
 

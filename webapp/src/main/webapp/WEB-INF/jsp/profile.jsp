@@ -210,7 +210,9 @@
                                            data-fragment-url="${profileBaseUrl}"
                                            data-target="#profileFavoritesPanel"
                                            data-list-selector=".profile-favorites-grid"
-                                           data-item-selector=".profile-favorites-grid > .car-card-shell"></a>
+                                           data-item-selector=".profile-favorites-grid > .car-card-shell">
+                                            <span class="visually-hidden"><spring:message code="common.action.showMoreCars"/></span>
+                                        </a>
                                     </div>
                                 </c:if>
                             </c:otherwise>
@@ -251,7 +253,9 @@
                                            data-fragment-url="${profileBaseUrl}"
                                            data-target="#profileLikedPanel"
                                            data-list-selector=".profile-review-list"
-                                           data-item-selector=".profile-review-list > .profile-review-card"></a>
+                                           data-item-selector=".profile-review-list > .profile-review-card">
+                                            <span class="visually-hidden"><spring:message code="common.action.showMoreReviews"/></span>
+                                        </a>
                                     </div>
                                 </c:if>
                             </c:otherwise>
@@ -297,7 +301,9 @@
                                            data-fragment-url="${profileBaseUrl}"
                                            data-target="#profileReviewsPanel"
                                            data-list-selector=".profile-review-list"
-                                           data-item-selector=".profile-review-list > .profile-review-card"></a>
+                                           data-item-selector=".profile-review-list > .profile-review-card">
+                                            <span class="visually-hidden"><spring:message code="common.action.showMoreReviews"/></span>
+                                        </a>
                                     </div>
                                 </c:if>
                             </c:otherwise>
