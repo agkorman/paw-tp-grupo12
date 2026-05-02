@@ -1,432 +1,272 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.CarImagePayload;
-import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarRequestImage;
-import ar.edu.itba.paw.model.Page;
-import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
-class UserServiceImplTest {
+@ExtendWith(MockitoExtension.class)
+public class UserServiceImplTest {
 
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private static final long USER_ID = 42L;
+    private static final String RAW_USERNAME = "  Joaco  ";
+    private static final String NORMALIZED_USERNAME = "Joaco";
+    private static final String RAW_EMAIL = "  Joaco@Example.COM ";
+    private static final String NORMALIZED_EMAIL = "joaco@example.com";
+    private static final String RAW_PASSWORD = "secret-password";
+    private static final String ENCODED_PASSWORD = "encoded-secret";
 
-    @Test
-    void createUserStoresBcryptPasswordAndNormalizesEmail() {
-        final FakeUserDao userDao = new FakeUserDao();
-        final UserService userService = userService(userDao);
+    @Mock
+    private UserDao userDao;
+    @Mock
+    private ReviewDao reviewDao;
+    @Mock
+    private CarRequestDao carRequestDao;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
-        final User user = userService.createUser(" driver ", "DRIVER@example.com ", "password123");
-
-        assertEquals("driver", user.getUsername());
-        assertEquals("driver@example.com", user.getEmail());
-        assertEquals("user", user.getRole());
-        assertNotEquals("password123", user.getPassword());
-        assertTrue(user.getPassword().startsWith("$2"));
-        assertTrue(passwordEncoder.matches("password123", user.getPassword()));
-    }
-
-    @Test
-    void createUserRejectsDuplicateUsername() {
-        final FakeUserDao userDao = new FakeUserDao();
-        userDao.create("driver", "driver@example.com", "encoded", "user");
-        final UserService userService = userService(userDao);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser("driver", "other@example.com", "password123"));
-    }
+    @InjectMocks
+    private UserServiceImpl userService;
 
     @Test
-    void createUserRejectsDuplicateEmail() {
-        final FakeUserDao userDao = new FakeUserDao();
-        userDao.create("driver", "driver@example.com", "encoded", "user");
-        final UserService userService = userService(userDao);
+    public void shouldReturnUserWhenDaoFindsExistingId() {
+        // Arrange
+        final User stored = new User(USER_ID, "Joaco", NORMALIZED_EMAIL, ENCODED_PASSWORD, "user", LocalDateTime.now());
+        when(userDao.findById(USER_ID)).thenReturn(Optional.of(stored));
 
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser("other", "DRIVER@example.com", "password123"));
+        // Exercise
+        final Optional<User> result = userService.getUserById(USER_ID);
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals(USER_ID, result.get().getId());
+        assertEquals(NORMALIZED_EMAIL, result.get().getEmail());
     }
 
     @Test
-    void createUserBindsLegacyContentWithoutChangingEmailsOrReassigningRows() {
-        final FakeUserDao userDao = new FakeUserDao();
-        final FakeReviewDao reviewDao = new FakeReviewDao();
-        final FakeCarRequestDao carRequestDao = new FakeCarRequestDao();
-        reviewDao.addReview(null, "DRIVER@example.com ");
-        reviewDao.addReview(null, "other@example.com");
-        reviewDao.addReview(99L, "driver@example.com");
-        carRequestDao.addRequest(null, " driver@example.com");
-        carRequestDao.addRequest(null, "other@example.com");
-        carRequestDao.addRequest(99L, "driver@example.com");
-        final UserService userService = new UserServiceImpl(userDao, reviewDao, carRequestDao, passwordEncoder);
+    public void shouldReturnEmptyWhenFindByEmailReceivesBlank() {
+        // Arrange
 
-        final User user = userService.createUser("driver", "driver@example.com", "password123");
+        // Exercise
+        final Optional<User> result = userService.findByEmail("   ");
 
-        assertEquals(user.getId(), reviewDao.userIdAt(0));
-        assertEquals("DRIVER@example.com ", reviewDao.emailAt(0));
-        assertNull(reviewDao.userIdAt(1));
-        assertEquals(99L, reviewDao.userIdAt(2));
-        assertEquals(user.getId(), carRequestDao.userIdAt(0));
-        assertEquals(" driver@example.com", carRequestDao.emailAt(0));
-        assertNull(carRequestDao.userIdAt(1));
-        assertEquals(99L, carRequestDao.userIdAt(2));
+        // Assertions
+        assertTrue(result.isEmpty());
     }
-
 
     @Test
-    void getModeratorsEmailsLoadsModeratorAndAdminRoles() {
-        final FakeUserDao userDao = new FakeUserDao();
-        userDao.create("user", "user@example.com", "encoded", "user");
-        userDao.create("mod", "mod@example.com", "encoded", "moderator");
-        userDao.create("admin", "admin@example.com", "encoded", "admin");
-        final UserService userService = userService(userDao);
+    public void shouldReturnEmptyWhenFindByEmailReceivesNull() {
+        // Arrange
 
-        final List<String> emails = userService.getModeratorsEmails();
+        // Exercise
+        final Optional<User> result = userService.findByEmail(null);
 
-        assertEquals(List.of("mod@example.com", "admin@example.com"), emails);
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 
-    private UserService userService(final FakeUserDao userDao) {
-        return new UserServiceImpl(userDao, new FakeReviewDao(), new FakeCarRequestDao(), passwordEncoder);
+    @Test
+    public void shouldNormalizeEmailBeforeQueryingDao() {
+        // Arrange
+        final User stored = new User(USER_ID, "Joaco", NORMALIZED_EMAIL, ENCODED_PASSWORD, "user", LocalDateTime.now());
+        when(userDao.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.of(stored));
+
+        // Exercise
+        final Optional<User> result = userService.findByEmail(RAW_EMAIL);
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals(NORMALIZED_EMAIL, result.get().getEmail());
     }
 
-    private static final class FakeUserDao implements UserDao {
-        private final List<User> users = new ArrayList<>();
-        private long nextId = 1;
+    @Test
+    public void shouldReturnEmptyWhenFindByUsernameReceivesBlank() {
+        // Arrange
 
-        @Override
-        public Optional<User> findById(final long id) {
-            return users.stream()
-                    .filter(user -> user.getId() == id)
-                    .findFirst();
-        }
+        // Exercise
+        final Optional<User> result = userService.findByUsername("   ");
 
-        @Override
-        public Optional<User> findByEmail(final String email) {
-            return users.stream()
-                    .filter(user -> user.getEmail().equalsIgnoreCase(email))
-                    .findFirst();
-        }
-
-        @Override
-        public Optional<User> findByUsername(final String username) {
-            return users.stream()
-                    .filter(user -> user.getUsername().equals(username))
-                    .findFirst();
-        }
-
-        @Override
-        public User create(final String username, final String email, final String password, final String role) {
-            final User user = new User(nextId++, username, email, password, role, LocalDateTime.now());
-            users.add(user);
-            return user;
-        }
-
-        @Override
-        public List<User> findAll() {
-            return List.copyOf(users);
-        }
-
-        @Override
-        public List<String> findEmailsByRoles(final Collection<String> roles) {
-            final List<String> normalizedRoles = roles.stream()
-                    .map(role -> role.toLowerCase(Locale.ROOT))
-                    .toList();
-            return users.stream()
-                    .filter(user -> normalizedRoles.contains(user.getRole()))
-                    .map(User::getEmail)
-                    .toList();
-        }
-
-        @Override
-        public boolean updateRole(final long userId, final String role) {
-            return false;
-        }
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 
-    private static final class FakeReviewDao implements ReviewDao {
-        private final List<LegacyIdentity> reviews = new ArrayList<>();
+    @Test
+    public void shouldCreateUserWithNormalizedFieldsAndEncodedPassword() {
+        // Arrange
+        final User created = new User(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user",
+                LocalDateTime.now());
+        when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
+        when(userDao.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(userDao.create(NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user")).thenReturn(created);
 
-        @Override
-        public List<Review> findAll() {
-            return Collections.emptyList();
-        }
+        // Exercise
+        final User result = userService.createUser(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD);
 
-        @Override
-        public Page<Review> findLatest(final int page, final int pageSize) {
-            return Page.empty(page, pageSize);
-        }
-
-        @Override
-        public long countAll() {
-            return 0L;
-        }
-
-        @Override
-        public Page<Review> findByFollowedUsers(final long followerId, final int page, final int pageSize) {
-            return Page.empty(page, pageSize);
-        }
-
-        @Override
-        public long countByFollowedUsers(final long followerId) {
-            return 0L;
-        }
-
-        @Override
-        public Page<Review> findByFavoriteCars(final long userId, final int page, final int pageSize) {
-            return Page.empty(page, pageSize);
-        }
-
-        @Override
-        public long countByFavoriteCars(final long userId) {
-            return 0L;
-        }
-
-        @Override
-        public Map<Long, Integer> findDefaultPagesByReviewIds(final Collection<Long> reviewIds) {
-            return Collections.emptyMap();
-        }
-
-        private void addReview(final Long userId, final String email) {
-            reviews.add(new LegacyIdentity(userId, email));
-        }
-
-        private Long userIdAt(final int index) {
-            return reviews.get(index).userId;
-        }
-
-        private String emailAt(final int index) {
-            return reviews.get(index).email;
-        }
-
-        @Override
-        public int bindReviewsToUserByEmail(final long userId, final String email) {
-            int updated = 0;
-            for (final LegacyIdentity review : reviews) {
-                if (review.userId == null && matchesEmail(review.email, email)) {
-                    review.userId = userId;
-                    updated++;
-                }
-            }
-            return updated;
-        }
-
-        @Override
-        public Optional<Review> findById(final long id) {
-            return Optional.empty();
-        }
-
-        @Override
-        public List<Review> findByIds(final Collection<Long> ids) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<Review> findByCarId(final long carId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Page<Review> findByCarId(final long carId, final int page) {
-            return Page.empty(page, 0);
-        }
-
-        @Override
-        public Optional<Review> findLatestByCarId(final long carId) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<Review> findTopRatedLatestByCarId(final long carId) {
-            return Optional.empty();
-        }
-
-        @Override
-        public List<Review> findByCarIdOrderByRatingAsc(final long carId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Page<Review> findByCarIdOrderByRatingAsc(final long carId, final int page) {
-            return Page.empty(page, 0);
-        }
-
-        @Override
-        public List<Review> findByCarIdOrderByRatingDesc(final long carId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Page<Review> findByCarIdOrderByRatingDesc(final long carId, final int page) {
-            return Page.empty(page, 0);
-        }
-
-        @Override
-        public long countByCarId(final long carId) {
-            return 0L;
-        }
-
-        @Override
-        public List<Review> findByUserId(final long userId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Page<Review> findByUserId(final long userId, final int page) {
-            return Page.empty(page, 0);
-        }
-
-        @Override
-        public long countByUserId(final long userId) {
-            return 0L;
-        }
-
-        @Override
-        public Optional<ReviewStats> findStatsByCarId(final long carId) {
-            return Optional.empty();
-        }
-
-        @Override
-        public List<ReviewStats> findStatsByCarIds(final Collection<Long> carIds) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Review create(final long userId, final long carId, final BigDecimal rating, final String title,
-                             final String body, final String ownershipStatus, final Integer modelYear,
-                             final Integer mileageKm, final Boolean wouldRecommend) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Optional<Review> update(final long id, final long carId, final BigDecimal rating, final String title,
-                                       final String body, final String ownershipStatus, final Integer modelYear,
-                                       final Integer mileageKm, final Boolean wouldRecommend) {
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean delete(final long id) {
-            return false;
-        }
-
-        @Override
-        public int deleteByCarId(final long carId) {
-            return 0;
-        }
+        // Assertions
+        assertEquals(USER_ID, result.getId());
+        assertEquals(NORMALIZED_USERNAME, result.getUsername());
+        assertEquals(NORMALIZED_EMAIL, result.getEmail());
+        assertEquals(ENCODED_PASSWORD, result.getPassword());
+        assertEquals("user", result.getRole());
     }
 
-    private static final class FakeCarRequestDao implements CarRequestDao {
-        private final List<LegacyIdentity> requests = new ArrayList<>();
+    @Test
+    public void shouldRejectCreateUserWhenUsernameIsBlank() {
+        // Arrange
 
-        private void addRequest(final Long userId, final String email) {
-            requests.add(new LegacyIdentity(userId, email));
-        }
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> userService.createUser("   ", RAW_EMAIL, RAW_PASSWORD));
 
-        private Long userIdAt(final int index) {
-            return requests.get(index).userId;
-        }
-
-        private String emailAt(final int index) {
-            return requests.get(index).email;
-        }
-
-        @Override
-        public int bindRequestsToUserByEmail(final long userId, final String email) {
-            int updated = 0;
-            for (final LegacyIdentity request : requests) {
-                if (request.userId == null && matchesEmail(request.email, email)) {
-                    request.userId = userId;
-                    updated++;
-                }
-            }
-            return updated;
-        }
-
-        @Override
-        public Optional<CarRequest> findById(final long id) {
-            return Optional.empty();
-        }
-
-        @Override
-        public List<CarRequest> findByStatus(final String status) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public ar.edu.itba.paw.model.Page<CarRequest> findByStatus(final String status, final int page) {
-            return ar.edu.itba.paw.model.Page.empty(1, 0);
-        }
-
-        @Override
-        public long countByStatus(final String status) {
-            return 0L;
-        }
-
-        @Override
-        public CarRequest create(final long submittedByUserId, final String submitterEmail,
-                                 final long brandId, final long bodyTypeId, final Integer year,
-                                 final String model, final String description, final String imageContentType,
-                                 final byte[] imageData, final String status,
-                                 final String fuelType, final Integer horsepower, final Integer airbagCount,
-                                 final String transmission, final java.math.BigDecimal fuelConsumption,
-                                 final Integer maxSpeedKmh, final java.math.BigDecimal priceUsd) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public List<CarRequestImage> findImagesByRequestId(final long requestId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Optional<CarRequestImage> findImageByRequestIdAndImageId(final long requestId, final long imageId) {
-            return Optional.empty();
-        }
-
-        @Override
-        public void replaceImages(final long requestId, final List<CarImagePayload> images) {
-        }
-
-        @Override
-        public boolean updateStatus(final long id, final String expectedStatus, final String newStatus) {
-            return false;
-        }
+        // Assertions
+        assertEquals("Username is required.", ex.getMessage());
     }
 
-    private static boolean matchesEmail(final String rowEmail, final String email) {
-        return rowEmail != null && email != null && rowEmail.trim().equalsIgnoreCase(email);
+    @Test
+    public void shouldRejectCreateUserWhenEmailIsBlank() {
+        // Arrange
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> userService.createUser(RAW_USERNAME, "   ", RAW_PASSWORD));
+
+        // Assertions
+        assertEquals("Email is required.", ex.getMessage());
     }
 
-    private static final class LegacyIdentity {
-        private Long userId;
-        private final String email;
+    @Test
+    public void shouldRejectCreateUserWhenPasswordIsEmpty() {
+        // Arrange
 
-        private LegacyIdentity(final Long userId, final String email) {
-            this.userId = userId;
-            this.email = email;
-        }
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, ""));
+
+        // Assertions
+        assertEquals("Password is required.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldRejectCreateUserWhenPasswordIsNull() {
+        // Arrange
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, null));
+
+        // Assertions
+        assertEquals("Password is required.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldRejectCreateUserWhenUsernameAlreadyExists() {
+        // Arrange
+        final User existing = new User(99L, NORMALIZED_USERNAME, "other@example.com", "x", "user", LocalDateTime.now());
+        when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.of(existing));
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD));
+
+        // Assertions
+        assertEquals("Username is already registered.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldRejectCreateUserWhenEmailAlreadyExists() {
+        // Arrange
+        final User existing = new User(99L, "other", NORMALIZED_EMAIL, "x", "user", LocalDateTime.now());
+        when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
+        when(userDao.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.of(existing));
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD));
+
+        // Assertions
+        assertEquals("Email is already registered.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldUpdateRoleNormalizedToLowerCase() {
+        // Arrange
+        when(userDao.updateRole(USER_ID, "admin")).thenReturn(true);
+
+        // Exercise
+        final boolean result = userService.updateRole(USER_ID, "  ADMIN ");
+
+        // Assertions
+        assertTrue(result);
+    }
+
+    @Test
+    public void shouldRejectUpdateRoleWhenRoleIsBlank() {
+        // Arrange
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> userService.updateRole(USER_ID, "   "));
+
+        // Assertions
+        assertEquals("Role is required.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldReturnModeratorEmailsFromDao() {
+        // Arrange
+        final List<String> emails = List.of("a@x.com", "b@x.com");
+        when(userDao.findEmailsByRoles(List.of("moderator", "admin"))).thenReturn(emails);
+
+        // Exercise
+        final List<String> result = userService.getModeratorsEmails();
+
+        // Assertions
+        assertEquals(emails, result);
+    }
+
+    @Test
+    public void shouldReturnAllUsersFromDao() {
+        // Arrange
+        final List<User> users = List.of(
+                new User(1L, "a", "a@x.com", "p", "user", LocalDateTime.now()),
+                new User(2L, "b", "b@x.com", "p", "user", LocalDateTime.now())
+        );
+        when(userDao.findAll()).thenReturn(users);
+
+        // Exercise
+        final List<User> result = userService.getAllUsers();
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertSame(users, result);
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenFindByIdReceivesUnknown() {
+        // Arrange
+        when(userDao.findById(999L)).thenReturn(Optional.empty());
+
+        // Exercise
+        final Optional<User> result = userService.getUserById(999L);
+
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 }

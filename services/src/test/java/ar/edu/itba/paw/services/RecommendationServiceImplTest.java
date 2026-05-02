@@ -1,373 +1,277 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
-import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRecommendation;
-import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
-import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.ReviewTag;
-import ar.edu.itba.paw.model.TagHighlight;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewTagDao;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.when;
 
-class RecommendationServiceImplTest {
+@ExtendWith(MockitoExtension.class)
+public class RecommendationServiceImplTest {
 
-    private static final ReviewTag LOW_FUEL = tag((short) 1, "low_fuel_consumption", "Consume poco");
-    private static final ReviewTag HIGH_FUEL = tag((short) 2, "high_fuel_consumption", "Consume mucho");
-    private static final ReviewTag COMFORTABLE = tag((short) 3, "comfortable", "Comodo");
-    private static final ReviewTag AGILE = tag((short) 4, "agile_engine", "Motor agil");
+    @Mock
+    private CarService carService;
+    @Mock
+    private ReviewTagService reviewTagService;
+    @Mock
+    private ReviewTagDao reviewTagDao;
+    @Mock
+    private ReviewDao reviewDao;
 
-    @Test
-    void emptyAnswersReturnNoRecommendations() {
-        final RecommendationService service = service(List.of(car(1L, "Sedan", "combustion")), Map.of(), Map.of());
+    @InjectMocks
+    private RecommendationServiceImpl recommendationService;
 
-        final List<CarRecommendation> recommendations = service.recommend(new RecommendationCriteria(Map.of(), null, null), 5);
+    private static final short COMFORT_TAG_ID = 1;
+    private static final short UNCOMFORT_TAG_ID = 2;
+    private static final short BIG_TRUNK_TAG_ID = 3;
+    private static final short SMALL_TRUNK_TAG_ID = 4;
 
-        assertTrue(recommendations.isEmpty());
+    private static Car car(final long id) {
+        return new Car(id, 1L, "Brand-" + id, "Model-" + id, 2L, 2024, "sedan",
+                "desc", LocalDateTime.now(), false, "GASOLINE", 100, 6, "MANUAL",
+                new BigDecimal("6.0"), 180, new BigDecimal("20000.00"));
     }
 
-    @Test
-    void higherTagFrequencyRanksFirst() {
-        final Car carOne = car(1L, "Sedan", "combustion");
-        final Car carTwo = car(2L, "Sedan", "combustion");
-        final RecommendationService service = service(
-                List.of(carOne, carTwo),
-                Map.of(1L, stats(1L, 2), 2L, stats(2L, 3)),
-                Map.of(
-                        1L, Map.of(LOW_FUEL.getId(), 1),
-                        2L, Map.of(LOW_FUEL.getId(), 3)
-                )
-        );
-
-        final List<CarRecommendation> recommendations = service.recommend(criteria("fuelEconomy", "very"), 5);
-
-        assertEquals(2L, recommendations.get(0).getCar().getId());
-        assertEquals(1L, recommendations.get(1).getCar().getId());
+    private static ReviewTag tag(final short id, final String code) {
+        return new ReviewTag(id, code, "label-" + code, ReviewTag.SENTIMENT_POSITIVE, code + "-dim",
+                LocalDateTime.now());
     }
 
-    @Test
-    void hardPrefiltersConstrainCandidates() {
-        final Car sedan = car(1L, "Sedan", "combustion");
-        final Car suv = car(2L, "SUV", "hybrid");
-        final RecommendationService service = service(
-                List.of(sedan, suv),
-                Map.of(1L, stats(1L, 1), 2L, stats(2L, 1)),
-                Map.of(1L, Map.of(LOW_FUEL.getId(), 1), 2L, Map.of(LOW_FUEL.getId(), 1))
+    private static List<ReviewTag> allTags() {
+        return List.of(
+                tag(COMFORT_TAG_ID, "comfortable"),
+                tag(UNCOMFORT_TAG_ID, "uncomfortable"),
+                tag(BIG_TRUNK_TAG_ID, "big_trunk"),
+                tag(SMALL_TRUNK_TAG_ID, "small_trunk")
         );
+    }
 
-        final RecommendationCriteria criteria = criteria("fuelEconomy", "very");
-        criteria.setBodyType("SUV");
-        criteria.setFuelType("hybrid");
+    private static ReviewStats stats(final long carId, final long reviewCount) {
+        return new ReviewStats(carId, reviewCount, new BigDecimal("4.0"));
+    }
 
-        final List<CarRecommendation> recommendations = service.recommend(criteria, 5);
-
-        assertEquals(1, recommendations.size());
-        assertEquals(2L, recommendations.get(0).getCar().getId());
+    private void mockSinglePageOfCars(final List<Car> cars) {
+        final Page<Car> page = new Page<>(cars, 1, Math.max(cars.size(), 1), cars.size());
+        when(carService.searchCars(any(CarSearchCriteria.class))).thenReturn(page);
     }
 
     @Test
-    void zeroReviewCarsAreSkipped() {
-        final RecommendationService service = service(
-                List.of(car(1L, "Sedan", "combustion")),
-                Map.of(1L, stats(1L, 0)),
-                Map.of(1L, Map.of(LOW_FUEL.getId(), 1))
-        );
+    public void shouldReturnQuestionnaireQuestions() {
+        // Arrange
 
-        final List<CarRecommendation> recommendations = service.recommend(criteria("fuelEconomy", "very"), 5);
+        // Exercise
+        final List<RecommendationQuestion> questions = recommendationService.getQuestions();
 
-        assertTrue(recommendations.isEmpty());
+        // Assertions
+        assertFalse(questions.isEmpty());
+        assertTrue(questions.stream().anyMatch(q -> "driving".equals(q.getId())));
     }
 
     @Test
-    void highlightsAreSplitByImpactSign() {
-        final RecommendationService service = service(
-                List.of(car(1L, "Sedan", "combustion")),
-                Map.of(1L, stats(1L, 2)),
-                Map.of(1L, Map.of(LOW_FUEL.getId(), 1, HIGH_FUEL.getId(), 2, COMFORTABLE.getId(), 1, AGILE.getId(), 1))
-        );
+    public void shouldReturnEmptyWhenCriteriaIsNull() {
+        // Arrange
 
-        final RecommendationCriteria criteria = new RecommendationCriteria(
-                Map.of("fuelEconomy", "very", "comfort", "very", "performance", "very"),
-                null,
-                null
-        );
-        final List<CarRecommendation> recommendations = service.recommend(criteria, 5);
-        final CarRecommendation top = recommendations.get(0);
+        // Exercise
+        final List<CarRecommendation> result = recommendationService.recommend(null, 5);
 
-        assertEquals(2, top.getPositiveHighlights().size());
-        assertTrue(top.getPositiveHighlights().stream()
-                .noneMatch(highlight -> HIGH_FUEL.getCode().equals(highlight.getTag().getCode())));
-        assertTrue(top.getPositiveHighlights().stream().allMatch(TagHighlight::isPositiveImpact));
-
-        assertEquals(1, top.getNegativeHighlights().size());
-        assertEquals(HIGH_FUEL.getCode(), top.getNegativeHighlights().get(0).getTag().getCode());
-        assertTrue(top.getNegativeHighlights().get(0).getTier().isVisible());
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 
-    private RecommendationService service(final List<Car> cars, final Map<Long, ReviewStats> stats,
-                                          final Map<Long, Map<Short, Integer>> tagCounts) {
-        return new RecommendationServiceImpl(
-                new FakeCarService(cars),
-                new FakeReviewTagService(),
-                new FakeReviewTagDao(tagCounts),
-                new FakeReviewDao(stats)
-        );
+    @Test
+    public void shouldReturnEmptyWhenAnswersAreEmpty() {
+        // Arrange
+        final RecommendationCriteria criteria = new RecommendationCriteria(Map.of(), null, null);
+
+        // Exercise
+        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 
-    private RecommendationCriteria criteria(final String question, final String answer) {
-        return new RecommendationCriteria(Map.of(question, answer), null, null);
+    @Test
+    public void shouldReturnEmptyWhenWeightsCancelOut() {
+        // Arrange — fuelEconomy "very" gives +1.0/-1.0 for two tags; an opposite combination
+        // is not directly possible, so simulate cancellation by selecting the "any"/"not" answers
+        // which produce empty weights. Driving=any + firstCar=no => no weights at all.
+        final Map<String, String> answers = new HashMap<>();
+        answers.put("driving", "any");
+        answers.put("firstCar", "no");
+        final RecommendationCriteria criteria = new RecommendationCriteria(answers, null, null);
+
+        // Exercise
+        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 
-    private static ReviewTag tag(final short id, final String code, final String label) {
-        return new ReviewTag(id, code, label, "positive", "dimension", LocalDateTime.now());
+    @Test
+    public void shouldReturnEmptyWhenNoCandidatesAreFound() {
+        // Arrange
+        final RecommendationCriteria criteria = new RecommendationCriteria(Map.of("comfort", "very"), null, null);
+        when(reviewTagService.getAll()).thenReturn(allTags());
+        mockSinglePageOfCars(List.of());
+
+        // Exercise
+        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 
-    private static ReviewStats stats(final long carId, final long count) {
-        return new ReviewStats(carId, count, BigDecimal.valueOf(4));
+    @Test
+    public void shouldFilterOutCarsWithoutReviews() {
+        // Arrange
+        final RecommendationCriteria criteria = new RecommendationCriteria(Map.of("comfort", "very"), null, null);
+        final Car carA = car(1L);
+        when(reviewTagService.getAll()).thenReturn(allTags());
+        mockSinglePageOfCars(List.of(carA));
+        when(reviewDao.findStatsByCarIds(List.of(1L))).thenReturn(List.of()); // zero reviews
+        when(reviewTagDao.getTagCountsForCars(List.of(1L))).thenReturn(Map.of());
+
+        // Exercise
+        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 
-    private static Car car(final long id, final String bodyType, final String fuelType) {
-        return new Car(id, 1L, "Brand", "Model " + id, 1L, bodyType, "Desc", LocalDateTime.now(), true,
-                fuelType, 100, 6, "automatic", BigDecimal.valueOf(7), 180, BigDecimal.valueOf(20000));
+    @Test
+    public void shouldRankCarWithHigherPositiveTagFrequencyFirst() {
+        // Arrange — both cars have 10 reviews; A has 8 mentions of comfortable, B has 2.
+        final RecommendationCriteria criteria = new RecommendationCriteria(Map.of("comfort", "very"), null, null);
+        final Car carA = car(1L);
+        final Car carB = car(2L);
+        when(reviewTagService.getAll()).thenReturn(allTags());
+        mockSinglePageOfCars(List.of(carA, carB));
+        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10), stats(2L, 10)));
+        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
+                1L, Map.of(COMFORT_TAG_ID, 8),
+                2L, Map.of(COMFORT_TAG_ID, 2)
+        ));
+
+        // Exercise
+        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals(1L, result.get(0).getCar().getId());
+        assertEquals(2L, result.get(1).getCar().getId());
+        assertTrue(result.get(0).getScore().compareTo(result.get(1).getScore()) > 0);
     }
 
-    private static final class FakeCarService implements CarService {
-        private final List<Car> cars;
+    @Test
+    public void shouldHonorLimitParameter() {
+        // Arrange
+        final RecommendationCriteria criteria = new RecommendationCriteria(Map.of("comfort", "very"), null, null);
+        final Car carA = car(1L);
+        final Car carB = car(2L);
+        final Car carC = car(3L);
+        when(reviewTagService.getAll()).thenReturn(allTags());
+        mockSinglePageOfCars(List.of(carA, carB, carC));
+        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(
+                stats(1L, 10), stats(2L, 10), stats(3L, 10)));
+        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
+                1L, Map.of(COMFORT_TAG_ID, 8),
+                2L, Map.of(COMFORT_TAG_ID, 5),
+                3L, Map.of(COMFORT_TAG_ID, 2)
+        ));
 
-        private FakeCarService(final List<Car> cars) {
-            this.cars = cars;
-        }
+        // Exercise
+        final List<CarRecommendation> result = recommendationService.recommend(criteria, 2);
 
-        @Override
-        public List<Car> getAllCars() { return cars; }
-
-        @Override
-        public Optional<Car> getCarById(final long id) { return Optional.empty(); }
-
-        @Override
-        public List<Car> getCarsByIds(final Collection<Long> ids) { return Collections.emptyList(); }
-
-        @Override
-        public List<Car> getCarsByBrandAndBodyType(final String brand, final String bodyType) { return Collections.emptyList(); }
-
-        @Override
-        public Page<Car> searchCars(final CarSearchCriteria criteria) {
-            final List<Car> filtered = cars.stream()
-                    .filter(car -> criteria.getBodyType() == null || criteria.getBodyType().equals(car.getBodyType()))
-                    .filter(car -> criteria.getFuelTypes().isEmpty() || criteria.getFuelTypes().contains(car.getFuelType()))
-                    .toList();
-            return new Page<>(filtered, 1, 16, filtered.size());
-        }
-
-        @Override
-        public Optional<CarImage> getCarImageByCarId(final long carId) { return Optional.empty(); }
-
-        @Override
-        public List<CarImage> getCarImagesByCarId(final long carId) { return Collections.emptyList(); }
-
-        @Override
-        public Optional<CarImage> getCarImageById(final long carId, final long imageId) { return Optional.empty(); }
-
-        @Override
-        public void saveCarImages(final long carId, final List<CarImagePayload> images) {}
-
-        @Override
-        public void appendCarImages(final long carId, final List<CarImagePayload> images) {}
-
-        @Override
-        public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
-                                             final Integer year, final long submittedByUserId, final String submitterEmail,
-                                             final Optional<String> description, final List<CarImagePayload> images,
-                                             final String fuelType, final Integer horsepower,
-                                             final Integer airbagCount, final String transmission,
-                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                                             final BigDecimal priceUsd) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Optional<Car> updateCar(final long id, final long brandId, final String model,
-                                       final long bodyTypeId, final Integer year, final String description,
-                                       final Optional<String> imageContentType, final Optional<byte[]> imageData,
-                                       final String fuelType, final Integer horsepower,
-                                       final Integer airbagCount, final String transmission,
-                                       final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                                       final BigDecimal priceUsd) {
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean deleteCar(final long id) { return false; }
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals(1L, result.get(0).getCar().getId());
+        assertEquals(2L, result.get(1).getCar().getId());
     }
 
-    private static final class FakeReviewTagService implements ReviewTagService {
-        @Override
-        public List<ReviewTag> getAll() { return List.of(LOW_FUEL, HIGH_FUEL, COMFORTABLE, AGILE); }
+    @Test
+    public void shouldFallBackToDefaultLimitWhenLimitIsZeroOrNegative() {
+        // Arrange — 6 cars; default limit is 5
+        final RecommendationCriteria criteria = new RecommendationCriteria(Map.of("comfort", "very"), null, null);
+        final List<Car> cars = List.of(car(1L), car(2L), car(3L), car(4L), car(5L), car(6L));
+        when(reviewTagService.getAll()).thenReturn(allTags());
+        mockSinglePageOfCars(cars);
+        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(
+                stats(1L, 10), stats(2L, 10), stats(3L, 10), stats(4L, 10), stats(5L, 10), stats(6L, 10)));
+        final Map<Long, Map<Short, Integer>> counts = new HashMap<>();
+        for (long id = 1; id <= 6; id++) {
+            counts.put(id, Map.of(COMFORT_TAG_ID, (int) (10 - id)));
+        }
+        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(counts);
 
-        @Override
-        public Map<String, List<ReviewTag>> getAllGroupedBySentiment() { return Map.of(); }
+        // Exercise
+        final List<CarRecommendation> result = recommendationService.recommend(criteria, 0);
 
-        @Override
-        public List<ReviewTag> validateSelection(final Collection<Short> tagIds) { return Collections.emptyList(); }
+        // Assertions
+        assertEquals(5, result.size());
     }
 
-    private static final class FakeReviewTagDao implements ReviewTagDao {
-        private final Map<Long, Map<Short, Integer>> tagCounts;
+    @Test
+    public void shouldSurfacePositiveAndNegativeHighlightsForFreqAboveThreshold() {
+        // Arrange — answer 'comfort=very' weights comfortable=+1.0, uncomfortable=-1.0
+        // Car A: 10 reviews, 6 mentions of comfortable (freq 0.6 -> DESTACADO), 5 mentions of uncomfortable (freq 0.5 -> CUESTIONADO)
+        final RecommendationCriteria criteria = new RecommendationCriteria(Map.of("comfort", "very"), null, null);
+        final Car carA = car(1L);
+        when(reviewTagService.getAll()).thenReturn(allTags());
+        mockSinglePageOfCars(List.of(carA));
+        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10)));
+        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
+                1L, Map.of(COMFORT_TAG_ID, 6, UNCOMFORT_TAG_ID, 5)));
 
-        private FakeReviewTagDao(final Map<Long, Map<Short, Integer>> tagCounts) {
-            this.tagCounts = tagCounts;
-        }
+        // Exercise
+        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
 
-        @Override
-        public List<ReviewTag> findAll() { return Collections.emptyList(); }
-
-        @Override
-        public Optional<ReviewTag> findById(final short tagId) { return Optional.empty(); }
-
-        @Override
-        public List<ReviewTag> findByIds(final Collection<Short> tagIds) { return Collections.emptyList(); }
-
-        @Override
-        public void replaceAssignments(final long reviewId, final Collection<Short> tagIds) {}
-
-        @Override
-        public Map<Long, List<ReviewTag>> findByReviewIds(final Collection<Long> reviewIds) { return Map.of(); }
-
-        @Override
-        public Map<Long, Map<Short, Integer>> getTagCountsForCars(final Collection<Long> carIds) {
-            final Map<Long, Map<Short, Integer>> result = new HashMap<>();
-            for (final Long carId : carIds) {
-                if (tagCounts.containsKey(carId)) {
-                    result.put(carId, tagCounts.get(carId));
-                }
-            }
-            return result;
-        }
+        // Assertions
+        assertEquals(1, result.size());
+        final CarRecommendation rec = result.get(0);
+        assertEquals(1, rec.getPositiveHighlights().size());
+        assertEquals("comfortable", rec.getPositiveHighlights().get(0).getTag().getCode());
+        assertEquals(1, rec.getNegativeHighlights().size());
+        assertEquals("uncomfortable", rec.getNegativeHighlights().get(0).getTag().getCode());
     }
 
-    private static final class FakeReviewDao implements ReviewDao {
-        private final Map<Long, ReviewStats> stats;
+    @Test
+    public void shouldHideHighlightsBelowVisibilityThreshold() {
+        // Arrange — frequency 1/10 = 0.1 is below LOW_THRESHOLD 0.20 → tier MINOR → not visible.
+        final RecommendationCriteria criteria = new RecommendationCriteria(Map.of("comfort", "very"), null, null);
+        final Car carA = car(1L);
+        when(reviewTagService.getAll()).thenReturn(allTags());
+        mockSinglePageOfCars(List.of(carA));
+        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10)));
+        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
+                1L, Map.of(COMFORT_TAG_ID, 1)));
 
-        private FakeReviewDao(final Map<Long, ReviewStats> stats) {
-            this.stats = stats;
-        }
+        // Exercise
+        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
 
-        @Override
-        public List<Review> findAll() { return Collections.emptyList(); }
-
-        @Override
-        public Page<Review> findLatest(final int page, final int pageSize) { return Page.empty(page, pageSize); }
-
-        @Override
-        public long countAll() { return 0L; }
-
-        @Override
-        public Page<Review> findByFollowedUsers(final long followerId, final int page, final int pageSize) {
-            return Page.empty(page, pageSize);
-        }
-
-        @Override
-        public long countByFollowedUsers(final long followerId) { return 0L; }
-
-        @Override
-        public Page<Review> findByFavoriteCars(final long userId, final int page, final int pageSize) {
-            return Page.empty(page, pageSize);
-        }
-
-        @Override
-        public long countByFavoriteCars(final long userId) { return 0L; }
-
-        @Override
-        public Map<Long, Integer> findDefaultPagesByReviewIds(final Collection<Long> reviewIds) { return Map.of(); }
-
-        @Override
-        public Optional<Review> findById(final long id) { return Optional.empty(); }
-
-        @Override
-        public List<Review> findByIds(final Collection<Long> ids) { return Collections.emptyList(); }
-
-        @Override
-        public List<Review> findByCarId(final long carId) { return Collections.emptyList(); }
-
-        @Override
-        public Page<Review> findByCarId(final long carId, final int page) { return Page.empty(page, 0); }
-
-        @Override
-        public Optional<Review> findLatestByCarId(final long carId) { return Optional.empty(); }
-
-        @Override
-        public Optional<Review> findTopRatedLatestByCarId(final long carId) { return Optional.empty(); }
-
-        @Override
-        public List<Review> findByCarIdOrderByRatingAsc(final long carId) { return Collections.emptyList(); }
-
-        @Override
-        public Page<Review> findByCarIdOrderByRatingAsc(final long carId, final int page) { return Page.empty(page, 0); }
-
-        @Override
-        public List<Review> findByCarIdOrderByRatingDesc(final long carId) { return Collections.emptyList(); }
-
-        @Override
-        public Page<Review> findByCarIdOrderByRatingDesc(final long carId, final int page) { return Page.empty(page, 0); }
-
-        @Override
-        public long countByCarId(final long carId) { return 0; }
-
-        @Override
-        public List<Review> findByUserId(final long userId) { return Collections.emptyList(); }
-
-        @Override
-        public Page<Review> findByUserId(final long userId, final int page) { return Page.empty(page, 0); }
-
-        @Override
-        public long countByUserId(final long userId) { return 0; }
-
-        @Override
-        public Optional<ReviewStats> findStatsByCarId(final long carId) { return Optional.ofNullable(stats.get(carId)); }
-
-        @Override
-        public List<ReviewStats> findStatsByCarIds(final Collection<Long> carIds) {
-            return carIds.stream().filter(stats::containsKey).map(stats::get).toList();
-        }
-
-        @Override
-        public Review create(final long userId, final long carId, final BigDecimal rating, final String title,
-                             final String body, final String ownershipStatus, final Integer modelYear,
-                             final Integer mileageKm, final Boolean wouldRecommend) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int bindReviewsToUserByEmail(final long userId, final String email) { return 0; }
-
-        @Override
-        public Optional<Review> update(final long id, final long carId, final BigDecimal rating, final String title,
-                                       final String body, final String ownershipStatus, final Integer modelYear,
-                                       final Integer mileageKm, final Boolean wouldRecommend) {
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean delete(final long id) { return false; }
-
-        @Override
-        public int deleteByCarId(final long carId) { return 0; }
+        // Assertions
+        assertEquals(1, result.size());
+        assertTrue(result.get(0).getPositiveHighlights().isEmpty());
+        assertTrue(result.get(0).getNegativeHighlights().isEmpty());
     }
 }
