@@ -386,12 +386,12 @@ ALTER TABLE car_requests
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS chk_cars_year;
 ALTER TABLE cars
     ADD CONSTRAINT chk_cars_year
-    CHECK (year IS NULL OR year BETWEEN 1886 AND 2100);
+    CHECK (year IS NULL OR year BETWEEN 1950 AND 2026) NOT VALID;
 
 ALTER TABLE car_requests DROP CONSTRAINT IF EXISTS chk_car_requests_year;
 ALTER TABLE car_requests
     ADD CONSTRAINT chk_car_requests_year
-    CHECK (year IS NULL OR year BETWEEN 1886 AND 2100);
+    CHECK (year IS NULL OR year BETWEEN 1950 AND 2026) NOT VALID;
 
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS chk_cars_fuel_type;
 ALTER TABLE cars

@@ -16,7 +16,7 @@
     <div class="cars-filters-panel-inner">
 
         <div class="cars-filters-header">
-            <h2 id="filtersPanelTitle" class="cars-filters-title">Filtros Avanzados</h2>
+            <h2 id="filtersPanelTitle" class="cars-filters-title">Filtros avanzados</h2>
             <button type="button" class="cars-filters-close" data-close-filters-panel aria-label="Cerrar filtros">
                 <pa:icon name="close" size="18"/>
             </button>
@@ -30,36 +30,6 @@
            class="filters-panel-validation-message"
            role="alert"
            hidden></p>
-
-        <%-- Año modelo --%>
-        <section class="filters-panel-section">
-            <h3 class="filters-panel-section-title">Año modelo</h3>
-            <div class="dual-range"
-                 data-range-min="1886"
-                 data-range-max="2100"
-                 data-input-low="panelYearMin"
-                 data-input-high="panelYearMax">
-                <div class="dual-range-track">
-                    <div class="dual-range-fill" id="panelYearFill"></div>
-                </div>
-                <input type="range" class="dual-range-thumb dual-range-low" min="1886" max="2100" step="1"
-                       value="<c:out value='${not empty criteria.yearMin ? criteria.yearMin : 1886}'/>">
-                <input type="range" class="dual-range-thumb dual-range-high" min="1886" max="2100" step="1"
-                       value="<c:out value='${not empty criteria.yearMax ? criteria.yearMax : 2100}'/>">
-            </div>
-            <div class="dual-range-inputs">
-                <input type="number" id="panelYearMin" name="yearMin" class="range-number-input"
-                       min="1886" max="2100" placeholder="Mín"
-                       aria-describedby="panelYearError"
-                       value="<c:out value='${criteria.yearMin}'/>">
-                <span class="range-separator">–</span>
-                <input type="number" id="panelYearMax" name="yearMax" class="range-number-input"
-                       min="1886" max="2100" placeholder="Máx"
-                       aria-describedby="panelYearError"
-                       value="<c:out value='${criteria.yearMax}'/>">
-            </div>
-            <p id="panelYearError" class="filters-field-error" hidden></p>
-        </section>
 
         <%-- Motorización — icon picker (multi-select) --%>
         <section class="filters-panel-section">
@@ -81,67 +51,172 @@
             <input type="hidden" id="panelFuelType" name="fuelType" value="<c:out value='${criteria.fuelType}'/>">
         </section>
 
+        <%-- Transmisión — segmented control --%>
+        <section class="filters-panel-section">
+            <h3 class="filters-panel-section-title">Transmisión</h3>
+            <div class="segmented-control filter-segmented" data-filter-target="panelTransmission">
+                <button type="button" class="segmented-control-option filter-segment-option${empty criteria.transmission ? ' is-selected' : ''}" data-value="">Ambos</button>
+                <button type="button" class="segmented-control-option filter-segment-option${'automatic' eq criteria.transmission ? ' is-selected' : ''}" data-value="automatic">Automática</button>
+                <button type="button" class="segmented-control-option filter-segment-option${'manual' eq criteria.transmission ? ' is-selected' : ''}" data-value="manual">Manual</button>
+            </div>
+            <input type="hidden" id="panelTransmission" name="transmission" value="<c:out value='${criteria.transmission}'/>">
+        </section>
+
         <%-- Precio 0 km (USD) --%>
         <section class="filters-panel-section">
             <h3 class="filters-panel-section-title">Precio 0 km (USD)</h3>
             <div class="dual-range"
                  data-range-min="0"
                  data-range-max="1000"
-                 data-real-min="0"
+                 data-real-min="10000"
                  data-real-max="5000000"
-                 data-scale="log"
+                 data-scale="price"
                  data-input-low="panelPriceMin"
                  data-input-high="panelPriceMax">
                 <div class="dual-range-track">
                     <div class="dual-range-fill" id="panelPriceFill"></div>
                 </div>
-                <input type="range" class="dual-range-thumb dual-range-low"  min="0" max="1000" step="1"
+                <input type="range" class="dual-range-thumb dual-range-low" min="0" max="1000" step="10"
                        value="0">
-                <input type="range" class="dual-range-thumb dual-range-high" min="0" max="1000" step="1"
+                <input type="range" class="dual-range-thumb dual-range-high" min="0" max="1000" step="10"
                        value="1000">
+                <div class="dual-range-labels">
+                    <span>$10k</span>
+                    <span>$250k+</span>
+                </div>
             </div>
             <div class="dual-range-inputs">
-                <input type="number" id="panelPriceMin" name="priceMin" class="range-number-input"
-                       min="0" max="5000000" placeholder="Mín"
+                <input type="text" id="panelPriceMin" name="priceMin" class="range-number-input range-number-input--currency"
+                       inputmode="numeric" autocomplete="off" data-currency-input="true"
+                       data-min="10000" data-max="5000000" data-display-max="250000" data-step="1000"
+                       data-boundary="min" placeholder="Mín"
                        aria-describedby="panelPriceError"
                        value="<c:out value='${criteria.priceMin}'/>">
                 <span class="range-separator">–</span>
-                <input type="number" id="panelPriceMax" name="priceMax" class="range-number-input"
-                       min="0" max="5000000" placeholder="Máx"
+                <input type="text" id="panelPriceMax" name="priceMax" class="range-number-input range-number-input--currency"
+                       inputmode="numeric" autocomplete="off" data-currency-input="true"
+                       data-min="10000" data-max="5000000" data-display-max="250000"
+                       data-step="1000" data-boundary="max" placeholder="Máx"
                        aria-describedby="panelPriceError"
                        value="<c:out value='${criteria.priceMax}'/>">
             </div>
             <p id="panelPriceError" class="filters-field-error" hidden></p>
         </section>
 
-        <%-- Caballos de fuerza --%>
+        <%-- Año modelo --%>
         <section class="filters-panel-section">
-            <h3 class="filters-panel-section-title">Caballos de fuerza (HP)</h3>
+            <h3 class="filters-panel-section-title">Año modelo</h3>
             <div class="dual-range"
-                 data-range-min="0"
-                 data-range-max="1500"
-                 data-input-low="panelHpMin"
-                 data-input-high="panelHpMax">
+                 data-range-min="1950"
+                 data-range-max="2026"
+                 data-input-low="panelYearMin"
+                 data-input-high="panelYearMax">
                 <div class="dual-range-track">
-                    <div class="dual-range-fill" id="panelHpFill"></div>
+                    <div class="dual-range-fill" id="panelYearFill"></div>
                 </div>
-                <input type="range" class="dual-range-thumb dual-range-low"  min="0" max="1500" step="10"
-                       value="<c:out value='${not empty criteria.horsepowerMin ? criteria.horsepowerMin : 0}'/>">
-                <input type="range" class="dual-range-thumb dual-range-high" min="0" max="1500" step="10"
-                       value="<c:out value='${not empty criteria.horsepowerMax ? criteria.horsepowerMax : 1500}'/>">
+                <input type="range" class="dual-range-thumb dual-range-low" min="1950" max="2026" step="1"
+                       value="<c:out value='${not empty criteria.yearMin ? criteria.yearMin : 1950}'/>">
+                <input type="range" class="dual-range-thumb dual-range-high" min="1950" max="2026" step="1"
+                       value="<c:out value='${not empty criteria.yearMax ? criteria.yearMax : 2026}'/>">
+                <div class="dual-range-labels">
+                    <span>1950</span>
+                    <span>2026</span>
+                </div>
             </div>
             <div class="dual-range-inputs">
-                <input type="number" id="panelHpMin" name="horsepowerMin" class="range-number-input"
-                       min="0" max="1500" placeholder="Mín"
-                       aria-describedby="panelHpError"
-                       value="<c:out value='${criteria.horsepowerMin}'/>">
+                <input type="text" id="panelYearMin" name="yearMin" class="range-number-input"
+                       inputmode="numeric" autocomplete="off" data-number-input="true"
+                       data-min="1950" data-max="2026" data-step="1" data-boundary="min" placeholder="Mín"
+                       aria-describedby="panelYearError"
+                       value="<c:out value='${criteria.yearMin}'/>">
                 <span class="range-separator">–</span>
-                <input type="number" id="panelHpMax" name="horsepowerMax" class="range-number-input"
-                       min="0" max="1500" placeholder="Máx"
-                       aria-describedby="panelHpError"
-                       value="<c:out value='${criteria.horsepowerMax}'/>">
+                <input type="text" id="panelYearMax" name="yearMax" class="range-number-input"
+                       inputmode="numeric" autocomplete="off" data-number-input="true"
+                       data-min="1950" data-max="2026" data-step="1" data-boundary="max" placeholder="Máx"
+                       aria-describedby="panelYearError"
+                       value="<c:out value='${criteria.yearMax}'/>">
             </div>
-            <p id="panelHpError" class="filters-field-error" hidden></p>
+            <p id="panelYearError" class="filters-field-error" hidden></p>
+        </section>
+
+        <%-- Rendimiento técnico --%>
+        <section class="filters-panel-section">
+            <div class="filters-panel-subsection">
+                <h4 class="filters-panel-subsection-title">Caballos de fuerza (HP)</h4>
+                <div class="dual-range"
+                     data-range-min="50"
+                     data-range-max="800"
+                     data-input-low="panelHpMin"
+                     data-input-high="panelHpMax">
+                    <div class="dual-range-track">
+                        <div class="dual-range-fill" id="panelHpFill"></div>
+                    </div>
+                    <input type="range" class="dual-range-thumb dual-range-low" min="50" max="800" step="25"
+                           value="<c:out value='${not empty criteria.horsepowerMin ? criteria.horsepowerMin : 50}'/>">
+                    <input type="range" class="dual-range-thumb dual-range-high" min="50" max="800" step="25"
+                           value="<c:out value='${not empty criteria.horsepowerMax ? criteria.horsepowerMax : 800}'/>">
+                    <div class="dual-range-labels">
+                        <span>50 HP</span>
+                        <span>800+ HP</span>
+                    </div>
+                </div>
+                <div class="dual-range-inputs">
+                    <input type="text" id="panelHpMin" name="horsepowerMin" class="range-number-input"
+                           inputmode="numeric" autocomplete="off" data-number-input="true"
+                           data-min="50" data-max="800" data-step="25" data-boundary="min" placeholder="Mín"
+                           aria-describedby="panelHpError"
+                           value="<c:out value='${criteria.horsepowerMin}'/>">
+                    <span class="range-separator">–</span>
+                    <input type="text" id="panelHpMax" name="horsepowerMax" class="range-number-input"
+                           inputmode="numeric" autocomplete="off" data-number-input="true"
+                           data-min="50" data-max="800" data-step="25" data-boundary="max" placeholder="Máx"
+                           aria-describedby="panelHpError"
+                           value="<c:out value='${criteria.horsepowerMax}'/>">
+                </div>
+                <p id="panelHpError" class="filters-field-error" hidden></p>
+            </div>
+
+            <div class="filters-panel-subsection">
+                <div class="filter-range-header">
+                    <h4 class="filters-panel-subsection-title">Velocidad máxima</h4>
+                </div>
+                <p class="filter-range-value-display" id="panelMaxSpeedDisplay"></p>
+                <input type="range" id="panelMaxSpeedSlider" name="maxSpeedMin"
+                       class="single-range"
+                       min="0" max="500" step="25"
+                       value="<c:out value='${not empty criteria.maxSpeedMin ? criteria.maxSpeedMin : 0}'/>">
+                <div class="single-range-labels">
+                    <div class="single-range-label-col">
+                        <span>0 km/h</span>
+                        <span class="single-range-sublabel">Más lenta</span>
+                    </div>
+                    <div class="single-range-label-col single-range-label-col--end">
+                        <span>500 km/h</span>
+                        <span class="single-range-sublabel">Más rápida</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filters-panel-subsection">
+                <div class="filter-range-header">
+                    <h4 class="filters-panel-subsection-title">Consumo de nafta</h4>
+                </div>
+                <p class="filter-range-value-display" id="panelConsumptionDisplay"></p>
+                <input type="range" id="panelConsumptionSlider" name="fuelConsumptionMax"
+                       class="single-range"
+                       min="0" max="30" step="1"
+                       value="<c:out value='${not empty criteria.fuelConsumptionMax ? criteria.fuelConsumptionMax : 30}'/>">
+                <div class="single-range-labels">
+                    <div class="single-range-label-col">
+                        <span>0 L/100km</span>
+                        <span class="single-range-sublabel">Menor consumo</span>
+                    </div>
+                    <div class="single-range-label-col single-range-label-col--end">
+                        <span>30 L/100km</span>
+                        <span class="single-range-sublabel">Mayor consumo</span>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <%-- Número de airbags — realistic discrete options --%>
@@ -156,61 +231,6 @@
                 <button type="button" class="filter-toggle-option${criteria.airbagMin eq 10 ? ' is-selected' : ''}" data-value="10">10+</button>
             </div>
             <input type="hidden" id="panelAirbagMin" name="airbagMin" value="<c:out value='${criteria.airbagMin}'/>">
-        </section>
-
-        <%-- Transmisión — segmented control --%>
-        <section class="filters-panel-section">
-            <h3 class="filters-panel-section-title">Transmisión</h3>
-            <div class="segmented-control filter-segmented" data-filter-target="panelTransmission">
-                <button type="button" class="segmented-control-option filter-segment-option${empty criteria.transmission ? ' is-selected' : ''}" data-value="">Ambos</button>
-                <button type="button" class="segmented-control-option filter-segment-option${'automatic' eq criteria.transmission ? ' is-selected' : ''}" data-value="automatic">Automática</button>
-                <button type="button" class="segmented-control-option filter-segment-option${'manual' eq criteria.transmission ? ' is-selected' : ''}" data-value="manual">Manual</button>
-            </div>
-            <input type="hidden" id="panelTransmission" name="transmission" value="<c:out value='${criteria.transmission}'/>">
-        </section>
-
-        <%-- Consumo de nafta (max only) --%>
-        <section class="filters-panel-section">
-            <div class="filter-range-header">
-                <h3 class="filters-panel-section-title">Consumo de nafta</h3>
-            </div>
-            <p class="filter-range-value-display" id="panelConsumptionDisplay"></p>
-            <input type="range" id="panelConsumptionSlider" name="fuelConsumptionMax"
-                   class="single-range"
-                   min="0" max="30" step="0.5"
-                   value="<c:out value='${not empty criteria.fuelConsumptionMax ? criteria.fuelConsumptionMax : 30}'/>">
-            <div class="single-range-labels">
-                <div class="single-range-label-col">
-                    <span>0 L/100km</span>
-                    <span class="single-range-sublabel">Menor consumo</span>
-                </div>
-                <div class="single-range-label-col single-range-label-col--end">
-                    <span>30 L/100km</span>
-                    <span class="single-range-sublabel">Mayor consumo</span>
-                </div>
-            </div>
-        </section>
-
-        <%-- Velocidad máxima (min only) --%>
-        <section class="filters-panel-section">
-            <div class="filter-range-header">
-                <h3 class="filters-panel-section-title">Velocidad máxima</h3>
-            </div>
-            <p class="filter-range-value-display" id="panelMaxSpeedDisplay"></p>
-            <input type="range" id="panelMaxSpeedSlider" name="maxSpeedMin"
-                   class="single-range"
-                   min="0" max="500" step="10"
-                   value="<c:out value='${not empty criteria.maxSpeedMin ? criteria.maxSpeedMin : 0}'/>">
-            <div class="single-range-labels">
-                <div class="single-range-label-col">
-                    <span>0 km/h</span>
-                    <span class="single-range-sublabel">Más lenta</span>
-                </div>
-                <div class="single-range-label-col single-range-label-col--end">
-                    <span>500 km/h</span>
-                    <span class="single-range-sublabel">Más rápida</span>
-                </div>
-            </div>
         </section>
 
         <%-- Footer --%>

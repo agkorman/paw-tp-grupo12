@@ -37,7 +37,6 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
 import java.math.BigDecimal;
-import java.time.Year;
 import java.util.Comparator;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -547,10 +546,11 @@ public class CarReviewController {
                 errors.rejectValue("modelYear", "modelYear.required", "El año del modelo es obligatorio.");
             }
         } else {
-            final int maxModelYear = Year.now().getValue() + 1;
-            if (modelYear > maxModelYear) {
+            final int minModelYear = 1950;
+            final int maxModelYear = 2026;
+            if (modelYear < minModelYear || modelYear > maxModelYear) {
                 errors.rejectValue("modelYear", "modelYear.range",
-                        "Ingresá un año entre 1886 y " + maxModelYear + ".");
+                        "Ingresá un año entre " + minModelYear + " y " + maxModelYear + ".");
             }
         }
 

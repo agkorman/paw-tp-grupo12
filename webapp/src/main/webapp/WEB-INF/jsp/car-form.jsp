@@ -41,7 +41,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=5'/>">
@@ -127,7 +127,7 @@
                         <div class="review-modal-field">
                             <label for="modalCarYear">Año</label>
                             <form:input id="modalCarYear" path="year" type="number"
-                                        min="1886" max="2100"
+                                        min="1950" max="2026"
                                         placeholder="Ej: 2024"/>
                             <form:errors path="year" cssClass="form-error" element="span"/>
                         </div>

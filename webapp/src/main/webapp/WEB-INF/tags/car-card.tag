@@ -72,6 +72,43 @@
                 </div>
                 <c:if test="${showHp eq 'true' or showSpeed eq 'true' or showConsumption eq 'true' or showAirbags eq 'true' or showTransmission eq 'true' or showFuelType eq 'true' or showPrice eq 'true' or showYear eq 'true'}">
                 <div class="card-spec-tags">
+                    <c:if test="${showFuelType eq 'true'}">
+                        <span class="card-spec-tag">
+                            <c:choose>
+                                <c:when test="${fuelType eq 'hybrid'}">
+                                    <pa:icon name="eco" size="11" cssClass="card-spec-fuel-icon"/>
+                                    Híbrido
+                                </c:when>
+                                <c:when test="${fuelType eq 'electric'}">
+                                    <pa:icon name="bolt" size="11" cssClass="card-spec-fuel-icon"/>
+                                    Eléctrico
+                                </c:when>
+                                <c:when test="${fuelType eq 'combustion'}">
+                                    <pa:icon name="gas-pump" size="11" cssClass="card-spec-fuel-icon"/>
+                                    Combustión
+                                </c:when>
+                                <c:otherwise>--</c:otherwise>
+                            </c:choose>
+                        </span>
+                    </c:if>
+                    <c:if test="${showTransmission eq 'true'}">
+                        <span class="card-spec-tag">
+                            <c:choose>
+                                <c:when test="${transmission eq 'manual'}">Manual</c:when>
+                                <c:when test="${transmission eq 'automatic'}">Automática</c:when>
+                                <c:otherwise>Transmisión N/A</c:otherwise>
+                            </c:choose>
+                        </span>
+                    </c:if>
+                    <c:if test="${showPrice eq 'true'}">
+                        <span class="card-spec-tag">
+                            <pa:icon name="dollar" size="11"/>
+                            <c:choose>
+                                <c:when test="${not empty priceUsd}">USD <fmt:formatNumber value="${priceUsd}" groupingUsed="true" maxFractionDigits="0"/></c:when>
+                                <c:otherwise>-- USD</c:otherwise>
+                            </c:choose>
+                        </span>
+                    </c:if>
                     <c:if test="${showYear eq 'true'}">
                         <span class="card-spec-tag">
                             <c:choose>
@@ -113,43 +150,6 @@
                             <c:choose>
                                 <c:when test="${not empty airbagCount}"><c:out value="${airbagCount}"/> Airbags</c:when>
                                 <c:otherwise>-- Airbags</c:otherwise>
-                            </c:choose>
-                        </span>
-                    </c:if>
-                    <c:if test="${showTransmission eq 'true'}">
-                        <span class="card-spec-tag">
-                            <c:choose>
-                                <c:when test="${transmission eq 'manual'}">Manual</c:when>
-                                <c:when test="${transmission eq 'automatic'}">Automática</c:when>
-                                <c:otherwise>Transmisión N/A</c:otherwise>
-                            </c:choose>
-                        </span>
-                    </c:if>
-                    <c:if test="${showFuelType eq 'true'}">
-                        <span class="card-spec-tag">
-                            <c:choose>
-                                <c:when test="${fuelType eq 'hybrid'}">
-                                    <pa:icon name="eco" size="11" cssClass="card-spec-fuel-icon"/>
-                                    Híbrido
-                                </c:when>
-                                <c:when test="${fuelType eq 'electric'}">
-                                    <pa:icon name="bolt" size="11" cssClass="card-spec-fuel-icon"/>
-                                    Eléctrico
-                                </c:when>
-                                <c:when test="${fuelType eq 'combustion'}">
-                                    <pa:icon name="gas-pump" size="11" cssClass="card-spec-fuel-icon"/>
-                                    Combustión
-                                </c:when>
-                                <c:otherwise>--</c:otherwise>
-                            </c:choose>
-                        </span>
-                    </c:if>
-                    <c:if test="${showPrice eq 'true'}">
-                        <span class="card-spec-tag">
-                            <pa:icon name="dollar" size="11"/>
-                            <c:choose>
-                                <c:when test="${not empty priceUsd}">USD <fmt:formatNumber value="${priceUsd}" groupingUsed="true" maxFractionDigits="0"/></c:when>
-                                <c:otherwise>-- USD</c:otherwise>
                             </c:choose>
                         </span>
                     </c:if>

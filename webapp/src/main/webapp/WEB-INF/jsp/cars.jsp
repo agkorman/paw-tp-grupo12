@@ -10,10 +10,10 @@
     <title>La Posta Autos</title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/cars.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/cars.css?v=8'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
 </head>
 <body>
@@ -63,7 +63,7 @@
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
-    <script src="<c:url value='/js/cars-filters-panel.js?v=5'/>"></script>
+    <script src="<c:url value='/js/cars-filters-panel.js?v=15'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/submitted-toast.js'/>"></script>

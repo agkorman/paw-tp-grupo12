@@ -274,7 +274,8 @@
     }
 
     function validateNumerics() {
-        var maxYear = new Date().getFullYear() + 1;
+        var minYear = 1950;
+        var maxYear = 2026;
         var ok = true;
         clearInlineError(modelYearInput);
         clearInlineError(mileageInput);
@@ -288,8 +289,8 @@
                     ok = false;
                 } else {
                     var parsedYear = Number(year);
-                    if (parsedYear < 1886 || parsedYear > maxYear) {
-                        setInlineError(modelYearInput, 'Ingresá un año entre 1886 y ' + maxYear + '.');
+                    if (parsedYear < minYear || parsedYear > maxYear) {
+                        setInlineError(modelYearInput, 'Ingresá un año entre ' + minYear + ' y ' + maxYear + '.');
                         ok = false;
                     }
                 }
