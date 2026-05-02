@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -171,6 +172,41 @@ class UserServiceImplTest {
         @Override
         public List<Review> findAll() {
             return Collections.emptyList();
+        }
+
+        @Override
+        public Page<Review> findLatest(final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countAll() {
+            return 0L;
+        }
+
+        @Override
+        public Page<Review> findByFollowedUsers(final long followerId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countByFollowedUsers(final long followerId) {
+            return 0L;
+        }
+
+        @Override
+        public Page<Review> findByFavoriteCars(final long userId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countByFavoriteCars(final long userId) {
+            return 0L;
+        }
+
+        @Override
+        public Map<Long, Integer> findDefaultPagesByReviewIds(final Collection<Long> reviewIds) {
+            return Collections.emptyMap();
         }
 
         private void addReview(final Long userId, final String email) {

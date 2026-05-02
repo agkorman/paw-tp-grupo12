@@ -477,6 +477,43 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public ar.edu.itba.paw.model.Page<Review> findLatest(final int page, final int pageSize) {
+            return ar.edu.itba.paw.model.Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countAll() {
+            return 0L;
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<Review> findByFollowedUsers(final long followerId, final int page,
+                                                                      final int pageSize) {
+            return ar.edu.itba.paw.model.Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countByFollowedUsers(final long followerId) {
+            return 0L;
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<Review> findByFavoriteCars(final long userId, final int page,
+                                                                     final int pageSize) {
+            return ar.edu.itba.paw.model.Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countByFavoriteCars(final long userId) {
+            return 0L;
+        }
+
+        @Override
+        public java.util.Map<Long, Integer> findDefaultPagesByReviewIds(final Collection<Long> reviewIds) {
+            return java.util.Collections.emptyMap();
+        }
+
+        @Override
         public Optional<Review> findById(final long id) {
             return Optional.empty();
         }
