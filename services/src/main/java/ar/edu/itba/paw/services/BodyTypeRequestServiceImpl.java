@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.BodyTypeRequest;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BodyTypeRequestDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +17,16 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
 
     private final BodyTypeRequestDao bodyTypeRequestDao;
     private final BodyTypeDao bodyTypeDao;
+    private final UserService userService;
+    private final EmailService emailService;
 
     @Autowired
-    public BodyTypeRequestServiceImpl(final BodyTypeRequestDao bodyTypeRequestDao, final BodyTypeDao bodyTypeDao) {
+    public BodyTypeRequestServiceImpl(final BodyTypeRequestDao bodyTypeRequestDao, final BodyTypeDao bodyTypeDao,
+                                      final UserService userService, final EmailService emailService) {
         this.bodyTypeRequestDao = bodyTypeRequestDao;
         this.bodyTypeDao = bodyTypeDao;
+        this.userService = userService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -97,11 +103,51 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
         }
 
         bodyTypeDao.create(nameToCreate);
+        sendRequestApprovedNotification(request, nameToCreate);
         return true;
     }
 
     @Override
+    @Transactional
     public boolean rejectPendingRequest(final long id) {
-        return bodyTypeRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
+        final BodyTypeRequest request = bodyTypeRequestDao.findById(id).orElse(null);
+        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            return false;
+        }
+
+        final boolean statusUpdated = bodyTypeRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
+        if (statusUpdated) {
+            sendRequestRejectedNotification(request);
+        }
+        return statusUpdated;
+    }
+
+    private void sendRequestApprovedNotification(final BodyTypeRequest request, final String approvedName) {
+        final String recipientEmail = resolveSubmitterEmail(request);
+        if (recipientEmail != null) {
+            emailService.sendCatalogRequestApprovedNotification(recipientEmail, "tipo de carrocería",
+                    approvedName);
+        }
+    }
+
+    private void sendRequestRejectedNotification(final BodyTypeRequest request) {
+        final String recipientEmail = resolveSubmitterEmail(request);
+        if (recipientEmail != null) {
+            emailService.sendCatalogRequestRejectedNotification(recipientEmail, "tipo de carrocería",
+                    request.getName());
+        }
+    }
+
+    private String resolveSubmitterEmail(final BodyTypeRequest request) {
+        if (request.getSubmitterEmail() != null && !request.getSubmitterEmail().isBlank()) {
+            return request.getSubmitterEmail();
+        }
+        if (request.getSubmittedByUserId() == null) {
+            return null;
+        }
+        return userService.getUserById(request.getSubmittedByUserId())
+                .map(User::getEmail)
+                .filter(email -> !email.isBlank())
+                .orElse(null);
     }
 }

@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.AdminRequestDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,11 +16,14 @@ public class AdminRequestServiceImpl implements AdminRequestService {
 
     private final AdminRequestDao adminRequestDao;
     private final UserService userService;
+    private final EmailService emailService;
 
     @Autowired
-    public AdminRequestServiceImpl(final AdminRequestDao adminRequestDao, final UserService userService) {
+    public AdminRequestServiceImpl(final AdminRequestDao adminRequestDao, final UserService userService,
+                                   final EmailService emailService) {
         this.adminRequestDao = adminRequestDao;
         this.userService = userService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -91,11 +95,46 @@ public class AdminRequestServiceImpl implements AdminRequestService {
         }
 
         userService.updateRole(request.getSubmittedByUserId(), GRANTED_ROLE);
+        sendRequestApprovedNotification(request);
         return true;
     }
 
     @Override
+    @Transactional
     public boolean rejectPendingRequest(final long id) {
-        return adminRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
+        final AdminRequest request = adminRequestDao.findById(id).orElse(null);
+        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            return false;
+        }
+
+        final boolean statusUpdated = adminRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
+        if (statusUpdated) {
+            sendRequestRejectedNotification(request);
+        }
+        return statusUpdated;
+    }
+
+    private void sendRequestApprovedNotification(final AdminRequest request) {
+        final String recipientEmail = resolveSubmitterEmail(request);
+        if (recipientEmail != null) {
+            emailService.sendAdminRequestApprovedNotification(recipientEmail);
+        }
+    }
+
+    private void sendRequestRejectedNotification(final AdminRequest request) {
+        final String recipientEmail = resolveSubmitterEmail(request);
+        if (recipientEmail != null) {
+            emailService.sendAdminRequestRejectedNotification(recipientEmail);
+        }
+    }
+
+    private String resolveSubmitterEmail(final AdminRequest request) {
+        if (request.getSubmitterEmail() != null && !request.getSubmitterEmail().isBlank()) {
+            return request.getSubmitterEmail();
+        }
+        return userService.getUserById(request.getSubmittedByUserId())
+                .map(User::getEmail)
+                .filter(email -> !email.isBlank())
+                .orElse(null);
     }
 }

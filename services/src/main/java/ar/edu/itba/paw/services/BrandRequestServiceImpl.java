@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.BrandRequestDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +17,16 @@ public class BrandRequestServiceImpl implements BrandRequestService {
 
     private final BrandRequestDao brandRequestDao;
     private final BrandDao brandDao;
+    private final UserService userService;
+    private final EmailService emailService;
 
     @Autowired
-    public BrandRequestServiceImpl(final BrandRequestDao brandRequestDao, final BrandDao brandDao) {
+    public BrandRequestServiceImpl(final BrandRequestDao brandRequestDao, final BrandDao brandDao,
+                                   final UserService userService, final EmailService emailService) {
         this.brandRequestDao = brandRequestDao;
         this.brandDao = brandDao;
+        this.userService = userService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -97,11 +103,49 @@ public class BrandRequestServiceImpl implements BrandRequestService {
         }
 
         brandDao.create(nameToCreate);
+        sendRequestApprovedNotification(request, nameToCreate);
         return true;
     }
 
     @Override
+    @Transactional
     public boolean rejectPendingRequest(final long id) {
-        return brandRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
+        final BrandRequest request = brandRequestDao.findById(id).orElse(null);
+        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            return false;
+        }
+
+        final boolean statusUpdated = brandRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
+        if (statusUpdated) {
+            sendRequestRejectedNotification(request);
+        }
+        return statusUpdated;
+    }
+
+    private void sendRequestApprovedNotification(final BrandRequest request, final String approvedName) {
+        final String recipientEmail = resolveSubmitterEmail(request);
+        if (recipientEmail != null) {
+            emailService.sendCatalogRequestApprovedNotification(recipientEmail, "marca", approvedName);
+        }
+    }
+
+    private void sendRequestRejectedNotification(final BrandRequest request) {
+        final String recipientEmail = resolveSubmitterEmail(request);
+        if (recipientEmail != null) {
+            emailService.sendCatalogRequestRejectedNotification(recipientEmail, "marca", request.getName());
+        }
+    }
+
+    private String resolveSubmitterEmail(final BrandRequest request) {
+        if (request.getSubmitterEmail() != null && !request.getSubmitterEmail().isBlank()) {
+            return request.getSubmitterEmail();
+        }
+        if (request.getSubmittedByUserId() == null) {
+            return null;
+        }
+        return userService.getUserById(request.getSubmittedByUserId())
+                .map(User::getEmail)
+                .filter(email -> !email.isBlank())
+                .orElse(null);
     }
 }

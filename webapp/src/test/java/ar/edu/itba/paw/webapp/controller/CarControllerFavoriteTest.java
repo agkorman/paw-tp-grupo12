@@ -424,7 +424,30 @@ public class CarControllerFavoriteTest {
 
         @Override
         public void sendCarApprovedNotification(final String recipientEmail, final String brandName,
+                                                final String model, final long carId) {
+        }
+
+        @Override
+        public void sendCarRejectedNotification(final String recipientEmail, final String brandName,
                                                 final String model) {
+        }
+
+        @Override
+        public void sendCatalogRequestApprovedNotification(final String recipientEmail, final String requestType,
+                                                           final String requestedName) {
+        }
+
+        @Override
+        public void sendCatalogRequestRejectedNotification(final String recipientEmail, final String requestType,
+                                                           final String requestedName) {
+        }
+
+        @Override
+        public void sendAdminRequestApprovedNotification(final String recipientEmail) {
+        }
+
+        @Override
+        public void sendAdminRequestRejectedNotification(final String recipientEmail) {
         }
 
         @Override
