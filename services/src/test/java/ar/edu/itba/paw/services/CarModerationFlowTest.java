@@ -283,6 +283,17 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public boolean approvePendingRequest(final long id, final long brandId, final String model,
+                                             final long bodyTypeId, final Integer year, final String description,
+                                             final List<CarImagePayload> images,
+                                             final String fuelType, final Integer horsepower,
+                                             final Integer airbagCount, final String transmission,
+                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                             final BigDecimal priceUsd) {
+            return false;
+        }
+
+        @Override
         public boolean rejectPendingRequest(final long id) {
             return false;
         }

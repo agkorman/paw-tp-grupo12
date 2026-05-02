@@ -32,6 +32,8 @@ public interface CarService {
 
     void saveCarImages(long carId, List<CarImagePayload> images);
 
+    void appendCarImages(long carId, List<CarImagePayload> images);
+
     CarRequest requestCarCreation(long brandId, String model, long bodyTypeId, Integer year, long submittedByUserId,
                                   String submitterEmail, Optional<String> description,
                                   List<CarImagePayload> images,

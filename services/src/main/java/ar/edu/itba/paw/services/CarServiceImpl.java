@@ -95,6 +95,24 @@ public class CarServiceImpl implements CarService {
 
     @Override
     @Transactional
+    public void appendCarImages(final long carId, final List<CarImagePayload> images) {
+        final List<CarImagePayload> normalizedImages = ImagePayloadUtils.normalizeImages(images);
+        if (normalizedImages.isEmpty()) {
+            return;
+        }
+        final List<CarImagePayload> existingImages = carImageDao.findAllByCarId(carId)
+                .stream()
+                .map(image -> carImageDao.findByCarIdAndImageId(carId, image.getImageId()).orElse(null))
+                .filter(image -> image != null && image.getImageData() != null)
+                .map(image -> new CarImagePayload(image.getContentType(), image.getImageData()))
+                .toList();
+        final List<CarImagePayload> combinedImages = new java.util.ArrayList<>(existingImages);
+        combinedImages.addAll(normalizedImages);
+        carImageDao.replaceAll(carId, combinedImages);
+    }
+
+    @Override
+    @Transactional
     public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
                                          final Integer year, final long submittedByUserId, final String submitterEmail,
                                          final Optional<String> description,

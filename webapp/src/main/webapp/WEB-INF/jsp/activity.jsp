@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=5'/>">
+    <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/activity.css'/>">
 </head>
 <body>
@@ -39,7 +41,7 @@
         <c:param name="intent" value="activity-favorites"/>
     </c:url>
 
-    <main class="activity-page">
+    <main class="activity-page" data-activity-tabs>
         <c:choose>
             <c:when test="${authenticated}">
                 <pa:subtabs tabCount="3"
@@ -71,10 +73,19 @@
                             </div>
                         </c:when>
                         <c:otherwise>
-                            <div class="activity-feed" aria-label="Reseñas de usuarios seguidos">
-                                <c:forEach var="activityReview" items="${activityReviews}">
-                                    <pa:activity-review-card reviewCard="${activityReview}"/>
-                                </c:forEach>
+                            <div class="activity-panel-layout">
+                                <div class="activity-feed" aria-label="Reseñas de usuarios seguidos">
+                                    <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
+                                        <pa:activity-review-card reviewCard="${activityReview}"
+                                                                 idPrefix="activityFollowingReviewPreview-${activityCurrentPage}-${status.index}"/>
+                                    </c:forEach>
+                                </div>
+                                <aside class="activity-preview-column" aria-label="Vista previa de reseña">
+                                    <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
+                                        <pa:activity-review-preview-panel reviewCard="${activityReview}"
+                                                                          idPrefix="activityFollowingReviewPreview-${activityCurrentPage}-${status.index}"/>
+                                    </c:forEach>
+                                </aside>
                             </div>
                             <c:if test="${activityCurrentPage < activityTotalPages}">
                                 <c:url var="activityShowMoreUrl" value="/activity">
@@ -88,7 +99,9 @@
                                        data-fragment-url="${activityBaseUrl}"
                                        data-target="#activityFollowingPanel"
                                        data-list-selector=".activity-feed"
-                                       data-item-selector=".activity-feed > .activity-review-card">
+                                       data-item-selector=".activity-feed > .activity-review-card"
+                                       data-preview-list-selector=".activity-preview-column"
+                                       data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
                                         Mostrar más reseñas
                                     </a>
                                 </div>
@@ -106,10 +119,19 @@
                             </div>
                         </c:when>
                         <c:otherwise>
-                            <div class="activity-feed" aria-label="Reseñas de autos favoritos">
-                                <c:forEach var="activityReview" items="${activityReviews}">
-                                    <pa:activity-review-card reviewCard="${activityReview}"/>
-                                </c:forEach>
+                            <div class="activity-panel-layout">
+                                <div class="activity-feed" aria-label="Reseñas de autos favoritos">
+                                    <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
+                                        <pa:activity-review-card reviewCard="${activityReview}"
+                                                                 idPrefix="activityFavoriteReviewPreview-${activityCurrentPage}-${status.index}"/>
+                                    </c:forEach>
+                                </div>
+                                <aside class="activity-preview-column" aria-label="Vista previa de reseña">
+                                    <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
+                                        <pa:activity-review-preview-panel reviewCard="${activityReview}"
+                                                                          idPrefix="activityFavoriteReviewPreview-${activityCurrentPage}-${status.index}"/>
+                                    </c:forEach>
+                                </aside>
                             </div>
                             <c:if test="${activityCurrentPage < activityTotalPages}">
                                 <c:url var="activityShowMoreUrl" value="/activity">
@@ -123,7 +145,9 @@
                                        data-fragment-url="${activityBaseUrl}"
                                        data-target="#activityFavoritesPanel"
                                        data-list-selector=".activity-feed"
-                                       data-item-selector=".activity-feed > .activity-review-card">
+                                       data-item-selector=".activity-feed > .activity-review-card"
+                                       data-preview-list-selector=".activity-preview-column"
+                                       data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
                                         Mostrar más reseñas
                                     </a>
                                 </div>
@@ -141,10 +165,19 @@
                             </div>
                         </c:when>
                         <c:otherwise>
-                            <div class="activity-feed" aria-label="Últimas reseñas">
-                                <c:forEach var="activityReview" items="${activityReviews}">
-                                    <pa:activity-review-card reviewCard="${activityReview}"/>
-                                </c:forEach>
+                            <div class="activity-panel-layout">
+                                <div class="activity-feed" aria-label="Últimas reseñas">
+                                    <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
+                                        <pa:activity-review-card reviewCard="${activityReview}"
+                                                                 idPrefix="activityNewsReviewPreview-${activityCurrentPage}-${status.index}"/>
+                                    </c:forEach>
+                                </div>
+                                <aside class="activity-preview-column" aria-label="Vista previa de reseña">
+                                    <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
+                                        <pa:activity-review-preview-panel reviewCard="${activityReview}"
+                                                                          idPrefix="activityNewsReviewPreview-${activityCurrentPage}-${status.index}"/>
+                                    </c:forEach>
+                                </aside>
                             </div>
                             <c:if test="${activityCurrentPage < activityTotalPages}">
                                 <c:url var="activityShowMoreUrl" value="/activity">
@@ -158,7 +191,9 @@
                                        data-fragment-url="${activityBaseUrl}"
                                        data-target="#activityNewsPanel"
                                        data-list-selector=".activity-feed"
-                                       data-item-selector=".activity-feed > .activity-review-card">
+                                       data-item-selector=".activity-feed > .activity-review-card"
+                                       data-preview-list-selector=".activity-preview-column"
+                                       data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
                                         Mostrar más reseñas
                                     </a>
                                 </div>
@@ -169,6 +204,8 @@
             </c:otherwise>
         </c:choose>
     </main>
+
     <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
+    <script src="<c:url value='/js/activity.js?v=3'/>"></script>
 </body>
 </html>

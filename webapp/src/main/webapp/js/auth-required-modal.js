@@ -126,11 +126,6 @@
             return;
         }
 
-        if (target.hasAttribute('data-open-create-car-modal')) {
-            target.click();
-            return;
-        }
-
         focusResumeTarget(target);
     }
 
