@@ -80,6 +80,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - One CSS file per feature/page; shared design tokens live in `design-system.css` under `:root`.
 - Use Flexbox and Grid for layout. Do not use HTML layout tables or inline styles for positioning.
 - UI changes must follow the design language in `DESIGN.md` (dark showroom theme, color tokens, typography, component patterns). Prioritize clarity and usability over decoration.
+- Hide native browser spinner arrows on `input[type="number"]` globally. Numeric fields should use normal text-field styling plus explicit controls only when the UI intentionally provides them.
 
 ## Icons
 

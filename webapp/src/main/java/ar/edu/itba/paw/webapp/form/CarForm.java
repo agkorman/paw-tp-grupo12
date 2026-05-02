@@ -40,6 +40,8 @@ public class CarForm {
 
     private List<MultipartFile> files = new ArrayList<>();
 
+    private List<Long> retainedImageIds = new ArrayList<>();
+
     @NotBlank(message = "{validation.car.fuelType.required}")
     private String fuelType;
 
@@ -135,6 +137,14 @@ public class CarForm {
 
     public void setFiles(final List<MultipartFile> files) {
         this.files = files == null ? new ArrayList<>() : files;
+    }
+
+    public List<Long> getRetainedImageIds() {
+        return retainedImageIds;
+    }
+
+    public void setRetainedImageIds(final List<Long> retainedImageIds) {
+        this.retainedImageIds = retainedImageIds == null ? new ArrayList<>() : retainedImageIds;
     }
 
     public String getFuelType() {

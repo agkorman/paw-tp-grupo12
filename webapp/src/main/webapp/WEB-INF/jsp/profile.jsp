@@ -11,11 +11,11 @@
     <title><spring:message code="profile.title"/></title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=4'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=5'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=8'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=10'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-connections.css?v=1'/>">
@@ -142,33 +142,30 @@
                 <c:param name="tab" value="liked"/>
             </c:url>
 
-            <div class="profile-tabs-list ${ownProfile ? '' : 'profile-tabs-list-single'}" aria-label="${profileTabsAria}">
-                <a id="profileReviewsTab"
-                   class="profile-tab"
-                   href="${profileReviewsTabUrl}">
-                    <span>
-                        <c:choose>
-                            <c:when test="${ownProfile}"><spring:message code="profile.tab.myReviews"/></c:when>
-                            <c:otherwise><spring:message code="common.label.reviews"/></c:otherwise>
-                        </c:choose>
-                    </span>
-                    <strong><c:out value="${profileReviewCount}"/></strong>
-                </a>
-                <c:if test="${ownProfile}">
-                    <a id="profileFavoritesTab"
-                       class="profile-tab"
-                       href="${profileFavoritesTabUrl}">
-                        <span><spring:message code="profile.tab.favorites"/></span>
-                        <strong><c:out value="${favoriteCarCount}"/></strong>
-                    </a>
-                    <a id="profileLikedTab"
-                       class="profile-tab"
-                       href="${profileLikedTabUrl}">
-                        <span><spring:message code="profile.tab.liked"/></span>
-                        <strong><c:out value="${likedActivityCount}"/></strong>
-                    </a>
-                </c:if>
-            </div>
+            <spring:message var="profileMyReviewsLabel" code="profile.tab.myReviews"/>
+            <spring:message var="profileReviewsLabel" code="common.label.reviews"/>
+            <spring:message var="profileFavoritesLabel" code="profile.tab.favorites"/>
+            <spring:message var="profileLikedLabel" code="profile.tab.liked"/>
+            <c:choose>
+                <c:when test="${ownProfile}">
+                    <pa:subtabs tabCount="3"
+                                labels="${profileMyReviewsLabel}|${profileFavoritesLabel}|${profileLikedLabel}"
+                                hrefs="${profileReviewsTabUrl}|${profileFavoritesTabUrl}|${profileLikedTabUrl}"
+                                counts="${profileReviewCount}|${favoriteCarCount}|${likedActivityCount}"
+                                values="reviews|favorites|liked"
+                                activeValue="${activeTab}"
+                                ariaLabel="${profileTabsAria}"/>
+                </c:when>
+                <c:otherwise>
+                    <pa:subtabs tabCount="1"
+                                labels="${profileReviewsLabel}"
+                                hrefs="${profileReviewsTabUrl}"
+                                counts="${profileReviewCount}"
+                                values="reviews"
+                                activeValue="${activeTab}"
+                                ariaLabel="${profileTabsAria}"/>
+                </c:otherwise>
+            </c:choose>
 
             <c:choose>
                 <c:when test="${activeTab eq 'favorites'}">

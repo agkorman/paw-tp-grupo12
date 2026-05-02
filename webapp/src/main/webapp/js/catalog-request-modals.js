@@ -27,9 +27,7 @@
         var anyOpen = Object.keys(modals).some(function (k) {
             return modals[k] && !modals[k].hasAttribute('hidden');
         });
-        var createCarModal = document.getElementById('createCarModal');
-        var createCarOpen = createCarModal && !createCarModal.hasAttribute('hidden');
-        if (!anyOpen && !createCarOpen) {
+        if (!anyOpen) {
             document.body.classList.remove('modal-open');
         }
         if (lastTrigger && document.contains(lastTrigger) && typeof lastTrigger.focus === 'function') {

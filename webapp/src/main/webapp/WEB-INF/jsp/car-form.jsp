@@ -1,52 +1,92 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<c:set var="resolvedCarFormMode" value="${empty carFormMode ? 'create' : carFormMode}"/>
+<c:set var="adminCarFormMode" value="${resolvedCarFormMode ne 'create'}"/>
+<c:set var="catalogRequestLinksEnabled" value="${empty showCatalogRequestLinks ? not adminCarFormMode : showCatalogRequestLinks}"/>
+<spring:message var="defaultFormKicker" code="cars.add.kicker"/>
+<spring:message var="defaultFormTitle" code="cars.add.heading"/>
+<spring:message var="defaultFormSubtitle" code="cars.add.subtitle"/>
+<spring:message var="defaultSubmitLabel" code="cars.form.confirm"/>
+<spring:message var="defaultRejectLabel" code="common.action.reject"/>
+<c:set var="resolvedFormKicker" value="${empty formKicker ? defaultFormKicker : formKicker}"/>
+<c:set var="resolvedFormTitle" value="${empty formTitle ? defaultFormTitle : formTitle}"/>
+<c:set var="resolvedFormSubtitle" value="${empty formSubtitle ? defaultFormSubtitle : formSubtitle}"/>
+<c:set var="resolvedSubmitLabel" value="${empty submitLabel ? defaultSubmitLabel : submitLabel}"/>
+<c:set var="resolvedRejectLabel" value="${empty rejectLabel ? defaultRejectLabel : rejectLabel}"/>
+<c:url var="resolvedFormAction" value="${empty formAction ? '/cars' : formAction}"/>
+<c:url var="resolvedCancelUrl" value="${empty cancelUrl ? '/cars' : cancelUrl}"/>
+<c:if test="${not empty rejectAction}">
+    <c:url var="resolvedRejectAction" value="${rejectAction}"/>
+</c:if>
+<c:set var="resolvedExistingImageUrls" value=""/>
+<c:set var="resolvedExistingImageIds" value=""/>
+<c:if test="${not empty existingImageUrls}">
+    <c:forEach var="existingImageUrl" items="${existingImageUrls}">
+        <c:if test="${not empty existingImageUrl}">
+            <c:url var="resolvedExistingImageUrl" value="${existingImageUrl}"/>
+            <c:set var="resolvedExistingImageUrls" value="${resolvedExistingImageUrls}${empty resolvedExistingImageUrls ? '' : '|'}${resolvedExistingImageUrl}"/>
+        </c:if>
+    </c:forEach>
+</c:if>
+<c:if test="${not empty existingImageIds}">
+    <c:forEach var="existingImageId" items="${existingImageIds}">
+        <c:set var="resolvedExistingImageIds" value="${resolvedExistingImageIds}${empty resolvedExistingImageIds ? '' : '|'}${existingImageId}"/>
+    </c:forEach>
+</c:if>
+<spring:message var="brandSelectLabel" code="cars.form.brand.select"/>
+<spring:message var="bodyTypeSelectLabel" code="cars.form.bodyType.select"/>
+<spring:message var="carModelPlaceholder" code="cars.form.placeholder.model"/>
+<spring:message var="carYearPlaceholder" code="cars.form.placeholder.year"/>
+<spring:message var="carDescriptionPlaceholder" code="cars.form.placeholder.description"/>
+<spring:message var="carHorsepowerPlaceholder" code="cars.form.placeholder.horsepower"/>
+<spring:message var="carAirbagsPlaceholder" code="cars.form.placeholder.airbags"/>
+<spring:message var="carConsumptionPlaceholder" code="cars.form.placeholder.consumption"/>
+<spring:message var="carSpeedPlaceholder" code="cars.form.placeholder.speed"/>
+<spring:message var="carPricePlaceholder" code="cars.form.placeholder.price"/>
+<spring:message var="previousImageLabel" code="cars.image.previous"/>
+<spring:message var="nextImageLabel" code="cars.image.next"/>
+<spring:message var="removeImageLabel" code="cars.form.image.remove"/>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="cars.add.title"/></title>
+    <title><c:out value="${resolvedFormTitle}"/> | La Posta Autos</title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
+    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=5'/>">
     <link rel="stylesheet" href="<c:url value='/css/form-pages.css'/>">
 </head>
 <body>
     <pa:nav activePage="reviews"/>
-    <c:url var="carsUrl" value="/cars"/>
-    <c:url var="carCreateUrl" value="/cars"/>
-    <spring:message var="brandSelectLabel" code="cars.form.brand.select"/>
-    <spring:message var="bodyTypeSelectLabel" code="cars.form.bodyType.select"/>
-    <spring:message var="carModelPlaceholder" code="cars.form.placeholder.model"/>
-    <spring:message var="carYearPlaceholder" code="cars.form.placeholder.year"/>
-    <spring:message var="carDescriptionPlaceholder" code="cars.form.placeholder.description"/>
-    <spring:message var="carHorsepowerPlaceholder" code="cars.form.placeholder.horsepower"/>
-    <spring:message var="carAirbagsPlaceholder" code="cars.form.placeholder.airbags"/>
-    <spring:message var="carConsumptionPlaceholder" code="cars.form.placeholder.consumption"/>
-    <spring:message var="carSpeedPlaceholder" code="cars.form.placeholder.speed"/>
-    <spring:message var="carPricePlaceholder" code="cars.form.placeholder.price"/>
-    <spring:message var="previousImageLabel" code="cars.image.previous"/>
-    <spring:message var="nextImageLabel" code="cars.image.next"/>
 
     <main class="form-page">
-        <section id="createCarFormPage" class="form-page-panel car-form-page" data-admin-mode="false" aria-labelledby="createCarModalTitle">
+        <section id="createCarFormPage"
+                 class="form-page-panel car-form-page"
+                 data-admin-mode="${adminCarFormMode}"
+                 data-car-form-mode="${resolvedCarFormMode}"
+                 data-existing-image-urls="${fn:escapeXml(resolvedExistingImageUrls)}"
+                 data-existing-image-ids="${fn:escapeXml(resolvedExistingImageIds)}"
+                 data-existing-image-status="${fn:escapeXml(existingImageStatus)}"
+                 aria-labelledby="carFormTitle">
             <div class="review-modal-header">
                 <div>
-                    <span id="createCarModalKicker" class="review-modal-kicker"><spring:message code="cars.add.kicker"/></span>
-                    <h1 id="createCarModalTitle"><spring:message code="cars.add.heading"/></h1>
+                    <span id="carFormKicker" class="review-modal-kicker"><c:out value="${resolvedFormKicker}"/></span>
+                    <h1 id="carFormTitle"><c:out value="${resolvedFormTitle}"/></h1>
                 </div>
             </div>
 
             <form:form id="createCarForm" cssClass="car-modal-form" modelAttribute="carForm"
-                       method="post" action="${carCreateUrl}"
+                       method="post" action="${resolvedFormAction}"
                        enctype="multipart/form-data"
                        data-submit-lock="true"
                        novalidate="novalidate">
@@ -55,7 +95,7 @@
                     <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
                 </c:if>
 
-                <p id="createCarModalSubtitle" class="car-modal-subtitle"><spring:message code="cars.add.subtitle"/></p>
+                <p id="carFormSubtitle" class="car-modal-subtitle"><c:out value="${resolvedFormSubtitle}"/></p>
 
                 <div class="review-modal-grid car-modal-layout">
                     <div class="car-modal-column car-modal-column-details">
@@ -69,10 +109,12 @@
                                     </c:forEach>
                                 </form:select>
                                 <form:errors path="brand" cssClass="form-error" element="span"/>
-                                <button type="button" class="catalog-request-link"
-                                        data-open-catalog-request="brand">
-                                    <spring:message code="cars.form.brand.request"/>
-                                </button>
+                                <c:if test="${catalogRequestLinksEnabled}">
+                                    <button type="button" class="catalog-request-link"
+                                            data-open-catalog-request="brand">
+                                        <spring:message code="cars.form.brand.request"/>
+                                    </button>
+                                </c:if>
                             </div>
 
                             <div class="review-modal-field">
@@ -84,10 +126,12 @@
                                     </c:forEach>
                                 </form:select>
                                 <form:errors path="bodyType" cssClass="form-error" element="span"/>
-                                <button type="button" class="catalog-request-link"
-                                        data-open-catalog-request="body-type">
-                                    <spring:message code="cars.form.bodyType.request"/>
-                                </button>
+                                <c:if test="${catalogRequestLinksEnabled}">
+                                    <button type="button" class="catalog-request-link"
+                                            data-open-catalog-request="body-type">
+                                        <spring:message code="cars.form.bodyType.request"/>
+                                    </button>
+                                </c:if>
                             </div>
                         </div>
 
@@ -202,37 +246,62 @@
                         <div class="review-modal-field review-modal-field-wide car-image-field">
                             <span class="car-image-label"><spring:message code="cars.form.images"/></span>
                             <div class="car-image-upload">
-                                <form:input id="modalCarFile" path="files" type="file"
-                                            cssClass="car-image-upload-input"
-                                            accept="image/jpeg,image/png,image/webp"
-                                            multiple="multiple"
-                                            required="required"
-                                            aria-describedby="modalCarFileHelp modalCarFileStatus"/>
+                                <c:choose>
+                                    <c:when test="${adminCarFormMode}">
+                                        <span id="modalCarRetainedImageInputs" hidden>
+                                            <c:forEach var="existingImageId" items="${existingImageIds}">
+                                                <input type="hidden" name="retainedImageIds" value="${existingImageId}">
+                                            </c:forEach>
+                                        </span>
+                                        <form:input id="modalCarFile" path="files" type="file"
+                                                    cssClass="car-image-upload-input"
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    multiple="multiple"
+                                                    aria-describedby="modalCarFileHelp modalCarFileStatus"/>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <form:input id="modalCarFile" path="files" type="file"
+                                                    cssClass="car-image-upload-input"
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    multiple="multiple"
+                                                    required="required"
+                                                    aria-describedby="modalCarFileHelp modalCarFileStatus"/>
+                                    </c:otherwise>
+                                </c:choose>
                                 <label class="car-image-upload-card" for="modalCarFile">
                                     <span class="car-image-upload-icon" aria-hidden="true">
-                                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M5.25 19.25L9.8 14.7a2 2 0 0 1 2.8 0l1.05 1.05 2.9-2.9a2 2 0 0 1 2.8 0L22.75 16.25"/>
-                                            <rect x="4.5" y="5.25" width="19" height="17.5" rx="3"/>
-                                            <circle cx="18.75" cy="9.75" r="1.75"/>
-                                        </svg>
+                                        <pa:icon name="image-upload" size="28"/>
                                     </span>
                                     <span id="modalCarImagePreview" class="car-image-upload-preview" hidden aria-hidden="true">
                                         <button id="modalCarImagePrev" class="car-image-upload-preview-nav car-image-upload-preview-prev" type="button" aria-label="${previousImageLabel}">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                                            <pa:icon name="chevron-left" size="14"/>
                                         </button>
                                         <img id="modalCarImagePreviewImg" alt="">
+                                        <button id="modalCarImageRemove" class="car-image-upload-preview-remove" type="button" aria-label="${removeImageLabel}" hidden>
+                                            <pa:icon name="close" size="14"/>
+                                        </button>
                                         <button id="modalCarImageNext" class="car-image-upload-preview-nav car-image-upload-preview-next" type="button" aria-label="${nextImageLabel}">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                                            <pa:icon name="chevron-right" size="14"/>
                                         </button>
                                         <span id="modalCarImageCounter" class="car-image-upload-preview-counter">1 / 1</span>
                                     </span>
                                     <span class="car-image-upload-copy">
-                                        <strong id="modalCarFileTitle"><spring:message code="cars.form.image.uploadTitle"/></strong>
-                                        <span id="modalCarFileHelp"><spring:message code="cars.form.image.help"/></span>
+                                        <strong id="modalCarFileTitle">
+                                            <c:choose>
+                                                <c:when test="${resolvedCarFormMode eq 'review-request'}"><spring:message code="cars.form.image.reviewReadonly"/></c:when>
+                                                <c:when test="${resolvedCarFormMode eq 'edit-car'}"><spring:message code="cars.form.image.currentPlural"/></c:when>
+                                                <c:otherwise><spring:message code="cars.form.image.uploadTitle"/></c:otherwise>
+                                            </c:choose>
+                                        </strong>
+                                        <span id="modalCarFileHelp">
+                                            <c:choose>
+                                                <c:when test="${adminCarFormMode}"><spring:message code="cars.form.image.galleryHelp"/></c:when>
+                                                <c:otherwise><spring:message code="cars.form.image.help"/></c:otherwise>
+                                            </c:choose>
+                                        </span>
                                         <span id="modalCarFileStatus" class="car-image-upload-status"><spring:message code="cars.form.image.none"/></span>
                                         <span id="modalCarImageThumbnails" class="car-image-upload-thumbnails" hidden></span>
                                     </span>
-                                    <span id="modalCarFileAction" class="car-image-upload-action"><spring:message code="cars.form.image.search"/></span>
                                 </label>
                             </div>
                             <form:errors path="files" cssClass="form-error" element="span"/>
@@ -242,19 +311,35 @@
 
                 <div class="review-modal-actions">
                     <div id="createCarCreateActions" class="review-modal-action-group">
-                        <a href="${carsUrl}" class="btn-secondary"><spring:message code="common.action.cancel"/></a>
-                        <button id="createCarSubmitButton" type="submit" class="btn-primary"><spring:message code="cars.form.confirm"/></button>
+                        <a href="${resolvedCancelUrl}" class="btn-secondary"><spring:message code="common.action.cancel"/></a>
+                        <c:if test="${not empty resolvedRejectAction}">
+                            <button type="submit" class="btn-secondary admin-reject-btn" form="rejectCarRequestForm">
+                                <c:out value="${resolvedRejectLabel}"/>
+                            </button>
+                        </c:if>
+                        <button id="createCarSubmitButton" type="submit" class="btn-primary">
+                            <c:out value="${resolvedSubmitLabel}"/>
+                        </button>
                     </div>
                 </div>
             </form:form>
+            <c:if test="${not empty resolvedRejectAction}">
+                <form id="rejectCarRequestForm" method="post" action="${resolvedRejectAction}">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                </form>
+            </c:if>
         </section>
     </main>
 
-    <pa:request-brand-modal/>
-    <pa:request-body-type-modal/>
+    <c:if test="${catalogRequestLinksEnabled}">
+        <pa:request-brand-modal/>
+        <pa:request-body-type-modal/>
+    </c:if>
 
-    <script src="<c:url value='/js/car-form.js?v=1'/>"></script>
-    <script src="<c:url value='/js/catalog-request-modals.js'/>"></script>
+    <script src="<c:url value='/js/car-form.js?v=3'/>"></script>
+    <c:if test="${catalogRequestLinksEnabled}">
+        <script src="<c:url value='/js/catalog-request-modals.js'/>"></script>
+    </c:if>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>
 </html>

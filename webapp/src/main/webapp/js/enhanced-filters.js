@@ -274,7 +274,10 @@
         var feed = targetSelector ? document.querySelector(targetSelector) : null;
         var listSelector = link.dataset.listSelector || '.review-list';
         var itemSelector = link.dataset.itemSelector || '.review-list > .review-item';
+        var previewListSelector = link.dataset.previewListSelector;
+        var previewItemSelector = link.dataset.previewItemSelector;
         var reviewList = feed ? feed.querySelector(listSelector) : null;
+        var previewList = previewListSelector && feed ? feed.querySelector(previewListSelector) : null;
 
         if (!fragmentUrl || !targetSelector || !feed || !reviewList) {
             return false;
@@ -303,6 +306,7 @@
             var parsed = new DOMParser().parseFromString(html, 'text/html');
             var replacement = parsed.querySelector(targetSelector);
             var replacementItems = replacement ? replacement.querySelectorAll(itemSelector) : [];
+            var replacementPreviewItems = replacement && previewItemSelector ? replacement.querySelectorAll(previewItemSelector) : [];
             var replacementControls = replacement ? replacement.querySelector('.reviews-feed-more') : null;
             var currentControls = feed.querySelector('.reviews-feed-more');
 
@@ -313,6 +317,12 @@
             Array.prototype.forEach.call(replacementItems, function (item) {
                 reviewList.appendChild(item);
             });
+
+            if (previewList && replacementPreviewItems.length > 0) {
+                Array.prototype.forEach.call(replacementPreviewItems, function (item) {
+                    previewList.appendChild(item);
+                });
+            }
 
             if (currentControls && replacementControls) {
                 currentControls.replaceWith(replacementControls);

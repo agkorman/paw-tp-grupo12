@@ -42,6 +42,11 @@
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
     </c:when>
 
+    <c:when test="${name eq 'options'}">
+        <c:set var="s" value="${empty size ? 18 : size}"/>
+        <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><line x1="4" y1="7" x2="10" y2="7"/><line x1="14" y1="7" x2="20" y2="7"/><circle cx="12" cy="7" r="2"/><line x1="4" y1="12" x2="5" y2="12"/><line x1="9" y1="12" x2="20" y2="12"/><circle cx="7" cy="12" r="2"/><line x1="4" y1="17" x2="13" y2="17"/><line x1="17" y1="17" x2="20" y2="17"/><circle cx="15" cy="17" r="2"/></svg>
+    </c:when>
+
     <c:when test="${name eq 'sort'}">
         <c:set var="s" value="${empty size ? 18 : size}"/>
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M3 6h18M7 12h10M11 18h2"/></svg>

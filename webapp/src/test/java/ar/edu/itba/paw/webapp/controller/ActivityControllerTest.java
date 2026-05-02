@@ -8,11 +8,8 @@ import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
-import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
-import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import org.junit.Test;
@@ -25,8 +22,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -39,15 +36,13 @@ public class ActivityControllerTest {
         final ActivityController controller = new ActivityController(
                 new FakeReviewService(List.of(review)),
                 new FakeCarService(),
-                new FakeUserFollowService(),
-                new FakeCarFavoriteService(),
                 relativeTimeFormatter()
         );
 
-        final ModelAndView mav = controller.activity(user());
+        final ModelAndView mav = controller.activity(user(), null, 1);
 
         assertEquals("activity.jsp", mav.getViewName());
-        final List<ActivityController.ActivityReviewCard> cards = activityCards(mav, "latestActivityReviews");
+        final List<ActivityController.ActivityReviewCard> cards = activityCards(mav);
         assertEquals(1, cards.size());
         assertEquals("Porsche 911 GT3 RS", cards.get(0).getCarName());
         assertEquals("Alex Carrera", cards.get(0).getAuthorName());
@@ -62,18 +57,18 @@ public class ActivityControllerTest {
         final ActivityController controller = new ActivityController(
                 new FakeReviewService(List.of(followedReview, favoriteCarReview, unrelatedReview)),
                 new FakeCarService(),
-                new FakeUserFollowService(),
-                new FakeCarFavoriteService(),
                 relativeTimeFormatter()
         );
 
-        final ModelAndView mav = controller.activity(user());
+        final ModelAndView latestMav = controller.activity(user(), "latest", 1);
+        final ModelAndView followingMav = controller.activity(user(), "following", 1);
+        final ModelAndView favoritesMav = controller.activity(user(), "favorites", 1);
 
-        assertEquals(3, activityCards(mav, "latestActivityReviews").size());
-        assertEquals(1, activityCards(mav, "followedActivityReviews").size());
-        assertEquals(followedReview.getId(), activityCards(mav, "followedActivityReviews").get(0).getReview().getId());
-        assertEquals(1, activityCards(mav, "favoriteCarActivityReviews").size());
-        assertEquals(favoriteCarReview.getId(), activityCards(mav, "favoriteCarActivityReviews").get(0).getReview().getId());
+        assertEquals(3, activityCards(latestMav).size());
+        assertEquals(1, activityCards(followingMav).size());
+        assertEquals(followedReview.getId(), activityCards(followingMav).get(0).getReview().getId());
+        assertEquals(1, activityCards(favoritesMav).size());
+        assertEquals(favoriteCarReview.getId(), activityCards(favoritesMav).get(0).getReview().getId());
     }
 
     @Test
@@ -82,17 +77,15 @@ public class ActivityControllerTest {
         final ActivityController controller = new ActivityController(
                 new FakeReviewService(List.of(review)),
                 new FakeCarService(),
-                new FakeUserFollowService(),
-                new FakeCarFavoriteService(),
                 relativeTimeFormatter()
         );
 
-        final ModelAndView mav = controller.activity(null);
+        final ModelAndView mav = controller.activity(null, null, 1);
 
         assertEquals("activity.jsp", mav.getViewName());
-        assertEquals(1, activityCards(mav, "latestActivityReviews").size());
-        assertTrue(activityCards(mav, "followedActivityReviews").isEmpty());
-        assertTrue(activityCards(mav, "favoriteCarActivityReviews").isEmpty());
+        assertEquals(1, activityCards(mav).size());
+        assertEquals(0L, mav.getModel().get("followedCount"));
+        assertEquals(0L, mav.getModel().get("favoriteCount"));
     }
 
     @Test
@@ -108,14 +101,12 @@ public class ActivityControllerTest {
         final ActivityController controller = new ActivityController(
                 new FakeReviewService(reviews),
                 new FakeCarService(),
-                new FakeUserFollowService(),
-                new FakeCarFavoriteService(),
                 relativeTimeFormatter()
         );
 
-        final ModelAndView mav = controller.activity(user());
+        final ModelAndView mav = controller.activity(user(), null, 1);
 
-        assertEquals(2, activityCards(mav, "latestActivityReviews").stream()
+        assertEquals(2, activityCards(mav).stream()
                 .filter(card -> card.getReview().getId() == 6L)
                 .findFirst()
                 .orElseThrow()
@@ -162,8 +153,8 @@ public class ActivityControllerTest {
     }
 
     @SuppressWarnings("unchecked")
-    private List<ActivityController.ActivityReviewCard> activityCards(final ModelAndView mav, final String attribute) {
-        return (List<ActivityController.ActivityReviewCard>) mav.getModel().get(attribute);
+    private List<ActivityController.ActivityReviewCard> activityCards(final ModelAndView mav) {
+        return (List<ActivityController.ActivityReviewCard>) mav.getModel().get("activityReviews");
     }
 
     private static final class FakeReviewService implements ReviewService {
@@ -250,8 +241,71 @@ public class ActivityControllerTest {
         }
 
         @Override
+        public Page<Review> getReviewsByUser(final long userId, final int page) {
+            return Page.empty(page, 0);
+        }
+
+        @Override
+        public long countReviewsByUser(final long userId) {
+            return 0L;
+        }
+
+        @Override
         public List<Review> getAllReviews() {
             return reviews;
+        }
+
+        @Override
+        public Page<Review> getLatestReviews(final int page, final int pageSize) {
+            return paginate(reviews, page, pageSize);
+        }
+
+        @Override
+        public long countAllReviews() {
+            return reviews.size();
+        }
+
+        @Override
+        public Page<Review> getReviewsByFollowedUsers(final long followerId, final int page, final int pageSize) {
+            return paginate(reviews.stream()
+                    .filter(review -> review.getUserId() != null && review.getUserId() == 7L)
+                    .toList(), page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFollowedUsers(final long followerId) {
+            return reviews.stream()
+                    .filter(review -> review.getUserId() != null && review.getUserId() == 7L)
+                    .count();
+        }
+
+        @Override
+        public Page<Review> getReviewsByFavoriteCars(final long userId, final int page, final int pageSize) {
+            return paginate(reviews.stream()
+                    .filter(review -> review.getCarId() == 20L)
+                    .toList(), page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFavoriteCars(final long userId) {
+            return reviews.stream()
+                    .filter(review -> review.getCarId() == 20L)
+                    .count();
+        }
+
+        @Override
+        public Map<Long, Integer> getDefaultPagesForReviewIds(final Collection<Long> reviewIds) {
+            return getDefaultPagesForReviews(reviews);
+        }
+
+        private Page<Review> paginate(final List<Review> items, final int page, final int pageSize) {
+            if (items.isEmpty()) {
+                return Page.empty(1, pageSize);
+            }
+            final int effectivePage = Math.max(1, Math.min(page, (items.size() + pageSize - 1) / pageSize));
+            final int fromIndex = (effectivePage - 1) * pageSize;
+            final int toIndex = Math.min(fromIndex + pageSize, items.size());
+            return new Page<>(items.subList(fromIndex, toIndex), effectivePage, pageSize, items.size());
         }
 
         @Override
@@ -332,6 +386,11 @@ public class ActivityControllerTest {
         }
 
         @Override
+        public void appendCarImages(final long carId, final List<CarImagePayload> images) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
                                              final Integer year, final long submittedByUserId, final String submitterEmail,
                                              final Optional<String> description, final List<CarImagePayload> images,
@@ -358,69 +417,4 @@ public class ActivityControllerTest {
         }
     }
 
-    private static final class FakeUserFollowService implements UserFollowService {
-
-        @Override
-        public boolean followUser(final long followerId, final long followedId) {
-            return false;
-        }
-
-        @Override
-        public boolean unfollowUser(final long followerId, final long followedId) {
-            return false;
-        }
-
-        @Override
-        public boolean isFollowing(final long followerId, final long followedId) {
-            return followedId == 7L;
-        }
-
-        @Override
-        public long countFollowers(final long userId) {
-            return 0;
-        }
-
-        @Override
-        public long countFollowing(final long userId) {
-            return 1;
-        }
-
-        @Override
-        public List<User> getFollowers(final long userId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<User> getFollowing(final long userId) {
-            return List.of(new User(7L, "Alex Carrera", "alex@example.com", "password", "USER", LocalDateTime.now()));
-        }
-    }
-
-    private static final class FakeCarFavoriteService implements CarFavoriteService {
-
-        @Override
-        public List<Long> findFavoriteCarIdsByUser(final long userId) {
-            return List.of(20L);
-        }
-
-        @Override
-        public boolean setFavorite(final long userId, final long carId, final boolean favorite) {
-            return false;
-        }
-
-        @Override
-        public boolean isFavorited(final long userId, final long carId) {
-            return carId == 20L;
-        }
-
-        @Override
-        public List<Car> getFavoriteCars(final long userId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Set<Long> getFavoritedCarIds(final long userId, final Collection<Long> carIds) {
-            return Set.of(20L);
-        }
-    }
 }

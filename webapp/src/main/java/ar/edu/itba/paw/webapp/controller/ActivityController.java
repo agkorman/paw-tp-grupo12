@@ -1,13 +1,11 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
-import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,78 +13,96 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Controller
 public class ActivityController {
 
+    private static final String TAB_LATEST = "latest";
+    private static final String TAB_FOLLOWING = "following";
+    private static final String TAB_FAVORITES = "favorites";
+    private static final int ACTIVITY_PAGE_SIZE = 6;
+
     private final ReviewService reviewService;
     private final CarService carService;
-    private final UserFollowService userFollowService;
-    private final CarFavoriteService carFavoriteService;
     private final RelativeTimeFormatter relativeTimeFormatter;
 
     @Autowired
     public ActivityController(final ReviewService reviewService, final CarService carService,
-                              final UserFollowService userFollowService,
-                              final CarFavoriteService carFavoriteService,
                               final RelativeTimeFormatter relativeTimeFormatter) {
         this.reviewService = reviewService;
         this.carService = carService;
-        this.userFollowService = userFollowService;
-        this.carFavoriteService = carFavoriteService;
         this.relativeTimeFormatter = relativeTimeFormatter;
     }
 
     @RequestMapping(value = "/activity", method = RequestMethod.GET)
-    public ModelAndView activity(@AuthenticationPrincipal final AuthenticatedUser currentUser) {
-        final List<Review> reviews = reviewService.getAllReviews()
-                .stream()
-                .sorted(Comparator.<Review, LocalDateTime>comparing(
-                        review -> review.getCreatedAt() == null ? LocalDateTime.MIN : review.getCreatedAt(),
-                        Comparator.reverseOrder()
-                ).thenComparing((left, right) -> Long.compare(right.getId(), left.getId())))
-                .toList();
+    public ModelAndView activity(@AuthenticationPrincipal final AuthenticatedUser currentUser,
+                                 @RequestParam(value = "tab", required = false) final String tab,
+                                 @RequestParam(value = "page", defaultValue = "1") final int page) {
+        final boolean authenticated = currentUser != null;
+        final String activeTab = normalizeActivityTab(tab, authenticated);
+        final int pageSize = ACTIVITY_PAGE_SIZE;
+
+        final Page<Review> reviewsPage;
+        if (TAB_FOLLOWING.equals(activeTab)) {
+            reviewsPage = reviewService.getReviewsByFollowedUsers(currentUser.getId(), page, pageSize);
+        } else if (TAB_FAVORITES.equals(activeTab)) {
+            reviewsPage = reviewService.getReviewsByFavoriteCars(currentUser.getId(), page, pageSize);
+        } else {
+            reviewsPage = reviewService.getLatestReviews(page, pageSize);
+        }
+
+        final List<ActivityReviewCard> activityReviews = toActivityReviewCards(reviewsPage.getItems());
+        final long latestCount = reviewService.countAllReviews();
+        final long followedCount = authenticated
+                ? reviewService.countReviewsByFollowedUsers(currentUser.getId())
+                : 0L;
+        final long favoriteCount = authenticated
+                ? reviewService.countReviewsByFavoriteCars(currentUser.getId())
+                : 0L;
+
+        final ModelAndView mav = new ModelAndView("activity.jsp");
+        mav.addObject("activeTab", activeTab);
+        mav.addObject("latestCount", latestCount);
+        mav.addObject("followedCount", followedCount);
+        mav.addObject("favoriteCount", favoriteCount);
+        mav.addObject("activityReviews", activityReviews);
+        mav.addObject("activityCurrentPage", reviewsPage.getPageNumber());
+        mav.addObject("activityTotalPages", reviewsPage.getTotalPages());
+        return mav;
+    }
+
+    private List<ActivityReviewCard> toActivityReviewCards(final List<Review> reviews) {
         final Map<Long, Car> carsById = carService.getCarsByIds(reviews.stream().map(Review::getCarId).distinct().toList())
                 .stream()
                 .collect(Collectors.toMap(Car::getId, Function.identity(), (left, right) -> left));
-        final Map<Long, Integer> reviewPagesById = reviewService.getDefaultPagesForReviews(reviews);
-        final List<ActivityReviewCard> activityReviews = reviews
+        final Map<Long, Integer> reviewPagesById = reviewService.getDefaultPagesForReviewIds(
+                reviews.stream().map(Review::getId).toList());
+        return reviews
                 .stream()
                 .map(review -> new ActivityReviewCard(review, carsById.get(review.getCarId()),
                         reviewPagesById.getOrDefault(review.getId(), Pagination.DEFAULT_PAGE),
                         relativeTimeFormatter.format(review.getCreatedAt())))
                 .toList();
-        final Set<Long> followedUserIds = currentUser == null
-                ? Set.of()
-                : userFollowService.getFollowing(currentUser.getId())
-                    .stream()
-                    .map(User::getId)
-                    .collect(Collectors.toSet());
-        final Set<Long> favoriteCarIds = currentUser == null
-                ? Set.of()
-                : Set.copyOf(carFavoriteService.findFavoriteCarIdsByUser(currentUser.getId()));
+    }
 
-        final ModelAndView mav = new ModelAndView("activity.jsp");
-        mav.addObject("latestActivityReviews", activityReviews);
-        mav.addObject("followedActivityReviews", activityReviews
-                .stream()
-                .filter(card -> card.getReview().getUserId() != null && followedUserIds.contains(card.getReview().getUserId()))
-                .toList());
-        mav.addObject("favoriteCarActivityReviews", activityReviews
-                .stream()
-                .filter(card -> favoriteCarIds.contains(card.getReview().getCarId()))
-                .toList());
-        return mav;
+    private String normalizeActivityTab(final String tab, final boolean authenticated) {
+        if (tab == null || tab.isBlank()) {
+            return TAB_LATEST;
+        }
+        final String normalized = tab.trim().toLowerCase(Locale.ROOT);
+        if (authenticated && (TAB_FOLLOWING.equals(normalized) || TAB_FAVORITES.equals(normalized))) {
+            return normalized;
+        }
+        return TAB_LATEST;
     }
 
     public static final class ActivityReviewCard {

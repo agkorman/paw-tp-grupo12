@@ -283,6 +283,17 @@ class CarModerationFlowTest {
         }
 
         @Override
+        public boolean approvePendingRequest(final long id, final long brandId, final String model,
+                                             final long bodyTypeId, final Integer year, final String description,
+                                             final List<CarImagePayload> images,
+                                             final String fuelType, final Integer horsepower,
+                                             final Integer airbagCount, final String transmission,
+                                             final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                             final BigDecimal priceUsd) {
+            return false;
+        }
+
+        @Override
         public boolean rejectPendingRequest(final long id) {
             return false;
         }
@@ -463,6 +474,43 @@ class CarModerationFlowTest {
         @Override
         public List<Review> findAll() {
             return Collections.emptyList();
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<Review> findLatest(final int page, final int pageSize) {
+            return ar.edu.itba.paw.model.Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countAll() {
+            return 0L;
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<Review> findByFollowedUsers(final long followerId, final int page,
+                                                                      final int pageSize) {
+            return ar.edu.itba.paw.model.Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countByFollowedUsers(final long followerId) {
+            return 0L;
+        }
+
+        @Override
+        public ar.edu.itba.paw.model.Page<Review> findByFavoriteCars(final long userId, final int page,
+                                                                     final int pageSize) {
+            return ar.edu.itba.paw.model.Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countByFavoriteCars(final long userId) {
+            return 0L;
+        }
+
+        @Override
+        public java.util.Map<Long, Integer> findDefaultPagesByReviewIds(final Collection<Long> reviewIds) {
+            return java.util.Collections.emptyMap();
         }
 
         @Override

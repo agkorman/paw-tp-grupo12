@@ -55,15 +55,47 @@
     padding: 0;
 }
 
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 /* ── Base ── */
 html, body {
     background-color: var(--surface);
     color: var(--on-surface);
     font-family: var(--font-body);
     min-height: 100vh;
+    color-scheme: dark;
+    scrollbar-color: var(--surface-container-highest) var(--surface-container-lowest);
 }
 
 body {
     display: flex;
     flex-direction: column;
+}
+
+*::-webkit-scrollbar {
+    width: 0.75rem;
+    height: 0.75rem;
+}
+
+*::-webkit-scrollbar-track {
+    background: var(--surface-container-lowest);
+}
+
+*::-webkit-scrollbar-thumb {
+    border: 2px solid var(--surface-container-lowest);
+    border-radius: var(--radius-full);
+    background: var(--surface-container-highest);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary);
 }

@@ -26,7 +26,7 @@
     <div class="cars-toolbar-shell">
         <label class="cars-toolbar-search" for="cars-toolbar-search">
             <span class="cars-toolbar-icon" aria-hidden="true">
-                <pa:icon name="search" size="18"/>
+                <pa:icon name="search" size="22"/>
             </span>
             <input
                     id="cars-toolbar-search"
@@ -42,7 +42,7 @@
         <div class="cars-toolbar-field">
             <span class="cars-toolbar-field-ui" aria-hidden="true">
                 <span class="cars-toolbar-icon">
-                    <pa:icon name="tag" size="18"/>
+                    <pa:icon name="tag" size="22"/>
                 </span>
                 <span class="cars-toolbar-field-copy">
                     <span class="cars-toolbar-label"><spring:message code="cars.form.brand"/></span>
@@ -70,7 +70,7 @@
         <div class="cars-toolbar-field">
             <span class="cars-toolbar-field-ui" aria-hidden="true">
                 <span class="cars-toolbar-icon">
-                    <pa:icon name="car" size="18"/>
+                    <pa:icon name="car" size="22"/>
                 </span>
                 <span class="cars-toolbar-field-copy">
                     <span class="cars-toolbar-label"><spring:message code="cars.form.bodyType"/></span>
@@ -102,7 +102,7 @@
                 aria-expanded="false"
                 aria-controls="carsFiltersPanel"
                 aria-label="${filtersAria}">
-            <pa:icon name="filter" size="18"/>
+            <pa:icon name="options" size="22"/>
             <spring:message code="cars.toolbar.filters"/>
         </button>
         <span class="cars-toolbar-count" hidden aria-live="polite"></span>
@@ -110,7 +110,7 @@
         <div class="cars-toolbar-field">
             <span class="cars-toolbar-field-ui" aria-hidden="true">
                 <span class="cars-toolbar-icon">
-                    <pa:icon name="sort" size="18"/>
+                    <pa:icon name="sort" size="22"/>
                 </span>
                 <span class="cars-toolbar-field-copy">
                     <span class="cars-toolbar-label"><spring:message code="cars.toolbar.sort"/></span>

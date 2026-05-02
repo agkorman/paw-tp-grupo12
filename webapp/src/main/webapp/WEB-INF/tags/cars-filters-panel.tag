@@ -37,35 +37,6 @@
            hidden></p>
 
         <section class="filters-panel-section">
-            <h3 class="filters-panel-section-title"><spring:message code="cars.filter.year"/></h3>
-            <div class="dual-range"
-                 data-range-min="1886"
-                 data-range-max="2100"
-                 data-input-low="panelYearMin"
-                 data-input-high="panelYearMax">
-                <div class="dual-range-track">
-                    <div class="dual-range-fill" id="panelYearFill"></div>
-                </div>
-                <input type="range" class="dual-range-thumb dual-range-low" min="1886" max="2100" step="1"
-                       value="<c:out value='${not empty criteria.yearMin ? criteria.yearMin : 1886}'/>">
-                <input type="range" class="dual-range-thumb dual-range-high" min="1886" max="2100" step="1"
-                       value="<c:out value='${not empty criteria.yearMax ? criteria.yearMax : 2100}'/>">
-            </div>
-            <div class="dual-range-inputs">
-                <input type="number" id="panelYearMin" name="yearMin" class="range-number-input"
-                       min="1886" max="2100" placeholder="${filterMinPlaceholder}"
-                       aria-describedby="panelYearError"
-                       value="<c:out value='${criteria.yearMin}'/>">
-                <span class="range-separator">–</span>
-                <input type="number" id="panelYearMax" name="yearMax" class="range-number-input"
-                       min="1886" max="2100" placeholder="${filterMaxPlaceholder}"
-                       aria-describedby="panelYearError"
-                       value="<c:out value='${criteria.yearMax}'/>">
-            </div>
-            <p id="panelYearError" class="filters-field-error" hidden></p>
-        </section>
-
-        <section class="filters-panel-section">
             <h3 class="filters-panel-section-title"><spring:message code="cars.form.fuelType"/></h3>
             <div class="fuel-type-picker" data-filter-target="panelFuelType" data-filter-multiple="true">
                 <button type="button" class="fuel-type-option filter-segment-option${fn:contains(criteria.fuelType, 'combustion') ? ' is-selected' : ''}" data-value="combustion">
@@ -85,31 +56,49 @@
         </section>
 
         <section class="filters-panel-section">
-            <h3 class="filters-panel-section-title"><spring:message code="cars.filter.price"/></h3>
+            <h3 class="filters-panel-section-title"><spring:message code="cars.form.transmission"/></h3>
+            <div class="segmented-control filter-segmented" data-filter-target="panelTransmission">
+                <button type="button" class="segmented-control-option filter-segment-option${empty criteria.transmission ? ' is-selected' : ''}" data-value=""><spring:message code="cars.filter.both"/></button>
+                <button type="button" class="segmented-control-option filter-segment-option${'automatic' eq criteria.transmission ? ' is-selected' : ''}" data-value="automatic"><spring:message code="domain.transmission.automatic"/></button>
+                <button type="button" class="segmented-control-option filter-segment-option${'manual' eq criteria.transmission ? ' is-selected' : ''}" data-value="manual"><spring:message code="domain.transmission.manual"/></button>
+            </div>
+            <input type="hidden" id="panelTransmission" name="transmission" value="<c:out value='${criteria.transmission}'/>">
+        </section>
+
+        <section class="filters-panel-section">
+            <h3 class="filters-panel-section-title"><spring:message code="cars.form.priceZeroKm"/></h3>
             <div class="dual-range"
                  data-range-min="0"
                  data-range-max="1000"
-                 data-real-min="0"
+                 data-real-min="10000"
                  data-real-max="5000000"
-                 data-scale="log"
+                 data-scale="price"
                  data-input-low="panelPriceMin"
                  data-input-high="panelPriceMax">
                 <div class="dual-range-track">
                     <div class="dual-range-fill" id="panelPriceFill"></div>
                 </div>
-                <input type="range" class="dual-range-thumb dual-range-low"  min="0" max="1000" step="1"
+                <input type="range" class="dual-range-thumb dual-range-low" min="0" max="1000" step="10"
                        value="0">
-                <input type="range" class="dual-range-thumb dual-range-high" min="0" max="1000" step="1"
+                <input type="range" class="dual-range-thumb dual-range-high" min="0" max="1000" step="10"
                        value="1000">
+                <div class="dual-range-labels">
+                    <span>$10k</span>
+                    <span>$250k+</span>
+                </div>
             </div>
             <div class="dual-range-inputs">
-                <input type="number" id="panelPriceMin" name="priceMin" class="range-number-input"
-                       min="0" max="5000000" placeholder="${filterMinPlaceholder}"
+                <input type="text" id="panelPriceMin" name="priceMin" class="range-number-input range-number-input--currency"
+                       inputmode="numeric" autocomplete="off" data-currency-input="true"
+                       data-min="10000" data-max="5000000" data-display-max="250000" data-step="1000"
+                       data-boundary="min" placeholder="${filterMinPlaceholder}"
                        aria-describedby="panelPriceError"
                        value="<c:out value='${criteria.priceMin}'/>">
                 <span class="range-separator">–</span>
-                <input type="number" id="panelPriceMax" name="priceMax" class="range-number-input"
-                       min="0" max="5000000" placeholder="${filterMaxPlaceholder}"
+                <input type="text" id="panelPriceMax" name="priceMax" class="range-number-input range-number-input--currency"
+                       inputmode="numeric" autocomplete="off" data-currency-input="true"
+                       data-min="10000" data-max="5000000" data-display-max="250000"
+                       data-step="1000" data-boundary="max" placeholder="${filterMaxPlaceholder}"
                        aria-describedby="panelPriceError"
                        value="<c:out value='${criteria.priceMax}'/>">
             </div>
@@ -117,32 +106,118 @@
         </section>
 
         <section class="filters-panel-section">
-            <h3 class="filters-panel-section-title"><spring:message code="cars.filter.horsepower"/></h3>
+            <h3 class="filters-panel-section-title"><spring:message code="cars.form.modelYear"/></h3>
             <div class="dual-range"
-                 data-range-min="0"
-                 data-range-max="1500"
-                 data-input-low="panelHpMin"
-                 data-input-high="panelHpMax">
+                 data-range-min="1886"
+                 data-range-max="2100"
+                 data-input-low="panelYearMin"
+                 data-input-high="panelYearMax">
                 <div class="dual-range-track">
-                    <div class="dual-range-fill" id="panelHpFill"></div>
+                    <div class="dual-range-fill" id="panelYearFill"></div>
                 </div>
-                <input type="range" class="dual-range-thumb dual-range-low"  min="0" max="1500" step="10"
-                       value="<c:out value='${not empty criteria.horsepowerMin ? criteria.horsepowerMin : 0}'/>">
-                <input type="range" class="dual-range-thumb dual-range-high" min="0" max="1500" step="10"
-                       value="<c:out value='${not empty criteria.horsepowerMax ? criteria.horsepowerMax : 1500}'/>">
+                <input type="range" class="dual-range-thumb dual-range-low" min="1886" max="2100" step="1"
+                       value="<c:out value='${not empty criteria.yearMin ? criteria.yearMin : 1886}'/>">
+                <input type="range" class="dual-range-thumb dual-range-high" min="1886" max="2100" step="1"
+                       value="<c:out value='${not empty criteria.yearMax ? criteria.yearMax : 2100}'/>">
+                <div class="dual-range-labels">
+                    <span>1886</span>
+                    <span>2100</span>
+                </div>
             </div>
             <div class="dual-range-inputs">
-                <input type="number" id="panelHpMin" name="horsepowerMin" class="range-number-input"
-                       min="0" max="1500" placeholder="${filterMinPlaceholder}"
-                       aria-describedby="panelHpError"
-                       value="<c:out value='${criteria.horsepowerMin}'/>">
+                <input type="text" id="panelYearMin" name="yearMin" class="range-number-input"
+                       inputmode="numeric" autocomplete="off" data-number-input="true"
+                       data-min="1886" data-max="2100" data-step="1" data-boundary="min" placeholder="${filterMinPlaceholder}"
+                       aria-describedby="panelYearError"
+                       value="<c:out value='${criteria.yearMin}'/>">
                 <span class="range-separator">–</span>
-                <input type="number" id="panelHpMax" name="horsepowerMax" class="range-number-input"
-                       min="0" max="1500" placeholder="${filterMaxPlaceholder}"
-                       aria-describedby="panelHpError"
-                       value="<c:out value='${criteria.horsepowerMax}'/>">
+                <input type="text" id="panelYearMax" name="yearMax" class="range-number-input"
+                       inputmode="numeric" autocomplete="off" data-number-input="true"
+                       data-min="1886" data-max="2100" data-step="1" data-boundary="max" placeholder="${filterMaxPlaceholder}"
+                       aria-describedby="panelYearError"
+                       value="<c:out value='${criteria.yearMax}'/>">
             </div>
-            <p id="panelHpError" class="filters-field-error" hidden></p>
+            <p id="panelYearError" class="filters-field-error" hidden></p>
+        </section>
+
+        <section class="filters-panel-section">
+            <div class="filters-panel-subsection" id="panelConsumptionSection" data-hide-when-electric-only="true" <c:if test="${electricOnlyFilter}">hidden</c:if>>
+                <h4 class="filters-panel-subsection-title"><spring:message code="cars.filter.horsepower"/></h4>
+                <div class="dual-range"
+                     data-range-min="50"
+                     data-range-max="800"
+                     data-input-low="panelHpMin"
+                     data-input-high="panelHpMax">
+                    <div class="dual-range-track">
+                        <div class="dual-range-fill" id="panelHpFill"></div>
+                    </div>
+                    <input type="range" class="dual-range-thumb dual-range-low" min="50" max="800" step="25"
+                           value="<c:out value='${not empty criteria.horsepowerMin ? criteria.horsepowerMin : 50}'/>">
+                    <input type="range" class="dual-range-thumb dual-range-high" min="50" max="800" step="25"
+                           value="<c:out value='${not empty criteria.horsepowerMax ? criteria.horsepowerMax : 800}'/>">
+                    <div class="dual-range-labels">
+                        <span>50 HP</span>
+                        <span>800+ HP</span>
+                    </div>
+                </div>
+                <div class="dual-range-inputs">
+                    <input type="text" id="panelHpMin" name="horsepowerMin" class="range-number-input"
+                           inputmode="numeric" autocomplete="off" data-number-input="true"
+                           data-min="50" data-max="800" data-step="25" data-boundary="min" placeholder="${filterMinPlaceholder}"
+                           aria-describedby="panelHpError"
+                           value="<c:out value='${criteria.horsepowerMin}'/>">
+                    <span class="range-separator">–</span>
+                    <input type="text" id="panelHpMax" name="horsepowerMax" class="range-number-input"
+                           inputmode="numeric" autocomplete="off" data-number-input="true"
+                           data-min="50" data-max="800" data-step="25" data-boundary="max" placeholder="${filterMaxPlaceholder}"
+                           aria-describedby="panelHpError"
+                           value="<c:out value='${criteria.horsepowerMax}'/>">
+                </div>
+                <p id="panelHpError" class="filters-field-error" hidden></p>
+            </div>
+
+            <div class="filters-panel-subsection">
+                <div class="filter-range-header">
+                    <h4 class="filters-panel-subsection-title"><spring:message code="cars.filter.speed"/></h4>
+                </div>
+                <p class="filter-range-value-display" id="panelMaxSpeedDisplay"></p>
+                <input type="range" id="panelMaxSpeedSlider" name="maxSpeedMin"
+                       class="single-range"
+                       min="0" max="500" step="25"
+                       value="<c:out value='${not empty criteria.maxSpeedMin ? criteria.maxSpeedMin : 0}'/>">
+                <div class="single-range-labels">
+                    <div class="single-range-label-col">
+                        <span>0 km/h</span>
+                        <span class="single-range-sublabel"><spring:message code="cars.filter.speed.slow"/></span>
+                    </div>
+                    <div class="single-range-label-col single-range-label-col--end">
+                        <span>500 km/h</span>
+                        <span class="single-range-sublabel"><spring:message code="cars.filter.speed.fast"/></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filters-panel-subsection">
+                <div class="filter-range-header">
+                    <h4 class="filters-panel-subsection-title"><spring:message code="cars.filter.consumption"/></h4>
+                </div>
+                <p class="filter-range-value-display" id="panelConsumptionDisplay"></p>
+                <input type="range" id="panelConsumptionSlider" name="fuelConsumptionMax"
+                       class="single-range"
+                       min="0" max="30" step="1"
+                       value="<c:out value='${not empty criteria.fuelConsumptionMax ? criteria.fuelConsumptionMax : 30}'/>"
+                       <c:if test="${electricOnlyFilter}">disabled</c:if>>
+                <div class="single-range-labels">
+                    <div class="single-range-label-col">
+                        <span>0 L/100km</span>
+                        <span class="single-range-sublabel"><spring:message code="cars.filter.consumption.low"/></span>
+                    </div>
+                    <div class="single-range-label-col single-range-label-col--end">
+                        <span>30 L/100km</span>
+                        <span class="single-range-sublabel"><spring:message code="cars.filter.consumption.high"/></span>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section class="filters-panel-section">
@@ -156,59 +231,6 @@
                 <button type="button" class="filter-toggle-option${criteria.airbagMin eq 10 ? ' is-selected' : ''}" data-value="10">10+</button>
             </div>
             <input type="hidden" id="panelAirbagMin" name="airbagMin" value="<c:out value='${criteria.airbagMin}'/>">
-        </section>
-
-        <section class="filters-panel-section">
-            <h3 class="filters-panel-section-title"><spring:message code="cars.form.transmission"/></h3>
-            <div class="segmented-control filter-segmented" data-filter-target="panelTransmission">
-                <button type="button" class="segmented-control-option filter-segment-option${empty criteria.transmission ? ' is-selected' : ''}" data-value=""><spring:message code="cars.filter.both"/></button>
-                <button type="button" class="segmented-control-option filter-segment-option${'automatic' eq criteria.transmission ? ' is-selected' : ''}" data-value="automatic"><spring:message code="domain.transmission.automatic"/></button>
-                <button type="button" class="segmented-control-option filter-segment-option${'manual' eq criteria.transmission ? ' is-selected' : ''}" data-value="manual"><spring:message code="domain.transmission.manual"/></button>
-            </div>
-            <input type="hidden" id="panelTransmission" name="transmission" value="<c:out value='${criteria.transmission}'/>">
-        </section>
-
-        <section class="filters-panel-section" id="panelConsumptionSection" data-hide-when-electric-only="true" <c:if test="${electricOnlyFilter}">hidden</c:if>>
-            <div class="filter-range-header">
-                <h3 class="filters-panel-section-title"><spring:message code="cars.filter.consumption"/></h3>
-            </div>
-            <p class="filter-range-value-display" id="panelConsumptionDisplay"></p>
-            <input type="range" id="panelConsumptionSlider" name="fuelConsumptionMax"
-                   class="single-range"
-                   min="0" max="30" step="0.5"
-                   value="<c:out value='${not empty criteria.fuelConsumptionMax ? criteria.fuelConsumptionMax : 30}'/>"
-                   <c:if test="${electricOnlyFilter}">disabled</c:if>>
-            <div class="single-range-labels">
-                <div class="single-range-label-col">
-                    <span><spring:message code="cars.filter.consumption.min"/></span>
-                    <span class="single-range-sublabel"><spring:message code="cars.filter.consumption.low"/></span>
-                </div>
-                <div class="single-range-label-col single-range-label-col--end">
-                    <span><spring:message code="cars.filter.consumption.max"/></span>
-                    <span class="single-range-sublabel"><spring:message code="cars.filter.consumption.high"/></span>
-                </div>
-            </div>
-        </section>
-
-        <section class="filters-panel-section">
-            <div class="filter-range-header">
-                <h3 class="filters-panel-section-title"><spring:message code="cars.filter.speed"/></h3>
-            </div>
-            <p class="filter-range-value-display" id="panelMaxSpeedDisplay"></p>
-            <input type="range" id="panelMaxSpeedSlider" name="maxSpeedMin"
-                   class="single-range"
-                   min="0" max="500" step="10"
-                   value="<c:out value='${not empty criteria.maxSpeedMin ? criteria.maxSpeedMin : 0}'/>">
-            <div class="single-range-labels">
-                <div class="single-range-label-col">
-                    <span><spring:message code="cars.filter.speed.min"/></span>
-                    <span class="single-range-sublabel"><spring:message code="cars.filter.speed.slow"/></span>
-                </div>
-                <div class="single-range-label-col single-range-label-col--end">
-                    <span><spring:message code="cars.filter.speed.max"/></span>
-                    <span class="single-range-sublabel"><spring:message code="cars.filter.speed.fast"/></span>
-                </div>
-            </div>
         </section>
 
         <%-- Footer --%>

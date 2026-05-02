@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -167,6 +168,34 @@ public class CarRequestServiceImpl implements CarRequestService {
             throw new IllegalArgumentException("Image metadata and payload must be provided together.");
         }
 
+        final List<CarImagePayload> replacementImages = hasImageContentType
+                ? List.of(new CarImagePayload(imageContentType.get(), imageData.orElseThrow()))
+                : List.of();
+        final List<CarImagePayload> approvalImages = new ArrayList<>(requestImagePayloads(request));
+        approvalImages.addAll(replacementImages);
+
+        return approvePendingRequest(id, brandId, normalizedModel, bodyTypeId, year, normalizedDescription, approvalImages,
+                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
+    }
+
+    @Override
+    @Transactional
+    public boolean approvePendingRequest(final long id, final long brandId, final String model,
+                                         final long bodyTypeId, final Integer year, final String description,
+                                         final List<CarImagePayload> images,
+                                         final String fuelType, final Integer horsepower,
+                                         final Integer airbagCount, final String transmission,
+                                         final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
+                                         final BigDecimal priceUsd) {
+        final CarRequest request = carRequestDao.findById(id).orElse(null);
+        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            return false;
+        }
+
+        final String normalizedModel = StringUtils.normalizeRequired(model, "Model is required to approve car requests.");
+        final String normalizedDescription = StringUtils.normalizeRequired(description, "Description is required to approve car requests.");
+        final List<CarImagePayload> normalizedImages = ImagePayloadUtils.normalizeImages(images);
+
         final boolean statusUpdated = carRequestDao.updateStatus(id, STATUS_PENDING, STATUS_APPROVED);
         if (!statusUpdated) {
             return false;
@@ -186,24 +215,31 @@ public class CarRequestServiceImpl implements CarRequestService {
                 maxSpeedKmh,
                 priceUsd
         );
-        final String contentTypeToPersist = imageContentType.orElse(request.getImageContentType());
-        final byte[] imageDataToPersist = imageData.orElse(request.getImageData());
-        if (imageContentType.isPresent() && imageData.isPresent()) {
-            carImageDao.saveOrReplace(createdCar.getId(), contentTypeToPersist, imageDataToPersist);
-        } else {
-            final List<CarImagePayload> requestGallery = carRequestDao.findImagesByRequestId(id)
-                    .stream()
-                    .map(image -> carRequestDao.findImageByRequestIdAndImageId(id, image.getImageId()).orElse(null))
-                    .filter(image -> image != null && image.getImageData() != null)
-                    .map(image -> new CarImagePayload(image.getContentType(), image.getImageData()))
-                    .toList();
+        if (!normalizedImages.isEmpty()) {
+            carImageDao.replaceAll(createdCar.getId(), normalizedImages);
+        } else if (images == null) {
+            final List<CarImagePayload> requestGallery = requestImagePayloads(request);
             if (!requestGallery.isEmpty()) {
                 carImageDao.replaceAll(createdCar.getId(), requestGallery);
-            } else if (contentTypeToPersist != null && imageDataToPersist != null) {
-                carImageDao.saveOrReplace(createdCar.getId(), contentTypeToPersist, imageDataToPersist);
             }
         }
         return true;
+    }
+
+    private List<CarImagePayload> requestImagePayloads(final CarRequest request) {
+        final List<CarImagePayload> galleryPayloads = carRequestDao.findImagesByRequestId(request.getId())
+                .stream()
+                .map(image -> carRequestDao.findImageByRequestIdAndImageId(request.getId(), image.getImageId()).orElse(null))
+                .filter(image -> image != null && image.getImageData() != null)
+                .map(image -> new CarImagePayload(image.getContentType(), image.getImageData()))
+                .toList();
+        if (!galleryPayloads.isEmpty()) {
+            return galleryPayloads;
+        }
+        if (request.getImageContentType() != null && request.getImageData() != null) {
+            return List.of(new CarImagePayload(request.getImageContentType(), request.getImageData()));
+        }
+        return List.of();
     }
 
     @Override

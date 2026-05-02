@@ -14,6 +14,7 @@
     var consumptionSection = document.getElementById('panelConsumptionSection');
     var consumptionSlider = document.getElementById('panelConsumptionSlider');
     var previewSubmitTimer = null;
+    var INVALID_PARAM = '__invalid__';
 
     if (!panel || !toolbarForm) {
         return;
@@ -109,12 +110,29 @@
 
     /* ── SINGLE-RANGE SLIDERS with "Hasta / Desde" display ── */
 
-    function initSingleRange(sliderId, displayId, prefix, unit) {
+    function updateSingleRangeFill(slider, mode) {
+        var min = parseFloat(slider.min || 0);
+        var max = parseFloat(slider.max || 100);
+        var value = parseFloat(slider.value);
+        var percent = max > min ? ((value - min) / (max - min) * 100) : 0;
+        percent = Math.min(100, Math.max(0, percent));
+
+        if (mode === 'to-end') {
+            slider.style.background = 'linear-gradient(to right, rgba(229, 226, 225, 0.14) 0%, rgba(229, 226, 225, 0.14) ' +
+                    percent + '%, var(--tertiary) ' + percent + '%, var(--tertiary) 100%)';
+        } else {
+            slider.style.background = 'linear-gradient(to right, var(--tertiary) 0%, var(--tertiary) ' +
+                    percent + '%, rgba(229, 226, 225, 0.14) ' + percent + '%, rgba(229, 226, 225, 0.14) 100%)';
+        }
+    }
+
+    function initSingleRange(sliderId, displayId, prefix, unit, fillMode) {
         var slider  = document.getElementById(sliderId);
         var display = document.getElementById(displayId);
         if (!slider || !display) { return function () {}; }
 
         function updateDisplay() {
+            updateSingleRangeFill(slider, fillMode);
             display.innerHTML = (prefix ? prefix + ' <strong>' : '<strong>') +
                                 slider.value +
                                 '</strong>' +
@@ -126,8 +144,8 @@
         return updateDisplay;
     }
 
-    var updateConsumptionDisplay = initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', 'Hasta', 'L/100km');
-    var updateSpeedDisplay       = initSingleRange('panelMaxSpeedSlider',    'panelMaxSpeedDisplay',    'Desde', 'km/h');
+    var updateConsumptionDisplay = initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', 'Hasta', 'L/100km', 'from-start');
+    var updateSpeedDisplay       = initSingleRange('panelMaxSpeedSlider',    'panelMaxSpeedDisplay',    'Desde', 'km/h', 'to-end');
 
     function isElectricOnlyFilter() {
         var fuelTypeInput = document.getElementById('panelFuelType');
@@ -165,6 +183,122 @@
         return Math.round(Math.log(value / minAnchor) / Math.log(realMax / minAnchor) * sliderMax);
     }
 
+    var PRICE_SCALE_POINTS = [
+        { pos: 0,    value: 10000,  step: 1000 },
+        { pos: 250,  value: 25000,  step: 1000 },
+        { pos: 500,  value: 50000,  step: 1000 },
+        { pos: 700,  value: 100000, step: 5000 },
+        { pos: 850,  value: 150000, step: 10000 },
+        { pos: 1000, value: 250000, step: 25000 }
+    ];
+
+    function interpolatePriceScale(pos) {
+        if (pos <= PRICE_SCALE_POINTS[0].pos) {
+            return PRICE_SCALE_POINTS[0].value;
+        }
+        for (var i = 1; i < PRICE_SCALE_POINTS.length; i++) {
+            var previous = PRICE_SCALE_POINTS[i - 1];
+            var next = PRICE_SCALE_POINTS[i];
+            if (pos <= next.pos) {
+                var percent = (pos - previous.pos) / (next.pos - previous.pos);
+                var raw = previous.value + (next.value - previous.value) * percent;
+                return Math.round(raw / next.step) * next.step;
+            }
+        }
+        return PRICE_SCALE_POINTS[PRICE_SCALE_POINTS.length - 1].value;
+    }
+
+    function pricePosToValue(pos, sliderMax, realMax) {
+        if (pos >= sliderMax) {
+            return realMax;
+        }
+        return interpolatePriceScale(pos);
+    }
+
+    function priceValueToPos(value, sliderMax) {
+        if (value >= PRICE_SCALE_POINTS[PRICE_SCALE_POINTS.length - 1].value) {
+            return sliderMax;
+        }
+        if (value <= PRICE_SCALE_POINTS[0].value) {
+            return 0;
+        }
+        for (var i = 1; i < PRICE_SCALE_POINTS.length; i++) {
+            var previous = PRICE_SCALE_POINTS[i - 1];
+            var next = PRICE_SCALE_POINTS[i];
+            if (value <= next.value) {
+                var percent = (value - previous.value) / (next.value - previous.value);
+                return Math.round(previous.pos + (next.pos - previous.pos) * percent);
+            }
+        }
+        return sliderMax;
+    }
+
+    function snapToSliderStep(slider, value) {
+        var minValue = parseFloat(slider.min || 0);
+        var maxValue = parseFloat(slider.max || 100);
+        var stepValue = slider.step === 'any' ? 1 : parseFloat(slider.step || 1);
+
+        if (!Number.isFinite(value)) {
+            return minValue;
+        }
+        if (!Number.isFinite(stepValue) || stepValue <= 0) {
+            stepValue = 1;
+        }
+
+        var snapped = minValue + Math.round((value - minValue) / stepValue) * stepValue;
+        return Math.min(maxValue, Math.max(minValue, snapped));
+    }
+
+    function parseCurrencyValue(value) {
+        var text = String(value || '').trim();
+        if (text === '') {
+            return NaN;
+        }
+        if (!/^\$?\s*(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(text)) {
+            return NaN;
+        }
+        return Number(text.replace(/[$,\s]/g, ''));
+    }
+
+    function currencyParamValue(value) {
+        if (String(value || '').trim() === '') {
+            return '';
+        }
+        var parsed = parseCurrencyValue(value);
+        return Number.isFinite(parsed) ? String(parsed) : INVALID_PARAM;
+    }
+
+    function formatCurrencyValue(value) {
+        var parsed = typeof value === 'number' ? value : parseCurrencyValue(value);
+        if (!Number.isFinite(parsed)) {
+            return '';
+        }
+        return '$' + Math.round(parsed).toLocaleString('en-US');
+    }
+
+    function parsePlainNumberValue(value) {
+        var text = String(value || '').trim();
+        if (text === '') {
+            return NaN;
+        }
+        if (!/^\d+$/.test(text)) {
+            return NaN;
+        }
+        return Number(text);
+    }
+
+    function numberParamValue(value) {
+        if (String(value || '').trim() === '') {
+            return '';
+        }
+        var parsed = parsePlainNumberValue(value);
+        return Number.isFinite(parsed) ? String(parsed) : INVALID_PARAM;
+    }
+
+    function isAllowedTypedCharacter(value, isCurrency) {
+        return isCurrency ? /^[\d$,\s]*$/.test(value) : /^\d*$/.test(value);
+    }
+
     var dualRanges = panel.querySelectorAll('.dual-range');
     Array.prototype.forEach.call(dualRanges, function (container) {
         var lowThumb  = container.querySelector('.dual-range-low');
@@ -177,16 +311,62 @@
 
         if (!lowThumb || !highThumb) { return; }
 
-        var isLog   = container.getAttribute('data-scale') === 'log';
+        var scale   = container.getAttribute('data-scale') || '';
+        var isLog   = scale === 'log';
+        var isPrice = scale === 'price';
         var min     = parseFloat(container.getAttribute('data-range-min') || 0);
         var max     = parseFloat(container.getAttribute('data-range-max') || 1500);
-        var realMax = isLog ? parseFloat(container.getAttribute('data-real-max') || max) : max;
+        var realMin = parseFloat(container.getAttribute('data-real-min') || min);
+        var realMax = (isLog || isPrice) ? parseFloat(container.getAttribute('data-real-max') || max) : max;
 
         function posToValue(pos) {
+            if (isPrice) {
+                return pricePosToValue(pos, max, realMax);
+            }
             return isLog ? logPosToValue(pos, max, realMax) : pos;
         }
         function valueToPos(value) {
+            if (isPrice) {
+                return priceValueToPos(value, max);
+            }
             return isLog ? logValueToPos(value, max, realMax) : value;
+        }
+
+        function inputStep(input) {
+            var step = input ? parseFloat(input.step || input.getAttribute('data-step') || 1) : 1;
+            return Number.isFinite(step) && step > 0 ? step : 1;
+        }
+
+        function parseRangeInput(input) {
+            if (!input) {
+                return NaN;
+            }
+            if (input.getAttribute('data-max-label') === String(input.value || '').trim()) {
+                return Number(input.getAttribute('data-max'));
+            }
+            return input.hasAttribute('data-currency-input') ? parseCurrencyValue(input.value) : parsePlainNumberValue(input.value);
+        }
+
+        function setRangeInputValue(input, value, emptyBoundaryValue) {
+            if (!input) {
+                return;
+            }
+            var boundary = input.getAttribute('data-boundary');
+            if (boundary && !input.getAttribute('data-max-label')) {
+                var boundaryAttr = boundary === 'min' ? input.getAttribute('data-min') : input.getAttribute('data-max');
+                if (boundaryAttr !== null && Number(value) === Number(boundaryAttr)) {
+                    input.value = '';
+                    return;
+                }
+            }
+            if (input.hasAttribute('data-currency-input') && input.getAttribute('data-max-label')
+                    && value >= Number(input.getAttribute('data-max'))) {
+                input.value = input.getAttribute('data-max-label');
+            } else if (input.hasAttribute('data-currency-input')) {
+                input.value = formatCurrencyValue(value);
+            } else {
+                input.value = value;
+            }
         }
 
         function updateFill() {
@@ -199,64 +379,193 @@
             }
         }
 
-        function clamp() {
+        function clamp(activeThumb) {
+            lowThumb.value = snapToSliderStep(lowThumb, parseFloat(lowThumb.value));
+            highThumb.value = snapToSliderStep(highThumb, parseFloat(highThumb.value));
             var low  = parseFloat(lowThumb.value);
             var high = parseFloat(highThumb.value);
-            if (low  > high) { lowThumb.value  = high; }
-            if (high < low)  { highThumb.value = low;  }
+            var minGap = Math.max(
+                    lowThumb.step === 'any' ? 1 : parseFloat(lowThumb.step || 1),
+                    highThumb.step === 'any' ? 1 : parseFloat(highThumb.step || 1)
+            );
+            if (!Number.isFinite(minGap) || minGap <= 0) {
+                minGap = 1;
+            }
+
+            if (activeThumb === 'low' && low >= high) {
+                lowThumb.value = snapToSliderStep(lowThumb, high - minGap);
+            } else if (activeThumb === 'high' && high <= low) {
+                highThumb.value = snapToSliderStep(highThumb, low + minGap);
+            } else if (high - low < minGap) {
+                highThumb.value = snapToSliderStep(highThumb, low + minGap);
+                if (parseFloat(highThumb.value) > max) {
+                    highThumb.value = max;
+                    lowThumb.value = snapToSliderStep(lowThumb, max - minGap);
+                }
+            }
         }
 
-        lowThumb.addEventListener('input', function () {
-            clamp(); updateFill();
+        function syncLowInputFromThumb() {
             var realValue = posToValue(parseFloat(lowThumb.value));
-            if (lowInput) { lowInput.value = realValue === min ? '' : realValue; }
+            setRangeInputValue(lowInput, realValue, min);
+        }
+
+        function syncHighInputFromThumb() {
+            var realValue = posToValue(parseFloat(highThumb.value));
+            setRangeInputValue(highInput, realValue, realMax);
+        }
+
+        function prepareTypedInput(input) {
+            if (!input) { return; }
+            input.addEventListener('beforeinput', function (event) {
+                if (!event.data) { return; }
+                if (event.data.length === 1 && !isAllowedTypedCharacter(event.data, input.hasAttribute('data-currency-input'))) {
+                    event.preventDefault();
+                }
+            });
+        }
+
+        function syncTypedInput(input, thumb, fallbackValue, isLowInput) {
+            if (!input) { return; }
+            var rawValue = input.value;
+            if (rawValue.trim() === '') {
+                thumb.value = fallbackValue;
+                updateFill();
+                return;
+            }
+            if (input.hasAttribute('data-currency-input')) {
+                var digits = rawValue.replace(/[^\d]/g, '');
+                if (input.getAttribute('data-max-label') === rawValue.trim()) {
+                    digits = input.getAttribute('data-max') || '';
+                }
+                if (digits === '') {
+                    input.value = '';
+                    thumb.value = fallbackValue;
+                    updateFill();
+                    return;
+                }
+                input.value = formatCurrencyValue(Number(digits));
+            } else {
+                var numberDigits = rawValue.replace(/[^\d]/g, '');
+                if (numberDigits !== rawValue) {
+                    input.value = numberDigits;
+                }
+                if (numberDigits === '') {
+                    thumb.value = fallbackValue;
+                    updateFill();
+                    return;
+                }
+            }
+
+            var value = parseRangeInput(input);
+            if (!Number.isFinite(value) || value < realMin || value > realMax) {
+                return;
+            }
+
+            var otherValue = isLowInput
+                    ? (highInput && highInput.value !== '' ? parseRangeInput(highInput) : realMax)
+                    : (lowInput && lowInput.value !== '' ? parseRangeInput(lowInput) : min);
+            if (Number.isFinite(otherValue) && ((isLowInput && value >= otherValue) || (!isLowInput && value <= otherValue))) {
+                return;
+            }
+
+            thumb.value = snapToSliderStep(thumb, valueToPos(value));
+            updateFill();
+        }
+
+        prepareTypedInput(lowInput);
+        prepareTypedInput(highInput);
+
+        lowThumb.addEventListener('input', function () {
+            clamp('low'); updateFill();
+            syncLowInputFromThumb();
         });
 
         highThumb.addEventListener('input', function () {
-            clamp(); updateFill();
-            var realValue = posToValue(parseFloat(highThumb.value));
-            if (highInput) { highInput.value = realValue === realMax ? '' : realValue; }
+            clamp('high'); updateFill();
+            syncHighInputFromThumb();
         });
 
         if (lowInput) {
+            lowInput.addEventListener('input', function () {
+                syncTypedInput(lowInput, lowThumb, min, true);
+                clearValidationErrors();
+            });
             lowInput.addEventListener('change', function () {
-                var v = parseFloat(lowInput.value);
+                var v = parseRangeInput(lowInput);
                 if (!isNaN(v)) {
+                    var highValue = highInput && highInput.value !== '' ? parseRangeInput(highInput) : realMax;
+                    if (v < realMin || v > realMax || (Number.isFinite(highValue) && v > highValue)) {
+                        clearValidationErrors();
+                        return;
+                    }
                     var pos = valueToPos(v);
-                    lowThumb.value = Math.min(Math.max(pos, min), parseFloat(highThumb.value));
+                    var maxLow = parseFloat(highThumb.value) - inputStep(lowThumb);
+                    lowThumb.value = snapToSliderStep(lowThumb, Math.min(Math.max(pos, min), maxLow));
+                    syncLowInputFromThumb();
                     updateFill();
                 }
                 clearValidationErrors();
             });
         }
         if (highInput) {
+            highInput.addEventListener('input', function () {
+                syncTypedInput(highInput, highThumb, realMax, false);
+                clearValidationErrors();
+            });
             highInput.addEventListener('change', function () {
-                var v = parseFloat(highInput.value);
+                var v = parseRangeInput(highInput);
                 if (!isNaN(v)) {
+                    var lowValue = lowInput && lowInput.value !== '' ? parseRangeInput(lowInput) : min;
+                    if (v < realMin || v > realMax || (Number.isFinite(lowValue) && v < lowValue)) {
+                        clearValidationErrors();
+                        return;
+                    }
                     var pos = valueToPos(v);
-                    highThumb.value = Math.max(Math.min(pos, max), parseFloat(lowThumb.value));
+                    var minHigh = parseFloat(lowThumb.value) + inputStep(highThumb);
+                    highThumb.value = snapToSliderStep(highThumb, Math.max(Math.min(pos, max), minHigh));
+                    syncHighInputFromThumb();
                     updateFill();
                 }
                 clearValidationErrors();
             });
         }
 
-        // Initialize slider positions from existing number input values (needed for log scale)
-        if (isLog) {
-            if (lowInput && lowInput.value !== '') {
-                lowThumb.value = valueToPos(parseFloat(lowInput.value));
-            }
-            if (highInput && highInput.value !== '') {
-                highThumb.value = valueToPos(parseFloat(highInput.value));
-            }
+        // Initialize slider positions from existing input values.
+        if (lowInput && lowInput.value !== '') {
+            lowThumb.value = snapToSliderStep(lowThumb, valueToPos(parseRangeInput(lowInput)));
         }
+        if (highInput && highInput.value !== '') {
+            highThumb.value = snapToSliderStep(highThumb, valueToPos(parseRangeInput(highInput)));
+        }
+        clamp();
 
         updateFill();
+        syncLowInputFromThumb();
+        syncHighInputFromThumb();
     });
 
     /* ── COLLECT PANEL PARAMS ── */
 
     var RANGE_DEFAULTS = { fuelConsumptionMax: '30', maxSpeedMin: '0' };
+
+    function boundaryParamValue(el, value) {
+        if (value === INVALID_PARAM || value === '') {
+            return value;
+        }
+        if (el.getAttribute('data-keep-boundary-param') === 'true') {
+            return value;
+        }
+        var boundary = el.getAttribute('data-boundary');
+        if (!boundary) {
+            return value;
+        }
+        var boundaryValue = boundary === 'min' ? el.getAttribute('data-min') : el.getAttribute('data-max');
+        if (boundaryValue !== null && Number(value) === Number(boundaryValue)) {
+            return '';
+        }
+        return value;
+    }
 
     function collectPanelParams() {
         var params = {};
@@ -273,6 +582,17 @@
                 if (el.value !== '' && (def === undefined || el.value !== def)) {
                     params[el.name] = el.value;
                 }
+            } else if (el.hasAttribute('data-currency-input')) {
+                var maxLabel = el.getAttribute('data-max-label');
+                var currencyValue = maxLabel && String(el.value || '').trim() === maxLabel
+                        ? el.getAttribute('data-max')
+                        : currencyParamValue(el.value);
+                currencyValue = boundaryParamValue(el, currencyValue);
+                if (currencyValue !== '') { params[el.name] = currencyValue; }
+            } else if (el.hasAttribute('data-number-input')) {
+                var numberValue = numberParamValue(el.value);
+                numberValue = boundaryParamValue(el, numberValue);
+                if (numberValue !== '') { params[el.name] = numberValue; }
             } else if (el.type === 'hidden' || el.type === 'number') {
                 if (el.value !== '') { params[el.name] = el.value; }
             }
@@ -426,7 +746,10 @@
         if (value === undefined || value === '') {
             return true;
         }
-        var parsed = Number(value);
+        if (value === INVALID_PARAM) {
+            return false;
+        }
+        var parsed = parsePlainNumberValue(value);
         return Number.isFinite(parsed) && parsed >= min && parsed <= max;
     }
 
@@ -445,9 +768,9 @@
             showPanelValidationError('Elegí una cantidad de airbags válida.');
             return false;
         }
-        if (!isValidNumberParam(panelParams.yearMin, 1886, 2100)
-                || !isValidNumberParam(panelParams.yearMax, 1886, 2100)) {
-            showYearValidationError('Usá años entre 1886 y 2100.', focusOnError);
+        if (!isValidNumberParam(panelParams.yearMin, 1950, 2026)
+                || !isValidNumberParam(panelParams.yearMax, 1950, 2026)) {
+            showYearValidationError('Usá años entre 1950 y 2026.', focusOnError);
             return false;
         }
 
@@ -457,9 +780,9 @@
             return false;
         }
 
-        if (!isValidNumberParam(panelParams.priceMin, 0, 5000000)
-                || !isValidNumberParam(panelParams.priceMax, 0, 5000000)) {
-            showPriceValidationError('Usá precios entre USD 0 y USD 5.000.000.', focusOnError);
+        if (!isValidNumberParam(panelParams.priceMin, 10000, 5000000)
+                || !isValidNumberParam(panelParams.priceMax, 10000, 5000000)) {
+            showPriceValidationError('Usá precios entre USD 10.000 y USD 5.000.000.', focusOnError);
             return false;
         }
 
@@ -469,9 +792,9 @@
             return false;
         }
 
-        if (!isValidNumberParam(panelParams.horsepowerMin, 0, 1500)
-                || !isValidNumberParam(panelParams.horsepowerMax, 0, 1500)) {
-            showHpValidationError('Usá valores de potencia entre 0 y 1500 HP.', focusOnError);
+        if (!isValidNumberParam(panelParams.horsepowerMin, 50, 800)
+                || !isValidNumberParam(panelParams.horsepowerMax, 50, 800)) {
+            showHpValidationError('Usá valores de potencia entre 50 y 800 HP.', focusOnError);
             return false;
         }
 
@@ -573,7 +896,7 @@
         var priceMin = document.getElementById('panelPriceMin');
         var priceMax = document.getElementById('panelPriceMax');
         if (priceMin) { priceMin.value = ''; }
-        if (priceMax) { priceMax.value = ''; }
+        if (priceMax) { priceMax.value = priceMax.getAttribute('data-max-label') || ''; }
 
         var yearMin = document.getElementById('panelYearMin');
         var yearMax = document.getElementById('panelYearMax');

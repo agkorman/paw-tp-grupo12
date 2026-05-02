@@ -37,7 +37,6 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
 import java.math.BigDecimal;
-import java.time.Year;
 import java.util.Comparator;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -207,10 +206,6 @@ public class CarReviewController {
         return "redirect:/reviews?carId=" + car.getId();
     }
 
-    private ModelAndView carReviewPage(final long carId, final String sort, final String error) {
-        return carReviewPage(carId, sort, error, null);
-    }
-
     private ModelAndView carReviewPage(final long carId, final String sort, final String error,
                                        final AuthenticatedUser currentUser) {
         final ReviewPageData pageData = resolveReviewPageData(carId, sort, null, currentUserId(currentUser));
@@ -342,7 +337,7 @@ public class CarReviewController {
                                         reply,
                                         replyLikeCounts.getOrDefault(reply.getId(), 0L),
                                         likedReplyIds.contains(reply.getId()),
-                                        currentUserId != null && reply.getUserId() == currentUserId
+                                        currentUserId != null && currentUserId.equals(reply.getUserId())
                                 ))
                                 .collect(Collectors.toList())
                 ))
@@ -551,10 +546,11 @@ public class CarReviewController {
                 errors.rejectValue("modelYear", "modelYear.required", "El año del modelo es obligatorio.");
             }
         } else {
-            final int maxModelYear = Year.now().getValue() + 1;
-            if (modelYear > maxModelYear) {
+            final int minModelYear = 1886;
+            final int maxModelYear = 2100;
+            if (modelYear < minModelYear || modelYear > maxModelYear) {
                 errors.rejectValue("modelYear", "modelYear.range",
-                        "Ingresá un año entre 1886 y " + maxModelYear + ".");
+                        "Ingresá un año entre " + minModelYear + " y " + maxModelYear + ".");
             }
         }
 
