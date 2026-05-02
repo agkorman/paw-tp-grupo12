@@ -241,6 +241,7 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldRejectPendingRequestThroughDao() {
         // Arrange
+        when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
         when(carRequestDao.updateStatus(REQUEST_ID, CarRequestService.STATUS_PENDING,
                 CarRequestService.STATUS_REJECTED)).thenReturn(true);
 

@@ -33,6 +33,8 @@ public class AdminRequestServiceImplTest {
     private AdminRequestDao adminRequestDao;
     @Mock
     private UserService userService;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private AdminRequestServiceImpl adminRequestService;
@@ -169,6 +171,7 @@ public class AdminRequestServiceImplTest {
     @Test
     public void shouldRejectPendingRequestThroughDao() {
         // Arrange
+        when(adminRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
         when(adminRequestDao.updateStatus(REQUEST_ID, AdminRequestService.STATUS_PENDING,
                 AdminRequestService.STATUS_REJECTED)).thenReturn(true);
 

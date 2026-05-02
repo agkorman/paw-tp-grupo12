@@ -11,7 +11,7 @@
     <title><spring:message code="admin.title"/></title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
+    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=5'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
@@ -27,12 +27,6 @@
                     <h1><spring:message code="admin.heading"/></h1>
 
                     <div class="admin-section-actions">
-                        <form method="post" action="<c:url value='/admin/digest/preview'/>">
-                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                            <button type="submit" class="btn-secondary">
-                                <spring:message code="admin.digest.send"/>
-                            </button>
-                        </form>
                         <spring:message var="pendingLabel" code="admin.pending"/>
                         <div class="admin-status" aria-label="${pendingLabel}">
                             <span><c:out value="${pendingLabel}"/></span>
@@ -213,5 +207,6 @@
     <script src="<c:url value='/js/admin-catalog-modal.js'/>"></script>
     <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>

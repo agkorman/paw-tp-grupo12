@@ -10,7 +10,7 @@
     <title><spring:message code="auth.register.title"/></title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
+    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/auth.css'/>">
@@ -93,5 +93,6 @@
 
     <script src="<c:url value='/js/auth-form.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>

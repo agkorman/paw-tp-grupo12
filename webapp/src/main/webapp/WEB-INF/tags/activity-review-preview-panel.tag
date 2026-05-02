@@ -131,7 +131,7 @@
                         </span>
                         <div>
                             <pa:review-author-link review="${reviewCard.review}"/>
-                            <span>Publicado el <c:out value="${fn:substring(reviewCard.review.createdAt, 0, 10)}"/></span>
+                            <span><c:out value="${reviewCard.timeAgo}"/></span>
                         </div>
                     </div>
                     <div class="review-preview-rating" aria-label="${reviewCard.review.rating} de 5 estrellas">

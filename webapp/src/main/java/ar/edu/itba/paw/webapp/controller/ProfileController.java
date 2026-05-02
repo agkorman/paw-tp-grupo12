@@ -65,27 +65,29 @@ public class ProfileController {
     @RequestMapping(value = "/profile", method = RequestMethod.GET)
     public ModelAndView ownProfile(@AuthenticationPrincipal final AuthenticatedUser currentUser,
                                    @RequestParam(value = "tab", required = false) final String tab,
-                                   @RequestParam(value = "page", defaultValue = "1") final int page) {
+                                   @RequestParam(value = "page", defaultValue = "1") final int page,
+                                   @RequestParam(value = "submitted", required = false) final String submitted) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
-        return profile(currentUser.getId(), currentUser, tab, page);
+        return profile(currentUser.getId(), currentUser, tab, page, submitted);
     }
 
     ModelAndView ownProfile(final AuthenticatedUser currentUser) {
-        return ownProfile(currentUser, null, 1);
+        return ownProfile(currentUser, null, 1, null);
     }
 
     @RequestMapping(value = "/profiles/{userId}", method = RequestMethod.GET)
     public ModelAndView publicProfile(@PathVariable("userId") final long userId,
                                       @AuthenticationPrincipal final AuthenticatedUser currentUser,
                                       @RequestParam(value = "tab", required = false) final String tab,
-                                      @RequestParam(value = "page", defaultValue = "1") final int page) {
-        return profile(userId, currentUser, tab, page);
+                                      @RequestParam(value = "page", defaultValue = "1") final int page,
+                                      @RequestParam(value = "submitted", required = false) final String submitted) {
+        return profile(userId, currentUser, tab, page, submitted);
     }
 
     ModelAndView publicProfile(final long userId, final AuthenticatedUser currentUser) {
-        return publicProfile(userId, currentUser, null, 1);
+        return publicProfile(userId, currentUser, null, 1, null);
     }
 
     @RequestMapping(value = "/profiles/{userId}/follow", method = RequestMethod.POST)
@@ -110,7 +112,7 @@ public class ProfileController {
     }
 
     private ModelAndView profile(final long profileUserId, final AuthenticatedUser currentUser,
-                                 final String tab, final int page) {
+                                 final String tab, final int page, final String submitted) {
         final User profileUser = userService.getUserById(profileUserId)
                 .orElseThrow(ResourceNotFoundException::new);
         final Long currentUserId = currentUser == null ? null : currentUser.getId();
@@ -175,7 +177,18 @@ public class ProfileController {
         mav.addObject("followingProfile", followingProfile);
         mav.addObject("reviewForm", new ReviewForm());
         mav.addObject("canRequestModerator", canRequestModerator(ownProfile, profileUser));
+        if (ownProfile) {
+            addSubmittedToast(mav, submitted);
+        }
         return mav;
+    }
+
+    private void addSubmittedToast(final ModelAndView mav, final String submitted) {
+        final String submittedToastMessageCode = ControllerUtils.submittedToastMessageCode(submitted);
+        if (submittedToastMessageCode != null) {
+            mav.addObject("showSubmittedToast", true);
+            mav.addObject("submittedToastMessageCode", submittedToastMessageCode);
+        }
     }
 
     private boolean canRequestModerator(final boolean ownProfile, final User profileUser) {

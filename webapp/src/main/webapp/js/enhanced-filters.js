@@ -148,6 +148,7 @@
             }
 
             currentTarget.replaceWith(replacement);
+            observeShowMoreSentinels(replacement);
             syncCatalogCount(replacement);
             window.history.replaceState({}, '', actionUrl.pathname + actionUrl.search);
             if (!skipScroll) {
@@ -252,6 +253,7 @@
             }
 
             currentTarget.replaceWith(replacement);
+            observeShowMoreSentinels(replacement);
             syncCatalogCount(replacement);
             window.history.replaceState({}, '', actionUrl.pathname + actionUrl.search);
             scrollToTarget(targetSelector, document.querySelector(targetSelector));
@@ -337,6 +339,8 @@
                 feed.appendChild(replacementControls);
             }
 
+            observeShowMoreSentinels(feed);
+
         }).catch(function () {
             window.location.href = link.href;
         }).finally(function () {
@@ -379,5 +383,38 @@
     });
 
     syncToolbarSelectValues(document);
+
+    var observeShowMoreSentinels = function (scope) {
+        if (!('IntersectionObserver' in window)) {
+            return;
+        }
+
+        var root = scope || document;
+        var sentinels = root.querySelectorAll ? root.querySelectorAll('.reviews-feed-more') : [];
+        Array.prototype.forEach.call(sentinels, function (sentinel) {
+            if (sentinel.dataset.infiniteScrollObserved === 'true') {
+                return;
+            }
+            sentinel.dataset.infiniteScrollObserved = 'true';
+
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (!entry.isIntersecting) {
+                        return;
+                    }
+                    var link = sentinel.querySelector('a[data-review-show-more="true"]');
+                    if (!link) {
+                        return;
+                    }
+                    observer.disconnect();
+                    showMoreReviews(link);
+                });
+            }, { rootMargin: '200px' });
+
+            observer.observe(sentinel);
+        });
+    };
+
+    observeShowMoreSentinels();
 
 })();

@@ -10,7 +10,7 @@
     <title><spring:message code="recommend.results.title"/></title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
+    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/cars.css'/>">
@@ -70,5 +70,6 @@
     </main>
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>

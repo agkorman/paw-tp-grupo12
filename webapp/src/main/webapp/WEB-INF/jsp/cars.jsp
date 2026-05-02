@@ -10,9 +10,9 @@
     <title>La Posta Autos</title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
+    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=6'/>">
     <link rel="stylesheet" href="<c:url value='/css/cars.css?v=8'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
 </head>
@@ -51,14 +51,7 @@
     <pa:auth-required-modal/>
 
     <c:if test="${showSubmittedToast}">
-        <div class="submitted-toast" id="submittedToast" role="status" aria-live="polite">
-            <svg class="submitted-toast-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" fill="#4caf7a"/>
-                <path d="M7.5 12.5l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span class="submitted-toast-text">Tu auto ha sido enviado correctamente y está en proceso de moderación.</span>
-            <button type="button" class="submitted-toast-action" data-dismiss-submitted-toast>ENTENDIDO</button>
-        </div>
+        <pa:submitted-toast messageCode="${submittedToastMessageCode}"/>
     </c:if>
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
@@ -68,5 +61,6 @@
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/submitted-toast.js'/>"></script>
 
+    <pa:footer/>
 </body>
 </html>

@@ -124,8 +124,10 @@ public class CarController {
             return "redirect:/cars/new";
         }
         populateCarsPageModel(model, criteria, currentUser);
-        if ("true".equalsIgnoreCase(submitted)) {
+        final String submittedToastMessageCode = ControllerUtils.submittedToastMessageCode(submitted);
+        if (submittedToastMessageCode != null) {
             model.addAttribute("showSubmittedToast", true);
+            model.addAttribute("submittedToastMessageCode", submittedToastMessageCode);
         }
         return "cars.jsp";
     }
@@ -148,10 +150,11 @@ public class CarController {
     }
 
     @RequestMapping(value = "/cars/new", method = RequestMethod.GET)
-    public ModelAndView newCarRequest() {
+    public ModelAndView newCarRequest(@RequestParam(value = "submitted", required = false) final String submitted) {
         final ModelAndView mav = new ModelAndView("car-form.jsp");
         mav.addObject("carForm", new CarForm());
         populateCarFormPageModel(mav);
+        addSubmittedToast(mav, submitted);
         return mav;
     }
 
@@ -235,6 +238,14 @@ public class CarController {
     private void populateCarFormPageModel(final ModelAndView mav) {
         mav.addObject("brands", brandService.findAll());
         mav.addObject("bodyTypes", bodyTypeService.findAll());
+    }
+
+    private void addSubmittedToast(final ModelAndView mav, final String submitted) {
+        final String submittedToastMessageCode = ControllerUtils.submittedToastMessageCode(submitted);
+        if (submittedToastMessageCode != null) {
+            mav.addObject("showSubmittedToast", true);
+            mav.addObject("submittedToastMessageCode", submittedToastMessageCode);
+        }
     }
 
     @RequestMapping(value = "/cars/{carId}/favorite", method = RequestMethod.POST)

@@ -206,13 +206,9 @@
 
 .admin-catalog-request-review-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 1rem;
     margin-top: 1rem;
-}
-
-.admin-catalog-request-review-grid .review-modal-field-wide {
-    grid-column: 1 / -1;
 }
 
 .admin-catalog-request-review-dialog .review-modal-field input[readonly],
@@ -247,7 +243,7 @@
 .admin-request-review-fields textarea {
     min-height: 6rem;
     line-height: 1.45;
-    resize: vertical;
+    resize: none;
 }
 
 .admin-request-review-dialog .review-modal-field input[readonly],
@@ -349,10 +345,6 @@
 
     .admin-catalog-request-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .admin-catalog-request-review-grid {
-        grid-template-columns: 1fr;
     }
 
     .admin-requests-section {
