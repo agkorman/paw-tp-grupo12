@@ -41,5 +41,11 @@ public interface CarRequestService {
                                   String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
                                   BigDecimal priceUsd);
 
+    boolean approvePendingRequest(long id, long brandId, String model, long bodyTypeId, Integer year, String description,
+                                  List<CarImagePayload> images,
+                                  String fuelType, Integer horsepower, Integer airbagCount,
+                                  String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
+                                  BigDecimal priceUsd);
+
     boolean rejectPendingRequest(long id);
 }
