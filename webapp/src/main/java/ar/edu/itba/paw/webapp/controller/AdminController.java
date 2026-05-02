@@ -277,7 +277,7 @@ public class AdminController {
                 carForm.getPriceUsd()
         );
 
-        if (approved && pendingRequest != null) {
+        if (approved) {
             final String submitterEmail = resolveSubmitterEmail(pendingRequest);
             if (submitterEmail != null) {
                 emailService.sendCarApprovedNotification(submitterEmail, resolvedBrand.getName(), carForm.getModel());
@@ -762,10 +762,6 @@ public class AdminController {
 
     private String validateUploadedImage(final MultipartFile file, final boolean required) {
         return ControllerUtils.validateUploadedImage(file, required);
-    }
-
-    private String validateUploadedImages(final List<MultipartFile> files, final boolean required) {
-        return validateUploadedImages(files, required, 0);
     }
 
     private String validateUploadedImages(final List<MultipartFile> files, final boolean required,

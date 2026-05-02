@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -171,7 +172,7 @@ public class CarRequestServiceImpl implements CarRequestService {
                 ? List.of(new CarImagePayload(imageContentType.get(), imageData.orElseThrow()))
                 : List.of();
 
-        return approvePendingRequest(id, brandId, model, bodyTypeId, year, description, replacementImages,
+        return approvePendingRequest(id, brandId, normalizedModel, bodyTypeId, year, normalizedDescription, replacementImages,
                 fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
     }
 
@@ -216,7 +217,7 @@ public class CarRequestServiceImpl implements CarRequestService {
         final byte[] imageDataToPersist = request.getImageData();
         if (!normalizedImages.isEmpty()) {
             final List<CarImagePayload> requestGallery = requestImagePayloads(request);
-            final List<CarImagePayload> combinedImages = new java.util.ArrayList<>(requestGallery);
+            final List<CarImagePayload> combinedImages = new ArrayList<>(requestGallery);
             combinedImages.addAll(normalizedImages);
             carImageDao.replaceAll(createdCar.getId(), combinedImages);
         } else {

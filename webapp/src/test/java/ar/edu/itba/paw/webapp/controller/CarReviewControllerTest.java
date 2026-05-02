@@ -527,16 +527,8 @@ public class CarReviewControllerTest {
         private boolean created;
         private long createdUserId;
         private long createdCarId;
-        private String createdOwnershipStatus;
-        private Integer createdModelYear;
-        private Integer createdMileageKm;
-        private Boolean createdWouldRecommend;
         private boolean updated;
         private long updatedCarId;
-        private String updatedOwnershipStatus;
-        private Integer updatedModelYear;
-        private Integer updatedMileageKm;
-        private Boolean updatedWouldRecommend;
         private boolean deleted;
         private long deletedId;
         private int requestedPage;
@@ -550,10 +542,6 @@ public class CarReviewControllerTest {
             this.created = true;
             this.createdUserId = userId;
             this.createdCarId = carId;
-            this.createdOwnershipStatus = ownershipStatus;
-            this.createdModelYear = modelYear;
-            this.createdMileageKm = mileageKm;
-            this.createdWouldRecommend = wouldRecommend;
             return review == null ? new Review() : review;
         }
 
@@ -582,10 +570,6 @@ public class CarReviewControllerTest {
                                              final Boolean wouldRecommend, final Collection<Short> tagIds) {
             this.updated = true;
             this.updatedCarId = carId;
-            this.updatedOwnershipStatus = ownershipStatus;
-            this.updatedModelYear = modelYear;
-            this.updatedMileageKm = mileageKm;
-            this.updatedWouldRecommend = wouldRecommend;
             return Optional.ofNullable(review);
         }
 
@@ -643,7 +627,7 @@ public class CarReviewControllerTest {
 
         @Override
         public List<Review> getReviewsByUser(final long userId) {
-            return review != null && review.getUserId() != null && review.getUserId() == userId
+            return review != null && review.getUserId() != null && review.getUserId().equals(userId)
                     ? List.of(review)
                     : Collections.emptyList();
         }
