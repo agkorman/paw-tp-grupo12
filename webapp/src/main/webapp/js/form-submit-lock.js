@@ -19,7 +19,9 @@
         }
         if (button.dataset.lockedLabel == null) {
             button.dataset.lockedLabel = button.textContent;
-            button.textContent = button.dataset.loadingLabel || 'Enviando...';
+            if (button.dataset.loadingLabel) {
+                button.textContent = button.dataset.loadingLabel;
+            }
         }
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');

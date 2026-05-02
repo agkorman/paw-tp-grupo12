@@ -18,7 +18,14 @@
         return;
     }
 
-    var emptyFileStatus = 'Ninguna imagen seleccionada';
+    var messages = page.dataset;
+    var formatMessage = function (template) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        return (template || '').replace(/\{(\d+)}/g, function (match, index) {
+            return args[index] == null ? match : args[index];
+        });
+    };
+    var emptyFileStatus = messages.msgFileEmpty || (fileStatus ? fileStatus.textContent : '');
     var existingImageUrls = (page.dataset.existingImageUrls || '').split('|').filter(function (url) {
         return !!url;
     });
@@ -33,15 +40,15 @@
     var previewIndex = 0;
     var accumulatedFiles = [];
     var requiredMessages = {
-        modalCarBrand: 'Seleccioná una marca.',
-        modalCarBodyType: 'Seleccioná un tipo de carrocería.',
-        modalCarModel: 'Ingresá el modelo.',
-        modalCarDescription: 'Ingresá una descripción.',
-        modalCarHorsepower: 'Ingresá la potencia.',
-        modalCarAirbagCount: 'Ingresá la cantidad de airbags.',
-        modalCarFuelConsumption: 'Ingresá el consumo.',
-        modalCarMaxSpeed: 'Ingresá la velocidad máxima.',
-        modalCarFile: 'Seleccioná al menos una imagen del auto.'
+        modalCarBrand: messages.msgRequiredBrand,
+        modalCarBodyType: messages.msgRequiredBodyType,
+        modalCarModel: messages.msgRequiredModel,
+        modalCarDescription: messages.msgRequiredDescription,
+        modalCarHorsepower: messages.msgRequiredHorsepower,
+        modalCarAirbagCount: messages.msgRequiredAirbags,
+        modalCarFuelConsumption: messages.msgRequiredConsumption,
+        modalCarMaxSpeed: messages.msgRequiredMaxSpeed,
+        modalCarFile: messages.msgRequiredImage
     };
 
     // Must mirror server-side uploaded image validation.
@@ -181,33 +188,33 @@
         clearInlineError(field);
 
         if ((field.required || hasRequiredRadioGroup(field)) && isMissingRequiredValue(field)) {
-            setInlineError(field, requiredMessages[field.id] || 'Completá este campo.');
+            setInlineError(field, requiredMessages[field.id] || messages.msgRequiredGeneric);
             return false;
         }
 
         if (field.type === 'radio' && hasRequiredRadioGroup(field)
                 && !radioGroup(field).some(function (radio) { return radio.checked; })) {
-            setInlineError(field, 'Seleccioná una opción.');
+            setInlineError(field, messages.msgRadioRequired);
             return false;
         }
 
         if (field.type === 'email' && field.value && !EMAIL_PATTERN.test(field.value.trim())) {
-            setInlineError(field, 'Ingresá un email válido.');
+            setInlineError(field, messages.msgEmailInvalid);
             return false;
         }
 
         if (field.type === 'number' && field.value) {
             var parsed = Number(field.value);
             if (!Number.isFinite(parsed)) {
-                setInlineError(field, 'Ingresá un valor numérico.');
+                setInlineError(field, messages.msgNumberInvalid);
                 return false;
             }
             if (field.min !== '' && parsed < Number(field.min)) {
-                setInlineError(field, 'Ingresá un valor mayor o igual a ' + field.min + '.');
+                setInlineError(field, formatMessage(messages.msgNumberMin, field.min));
                 return false;
             }
             if (field.max !== '' && parsed > Number(field.max)) {
-                setInlineError(field, 'Ingresá un valor menor o igual a ' + field.max + '.');
+                setInlineError(field, formatMessage(messages.msgNumberMax, field.max));
                 return false;
             }
         }
@@ -216,20 +223,20 @@
             var files = selectedFiles(field);
             if ((field.required || adminMode || existingImageCount === 0)
                     && existingImageCount + files.length === 0) {
-                setInlineError(field, requiredMessages[field.id] || 'Seleccioná al menos una imagen.');
+                setInlineError(field, requiredMessages[field.id] || messages.msgRequiredGeneric);
                 return false;
             }
             if (existingImageCount + files.length > MAX_IMAGE_COUNT) {
-                setInlineError(field, 'Podés cargar hasta ' + MAX_IMAGE_COUNT + ' imágenes.');
+                setInlineError(field, formatMessage(messages.msgImageMaxCount, MAX_IMAGE_COUNT));
                 return false;
             }
             for (var i = 0; i < files.length; i++) {
                 if (!files[i].type || ALLOWED_IMAGE_TYPES.indexOf(files[i].type) === -1) {
-                    setInlineError(field, 'Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.');
+                    setInlineError(field, messages.msgImageUnsupportedType);
                     return false;
                 }
                 if (files[i].size > MAX_IMAGE_BYTES) {
-                    setInlineError(field, 'La imagen no debe superar los 10 MB.');
+                    setInlineError(field, messages.msgImageTooLarge);
                     return false;
                 }
             }
@@ -363,7 +370,7 @@
             button.type = 'button';
             button.className = 'car-image-upload-thumb' + (index === previewIndex ? ' is-active' : '');
             button.setAttribute('data-upload-preview-index', String(index));
-            button.setAttribute('aria-label', 'Ver imagen ' + (index + 1));
+            button.setAttribute('aria-label', formatMessage(messages.msgImagePreview, index + 1));
 
             var img = document.createElement('img');
             img.src = url;
@@ -379,7 +386,7 @@
             addMore.type = 'button';
             addMore.className = 'car-image-upload-add-more';
             addMore.id = 'modalCarImageAddMore';
-            addMore.setAttribute('aria-label', 'Agregar más imágenes');
+            addMore.setAttribute('aria-label', messages.msgImageAddMore);
             addMore.textContent = '+';
             filePreviewThumbnails.appendChild(addMore);
         }
@@ -411,14 +418,16 @@
         fileUpload.classList.toggle('has-file', files.length > 0 || existingImageUrls.length > 0);
 
         if (files.length === 1) {
-            fileStatus.textContent = existingImageCount > 0 ? files[0].name + ' para agregar' : files[0].name;
+            fileStatus.textContent = existingImageCount > 0 ? files[0].name + ' ' + messages.msgImageAddSuffix : files[0].name;
             setPreviewFromFiles(files, nextPreviewIndex);
         } else if (files.length > 1) {
-            fileStatus.textContent = files.length + ' imágenes seleccionadas'
-                    + (existingImageCount > 0 ? ' para agregar' : '');
+            fileStatus.textContent = formatMessage(messages.msgImageMultiple, files.length)
+                    + (existingImageCount > 0 ? ' ' + messages.msgImageAddSuffix : '');
             setPreviewFromFiles(files, nextPreviewIndex);
         } else if (existingImageUrls.length > 0) {
-            fileStatus.textContent = existingImageStatus || (existingImageUrls.length + ' imágenes cargadas');
+            fileStatus.textContent = existingImageStatus || (existingImageUrls.length === 1
+                    ? messages.msgImageLoadedOne
+                    : formatMessage(messages.msgImageLoadedMultiple, existingImageUrls.length));
             setPreviewImages(existingImageUrls, [], nextPreviewIndex);
         } else {
             fileStatus.textContent = emptyFileStatus;

@@ -4,7 +4,6 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <c:url var="requestAdminUrl" value="/admin-requests"/>
-<spring:message var="closeModalLabel" code="common.action.close"/>
 <spring:message var="motivationPlaceholder" code="request.admin.placeholder.motivation"/>
 <spring:message var="bioPlaceholder" code="request.admin.placeholder.bio"/>
 <spring:message var="justificationPlaceholder" code="request.admin.placeholder.justification"/>
@@ -18,10 +17,6 @@
                 <span class="review-modal-kicker"><spring:message code="request.admin.kicker"/></span>
                 <h2 id="requestAdminModalTitle"><spring:message code="request.admin.title"/></h2>
             </div>
-            <button type="button" class="review-modal-close"
-                    data-close-request-admin-modal aria-label="${closeModalLabel}">
-                <pa:icon name="close" size="18"/>
-            </button>
         </header>
 
         <p class="car-modal-subtitle">

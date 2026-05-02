@@ -559,7 +559,6 @@ public class AdminController {
         final List<String> imageUrls = buildRequestImageUrls(request, retainedImageIds);
         mav.addObject("existingImageUrls", imageUrls);
         mav.addObject("existingImageIds", retainedImageIds);
-        mav.addObject("existingImageStatus", imageStatus(imageUrls.size()));
         return mav;
     }
 
@@ -578,7 +577,6 @@ public class AdminController {
         final List<String> imageUrls = buildCarImageUrls(car, retainedImageIds);
         mav.addObject("existingImageUrls", imageUrls);
         mav.addObject("existingImageIds", retainedImageIds);
-        mav.addObject("existingImageStatus", imageStatus(imageUrls.size()));
         return mav;
     }
 
@@ -714,14 +712,6 @@ public class AdminController {
             return List.of();
         }
         return List.of(LEGACY_IMAGE_ID);
-    }
-
-    private String imageStatus(final int imageCount) {
-        if (imageCount == 0) {
-            return "Sin imágenes cargadas";
-        }
-        return imageCount + " imagen" + (imageCount == 1 ? "" : "es") + " seleccionada"
-                + (imageCount == 1 ? "" : "s");
     }
 
     private String submitterLabel(final CarRequest request) {

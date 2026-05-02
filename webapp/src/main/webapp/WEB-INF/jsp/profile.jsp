@@ -30,8 +30,10 @@
     <spring:message var="followUserAction" code="profile.authRequired.followAction"/>
     <spring:message var="followingConnectionsTitle" code="profile.following"/>
     <spring:message var="followersConnectionsTitle" code="profile.followers"/>
+    <spring:message var="followLabel" code="common.label.follow"/>
+    <spring:message var="followingLabel" code="common.label.following"/>
 
-    <main class="profile-page">
+    <main class="profile-page" data-profile-user-id="${profile.id}">
         <section class="profile-hero" aria-labelledby="profileName">
             <div class="profile-avatar" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" aria-hidden="true" focusable="false">
@@ -47,9 +49,7 @@
                 <dl class="profile-stats" aria-label="${profileStatsAria}">
                     <div>
                         <dt>
-                            <button type="button" class="profile-stat-button" data-scroll-to-reviews>
-                                <c:out value="${profile.reviewCount}"/>
-                            </button>
+                            <span class="profile-stat-value"><c:out value="${profile.reviewCount}"/></span>
                         </dt>
                         <dd><spring:message code="common.label.reviews"/></dd>
                     </div>
@@ -73,7 +73,8 @@
                                     class="profile-stat-button"
                                     data-open-connections-modal
                                     data-connections-kind="followers"
-                                    data-connections-title="${followersConnectionsTitle}">
+                                    data-connections-title="${followersConnectionsTitle}"
+                                    data-profile-follower-count>
                                 <c:out value="${profile.followerCount}"/>
                             </button>
                         </dt>
@@ -84,26 +85,39 @@
 
             <c:choose>
                 <c:when test="${ownProfile}">
-                    <button type="button" class="btn-primary profile-action-button" data-open-edit-profile-modal><spring:message code="profile.settings"/></button>
-                    <c:if test="${canRequestModerator}">
-                        <button type="button" class="profile-moderator-link" data-open-request-admin-modal>
-                            <spring:message code="profile.requestAdmin"/>
-                        </button>
-                    </c:if>
+                    <div class="profile-owner-actions">
+                        <button type="button" class="btn-primary profile-action-button" data-open-edit-profile-modal><spring:message code="profile.settings"/></button>
+                        <c:url var="logoutUrl" value="/logout"/>
+                        <form class="profile-logout-form" method="post" action="${logoutUrl}" data-confirm-modal="logoutConfirmModal">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                            <button type="submit" class="btn-secondary profile-logout-button"><spring:message code="profile.edit.logout"/></button>
+                        </form>
+                        <c:if test="${canRequestModerator}">
+                            <button type="button" class="profile-moderator-link" data-open-request-admin-modal>
+                                <spring:message code="profile.requestAdmin"/>
+                            </button>
+                        </c:if>
+                    </div>
                 </c:when>
                 <c:otherwise>
                     <c:url var="profileFollowUrl" value="/profiles/${profile.id}/follow"/>
                     <c:choose>
                         <c:when test="${authenticated}">
-                            <form class="profile-action-form"
+                            <form class="profile-action-form profile-follow-form"
                                   method="post"
                                   action="${profileFollowUrl}"
+                                  data-enhanced-follow="true"
+                                  data-follow-user-id="${profile.id}"
                                   data-auth-resume-intent="follow-profile-${profile.id}">
                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <button
                                         type="submit"
                                         class="btn-primary profile-action-button profile-follow-button ${followingProfile ? 'is-following' : ''}"
-                                        aria-pressed="${followingProfile}">
+                                        aria-pressed="${followingProfile}"
+                                        data-follow-toggle
+                                        data-follow-user-id="${profile.id}"
+                                        data-follow-label="${fn:escapeXml(followLabel)}"
+                                        data-following-label="${fn:escapeXml(followingLabel)}">
                                     <c:choose>
                                         <c:when test="${followingProfile}"><spring:message code="common.label.following"/></c:when>
                                         <c:otherwise><spring:message code="common.label.follow"/></c:otherwise>
@@ -146,36 +160,27 @@
             <spring:message var="profileReviewsLabel" code="common.label.reviews"/>
             <spring:message var="profileFavoritesLabel" code="profile.tab.favorites"/>
             <spring:message var="profileLikedLabel" code="profile.tab.liked"/>
-            <c:choose>
-                <c:when test="${ownProfile}">
-                    <pa:subtabs tabCount="3"
-                                labels="${profileMyReviewsLabel}|${profileFavoritesLabel}|${profileLikedLabel}"
-                                hrefs="${profileReviewsTabUrl}|${profileFavoritesTabUrl}|${profileLikedTabUrl}"
-                                counts="${profileReviewCount}|${favoriteCarCount}|${likedActivityCount}"
-                                values="reviews|favorites|liked"
-                                activeValue="${activeTab}"
-                                ariaLabel="${profileTabsAria}"/>
-                </c:when>
-                <c:otherwise>
-                    <pa:subtabs tabCount="1"
-                                labels="${profileReviewsLabel}"
-                                hrefs="${profileReviewsTabUrl}"
-                                counts="${profileReviewCount}"
-                                values="reviews"
-                                activeValue="${activeTab}"
-                                ariaLabel="${profileTabsAria}"/>
-                </c:otherwise>
-            </c:choose>
+            <c:if test="${ownProfile}">
+                <pa:subtabs tabCount="3"
+                            labels="${profileMyReviewsLabel}|${profileFavoritesLabel}|${profileLikedLabel}"
+                            hrefs="${profileReviewsTabUrl}|${profileFavoritesTabUrl}|${profileLikedTabUrl}"
+                            counts="${profileReviewCount}|${favoriteCarCount}|${likedActivityCount}"
+                            values="reviews|favorites|liked"
+                            activeValue="${activeTab}"
+                            ariaLabel="${profileTabsAria}"/>
+            </c:if>
+            <c:if test="${not ownProfile}">
+                <header class="profile-section-heading">
+                    <h2 id="profileReviewsTitle"><c:out value="${profileReviewsLabel}"/></h2>
+                    <span><c:out value="${profileReviewCount}"/></span>
+                </header>
+            </c:if>
 
             <c:choose>
                 <c:when test="${activeTab eq 'favorites'}">
                     <section id="profileFavoritesPanel"
                              class="profile-tab-panel profile-favorites-section"
                              aria-labelledby="profileFavoritesTab">
-                        <div class="profile-section-heading">
-                            <h2 id="profileFavoritesTitle"><spring:message code="profile.tab.favorites"/></h2>
-                            <span><c:out value="${favoriteCarCount}"/></span>
-                        </div>
 
                         <c:choose>
                             <c:when test="${empty favoriteCars}">
@@ -224,10 +229,6 @@
                     <section id="profileLikedPanel"
                              class="profile-tab-panel profile-liked-section"
                              aria-labelledby="profileLikedTab">
-                        <div class="profile-section-heading">
-                            <h2 id="profileLikedTitle"><spring:message code="profile.tab.liked"/></h2>
-                            <span><c:out value="${likedActivityCount}"/></span>
-                        </div>
 
                         <c:choose>
                             <c:when test="${empty likedReviews}">
@@ -267,16 +268,7 @@
                 <c:otherwise>
                     <section id="profileReviewsPanel"
                              class="profile-tab-panel profile-reviews-section"
-                             aria-labelledby="profileReviewsTab">
-                        <div class="profile-section-heading">
-                            <h2 id="profileReviewsTitle">
-                                <c:choose>
-                                    <c:when test="${ownProfile}"><spring:message code="profile.tab.myReviews"/></c:when>
-                                    <c:otherwise><spring:message code="common.label.reviews"/></c:otherwise>
-                                </c:choose>
-                            </h2>
-                            <span><c:out value="${profileReviewCount}"/></span>
-                        </div>
+                             aria-labelledby="${ownProfile ? 'profileReviewsTab' : 'profileReviewsTitle'}">
 
                         <c:choose>
                             <c:when test="${empty profileReviews}">
@@ -320,6 +312,11 @@
     <pa:review-delete-modal/>
     <pa:edit-profile-modal profile="${profile}"/>
     <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
+    <pa:confirmation-modal id="logoutConfirmModal"
+                           titleCode="profile.logout.confirm.title"
+                           bodyCode="profile.logout.confirm.body"
+                           confirmCode="profile.edit.logout"
+                           confirmCssClass="btn-primary"/>
     <pa:auth-required-modal/>
     <c:if test="${ownProfile}">
         <pa:request-admin-modal/>
@@ -328,6 +325,7 @@
     <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
     <script src="<c:url value='/js/action-menu.js'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
+    <script src="<c:url value='/js/confirmation-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/profile.js?v=8'/>"></script>
     <c:if test="${ownProfile}">

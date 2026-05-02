@@ -3,6 +3,12 @@
         return (' ' + node.className + ' ').indexOf(' ' + className + ' ') >= 0;
     }
 
+    function supportsFetchFormData() {
+        return typeof window.fetch === 'function'
+            && typeof window.FormData === 'function'
+            && typeof window.Promise === 'function';
+    }
+
     function setClass(node, className, enabled) {
         if (enabled && !hasClass(node, className)) {
             node.className += ' ' + className;
@@ -112,10 +118,18 @@
         var visibleList = modal ? modal.querySelector('[data-connections-list]:not([hidden])') : null;
         var rows = visibleList ? visibleList.querySelectorAll('[data-connection-row]') : [];
         var normalizedQuery = query.toLowerCase();
+        var empty = visibleList ? visibleList.querySelector('[data-connections-empty]') : null;
+        var visibleCount = 0;
 
         for (var i = 0; i < rows.length; i += 1) {
             var haystack = (rows[i].getAttribute('data-search-text') || '').toLowerCase();
             rows[i].hidden = normalizedQuery !== '' && haystack.indexOf(normalizedQuery) < 0;
+            if (!rows[i].hidden) {
+                visibleCount += 1;
+            }
+        }
+        if (empty) {
+            empty.hidden = normalizedQuery === '' || visibleCount > 0;
         }
     }
 
@@ -123,6 +137,110 @@
         if (window.PawActionMenus) {
             window.PawActionMenus.close();
         }
+    }
+
+    function updateFollowButton(button, following) {
+        var followLabel = button.getAttribute('data-follow-label') || '';
+        var followingLabel = button.getAttribute('data-following-label') || followLabel;
+
+        button.setAttribute('aria-pressed', String(following));
+        setClass(button, 'is-following', following);
+        button.textContent = following ? followingLabel : followLabel;
+    }
+
+    function updateFollowButtons(userId, following) {
+        var buttons = document.querySelectorAll('[data-follow-toggle][data-follow-user-id="' + userId + '"]');
+
+        for (var i = 0; i < buttons.length; i += 1) {
+            updateFollowButton(buttons[i], following);
+        }
+    }
+
+    function updateProfileFollowerCount(userId, followerCount) {
+        var profileRoot = document.querySelector('[data-profile-user-id]');
+        var countNode = document.querySelector('[data-profile-follower-count]');
+
+        if (!profileRoot || !countNode || profileRoot.getAttribute('data-profile-user-id') !== userId) {
+            return;
+        }
+        countNode.textContent = String(Math.max(0, followerCount));
+    }
+
+    function parseFollowResponse(body) {
+        var parts = (body || '').trim().split('|');
+        var followerCount;
+
+        if (parts.length !== 2) {
+            return null;
+        }
+        followerCount = parseInt(parts[1], 10);
+        if (isNaN(followerCount)) {
+            return null;
+        }
+        return {
+            following: parts[0] === 'true',
+            followerCount: followerCount
+        };
+    }
+
+    function submitFollowForm(form) {
+        var button = form.querySelector('[data-follow-toggle]');
+        var userId = form.getAttribute('data-follow-user-id');
+
+        if (!button || !userId || button.disabled || form.getAttribute('data-loading') === 'true') {
+            return;
+        }
+        if (!supportsFetchFormData()) {
+            form.submit();
+            return;
+        }
+
+        form.setAttribute('data-loading', 'true');
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+
+        window.fetch(form.getAttribute('action'), {
+            method: 'POST',
+            body: new window.FormData(form),
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'text/plain',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(function (response) {
+            if (response.redirected) {
+                window.location.href = response.url;
+                return '';
+            }
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return '';
+            }
+            if (!response.ok) {
+                throw new Error('follow-request-failed');
+            }
+            return response.text();
+        }).then(function (body) {
+            var nextState;
+
+            if (!body) {
+                return;
+            }
+            nextState = parseFollowResponse(body);
+            if (!nextState) {
+                throw new Error('invalid-follow-response');
+            }
+            updateFollowButtons(userId, nextState.following);
+            updateProfileFollowerCount(userId, nextState.followerCount);
+        }).catch(function () {
+            form.submit();
+        }).finally(function () {
+            form.removeAttribute('data-loading');
+            if (document.contains(button)) {
+                button.disabled = false;
+                button.removeAttribute('aria-busy');
+            }
+        });
     }
 
     // funciones para recordar la pestaña en la que se encuentra el usuario en caso de un reload
@@ -286,7 +404,7 @@
         if (connectionsButton) {
             switchConnectionsList(
                 connectionsButton.getAttribute('data-connections-kind') || 'following',
-                connectionsButton.getAttribute('data-connections-title') || 'Seguidos'
+                connectionsButton.getAttribute('data-connections-title') || ''
             );
             return;
         }
@@ -336,6 +454,19 @@
                 sectionToggle.getAttribute('data-expanded') !== 'true'
             );
         }
+    });
+
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+
+        if (!hasAttribute(form, 'data-enhanced-follow')) {
+            return;
+        }
+        if (!supportsFetchFormData()) {
+            return;
+        }
+        event.preventDefault();
+        submitFollowForm(form);
     });
 
     document.addEventListener('keydown', function (event) {

@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<spring:message var="loginSubmittingLabel" code="auth.login.submitting"/>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -25,11 +26,11 @@
                 <h1 id="loginTitle"><spring:message code="auth.login.heading"/></h1>
             </div>
 
-            <c:if test="${not empty loginError}">
-                <div class="alert alert-error" role="alert"><c:out value="${loginError}"/></div>
+            <c:if test="${not empty loginErrorCode}">
+                <div class="alert alert-error" role="alert"><spring:message code="${loginErrorCode}"/></div>
             </c:if>
-            <c:if test="${not empty loginMessage}">
-                <div class="alert alert-success" role="status"><c:out value="${loginMessage}"/></div>
+            <c:if test="${not empty loginMessageCode}">
+                <div class="alert alert-success" role="status"><spring:message code="${loginMessageCode}"/></div>
             </c:if>
 
             <form id="loginForm" class="auth-form" method="post" action="<c:url value='/login'/>"
@@ -57,7 +58,9 @@
                     <span><spring:message code="auth.login.remember"/></span>
                 </label>
 
-                <button type="submit" class="btn-primary auth-submit"><spring:message code="auth.login.submit"/></button>
+                <button type="submit" class="btn-primary auth-submit" data-loading-label="${loginSubmittingLabel}">
+                    <spring:message code="auth.login.submit"/>
+                </button>
             </form>
 
             <p class="auth-switch">

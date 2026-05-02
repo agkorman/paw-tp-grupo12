@@ -37,10 +37,5 @@
             </div>
         </form>
 
-        <c:url var="logoutUrl" value="/logout"/>
-        <form class="profile-logout-form" method="post" action="${logoutUrl}">
-            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-            <button type="submit" class="btn-secondary profile-logout-button"><spring:message code="profile.edit.logout"/></button>
-        </form>
     </section>
 </div>

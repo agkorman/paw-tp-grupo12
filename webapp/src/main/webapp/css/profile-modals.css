@@ -126,18 +126,6 @@
     gap: 0.75rem;
 }
 
-.profile-logout-form {
-    display: flex;
-    justify-content: flex-end;
-    margin: 0;
-    padding: 0 var(--spacing-6) var(--spacing-6);
-}
-
-.profile-logout-button {
-    color: var(--on-surface);
-    border-color: var(--outline-variant);
-}
-
 .profile-delete-dialog {
     width: min(460px, 100%);
 }
@@ -149,6 +137,21 @@
 }
 
 .profile-delete-form p {
+    color: var(--on-surface-variant);
+    line-height: 1.55;
+}
+
+.profile-confirmation-dialog {
+    width: min(460px, 100%);
+}
+
+.profile-confirmation-body {
+    display: grid;
+    gap: var(--spacing-5);
+    padding: var(--spacing-6);
+}
+
+.profile-confirmation-body p {
     color: var(--on-surface-variant);
     line-height: 1.55;
 }

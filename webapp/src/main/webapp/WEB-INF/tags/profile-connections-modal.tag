@@ -11,7 +11,10 @@
 <spring:message var="closeModalLabel" code="common.action.close"/>
 <spring:message var="searchPlaceholder" code="profile.connections.search.placeholder"/>
 <spring:message var="searchAria" code="profile.connections.search.aria"/>
+<spring:message var="searchEmpty" code="profile.connections.search.empty"/>
 <spring:message var="followUserAction" code="profile.authRequired.followAction"/>
+<spring:message var="followLabel" code="common.label.follow"/>
+<spring:message var="followingLabel" code="common.label.following"/>
 
 <div id="profileConnectionsModal" class="profile-modal" hidden>
     <div class="profile-modal-overlay" data-close-profile-modal></div>
@@ -47,12 +50,18 @@
                                 <form class="profile-connection-follow-form"
                                       method="post"
                                       action="${connectionFollowUrl}"
+                                      data-enhanced-follow="true"
+                                      data-follow-user-id="${user.id}"
                                       data-auth-resume-intent="follow-profile-${user.id}">
                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <button
                                             type="submit"
                                             class="profile-connection-button ${user.following ? 'is-following' : ''}"
-                                            aria-pressed="${user.following}">
+                                            aria-pressed="${user.following}"
+                                            data-follow-toggle
+                                            data-follow-user-id="${user.id}"
+                                            data-follow-label="${fn:escapeXml(followLabel)}"
+                                            data-following-label="${fn:escapeXml(followingLabel)}">
                                         <c:choose>
                                             <c:when test="${user.following}"><spring:message code="common.label.following"/></c:when>
                                             <c:otherwise><spring:message code="common.label.follow"/></c:otherwise>
@@ -78,6 +87,7 @@
                     </c:if>
                 </article>
             </c:forEach>
+            <p class="profile-connections-empty" data-connections-empty hidden><c:out value="${searchEmpty}"/></p>
         </div>
 
         <div class="profile-connections-list" data-connections-list="followers" hidden>
@@ -99,12 +109,18 @@
                                 <form class="profile-connection-follow-form"
                                       method="post"
                                       action="${connectionFollowUrl}"
+                                      data-enhanced-follow="true"
+                                      data-follow-user-id="${user.id}"
                                       data-auth-resume-intent="follow-profile-${user.id}">
                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <button
                                             type="submit"
                                             class="profile-connection-button ${user.following ? 'is-following' : ''}"
-                                            aria-pressed="${user.following}">
+                                            aria-pressed="${user.following}"
+                                            data-follow-toggle
+                                            data-follow-user-id="${user.id}"
+                                            data-follow-label="${fn:escapeXml(followLabel)}"
+                                            data-following-label="${fn:escapeXml(followingLabel)}">
                                         <c:choose>
                                             <c:when test="${user.following}"><spring:message code="common.label.following"/></c:when>
                                             <c:otherwise><spring:message code="common.label.follow"/></c:otherwise>
@@ -130,6 +146,7 @@
                     </c:if>
                 </article>
             </c:forEach>
+            <p class="profile-connections-empty" data-connections-empty hidden><c:out value="${searchEmpty}"/></p>
         </div>
     </section>
 </div>

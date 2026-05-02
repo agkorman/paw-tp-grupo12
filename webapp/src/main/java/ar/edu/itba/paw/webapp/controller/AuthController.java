@@ -67,13 +67,13 @@ public class AuthController {
         mav.addObject("loginRedirect", safeRedirect);
         mav.addObject("loginIntent", safeIntent);
         if (error != null) {
-            mav.addObject("loginError", "Email o contraseña inválidos.");
+            mav.addObject("loginErrorCode", "auth.login.error");
         }
         if (logout != null) {
-            mav.addObject("loginMessage", "Sesión cerrada.");
+            mav.addObject("loginMessageCode", "auth.login.logout");
         }
         if (registered != null) {
-            mav.addObject("loginMessage", "Cuenta creada. Ya podés iniciar sesión.");
+            mav.addObject("loginMessageCode", "auth.login.registered");
         }
         return mav;
     }

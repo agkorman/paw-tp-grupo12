@@ -72,7 +72,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.625rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-end;
 }
 
@@ -85,17 +85,27 @@
     text-transform: uppercase;
 }
 
-.profile-review-score {
+.profile-review-rating-row,
+.profile-review-menu-slot {
+    flex: 0 0 auto;
+}
+
+.profile-review-rating-row .card-rating-badge {
+    gap: 0.35rem;
+    padding: 0.32rem 0.65rem;
+    font-size: 0.82rem;
+}
+
+.profile-review-rating-row .card-rating-badge svg {
+    width: 12px;
+    height: 12px;
+}
+
+.profile-review-menu-slot {
+    width: 2rem;
+    min-width: 2rem;
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 3rem;
-    min-height: 2rem;
-    padding: 0.35rem 0.75rem;
-    background: rgba(94, 212, 255, 0.14);
-    color: var(--tertiary);
-    font-family: var(--font-display);
-    font-weight: 700;
+    justify-content: flex-end;
 }
 
 .profile-review-card h3 {

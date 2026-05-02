@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<spring:message var="registerSubmittingLabel" code="auth.register.submitting"/>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -81,7 +82,9 @@
                             required>
                 </div>
 
-                <button type="submit" class="btn-primary auth-submit"><spring:message code="auth.register.submit"/></button>
+                <button type="submit" class="btn-primary auth-submit" data-loading-label="${registerSubmittingLabel}">
+                    <spring:message code="auth.register.submit"/>
+                </button>
             </form>
 
             <p class="auth-switch">

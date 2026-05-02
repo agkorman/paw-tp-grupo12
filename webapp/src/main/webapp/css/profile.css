@@ -69,25 +69,38 @@
 }
 
 .profile-stats dt {
-    color: var(--primary);
+    color: var(--on-surface);
     font-family: var(--font-display);
     font-size: 1.5rem;
     font-weight: 700;
+}
+
+.profile-stat-value,
+.profile-stat-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    min-width: 2rem;
 }
 
 .profile-stat-button {
     appearance: none;
     -webkit-appearance: none;
     background: transparent;
-    border: 0;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
     color: inherit;
     cursor: pointer;
     font: inherit;
-    padding: 0;
+    padding: 0 0.35rem;
 }
 
-.profile-stat-button:hover {
-    color: var(--primary-container);
+.profile-stat-button[data-open-connections-modal]:hover,
+.profile-stat-button[data-open-connections-modal]:focus-visible {
+    background: var(--surface-container-high);
+    border-color: var(--outline-variant);
+    color: var(--on-surface);
 }
 
 .profile-stats dd {
@@ -99,10 +112,16 @@
 }
 
 .profile-action-button {
-    align-self: end;
     min-height: 2.75rem;
     padding: 0.75rem 1.5rem;
     white-space: nowrap;
+}
+
+.profile-owner-actions {
+    align-self: end;
+    display: grid;
+    justify-items: stretch;
+    gap: 0.55rem;
 }
 
 .profile-action-form {
@@ -110,8 +129,28 @@
     margin: 0;
 }
 
+.profile-follow-form {
+    width: 9rem;
+}
+
+.profile-logout-form {
+    margin: 0;
+}
+
+.profile-logout-button {
+    width: 100%;
+    color: var(--on-surface);
+    border-color: var(--outline-variant);
+}
+
 .profile-action-form .profile-action-button {
     width: 100%;
+}
+
+.profile-action-form .profile-follow-button,
+.profile-follow-button {
+    width: 9rem;
+    justify-content: center;
 }
 
 .profile-follow-button.is-following {
@@ -220,7 +259,8 @@
         grid-template-columns: auto minmax(0, 1fr);
     }
 
-    .profile-action-button {
+    .profile-action-button,
+    .profile-owner-actions {
         grid-column: 1 / -1;
         justify-self: start;
     }

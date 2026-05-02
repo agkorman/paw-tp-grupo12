@@ -50,6 +50,31 @@
 <spring:message var="previousImageLabel" code="cars.image.previous"/>
 <spring:message var="nextImageLabel" code="cars.image.next"/>
 <spring:message var="removeImageLabel" code="cars.form.image.remove"/>
+<spring:message var="emptyFileStatus" code="cars.form.image.none"/>
+<spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
+<spring:message var="jsRequiredBrand" code="js.car.required.brand"/>
+<spring:message var="jsRequiredBodyType" code="js.car.required.bodyType"/>
+<spring:message var="jsRequiredModel" code="js.car.required.model"/>
+<spring:message var="jsRequiredDescription" code="js.car.required.description"/>
+<spring:message var="jsRequiredHorsepower" code="js.car.required.horsepower"/>
+<spring:message var="jsRequiredAirbags" code="js.car.required.airbags"/>
+<spring:message var="jsRequiredConsumption" code="js.car.required.consumption"/>
+<spring:message var="jsRequiredMaxSpeed" code="js.car.required.maxSpeed"/>
+<spring:message var="jsRequiredImage" code="js.car.required.image"/>
+<spring:message var="jsRadioRequired" code="js.car.validation.radio"/>
+<spring:message var="jsEmailInvalid" code="js.car.validation.email"/>
+<spring:message var="jsNumberInvalid" code="js.car.validation.number"/>
+<spring:message var="jsNumberMin" code="js.car.validation.min"/>
+<spring:message var="jsNumberMax" code="js.car.validation.max"/>
+<spring:message var="jsImageMaxCount" code="js.car.image.maxCount"/>
+<spring:message var="jsImageUnsupportedType" code="js.car.image.unsupportedType"/>
+<spring:message var="jsImageTooLarge" code="js.car.image.tooLarge"/>
+<spring:message var="jsImageMultiple" code="js.car.image.multiple"/>
+<spring:message var="jsImagePreview" code="js.car.image.preview"/>
+<spring:message var="jsImageAddSuffix" code="js.car.image.addSuffix"/>
+<spring:message var="jsImageLoadedOne" code="js.car.image.loadedOne"/>
+<spring:message var="jsImageLoadedMultiple" code="js.car.image.loadedMultiple"/>
+<spring:message var="jsImageAddMore" code="js.car.image.addMore"/>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -77,6 +102,31 @@
                  data-existing-image-urls="${fn:escapeXml(resolvedExistingImageUrls)}"
                  data-existing-image-ids="${fn:escapeXml(resolvedExistingImageIds)}"
                  data-existing-image-status="${fn:escapeXml(existingImageStatus)}"
+                 data-msg-file-empty="${fn:escapeXml(emptyFileStatus)}"
+                 data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
+                 data-msg-required-brand="${fn:escapeXml(jsRequiredBrand)}"
+                 data-msg-required-body-type="${fn:escapeXml(jsRequiredBodyType)}"
+                 data-msg-required-model="${fn:escapeXml(jsRequiredModel)}"
+                 data-msg-required-description="${fn:escapeXml(jsRequiredDescription)}"
+                 data-msg-required-horsepower="${fn:escapeXml(jsRequiredHorsepower)}"
+                 data-msg-required-airbags="${fn:escapeXml(jsRequiredAirbags)}"
+                 data-msg-required-consumption="${fn:escapeXml(jsRequiredConsumption)}"
+                 data-msg-required-max-speed="${fn:escapeXml(jsRequiredMaxSpeed)}"
+                 data-msg-required-image="${fn:escapeXml(jsRequiredImage)}"
+                 data-msg-radio-required="${fn:escapeXml(jsRadioRequired)}"
+                 data-msg-email-invalid="${fn:escapeXml(jsEmailInvalid)}"
+                 data-msg-number-invalid="${fn:escapeXml(jsNumberInvalid)}"
+                 data-msg-number-min="${fn:escapeXml(jsNumberMin)}"
+                 data-msg-number-max="${fn:escapeXml(jsNumberMax)}"
+                 data-msg-image-max-count="${fn:escapeXml(jsImageMaxCount)}"
+                 data-msg-image-unsupported-type="${fn:escapeXml(jsImageUnsupportedType)}"
+                 data-msg-image-too-large="${fn:escapeXml(jsImageTooLarge)}"
+                 data-msg-image-multiple="${fn:escapeXml(jsImageMultiple)}"
+                 data-msg-image-preview="${fn:escapeXml(jsImagePreview)}"
+                 data-msg-image-add-suffix="${fn:escapeXml(jsImageAddSuffix)}"
+                 data-msg-image-loaded-one="${fn:escapeXml(jsImageLoadedOne)}"
+                 data-msg-image-loaded-multiple="${fn:escapeXml(jsImageLoadedMultiple)}"
+                 data-msg-image-add-more="${fn:escapeXml(jsImageAddMore)}"
                  aria-labelledby="carFormTitle">
             <div class="review-modal-header">
                 <div>
@@ -299,7 +349,7 @@
                                                 <c:otherwise><spring:message code="cars.form.image.help"/></c:otherwise>
                                             </c:choose>
                                         </span>
-                                        <span id="modalCarFileStatus" class="car-image-upload-status"><spring:message code="cars.form.image.none"/></span>
+                                        <span id="modalCarFileStatus" class="car-image-upload-status"><c:out value="${emptyFileStatus}"/></span>
                                         <span id="modalCarImageThumbnails" class="car-image-upload-thumbnails" hidden></span>
                                     </span>
                                 </label>
