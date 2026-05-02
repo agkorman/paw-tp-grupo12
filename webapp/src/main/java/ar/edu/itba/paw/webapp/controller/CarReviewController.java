@@ -546,8 +546,8 @@ public class CarReviewController {
                 errors.rejectValue("modelYear", "modelYear.required", "El año del modelo es obligatorio.");
             }
         } else {
-            final int minModelYear = 1950;
-            final int maxModelYear = 2026;
+            final int minModelYear = 1886;
+            final int maxModelYear = 2100;
             if (modelYear < minModelYear || modelYear > maxModelYear) {
                 errors.rejectValue("modelYear", "modelYear.range",
                         "Ingresá un año entre " + minModelYear + " y " + maxModelYear + ".");

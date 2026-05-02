@@ -28,7 +28,8 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     private static final int SCORE_SCALE = 6;
     private static final int DEFAULT_LIMIT = 5;
-    private static final int HIGHLIGHT_LIMIT = 3;
+    private static final int POSITIVE_HIGHLIGHT_LIMIT = 2;
+    private static final int NEGATIVE_HIGHLIGHT_LIMIT = 1;
 
     private final CarService carService;
     private final ReviewTagService reviewTagService;
@@ -140,11 +141,12 @@ public class RecommendationServiceImpl implements RecommendationService {
                                     final Map<Short, BigDecimal> tagIdWeights,
                                     final Map<Short, ReviewTag> tagsById) {
         if (reviewCount <= 0 || carTagCounts == null || carTagCounts.isEmpty()) {
-            return new CarRecommendation(car, BigDecimal.ZERO, reviewCount, List.of());
+            return new CarRecommendation(car, BigDecimal.ZERO, reviewCount, List.of(), List.of());
         }
 
         BigDecimal score = BigDecimal.ZERO;
-        final List<WeightedHighlight> weightedHighlights = new ArrayList<>();
+        final List<WeightedHighlight> positives = new ArrayList<>();
+        final List<WeightedHighlight> negatives = new ArrayList<>();
         for (final Map.Entry<Short, BigDecimal> entry : tagIdWeights.entrySet()) {
             final int mentionCount = carTagCounts.getOrDefault(entry.getKey(), 0);
             if (mentionCount <= 0) {
@@ -153,23 +155,39 @@ public class RecommendationServiceImpl implements RecommendationService {
             final BigDecimal frequency = frequency(mentionCount, reviewCount);
             final BigDecimal contribution = entry.getValue().multiply(frequency);
             score = score.add(contribution);
-            if (contribution.compareTo(BigDecimal.ZERO) > 0) {
-                final ReviewTag tag = tagsById.get(entry.getKey());
-                if (tag != null) {
-                    weightedHighlights.add(new WeightedHighlight(
-                            contribution,
-                            new TagHighlight(tag, mentionCount, reviewCount, frequency)
-                    ));
-                }
+
+            final int sign = contribution.signum();
+            if (sign == 0) {
+                continue;
+            }
+            final ReviewTag tag = tagsById.get(entry.getKey());
+            if (tag == null) {
+                continue;
+            }
+            final boolean positiveImpact = sign > 0;
+            final TagHighlight highlight = new TagHighlight(tag, mentionCount, reviewCount, frequency, positiveImpact);
+            if (!highlight.isVisible()) {
+                continue;
+            }
+            final WeightedHighlight weighted = new WeightedHighlight(contribution.abs(), highlight);
+            if (positiveImpact) {
+                positives.add(weighted);
+            } else {
+                negatives.add(weighted);
             }
         }
 
-        final List<TagHighlight> highlights = weightedHighlights.stream()
+        return new CarRecommendation(car, score, reviewCount,
+                topHighlights(positives, POSITIVE_HIGHLIGHT_LIMIT),
+                topHighlights(negatives, NEGATIVE_HIGHLIGHT_LIMIT));
+    }
+
+    private List<TagHighlight> topHighlights(final List<WeightedHighlight> weighted, final int limit) {
+        return weighted.stream()
                 .sorted(Comparator.comparing(WeightedHighlight::getContribution).reversed())
-                .limit(HIGHLIGHT_LIMIT)
+                .limit(limit)
                 .map(WeightedHighlight::getHighlight)
                 .collect(Collectors.toList());
-        return new CarRecommendation(car, score, reviewCount, highlights);
     }
 
     private BigDecimal frequency(final int mentionCount, final int reviewCount) {

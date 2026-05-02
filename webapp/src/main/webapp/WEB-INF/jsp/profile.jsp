@@ -2,12 +2,13 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil | La Posta Autos</title>
+    <title><spring:message code="profile.title"/></title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
@@ -23,6 +24,12 @@
 <body>
     <pa:nav activePage="profile"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
+    <spring:message var="profileStatsAria" code="profile.stats.aria"/>
+    <spring:message var="profileContentAria" code="profile.content.aria"/>
+    <spring:message var="profileTabsAria" code="profile.tabs.aria"/>
+    <spring:message var="followUserAction" code="profile.authRequired.followAction"/>
+    <spring:message var="followingConnectionsTitle" code="profile.following"/>
+    <spring:message var="followersConnectionsTitle" code="profile.followers"/>
 
     <main class="profile-page">
         <section class="profile-hero" aria-labelledby="profileName">
@@ -37,14 +44,14 @@
                 <h1 id="profileName"><c:out value="${profile.name}"/></h1>
                 <p class="profile-email"><c:out value="${profile.email}"/></p>
 
-                <dl class="profile-stats" aria-label="Estadísticas del perfil">
+                <dl class="profile-stats" aria-label="${profileStatsAria}">
                     <div>
                         <dt>
                             <button type="button" class="profile-stat-button" data-scroll-to-reviews>
                                 <c:out value="${profile.reviewCount}"/>
                             </button>
                         </dt>
-                        <dd>Reviews</dd>
+                        <dd><spring:message code="common.label.reviews"/></dd>
                     </div>
                     <div>
                         <dt>
@@ -53,11 +60,11 @@
                                     class="profile-stat-button"
                                     data-open-connections-modal
                                     data-connections-kind="following"
-                                    data-connections-title="Seguidos">
+                                    data-connections-title="${followingConnectionsTitle}">
                                 <c:out value="${profile.followingCount}"/>
                             </button>
                         </dt>
-                        <dd>Seguidos</dd>
+                        <dd><spring:message code="profile.following"/></dd>
                     </div>
                     <div>
                         <dt>
@@ -66,21 +73,21 @@
                                     class="profile-stat-button"
                                     data-open-connections-modal
                                     data-connections-kind="followers"
-                                    data-connections-title="Seguidores">
+                                    data-connections-title="${followersConnectionsTitle}">
                                 <c:out value="${profile.followerCount}"/>
                             </button>
                         </dt>
-                        <dd>Seguidores</dd>
+                        <dd><spring:message code="profile.followers"/></dd>
                     </div>
                 </dl>
             </div>
 
             <c:choose>
                 <c:when test="${ownProfile}">
-                    <button type="button" class="btn-primary profile-action-button" data-open-edit-profile-modal>Ajustes de perfil</button>
+                    <button type="button" class="btn-primary profile-action-button" data-open-edit-profile-modal><spring:message code="profile.settings"/></button>
                     <c:if test="${canRequestModerator}">
                         <button type="button" class="profile-moderator-link" data-open-request-admin-modal>
-                            ¿Querés ser moderador?
+                            <spring:message code="profile.requestAdmin"/>
                         </button>
                     </c:if>
                 </c:when>
@@ -98,8 +105,8 @@
                                         class="btn-primary profile-action-button profile-follow-button ${followingProfile ? 'is-following' : ''}"
                                         aria-pressed="${followingProfile}">
                                     <c:choose>
-                                        <c:when test="${followingProfile}">Siguiendo</c:when>
-                                        <c:otherwise>Seguir</c:otherwise>
+                                        <c:when test="${followingProfile}"><spring:message code="common.label.following"/></c:when>
+                                        <c:otherwise><spring:message code="common.label.follow"/></c:otherwise>
                                     </c:choose>
                                 </button>
                             </form>
@@ -113,9 +120,9 @@
                                class="btn-primary profile-action-button profile-follow-button"
                                data-auth-resume-intent="follow-profile-${profile.id}"
                                data-auth-required="true"
-                               data-auth-required-action="seguir a este usuario"
+                               data-auth-required-action="${followUserAction}"
                                data-auth-required-intent="follow-profile-${profile.id}">
-                                Seguir
+                                <spring:message code="common.label.follow"/>
                             </a>
                         </c:otherwise>
                     </c:choose>
@@ -123,7 +130,7 @@
             </c:choose>
         </section>
 
-        <section class="profile-tabs" aria-label="Contenido del perfil">
+        <section class="profile-tabs" aria-label="${profileContentAria}">
             <c:url var="profileBaseUrl" value="${profileBasePath}"/>
             <c:url var="profileReviewsTabUrl" value="${profileBasePath}">
                 <c:param name="tab" value="reviews"/>
@@ -135,24 +142,28 @@
                 <c:param name="tab" value="liked"/>
             </c:url>
 
+            <spring:message var="profileMyReviewsLabel" code="profile.tab.myReviews"/>
+            <spring:message var="profileReviewsLabel" code="common.label.reviews"/>
+            <spring:message var="profileFavoritesLabel" code="profile.tab.favorites"/>
+            <spring:message var="profileLikedLabel" code="profile.tab.liked"/>
             <c:choose>
                 <c:when test="${ownProfile}">
                     <pa:subtabs tabCount="3"
-                                labels="Mis reseñas|Autos favoritos|Reseñas likeadas"
+                                labels="${profileMyReviewsLabel}|${profileFavoritesLabel}|${profileLikedLabel}"
                                 hrefs="${profileReviewsTabUrl}|${profileFavoritesTabUrl}|${profileLikedTabUrl}"
                                 counts="${profileReviewCount}|${favoriteCarCount}|${likedActivityCount}"
                                 values="reviews|favorites|liked"
                                 activeValue="${activeTab}"
-                                ariaLabel="Secciones del perfil"/>
+                                ariaLabel="${profileTabsAria}"/>
                 </c:when>
                 <c:otherwise>
                     <pa:subtabs tabCount="1"
-                                labels="Reviews"
+                                labels="${profileReviewsLabel}"
                                 hrefs="${profileReviewsTabUrl}"
                                 counts="${profileReviewCount}"
                                 values="reviews"
                                 activeValue="${activeTab}"
-                                ariaLabel="Secciones del perfil"/>
+                                ariaLabel="${profileTabsAria}"/>
                 </c:otherwise>
             </c:choose>
 
@@ -162,14 +173,14 @@
                              class="profile-tab-panel profile-favorites-section"
                              aria-labelledby="profileFavoritesTab">
                         <div class="profile-section-heading">
-                            <h2 id="profileFavoritesTitle">Autos favoritos</h2>
+                            <h2 id="profileFavoritesTitle"><spring:message code="profile.tab.favorites"/></h2>
                             <span><c:out value="${favoriteCarCount}"/></span>
                         </div>
 
                         <c:choose>
                             <c:when test="${empty favoriteCars}">
                                 <div class="profile-empty-state">
-                                    <p>Todavía no agregaste autos a favoritos.</p>
+                                    <p><spring:message code="profile.empty.favorites"/></p>
                                 </div>
                             </c:when>
                             <c:otherwise>
@@ -201,7 +212,7 @@
                                            data-target="#profileFavoritesPanel"
                                            data-list-selector=".profile-favorites-grid"
                                            data-item-selector=".profile-favorites-grid > .car-card-shell">
-                                            Mostrar más autos
+                                            <spring:message code="common.action.showMoreCars"/>
                                         </a>
                                     </div>
                                 </c:if>
@@ -214,14 +225,14 @@
                              class="profile-tab-panel profile-liked-section"
                              aria-labelledby="profileLikedTab">
                         <div class="profile-section-heading">
-                            <h2 id="profileLikedTitle">Reseñas likeadas</h2>
+                            <h2 id="profileLikedTitle"><spring:message code="profile.tab.liked"/></h2>
                             <span><c:out value="${likedActivityCount}"/></span>
                         </div>
 
                         <c:choose>
                             <c:when test="${empty likedReviews}">
                                 <div class="profile-empty-state">
-                                    <p>Todavía no le diste like a ninguna reseña.</p>
+                                    <p><spring:message code="profile.empty.liked"/></p>
                                 </div>
                             </c:when>
                             <c:otherwise>
@@ -245,7 +256,7 @@
                                            data-target="#profileLikedPanel"
                                            data-list-selector=".profile-review-list"
                                            data-item-selector=".profile-review-list > .profile-review-card">
-                                            Mostrar más reseñas
+                                            <spring:message code="common.action.showMoreReviews"/>
                                         </a>
                                     </div>
                                 </c:if>
@@ -260,8 +271,8 @@
                         <div class="profile-section-heading">
                             <h2 id="profileReviewsTitle">
                                 <c:choose>
-                                    <c:when test="${ownProfile}">Mis Reseñas</c:when>
-                                    <c:otherwise>Reviews</c:otherwise>
+                                    <c:when test="${ownProfile}"><spring:message code="profile.tab.myReviews"/></c:when>
+                                    <c:otherwise><spring:message code="common.label.reviews"/></c:otherwise>
                                 </c:choose>
                             </h2>
                             <span><c:out value="${profileReviewCount}"/></span>
@@ -270,7 +281,7 @@
                         <c:choose>
                             <c:when test="${empty profileReviews}">
                                 <div class="profile-empty-state">
-                                    <p>Todavía no tienes reseñas publicadas.</p>
+                                    <p><spring:message code="profile.empty.reviews"/></p>
                                 </div>
                             </c:when>
                             <c:otherwise>
@@ -294,7 +305,7 @@
                                            data-target="#profileReviewsPanel"
                                            data-list-selector=".profile-review-list"
                                            data-item-selector=".profile-review-list > .profile-review-card">
-                                            Mostrar más reseñas
+                                            <spring:message code="common.action.showMoreReviews"/>
                                         </a>
                                     </div>
                                 </c:if>

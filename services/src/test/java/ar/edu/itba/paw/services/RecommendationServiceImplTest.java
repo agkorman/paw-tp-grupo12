@@ -10,6 +10,7 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.ReviewTag;
+import ar.edu.itba.paw.model.TagHighlight;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewTagDao;
 import org.junit.jupiter.api.Test;
@@ -95,7 +96,7 @@ class RecommendationServiceImplTest {
     }
 
     @Test
-    void highlightsIncludeOnlyPositiveContributions() {
+    void highlightsAreSplitByImpactSign() {
         final RecommendationService service = service(
                 List.of(car(1L, "Sedan", "combustion")),
                 Map.of(1L, stats(1L, 2)),
@@ -108,10 +109,16 @@ class RecommendationServiceImplTest {
                 null
         );
         final List<CarRecommendation> recommendations = service.recommend(criteria, 5);
+        final CarRecommendation top = recommendations.get(0);
 
-        assertEquals(3, recommendations.get(0).getHighlights().size());
-        assertTrue(recommendations.get(0).getHighlights().stream()
+        assertEquals(2, top.getPositiveHighlights().size());
+        assertTrue(top.getPositiveHighlights().stream()
                 .noneMatch(highlight -> HIGH_FUEL.getCode().equals(highlight.getTag().getCode())));
+        assertTrue(top.getPositiveHighlights().stream().allMatch(TagHighlight::isPositiveImpact));
+
+        assertEquals(1, top.getNegativeHighlights().size());
+        assertEquals(HIGH_FUEL.getCode(), top.getNegativeHighlights().get(0).getTag().getCode());
+        assertTrue(top.getNegativeHighlights().get(0).getTier().isVisible());
     }
 
     private RecommendationService service(final List<Car> cars, final Map<Long, ReviewStats> stats,

@@ -9,33 +9,33 @@ import java.util.Map;
 
 public class RecommendationForm {
 
-    @NotBlank(message = "Elegí una opción.")
-    @Pattern(regexp = "city|highway|mixed|any", message = "Opción inválida.")
+    @NotBlank(message = "{validation.option.required}")
+    @Pattern(regexp = "city|highway|mixed|any", message = "{validation.option.invalid}")
     private String driving = "any";
 
-    @NotBlank(message = "Elegí una opción.")
-    @Pattern(regexp = "yes|no|any", message = "Opción inválida.")
+    @NotBlank(message = "{validation.option.required}")
+    @Pattern(regexp = "yes|no|any", message = "{validation.option.invalid}")
     private String firstCar = "any";
 
-    @NotBlank(message = "Elegí una opción.")
-    @Pattern(regexp = "very|somewhat|not", message = "Opción inválida.")
+    @NotBlank(message = "{validation.option.required}")
+    @Pattern(regexp = "very|somewhat|not", message = "{validation.option.invalid}")
     private String fuelEconomy = "not";
 
-    @NotBlank(message = "Elegí una opción.")
-    @Pattern(regexp = "very|somewhat|not", message = "Opción inválida.")
+    @NotBlank(message = "{validation.option.required}")
+    @Pattern(regexp = "very|somewhat|not", message = "{validation.option.invalid}")
     private String comfort = "not";
 
-    @NotBlank(message = "Elegí una opción.")
-    @Pattern(regexp = "lot|sometimes|rarely|any", message = "Opción inválida.")
+    @NotBlank(message = "{validation.option.required}")
+    @Pattern(regexp = "lot|sometimes|rarely|any", message = "{validation.option.invalid}")
     private String cargo = "any";
 
-    @NotBlank(message = "Elegí una opción.")
-    @Pattern(regexp = "very|somewhat|not", message = "Opción inválida.")
+    @NotBlank(message = "{validation.option.required}")
+    @Pattern(regexp = "very|somewhat|not", message = "{validation.option.invalid}")
     private String performance = "not";
 
     private String bodyType;
 
-    @Pattern(regexp = "|combustion|hybrid|electric", message = "Tipo de motorización inválido.")
+    @Pattern(regexp = "|combustion|hybrid|electric", message = "{validation.fuelType.invalid}")
     private String fuelType;
 
     public RecommendationCriteria toCriteria() {

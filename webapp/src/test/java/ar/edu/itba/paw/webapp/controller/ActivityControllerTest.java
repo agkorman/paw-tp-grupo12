@@ -11,7 +11,9 @@ import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import org.junit.Test;
+import org.springframework.context.support.StaticMessageSource;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.math.BigDecimal;
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,7 +35,8 @@ public class ActivityControllerTest {
         final Review review = review(1L, 7L, 10L);
         final ActivityController controller = new ActivityController(
                 new FakeReviewService(List.of(review)),
-                new FakeCarService()
+                new FakeCarService(),
+                relativeTimeFormatter()
         );
 
         final ModelAndView mav = controller.activity(user(), null, 1);
@@ -52,7 +56,8 @@ public class ActivityControllerTest {
         final Review unrelatedReview = review(3L, 9L, 30L);
         final ActivityController controller = new ActivityController(
                 new FakeReviewService(List.of(followedReview, favoriteCarReview, unrelatedReview)),
-                new FakeCarService()
+                new FakeCarService(),
+                relativeTimeFormatter()
         );
 
         final ModelAndView latestMav = controller.activity(user(), "latest", 1);
@@ -71,7 +76,8 @@ public class ActivityControllerTest {
         final Review review = review(1L, 7L, 10L);
         final ActivityController controller = new ActivityController(
                 new FakeReviewService(List.of(review)),
-                new FakeCarService()
+                new FakeCarService(),
+                relativeTimeFormatter()
         );
 
         final ModelAndView mav = controller.activity(null, null, 1);
@@ -94,7 +100,8 @@ public class ActivityControllerTest {
         );
         final ActivityController controller = new ActivityController(
                 new FakeReviewService(reviews),
-                new FakeCarService()
+                new FakeCarService(),
+                relativeTimeFormatter()
         );
 
         final ModelAndView mav = controller.activity(user(), null, 1);
@@ -127,6 +134,22 @@ public class ActivityControllerTest {
 
     private AuthenticatedUser user() {
         return new AuthenticatedUser(100L, "driver100", "driver100@example.com", "password", List.of());
+    }
+
+    private RelativeTimeFormatter relativeTimeFormatter() {
+        final StaticMessageSource messageSource = new StaticMessageSource();
+        messageSource.addMessage("common.timeAgo.now", Locale.getDefault(), "recién");
+        messageSource.addMessage("common.timeAgo.minute.one", Locale.getDefault(), "hace {0} minuto");
+        messageSource.addMessage("common.timeAgo.minute.many", Locale.getDefault(), "hace {0} minutos");
+        messageSource.addMessage("common.timeAgo.hour.one", Locale.getDefault(), "hace {0} hora");
+        messageSource.addMessage("common.timeAgo.hour.many", Locale.getDefault(), "hace {0} horas");
+        messageSource.addMessage("common.timeAgo.day.one", Locale.getDefault(), "hace {0} día");
+        messageSource.addMessage("common.timeAgo.day.many", Locale.getDefault(), "hace {0} días");
+        messageSource.addMessage("common.timeAgo.month.one", Locale.getDefault(), "hace {0} mes");
+        messageSource.addMessage("common.timeAgo.month.many", Locale.getDefault(), "hace {0} meses");
+        messageSource.addMessage("common.timeAgo.year.one", Locale.getDefault(), "hace {0} año");
+        messageSource.addMessage("common.timeAgo.year.many", Locale.getDefault(), "hace {0} años");
+        return new RelativeTimeFormatter(messageSource);
     }
 
     @SuppressWarnings("unchecked")

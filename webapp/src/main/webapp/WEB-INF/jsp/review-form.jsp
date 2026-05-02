@@ -2,12 +2,13 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><c:out value="${editMode ? 'Editar reseña' : 'Nueva reseña'}"/> | La Posta Autos</title>
+    <title><spring:message code="${editMode ? 'review.form.title.edit' : 'review.form.title.new'}"/> | <spring:message code="app.name"/></title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,16 +30,20 @@
     <c:url var="reviewUpdateUrl" value="/reviews/${reviewId}"/>
     <c:set var="reviewFormAction" value="${editMode ? reviewUpdateUrl : reviewCreateUrl}"/>
     <c:set var="reviewFormCancelUrl" value="${editMode ? profileUrl : reviewCancelUrl}"/>
+    <spring:message var="reviewTitlePlaceholder" code="review.form.placeholder.title"/>
+    <spring:message var="reviewBodyPlaceholder" code="review.form.placeholder.body"/>
+    <spring:message var="reviewYearPlaceholder" code="review.form.placeholder.year"/>
+    <spring:message var="reviewMileagePlaceholder" code="review.form.placeholder.mileage"/>
 
     <main class="form-page">
         <section id="createReviewFormPage" class="form-page-panel" data-default-car-id="${selectedCar.id}" aria-labelledby="createReviewTitle">
             <div class="review-modal-header">
                 <div>
-                    <span class="review-modal-kicker" data-review-modal-kicker><c:out value="${editMode ? 'Editar reseña' : 'Nueva reseña'}"/></span>
+                    <span class="review-modal-kicker" data-review-modal-kicker><spring:message code="${editMode ? 'review.form.title.edit' : 'review.form.title.new'}"/></span>
                     <h1 id="createReviewTitle" data-review-modal-title>
                         <c:choose>
-                            <c:when test="${editMode}">Editá tu experiencia con el <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/></c:when>
-                            <c:otherwise>Compartí tu experiencia con el <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/></c:otherwise>
+                            <c:when test="${editMode}"><spring:message code="review.form.heading.edit"/> <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/></c:when>
+                            <c:otherwise><spring:message code="review.form.heading.new"/> <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/></c:otherwise>
                         </c:choose>
                     </h1>
                 </div>
@@ -59,14 +64,14 @@
 
                 <p class="review-modal-subtitle" data-review-modal-subtitle>
                     <c:choose>
-                        <c:when test="${editMode}">Modificá los datos de la reseña y confirmá los cambios.</c:when>
-                        <c:otherwise>Completá los campos de la reseña. La publicación quedará asociada a tu cuenta.</c:otherwise>
+                        <c:when test="${editMode}"><spring:message code="review.form.subtitle.edit"/></c:when>
+                        <c:otherwise><spring:message code="review.form.subtitle.new"/></c:otherwise>
                     </c:choose>
                 </p>
 
                 <div class="review-modal-grid">
                     <div class="review-modal-field review-modal-field-wide">
-                        <label id="ratingLabel">Puntuación</label>
+                        <label id="ratingLabel"><spring:message code="review.form.rating"/></label>
                         <div class="star-rating" role="slider" aria-labelledby="ratingLabel" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" tabindex="0">
                             <form:hidden id="modalRating" path="rating"/>
                             <div class="star-rating-stars">
@@ -81,64 +86,66 @@
                                             </defs>
                                             <path fill="url(#starGrad${i})" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                         </svg>
-                                        <button type="button" class="star-hit star-hit-left" data-star="${i}" data-half="true" aria-label="${i - 1} y media estrellas"></button>
-                                        <button type="button" class="star-hit star-hit-right" data-star="${i}" data-half="false" aria-label="${i} estrellas"></button>
+                                        <spring:message var="halfStarLabel" code="review.rating.halfStars.aria" arguments="${i - 1}"/>
+                                        <spring:message var="fullStarLabel" code="review.rating.fullStars.aria" arguments="${i}"/>
+                                        <button type="button" class="star-hit star-hit-left" data-star="${i}" data-half="true" aria-label="${halfStarLabel}"></button>
+                                        <button type="button" class="star-hit star-hit-right" data-star="${i}" data-half="false" aria-label="${fullStarLabel}"></button>
                                     </div>
                                 </c:forEach>
                             </div>
-                            <span class="star-rating-value" aria-live="polite">Sin puntuación</span>
+                            <span class="star-rating-value" aria-live="polite"><spring:message code="review.form.rating.none"/></span>
                         </div>
                         <form:errors path="rating" cssClass="form-error" element="span"/>
                     </div>
 
                     <div class="review-modal-field review-modal-field-wide">
-                        <label>Estado de propiedad</label>
+                        <label><spring:message code="review.form.ownership"/></label>
                         <div class="toggle-group">
                             <label class="toggle-option">
                                 <form:radiobutton path="ownershipStatus" value=""/>
-                                <span>No especificado</span>
+                                <span><spring:message code="common.value.none"/></span>
                             </label>
                             <label class="toggle-option">
                                 <form:radiobutton path="ownershipStatus" value="Propietario actual"/>
-                                <span>Propietario actual</span>
+                                <span><spring:message code="review.form.ownership.current"/></span>
                             </label>
                             <label class="toggle-option">
                                 <form:radiobutton path="ownershipStatus" value="Ex propietario"/>
-                                <span>Ex propietario</span>
+                                <span><spring:message code="review.form.ownership.previous"/></span>
                             </label>
                         </div>
                         <form:errors path="ownershipStatus" cssClass="form-error" element="span"/>
                     </div>
 
                     <div class="review-modal-field review-modal-field-wide">
-                        <label for="modalTitle">Título</label>
+                        <label for="modalTitle"><spring:message code="review.form.titleField"/></label>
                         <form:input id="modalTitle" path="title" type="text" maxlength="200"
                                     required="required"
-                                    placeholder="Resumí tu experiencia en una frase"/>
+                                    placeholder="${reviewTitlePlaceholder}"/>
                         <form:errors path="title" cssClass="form-error" element="span"/>
                     </div>
                     <div class="review-modal-field review-modal-field-wide">
-                        <label for="modalBody">Descripción</label>
-                        <form:textarea id="modalBody" path="body" rows="4"
+                        <label for="modalBody"><spring:message code="review.form.body"/></label>
+                        <form:textarea id="modalBody" path="body" rows="4" maxlength="2000"
                                        required="required"
-                                       placeholder="Contanos qué te pareció el auto, qué destacarías y qué mejorarías."/>
+                                       placeholder="${reviewBodyPlaceholder}"/>
                         <form:errors path="body" cssClass="form-error" element="span"/>
                     </div>
                     <div class="review-modal-field">
-                        <label for="modalModelYear">Año del modelo</label>
+                        <label for="modalModelYear"><spring:message code="review.form.modelYear"/></label>
                         <form:input id="modalModelYear" path="modelYear" type="text" inputmode="numeric"
-                                    maxlength="4" required="required" placeholder="Ej: 2020"/>
+                                    maxlength="4" required="required" placeholder="${reviewYearPlaceholder}"/>
                         <form:errors path="modelYear" cssClass="form-error" element="span"/>
                     </div>
                     <div class="review-modal-field">
-                        <label for="modalMileageKm">Kilometraje (km)</label>
+                        <label for="modalMileageKm"><spring:message code="review.form.mileage"/></label>
                         <form:input id="modalMileageKm" path="mileageKm" type="text" inputmode="numeric"
-                                    maxlength="7" required="required" placeholder="Ej: 45000"/>
+                                    maxlength="7" required="required" placeholder="${reviewMileagePlaceholder}"/>
                         <form:errors path="mileageKm" cssClass="form-error" element="span"/>
                     </div>
 
                     <div class="review-modal-field review-modal-field-wide">
-                        <label>¿Lo recomendarías?</label>
+                        <label><spring:message code="review.form.recommend"/></label>
                         <div class="toggle-group">
                             <label class="toggle-option">
                                 <c:choose>
@@ -149,15 +156,15 @@
                                         <form:radiobutton path="wouldRecommend" value=""/>
                                     </c:otherwise>
                                 </c:choose>
-                                <span>No especificado</span>
+                                <span><spring:message code="common.value.none"/></span>
                             </label>
                             <label class="toggle-option toggle-option--yes">
                                 <form:radiobutton path="wouldRecommend" value="true"/>
-                                <span>Sí</span>
+                                <span><spring:message code="common.boolean.yes"/></span>
                             </label>
                             <label class="toggle-option toggle-option--no">
                                 <form:radiobutton path="wouldRecommend" value="false"/>
-                                <span>No</span>
+                                <span><spring:message code="common.boolean.no"/></span>
                             </label>
                         </div>
                         <form:errors path="wouldRecommend" cssClass="form-error" element="span"/>
@@ -172,8 +179,8 @@
                 </div>
 
                 <div class="review-modal-actions">
-                    <a id="reviewModalCancelButton" href="${reviewFormCancelUrl}" class="btn-secondary">Cancelar</a>
-                    <button id="reviewModalSubmitButton" type="submit" class="btn-primary"><c:out value="${editMode ? 'Guardar cambios' : 'Guardar reseña'}"/></button>
+                    <a id="reviewModalCancelButton" href="${reviewFormCancelUrl}" class="btn-secondary"><spring:message code="common.action.cancel"/></a>
+                    <button id="reviewModalSubmitButton" type="submit" class="btn-primary"><spring:message code="${editMode ? 'review.form.submit.edit' : 'review.form.submit.new'}"/></button>
                 </div>
             </form:form>
         </section>

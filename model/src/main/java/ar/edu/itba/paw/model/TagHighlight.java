@@ -9,15 +9,22 @@ public class TagHighlight implements Serializable {
     private int mentionCount;
     private int reviewCount;
     private BigDecimal frequency;
+    private boolean positiveImpact;
 
     public TagHighlight() {}
 
     public TagHighlight(final ReviewTag tag, final int mentionCount, final int reviewCount,
                         final BigDecimal frequency) {
+        this(tag, mentionCount, reviewCount, frequency, true);
+    }
+
+    public TagHighlight(final ReviewTag tag, final int mentionCount, final int reviewCount,
+                        final BigDecimal frequency, final boolean positiveImpact) {
         this.tag = tag;
         this.mentionCount = mentionCount;
         this.reviewCount = reviewCount;
         this.frequency = frequency;
+        this.positiveImpact = positiveImpact;
     }
 
     public ReviewTag getTag() {
@@ -52,7 +59,31 @@ public class TagHighlight implements Serializable {
         this.frequency = frequency;
     }
 
-    public int getPercentage() {
-        return frequency == null ? 0 : frequency.multiply(BigDecimal.valueOf(100)).setScale(0, java.math.RoundingMode.HALF_UP).intValue();
+    public boolean isPositiveImpact() {
+        return positiveImpact;
+    }
+
+    public void setPositiveImpact(final boolean positiveImpact) {
+        this.positiveImpact = positiveImpact;
+    }
+
+    public HighlightTier getTier() {
+        return HighlightTier.from(frequency, positiveImpact);
+    }
+
+    public String getTierEmoji() {
+        return getTier().getEmoji();
+    }
+
+    public String getTierLabel() {
+        return getTier().getLabelEs();
+    }
+
+    public String getTierClass() {
+        return getTier().getCssClass();
+    }
+
+    public boolean isVisible() {
+        return getTier().isVisible();
     }
 }

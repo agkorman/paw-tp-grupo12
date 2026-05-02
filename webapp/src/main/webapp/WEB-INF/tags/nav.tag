@@ -12,23 +12,23 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <noscript>
     <div class="noscript-overlay">
         <div class="noscript-box">
-            <strong>JavaScript requerido</strong>
-            <p>Esta aplicación requiere JavaScript para funcionar. Activalo en tu navegador para continuar.</p>
+            <strong><spring:message code="nav.noScript.title"/></strong>
+            <p><spring:message code="nav.noScript.body"/></p>
         </div>
     </div>
 </noscript>
 <nav>
-    <a href="<c:url value='/'/>" class="nav-brand">La Posta Autos</a>
+    <a href="<c:url value='/'/>" class="nav-brand"><spring:message code="app.name"/></a>
     <ul class="nav-links">
-        <li><a href="<c:url value='/cars'/>" class="${activePage eq 'reviews' ? 'active' : ''}">Catálogo</a></li>
-        <li><a href="<c:url value='/cars/recommend'/>" class="${activePage eq 'recommend' ? 'active' : ''}">Encontrá tu auto</a></li>
-        <li><a href="<c:url value='/activity'/>" class="${activePage eq 'activity' ? 'active' : ''}">Actividad</a></li>
+        <li><a href="<c:url value='/cars'/>" class="${activePage eq 'reviews' ? 'active' : ''}"><spring:message code="nav.catalog"/></a></li>
+        <li><a href="<c:url value='/activity'/>" class="${activePage eq 'activity' ? 'active' : ''}"><spring:message code="nav.activity"/></a></li>
         <sec:authorize access="hasRole('ADMIN')">
-            <li><a href="<c:url value='/admin'/>" class="${activePage eq 'admin' ? 'active' : ''}">Administración</a></li>
+            <li><a href="<c:url value='/admin'/>" class="${activePage eq 'admin' ? 'active' : ''}"><spring:message code="nav.admin"/></a></li>
         </sec:authorize>
     </ul>
     <div class="nav-right">
@@ -44,6 +44,7 @@
                 <input
                         type="search"
                         name="q"
+                        maxlength="120"
                         value="${fn:escapeXml(searchValue)}"
                         placeholder="${fn:escapeXml(searchPlaceholder)}"
                         aria-label="${fn:escapeXml(searchPlaceholder)}">
@@ -61,7 +62,7 @@
         </c:if>
         <sec:authorize access="isAnonymous()">
             <span class="nav-profile">
-                <a class="nav-profile-text nav-auth-link" href="<c:url value='/login'/>">Iniciar sesión</a>
+                <a class="nav-profile-text nav-auth-link" href="<c:url value='/login'/>"><spring:message code="common.action.login"/></a>
                 <span class="avatar" aria-hidden="true">
                     <pa:icon name="user-avatar" size="18"/>
                 </span>
@@ -70,10 +71,11 @@
         <sec:authorize access="isAuthenticated()">
             <sec:authentication property="principal.displayName" var="displayName"/>
             <span class="nav-profile">
-                <a class="nav-user nav-profile-text ${activePage eq 'profile' ? 'active' : ''}" href="<c:url value='/profile'/>" aria-label="Ir al perfil">
+                <spring:message var="profileLabel" code="nav.profile"/>
+                <a class="nav-user nav-profile-text ${activePage eq 'profile' ? 'active' : ''}" href="<c:url value='/profile'/>" aria-label="${fn:escapeXml(profileLabel)}">
                     <c:out value="${displayName}"/>
                 </a>
-                <a class="avatar nav-avatar-link" href="<c:url value='/profile'/>" aria-label="Ir al perfil">
+                <a class="avatar nav-avatar-link" href="<c:url value='/profile'/>" aria-label="${fn:escapeXml(profileLabel)}">
                     <pa:icon name="user-avatar" size="18"/>
                 </a>
             </span>

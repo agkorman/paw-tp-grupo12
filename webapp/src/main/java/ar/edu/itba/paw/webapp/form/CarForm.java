@@ -16,60 +16,60 @@ import java.util.List;
 
 public class CarForm {
 
-    @NotBlank(message = "La marca es obligatoria.")
+    @NotBlank(message = "{validation.car.brand.required}")
     private String brand;
 
-    @NotBlank(message = "El tipo de carrocería es obligatorio.")
+    @NotBlank(message = "{validation.car.bodyType.required}")
     private String bodyType;
 
-    @NotBlank(message = "El modelo es obligatorio.")
-    @Size(max = 120, message = "El modelo debe tener como máximo 120 caracteres.")
+    @NotBlank(message = "{validation.car.model.required}")
+    @Size(max = 120, message = "{validation.car.model.max}")
     private String model;
 
-    @Min(value = 1950, message = "El año debe ser 1950 o posterior.")
-    @Max(value = 2026, message = "El año debe ser 2026 o anterior.")
+    @Min(value = 1886, message = "{validation.car.year.min}")
+    @Max(value = 2100, message = "{validation.car.year.max}")
     private Integer year;
 
-    @Email(message = "Ingresá un email válido.")
-    @Size(max = 100, message = "El email debe tener como máximo 100 caracteres.")
+    @Email(message = "{validation.email.invalid}")
+    @Size(max = 100, message = "{validation.email.max}")
     private String submitterEmail;
 
-    @NotBlank(message = "La descripción es obligatoria.")
-    @Size(max = 1500, message = "La descripción debe tener como máximo 1500 caracteres.")
+    @NotBlank(message = "{validation.car.description.required}")
+    @Size(max = 1500, message = "{validation.car.description.max}")
     private String description;
 
     private List<MultipartFile> files = new ArrayList<>();
 
     private List<Long> retainedImageIds = new ArrayList<>();
 
-    @NotBlank(message = "El tipo de motorización es obligatorio.")
+    @NotBlank(message = "{validation.car.fuelType.required}")
     private String fuelType;
 
-    @NotNull(message = "La potencia es obligatoria.")
-    @Min(value = 1, message = "La potencia debe ser mayor a 0.")
-    @Max(value = 2000, message = "La potencia no puede superar los 2000 HP.")
+    @NotNull(message = "{validation.car.horsepower.required}")
+    @Min(value = 1, message = "{validation.car.horsepower.min}")
+    @Max(value = 2000, message = "{validation.car.horsepower.max}")
     private Integer horsepower;
 
-    @NotNull(message = "El número de airbags es obligatorio.")
-    @Min(value = 0, message = "El número de airbags no puede ser negativo.")
-    @Max(value = 30, message = "El número de airbags no puede superar 30.")
+    @NotNull(message = "{validation.car.airbagCount.required}")
+    @Min(value = 0, message = "{validation.car.airbagCount.min}")
+    @Max(value = 30, message = "{validation.car.airbagCount.max}")
     private Integer airbagCount;
 
-    @NotBlank(message = "La transmisión es obligatoria.")
+    @NotBlank(message = "{validation.car.transmission.required}")
     private String transmission;
 
-    @NotNull(message = "El consumo de nafta es obligatorio.")
-    @DecimalMin(value = "0.0", message = "El consumo debe ser mayor o igual a 0.")
-    @DecimalMax(value = "99.9", message = "El consumo no puede superar 99.9 L/100km.")
+    @NotNull(message = "{validation.car.fuelConsumption.required}")
+    @DecimalMin(value = "0.0", message = "{validation.car.fuelConsumption.min}")
+    @DecimalMax(value = "99.9", message = "{validation.car.fuelConsumption.max}")
     private BigDecimal fuelConsumption;
 
-    @NotNull(message = "La velocidad máxima es obligatoria.")
-    @Min(value = 1, message = "La velocidad debe ser mayor a 0.")
-    @Max(value = 600, message = "La velocidad no puede superar los 600 km/h.")
+    @NotNull(message = "{validation.car.maxSpeed.required}")
+    @Min(value = 1, message = "{validation.car.maxSpeed.min}")
+    @Max(value = 600, message = "{validation.car.maxSpeed.max}")
     private Integer maxSpeedKmh;
 
-    @DecimalMin(value = "0.01", message = "El precio debe ser mayor a 0.")
-    @DecimalMax(value = "5000000.00", message = "El precio no puede superar USD 5.000.000.")
+    @DecimalMin(value = "0.01", message = "{validation.car.price.min}")
+    @DecimalMax(value = "5000000.00", message = "{validation.car.price.max}")
     private BigDecimal priceUsd;
 
     public String getBrand() {

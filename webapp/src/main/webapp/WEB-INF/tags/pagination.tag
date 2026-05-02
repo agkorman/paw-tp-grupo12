@@ -9,6 +9,7 @@
 <%@ attribute name="ariaLabel" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <c:if test="${totalPages > 1}">
     <c:set var="resolvedPageParam" value="${empty pageParam ? 'page' : pageParam}"/>
@@ -20,7 +21,8 @@
     <c:if test="${windowStart < 1}"><c:set var="windowStart" value="1"/></c:if>
     <c:if test="${windowEnd > totalPages}"><c:set var="windowEnd" value="${totalPages}"/></c:if>
 
-    <nav class="pagination" aria-label="${empty ariaLabel ? 'Paginación' : ariaLabel}">
+    <spring:message var="defaultPaginationLabel" code="common.pagination.aria"/>
+    <nav class="pagination" aria-label="${empty ariaLabel ? defaultPaginationLabel : ariaLabel}">
         <ul class="pagination-list">
             <c:set var="prevPage" value="${safeCurrentPage - 1}"/>
             <li class="pagination-item ${safeCurrentPage <= 1 ? 'is-disabled' : ''}">
