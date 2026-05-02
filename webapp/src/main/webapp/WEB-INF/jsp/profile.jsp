@@ -205,15 +205,12 @@
                                         <c:param name="page" value="${favoriteCarsCurrentPage + 1}"/>
                                     </c:url>
                                     <div class="reviews-feed-more profile-show-more">
-                                        <a class="btn-secondary reviews-show-more"
-                                           href="${favoriteCarsShowMoreUrl}"
+                                        <a href="${favoriteCarsShowMoreUrl}"
                                            data-review-show-more="true"
                                            data-fragment-url="${profileBaseUrl}"
                                            data-target="#profileFavoritesPanel"
                                            data-list-selector=".profile-favorites-grid"
-                                           data-item-selector=".profile-favorites-grid > .car-card-shell">
-                                            <spring:message code="common.action.showMoreCars"/>
-                                        </a>
+                                           data-item-selector=".profile-favorites-grid > .car-card-shell"></a>
                                     </div>
                                 </c:if>
                             </c:otherwise>
@@ -249,15 +246,12 @@
                                         <c:param name="page" value="${likedReviewsCurrentPage + 1}"/>
                                     </c:url>
                                     <div class="reviews-feed-more profile-show-more">
-                                        <a class="btn-secondary reviews-show-more"
-                                           href="${likedReviewsShowMoreUrl}"
+                                        <a href="${likedReviewsShowMoreUrl}"
                                            data-review-show-more="true"
                                            data-fragment-url="${profileBaseUrl}"
                                            data-target="#profileLikedPanel"
                                            data-list-selector=".profile-review-list"
-                                           data-item-selector=".profile-review-list > .profile-review-card">
-                                            <spring:message code="common.action.showMoreReviews"/>
-                                        </a>
+                                           data-item-selector=".profile-review-list > .profile-review-card"></a>
                                     </div>
                                 </c:if>
                             </c:otherwise>
@@ -298,15 +292,12 @@
                                         <c:param name="page" value="${profileReviewsCurrentPage + 1}"/>
                                     </c:url>
                                     <div class="reviews-feed-more profile-show-more">
-                                        <a class="btn-secondary reviews-show-more"
-                                           href="${profileReviewsShowMoreUrl}"
+                                        <a href="${profileReviewsShowMoreUrl}"
                                            data-review-show-more="true"
                                            data-fragment-url="${profileBaseUrl}"
                                            data-target="#profileReviewsPanel"
                                            data-list-selector=".profile-review-list"
-                                           data-item-selector=".profile-review-list > .profile-review-card">
-                                            <spring:message code="common.action.showMoreReviews"/>
-                                        </a>
+                                           data-item-selector=".profile-review-list > .profile-review-card"></a>
                                     </div>
                                 </c:if>
                             </c:otherwise>

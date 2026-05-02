@@ -93,17 +93,14 @@
                                             <c:param name="page" value="${activityCurrentPage + 1}"/>
                                         </c:url>
                                         <div class="reviews-feed-more profile-show-more">
-                                            <a class="btn-secondary reviews-show-more"
-                                               href="${activityShowMoreUrl}"
+                                            <a href="${activityShowMoreUrl}"
                                                data-review-show-more="true"
                                                data-fragment-url="${activityBaseUrl}"
                                                data-target="#activityFollowingPanel"
                                                data-list-selector=".activity-feed"
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
-                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                                <spring:message code="common.action.showMoreReviews"/>
-                                            </a>
+                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel"></a>
                                         </div>
                                     </c:if>
                                 </div>
@@ -139,17 +136,14 @@
                                             <c:param name="page" value="${activityCurrentPage + 1}"/>
                                         </c:url>
                                         <div class="reviews-feed-more profile-show-more">
-                                            <a class="btn-secondary reviews-show-more"
-                                               href="${activityShowMoreUrl}"
+                                            <a href="${activityShowMoreUrl}"
                                                data-review-show-more="true"
                                                data-fragment-url="${activityBaseUrl}"
                                                data-target="#activityFavoritesPanel"
                                                data-list-selector=".activity-feed"
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
-                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                                <spring:message code="common.action.showMoreReviews"/>
-                                            </a>
+                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel"></a>
                                         </div>
                                     </c:if>
                                 </div>
@@ -185,17 +179,14 @@
                                             <c:param name="page" value="${activityCurrentPage + 1}"/>
                                         </c:url>
                                         <div class="reviews-feed-more profile-show-more">
-                                            <a class="btn-secondary reviews-show-more"
-                                               href="${activityShowMoreUrl}"
+                                            <a href="${activityShowMoreUrl}"
                                                data-review-show-more="true"
                                                data-fragment-url="${activityBaseUrl}"
                                                data-target="#activityNewsPanel"
                                                data-list-selector=".activity-feed"
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
-                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                                <spring:message code="common.action.showMoreReviews"/>
-                                            </a>
+                                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel"></a>
                                         </div>
                                     </c:if>
                                 </div>

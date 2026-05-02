@@ -380,4 +380,41 @@
 
     syncToolbarSelectValues(document);
 
+    var observeShowMoreSentinels = function () {
+        if (!('IntersectionObserver' in window)) {
+            return;
+        }
+
+        var sentinels = document.querySelectorAll('.reviews-feed-more');
+        Array.prototype.forEach.call(sentinels, function (sentinel) {
+            if (sentinel.dataset.infiniteScrollObserved === 'true') {
+                return;
+            }
+            sentinel.dataset.infiniteScrollObserved = 'true';
+
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (!entry.isIntersecting) {
+                        return;
+                    }
+                    var link = sentinel.querySelector('a[data-review-show-more="true"]');
+                    if (!link) {
+                        return;
+                    }
+                    observer.disconnect();
+                    showMoreReviews(link);
+                });
+            }, { rootMargin: '200px' });
+
+            observer.observe(sentinel);
+        });
+    };
+
+    var domObserver = new MutationObserver(function () {
+        observeShowMoreSentinels();
+    });
+    domObserver.observe(document.body, { childList: true, subtree: true });
+
+    observeShowMoreSentinels();
+
 })();
