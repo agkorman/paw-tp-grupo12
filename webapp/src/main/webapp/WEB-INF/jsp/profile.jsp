@@ -12,9 +12,9 @@
     <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=4'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=5'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=9'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=10'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-connections.css?v=1'/>">
@@ -135,36 +135,26 @@
                 <c:param name="tab" value="liked"/>
             </c:url>
 
-            <div class="profile-tabs-list ${ownProfile ? '' : 'profile-tabs-list-single'}" aria-label="Secciones del perfil">
-                <a id="profileReviewsTab"
-                   class="profile-tab"
-                   href="${profileReviewsTabUrl}"
-                   <c:if test="${activeTab eq 'reviews'}">aria-current="page"</c:if>>
-                    <span>
-                        <c:choose>
-                            <c:when test="${ownProfile}">Mis reseñas</c:when>
-                            <c:otherwise>Reviews</c:otherwise>
-                        </c:choose>
-                    </span>
-                    <strong><c:out value="${profileReviewCount}"/></strong>
-                </a>
-                <c:if test="${ownProfile}">
-                    <a id="profileFavoritesTab"
-                       class="profile-tab"
-                       href="${profileFavoritesTabUrl}"
-                       <c:if test="${activeTab eq 'favorites'}">aria-current="page"</c:if>>
-                        <span>Autos favoritos</span>
-                        <strong><c:out value="${favoriteCarCount}"/></strong>
-                    </a>
-                    <a id="profileLikedTab"
-                       class="profile-tab"
-                       href="${profileLikedTabUrl}"
-                       <c:if test="${activeTab eq 'liked'}">aria-current="page"</c:if>>
-                        <span>Reseñas likeadas</span>
-                        <strong><c:out value="${likedActivityCount}"/></strong>
-                    </a>
-                </c:if>
-            </div>
+            <c:choose>
+                <c:when test="${ownProfile}">
+                    <pa:subtabs tabCount="3"
+                                labels="Mis reseñas|Autos favoritos|Reseñas likeadas"
+                                hrefs="${profileReviewsTabUrl}|${profileFavoritesTabUrl}|${profileLikedTabUrl}"
+                                counts="${profileReviewCount}|${favoriteCarCount}|${likedActivityCount}"
+                                values="reviews|favorites|liked"
+                                activeValue="${activeTab}"
+                                ariaLabel="Secciones del perfil"/>
+                </c:when>
+                <c:otherwise>
+                    <pa:subtabs tabCount="1"
+                                labels="Reviews"
+                                hrefs="${profileReviewsTabUrl}"
+                                counts="${profileReviewCount}"
+                                values="reviews"
+                                activeValue="${activeTab}"
+                                ariaLabel="Secciones del perfil"/>
+                </c:otherwise>
+            </c:choose>
 
             <c:choose>
                 <c:when test="${activeTab eq 'favorites'}">

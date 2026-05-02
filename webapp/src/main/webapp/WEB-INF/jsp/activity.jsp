@@ -14,8 +14,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/activity.css?v=1'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=5'/>">
+    <link rel="stylesheet" href="<c:url value='/css/activity.css'/>">
 </head>
 <body>
     <pa:nav activePage="activity"/>
@@ -24,70 +24,46 @@
     <c:url var="activityLatestTabUrl" value="/activity">
         <c:param name="tab" value="latest"/>
     </c:url>
+    <c:url var="activityFollowingTabUrl" value="/activity">
+        <c:param name="tab" value="following"/>
+    </c:url>
+    <c:url var="activityFavoritesTabUrl" value="/activity">
+        <c:param name="tab" value="favorites"/>
+    </c:url>
     <c:url var="activityFollowingLoginUrl" value="/login">
-        <c:param name="redirect" value="/activity?tab=following"/>
+        <c:param name="redirect" value="/activity"/>
         <c:param name="intent" value="activity-following"/>
     </c:url>
     <c:url var="activityFavoritesLoginUrl" value="/login">
-        <c:param name="redirect" value="/activity?tab=favorites"/>
+        <c:param name="redirect" value="/activity"/>
         <c:param name="intent" value="activity-favorites"/>
     </c:url>
 
     <main class="activity-page">
-        <nav class="activity-tabs-list" aria-label="Filtros de actividad">
-            <a id="activityNewsTab"
-               class="activity-tab"
-               href="${activityLatestTabUrl}"
-               <c:if test="${activeTab eq 'latest'}">aria-current="page"</c:if>>
-                <span>Novedad</span>
-                <strong><c:out value="${latestCount}"/></strong>
-            </a>
-            <c:choose>
-                <c:when test="${authenticated}">
-                    <c:url var="activityFollowingTabUrl" value="/activity">
-                        <c:param name="tab" value="following"/>
-                    </c:url>
-                    <c:url var="activityFavoritesTabUrl" value="/activity">
-                        <c:param name="tab" value="favorites"/>
-                    </c:url>
-                    <a id="activityFollowingTab"
-                       class="activity-tab"
-                       href="${activityFollowingTabUrl}"
-                       <c:if test="${activeTab eq 'following'}">aria-current="page"</c:if>>
-                        <span>Seguidos</span>
-                        <strong><c:out value="${followedCount}"/></strong>
-                    </a>
-                    <a id="activityFavoritesTab"
-                       class="activity-tab"
-                       href="${activityFavoritesTabUrl}"
-                       <c:if test="${activeTab eq 'favorites'}">aria-current="page"</c:if>>
-                        <span>Autos favoritos</span>
-                        <strong><c:out value="${favoriteCount}"/></strong>
-                    </a>
-                </c:when>
-                <c:otherwise>
-                    <a href="${activityFollowingLoginUrl}"
-                       id="activityFollowingTab"
-                       class="activity-tab activity-tab-login"
-                       data-activity-login-tab>
-                        <span>Seguidos</span>
-                        <strong>0</strong>
-                    </a>
-                    <a href="${activityFavoritesLoginUrl}"
-                       id="activityFavoritesTab"
-                       class="activity-tab activity-tab-login"
-                       data-activity-login-tab>
-                        <span>Autos favoritos</span>
-                        <strong>0</strong>
-                    </a>
-                </c:otherwise>
-            </c:choose>
-        </nav>
+        <c:choose>
+            <c:when test="${authenticated}">
+                <pa:subtabs tabCount="3"
+                            labels="Novedad|Seguidos|Autos favoritos"
+                            hrefs="${activityLatestTabUrl}|${activityFollowingTabUrl}|${activityFavoritesTabUrl}"
+                            counts="${latestCount}|${followedCount}|${favoriteCount}"
+                            values="latest|following|favorites"
+                            activeValue="${activeTab}"
+                            ariaLabel="Filtros de actividad"/>
+            </c:when>
+            <c:otherwise>
+                <pa:subtabs tabCount="3"
+                            labels="Novedad|Seguidos|Autos favoritos"
+                            hrefs="${activityLatestTabUrl}|${activityFollowingLoginUrl}|${activityFavoritesLoginUrl}"
+                            counts="${latestCount}|0|0"
+                            values="latest|following|favorites"
+                            activeValue="${activeTab}"
+                            ariaLabel="Filtros de actividad"/>
+            </c:otherwise>
+        </c:choose>
 
         <c:choose>
             <c:when test="${activeTab eq 'following'}">
-                <section id="activityFollowingPanel"
-                         class="activity-tab-panel">
+                <section id="activityFollowingPanel" class="activity-tab-panel">
                     <c:choose>
                         <c:when test="${empty activityReviews}">
                             <div class="activity-empty-state">
@@ -122,8 +98,7 @@
                 </section>
             </c:when>
             <c:when test="${activeTab eq 'favorites'}">
-                <section id="activityFavoritesPanel"
-                         class="activity-tab-panel">
+                <section id="activityFavoritesPanel" class="activity-tab-panel">
                     <c:choose>
                         <c:when test="${empty activityReviews}">
                             <div class="activity-empty-state">
@@ -158,8 +133,7 @@
                 </section>
             </c:when>
             <c:otherwise>
-                <section id="activityNewsPanel"
-                         class="activity-tab-panel">
+                <section id="activityNewsPanel" class="activity-tab-panel">
                     <c:choose>
                         <c:when test="${empty activityReviews}">
                             <div class="activity-empty-state">
@@ -195,7 +169,6 @@
             </c:otherwise>
         </c:choose>
     </main>
-
     <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
 </body>
 </html>
