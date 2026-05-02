@@ -17,12 +17,18 @@
     <c:url var="resolvedRejectAction" value="${rejectAction}"/>
 </c:if>
 <c:set var="resolvedExistingImageUrls" value=""/>
+<c:set var="resolvedExistingImageIds" value=""/>
 <c:if test="${not empty existingImageUrls}">
     <c:forEach var="existingImageUrl" items="${existingImageUrls}">
         <c:if test="${not empty existingImageUrl}">
             <c:url var="resolvedExistingImageUrl" value="${existingImageUrl}"/>
             <c:set var="resolvedExistingImageUrls" value="${resolvedExistingImageUrls}${empty resolvedExistingImageUrls ? '' : '|'}${resolvedExistingImageUrl}"/>
         </c:if>
+    </c:forEach>
+</c:if>
+<c:if test="${not empty existingImageIds}">
+    <c:forEach var="existingImageId" items="${existingImageIds}">
+        <c:set var="resolvedExistingImageIds" value="${resolvedExistingImageIds}${empty resolvedExistingImageIds ? '' : '|'}${existingImageId}"/>
     </c:forEach>
 </c:if>
 <!DOCTYPE html>
@@ -50,6 +56,7 @@
                  data-admin-mode="${adminCarFormMode}"
                  data-car-form-mode="${resolvedCarFormMode}"
                  data-existing-image-urls="${fn:escapeXml(resolvedExistingImageUrls)}"
+                 data-existing-image-ids="${fn:escapeXml(resolvedExistingImageIds)}"
                  data-existing-image-status="${fn:escapeXml(existingImageStatus)}"
                  aria-labelledby="carFormTitle">
             <div class="review-modal-header">
@@ -222,6 +229,11 @@
                             <div class="car-image-upload">
                                 <c:choose>
                                     <c:when test="${adminCarFormMode}">
+                                        <span id="modalCarRetainedImageInputs" hidden>
+                                            <c:forEach var="existingImageId" items="${existingImageIds}">
+                                                <input type="hidden" name="retainedImageIds" value="${existingImageId}">
+                                            </c:forEach>
+                                        </span>
                                         <form:input id="modalCarFile" path="files" type="file"
                                                     cssClass="car-image-upload-input"
                                                     accept="image/jpeg,image/png,image/webp"
@@ -246,6 +258,9 @@
                                             <pa:icon name="chevron-left" size="14"/>
                                         </button>
                                         <img id="modalCarImagePreviewImg" alt="">
+                                        <button id="modalCarImageRemove" class="car-image-upload-preview-remove" type="button" aria-label="Quitar imagen" hidden>
+                                            <pa:icon name="close" size="14"/>
+                                        </button>
                                         <button id="modalCarImageNext" class="car-image-upload-preview-nav car-image-upload-preview-next" type="button" aria-label="Imagen siguiente">
                                             <pa:icon name="chevron-right" size="14"/>
                                         </button>
@@ -261,7 +276,7 @@
                                         </strong>
                                         <span id="modalCarFileHelp">
                                             <c:choose>
-                                                <c:when test="${adminCarFormMode}">Opcional: cargá imágenes nuevas para agregarlas a la galería.</c:when>
+                                                <c:when test="${adminCarFormMode}">Conservá, quitá o cargá imágenes para la galería.</c:when>
                                                 <c:otherwise>JPEG, PNG o WEBP. Máximo 5 imágenes, 10 MB cada una.</c:otherwise>
                                             </c:choose>
                                         </span>

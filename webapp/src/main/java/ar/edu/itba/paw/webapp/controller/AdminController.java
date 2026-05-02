@@ -47,11 +47,13 @@ import java.net.URI;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -222,8 +224,14 @@ public class AdminController {
 
         rejectInvalidSpecFields(errors, carForm);
         final List<MultipartFile> files = selectedImageFiles(carForm.getFiles());
-        final int existingImageCount = buildRequestImageUrls(pendingRequest).size();
-        final String imageError = validateUploadedImages(files, false, existingImageCount);
+        final List<Long> availableImageIds = buildRequestImageIds(pendingRequest);
+        final List<Long> submittedRetainedImageIds = carForm.getRetainedImageIds();
+        final List<Long> retainedImageIds = retainedImageIds(submittedRetainedImageIds, availableImageIds);
+        carForm.setRetainedImageIds(retainedImageIds);
+        if (hasUnknownRetainedImageIds(submittedRetainedImageIds, availableImageIds)) {
+            errors.rejectValue("files", "image.invalid", "Imagen precargada inválida.");
+        }
+        final String imageError = validateUploadedImages(files, true, retainedImageIds.size());
         if (imageError != null) {
             errors.rejectValue("files", "image.invalid", imageError);
         }
@@ -255,7 +263,8 @@ public class AdminController {
 
         final List<CarImagePayload> imagePayloads;
         try {
-            imagePayloads = toImagePayloads(files);
+            imagePayloads = requestImagePayloads(pendingRequest, retainedImageIds);
+            imagePayloads.addAll(toImagePayloads(files));
         } catch (final IOException e) {
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
@@ -299,8 +308,14 @@ public class AdminController {
 
         rejectInvalidSpecFields(errors, carForm);
         final List<MultipartFile> files = selectedImageFiles(carForm.getFiles());
-        final int existingImageCount = buildCarImageUrls(existingCar).size();
-        final String imageError = validateUploadedImages(files, false, existingImageCount);
+        final List<Long> availableImageIds = buildCarImageIds(existingCar);
+        final List<Long> submittedRetainedImageIds = carForm.getRetainedImageIds();
+        final List<Long> retainedImageIds = retainedImageIds(submittedRetainedImageIds, availableImageIds);
+        carForm.setRetainedImageIds(retainedImageIds);
+        if (hasUnknownRetainedImageIds(submittedRetainedImageIds, availableImageIds)) {
+            errors.rejectValue("files", "image.invalid", "Imagen precargada inválida.");
+        }
+        final String imageError = validateUploadedImages(files, true, retainedImageIds.size());
         if (imageError != null) {
             errors.rejectValue("files", "image.invalid", imageError);
         }
@@ -332,7 +347,8 @@ public class AdminController {
 
         final List<CarImagePayload> imagePayloads;
         try {
-            imagePayloads = toImagePayloads(files);
+            imagePayloads = carImagePayloads(existingCar, retainedImageIds);
+            imagePayloads.addAll(toImagePayloads(files));
         } catch (final IOException e) {
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
@@ -354,8 +370,8 @@ public class AdminController {
                 carForm.getMaxSpeedKmh(),
                 carForm.getPriceUsd()
         );
-        if (updated.isPresent() && !imagePayloads.isEmpty()) {
-            carService.appendCarImages(carId, imagePayloads);
+        if (updated.isPresent()) {
+            carService.saveCarImages(carId, imagePayloads);
         }
         return new ModelAndView("redirect:/reviews?carId=" + carId);
     }
@@ -550,8 +566,11 @@ public class AdminController {
         mav.addObject("rejectAction", "/admin/requests/" + request.getId() + "/reject");
         mav.addObject("rejectLabel", "Rechazar");
         mav.addObject("showCatalogRequestLinks", false);
-        mav.addObject("existingImageUrls", buildRequestImageUrls(request));
-        mav.addObject("existingImageStatus", requestImageStatus(request));
+        final List<Long> retainedImageIds = retainedImageIds(carForm.getRetainedImageIds(), buildRequestImageIds(request));
+        final List<String> imageUrls = buildRequestImageUrls(request, retainedImageIds);
+        mav.addObject("existingImageUrls", imageUrls);
+        mav.addObject("existingImageIds", retainedImageIds);
+        mav.addObject("existingImageStatus", imageStatus(imageUrls.size()));
         return mav;
     }
 
@@ -561,13 +580,16 @@ public class AdminController {
         mav.addObject("carFormMode", "edit-car");
         mav.addObject("formKicker", "Catálogo");
         mav.addObject("formTitle", "Editar auto");
-        mav.addObject("formSubtitle", "Modificá los datos del auto publicado. Si cargás imágenes nuevas, se agregan a la galería actual.");
+        mav.addObject("formSubtitle", "Modificá los datos del auto publicado y ajustá su galería de imágenes.");
         mav.addObject("formAction", "/admin/cars/" + car.getId());
         mav.addObject("cancelUrl", "/reviews?carId=" + car.getId());
         mav.addObject("submitLabel", "Guardar cambios");
         mav.addObject("showCatalogRequestLinks", false);
-        mav.addObject("existingImageUrls", buildCarImageUrls(car));
-        mav.addObject("existingImageStatus", carImageStatus(car));
+        final List<Long> retainedImageIds = retainedImageIds(carForm.getRetainedImageIds(), buildCarImageIds(car));
+        final List<String> imageUrls = buildCarImageUrls(car, retainedImageIds);
+        mav.addObject("existingImageUrls", imageUrls);
+        mav.addObject("existingImageIds", retainedImageIds);
+        mav.addObject("existingImageStatus", imageStatus(imageUrls.size()));
         return mav;
     }
 
@@ -593,6 +615,7 @@ public class AdminController {
         form.setFuelConsumption(request.getFuelConsumption());
         form.setMaxSpeedKmh(request.getMaxSpeedKmh());
         form.setPriceUsd(request.getPriceUsd());
+        form.setRetainedImageIds(buildRequestImageIds(request));
         return form;
     }
 
@@ -610,6 +633,7 @@ public class AdminController {
         form.setFuelConsumption(car.getFuelConsumption());
         form.setMaxSpeedKmh(car.getMaxSpeedKmh());
         form.setPriceUsd(car.getPriceUsd());
+        form.setRetainedImageIds(buildCarImageIds(car));
         return form;
     }
 
@@ -640,47 +664,75 @@ public class AdminController {
     }
 
     private List<String> buildRequestImageUrls(final CarRequest request) {
+        return buildRequestImageUrls(request, buildRequestImageIds(request));
+    }
+
+    private List<String> buildRequestImageUrls(final CarRequest request, final List<Long> imageIds) {
+        final Set<Long> retainedIds = new LinkedHashSet<>(imageIds);
         final List<CarRequestImage> requestImages = carRequestService.getCarRequestImages(request.getId());
         if (!requestImages.isEmpty()) {
             return requestImages.stream()
+                    .filter(image -> retainedIds.contains(image.getImageId()))
                     .map(image -> "/admin/requests/" + request.getId() + "/images/" + image.getImageId())
                     .collect(Collectors.toList());
         }
-        if (request.getImageData() == null) {
+        if (request.getImageData() == null || !retainedIds.contains(0L)) {
             return List.of();
         }
         return List.of("/admin/requests/" + request.getId() + "/image");
     }
 
+    private List<Long> buildRequestImageIds(final CarRequest request) {
+        final List<CarRequestImage> requestImages = carRequestService.getCarRequestImages(request.getId());
+        if (!requestImages.isEmpty()) {
+            return requestImages.stream()
+                    .map(CarRequestImage::getImageId)
+                    .collect(Collectors.toList());
+        }
+        if (request.getImageData() == null) {
+            return List.of();
+        }
+        return List.of(0L);
+    }
+
     private List<String> buildCarImageUrls(final Car car) {
+        return buildCarImageUrls(car, buildCarImageIds(car));
+    }
+
+    private List<String> buildCarImageUrls(final Car car, final List<Long> imageIds) {
+        final Set<Long> retainedIds = new LinkedHashSet<>(imageIds);
         final List<CarImage> carImages = carService.getCarImagesByCarId(car.getId());
         if (!carImages.isEmpty()) {
             return carImages.stream()
+                    .filter(image -> retainedIds.contains(image.getImageId()))
                     .map(image -> "/cars/" + car.getId() + "/images/" + image.getImageId())
                     .collect(Collectors.toList());
         }
-        if (!car.getHasImage()) {
+        if (!car.getHasImage() || !retainedIds.contains(0L)) {
             return List.of();
         }
         return List.of("/cars/" + car.getId() + "/image");
     }
 
-    private String requestImageStatus(final CarRequest request) {
-        final List<String> imageUrls = buildRequestImageUrls(request);
-        if (imageUrls.isEmpty()) {
-            return "Sin imágenes cargadas";
+    private List<Long> buildCarImageIds(final Car car) {
+        final List<CarImage> carImages = carService.getCarImagesByCarId(car.getId());
+        if (!carImages.isEmpty()) {
+            return carImages.stream()
+                    .map(CarImage::getImageId)
+                    .collect(Collectors.toList());
         }
-        return imageUrls.size() + " imagen" + (imageUrls.size() == 1 ? "" : "es") + " cargada"
-                + (imageUrls.size() == 1 ? "" : "s") + " en la solicitud #" + request.getId();
+        if (!car.getHasImage()) {
+            return List.of();
+        }
+        return List.of(0L);
     }
 
-    private String carImageStatus(final Car car) {
-        final List<String> imageUrls = buildCarImageUrls(car);
-        if (imageUrls.isEmpty()) {
+    private String imageStatus(final int imageCount) {
+        if (imageCount == 0) {
             return "Sin imágenes cargadas";
         }
-        return imageUrls.size() + " imagen" + (imageUrls.size() == 1 ? "" : "es") + " actual"
-                + (imageUrls.size() == 1 ? "" : "es") + " del auto #" + car.getId();
+        return imageCount + " imagen" + (imageCount == 1 ? "" : "es") + " seleccionada"
+                + (imageCount == 1 ? "" : "s");
     }
 
     private String submitterLabel(final CarRequest request) {
@@ -766,10 +818,11 @@ public class AdminController {
 
     private String validateUploadedImages(final List<MultipartFile> files, final boolean required,
                                           final int existingImageCount) {
-        if (files.isEmpty()) {
+        final int totalImageCount = existingImageCount + files.size();
+        if (totalImageCount == 0) {
             return required ? "La imagen es obligatoria." : null;
         }
-        if (existingImageCount + files.size() > MAX_IMAGE_COUNT) {
+        if (totalImageCount > MAX_IMAGE_COUNT) {
             return "Podés cargar hasta " + MAX_IMAGE_COUNT + " imágenes.";
         }
         for (final MultipartFile file : files) {
@@ -792,6 +845,66 @@ public class AdminController {
         return files.stream()
                 .filter(file -> file != null && !file.isEmpty())
                 .collect(Collectors.toList());
+    }
+
+    private List<Long> retainedImageIds(final List<Long> submittedImageIds, final List<Long> availableImageIds) {
+        if (submittedImageIds == null || submittedImageIds.isEmpty() || availableImageIds.isEmpty()) {
+            return List.of();
+        }
+        final Set<Long> available = new LinkedHashSet<>(availableImageIds);
+        final Set<Long> retained = new LinkedHashSet<>();
+        for (final Long imageId : submittedImageIds) {
+            if (imageId != null && available.contains(imageId)) {
+                retained.add(imageId);
+            }
+        }
+        return new ArrayList<>(retained);
+    }
+
+    private boolean hasUnknownRetainedImageIds(final List<Long> submittedImageIds, final List<Long> availableImageIds) {
+        if (submittedImageIds == null || submittedImageIds.isEmpty()) {
+            return false;
+        }
+        final Set<Long> available = new LinkedHashSet<>(availableImageIds);
+        return submittedImageIds.stream()
+                .filter(Objects::nonNull)
+                .anyMatch(imageId -> !available.contains(imageId));
+    }
+
+    private List<CarImagePayload> requestImagePayloads(final CarRequest request, final List<Long> retainedImageIds) {
+        final List<CarImagePayload> payloads = new ArrayList<>();
+        for (final Long imageId : retainedImageIds) {
+            if (imageId == null) {
+                continue;
+            }
+            if (imageId == 0L) {
+                if (request.getImageContentType() != null && request.getImageData() != null) {
+                    payloads.add(new CarImagePayload(request.getImageContentType(), request.getImageData()));
+                }
+                continue;
+            }
+            carRequestService.getCarRequestImageById(request.getId(), imageId)
+                    .filter(image -> image.getImageData() != null)
+                    .map(image -> new CarImagePayload(image.getContentType(), image.getImageData()))
+                    .ifPresent(payloads::add);
+        }
+        return payloads;
+    }
+
+    private List<CarImagePayload> carImagePayloads(final Car car, final List<Long> retainedImageIds) {
+        final List<CarImagePayload> payloads = new ArrayList<>();
+        for (final Long imageId : retainedImageIds) {
+            if (imageId == null) {
+                continue;
+            }
+            final Optional<CarImage> image = imageId == 0L
+                    ? carService.getCarImageByCarId(car.getId())
+                    : carService.getCarImageById(car.getId(), imageId);
+            image.filter(carImage -> carImage.getImageData() != null)
+                    .map(carImage -> new CarImagePayload(carImage.getContentType(), carImage.getImageData()))
+                    .ifPresent(payloads::add);
+        }
+        return payloads;
     }
 
     private List<CarImagePayload> toImagePayloads(final List<MultipartFile> files) throws IOException {

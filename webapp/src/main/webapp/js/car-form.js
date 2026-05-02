@@ -7,8 +7,10 @@
     var filePreviewImg = document.getElementById('modalCarImagePreviewImg');
     var filePreviewPrev = document.getElementById('modalCarImagePrev');
     var filePreviewNext = document.getElementById('modalCarImageNext');
+    var filePreviewRemove = document.getElementById('modalCarImageRemove');
     var filePreviewCounter = document.getElementById('modalCarImageCounter');
     var filePreviewThumbnails = document.getElementById('modalCarImageThumbnails');
+    var retainedImageInputs = document.getElementById('modalCarRetainedImageInputs');
     var fileUpload = fileInput ? fileInput.closest('.car-image-upload') : null;
 
     if (!page || !form) {
@@ -18,6 +20,9 @@
     var emptyFileStatus = 'Ninguna imagen seleccionada';
     var existingImageUrls = (page.dataset.existingImageUrls || '').split('|').filter(function (url) {
         return !!url;
+    });
+    var existingImageIds = (page.dataset.existingImageIds || '').split('|').filter(function (id) {
+        return !!id;
     });
     var existingImageCount = existingImageUrls.length;
     var existingImageStatus = page.dataset.existingImageStatus || '';
@@ -257,6 +262,20 @@
         fileInput.files = dt.files;
     };
 
+    var syncRetainedImageInputs = function () {
+        if (!retainedImageInputs) {
+            return;
+        }
+        retainedImageInputs.textContent = '';
+        existingImageIds.forEach(function (imageId) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'retainedImageIds';
+            input.value = imageId;
+            retainedImageInputs.appendChild(input);
+        });
+    };
+
     var appendToAccumulator = function (newFiles) {
         var existing = {};
         accumulatedFiles.forEach(function (file) {
@@ -319,6 +338,9 @@
         if (filePreviewNext) {
             filePreviewNext.toggleAttribute('hidden', previewImages.length <= 1);
         }
+        if (filePreviewRemove) {
+            filePreviewRemove.toggleAttribute('hidden', false);
+        }
         if (!filePreviewThumbnails) {
             return;
         }
@@ -353,22 +375,22 @@
         filePreviewThumbnails.toggleAttribute('hidden', !(previewImages.length > 1 || showAddMore));
     };
 
-    var setPreviewImages = function (imageUrls, objectUrls) {
+    var setPreviewImages = function (imageUrls, objectUrls, nextPreviewIndex) {
         revokePreviewObjectUrls();
         previewImages = imageUrls || [];
-        previewIndex = 0;
+        previewIndex = typeof nextPreviewIndex === 'number' ? nextPreviewIndex : 0;
         previewObjectUrls = objectUrls || [];
         renderPreview();
     };
 
-    var setPreviewFromFiles = function (files) {
+    var setPreviewFromFiles = function (files, nextPreviewIndex) {
         var objectUrls = files.map(function (file) {
             return window.URL.createObjectURL(file);
         });
-        setPreviewImages(existingImageUrls.concat(objectUrls), objectUrls);
+        setPreviewImages(existingImageUrls.concat(objectUrls), objectUrls, nextPreviewIndex);
     };
 
-    var updateFileState = function () {
+    var updateFileState = function (nextPreviewIndex) {
         if (!fileInput || !fileStatus || !fileUpload) {
             return;
         }
@@ -378,14 +400,14 @@
 
         if (files.length === 1) {
             fileStatus.textContent = existingImageCount > 0 ? files[0].name + ' para agregar' : files[0].name;
-            setPreviewFromFiles(files);
+            setPreviewFromFiles(files, nextPreviewIndex);
         } else if (files.length > 1) {
             fileStatus.textContent = files.length + ' imágenes seleccionadas'
                     + (existingImageCount > 0 ? ' para agregar' : '');
-            setPreviewFromFiles(files);
+            setPreviewFromFiles(files, nextPreviewIndex);
         } else if (existingImageUrls.length > 0) {
             fileStatus.textContent = existingImageStatus || (existingImageUrls.length + ' imágenes cargadas');
-            setPreviewImages(existingImageUrls, []);
+            setPreviewImages(existingImageUrls, [], nextPreviewIndex);
         } else {
             fileStatus.textContent = emptyFileStatus;
             setPreviewImages([], []);
@@ -399,6 +421,10 @@
             var picked = Array.prototype.slice.call(event.target.files || []).filter(function (file) {
                 return file && file.size > 0;
             });
+            if (picked.length === 0) {
+                syncInputFromAccumulator();
+                return;
+            }
             appendToAccumulator(picked);
             updateFileState();
             validateField(fileInput);
@@ -420,6 +446,33 @@
             event.stopPropagation();
             previewIndex += 1;
             renderPreview();
+        });
+    }
+
+    if (filePreviewRemove) {
+        filePreviewRemove.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            var fileIndex = previewIndex - existingImageCount;
+            if (previewIndex < existingImageCount) {
+                existingImageUrls.splice(previewIndex, 1);
+                existingImageIds.splice(previewIndex, 1);
+                existingImageCount = existingImageUrls.length;
+                syncRetainedImageInputs();
+            } else {
+                if (fileIndex < 0 || fileIndex >= accumulatedFiles.length) {
+                    return;
+                }
+                accumulatedFiles.splice(fileIndex, 1);
+                syncInputFromAccumulator();
+            }
+
+            if (previewIndex >= existingImageCount + accumulatedFiles.length) {
+                previewIndex -= 1;
+            }
+            updateFileState(previewIndex);
+            validateField(fileInput);
         });
     }
 

@@ -171,8 +171,10 @@ public class CarRequestServiceImpl implements CarRequestService {
         final List<CarImagePayload> replacementImages = hasImageContentType
                 ? List.of(new CarImagePayload(imageContentType.get(), imageData.orElseThrow()))
                 : List.of();
+        final List<CarImagePayload> approvalImages = new ArrayList<>(requestImagePayloads(request));
+        approvalImages.addAll(replacementImages);
 
-        return approvePendingRequest(id, brandId, normalizedModel, bodyTypeId, year, normalizedDescription, replacementImages,
+        return approvePendingRequest(id, brandId, normalizedModel, bodyTypeId, year, normalizedDescription, approvalImages,
                 fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
     }
 
@@ -213,19 +215,12 @@ public class CarRequestServiceImpl implements CarRequestService {
                 maxSpeedKmh,
                 priceUsd
         );
-        final String contentTypeToPersist = request.getImageContentType();
-        final byte[] imageDataToPersist = request.getImageData();
         if (!normalizedImages.isEmpty()) {
-            final List<CarImagePayload> requestGallery = requestImagePayloads(request);
-            final List<CarImagePayload> combinedImages = new ArrayList<>(requestGallery);
-            combinedImages.addAll(normalizedImages);
-            carImageDao.replaceAll(createdCar.getId(), combinedImages);
-        } else {
+            carImageDao.replaceAll(createdCar.getId(), normalizedImages);
+        } else if (images == null) {
             final List<CarImagePayload> requestGallery = requestImagePayloads(request);
             if (!requestGallery.isEmpty()) {
                 carImageDao.replaceAll(createdCar.getId(), requestGallery);
-            } else if (contentTypeToPersist != null && imageDataToPersist != null) {
-                carImageDao.saveOrReplace(createdCar.getId(), contentTypeToPersist, imageDataToPersist);
             }
         }
         return true;

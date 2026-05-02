@@ -1382,6 +1382,35 @@
     display: none;
 }
 
+.car-image-upload-preview-remove {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 5;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(229, 226, 225, 0.2);
+    border-radius: 999px;
+    background: rgba(12, 14, 18, 0.82);
+    color: var(--on-surface);
+    cursor: pointer;
+}
+
+.car-image-upload-preview-remove:hover,
+.car-image-upload-preview-remove:focus-visible {
+    border-color: rgba(255, 180, 171, 0.56);
+    background: rgba(255, 180, 171, 0.2);
+    color: #ffdad6;
+    outline: none;
+}
+
+.car-image-upload-preview-remove[hidden] {
+    display: none;
+}
+
 .car-image-upload-preview-prev {
     left: 0.75rem;
 }
