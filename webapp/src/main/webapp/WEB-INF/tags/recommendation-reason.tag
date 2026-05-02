@@ -3,6 +3,7 @@
 <%@ attribute name="negatives" required="false" type="java.util.List" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <c:if test="${not empty positives or not empty negatives}">
     <div class="recommendation-reason">
@@ -16,7 +17,7 @@
                             <spring:message code="review.tag.emoji.fallback" var="recTagEmojiFallback" text="🏷️"/>
                             <spring:message code="${recTagEmojiKey}" var="recTagEmojiDisplay" text="${recTagEmojiFallback}"/>
                             <span class="recommendation-highlight-emoji recommendation-highlight-emoji--topic" aria-hidden="true"><c:out value="${recTagEmojiDisplay}"/></span>
-                            <span class="recommendation-highlight-tag"><c:out value="${highlight.tag.labelEs}"/></span>
+                            <span class="recommendation-highlight-tag"><pa:review-tag-label tag="${highlight.tag}"/></span>
                         </li>
                     </c:if>
                 </c:forEach>
@@ -32,7 +33,7 @@
                             <spring:message code="review.tag.emoji.fallback" var="recTagEmojiFallback" text="🏷️"/>
                             <spring:message code="${recTagEmojiKey}" var="recTagEmojiDisplay" text="${recTagEmojiFallback}"/>
                             <span class="recommendation-highlight-emoji recommendation-highlight-emoji--topic" aria-hidden="true"><c:out value="${recTagEmojiDisplay}"/></span>
-                            <span class="recommendation-highlight-tag"><c:out value="${highlight.tag.labelEs}"/></span>
+                            <span class="recommendation-highlight-tag"><pa:review-tag-label tag="${highlight.tag}"/></span>
                         </li>
                     </c:if>
                 </c:forEach>

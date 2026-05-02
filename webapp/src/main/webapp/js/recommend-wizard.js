@@ -10,6 +10,12 @@
     const progressBar = form.querySelector('.wizard-progress-bar');
     const progressLabel = form.querySelector('.wizard-progress-label');
     const fallbackActions = form.querySelector('.wizard-fallback-actions');
+    const progressShell = form.querySelector('.wizard-progress');
+    const questionIndexTemplate = progressShell
+        ? (progressShell.getAttribute('data-recommend-question-index-template') || '')
+        : '';
+    const QUESTION_INDEX_CUR = '__PAW_0__';
+    const QUESTION_INDEX_TOTAL = '__PAW_1__';
 
     if (steps.length === 0) {
         return;
@@ -45,12 +51,21 @@
         if (type === 'intro') {
             filled = 0;
             labelText = '';
+        } else if (questionIndexTemplate.indexOf(QUESTION_INDEX_CUR) !== -1
+            && questionIndexTemplate.indexOf(QUESTION_INDEX_TOTAL) !== -1) {
+            if (type === 'question') {
+                filled = answeredQuestions + 1;
+            } else {
+                filled = totalSlots;
+            }
+            labelText = questionIndexTemplate.split(QUESTION_INDEX_CUR).join(String(filled))
+                .split(QUESTION_INDEX_TOTAL).join(String(totalSlots));
         } else if (type === 'question') {
             filled = answeredQuestions + 1;
-            labelText = 'Paso ' + filled + ' de ' + totalSlots;
+            labelText = '';
         } else {
             filled = totalSlots;
-            labelText = 'Paso ' + filled + ' de ' + totalSlots;
+            labelText = '';
         }
         const ratio = filled / totalSlots;
         if (progressBar) {

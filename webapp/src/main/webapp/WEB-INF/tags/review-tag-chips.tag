@@ -6,6 +6,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <c:choose>
     <c:when test="${mode eq 'edit'}">
@@ -28,7 +29,7 @@
                                        data-dimension="${fn:escapeXml(tag.dimension)}"
                                        <c:if test="${isChecked}">checked</c:if>>
                                 <span class="review-tag-chip-emoji" aria-hidden="true"><c:out value="${tagEmojiDisplay}"/></span>
-                                <span class="review-tag-chip-text"><c:out value="${tag.labelEs}"/></span>
+                                <span class="review-tag-chip-text"><pa:review-tag-label tag="${tag}"/></span>
                             </label>
                         </c:forEach>
                     </div>
@@ -48,7 +49,7 @@
                                        data-dimension="${fn:escapeXml(tag.dimension)}"
                                        <c:if test="${isChecked}">checked</c:if>>
                                 <span class="review-tag-chip-emoji" aria-hidden="true"><c:out value="${tagEmojiDisplay}"/></span>
-                                <span class="review-tag-chip-text"><c:out value="${tag.labelEs}"/></span>
+                                <span class="review-tag-chip-text"><pa:review-tag-label tag="${tag}"/></span>
                             </label>
                         </c:forEach>
                     </div>
@@ -66,7 +67,7 @@
                     <spring:message code="${tagEmojiKey}" var="tagEmojiDisplay" text="${tagEmojiFallback}"/>
                     <li class="review-tag-chip review-tag-chip--display review-tag-chip--${tag.sentiment}">
                         <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${tagEmojiDisplay}"/></span>
-                        <span class="review-tag-chip-label"><c:out value="${tag.labelEs}"/></span>
+                        <span class="review-tag-chip-label"><pa:review-tag-label tag="${tag}"/></span>
                     </li>
                 </c:forEach>
             </ul>
