@@ -80,8 +80,7 @@ public class ReviewTagJdbcDao implements ReviewTagDao {
         }
         if (!batchArgs.isEmpty()) {
             jdbcTemplate.batchUpdate(
-                    "INSERT INTO review_tag_assignments (review_id, tag_id) VALUES (?, ?) "
-                            + "ON CONFLICT (review_id, tag_id) DO NOTHING",
+                    "INSERT INTO review_tag_assignments (review_id, tag_id) VALUES (?, ?)",
                     batchArgs
             );
         }
