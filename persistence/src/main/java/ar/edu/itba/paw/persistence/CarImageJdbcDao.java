@@ -50,7 +50,7 @@ public class CarImageJdbcDao implements CarImageDao {
     public List<CarImage> findAllByCarId(final long carId) {
         try {
             return jdbcTemplate.query(
-                    "SELECT image_id, car_id, display_order, content_type, NULL::bytea AS image_data, updated_at "
+                    "SELECT image_id, car_id, display_order, content_type, CAST(NULL AS bytea) AS image_data, updated_at "
                             + "FROM car_images WHERE car_id = ? ORDER BY display_order ASC, image_id ASC",
                     ROW_MAPPER,
                     carId

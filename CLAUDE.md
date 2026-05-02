@@ -33,7 +33,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 ## Transactions
 
-- `@Transactional` goes on service methods only — never on DAO methods or controllers.
+- In production code, `@Transactional` goes on service methods only — never on DAO methods or controllers.
 - Use `@Transactional(readOnly = true)` for read-only service methods.
 
 ## Controllers
@@ -167,7 +167,32 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - Domain objects are plain POJOs: hand-written getters/setters, constructor delegation via `this()`, implement `Serializable`. Lombok is prohibited — do not introduce it.
 
+## Testing (Persistence Layer)
+
+- Persistence tests live under `persistence/src/test/java/ar/edu/itba/paw/persistence/`.
+- Stack: JUnit 5 + Spring Test + HSQLDB in memory. The `persistence` module declares these as test dependencies; versions stay pinned in the root `pom.xml` `<dependencyManagement>`.
+- Persistence tests use real Spring-managed DAOs with `@Autowired`, a real test `DataSource`, and `TestConfiguration`. Do not mock DAOs or use Mockito in this layer.
+- `TestConfiguration` uses HSQLDB with `jdbc:hsqldb:mem:paw;sql.syntax_pgs=true`, defines a `DataSourceTransactionManager`, and component-scans only `ar.edu.itba.paw.persistence`.
+- The HSQLDB schema is `persistence/src/test/resources/test-schema.sql`. Keep it minimal and faithful to the DAO behavior under test: table/column names, relevant FKs, uniqueness, checks, nullability, and relationships. Do not try to port the full PostgreSQL production schema.
+- Do not add global seed data. Each test prepares its own state explicitly in `// Arrange`; tests must not depend on execution order or data created by another test.
+- The shared persistence test base uses Spring Test with `@Transactional` and `@Rollback` so every test method runs in its own transaction and rolls back automatically. Keep rollback explicit in the base class.
+- Test layout follows Arrange / Exercise / Assertions, separated by comment markers. The Exercise section must be a single-line invocation of the DAO method under test.
+- Mutating DAO tests must assert both the returned value and the persisted side effect by querying the database back through DAOs or simple test helpers.
+- Run with `mvn -pl persistence test`.
+
+## Testing (Service Layer)
+
+- Service-layer unit tests live under `services/src/test/java/ar/edu/itba/paw/services/`.
+- Stack: JUnit 5 (`junit-bom` 5.11.0) + Mockito 5.23.0 (`mockito-core` and `mockito-junit-jupiter`). Versions are pinned in the root `pom.xml` `<dependencyManagement>`; the `services` module declares the deps with `<scope>test</scope>` and no version.
+- Each test class uses `@ExtendWith(MockitoExtension.class)`, `@Mock` for DAOs/collaborators, and `@InjectMocks` for the service under test. Do not use `@BeforeEach`, `@RunWith(MockitoJUnitRunner.class)`, manual mock init, or `MockitoAnnotations.openMocks(this)`.
+- Interaction verification is forbidden in this layer: do not use `Mockito.verify`, `verify(...)`, `Mockito.spy`, `spy(...)`, `times(...)`, `never(...)`, `atLeast(...)`, `atMost(...)`, or any other interaction check. Tests assert observable results, not implementation details.
+- Every test must have at least one meaningful assertion on the returned value or thrown exception. Tests without assertions, or that only check non-null, are not allowed.
+- Test layout follows Arrange / Exercise / Assertions, separated by comment markers. The Exercise section must be a single-line invocation of the method under test.
+- Scope: only services with non-trivial logic are covered (validation, normalization, state transitions, scoring, exception swallowing). Pure delegation methods are not tested artificially.
+- DB, network, filesystem, sleeps, and shared mutable state are forbidden in unit tests. Run with `mvn -pl services test`.
+
 ## Maven
 
 - All dependency versions are declared in the root `pom.xml` under `<dependencyManagement>`. Child modules declare dependencies without `<version>`.
 - Do not hard-code third-party versions in module POMs.
+- Spring Boot dependencies are **FORBIDDEN**. This is a plain Spring MVC project (Spring Framework, not Spring Boot). Never add `spring-boot-*`, `spring-boot-starter-*`, or any Boot autoconfiguration artifacts. Configuration is explicit Java/XML config wired through `WebConfig`/`WebAuthConfig`.

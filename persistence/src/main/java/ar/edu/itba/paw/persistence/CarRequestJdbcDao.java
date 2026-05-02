@@ -169,7 +169,7 @@ public class CarRequestJdbcDao implements CarRequestDao {
     public List<CarRequestImage> findImagesByRequestId(final long requestId) {
         try {
             return jdbcTemplate.query(
-                    "SELECT image_id, car_request_id, display_order, content_type, NULL::bytea AS image_data, updated_at "
+                    "SELECT image_id, car_request_id, display_order, content_type, CAST(NULL AS bytea) AS image_data, updated_at "
                             + "FROM car_request_images WHERE car_request_id = ? "
                             + "ORDER BY display_order ASC, image_id ASC",
                     IMAGE_ROW_MAPPER,
