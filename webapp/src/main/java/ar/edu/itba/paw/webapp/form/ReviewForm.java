@@ -14,42 +14,42 @@ import java.util.Set;
 
 public class ReviewForm {
 
-    @NotNull(message = "El auto es obligatorio.")
+    @NotNull(message = "{validation.review.car.required}")
     private Long carId;
 
-    @Email(message = "Ingresá un email válido.")
-    @Size(max = 100, message = "El email debe tener como máximo 100 caracteres.")
+    @Email(message = "{validation.email.invalid}")
+    @Size(max = 100, message = "{validation.email.max}")
     private String reviewerEmail;
 
-    @NotNull(message = "La puntuación es obligatoria.")
-    @DecimalMin(value = "0.0", message = "La puntuación debe estar entre 0 y 5.")
-    @DecimalMax(value = "5.0", message = "La puntuación debe estar entre 0 y 5.")
+    @NotNull(message = "{validation.review.rating.required}")
+    @DecimalMin(value = "0.0", message = "{validation.review.rating.range}")
+    @DecimalMax(value = "5.0", message = "{validation.review.rating.range}")
     private BigDecimal rating;
 
-    @NotBlank(message = "El título es obligatorio.")
-    @Size(max = 200, message = "El título debe tener como máximo 200 caracteres.")
+    @NotBlank(message = "{validation.review.title.required}")
+    @Size(max = 200, message = "{validation.review.title.max}")
     private String title;
 
-    @NotBlank(message = "La descripción es obligatoria.")
-    @Size(max = 2000, message = "La descripción debe tener como máximo 2000 caracteres.")
+    @NotBlank(message = "{validation.review.body.required}")
+    @Size(max = 2000, message = "{validation.review.body.max}")
     private String body;
 
-    @Size(max = 20, message = "Estado de propiedad no válido.")
+    @Size(max = 20, message = "{validation.review.ownershipStatus.max}")
     private String ownershipStatus;
 
-    @NotNull(message = "El año del modelo es obligatorio.")
-    @Min(value = 1886, message = "Ingresá un año válido.")
-    @Max(value = 2100, message = "Ingresá un año válido.")
+    @NotNull(message = "{validation.review.modelYear.required}")
+    @Min(value = 1886, message = "{validation.review.modelYear.range}")
+    @Max(value = 2100, message = "{validation.review.modelYear.range}")
     private Integer modelYear;
 
-    @NotNull(message = "El kilometraje es obligatorio.")
-    @Min(value = 0, message = "Ingresá un kilometraje entre 0 y 2.000.000 km.")
-    @Max(value = 2_000_000, message = "Ingresá un kilometraje entre 0 y 2.000.000 km.")
+    @NotNull(message = "{validation.review.mileage.required}")
+    @Min(value = 0, message = "{validation.review.mileage.range}")
+    @Max(value = 2_000_000, message = "{validation.review.mileage.range}")
     private Integer mileageKm;
 
     private Boolean wouldRecommend;
 
-    @Size(max = 6, message = "Podés elegir hasta 6 etiquetas.")
+    @Size(max = 6, message = "{validation.review.tags.max}")
     private Set<Short> tagIds = new LinkedHashSet<>();
 
     public Long getCarId() {

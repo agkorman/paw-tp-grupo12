@@ -11,6 +11,8 @@
     var hpError = document.getElementById('panelHpError');
     var yearError = document.getElementById('panelYearError');
     var priceError = document.getElementById('panelPriceError');
+    var consumptionSection = document.getElementById('panelConsumptionSection');
+    var consumptionSlider = document.getElementById('panelConsumptionSlider');
     var previewSubmitTimer = null;
 
     if (!panel || !toolbarForm) {
@@ -100,6 +102,7 @@
             btn.classList.add('is-selected');
             if (hidden) { hidden.value = btn.getAttribute('data-value') || ''; }
         }
+        updateConsumptionFilterVisibility();
         clearValidationErrors();
         schedulePreviewSubmit();
     });
@@ -125,6 +128,24 @@
 
     var updateConsumptionDisplay = initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', 'Hasta', 'L/100km');
     var updateSpeedDisplay       = initSingleRange('panelMaxSpeedSlider',    'panelMaxSpeedDisplay',    'Desde', 'km/h');
+
+    function isElectricOnlyFilter() {
+        var fuelTypeInput = document.getElementById('panelFuelType');
+        return fuelTypeInput && fuelTypeInput.value === 'electric';
+    }
+
+    function updateConsumptionFilterVisibility() {
+        if (!consumptionSection || !consumptionSlider) {
+            return;
+        }
+        var hidden = isElectricOnlyFilter();
+        consumptionSection.hidden = hidden;
+        consumptionSlider.disabled = hidden;
+        if (hidden) {
+            consumptionSlider.value = consumptionSlider.max;
+            updateConsumptionDisplay();
+        }
+    }
 
     /* ── DUAL-RANGE SLIDER ── */
 
@@ -242,6 +263,9 @@
 
         var inputs = panel.querySelectorAll('input[name], select[name]');
         Array.prototype.forEach.call(inputs, function (el) {
+            if (el.disabled) {
+                return;
+            }
             if (el.type === 'radio') {
                 if (el.checked && el.value !== '') { params[el.name] = el.value; }
             } else if (el.type === 'range') {
@@ -568,9 +592,9 @@
         var fills = panel.querySelectorAll('.dual-range-fill');
         Array.prototype.forEach.call(fills, function (f) { f.style.left = '0%'; f.style.width = '100%'; })
 
-        var consumptionSlider = document.getElementById('panelConsumptionSlider');
         if (consumptionSlider) {
             consumptionSlider.value = consumptionSlider.max;
+            consumptionSlider.disabled = false;
             updateConsumptionDisplay();
         }
 
@@ -579,6 +603,7 @@
             speedSlider.value = speedSlider.min;
             updateSpeedDisplay();
         }
+        updateConsumptionFilterVisibility();
     }
 
     if (clearBtn) {
@@ -602,5 +627,6 @@
     }
 
     syncFiltersToggleState(collectPanelParams());
+    updateConsumptionFilterVisibility();
 
 })();

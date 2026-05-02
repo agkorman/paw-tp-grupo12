@@ -9,15 +9,20 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 
 <c:url var="reviewsFeedUrl" value="/reviews/feed"/>
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
+<spring:message var="reviewRepliesLabel" code="review.feed.replies.aria"/>
+<spring:message var="replyPlaceholder" code="review.feed.reply.placeholder"/>
+<spring:message var="replyAuthAction" code="review.authRequired.replyAction"/>
+<spring:message var="likeLabel" code="review.like.label"/>
 
 <section id="reviewsFeed" class="reviews-feed">
     <c:set var="reviewTotalCount" value="${empty totalItems ? fn:length(reviews) : totalItems}"/>
     <div class="feed-header">
-        <h2>Reseñas <span class="review-count-label">
+        <h2><spring:message code="review.feed.title"/> <span class="review-count-label">
             <c:choose>
                 <c:when test="${reviewTotalCount >= 1000}">${reviewTotalCount / 1000}k</c:when>
                 <c:otherwise>${reviewTotalCount}</c:otherwise>
@@ -30,14 +35,14 @@
                   data-target="#reviewsFeed"
                   data-auto-submit="true">
                 <input type="hidden" name="carId" value="${carId}">
-                <label class="review-sort-label" for="reviewSortSelect">Ordenar por:</label>
+                <label class="review-sort-label" for="reviewSortSelect"><spring:message code="review.feed.sort"/></label>
                 <select id="reviewSortSelect" name="sort" class="review-sort-select">
-                    <option value="" ${empty currentSort ? 'selected' : ''}>Más recientes</option>
-                    <option value="rating_desc" ${currentSort eq 'rating_desc' ? 'selected' : ''}>Mayor puntuación</option>
-                    <option value="rating_asc" ${currentSort eq 'rating_asc' ? 'selected' : ''}>Menor puntuación</option>
+                    <option value="" ${empty currentSort ? 'selected' : ''}><spring:message code="review.feed.sort.recent"/></option>
+                    <option value="rating_desc" ${currentSort eq 'rating_desc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingDesc"/></option>
+                    <option value="rating_asc" ${currentSort eq 'rating_asc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingAsc"/></option>
                 </select>
                 <noscript>
-                    <button type="submit" class="btn-secondary review-sort-submit">Aplicar</button>
+                    <button type="submit" class="btn-secondary review-sort-submit"><spring:message code="common.action.apply"/></button>
                 </noscript>
             </form>
         </div>
@@ -48,7 +53,7 @@
     <c:choose>
         <c:when test="${empty reviewThreads}">
             <div class="empty-state">
-                <p>Todavía no hay reseñas para este auto.</p>
+                <p><spring:message code="review.feed.empty"/></p>
             </div>
         </c:when>
         <c:otherwise>
@@ -66,7 +71,7 @@
                         <pa:review-tag-chips mode="display" tags="${review.tags}"/>
                         <div class="review-meta">
                             <pa:review-author-link review="${review}"/>
-                            <span><c:out value="${fn:substring(review.createdAt, 0, 10)}"/></span>
+                            <span><c:out value="${relativeTimeFormatter.format(review.createdAt)}"/></span>
                             <pa:review-like-button
                                     reviewId="${review.id}"
                                     action="${reviewLikeUrl}"
@@ -74,7 +79,7 @@
                                     likeCount="${thread.likeCount}"
                                     disabled="${not authenticated}"/>
                         </div>
-                        <div class="review-replies" aria-label="Respuestas a la reseña">
+                        <div class="review-replies" aria-label="${reviewRepliesLabel}">
                             <c:if test="${not empty thread.replies}">
                                 <div class="review-reply-list">
                                     <c:forEach var="replyCard" items="${thread.replies}">
@@ -86,7 +91,7 @@
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">
                                                     <c:out value="${empty reply.authorUsername ? 'Usuario' : reply.authorUsername}"/>
                                                 </a>
-                                                <span><c:out value="${fn:substring(reply.createdAt, 0, 10)}"/></span>
+                                                <span><c:out value="${relativeTimeFormatter.format(reply.createdAt)}"/></span>
                                             </div>
                                             <p class="review-reply-body"><c:out value="${reply.body}"/></p>
                                             <pa:review-like-button
@@ -95,7 +100,7 @@
                                                     liked="${replyCard.liked}"
                                                     likeCount="${replyCard.likeCount}"
                                                     disabled="${not authenticated}"
-                                                    label="Like"/>
+                                                    label="${likeLabel}"/>
                                         </article>
                                     </c:forEach>
                                 </div>
@@ -107,11 +112,11 @@
                                           data-target="#reviewsFeed"
                                           data-auth-resume-intent="reply-${review.id}">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                        <label for="replyBody-${review.id}">Responder</label>
+                                        <label for="replyBody-${review.id}"><spring:message code="review.feed.reply"/></label>
                                         <div class="review-reply-form-row">
                                             <textarea id="replyBody-${review.id}" name="body" rows="2" maxlength="1000" required
-                                                      placeholder="Sumá una respuesta breve"></textarea>
-                                            <button type="submit" class="btn-secondary">Responder</button>
+                                                      placeholder="${replyPlaceholder}"></textarea>
+                                            <button type="submit" class="btn-secondary"><spring:message code="review.feed.reply"/></button>
                                         </div>
                                     </form>
                                 </c:when>
@@ -124,11 +129,11 @@
                                         <a href="${replyLoginUrl}"
                                            class="review-reply-login-button"
                                            data-auth-required="true"
-                                           data-auth-required-action="responder una reseña"
+                                           data-auth-required-action="${replyAuthAction}"
                                            data-auth-required-intent="reply-${review.id}">
-                                            Iniciá sesión
+                                            <spring:message code="review.feed.loginPrefix"/>
                                         </a>
-                                        para responder o dar like.
+                                        <spring:message code="review.feed.loginSuffix"/>
                                     </p>
                                 </c:otherwise>
                             </c:choose>
@@ -151,7 +156,7 @@
                        data-review-show-more="true"
                        data-fragment-url="${reviewsFeedUrl}"
                        data-target="#reviewsFeed">
-                        Mostrar más reseñas
+                        <spring:message code="common.action.showMoreReviews"/>
                     </a>
                 </div>
             </c:if>

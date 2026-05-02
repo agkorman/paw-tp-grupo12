@@ -2,12 +2,13 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Posta Autos</title>
+    <title><spring:message code="cars.title"/></title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css'/>">
@@ -56,14 +57,14 @@
                 <circle cx="12" cy="12" r="10" fill="#4caf7a"/>
                 <path d="M7.5 12.5l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span class="submitted-toast-text">Tu auto ha sido enviado correctamente y está en proceso de moderación.</span>
-            <button type="button" class="submitted-toast-action" data-dismiss-submitted-toast>ENTENDIDO</button>
+            <span class="submitted-toast-text"><spring:message code="cars.submittedToast"/></span>
+            <button type="button" class="submitted-toast-action" data-dismiss-submitted-toast><spring:message code="cars.submittedToast.dismiss"/></button>
         </div>
     </c:if>
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
-    <script src="<c:url value='/js/cars-filters-panel.js?v=5'/>"></script>
+    <script src="<c:url value='/js/cars-filters-panel.js?v=6'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/submitted-toast.js'/>"></script>

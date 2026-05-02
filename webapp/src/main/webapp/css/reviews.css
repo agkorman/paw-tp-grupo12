@@ -291,6 +291,7 @@
     padding: 0.875rem;
     display: grid;
     gap: 0.5rem;
+    min-width: 0;
 }
 
 .last-review-top {
@@ -298,10 +299,21 @@
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
+    min-width: 0;
+}
+
+.last-review-top strong {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .last-review-body {
     margin: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .last-review-meta {
@@ -400,6 +412,7 @@
     background: var(--surface-container-high);
     border-radius: var(--radius-md);
     padding: 1rem;
+    min-width: 0;
     scroll-margin-top: 72px;
     transition: box-shadow 0.2s, background 0.2s;
 }
@@ -414,6 +427,14 @@
     justify-content: space-between;
     gap: 1rem;
     align-items: center;
+    min-width: 0;
+}
+
+.review-item-top strong {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .rating-pill {
@@ -532,6 +553,9 @@
 
 .review-body {
     margin-top: 0.625rem;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .review-meta {
@@ -587,6 +611,7 @@
     display: grid;
     gap: 0.5rem;
     padding: 0.75rem 0.875rem;
+    min-width: 0;
     border-left: 2px solid rgba(255, 87, 25, 0.45);
     background: rgba(255, 255, 255, 0.035);
 }
@@ -603,6 +628,9 @@
 .review-reply-body {
     margin: 0;
     color: var(--on-surface);
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .review-reply-form {

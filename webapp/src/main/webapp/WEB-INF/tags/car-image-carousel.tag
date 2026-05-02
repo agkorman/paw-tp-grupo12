@@ -5,8 +5,12 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <c:set var="imageCount" value="${empty images ? 0 : fn:length(images)}"/>
+<spring:message var="previousImageLabel" code="cars.image.previous"/>
+<spring:message var="nextImageLabel" code="cars.image.next"/>
+<spring:message var="carouselLabel" code="cars.image.carousel"/>
 
 <c:choose>
     <c:when test="${imageCount gt 0}">
@@ -23,18 +27,18 @@
                 </c:forEach>
                 <c:if test="${imageCount gt 1}">
                     <button type="button" class="car-image-carousel-nav car-image-carousel-prev"
-                            data-carousel-prev aria-label="Imagen anterior">
+                            data-carousel-prev aria-label="${previousImageLabel}">
                         <pa:icon name="chevron-left" size="18"/>
                     </button>
                     <button type="button" class="car-image-carousel-nav car-image-carousel-next"
-                            data-carousel-next aria-label="Imagen siguiente">
+                            data-carousel-next aria-label="${nextImageLabel}">
                         <pa:icon name="chevron-right" size="18"/>
                     </button>
                     <span class="car-image-carousel-count" data-carousel-count>1 / ${imageCount}</span>
                 </c:if>
             </div>
             <c:if test="${imageCount gt 1}">
-                <div class="car-image-carousel-thumbs" aria-label="Imágenes del auto">
+                <div class="car-image-carousel-thumbs" aria-label="${carouselLabel}">
                     <c:forEach var="image" items="${images}" varStatus="status">
                         <c:url var="thumbUrl" value="/cars/${carId}/images/${image.imageId}"/>
                         <button type="button"

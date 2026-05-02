@@ -63,6 +63,17 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Custom tags use the `pa:` namespace prefix and live in `WEB-INF/tags/`.
 - Every JSP starts with `<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>`.
 
+## Internationalization (i18n)
+
+- All user-visible UI text belongs in `webapp/src/main/resources/messages.properties`. Do not add hardcoded Spanish/English copy directly in JSPs, tag files, controllers, form validation annotations, or JavaScript when it is meant for users.
+- Use Spring messages in JSP/tag files: declare `<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>` and render with `<spring:message code="..."/>`. For HTML attributes, resolve into a variable first with `var` and escape it when needed.
+- Bean Validation messages use bundle keys in braces, e.g. `@NotBlank(message = "{validation.review.body.required}")`. Spring MVC validation is wired to the app `MessageSource`; keep it that way when touching `WebConfig`.
+- Key naming standard is dot-separated and domain-first: `domain.section.element.state`. Examples: `cars.form.description`, `review.feed.empty`, `admin.catalogRequest.title`, `auth.login.error`.
+- Validation keys use `validation.entity.field.rule`, e.g. `validation.car.model.max`, `validation.review.rating.required`. Shared validation keys may use `validation.option.required` or `validation.email.invalid`.
+- Shared UI labels/actions go under `common.*`; JavaScript-facing messages go under `js.*`; type mismatch keys keep Spring's required names such as `typeMismatch.reviewForm.rating`.
+- Do not translate or externalize technical strings: route paths, view names, request parameter names, enum-like persisted values (`pending`, `approved`, `rejected`), CSS classes, data attributes, DOM ids, JS event names, SQL, and log/debug-only strings.
+- When adding new UI copy, add the key and value to `messages.properties` in the matching section in the same change. Keep keys unique and descriptive; never reuse a key for unrelated text just because the current Spanish value matches.
+
 ## CSS & UI
 
 - CSS rules go in dedicated files — never inline styles on elements.

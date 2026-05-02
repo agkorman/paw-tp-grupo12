@@ -5,10 +5,24 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <c:set var="adminMode" value="${mode eq 'admin'}"/>
 <c:url var="carCreateUrl" value="/cars"/>
 <c:url var="adminBaseUrl" value="/admin"/>
+<spring:message var="brandSelectLabel" code="cars.form.brand.select"/>
+<spring:message var="bodyTypeSelectLabel" code="cars.form.bodyType.select"/>
+<spring:message var="carModelPlaceholder" code="cars.form.placeholder.model"/>
+<spring:message var="carYearPlaceholder" code="cars.form.placeholder.year2026"/>
+<spring:message var="carDescriptionPlaceholder" code="cars.form.placeholder.description"/>
+<spring:message var="carHorsepowerPlaceholder" code="cars.form.placeholder.horsepower"/>
+<spring:message var="carAirbagsPlaceholder" code="cars.form.placeholder.airbags"/>
+<spring:message var="carConsumptionPlaceholder" code="cars.form.placeholder.consumption"/>
+<spring:message var="carSpeedPlaceholder" code="cars.form.placeholder.speed"/>
+<spring:message var="carPricePlaceholder" code="cars.form.placeholder.price25000"/>
+<spring:message var="closeModalLabel" code="common.action.close"/>
+<spring:message var="previousImageLabel" code="cars.image.previous"/>
+<spring:message var="nextImageLabel" code="cars.image.next"/>
 
 <div id="createCarModal"
      class="review-modal"
@@ -22,18 +36,18 @@
             <div>
                 <span id="createCarModalKicker" class="review-modal-kicker">
                     <c:choose>
-                        <c:when test="${adminMode}">Solicitud pendiente</c:when>
-                        <c:otherwise>Nuevo vehículo</c:otherwise>
+                        <c:when test="${adminMode}"><spring:message code="common.status.pending"/></c:when>
+                        <c:otherwise><spring:message code="cars.add.kicker"/></c:otherwise>
                     </c:choose>
                 </span>
                 <h2 id="createCarModalTitle">
                     <c:choose>
-                        <c:when test="${adminMode}">Revisar formulario</c:when>
-                        <c:otherwise>Agregá un auto</c:otherwise>
+                        <c:when test="${adminMode}"><spring:message code="cars.form.mode.review.title"/></c:when>
+                        <c:otherwise><spring:message code="cars.add.heading"/></c:otherwise>
                     </c:choose>
                 </h2>
             </div>
-            <button type="button" class="review-modal-close" data-close-car-modal aria-label="Cerrar modal">
+            <button type="button" class="review-modal-close" data-close-car-modal aria-label="${closeModalLabel}">
                 <pa:icon name="close" size="18"/>
             </button>
         </div>
@@ -50,8 +64,8 @@
 
             <p id="createCarModalSubtitle" class="car-modal-subtitle">
                 <c:choose>
-                    <c:when test="${adminMode}">Revisá los datos enviados por el usuario antes de aprobar o rechazar la solicitud.</c:when>
-                    <c:otherwise>Completá los datos del auto. La solicitud quedará asociada a tu cuenta.</c:otherwise>
+                    <c:when test="${adminMode}"><spring:message code="cars.form.mode.review.subtitle"/></c:when>
+                    <c:otherwise><spring:message code="cars.add.subtitle"/></c:otherwise>
                 </c:choose>
             </p>
 
@@ -59,7 +73,7 @@
                 <div class="car-modal-column car-modal-column-details">
                     <c:if test="${adminMode}">
                         <div id="modalCarSubmitterEmailField" class="review-modal-field review-modal-field-wide" hidden>
-                            <label for="modalCarSubmitterEmail">Email</label>
+                            <label for="modalCarSubmitterEmail"><spring:message code="common.form.email"/></label>
                             <form:input id="modalCarSubmitterEmail" path="submitterEmail" type="email"
                                         maxlength="100" disabled="true"/>
                             <form:errors path="submitterEmail" cssClass="form-error" element="span"/>
@@ -68,9 +82,9 @@
 
                     <div class="car-modal-inline-fields">
                         <div class="review-modal-field">
-                            <label for="modalCarBrand">Marca</label>
+                            <label for="modalCarBrand"><spring:message code="cars.form.brand"/></label>
                             <form:select id="modalCarBrand" path="brand" required="required">
-                                <form:option value="" label="Seleccioná una marca"/>
+                                <form:option value="" label="${brandSelectLabel}"/>
                                 <c:forEach items="${brands}" var="brand">
                                     <form:option value="${brand.name}" label="${brand.name}"/>
                                 </c:forEach>
@@ -79,15 +93,15 @@
                             <c:if test="${not adminMode}">
                                 <button type="button" class="catalog-request-link"
                                         data-open-catalog-request="brand">
-                                    No encuentro la marca
+                                    <spring:message code="cars.form.brand.request"/>
                                 </button>
                             </c:if>
                         </div>
 
                         <div class="review-modal-field">
-                            <label for="modalCarBodyType">Tipo de carrocería</label>
+                            <label for="modalCarBodyType"><spring:message code="cars.form.bodyType"/></label>
                             <form:select id="modalCarBodyType" path="bodyType" required="required">
-                                <form:option value="" label="Seleccioná un tipo"/>
+                                <form:option value="" label="${bodyTypeSelectLabel}"/>
                                 <c:forEach items="${bodyTypes}" var="bodyType">
                                     <form:option value="${bodyType.name}" label="${bodyType.name}"/>
                                 </c:forEach>
@@ -96,79 +110,79 @@
                             <c:if test="${not adminMode}">
                                 <button type="button" class="catalog-request-link"
                                         data-open-catalog-request="body-type">
-                                    No encuentro la carrocería
+                                    <spring:message code="cars.form.bodyType.request"/>
                                 </button>
                             </c:if>
                         </div>
                     </div>
 
                     <div class="review-modal-field review-modal-field-wide">
-                        <label for="modalCarModel">Modelo</label>
+                        <label for="modalCarModel"><spring:message code="cars.form.model"/></label>
                         <form:input id="modalCarModel" path="model" type="text"
                                     maxlength="120" required="required"
-                                    placeholder="Ej: 911 Carrera T"/>
+                                    placeholder="${carModelPlaceholder}"/>
                         <form:errors path="model" cssClass="form-error" element="span"/>
                     </div>
 
                     <div class="review-modal-field review-modal-field-wide">
-                        <label for="modalCarYear">Año modelo</label>
+                        <label for="modalCarYear"><spring:message code="cars.form.modelYear"/></label>
                         <form:input id="modalCarYear" path="year" type="number"
                                     min="1886" max="2100"
-                                    placeholder="Ej: 2026" readonly="${adminMode}"/>
+                                    placeholder="${carYearPlaceholder}" readonly="${adminMode}"/>
                         <form:errors path="year" cssClass="form-error" element="span"/>
                     </div>
 
                     <div class="review-modal-field review-modal-field-wide">
-                        <label for="modalCarDescription">Descripción</label>
+                        <label for="modalCarDescription"><spring:message code="cars.form.description"/></label>
                         <form:textarea id="modalCarDescription" path="description" rows="4" maxlength="1500"
                                        required="required"
-                                       placeholder="Describe el auto, su propuesta y cualquier detalle relevante."/>
+                                       placeholder="${carDescriptionPlaceholder}"/>
                         <form:errors path="description" cssClass="form-error" element="span"/>
                     </div>
 
                     <div class="review-modal-field review-modal-field-wide">
-                        <span class="review-modal-section-label">Especificaciones técnicas</span>
+                        <span class="review-modal-section-label"><spring:message code="cars.form.specs"/></span>
                     </div>
 
                     <div class="car-modal-spec-panel">
                         <div class="car-modal-spec-grid">
                             <div class="review-modal-field">
-                                <label for="modalCarHorsepower">Potencia (HP)</label>
+                                <label for="modalCarHorsepower"><spring:message code="cars.form.horsepower"/></label>
                                 <form:input id="modalCarHorsepower" path="horsepower" type="number"
                                             min="1" max="2000" required="required"
-                                            placeholder="Ej: 150" readonly="${adminMode}"/>
+                                            placeholder="${carHorsepowerPlaceholder}" readonly="${adminMode}"/>
                                 <form:errors path="horsepower" cssClass="form-error" element="span"/>
                             </div>
 
                             <div class="review-modal-field">
-                                <label for="modalCarAirbagCount">Airbags</label>
+                                <label for="modalCarAirbagCount"><spring:message code="cars.form.airbags"/></label>
                                 <form:input id="modalCarAirbagCount" path="airbagCount" type="number"
                                             min="0" max="30" required="required"
-                                            placeholder="Ej: 6" readonly="${adminMode}"/>
+                                            placeholder="${carAirbagsPlaceholder}" readonly="${adminMode}"/>
                                 <form:errors path="airbagCount" cssClass="form-error" element="span"/>
                             </div>
 
                             <div class="review-modal-field">
-                                <label for="modalCarFuelConsumption">Consumo (L/100km)</label>
+                                <label for="modalCarFuelConsumption"><spring:message code="cars.form.fuelConsumption"/></label>
                                 <form:input id="modalCarFuelConsumption" path="fuelConsumption" type="number"
                                             step="0.1" min="0" max="99.9" required="required"
-                                            placeholder="Ej: 6.8" readonly="${adminMode}"/>
+                                            placeholder="${carConsumptionPlaceholder}" readonly="${adminMode}"/>
                                 <form:errors path="fuelConsumption" cssClass="form-error" element="span"/>
                             </div>
 
                             <div class="review-modal-field">
-                                <label for="modalCarMaxSpeed">Vel. máxima (km/h)</label>
+                                <label for="modalCarMaxSpeed"><spring:message code="cars.form.maxSpeed"/></label>
                                 <form:input id="modalCarMaxSpeed" path="maxSpeedKmh" type="number"
                                             min="1" max="600" required="required"
-                                            placeholder="Ej: 190" readonly="${adminMode}"/>
+                                            placeholder="${carSpeedPlaceholder}" readonly="${adminMode}"/>
                                 <form:errors path="maxSpeedKmh" cssClass="form-error" element="span"/>
                             </div>
 
                             <div class="review-modal-field">
-                                <label for="modalCarPriceUsd">Precio 0 km (USD)</label>
+                                <label for="modalCarPriceUsd"><spring:message code="cars.form.priceZeroKm"/></label>
                                 <form:input id="modalCarPriceUsd" path="priceUsd" type="number"
                                             step="0.01" min="0.01" max="5000000"
-                                            placeholder="Ej: 25000" readonly="${adminMode}"/>
+                                            placeholder="${carPricePlaceholder}" readonly="${adminMode}"/>
                                 <form:errors path="priceUsd" cssClass="form-error" element="span"/>
                             </div>
                         </div>
@@ -177,41 +191,41 @@
 
                 <div class="car-modal-column car-modal-column-media">
                     <div class="review-modal-field">
-                        <label>Motorización</label>
+                        <label><spring:message code="cars.form.fuelType"/></label>
                         <div class="segmented-control segmented-control-radio-group">
                             <label class="segmented-control-radio-option">
                                 <input type="radio" name="fuelType" value="combustion" required="required" <c:if test="${empty carForm.fuelType or carForm.fuelType eq 'combustion'}">checked="checked"</c:if>/>
-                                <span>Combustión</span>
+                                <span><spring:message code="domain.fuel.combustion"/></span>
                             </label>
                             <label class="segmented-control-radio-option">
                                 <input type="radio" name="fuelType" value="hybrid" <c:if test="${carForm.fuelType eq 'hybrid'}">checked="checked"</c:if>/>
-                                <span>Híbrido</span>
+                                <span><spring:message code="domain.fuel.hybrid"/></span>
                             </label>
                             <label class="segmented-control-radio-option">
                                 <input type="radio" name="fuelType" value="electric" <c:if test="${carForm.fuelType eq 'electric'}">checked="checked"</c:if>/>
-                                <span>Eléctrico</span>
+                                <span><spring:message code="domain.fuel.electric"/></span>
                             </label>
                         </div>
                         <form:errors path="fuelType" cssClass="form-error" element="span"/>
                     </div>
 
                     <div class="review-modal-field">
-                        <label>Transmisión</label>
+                        <label><spring:message code="cars.form.transmission"/></label>
                         <div class="segmented-control segmented-control-radio-group">
                             <label class="segmented-control-radio-option">
                                 <input type="radio" name="transmission" value="manual" required="required" <c:if test="${empty carForm.transmission or carForm.transmission eq 'manual'}">checked="checked"</c:if>/>
-                                <span>Manual</span>
+                                <span><spring:message code="domain.transmission.manual"/></span>
                             </label>
                             <label class="segmented-control-radio-option">
                                 <input type="radio" name="transmission" value="automatic" <c:if test="${carForm.transmission eq 'automatic'}">checked="checked"</c:if>/>
-                                <span>Automática</span>
+                                <span><spring:message code="domain.transmission.automatic"/></span>
                             </label>
                         </div>
                         <form:errors path="transmission" cssClass="form-error" element="span"/>
                     </div>
 
                     <div class="review-modal-field review-modal-field-wide car-image-field">
-                        <span class="car-image-label">Imágenes</span>
+                        <span class="car-image-label"><spring:message code="cars.form.images"/></span>
                         <div class="car-image-upload <c:if test="${adminMode}">is-readonly</c:if>">
                             <c:choose>
                                 <c:when test="${adminMode}">
@@ -236,11 +250,11 @@
                                     <pa:icon name="image-upload" size="28"/>
                                 </span>
                                 <span id="modalCarImagePreview" class="car-image-upload-preview" hidden aria-hidden="true">
-                                    <button id="modalCarImagePrev" class="car-image-upload-preview-nav car-image-upload-preview-prev" type="button" aria-label="Imagen anterior">
+                                    <button id="modalCarImagePrev" class="car-image-upload-preview-nav car-image-upload-preview-prev" type="button" aria-label="${previousImageLabel}">
                                         <pa:icon name="chevron-left" size="14"/>
                                     </button>
                                     <img id="modalCarImagePreviewImg" alt="">
-                                    <button id="modalCarImageNext" class="car-image-upload-preview-nav car-image-upload-preview-next" type="button" aria-label="Imagen siguiente">
+                                    <button id="modalCarImageNext" class="car-image-upload-preview-nav car-image-upload-preview-next" type="button" aria-label="${nextImageLabel}">
                                         <pa:icon name="chevron-right" size="14"/>
                                     </button>
                                     <span id="modalCarImageCounter" class="car-image-upload-preview-counter">1 / 1</span>
@@ -248,23 +262,23 @@
                                 <span class="car-image-upload-copy">
                                     <strong id="modalCarFileTitle">
                                         <c:choose>
-                                            <c:when test="${adminMode}">Imágenes enviadas por el usuario</c:when>
-                                            <c:otherwise>Arrastrá o elegí imágenes del auto</c:otherwise>
+                                            <c:when test="${adminMode}"><spring:message code="cars.form.image.reviewReadonly"/></c:when>
+                                            <c:otherwise><spring:message code="cars.form.image.uploadTitle"/></c:otherwise>
                                         </c:choose>
                                     </strong>
                                     <span id="modalCarFileHelp">
                                         <c:choose>
-                                            <c:when test="${adminMode}">Las imágenes se revisan desde la tarjeta seleccionada.</c:when>
-                                            <c:otherwise>JPEG, PNG o WEBP. Máximo 5 imágenes, 10 MB cada una.</c:otherwise>
+                                            <c:when test="${adminMode}"><spring:message code="cars.form.image.reviewHelp"/></c:when>
+                                            <c:otherwise><spring:message code="cars.form.image.help"/></c:otherwise>
                                         </c:choose>
                                     </span>
-                                    <span id="modalCarFileStatus" class="car-image-upload-status">Ninguna imagen seleccionada</span>
+                                    <span id="modalCarFileStatus" class="car-image-upload-status"><spring:message code="cars.form.image.none"/></span>
                                     <span id="modalCarImageThumbnails" class="car-image-upload-thumbnails" hidden></span>
                                 </span>
                                 <span id="modalCarFileAction" class="car-image-upload-action">
                                     <c:choose>
-                                        <c:when test="${adminMode}">Cargada</c:when>
-                                        <c:otherwise>Buscar</c:otherwise>
+                                        <c:when test="${adminMode}"><spring:message code="cars.form.image.loaded"/></c:when>
+                                        <c:otherwise><spring:message code="cars.form.image.search"/></c:otherwise>
                                     </c:choose>
                                 </span>
                             </label>
@@ -276,17 +290,17 @@
 
             <div class="review-modal-actions">
                 <div id="createCarCreateActions" class="review-modal-action-group" <c:if test="${adminMode}">hidden</c:if>>
-                    <button type="button" class="btn-secondary" data-close-car-modal>Cancelar</button>
-                    <button id="createCarSubmitButton" type="submit" class="btn-primary">Confirmar auto</button>
+                    <button type="button" class="btn-secondary" data-close-car-modal><spring:message code="common.action.cancel"/></button>
+                    <button id="createCarSubmitButton" type="submit" class="btn-primary"><spring:message code="cars.form.confirm"/></button>
                 </div>
                 <c:if test="${adminMode}">
                     <div id="createCarReviewActions" class="review-modal-action-group">
-                        <button type="submit" class="btn-secondary admin-reject-btn" form="rejectCarRequestForm">Rechazar</button>
-                        <button id="createCarReviewSubmitButton" type="submit" class="btn-primary">Confirmar auto</button>
+                        <button type="submit" class="btn-secondary admin-reject-btn" form="rejectCarRequestForm"><spring:message code="common.action.reject"/></button>
+                        <button id="createCarReviewSubmitButton" type="submit" class="btn-primary"><spring:message code="cars.form.confirm"/></button>
                     </div>
                     <div id="createCarEditActions" class="review-modal-action-group" hidden>
-                        <button type="button" class="btn-secondary" data-close-car-modal>Cancelar</button>
-                        <button id="createCarEditSubmitButton" type="submit" class="btn-primary">Guardar cambios</button>
+                        <button type="button" class="btn-secondary" data-close-car-modal><spring:message code="common.action.cancel"/></button>
+                        <button id="createCarEditSubmitButton" type="submit" class="btn-primary"><spring:message code="cars.form.save"/></button>
                     </div>
                 </c:if>
             </div>

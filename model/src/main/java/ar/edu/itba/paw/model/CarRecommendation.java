@@ -10,16 +10,24 @@ public class CarRecommendation implements Serializable {
     private Car car;
     private BigDecimal score;
     private int reviewCount;
-    private List<TagHighlight> highlights;
+    private List<TagHighlight> positiveHighlights;
+    private List<TagHighlight> negativeHighlights;
 
     public CarRecommendation() {}
 
     public CarRecommendation(final Car car, final BigDecimal score, final int reviewCount,
-                             final List<TagHighlight> highlights) {
+                             final List<TagHighlight> positiveHighlights) {
+        this(car, score, reviewCount, positiveHighlights, Collections.emptyList());
+    }
+
+    public CarRecommendation(final Car car, final BigDecimal score, final int reviewCount,
+                             final List<TagHighlight> positiveHighlights,
+                             final List<TagHighlight> negativeHighlights) {
         this.car = car;
         this.score = score;
         this.reviewCount = reviewCount;
-        this.highlights = highlights == null ? Collections.emptyList() : Collections.unmodifiableList(highlights);
+        this.positiveHighlights = freeze(positiveHighlights);
+        this.negativeHighlights = freeze(negativeHighlights);
     }
 
     public Car getCar() {
@@ -46,11 +54,23 @@ public class CarRecommendation implements Serializable {
         this.reviewCount = reviewCount;
     }
 
-    public List<TagHighlight> getHighlights() {
-        return highlights;
+    public List<TagHighlight> getPositiveHighlights() {
+        return positiveHighlights;
     }
 
-    public void setHighlights(final List<TagHighlight> highlights) {
-        this.highlights = highlights == null ? Collections.emptyList() : Collections.unmodifiableList(highlights);
+    public void setPositiveHighlights(final List<TagHighlight> positiveHighlights) {
+        this.positiveHighlights = freeze(positiveHighlights);
+    }
+
+    public List<TagHighlight> getNegativeHighlights() {
+        return negativeHighlights;
+    }
+
+    public void setNegativeHighlights(final List<TagHighlight> negativeHighlights) {
+        this.negativeHighlights = freeze(negativeHighlights);
+    }
+
+    private static List<TagHighlight> freeze(final List<TagHighlight> source) {
+        return source == null ? Collections.emptyList() : Collections.unmodifiableList(source);
     }
 }

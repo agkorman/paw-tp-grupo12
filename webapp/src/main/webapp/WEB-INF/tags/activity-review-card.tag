@@ -2,6 +2,7 @@
 <%@ attribute name="reviewCard" required="true" type="ar.edu.itba.paw.webapp.controller.ActivityController.ActivityReviewCard" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <c:url var="activityReviewUrl" value="/reviews">
     <c:param name="carId" value="${reviewCard.review.carId}"/>
@@ -17,11 +18,12 @@
     </c:url>
     <c:set var="activityReviewStyle" value="--activity-car-image: url('${activityCarImageUrl}');"/>
 </c:if>
+<spring:message var="activityReviewAria" code="activity.review.view.aria" arguments="${reviewCard.carName}"/>
 
 <a class="activity-review-card ${reviewCard.hasCarImage ? 'has-image' : ''}"
    href="${activityReviewHref}"
    style="${activityReviewStyle}"
-   aria-label="Ver reseña de ${fn:escapeXml(reviewCard.carName)}">
+   aria-label="${fn:escapeXml(activityReviewAria)}">
     <span class="activity-review-author">
         <span class="activity-review-author-copy">
             <strong><c:out value="${reviewCard.authorName}"/></strong>

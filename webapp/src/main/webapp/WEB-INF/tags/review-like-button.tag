@@ -8,8 +8,14 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
-<c:set var="likeLabel" value="${empty label ? 'Like' : label}"/>
+<spring:message var="defaultLikeLabel" code="review.like.label"/>
+<spring:message var="likeActionLabel" code="review.like.action"/>
+<spring:message var="likeLoginLabel" code="review.like.login"/>
+<spring:message var="likeAddLabel" code="review.like.add.aria"/>
+<spring:message var="likeRemoveLabel" code="review.like.remove.aria"/>
+<c:set var="likeLabel" value="${empty label ? defaultLikeLabel : label}"/>
 <c:set var="likeDisabled" value="${empty disabled ? false : disabled}"/>
 <c:url var="loginUrl" value="/login"/>
 
@@ -21,9 +27,9 @@
                    class="review-like-toggle ${liked ? 'is-active' : ''}"
                    data-auth-resume-intent="like-${fn:escapeXml(reviewId)}"
                    data-auth-required="true"
-                   data-auth-required-action="dar like"
+                   data-auth-required-action="${likeActionLabel}"
                    data-auth-required-intent="like-${fn:escapeXml(reviewId)}"
-                   aria-label="Iniciar sesión para dar like">
+                   aria-label="${likeLoginLabel}">
                     <pa:icon name="heart" size="17"/>
                     <span class="review-like-label"><c:out value="${likeLabel}"/></span>
                     <span class="review-like-count" data-review-like-count><c:out value="${empty likeCount ? 0 : likeCount}"/></span>
@@ -43,7 +49,7 @@
                             data-review-id="${fn:escapeXml(reviewId)}"
                             data-liked="${liked}"
                             aria-pressed="${liked}"
-                            aria-label="${liked ? 'Quitar like' : 'Dar like'}">
+                            aria-label="${liked ? likeRemoveLabel : likeAddLabel}">
                         <pa:icon name="heart" size="17"/>
                         <span class="review-like-label"><c:out value="${likeLabel}"/></span>
                         <span class="review-like-count" data-review-like-count><c:out value="${empty likeCount ? 0 : likeCount}"/></span>
@@ -60,12 +66,12 @@
                 data-review-id="${fn:escapeXml(reviewId)}"
                 data-liked="${liked}"
                 aria-pressed="${liked}"
-                aria-label="${liked ? 'Quitar like' : 'Dar like'}"
+                aria-label="${liked ? likeRemoveLabel : likeAddLabel}"
                 data-auth-resume-intent="like-${fn:escapeXml(reviewId)}"
                 <c:if test="${likeDisabled}">
                     aria-disabled="true"
                     data-auth-required="true"
-                    data-auth-required-action="dar like"
+                    data-auth-required-action="${likeActionLabel}"
                     data-auth-required-intent="like-${fn:escapeXml(reviewId)}"
                 </c:if>>
                 <pa:icon name="heart" size="17"/>
