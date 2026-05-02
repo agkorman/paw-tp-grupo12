@@ -29,7 +29,7 @@ public class ActivityController {
     private static final String TAB_LATEST = "latest";
     private static final String TAB_FOLLOWING = "following";
     private static final String TAB_FAVORITES = "favorites";
-    private static final int ACTIVITY_PAGE_SIZE = 6;
+    private static final int ACTIVITY_PAGE_SIZE = 10;
 
     private final ReviewService reviewService;
     private final CarService carService;

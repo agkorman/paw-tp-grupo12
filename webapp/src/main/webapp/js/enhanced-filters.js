@@ -314,8 +314,13 @@
                 throw new Error('Review fragment content not found');
             }
 
+            var controlsInFeed = currentControls && reviewList && reviewList.contains(currentControls);
             Array.prototype.forEach.call(replacementItems, function (item) {
-                reviewList.appendChild(item);
+                if (controlsInFeed) {
+                    reviewList.insertBefore(item, currentControls);
+                } else {
+                    reviewList.appendChild(item);
+                }
             });
 
             if (previewList && replacementPreviewItems.length > 0) {
