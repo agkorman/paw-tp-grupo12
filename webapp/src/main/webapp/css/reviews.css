@@ -437,6 +437,45 @@
     word-break: break-word;
 }
 
+.review-item-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.review-item-menu {
+    z-index: 25;
+}
+
+.review-item-menu form {
+    margin: 0;
+}
+
+.review-hide-button {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-md);
+    background: var(--surface-container-high);
+    color: var(--secondary);
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.review-hide-button:hover,
+.review-hide-button:focus-visible {
+    border-color: rgba(255, 159, 146, 0.48);
+    background: var(--surface-container-highest);
+    color: #ff9f92;
+}
+
 .rating-pill {
     display: inline-flex;
     align-items: center;
@@ -719,6 +758,10 @@
 
 .review-modal[hidden] {
     display: none;
+}
+
+body.review-modal-open {
+    overflow: hidden;
 }
 
 .review-modal-overlay {
@@ -1238,6 +1281,14 @@
 .review-modal-field textarea {
     resize: vertical;
     min-height: 6rem;
+}
+
+.review-hide-dialog {
+    max-width: 34rem;
+}
+
+.review-hide-form {
+    gap: 1rem;
 }
 
 .car-modal-layout .review-modal-field {

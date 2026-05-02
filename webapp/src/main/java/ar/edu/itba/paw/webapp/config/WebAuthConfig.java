@@ -66,6 +66,8 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/car-image"),
                                 antMatcher(HttpMethod.POST, "/cars/*/image"))
                             .hasRole("ADMIN")
+                        .requestMatchers(antMatcher(HttpMethod.POST, "/reviews/*/hide"))
+                            .hasRole("ADMIN")
                         .requestMatchers(
                                 antMatcher(HttpMethod.POST, "/cars"),
                                 antMatcher(HttpMethod.POST, "/reviews"),

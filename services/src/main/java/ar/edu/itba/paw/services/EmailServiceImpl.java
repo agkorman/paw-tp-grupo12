@@ -94,6 +94,28 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async("mailTaskExecutor")
+    public void sendReviewHiddenNotification(final String recipientEmail, final String subject,
+                                             final String heading, final String intro,
+                                             final String reviewLabel, final String carLabel,
+                                             final String reasonLabel, final String reviewTitle,
+                                             final String carName, final String moderatorReason) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+
+        sendEmail(
+                sanitizeHeaderValue(subject),
+                buildReviewHiddenPlainText(heading, intro, reviewLabel, carLabel, reasonLabel,
+                        reviewTitle, carName, moderatorReason),
+                buildReviewHiddenHtml(heading, intro, reviewLabel, carLabel, reasonLabel,
+                        reviewTitle, carName, moderatorReason),
+                "Failed to send hidden review notification to " + recipientEmail,
+                helper -> helper.setTo(recipientEmail)
+        );
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
     public void sendWeeklyModeratorDigest(final List<String> moderatorEmails, final int pendingRequestCount) {
         if (moderatorEmails == null || moderatorEmails.isEmpty()) {
             return;
@@ -422,6 +444,92 @@ public class EmailServiceImpl implements EmailService {
                 "Hola, " + displayName + "!",
                 "Esto es lo que pasó esta semana en tu cuenta.",
                 bodyHtml
+        );
+    }
+
+    // ── Review moderation notification ────────────────────────────────────────
+
+    private String buildReviewHiddenPlainText(final String heading, final String intro,
+                                              final String reviewLabel, final String carLabel,
+                                              final String reasonLabel, final String reviewTitle,
+                                              final String carName, final String moderatorReason) {
+        return """
+                %s
+
+                %s
+
+                %s: %s
+                %s: %s
+
+                %s:
+                %s
+                """.formatted(
+                safeValue(heading),
+                safeValue(intro),
+                safeValue(reviewLabel),
+                safeValue(reviewTitle),
+                safeValue(carLabel),
+                safeValue(carName),
+                safeValue(reasonLabel),
+                safeValue(moderatorReason)
+        );
+    }
+
+    private String buildReviewHiddenHtml(final String heading, final String intro,
+                                         final String reviewLabel, final String carLabel,
+                                         final String reasonLabel, final String reviewTitle,
+                                         final String carName, final String moderatorReason) {
+        final String bodyHtml = buildModeratedReviewSummary(reviewLabel, carLabel, reviewTitle, carName)
+                + buildModerationReason(reasonLabel, moderatorReason);
+
+        return buildEmailShell(
+                escapeHtml(safeValue(intro)),
+                safeValue(heading),
+                safeValue(intro),
+                bodyHtml
+        );
+    }
+
+    private String buildModeratedReviewSummary(final String reviewLabel, final String carLabel,
+                                               final String reviewTitle, final String carName) {
+        return """
+                <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:24px;">
+                    %s
+                    <div style="font-size:24px;line-height:1.2;font-weight:700;color:%s;font-family:%s;">
+                        %s
+                    </div>
+                    <div style="margin-top:10px;font-size:14px;line-height:1.6;color:%s;font-family:%s;">
+                        <strong style="color:%s;">%s:</strong> %s
+                    </div>
+                </div>
+                """.formatted(
+                COLOR_SURFACE_HIGH,
+                COLOR_OUTLINE,
+                buildSectionLabel(reviewLabel),
+                COLOR_ON_SURFACE,
+                DISPLAY_FONT,
+                escapeHtml(safeValue(reviewTitle)),
+                COLOR_ON_SURFACE_VARIANT,
+                BODY_FONT,
+                COLOR_ON_SURFACE,
+                escapeHtml(safeValue(carLabel)),
+                escapeHtml(safeValue(carName))
+        );
+    }
+
+    private String buildModerationReason(final String reasonLabel, final String moderatorReason) {
+        return """
+                %s
+                <div style="background:%s;border:1px solid %s;border-radius:18px;padding:20px 22px;font-size:15px;line-height:1.7;color:%s;font-family:%s;white-space:pre-line;">
+                    %s
+                </div>
+                """.formatted(
+                buildSectionLabel(reasonLabel),
+                COLOR_SURFACE_HIGH,
+                COLOR_OUTLINE,
+                COLOR_ON_SURFACE,
+                BODY_FONT,
+                escapeHtml(safeValue(moderatorReason))
         );
     }
 

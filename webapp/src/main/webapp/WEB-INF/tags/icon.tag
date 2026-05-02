@@ -57,6 +57,11 @@
         <svg width="${s}" height="${s}" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><circle cx="9" cy="4" r="1.6"/><circle cx="9" cy="9" r="1.6"/><circle cx="9" cy="14" r="1.6"/></svg>
     </c:when>
 
+    <c:when test="${name eq 'visibility-off'}">
+        <c:set var="s" value="${empty size ? 18 : size}"/>
+        <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M3 3l18 18"/><path d="M10.6 10.6A2 2 0 0 0 13.4 13.4"/><path d="M9.9 4.2A10.8 10.8 0 0 1 12 4c5.2 0 8.8 4.2 10 8-.5 1.6-1.5 3.2-2.8 4.5"/><path d="M6.6 6.7C4.4 8.1 2.8 10.2 2 12c1.2 3.8 4.8 8 10 8 1.8 0 3.4-.5 4.8-1.3"/></svg>
+    </c:when>
+
     <c:when test="${name eq 'plus'}">
         <c:set var="s" value="${empty size ? 24 : size}"/>
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M12 5v14"/><path d="M5 12h14"/></svg>

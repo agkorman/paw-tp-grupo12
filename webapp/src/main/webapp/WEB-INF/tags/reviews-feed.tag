@@ -6,10 +6,12 @@
 <%@ attribute name="currentPage" required="false" type="java.lang.Integer" %>
 <%@ attribute name="totalPages" required="false" type="java.lang.Integer" %>
 <%@ attribute name="totalItems" required="false" type="java.lang.Long" %>
+<%@ attribute name="currentUserId" required="false" type="java.lang.Long" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 
 <c:url var="reviewsFeedUrl" value="/reviews/feed"/>
@@ -18,6 +20,8 @@
 <spring:message var="replyPlaceholder" code="review.feed.reply.placeholder"/>
 <spring:message var="replyAuthAction" code="review.authRequired.replyAction"/>
 <spring:message var="likeLabel" code="review.like.label"/>
+<spring:message var="reviewActionMenuLabel" code="review.actionMenu.open"/>
+<spring:message var="reviewHideLabel" code="review.hide.action.aria"/>
 
 <section id="reviewsFeed" class="reviews-feed">
     <c:set var="reviewTotalCount" value="${empty totalItems ? fn:length(reviews) : totalItems}"/>
@@ -62,10 +66,44 @@
                     <c:set var="review" value="${thread.review}"/>
                     <c:url var="reviewLikeUrl" value="/reviews/${review.id}/like"/>
                     <c:url var="replyCreateUrl" value="/reviews/${review.id}/replies"/>
+                    <c:url var="reviewEditPageUrl" value="/reviews/${review.id}/edit"/>
+                    <c:url var="reviewDeleteUrl" value="/reviews/${review.id}/delete"/>
+                    <c:url var="reviewHideUrl" value="/reviews/${review.id}/hide"/>
                     <article class="review-item" id="review-${review.id}">
                         <div class="review-item-top">
                             <strong><c:out value="${review.title}"/></strong>
-                            <span class="rating-pill"><c:out value="${review.rating}"/>/5.0</span>
+                            <div class="review-item-actions">
+                                <span class="rating-pill"><c:out value="${review.rating}"/>/5.0</span>
+                                <sec:authorize access="hasRole('ADMIN')">
+                                    <c:choose>
+                                        <c:when test="${not empty currentUserId and review.userId == currentUserId}">
+                                            <pa:action-menu label="${reviewActionMenuLabel}" cssClass="review-item-menu">
+                                                <a href="${reviewEditPageUrl}">
+                                                    <spring:message code="common.action.edit"/>
+                                                </a>
+                                                <form method="post" action="${reviewDeleteUrl}">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                                    <button type="submit" class="action-menu-danger">
+                                                        <spring:message code="common.action.delete"/>
+                                                    </button>
+                                                </form>
+                                            </pa:action-menu>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <button type="button"
+                                                    class="review-hide-button"
+                                                    aria-label="${fn:escapeXml(reviewHideLabel)}"
+                                                    title="${fn:escapeXml(reviewHideLabel)}"
+                                                    data-open-hide-review-modal
+                                                    data-review-id="${fn:escapeXml(review.id)}"
+                                                    data-review-hide-action="${fn:escapeXml(reviewHideUrl)}"
+                                                    data-review-title="${fn:escapeXml(review.title)}">
+                                                <pa:icon name="visibility-off" size="18"/>
+                                            </button>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </sec:authorize>
+                            </div>
                         </div>
                         <p class="review-body"><c:out value="${review.body}"/></p>
                         <pa:review-tag-chips mode="display" tags="${review.tags}"/>

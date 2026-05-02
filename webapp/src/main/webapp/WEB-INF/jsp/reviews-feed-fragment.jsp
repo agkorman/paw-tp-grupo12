@@ -3,4 +3,5 @@
 
 <pa:reviews-feed reviews="${reviews}" reviewThreads="${reviewThreads}" carId="${selectedCar.id}"
                  currentSort="${currentSort}"
-                 currentPage="${currentPage}" totalPages="${totalPages}" totalItems="${totalItems}"/>
+                 currentPage="${currentPage}" totalPages="${totalPages}" totalItems="${totalItems}"
+                 currentUserId="${currentUserId}"/>

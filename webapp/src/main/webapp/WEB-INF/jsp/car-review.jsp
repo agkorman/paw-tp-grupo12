@@ -14,8 +14,8 @@
     <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=5'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=4'/>">
+    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=6'/>">
     <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
 </head>
 <body>
@@ -122,11 +122,14 @@
 
         <pa:reviews-feed reviews="${reviews}" reviewThreads="${reviewThreads}" carId="${selectedCar.id}"
                          currentSort="${currentSort}"
-                         currentPage="${currentPage}" totalPages="${totalPages}" totalItems="${totalItems}"/>
+                         currentPage="${currentPage}" totalPages="${totalPages}" totalItems="${totalItems}"
+                         currentUserId="${currentUserId}"/>
     </main>
 
     <pa:auth-required-modal/>
     <sec:authorize access="hasRole('ADMIN')">
+        <pa:toast/>
+        <pa:review-hide-modal/>
         <pa:car-delete-modal/>
     </sec:authorize>
 
@@ -138,6 +141,8 @@
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <sec:authorize access="hasRole('ADMIN')">
         <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
+        <script src="<c:url value='/js/toast.js'/>"></script>
+        <script src="<c:url value='/js/review-moderation.js'/>"></script>
     </sec:authorize>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
 </body>

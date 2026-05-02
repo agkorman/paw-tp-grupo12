@@ -428,6 +428,14 @@ public class CarControllerFavoriteTest {
         }
 
         @Override
+        public void sendReviewHiddenNotification(final String recipientEmail, final String subject,
+                                                 final String heading, final String intro,
+                                                 final String reviewLabel, final String carLabel,
+                                                 final String reasonLabel, final String reviewTitle,
+                                                 final String carName, final String moderatorReason) {
+        }
+
+        @Override
         public void sendWeeklyModeratorDigest(final List<String> moderatorEmails, final int pendingRequestCount) {
         }
 

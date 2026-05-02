@@ -9,8 +9,12 @@
 
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 <spring:message var="latestReviewLabel" code="review.latest.title"/>
+<spring:message var="latestReviewEmpty" code="review.latest.empty"/>
 
-<section class="latest-review-section" aria-label="${latestReviewLabel}">
+<section class="latest-review-section"
+         aria-label="${fn:escapeXml(latestReviewLabel)}"
+         data-latest-review-section
+         data-empty-message="${fn:escapeXml(latestReviewEmpty)}">
     <h2><spring:message code="review.latest.title"/></h2>
     <c:choose>
         <c:when test="${empty latestReview}">
@@ -19,7 +23,7 @@
             </div>
         </c:when>
         <c:otherwise>
-            <article class="last-review-item">
+            <article class="last-review-item" data-latest-review-id="${fn:escapeXml(latestReview.id)}">
                 <div class="last-review-top">
                     <strong><c:out value="${latestReview.title}"/></strong>
                     <span class="rating-pill"><c:out value="${latestReview.rating}"/>/5.0</span>

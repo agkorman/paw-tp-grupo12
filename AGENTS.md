@@ -67,6 +67,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Always escape user-visible output: `<c:out value="${...}"/>` for text, `fn:escapeXml()` for values inside HTML attributes. Never print raw `${...}` where user-controlled data can appear (XSS prevention).
 - Use `<c:url>` for all application URLs. Never hardcode context paths.
 - Custom tags use the `pa:` namespace prefix and live in `WEB-INF/tags/`.
+- Reuse the existing confirmation modal component whenever a confirmation UI is needed. Do not create a second modal pattern or inline ad hoc confirmation dialogs.
 - Every JSP starts with `<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>`.
 
 ## Internationalization (i18n)

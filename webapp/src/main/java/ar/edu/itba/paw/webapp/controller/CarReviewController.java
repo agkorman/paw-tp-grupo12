@@ -6,11 +6,14 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
+import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
@@ -18,8 +21,11 @@ import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -53,6 +59,8 @@ public class CarReviewController {
     private static final String SORT_RATING_ASC = "rating_asc";
     private static final String SORT_RATING_DESC = "rating_desc";
     private static final int MAX_REPLY_BODY_LENGTH = 1000;
+    private static final int REVIEW_HIDE_REASON_MIN_LENGTH = 10;
+    private static final int REVIEW_HIDE_REASON_MAX_LENGTH = 600;
     private static final BigDecimal RATING_STEP_DOUBLED = BigDecimal.valueOf(2);
     private static final Set<String> ALLOWED_OWNERSHIP_STATUSES =
             Set.of("", "Propietario actual", "Ex propietario");
@@ -62,17 +70,26 @@ public class CarReviewController {
     private final ReviewService reviewService;
     private final ReviewReplyService reviewReplyService;
     private final ReviewLikeService reviewLikeService;
+    private final EmailService emailService;
+    private final UserService userService;
+    private final MessageSource messageSource;
 
     @Autowired
     public CarReviewController(final CarService carService, final CarFavoriteService carFavoriteService,
                                final ReviewService reviewService,
                                final ReviewReplyService reviewReplyService,
-                               final ReviewLikeService reviewLikeService) {
+                               final ReviewLikeService reviewLikeService,
+                               final EmailService emailService,
+                               final UserService userService,
+                               final MessageSource messageSource) {
         this.carService = carService;
         this.carFavoriteService = carFavoriteService;
         this.reviewService = reviewService;
         this.reviewReplyService = reviewReplyService;
         this.reviewLikeService = reviewLikeService;
+        this.emailService = emailService;
+        this.userService = userService;
+        this.messageSource = messageSource;
     }
 
     @InitBinder
@@ -157,6 +174,7 @@ public class CarReviewController {
         mav.addObject("currentPage", pageData.currentPage);
         mav.addObject("totalPages", pageData.totalPages);
         mav.addObject("totalItems", pageData.totalItems);
+        mav.addObject("currentUserId", currentUserId(currentUser));
         return mav;
     }
 
@@ -248,6 +266,7 @@ public class CarReviewController {
         attributes.put("currentPage", pageData.currentPage);
         attributes.put("totalPages", pageData.totalPages);
         attributes.put("totalItems", pageData.totalItems);
+        attributes.put("currentUserId", currentUserId(currentUser));
         attributes.put("latestReview", pageData.latestReview.orElse(null));
         attributes.put("latestReviewLikeCount", pageData.latestReviewLikeCount);
         attributes.put("latestReviewLiked", pageData.latestReviewLiked);
@@ -420,6 +439,70 @@ public class CarReviewController {
         return new ModelAndView("redirect:/profile");
     }
 
+    @RequestMapping(value = "/reviews/{reviewId}/hide", method = RequestMethod.POST)
+    public Object hideReview(@PathVariable("reviewId") final long reviewId,
+                             @RequestParam(value = "reason", required = false) final String reason,
+                             @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
+                             @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
+        if (currentUser == null) {
+            if (ajax) {
+                return new ResponseEntity<String>("/login", HttpStatus.UNAUTHORIZED);
+            }
+            return new ModelAndView("redirect:/login");
+        }
+        if (!isAdmin(currentUser)) {
+            throw new ForbiddenException();
+        }
+
+        final String normalizedReason = ControllerUtils.normalize(reason);
+        final String validationError = validateReviewHideReason(normalizedReason);
+        if (validationError != null) {
+            if (ajax) {
+                return new ResponseEntity<String>(validationError, HttpStatus.BAD_REQUEST);
+            }
+            return new ModelAndView("redirect:/reviews");
+        }
+
+        final Review review = reviewService.getReviewById(reviewId).orElse(null);
+        if (review == null) {
+            throw new ResourceNotFoundException();
+        }
+
+        final Car car = carService.getCarById(review.getCarId()).orElse(null);
+        final String recipientEmail = resolveReviewRecipientEmail(review);
+        final String reviewTitle = review.getTitle();
+        final String carName = carDisplayName(car);
+
+        try {
+            if (!reviewService.deleteReview(reviewId)) {
+                return reviewHideError(ajax, review.getCarId());
+            }
+        } catch (final RuntimeException ignored) {
+            return reviewHideError(ajax, review.getCarId());
+        }
+
+        if (recipientEmail != null) {
+            emailService.sendReviewHiddenNotification(
+                    recipientEmail,
+                    message("review.hide.email.subject"),
+                    message("review.hide.email.heading"),
+                    message("review.hide.email.intro"),
+                    message("review.hide.email.review"),
+                    message("review.hide.email.car"),
+                    message("review.hide.email.reason"),
+                    reviewTitle,
+                    carName,
+                    normalizedReason
+            );
+        }
+
+        if (ajax) {
+            return new ResponseEntity<String>("ok", HttpStatus.OK);
+        }
+        return new ModelAndView("redirect:/reviews?carId=" + review.getCarId());
+    }
+
     @RequestMapping(value = "/reviews/{reviewId}/replies", method = RequestMethod.POST)
     public ModelAndView createReply(@PathVariable("reviewId") final long reviewId,
                                     @RequestParam(value = "body", required = false) final String body,
@@ -527,6 +610,69 @@ public class CarReviewController {
         if (currentUser == null || review.getUserId() == null || !review.getUserId().equals(currentUser.getId())) {
             throw new ForbiddenException();
         }
+    }
+
+    private Object reviewHideError(final boolean ajax, final long carId) {
+        if (ajax) {
+            return new ResponseEntity<String>(message("review.hide.toast.error"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ModelAndView("redirect:/reviews?carId=" + carId);
+    }
+
+    private String validateReviewHideReason(final String reason) {
+        if (reason == null) {
+            return message("review.hide.reason.required");
+        }
+        if (reason.length() < REVIEW_HIDE_REASON_MIN_LENGTH) {
+            return message("review.hide.reason.min", REVIEW_HIDE_REASON_MIN_LENGTH);
+        }
+        if (reason.length() > REVIEW_HIDE_REASON_MAX_LENGTH) {
+            return message("review.hide.reason.max", REVIEW_HIDE_REASON_MAX_LENGTH);
+        }
+        return null;
+    }
+
+    private String resolveReviewRecipientEmail(final Review review) {
+        final String reviewerEmail = ControllerUtils.normalizeEmail(review.getReviewerEmail());
+        if (reviewerEmail != null) {
+            return reviewerEmail;
+        }
+        if (review.getUserId() == null) {
+            return null;
+        }
+        return userService.getUserById(review.getUserId())
+                .map(User::getEmail)
+                .map(ControllerUtils::normalizeEmail)
+                .orElse(null);
+    }
+
+    private String carDisplayName(final Car car) {
+        if (car == null) {
+            return message("review.hide.email.carFallback");
+        }
+        final String brand = ControllerUtils.normalize(car.getBrandName());
+        final String model = ControllerUtils.normalize(car.getModel());
+        if (brand == null && model == null) {
+            return message("review.hide.email.carFallback");
+        }
+        if (brand == null) {
+            return model;
+        }
+        if (model == null) {
+            return brand;
+        }
+        return brand + " " + model;
+    }
+
+    private boolean isAdmin(final AuthenticatedUser currentUser) {
+        return currentUser.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+    }
+
+    private String message(final String code, final Object... args) {
+        return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
     }
 
     private void rejectInvalidReviewFields(final BindingResult errors, final BigDecimal rating,

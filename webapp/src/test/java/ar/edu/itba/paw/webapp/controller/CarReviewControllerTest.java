@@ -9,16 +9,23 @@ import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.ReviewStats;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
+import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.junit.Test;
+import org.springframework.context.support.StaticMessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
@@ -29,6 +36,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -214,6 +222,67 @@ public class CarReviewControllerTest {
     }
 
     @Test
+    public void adminCanHideReviewAndNotifyOwner() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        reviewService.review = review(3L, 8L, 10L);
+        final FakeEmailService emailService = new FakeEmailService();
+        final CarReviewController controller = new CarReviewController(
+                new FakeCarService(),
+                new FakeCarFavoriteService(),
+                reviewService,
+                new FakeReviewReplyService(),
+                new FakeReviewLikeService(),
+                emailService,
+                new FakeUserService(),
+                messageSource()
+        );
+
+        final ResponseEntity<?> response = (ResponseEntity<?>) controller.hideReview(
+                3L,
+                "Motivo claro de moderación",
+                "XMLHttpRequest",
+                admin(1L)
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(reviewService.deleted);
+        assertEquals("driver8@example.com", emailService.reviewHiddenRecipient);
+    }
+
+    @Test
+    public void adminCannotHideReviewWithoutReason() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        reviewService.review = review(3L, 8L, 10L);
+        final CarReviewController controller = controller(reviewService);
+
+        final ResponseEntity<?> response = (ResponseEntity<?>) controller.hideReview(
+                3L,
+                "   ",
+                "XMLHttpRequest",
+                admin(1L)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertFalse(reviewService.deleted);
+    }
+
+    @Test
+    public void nonAdminCannotHideReview() {
+        final FakeReviewService reviewService = new FakeReviewService();
+        reviewService.review = review(3L, 8L, 10L);
+        final CarReviewController controller = controller(reviewService);
+
+        assertThrows(ForbiddenException.class, () -> controller.hideReview(
+                3L,
+                "Motivo claro de moderación",
+                "XMLHttpRequest",
+                user(7L)
+        ));
+
+        assertFalse(reviewService.deleted);
+    }
+
+    @Test
     public void missingReviewReturnsNotFoundOnUpdate() {
         final FakeReviewService reviewService = new FakeReviewService();
         final CarReviewController controller = controller(reviewService);
@@ -249,7 +318,10 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 replyService,
-                new FakeReviewLikeService()
+                new FakeReviewLikeService(),
+                new FakeEmailService(),
+                new FakeUserService(),
+                messageSource()
         );
 
         final ModelAndView mav = controller.createReply(3L, "Totalmente de acuerdo.", user(7L));
@@ -270,7 +342,10 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 replyService,
-                new FakeReviewLikeService()
+                new FakeReviewLikeService(),
+                new FakeEmailService(),
+                new FakeUserService(),
+                messageSource()
         );
 
         final ModelAndView mav = controller.createReply(3L, "   ", user(7L));
@@ -289,7 +364,10 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 new FakeReviewReplyService(),
-                likeService
+                likeService,
+                new FakeEmailService(),
+                new FakeUserService(),
+                messageSource()
         );
 
         final ModelAndView mav = (ModelAndView) controller.toggleReviewLike(3L, null, user(7L));
@@ -312,7 +390,10 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 replyService,
-                likeService
+                likeService,
+                new FakeEmailService(),
+                new FakeUserService(),
+                messageSource()
         );
 
         final ModelAndView mav = (ModelAndView) controller.toggleReplyLike(4L, null, user(7L));
@@ -374,12 +455,37 @@ public class CarReviewControllerTest {
                 new FakeCarFavoriteService(),
                 reviewService,
                 new FakeReviewReplyService(),
-                new FakeReviewLikeService()
+                new FakeReviewLikeService(),
+                new FakeEmailService(),
+                new FakeUserService(),
+                messageSource()
         );
     }
 
     private AuthenticatedUser user(final long id) {
         return new AuthenticatedUser(id, "driver" + id, "driver" + id + "@example.com", "password", List.of());
+    }
+
+    private AuthenticatedUser admin(final long id) {
+        return new AuthenticatedUser(id, "admin" + id, "admin" + id + "@example.com", "password",
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+    }
+
+    private StaticMessageSource messageSource() {
+        final StaticMessageSource source = new StaticMessageSource();
+        source.setUseCodeAsDefaultMessage(true);
+        source.addMessage("review.hide.reason.required", Locale.getDefault(), "Ingresá un motivo.");
+        source.addMessage("review.hide.reason.min", Locale.getDefault(), "El motivo debe tener al menos {0} caracteres.");
+        source.addMessage("review.hide.reason.max", Locale.getDefault(), "El motivo debe tener como máximo {0} caracteres.");
+        source.addMessage("review.hide.toast.error", Locale.getDefault(), "No pudimos ocultar la review.");
+        source.addMessage("review.hide.email.subject", Locale.getDefault(), "[La Posta Autos] Tu review fue ocultada");
+        source.addMessage("review.hide.email.heading", Locale.getDefault(), "Tu review fue ocultada");
+        source.addMessage("review.hide.email.intro", Locale.getDefault(), "Un moderador ocultó una review.");
+        source.addMessage("review.hide.email.review", Locale.getDefault(), "Review");
+        source.addMessage("review.hide.email.car", Locale.getDefault(), "Auto");
+        source.addMessage("review.hide.email.reason", Locale.getDefault(), "Motivo del moderador");
+        source.addMessage("review.hide.email.carFallback", Locale.getDefault(), "Auto reseñado");
+        return source;
     }
 
     private Review review(final long id, final Long userId, final long carId) {
@@ -529,6 +635,77 @@ public class CarReviewControllerTest {
         @Override
         public java.util.Set<Long> getFavoritedCarIds(final long userId, final Collection<Long> carIds) {
             return Collections.emptySet();
+        }
+    }
+
+    private static final class FakeEmailService implements EmailService {
+        private String reviewHiddenRecipient;
+
+        @Override
+        public void sendNewCarRequestNotification(final CarRequest request, final String brandName,
+                                                  final String bodyTypeName) {
+        }
+
+        @Override
+        public void sendCarApprovedNotification(final String recipientEmail, final String brandName,
+                                                final String model) {
+        }
+
+        @Override
+        public void sendReviewHiddenNotification(final String recipientEmail, final String subject,
+                                                 final String heading, final String intro,
+                                                 final String reviewLabel, final String carLabel,
+                                                 final String reasonLabel, final String reviewTitle,
+                                                 final String carName, final String moderatorReason) {
+            this.reviewHiddenRecipient = recipientEmail;
+        }
+
+        @Override
+        public void sendWeeklyModeratorDigest(final List<String> moderatorEmails, final int pendingRequestCount) {
+        }
+
+        @Override
+        public void sendWeeklyUserDigest(final String recipientEmail, final String username,
+                                         final List<ReviewActivityItem> reviewActivity,
+                                         final List<FavoriteActivityItem> favoriteActivity) {
+        }
+    }
+
+    private static final class FakeUserService implements UserService {
+        @Override
+        public Optional<User> getUserById(final long id) {
+            return Optional.of(new User(id, "driver" + id, "driver" + id + "@example.com",
+                    "password", "user", LocalDateTime.now()));
+        }
+
+        @Override
+        public Optional<User> findByEmail(final String email) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<User> findByUsername(final String username) {
+            return Optional.empty();
+        }
+
+        @Override
+        public User createUser(final String username, final String email, final String rawPassword) {
+            return new User();
+        }
+
+        @Override
+        public boolean updateRole(final long userId, final String role) {
+            return false;
+        }
+
+        @Override
+        public List<String> getModeratorsEmails() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<User> getAllUsers() {
+            return Collections.emptyList();
         }
     }
 

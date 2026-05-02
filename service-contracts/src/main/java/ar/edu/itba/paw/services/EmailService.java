@@ -7,6 +7,9 @@ import java.util.List;
 public interface EmailService {
     void sendNewCarRequestNotification(CarRequest request, String brandName, String bodyTypeName);
     void sendCarApprovedNotification(String recipientEmail, String brandName, String model);
+    void sendReviewHiddenNotification(String recipientEmail, String subject, String heading, String intro,
+                                      String reviewLabel, String carLabel, String reasonLabel,
+                                      String reviewTitle, String carName, String moderatorReason);
     void sendWeeklyModeratorDigest(List<String> moderatorEmails, int pendingRequestCount);
     void sendWeeklyUserDigest(String recipientEmail, String username,
                               List<ReviewActivityItem> reviewActivity,
