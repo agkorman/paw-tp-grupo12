@@ -40,6 +40,94 @@
         return !!(tabsRoot && panelId && tabsRoot.querySelector('[data-activity-tab-target="' + panelId + '"]'));
     }
 
+    function activePreviewLayout() {
+        return document.querySelector('.activity-tab-panel:not([hidden]) .activity-panel-layout.has-active-preview');
+    }
+
+    function syncBodyScrollLock() {
+        document.body.classList.toggle(
+            'activity-preview-scroll-lock',
+            !!activePreviewLayout() && window.innerWidth > 1100
+        );
+    }
+
+    function setPreviewState(panel, active) {
+        var layout = panel && panel.closest ? panel.closest('.activity-panel-layout') : null;
+        if (panel) {
+            panel.hidden = !active;
+        }
+        if (layout) {
+            layout.classList.toggle('has-active-preview', active);
+            if (active) {
+                updatePreviewLayoutHeight(layout);
+            } else {
+                layout.style.removeProperty('--activity-panel-height');
+            }
+        }
+        syncBodyScrollLock();
+    }
+
+    function updatePreviewLayoutHeight(layout) {
+        var rect;
+        var height;
+
+        if (!layout || window.innerWidth <= 1100) {
+            return;
+        }
+
+        rect = layout.getBoundingClientRect();
+        height = Math.max(360, window.innerHeight - rect.top - 32);
+        layout.style.setProperty('--activity-panel-height', height + 'px');
+    }
+
+    function updateActivePreviewLayoutHeights() {
+        var layouts = document.querySelectorAll('.activity-panel-layout.has-active-preview');
+        for (var i = 0; i < layouts.length; i += 1) {
+            updatePreviewLayoutHeight(layouts[i]);
+        }
+    }
+
+    function closeActivityPreview(tabsRoot) {
+        var root = tabsRoot || document;
+        var panels = root.querySelectorAll('[data-activity-preview-panel]');
+        var cards = root.querySelectorAll('[data-activity-review-card]');
+
+        for (var i = 0; i < panels.length; i += 1) {
+            panels[i].hidden = true;
+            var layout = panels[i].closest ? panels[i].closest('.activity-panel-layout') : null;
+            if (layout) {
+                layout.classList.remove('has-active-preview');
+            }
+        }
+        for (var j = 0; j < cards.length; j += 1) {
+            cards[j].classList.remove('is-selected');
+            cards[j].removeAttribute('aria-current');
+        }
+        syncBodyScrollLock();
+    }
+
+    function openActivityPreview(card) {
+        var targetId = card ? card.getAttribute('data-activity-preview-target') : null;
+        var panel = targetId ? document.getElementById(targetId) : null;
+        var tabsRoot = card ? closestByAttribute(card, 'data-activity-tabs') : null;
+        var closeButton;
+
+        if (!panel || !tabsRoot) {
+            return false;
+        }
+
+        closeActivityPreview(tabsRoot);
+        card.classList.add('is-selected');
+        card.setAttribute('aria-current', 'true');
+        setPreviewState(panel, true);
+
+        closeButton = panel.querySelector('[data-close-activity-preview]');
+        if (closeButton && typeof closeButton.focus === 'function') {
+            closeButton.focus();
+        }
+        return true;
+    }
+
     function activateActivityTab(tabsRoot, panelId, shouldFocus) {
         var tabs = tabsRoot ? tabsRoot.querySelectorAll('[data-activity-tab-target]') : [];
         var panels = tabsRoot ? tabsRoot.querySelectorAll('.activity-tab-panel') : [];
@@ -65,6 +153,8 @@
         if (shouldFocus && activeTab) {
             activeTab.focus();
         }
+        updateActivePreviewLayoutHeights();
+        syncBodyScrollLock();
         storeActivityTab(panelId);
     }
 
@@ -96,7 +186,25 @@
     }
 
     document.addEventListener('click', function (event) {
+        var previewCard = closestByAttribute(event.target, 'data-activity-review-card');
+        var closePreview = closestByAttribute(event.target, 'data-close-activity-preview');
         var tab = closestByAttribute(event.target, 'data-activity-tab-target');
+        var tabsRoot;
+
+        if (closePreview) {
+            event.preventDefault();
+            tabsRoot = closestByAttribute(closePreview, 'data-activity-tabs') || document;
+            closeActivityPreview(tabsRoot);
+            return;
+        }
+
+        if (previewCard) {
+            if (openActivityPreview(previewCard)) {
+                event.preventDefault();
+            }
+            return;
+        }
+
         if (!tab) {
             return;
         }
@@ -151,6 +259,11 @@
             event.preventDefault();
             activateActivityTab(tabsRoot, tabs[nextIndex].getAttribute('data-activity-tab-target'), true);
         }
+    });
+
+    window.addEventListener('resize', function () {
+        updateActivePreviewLayoutHeights();
+        syncBodyScrollLock();
     });
 
     setupActivityTabs();
