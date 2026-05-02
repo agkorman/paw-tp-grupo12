@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
@@ -141,6 +142,28 @@ public class RecommendationControllerTest {
         public List<Review> getAllReviews() { return Collections.emptyList(); }
 
         @Override
+        public long countAllReviews() { return 0L; }
+
+        @Override
+        public Page<Review> getLatestReviews(final int page, final int pageSize) { return Page.empty(page, pageSize); }
+
+        @Override
+        public Page<Review> getReviewsByFollowedUsers(final long followerId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFollowedUsers(final long followerId) { return 0L; }
+
+        @Override
+        public Page<Review> getReviewsByFavoriteCars(final long userId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFavoriteCars(final long userId) { return 0L; }
+
+        @Override
         public Optional<Review> getReviewById(final long id) { return Optional.empty(); }
 
         @Override
@@ -183,6 +206,17 @@ public class RecommendationControllerTest {
 
         @Override
         public List<Review> getReviewsByUser(final long userId) { return Collections.emptyList(); }
+
+        @Override
+        public Page<Review> getReviewsByUser(final long userId, final int page) { return Page.empty(page, 0); }
+
+        @Override
+        public long countReviewsByUser(final long userId) { return 0L; }
+
+        @Override
+        public Map<Long, Integer> getDefaultPagesForReviewIds(final Collection<Long> reviewIds) {
+            return Collections.emptyMap();
+        }
 
         @Override
         public Optional<ReviewStats> getReviewStatsByCar(final long carId) {

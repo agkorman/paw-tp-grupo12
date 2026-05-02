@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=5'/>">
     <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
 </head>
 <body>
@@ -42,32 +42,12 @@
                         </svg>
                     </a>
                     <sec:authorize access="hasRole('ADMIN')">
-                        <c:url var="selectedCarEditUrl" value="/admin/cars/${selectedCar.id}"/>
+                        <c:url var="selectedCarEditUrl" value="/admin/cars/${selectedCar.id}/edit"/>
                         <c:url var="selectedCarDeleteUrl" value="/admin/cars/${selectedCar.id}/delete"/>
-                        <c:url var="selectedCarImageUrl" value="/car-image">
-                            <c:param name="carId" value="${selectedCar.id}"/>
-                        </c:url>
                         <pa:action-menu label="Abrir opciones de auto">
-                            <button
-                                    type="button"
-                                    data-open-create-car-modal="edit-car"
-                                    data-car-action="${fn:escapeXml(selectedCarEditUrl)}"
-                                    data-car-id="${fn:escapeXml(selectedCar.id)}"
-                                    data-car-brand="${fn:escapeXml(selectedCar.brandName)}"
-                                    data-car-model="${fn:escapeXml(selectedCar.model)}"
-                                    data-car-year="${fn:escapeXml(selectedCar.year)}"
-                                    data-car-body-type="${fn:escapeXml(selectedCar.bodyType)}"
-                                    data-car-description="${fn:escapeXml(selectedCar.description)}"
-                                    data-car-fuel-type="${fn:escapeXml(selectedCar.fuelType)}"
-                                    data-car-horsepower="${fn:escapeXml(selectedCar.horsepower)}"
-                                    data-car-airbag-count="${fn:escapeXml(selectedCar.airbagCount)}"
-                                    data-car-transmission="${fn:escapeXml(selectedCar.transmission)}"
-                                    data-car-fuel-consumption="${fn:escapeXml(selectedCar.fuelConsumption)}"
-                                    data-car-max-speed-kmh="${fn:escapeXml(selectedCar.maxSpeedKmh)}"
-                                    data-car-price-usd="${fn:escapeXml(selectedCar.priceUsd)}"
-                                    data-car-image-url="${selectedCar.hasImage ? fn:escapeXml(selectedCarImageUrl) : ''}">
+                            <a href="${selectedCarEditUrl}">
                                 Editar
-                            </button>
+                            </a>
                             <button
                                     type="button"
                                     class="action-menu-danger"
@@ -123,7 +103,6 @@
 
     <pa:auth-required-modal/>
     <sec:authorize access="hasRole('ADMIN')">
-        <pa:admin-car-form brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
         <pa:car-delete-modal/>
     </sec:authorize>
 
@@ -134,7 +113,6 @@
     <script src="<c:url value='/js/review-tag-chips.js'/>" defer></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <sec:authorize access="hasRole('ADMIN')">
-        <script src="<c:url value='/js/car-form.js?v=1'/>"></script>
         <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
     </sec:authorize>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>

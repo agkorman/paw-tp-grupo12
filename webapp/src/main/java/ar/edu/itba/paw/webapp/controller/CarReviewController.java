@@ -206,10 +206,6 @@ public class CarReviewController {
         return "redirect:/reviews?carId=" + car.getId();
     }
 
-    private ModelAndView carReviewPage(final long carId, final String sort, final String error) {
-        return carReviewPage(carId, sort, error, null);
-    }
-
     private ModelAndView carReviewPage(final long carId, final String sort, final String error,
                                        final AuthenticatedUser currentUser) {
         final ReviewPageData pageData = resolveReviewPageData(carId, sort, null, currentUserId(currentUser));
@@ -341,7 +337,7 @@ public class CarReviewController {
                                         reply,
                                         replyLikeCounts.getOrDefault(reply.getId(), 0L),
                                         likedReplyIds.contains(reply.getId()),
-                                        currentUserId != null && reply.getUserId() == currentUserId
+                                        currentUserId != null && currentUserId.equals(reply.getUserId())
                                 ))
                                 .collect(Collectors.toList())
                 ))

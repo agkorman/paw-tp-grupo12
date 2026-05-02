@@ -93,65 +93,8 @@
     flex-direction: column;
     gap: 1.5rem;
     min-height: calc(100vh - 24rem);
-    width: 100%;
-    max-width: 72rem;
+    width: min(1120px, calc(100% - 3rem));
     margin: 0 auto;
-}
-
-.admin-request-tabs {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.5rem;
-    padding: 0.35rem;
-    background: var(--surface-container-low);
-}
-
-.admin-request-tab {
-    appearance: none;
-    -webkit-appearance: none;
-    min-width: 0;
-    min-height: 3.25rem;
-    padding: 0.75rem 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    border: 0;
-    border-radius: var(--radius-sm, 0.25rem);
-    background: transparent;
-    color: var(--secondary);
-    font: inherit;
-    text-align: left;
-    text-decoration: none;
-    transition: background 0.2s, color 0.2s;
-}
-
-.admin-request-tab span {
-    min-width: 0;
-    overflow-wrap: anywhere;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.admin-request-tab strong {
-    flex: 0 0 auto;
-    color: var(--primary);
-    font-family: var(--font-display);
-    font-size: 1rem;
-}
-
-.admin-request-tab:hover,
-.admin-request-tab:focus-visible {
-    background: var(--surface-container-high);
-    color: var(--on-surface);
-    outline: none;
-}
-
-.admin-request-tab[aria-selected="true"] {
-    background: var(--surface-container-highest);
-    color: var(--on-surface);
 }
 
 .admin-section-heading {
@@ -404,10 +347,6 @@
         grid-template-columns: 1fr;
     }
 
-    .admin-request-tabs {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .admin-catalog-request-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -428,10 +367,6 @@
 @media (max-width: 560px) {
     .admin-hero h1 {
         font-size: 2.35rem;
-    }
-
-    .admin-request-tabs {
-        grid-template-columns: 1fr;
     }
 
     .admin-catalog-request-grid {

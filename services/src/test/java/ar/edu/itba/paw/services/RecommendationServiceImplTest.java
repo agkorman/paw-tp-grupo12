@@ -182,6 +182,9 @@ class RecommendationServiceImplTest {
         public void saveCarImages(final long carId, final List<CarImagePayload> images) {}
 
         @Override
+        public void appendCarImages(final long carId, final List<CarImagePayload> images) {}
+
+        @Override
         public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
                                              final Integer year, final long submittedByUserId, final String submitterEmail,
                                              final Optional<String> description, final List<CarImagePayload> images,
@@ -261,6 +264,31 @@ class RecommendationServiceImplTest {
 
         @Override
         public List<Review> findAll() { return Collections.emptyList(); }
+
+        @Override
+        public Page<Review> findLatest(final int page, final int pageSize) { return Page.empty(page, pageSize); }
+
+        @Override
+        public long countAll() { return 0L; }
+
+        @Override
+        public Page<Review> findByFollowedUsers(final long followerId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countByFollowedUsers(final long followerId) { return 0L; }
+
+        @Override
+        public Page<Review> findByFavoriteCars(final long userId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countByFavoriteCars(final long userId) { return 0L; }
+
+        @Override
+        public Map<Long, Integer> findDefaultPagesByReviewIds(final Collection<Long> reviewIds) { return Map.of(); }
 
         @Override
         public Optional<Review> findById(final long id) { return Optional.empty(); }

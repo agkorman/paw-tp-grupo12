@@ -462,6 +462,10 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public void appendCarImages(final long carId, final List<CarImagePayload> images) {
+        }
+
+        @Override
         public CarRequest requestCarCreation(final long brandId, final String model, final long bodyTypeId,
                                              final Integer year, final long submittedByUserId, final String submitterEmail,
                                              final Optional<String> description,
@@ -513,6 +517,16 @@ public class CarReviewControllerTest {
         }
 
         @Override
+        public Page<Car> getFavoriteCars(final long userId, final int page) {
+            return Page.empty(page, 0);
+        }
+
+        @Override
+        public long countFavoriteCars(final long userId) {
+            return 0L;
+        }
+
+        @Override
         public java.util.Set<Long> getFavoritedCarIds(final long userId, final Collection<Long> carIds) {
             return Collections.emptySet();
         }
@@ -523,16 +537,8 @@ public class CarReviewControllerTest {
         private boolean created;
         private long createdUserId;
         private long createdCarId;
-        private String createdOwnershipStatus;
-        private Integer createdModelYear;
-        private Integer createdMileageKm;
-        private Boolean createdWouldRecommend;
         private boolean updated;
         private long updatedCarId;
-        private String updatedOwnershipStatus;
-        private Integer updatedModelYear;
-        private Integer updatedMileageKm;
-        private Boolean updatedWouldRecommend;
         private boolean deleted;
         private long deletedId;
         private int requestedPage;
@@ -546,16 +552,42 @@ public class CarReviewControllerTest {
             this.created = true;
             this.createdUserId = userId;
             this.createdCarId = carId;
-            this.createdOwnershipStatus = ownershipStatus;
-            this.createdModelYear = modelYear;
-            this.createdMileageKm = mileageKm;
-            this.createdWouldRecommend = wouldRecommend;
             return review == null ? new Review() : review;
         }
 
         @Override
         public List<Review> getAllReviews() {
             return review == null ? Collections.emptyList() : List.of(review);
+        }
+
+        @Override
+        public long countAllReviews() {
+            return getAllReviews().size();
+        }
+
+        @Override
+        public Page<Review> getLatestReviews(final int page, final int pageSize) {
+            return new Page<>(getAllReviews(), 1, pageSize, getAllReviews().size());
+        }
+
+        @Override
+        public Page<Review> getReviewsByFollowedUsers(final long followerId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFollowedUsers(final long followerId) {
+            return 0L;
+        }
+
+        @Override
+        public Page<Review> getReviewsByFavoriteCars(final long userId, final int page, final int pageSize) {
+            return Page.empty(page, pageSize);
+        }
+
+        @Override
+        public long countReviewsByFavoriteCars(final long userId) {
+            return 0L;
         }
 
         @Override
@@ -578,10 +610,6 @@ public class CarReviewControllerTest {
                                              final Boolean wouldRecommend, final Collection<Short> tagIds) {
             this.updated = true;
             this.updatedCarId = carId;
-            this.updatedOwnershipStatus = ownershipStatus;
-            this.updatedModelYear = modelYear;
-            this.updatedMileageKm = mileageKm;
-            this.updatedWouldRecommend = wouldRecommend;
             return Optional.ofNullable(review);
         }
 
@@ -639,9 +667,25 @@ public class CarReviewControllerTest {
 
         @Override
         public List<Review> getReviewsByUser(final long userId) {
-            return review != null && review.getUserId() != null && review.getUserId() == userId
+            return review != null && review.getUserId() != null && review.getUserId().equals(userId)
                     ? List.of(review)
                     : Collections.emptyList();
+        }
+
+        @Override
+        public Page<Review> getReviewsByUser(final long userId, final int page) {
+            final List<Review> items = getReviewsByUser(userId);
+            return new Page<>(items, 1, Pagination.REVIEWS_PAGE_SIZE, items.size());
+        }
+
+        @Override
+        public long countReviewsByUser(final long userId) {
+            return getReviewsByUser(userId).size();
+        }
+
+        @Override
+        public Map<Long, Integer> getDefaultPagesForReviewIds(final Collection<Long> reviewIds) {
+            return Collections.emptyMap();
         }
 
         @Override
@@ -740,6 +784,16 @@ public class CarReviewControllerTest {
         @Override
         public List<Long> getLikedReviewIdsByUser(final long userId) {
             return Collections.emptyList();
+        }
+
+        @Override
+        public Page<Long> getLikedReviewIdsByUser(final long userId, final int page) {
+            return Page.empty(page, 0);
+        }
+
+        @Override
+        public long countLikedReviewsByUser(final long userId) {
+            return 0L;
         }
 
         @Override

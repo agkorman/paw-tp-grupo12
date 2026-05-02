@@ -114,6 +114,122 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
+    public Page<Review> findLatest(final int page, final int pageSize) {
+        return findPaginated("", new Object[0], page, pageSize, countAll());
+    }
+
+    @Override
+    public long countAll() {
+        return countReviews("SELECT count(*) FROM reviews");
+    }
+
+    @Override
+    public Page<Review> findByFollowedUsers(final long followerId, final int page, final int pageSize) {
+        return findPaginated(
+                "JOIN user_follows uf ON uf.followed_id = r.user_id WHERE uf.follower_id = ? ",
+                new Object[]{followerId},
+                page,
+                pageSize,
+                countByFollowedUsers(followerId)
+        );
+    }
+
+    @Override
+    public long countByFollowedUsers(final long followerId) {
+        return countReviews(
+                "SELECT count(*) FROM reviews r "
+                        + "JOIN user_follows uf ON uf.followed_id = r.user_id "
+                        + "WHERE uf.follower_id = ?",
+                followerId
+        );
+    }
+
+    @Override
+    public Page<Review> findByFavoriteCars(final long userId, final int page, final int pageSize) {
+        return findPaginated(
+                "JOIN car_favorites cf ON cf.car_id = r.car_id WHERE cf.user_id = ? ",
+                new Object[]{userId},
+                page,
+                pageSize,
+                countByFavoriteCars(userId)
+        );
+    }
+
+    @Override
+    public long countByFavoriteCars(final long userId) {
+        return countReviews(
+                "SELECT count(*) FROM reviews r "
+                        + "JOIN car_favorites cf ON cf.car_id = r.car_id "
+                        + "WHERE cf.user_id = ?",
+                userId
+        );
+    }
+
+    @Override
+    public Map<Long, Integer> findDefaultPagesByReviewIds(final Collection<Long> reviewIds) {
+        final List<Long> normalizedIds = reviewIds == null
+                ? List.of()
+                : reviewIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        if (normalizedIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        final MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("reviewIds", normalizedIds)
+                .addValue("pageSize", Pagination.REVIEWS_PAGE_SIZE);
+        return namedParameterJdbcTemplate.query(
+                "SELECT ranked.review_id, (((ranked.review_position - 1) / :pageSize) + 1)::int AS page_number "
+                        + "FROM ("
+                        + "SELECT r.review_id, "
+                        + "ROW_NUMBER() OVER (PARTITION BY r.car_id ORDER BY "
+                        + DEFAULT_REVIEW_ORDER
+                        + ") AS review_position "
+                        + "FROM reviews r "
+                        + "WHERE r.car_id IN ("
+                        + "SELECT target.car_id FROM reviews target WHERE target.review_id IN (:reviewIds)"
+                        + ")"
+                        + ") ranked "
+                        + "WHERE ranked.review_id IN (:reviewIds)",
+                params,
+                rs -> {
+                    final Map<Long, Integer> pagesByReviewId = new HashMap<>();
+                    while (rs.next()) {
+                        pagesByReviewId.put(rs.getLong("review_id"), rs.getInt("page_number"));
+                    }
+                    return pagesByReviewId;
+                }
+        );
+    }
+
+    private Page<Review> findPaginated(final String joinAndWhereClause, final Object[] params, final int page,
+                                       final int pageSize, final long total) {
+        final int effectivePageSize = pageSize > 0 ? pageSize : Pagination.REVIEWS_PAGE_SIZE;
+        if (total == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, effectivePageSize);
+        }
+        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), total, effectivePageSize);
+        final long offset = Pagination.offsetFor(effectivePage, effectivePageSize);
+        final Object[] queryParams = new Object[params.length + 2];
+        System.arraycopy(params, 0, queryParams, 0, params.length);
+        queryParams[params.length] = effectivePageSize;
+        queryParams[params.length + 1] = offset;
+        final List<Review> items = attachTagsToList(jdbcTemplate.query(
+                REVIEW_SELECT + joinAndWhereClause + "ORDER BY " + DEFAULT_REVIEW_ORDER + " LIMIT ? OFFSET ?",
+                ROW_MAPPER,
+                queryParams
+        ));
+        return new Page<>(items, effectivePage, effectivePageSize, total);
+    }
+
+    private long countReviews(final String sql, final Object... params) {
+        final Long count = jdbcTemplate.queryForObject(sql, Long.class, params);
+        return count == null ? 0L : count;
+    }
+
+    @Override
     public Optional<Review> findById(long id) {
         return attachTags(jdbcTemplate.query(
                 REVIEW_SELECT + "WHERE r.review_id = ?",

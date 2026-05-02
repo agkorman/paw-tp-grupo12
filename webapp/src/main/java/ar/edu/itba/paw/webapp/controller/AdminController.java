@@ -3,6 +3,9 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.BodyTypeRequest;
+import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.CarRequest;
@@ -42,11 +45,15 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -59,6 +66,8 @@ public class AdminController {
     private static final String TAB_BRANDS = "brands";
     private static final String TAB_BODY_TYPES = "body-types";
     private static final String TAB_MODERATORS = "moderators";
+    private static final int MAX_IMAGE_COUNT = 5;
+    private static final long LEGACY_IMAGE_ID = 0L;
 
     private final CarRequestService carRequestService;
     private final CarService carService;
@@ -184,37 +193,76 @@ public class AdminController {
         return mav;
     }
 
+    @RequestMapping(value = "/requests/{requestId}/review", method = RequestMethod.GET)
+    public ModelAndView reviewCarRequest(@PathVariable("requestId") final long requestId) {
+        final CarRequest request = carRequestService.getCarRequestById(requestId).orElse(null);
+        if (request == null || !CarRequestService.STATUS_PENDING.equals(request.getStatus())) {
+            return new ModelAndView("redirect:/admin");
+        }
+        return carRequestFormPage(request, toForm(request), null);
+    }
+
+    @RequestMapping(value = "/cars/{carId}/edit", method = RequestMethod.GET)
+    public ModelAndView editCar(@PathVariable("carId") final long carId,
+                                @RequestHeader(value = "Referer", required = false) final String referer) {
+        final Car car = carService.getCarById(carId).orElse(null);
+        if (car == null) {
+            return redirectBackToCatalog(referer);
+        }
+        return carEditFormPage(car, toForm(car), null);
+    }
+
     @RequestMapping(value = "/requests/{requestId}/accept", method = RequestMethod.POST,
             consumes = "multipart/form-data")
     public ModelAndView acceptRequest(@PathVariable("requestId") final long requestId,
                                       @Valid @ModelAttribute("carForm") final CarForm carForm,
                                       final BindingResult errors,
                                       @RequestHeader(value = "Referer", required = false) final String referer) {
-        rejectInvalidSpecFields(errors, carForm);
-        if (errors.hasErrors()) {
-            return redirectBackToAdmin(referer);
-        }
-
-        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
-        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
-        if (resolvedBrand == null || resolvedBodyType == null) {
-            return redirectBackToAdmin(referer);
-        }
-
-        final MultipartFile file = carForm.getFile();
-        final String imageError = validateUploadedImage(file, false);
-        if (imageError != null) {
-            return redirectBackToAdmin(referer);
-        }
-
-        if (isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carForm.getYear(), -1L)) {
-            return redirectBackToAdmin(referer);
-        }
-
-        final Optional<String> imageContentType = resolveOptionalImageContentType(file);
-        final Optional<byte[]> imageData = readOptionalImageData(file);
-
         final CarRequest pendingRequest = carRequestService.getCarRequestById(requestId).orElse(null);
+        if (pendingRequest == null || !CarRequestService.STATUS_PENDING.equals(pendingRequest.getStatus())) {
+            return new ModelAndView("redirect:/admin");
+        }
+
+        rejectInvalidSpecFields(errors, carForm);
+        final List<MultipartFile> files = selectedImageFiles(carForm.getFiles());
+        final List<Long> retainedImageIds = resolveRetainedRequestImageIds(pendingRequest, carForm, errors);
+        final String imageError = validateUploadedImages(files, true, retainedImageIds.size());
+        if (imageError != null) {
+            errors.rejectValue("files", "image.invalid", imageError);
+        }
+
+        Brand resolvedBrand = null;
+        if (!errors.hasFieldErrors("brand")) {
+            resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
+            if (resolvedBrand == null) {
+                errors.rejectValue("brand", "brand.invalid", "Marca no válida.");
+            }
+        }
+
+        BodyType resolvedBodyType = null;
+        if (!errors.hasFieldErrors("bodyType")) {
+            resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
+            if (resolvedBodyType == null) {
+                errors.rejectValue("bodyType", "bodyType.invalid", "Tipo de carrocería no válido.");
+            }
+        }
+
+        if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null
+                && isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carForm.getYear(), -1L)) {
+            errors.reject("car.duplicate", "Ya existe un auto con esa marca, modelo, carrocería y año.");
+        }
+
+        if (errors.hasErrors()) {
+            return carRequestFormPage(pendingRequest, carForm, errors);
+        }
+
+        final List<CarImagePayload> imagePayloads;
+        try {
+            imagePayloads = requestImagePayloads(pendingRequest, retainedImageIds);
+            imagePayloads.addAll(toImagePayloads(files));
+        } catch (final IOException e) {
+            throw new IllegalStateException("Failed to read uploaded image.", e);
+        }
 
         final boolean approved = carRequestService.approvePendingRequest(
                 requestId,
@@ -223,8 +271,7 @@ public class AdminController {
                 resolvedBodyType.getId(),
                 carForm.getYear(),
                 carForm.getDescription(),
-                imageContentType,
-                imageData,
+                imagePayloads,
                 ControllerUtils.normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),
                 carForm.getAirbagCount(),
@@ -234,7 +281,7 @@ public class AdminController {
                 carForm.getPriceUsd()
         );
 
-        if (approved && pendingRequest != null) {
+        if (approved) {
             final String submitterEmail = resolveSubmitterEmail(pendingRequest);
             if (submitterEmail != null) {
                 emailService.sendCarApprovedNotification(submitterEmail, resolvedBrand.getName(), carForm.getModel());
@@ -249,36 +296,61 @@ public class AdminController {
                                   @Valid @ModelAttribute("carForm") final CarForm carForm,
                                   final BindingResult errors,
                                   @RequestHeader(value = "Referer", required = false) final String referer) {
+        final Car existingCar = carService.getCarById(carId).orElse(null);
+        if (existingCar == null) {
+            return redirectBackToCatalog(referer);
+        }
+
         rejectInvalidSpecFields(errors, carForm);
-        if (errors.hasErrors()) {
-            return redirectBackToCatalog(referer);
-        }
-
-        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
-        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
-        if (resolvedBrand == null || resolvedBodyType == null) {
-            return redirectBackToCatalog(referer);
-        }
-
-        if (isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carForm.getYear(), carId)) {
-            return redirectBackToCatalog(referer);
-        }
-
-        final MultipartFile file = carForm.getFile();
-        final String imageError = validateUploadedImage(file, false);
+        final List<MultipartFile> files = selectedImageFiles(carForm.getFiles());
+        final List<Long> retainedImageIds = resolveRetainedCarImageIds(existingCar, carForm, errors);
+        final String imageError = validateUploadedImages(files, true, retainedImageIds.size());
         if (imageError != null) {
-            return redirectBackToCatalog(referer);
+            errors.rejectValue("files", "image.invalid", imageError);
         }
 
-        carService.updateCar(
+        Brand resolvedBrand = null;
+        if (!errors.hasFieldErrors("brand")) {
+            resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
+            if (resolvedBrand == null) {
+                errors.rejectValue("brand", "brand.invalid", "Marca no válida.");
+            }
+        }
+
+        BodyType resolvedBodyType = null;
+        if (!errors.hasFieldErrors("bodyType")) {
+            resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
+            if (resolvedBodyType == null) {
+                errors.rejectValue("bodyType", "bodyType.invalid", "Tipo de carrocería no válido.");
+            }
+        }
+
+        if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null
+                && isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carForm.getYear(), carId)) {
+            errors.reject("car.duplicate", "Ya existe un auto con esa marca, modelo, carrocería y año.");
+        }
+
+        if (errors.hasErrors()) {
+            return carEditFormPage(existingCar, carForm, errors);
+        }
+
+        final List<CarImagePayload> imagePayloads;
+        try {
+            imagePayloads = carImagePayloads(existingCar, retainedImageIds);
+            imagePayloads.addAll(toImagePayloads(files));
+        } catch (final IOException e) {
+            throw new IllegalStateException("Failed to read uploaded image.", e);
+        }
+
+        final Optional<Car> updated = carService.updateCar(
                 carId,
                 resolvedBrand.getId(),
                 carForm.getModel(),
                 resolvedBodyType.getId(),
                 carForm.getYear(),
                 carForm.getDescription(),
-                resolveOptionalImageContentType(file),
-                readOptionalImageData(file),
+                Optional.empty(),
+                Optional.empty(),
                 ControllerUtils.normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),
                 carForm.getAirbagCount(),
@@ -287,7 +359,10 @@ public class AdminController {
                 carForm.getMaxSpeedKmh(),
                 carForm.getPriceUsd()
         );
-        return redirectBackToCatalog(referer);
+        if (updated.isPresent()) {
+            carService.saveCarImages(carId, imagePayloads);
+        }
+        return new ModelAndView("redirect:/reviews?carId=" + carId);
     }
 
     @RequestMapping(value = "/cars/{carId}/delete", method = RequestMethod.POST)
@@ -466,6 +541,91 @@ public class AdminController {
                 .body(requestImage.getImageData());
     }
 
+    private ModelAndView carRequestFormPage(final CarRequest request, final CarForm carForm,
+                                            final BindingResult errors) {
+        final ModelAndView mav = new ModelAndView("car-form.jsp");
+        addCarFormBinding(mav, carForm, errors);
+        mav.addObject("carFormMode", "review-request");
+        mav.addObject("formKicker", "Solicitud pendiente");
+        mav.addObject("formTitle", "Revisar formulario");
+        mav.addObject("formSubtitle", "Corregí los datos que haga falta antes de aprobar o rechazar la solicitud.");
+        mav.addObject("formAction", "/admin/requests/" + request.getId() + "/accept");
+        mav.addObject("cancelUrl", "/admin?tab=cars");
+        mav.addObject("submitLabel", "Confirmar auto");
+        mav.addObject("rejectAction", "/admin/requests/" + request.getId() + "/reject");
+        mav.addObject("rejectLabel", "Rechazar");
+        mav.addObject("showCatalogRequestLinks", false);
+        final List<Long> retainedImageIds = retainedImageIds(carForm.getRetainedImageIds(), buildRequestImageIds(request));
+        final List<String> imageUrls = buildRequestImageUrls(request, retainedImageIds);
+        mav.addObject("existingImageUrls", imageUrls);
+        mav.addObject("existingImageIds", retainedImageIds);
+        mav.addObject("existingImageStatus", imageStatus(imageUrls.size()));
+        return mav;
+    }
+
+    private ModelAndView carEditFormPage(final Car car, final CarForm carForm, final BindingResult errors) {
+        final ModelAndView mav = new ModelAndView("car-form.jsp");
+        addCarFormBinding(mav, carForm, errors);
+        mav.addObject("carFormMode", "edit-car");
+        mav.addObject("formKicker", "Catálogo");
+        mav.addObject("formTitle", "Editar auto");
+        mav.addObject("formSubtitle", "Modificá los datos del auto publicado y ajustá su galería de imágenes.");
+        mav.addObject("formAction", "/admin/cars/" + car.getId());
+        mav.addObject("cancelUrl", "/reviews?carId=" + car.getId());
+        mav.addObject("submitLabel", "Guardar cambios");
+        mav.addObject("showCatalogRequestLinks", false);
+        final List<Long> retainedImageIds = retainedImageIds(carForm.getRetainedImageIds(), buildCarImageIds(car));
+        final List<String> imageUrls = buildCarImageUrls(car, retainedImageIds);
+        mav.addObject("existingImageUrls", imageUrls);
+        mav.addObject("existingImageIds", retainedImageIds);
+        mav.addObject("existingImageStatus", imageStatus(imageUrls.size()));
+        return mav;
+    }
+
+    private void addCarFormBinding(final ModelAndView mav, final CarForm carForm, final BindingResult errors) {
+        mav.addObject("carForm", carForm);
+        if (errors != null) {
+            mav.addObject(BindingResult.MODEL_KEY_PREFIX + "carForm", errors);
+        }
+    }
+
+    private CarForm toForm(final CarRequest request) {
+        final CarForm form = new CarForm();
+        brandService.findById(request.getBrandId()).map(Brand::getName).ifPresent(form::setBrand);
+        bodyTypeService.findById(request.getBodyTypeId()).map(BodyType::getName).ifPresent(form::setBodyType);
+        form.setModel(request.getModel());
+        form.setYear(request.getYear());
+        form.setSubmitterEmail(resolveSubmitterEmail(request));
+        form.setDescription(request.getDescription());
+        form.setFuelType(request.getFuelType());
+        form.setHorsepower(request.getHorsepower());
+        form.setAirbagCount(request.getAirbagCount());
+        form.setTransmission(request.getTransmission());
+        form.setFuelConsumption(request.getFuelConsumption());
+        form.setMaxSpeedKmh(request.getMaxSpeedKmh());
+        form.setPriceUsd(request.getPriceUsd());
+        form.setRetainedImageIds(buildRequestImageIds(request));
+        return form;
+    }
+
+    private CarForm toForm(final Car car) {
+        final CarForm form = new CarForm();
+        form.setBrand(car.getBrandName());
+        form.setBodyType(car.getBodyType());
+        form.setModel(car.getModel());
+        form.setYear(car.getYear());
+        form.setDescription(car.getDescription());
+        form.setFuelType(car.getFuelType());
+        form.setHorsepower(car.getHorsepower());
+        form.setAirbagCount(car.getAirbagCount());
+        form.setTransmission(car.getTransmission());
+        form.setFuelConsumption(car.getFuelConsumption());
+        form.setMaxSpeedKmh(car.getMaxSpeedKmh());
+        form.setPriceUsd(car.getPriceUsd());
+        form.setRetainedImageIds(buildCarImageIds(car));
+        return form;
+    }
+
     private AdminCarRequestCard toCard(final CarRequest request, final Map<Long, Brand> brandsById,
                                        final Map<Long, BodyType> bodyTypesById) {
         final String brandName = brandsById.getOrDefault(request.getBrandId(), new Brand()).getName();
@@ -493,16 +653,75 @@ public class AdminController {
     }
 
     private List<String> buildRequestImageUrls(final CarRequest request) {
+        return buildRequestImageUrls(request, buildRequestImageIds(request));
+    }
+
+    private List<String> buildRequestImageUrls(final CarRequest request, final List<Long> imageIds) {
+        final Set<Long> retainedIds = new LinkedHashSet<>(imageIds);
         final List<CarRequestImage> requestImages = carRequestService.getCarRequestImages(request.getId());
         if (!requestImages.isEmpty()) {
             return requestImages.stream()
+                    .filter(image -> retainedIds.contains(image.getImageId()))
                     .map(image -> "/admin/requests/" + request.getId() + "/images/" + image.getImageId())
+                    .collect(Collectors.toList());
+        }
+        if (request.getImageData() == null || !retainedIds.contains(LEGACY_IMAGE_ID)) {
+            return List.of();
+        }
+        return List.of("/admin/requests/" + request.getId() + "/image");
+    }
+
+    private List<Long> buildRequestImageIds(final CarRequest request) {
+        final List<CarRequestImage> requestImages = carRequestService.getCarRequestImages(request.getId());
+        if (!requestImages.isEmpty()) {
+            return requestImages.stream()
+                    .map(CarRequestImage::getImageId)
                     .collect(Collectors.toList());
         }
         if (request.getImageData() == null) {
             return List.of();
         }
-        return List.of("/admin/requests/" + request.getId() + "/image");
+        return List.of(LEGACY_IMAGE_ID);
+    }
+
+    private List<String> buildCarImageUrls(final Car car) {
+        return buildCarImageUrls(car, buildCarImageIds(car));
+    }
+
+    private List<String> buildCarImageUrls(final Car car, final List<Long> imageIds) {
+        final Set<Long> retainedIds = new LinkedHashSet<>(imageIds);
+        final List<CarImage> carImages = carService.getCarImagesByCarId(car.getId());
+        if (!carImages.isEmpty()) {
+            return carImages.stream()
+                    .filter(image -> retainedIds.contains(image.getImageId()))
+                    .map(image -> "/cars/" + car.getId() + "/images/" + image.getImageId())
+                    .collect(Collectors.toList());
+        }
+        if (!car.getHasImage() || !retainedIds.contains(LEGACY_IMAGE_ID)) {
+            return List.of();
+        }
+        return List.of("/cars/" + car.getId() + "/image");
+    }
+
+    private List<Long> buildCarImageIds(final Car car) {
+        final List<CarImage> carImages = carService.getCarImagesByCarId(car.getId());
+        if (!carImages.isEmpty()) {
+            return carImages.stream()
+                    .map(CarImage::getImageId)
+                    .collect(Collectors.toList());
+        }
+        if (!car.getHasImage()) {
+            return List.of();
+        }
+        return List.of(LEGACY_IMAGE_ID);
+    }
+
+    private String imageStatus(final int imageCount) {
+        if (imageCount == 0) {
+            return "Sin imágenes cargadas";
+        }
+        return imageCount + " imagen" + (imageCount == 1 ? "" : "es") + " seleccionada"
+                + (imageCount == 1 ? "" : "s");
     }
 
     private String submitterLabel(final CarRequest request) {
@@ -586,8 +805,123 @@ public class AdminController {
         return ControllerUtils.validateUploadedImage(file, required);
     }
 
+    private String validateUploadedImages(final List<MultipartFile> files, final boolean required,
+                                          final int existingImageCount) {
+        final int totalImageCount = existingImageCount + files.size();
+        if (totalImageCount == 0) {
+            return required ? "La imagen es obligatoria." : null;
+        }
+        if (totalImageCount > MAX_IMAGE_COUNT) {
+            return "Podés cargar hasta " + MAX_IMAGE_COUNT + " imágenes.";
+        }
+        for (final MultipartFile file : files) {
+            final String imageError = validateUploadedImage(file, true);
+            if (imageError != null) {
+                return imageError;
+            }
+        }
+        return null;
+    }
+
     private String resolveImageContentType(final MultipartFile file) {
         return ControllerUtils.normalizeContentType(file == null ? null : file.getContentType());
+    }
+
+    private List<MultipartFile> selectedImageFiles(final List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return files.stream()
+                .filter(file -> file != null && !file.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private List<Long> resolveRetainedRequestImageIds(final CarRequest request, final CarForm carForm,
+                                                      final BindingResult errors) {
+        return resolveRetainedImageIds(carForm, buildRequestImageIds(request), errors);
+    }
+
+    private List<Long> resolveRetainedCarImageIds(final Car car, final CarForm carForm, final BindingResult errors) {
+        return resolveRetainedImageIds(carForm, buildCarImageIds(car), errors);
+    }
+
+    private List<Long> resolveRetainedImageIds(final CarForm carForm, final List<Long> availableImageIds,
+                                               final BindingResult errors) {
+        final List<Long> submittedImageIds = carForm.getRetainedImageIds();
+        final List<Long> retainedImageIds = retainedImageIds(submittedImageIds, availableImageIds);
+        carForm.setRetainedImageIds(retainedImageIds);
+        if (hasUnknownRetainedImageIds(submittedImageIds, availableImageIds)) {
+            errors.rejectValue("files", "image.invalid", "Imagen precargada inválida.");
+        }
+        return retainedImageIds;
+    }
+
+    private List<Long> retainedImageIds(final List<Long> submittedImageIds, final List<Long> availableImageIds) {
+        if (submittedImageIds == null || submittedImageIds.isEmpty() || availableImageIds.isEmpty()) {
+            return List.of();
+        }
+        final Set<Long> available = new LinkedHashSet<>(availableImageIds);
+        final Set<Long> retained = new LinkedHashSet<>();
+        for (final Long imageId : submittedImageIds) {
+            if (imageId != null && available.contains(imageId)) {
+                retained.add(imageId);
+            }
+        }
+        return new ArrayList<>(retained);
+    }
+
+    private boolean hasUnknownRetainedImageIds(final List<Long> submittedImageIds, final List<Long> availableImageIds) {
+        if (submittedImageIds == null || submittedImageIds.isEmpty()) {
+            return false;
+        }
+        final Set<Long> available = new LinkedHashSet<>(availableImageIds);
+        return submittedImageIds.stream()
+                .filter(Objects::nonNull)
+                .anyMatch(imageId -> !available.contains(imageId));
+    }
+
+    private List<CarImagePayload> requestImagePayloads(final CarRequest request, final List<Long> retainedImageIds) {
+        final List<CarImagePayload> payloads = new ArrayList<>();
+        for (final Long imageId : retainedImageIds) {
+            if (imageId == null) {
+                continue;
+            }
+            if (imageId == LEGACY_IMAGE_ID) {
+                if (request.getImageContentType() != null && request.getImageData() != null) {
+                    payloads.add(new CarImagePayload(request.getImageContentType(), request.getImageData()));
+                }
+                continue;
+            }
+            carRequestService.getCarRequestImageById(request.getId(), imageId)
+                    .filter(image -> image.getImageData() != null)
+                    .map(image -> new CarImagePayload(image.getContentType(), image.getImageData()))
+                    .ifPresent(payloads::add);
+        }
+        return payloads;
+    }
+
+    private List<CarImagePayload> carImagePayloads(final Car car, final List<Long> retainedImageIds) {
+        final List<CarImagePayload> payloads = new ArrayList<>();
+        for (final Long imageId : retainedImageIds) {
+            if (imageId == null) {
+                continue;
+            }
+            final Optional<CarImage> image = imageId == LEGACY_IMAGE_ID
+                    ? carService.getCarImageByCarId(car.getId())
+                    : carService.getCarImageById(car.getId(), imageId);
+            image.filter(carImage -> carImage.getImageData() != null)
+                    .map(carImage -> new CarImagePayload(carImage.getContentType(), carImage.getImageData()))
+                    .ifPresent(payloads::add);
+        }
+        return payloads;
+    }
+
+    private List<CarImagePayload> toImagePayloads(final List<MultipartFile> files) throws IOException {
+        final List<CarImagePayload> payloads = new ArrayList<>();
+        for (final MultipartFile file : files) {
+            payloads.add(new CarImagePayload(resolveImageContentType(file), file.getBytes()));
+        }
+        return payloads;
     }
 
     private boolean isDuplicateCar(final Brand brand, final BodyType bodyType, final String model, final Integer year,
@@ -614,21 +948,6 @@ public class AdminController {
                 && !CarSearchCriteria.ALLOWED_TRANSMISSIONS.contains(
                         ControllerUtils.normalizeSpecValue(carForm.getTransmission()))) {
             errors.rejectValue("transmission", "transmission.invalid", "Transmisión no válida.");
-        }
-    }
-
-    private Optional<String> resolveOptionalImageContentType(final MultipartFile file) {
-        return file == null || file.isEmpty() ? Optional.empty() : Optional.ofNullable(resolveImageContentType(file));
-    }
-
-    private Optional<byte[]> readOptionalImageData(final MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(file.getBytes());
-        } catch (final IOException e) {
-            throw new IllegalStateException("Failed to read uploaded image.", e);
         }
     }
 

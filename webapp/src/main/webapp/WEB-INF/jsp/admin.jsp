@@ -12,9 +12,9 @@
     <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/components.css?v=5'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/admin.css?v=7'/>">
+    <link rel="stylesheet" href="<c:url value='/css/admin.css?v=10'/>">
 </head>
 <body>
     <pa:nav activePage="admin"/>
@@ -43,37 +43,25 @@
         </section>
 
         <section class="admin-requests-section" aria-label="Solicitudes pendientes">
-            <nav class="admin-request-tabs" aria-label="Tipos de solicitudes">
-                <c:url var="carsTabUrl" value="/admin">
-                    <c:param name="tab" value="cars"/>
-                </c:url>
-                <c:url var="brandsTabUrl" value="/admin">
-                    <c:param name="tab" value="brands"/>
-                </c:url>
-                <c:url var="bodyTypesTabUrl" value="/admin">
-                    <c:param name="tab" value="body-types"/>
-                </c:url>
-                <c:url var="moderatorsTabUrl" value="/admin">
-                    <c:param name="tab" value="moderators"/>
-                </c:url>
-
-                <a class="admin-request-tab" href="${carsTabUrl}">
-                    <span>Autos</span>
-                    <strong><c:out value="${carRequestCount}"/></strong>
-                </a>
-                <a class="admin-request-tab" href="${brandsTabUrl}">
-                    <span>Marcas</span>
-                    <strong><c:out value="${brandRequestCount}"/></strong>
-                </a>
-                <a class="admin-request-tab" href="${bodyTypesTabUrl}">
-                    <span>Carrocerías</span>
-                    <strong><c:out value="${bodyTypeRequestCount}"/></strong>
-                </a>
-                <a class="admin-request-tab" href="${moderatorsTabUrl}">
-                    <span>Moderador</span>
-                    <strong><c:out value="${adminRequestCount}"/></strong>
-                </a>
-            </nav>
+            <c:url var="carsTabUrl" value="/admin">
+                <c:param name="tab" value="cars"/>
+            </c:url>
+            <c:url var="brandsTabUrl" value="/admin">
+                <c:param name="tab" value="brands"/>
+            </c:url>
+            <c:url var="bodyTypesTabUrl" value="/admin">
+                <c:param name="tab" value="body-types"/>
+            </c:url>
+            <c:url var="moderatorsTabUrl" value="/admin">
+                <c:param name="tab" value="moderators"/>
+            </c:url>
+            <pa:subtabs tabCount="4"
+                        labels="Autos|Marcas|Carrocerías|Moderador"
+                        hrefs="${carsTabUrl}|${brandsTabUrl}|${bodyTypesTabUrl}|${moderatorsTabUrl}"
+                        counts="${carRequestCount}|${brandRequestCount}|${bodyTypeRequestCount}|${adminRequestCount}"
+                        values="cars|brands|body-types|moderators"
+                        activeValue="${activeTab}"
+                        ariaLabel="Tipos de solicitudes"/>
 
             <c:url var="adminBaseUrl" value="/admin"/>
             <jsp:useBean id="adminPaginationParams" class="java.util.LinkedHashMap" scope="page"/>
@@ -182,6 +170,7 @@
                         <c:otherwise>
                             <div class="admin-requests-grid">
                                 <c:forEach var="request" items="${pendingRequests}">
+                                    <c:url var="requestReviewUrl" value="/admin/requests/${request.id}/review"/>
                                     <pa:car-card
                                             model="${request.brandName} ${request.model}"
                                             year="${request.year}"
@@ -189,26 +178,10 @@
                                             carId="${request.id}"
                                             hasImage="${request.hasImage}"
                                             imageUrl="${request.imageUrl}"
-                                            href="#"
+                                            href="${requestReviewUrl}"
                                             submitter="${request.submitter}"
                                             footerText="Solicitud pendiente"
-                                            actionText="Revisar"
-                                            openModal="true"
-                                            requestId="${request.id}"
-                                            requestBrand="${request.brandName}"
-                                            requestModel="${request.model}"
-                                            requestYear="${request.year}"
-                                            requestBodyType="${request.bodyTypeName}"
-                                            requestDescription="${request.description}"
-                                            requestSubmitter="${request.submitter}"
-                                            requestImageUrls="${request.imageUrls}"
-                                            requestFuelType="${request.fuelType}"
-                                            requestHorsepower="${request.horsepower}"
-                                            requestAirbagCount="${request.airbagCount}"
-                                            requestTransmission="${request.transmission}"
-                                            requestFuelConsumption="${request.fuelConsumption}"
-                                            requestMaxSpeedKmh="${request.maxSpeedKmh}"
-                                            requestPriceUsd="${request.priceUsd}"/>
+                                            actionText="Revisar"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -227,10 +200,8 @@
 
     </main>
 
-    <pa:admin-car-form brands="${brands}" bodyTypes="${bodyTypes}" mode="admin"/>
     <pa:admin-catalog-request-modal/>
     <pa:admin-request-review-modal/>
-    <script src="<c:url value='/js/car-form.js?v=1'/>"></script>
     <script src="<c:url value='/js/admin-catalog-modal.js'/>"></script>
     <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>

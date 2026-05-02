@@ -26,64 +26,15 @@
 <%@ attribute name="showFuelType" required="false" %>
 <%@ attribute name="showPrice" required="false" %>
 <%@ attribute name="showYear" required="false" %>
-<%@ attribute name="openModal" required="false" %>
-<%@ attribute name="requestId" required="false" %>
-<%@ attribute name="requestBrand" required="false" %>
-<%@ attribute name="requestModel" required="false" %>
-<%@ attribute name="requestYear" required="false" %>
-<%@ attribute name="requestBodyType" required="false" %>
-<%@ attribute name="requestDescription" required="false" %>
-<%@ attribute name="requestSubmitter" required="false" %>
-<%@ attribute name="requestImageUrls" required="false" %>
-<%@ attribute name="requestFuelType" required="false" %>
-<%@ attribute name="requestHorsepower" required="false" %>
-<%@ attribute name="requestAirbagCount" required="false" %>
-<%@ attribute name="requestTransmission" required="false" %>
-<%@ attribute name="requestFuelConsumption" required="false" %>
-<%@ attribute name="requestMaxSpeedKmh" required="false" %>
-<%@ attribute name="requestPriceUsd" required="false" %>
 <%@ taglib prefix="c"   uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn"  uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="pa"  tagdir="/WEB-INF/tags" %>
 
-<c:set var="modalImageUrl" value=""/>
-<c:if test="${not empty imageUrl}">
-    <c:url var="modalImageUrl" value="${imageUrl}"/>
-</c:if>
-<c:set var="modalImageUrls" value=""/>
-<c:if test="${not empty requestImageUrls}">
-    <c:forEach var="requestImageUrl" items="${fn:split(requestImageUrls, '|')}">
-        <c:if test="${not empty requestImageUrl}">
-            <c:url var="resolvedRequestImageUrl" value="${requestImageUrl}"/>
-            <c:set var="modalImageUrls" value="${modalImageUrls}${empty modalImageUrls ? '' : '|'}${resolvedRequestImageUrl}"/>
-        </c:if>
-    </c:forEach>
-</c:if>
-
 <div class="car-card-shell">
     <a href="${fn:escapeXml(href)}"
        class="car-card-link"
-       aria-label="Ver ${fn:escapeXml(model)}"
-       <c:if test="${openModal}">
-           data-open-create-car-modal="true"
-           data-request-id="${fn:escapeXml(requestId)}"
-           data-request-brand="${fn:escapeXml(requestBrand)}"
-           data-request-model="${fn:escapeXml(requestModel)}"
-           data-request-year="${fn:escapeXml(requestYear)}"
-           data-request-body-type="${fn:escapeXml(requestBodyType)}"
-           data-request-description="${fn:escapeXml(requestDescription)}"
-           data-request-submitter="${fn:escapeXml(requestSubmitter)}"
-           data-request-fuel-type="${fn:escapeXml(requestFuelType)}"
-           data-request-horsepower="${fn:escapeXml(requestHorsepower)}"
-           data-request-airbag-count="${fn:escapeXml(requestAirbagCount)}"
-           data-request-transmission="${fn:escapeXml(requestTransmission)}"
-           data-request-fuel-consumption="${fn:escapeXml(requestFuelConsumption)}"
-           data-request-max-speed-kmh="${fn:escapeXml(requestMaxSpeedKmh)}"
-           data-request-price-usd="${fn:escapeXml(requestPriceUsd)}"
-           data-request-image-url="${fn:escapeXml(modalImageUrl)}"
-           data-request-image-urls="${fn:escapeXml(modalImageUrls)}"
-       </c:if>>
+       aria-label="Ver ${fn:escapeXml(model)}">
         <div class="car-card">
             <div class="card-image-wrap">
                 <c:choose>
