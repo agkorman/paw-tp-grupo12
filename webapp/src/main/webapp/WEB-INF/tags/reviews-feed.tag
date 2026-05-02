@@ -151,11 +151,12 @@
                     <c:param name="page" value="${currentPage + 1}"/>
                 </c:url>
                 <div class="reviews-feed-more">
-                    <a href="${showMoreUrl}"
+                    <a class="btn-secondary reviews-show-more"
+                       href="${showMoreUrl}"
                        data-review-show-more="true"
                        data-fragment-url="${reviewsFeedUrl}"
                        data-target="#reviewsFeed">
-                        <span class="visually-hidden"><spring:message code="common.action.showMoreReviews"/></span>
+                        <spring:message code="common.action.showMoreReviews"/>
                     </a>
                 </div>
             </c:if>

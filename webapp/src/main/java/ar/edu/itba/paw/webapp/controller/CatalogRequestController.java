@@ -107,7 +107,7 @@ public class CatalogRequestController {
         try {
             final URI uri = URI.create(referer);
             final String path = uri.getRawPath();
-            if (path == null || path.isBlank()) {
+            if (path == null || path.isBlank() || path.startsWith("//")) {
                 return new ModelAndView(withSubmittedRedirect(fallback, submitted));
             }
             final String query = withSubmitted(uri.getRawQuery(), submitted);

@@ -93,7 +93,8 @@
                                             <c:param name="page" value="${activityCurrentPage + 1}"/>
                                         </c:url>
                                         <div class="reviews-feed-more profile-show-more">
-                                            <a href="${activityShowMoreUrl}"
+                                            <a class="btn-secondary reviews-show-more"
+                                               href="${activityShowMoreUrl}"
                                                data-review-show-more="true"
                                                data-fragment-url="${activityBaseUrl}"
                                                data-target="#activityFollowingPanel"
@@ -101,7 +102,7 @@
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
                                                data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                                <span class="visually-hidden"><spring:message code="common.action.showMoreReviews"/></span>
+                                                <spring:message code="common.action.showMoreReviews"/>
                                             </a>
                                         </div>
                                     </c:if>
@@ -138,7 +139,8 @@
                                             <c:param name="page" value="${activityCurrentPage + 1}"/>
                                         </c:url>
                                         <div class="reviews-feed-more profile-show-more">
-                                            <a href="${activityShowMoreUrl}"
+                                            <a class="btn-secondary reviews-show-more"
+                                               href="${activityShowMoreUrl}"
                                                data-review-show-more="true"
                                                data-fragment-url="${activityBaseUrl}"
                                                data-target="#activityFavoritesPanel"
@@ -146,7 +148,7 @@
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
                                                data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                                <span class="visually-hidden"><spring:message code="common.action.showMoreReviews"/></span>
+                                                <spring:message code="common.action.showMoreReviews"/>
                                             </a>
                                         </div>
                                     </c:if>
@@ -183,7 +185,8 @@
                                             <c:param name="page" value="${activityCurrentPage + 1}"/>
                                         </c:url>
                                         <div class="reviews-feed-more profile-show-more">
-                                            <a href="${activityShowMoreUrl}"
+                                            <a class="btn-secondary reviews-show-more"
+                                               href="${activityShowMoreUrl}"
                                                data-review-show-more="true"
                                                data-fragment-url="${activityBaseUrl}"
                                                data-target="#activityNewsPanel"
@@ -191,7 +194,7 @@
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
                                                data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                                <span class="visually-hidden"><spring:message code="common.action.showMoreReviews"/></span>
+                                                <spring:message code="common.action.showMoreReviews"/>
                                             </a>
                                         </div>
                                     </c:if>
