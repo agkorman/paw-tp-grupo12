@@ -463,6 +463,7 @@ public class CarController {
     }
 
     private CarCatalogData resolveCatalogData(final CarSearchCriteria criteria) {
+        ignoreConsumptionFilterForElectricOnly(criteria);
         if (!criteria.isValid()) {
             return new CarCatalogData(Page.empty(1, 0), Collections.emptyMap());
         }
@@ -480,6 +481,12 @@ public class CarController {
                     .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
         }
         return new CarCatalogData(carPage, reviewStatsByCarId);
+    }
+
+    private void ignoreConsumptionFilterForElectricOnly(final CarSearchCriteria criteria) {
+        if (criteria.isElectricOnly()) {
+            criteria.setFuelConsumptionMax(null);
+        }
     }
 
     private Map<Long, ReviewStats> getReviewStatsByCarId(final List<Car> cars) {

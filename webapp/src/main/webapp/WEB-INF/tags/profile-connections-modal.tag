@@ -4,22 +4,28 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
+<spring:message var="followingTitle" code="profile.connections.title"/>
+<spring:message var="closeModalLabel" code="common.action.close"/>
+<spring:message var="searchPlaceholder" code="profile.connections.search.placeholder"/>
+<spring:message var="searchAria" code="profile.connections.search.aria"/>
+<spring:message var="followUserAction" code="profile.authRequired.followAction"/>
 
 <div id="profileConnectionsModal" class="profile-modal" hidden>
     <div class="profile-modal-overlay" data-close-profile-modal></div>
     <section class="profile-modal-dialog profile-connections-dialog" role="dialog" aria-modal="true" aria-labelledby="profileConnectionsTitle">
         <header class="profile-modal-header profile-connections-header">
-            <h2 id="profileConnectionsTitle" data-connections-title>Seguidos</h2>
-            <button type="button" class="profile-modal-close" data-close-profile-modal aria-label="Cerrar modal">
+            <h2 id="profileConnectionsTitle" data-connections-title><c:out value="${followingTitle}"/></h2>
+            <button type="button" class="profile-modal-close" data-close-profile-modal aria-label="${closeModalLabel}">
                 <pa:icon name="close" size="20"/>
             </button>
         </header>
 
         <div class="profile-connections-search">
             <pa:icon name="search" size="18"/>
-            <input type="search" placeholder="Buscar" aria-label="Buscar usuarios" data-connections-search>
+            <input type="search" maxlength="80" placeholder="${searchPlaceholder}" aria-label="${searchAria}" data-connections-search>
         </div>
 
         <div class="profile-connections-list" data-connections-list="following">
@@ -48,8 +54,8 @@
                                             class="profile-connection-button ${user.following ? 'is-following' : ''}"
                                             aria-pressed="${user.following}">
                                         <c:choose>
-                                            <c:when test="${user.following}">Siguiendo</c:when>
-                                            <c:otherwise>Seguir</c:otherwise>
+                                            <c:when test="${user.following}"><spring:message code="common.label.following"/></c:when>
+                                            <c:otherwise><spring:message code="common.label.follow"/></c:otherwise>
                                         </c:choose>
                                     </button>
                                 </form>
@@ -63,9 +69,9 @@
                                    class="profile-connection-button"
                                    data-auth-resume-intent="follow-profile-${user.id}"
                                    data-auth-required="true"
-                                   data-auth-required-action="seguir a este usuario"
+                                   data-auth-required-action="${followUserAction}"
                                    data-auth-required-intent="follow-profile-${user.id}">
-                                    Seguir
+                                    <spring:message code="common.label.follow"/>
                                 </a>
                             </c:otherwise>
                         </c:choose>
@@ -100,8 +106,8 @@
                                             class="profile-connection-button ${user.following ? 'is-following' : ''}"
                                             aria-pressed="${user.following}">
                                         <c:choose>
-                                            <c:when test="${user.following}">Siguiendo</c:when>
-                                            <c:otherwise>Seguir</c:otherwise>
+                                            <c:when test="${user.following}"><spring:message code="common.label.following"/></c:when>
+                                            <c:otherwise><spring:message code="common.label.follow"/></c:otherwise>
                                         </c:choose>
                                     </button>
                                 </form>
@@ -115,9 +121,9 @@
                                    class="profile-connection-button"
                                    data-auth-resume-intent="follow-profile-${user.id}"
                                    data-auth-required="true"
-                                   data-auth-required-action="seguir a este usuario"
+                                   data-auth-required-action="${followUserAction}"
                                    data-auth-required-intent="follow-profile-${user.id}">
-                                    Seguir
+                                    <spring:message code="common.label.follow"/>
                                 </a>
                             </c:otherwise>
                         </c:choose>

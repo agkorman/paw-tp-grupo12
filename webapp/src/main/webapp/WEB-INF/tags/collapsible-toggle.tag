@@ -4,9 +4,12 @@
 <%@ attribute name="cssClass" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
-<c:set var="resolvedShowLabel" value="${empty showLabel ? 'Ver más' : showLabel}"/>
-<c:set var="resolvedHideLabel" value="${empty hideLabel ? 'Ver menos' : hideLabel}"/>
+<spring:message var="defaultShowLabel" code="common.action.showMore"/>
+<spring:message var="defaultHideLabel" code="common.action.showLess"/>
+<c:set var="resolvedShowLabel" value="${empty showLabel ? defaultShowLabel : showLabel}"/>
+<c:set var="resolvedHideLabel" value="${empty hideLabel ? defaultHideLabel : hideLabel}"/>
 
 <button
         type="button"

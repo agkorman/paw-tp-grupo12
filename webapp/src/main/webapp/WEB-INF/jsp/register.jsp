@@ -1,12 +1,13 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro | La Posta Autos</title>
+    <title><spring:message code="auth.register.title"/></title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
@@ -20,8 +21,8 @@
     <main class="auth-page">
         <section class="auth-panel" aria-labelledby="registerTitle">
             <div class="auth-header">
-                <span class="auth-kicker">Registro</span>
-                <h1 id="registerTitle">Creá tu cuenta</h1>
+                <span class="auth-kicker"><spring:message code="auth.register.kicker"/></span>
+                <h1 id="registerTitle"><spring:message code="auth.register.heading"/></h1>
             </div>
 
             <c:if test="${not empty registrationError}">
@@ -33,7 +34,7 @@
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
                 <div class="auth-field">
-                    <label for="registerUsername">Usuario</label>
+                    <label for="registerUsername"><spring:message code="common.form.username"/></label>
                     <input
                             id="registerUsername"
                             name="username"
@@ -45,7 +46,7 @@
                 </div>
 
                 <div class="auth-field">
-                    <label for="registerEmail">Email</label>
+                    <label for="registerEmail"><spring:message code="common.form.email"/></label>
                     <input
                             id="registerEmail"
                             name="email"
@@ -57,7 +58,7 @@
                 </div>
 
                 <div class="auth-field">
-                    <label for="registerPassword">Contraseña</label>
+                    <label for="registerPassword"><spring:message code="common.form.password"/></label>
                     <input
                             id="registerPassword"
                             name="password"
@@ -69,7 +70,7 @@
                 </div>
 
                 <div class="auth-field">
-                    <label for="registerConfirmPassword">Confirmar contraseña</label>
+                    <label for="registerConfirmPassword"><spring:message code="auth.register.confirmPassword"/></label>
                     <input
                             id="registerConfirmPassword"
                             name="confirmPassword"
@@ -80,12 +81,12 @@
                             required>
                 </div>
 
-                <button type="submit" class="btn-primary auth-submit">Crear cuenta</button>
+                <button type="submit" class="btn-primary auth-submit"><spring:message code="auth.register.submit"/></button>
             </form>
 
             <p class="auth-switch">
-                ¿Ya tenés cuenta?
-                <a href="<c:url value='/login'/>">Ingresá</a>
+                <spring:message code="auth.register.hasAccount"/>
+                <a href="<c:url value='/login'/>"><spring:message code="auth.register.loginLink"/></a>
             </p>
         </section>
     </main>

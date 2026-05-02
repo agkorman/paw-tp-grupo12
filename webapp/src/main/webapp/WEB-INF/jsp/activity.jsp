@@ -40,26 +40,34 @@
         <c:param name="redirect" value="/activity"/>
         <c:param name="intent" value="activity-favorites"/>
     </c:url>
+    <spring:message var="activityKicker" code="activity.kicker"/>
+    <spring:message var="activityFollowingLabel" code="activity.tab.following"/>
+    <spring:message var="activityFavoritesLabel" code="activity.tab.favorites"/>
+    <spring:message var="activityFiltersAria" code="activity.filters.aria"/>
+    <spring:message var="activityLatestAria" code="activity.latest.aria"/>
+    <spring:message var="activityFollowingAria" code="activity.following.aria"/>
+    <spring:message var="activityFavoritesAria" code="activity.favorites.aria"/>
+    <spring:message var="activityPreviewAria" code="activity.preview.aria"/>
 
     <main class="activity-page" data-activity-tabs>
         <c:choose>
             <c:when test="${authenticated}">
                 <pa:subtabs tabCount="3"
-                            labels="Novedad|Seguidos|Autos favoritos"
+                            labels="${activityKicker}|${activityFollowingLabel}|${activityFavoritesLabel}"
                             hrefs="${activityLatestTabUrl}|${activityFollowingTabUrl}|${activityFavoritesTabUrl}"
                             counts="${latestCount}|${followedCount}|${favoriteCount}"
                             values="latest|following|favorites"
                             activeValue="${activeTab}"
-                            ariaLabel="Filtros de actividad"/>
+                            ariaLabel="${activityFiltersAria}"/>
             </c:when>
             <c:otherwise>
                 <pa:subtabs tabCount="3"
-                            labels="Novedad|Seguidos|Autos favoritos"
+                            labels="${activityKicker}|${activityFollowingLabel}|${activityFavoritesLabel}"
                             hrefs="${activityLatestTabUrl}|${activityFollowingLoginUrl}|${activityFavoritesLoginUrl}"
                             counts="${latestCount}|0|0"
                             values="latest|following|favorites"
                             activeValue="${activeTab}"
-                            ariaLabel="Filtros de actividad"/>
+                            ariaLabel="${activityFiltersAria}"/>
             </c:otherwise>
         </c:choose>
 
@@ -69,18 +77,18 @@
                     <c:choose>
                         <c:when test="${empty activityReviews}">
                             <div class="activity-empty-state">
-                                <p>No hay reseñas recientes de usuarios que sigues.</p>
+                                <p><spring:message code="activity.empty.following"/></p>
                             </div>
                         </c:when>
                         <c:otherwise>
                             <div class="activity-panel-layout">
-                                <div class="activity-feed" aria-label="Reseñas de usuarios seguidos">
+                                <div class="activity-feed" aria-label="${activityFollowingAria}">
                                     <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
                                         <pa:activity-review-card reviewCard="${activityReview}"
                                                                  idPrefix="activityFollowingReviewPreview-${activityCurrentPage}-${status.index}"/>
                                     </c:forEach>
                                 </div>
-                                <aside class="activity-preview-column" aria-label="Vista previa de reseña">
+                                <aside class="activity-preview-column" aria-label="${activityPreviewAria}">
                                     <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
                                         <pa:activity-review-preview-panel reviewCard="${activityReview}"
                                                                           idPrefix="activityFollowingReviewPreview-${activityCurrentPage}-${status.index}"/>
@@ -102,7 +110,7 @@
                                        data-item-selector=".activity-feed > .activity-review-card"
                                        data-preview-list-selector=".activity-preview-column"
                                        data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                        Mostrar más reseñas
+                                        <spring:message code="common.action.showMoreReviews"/>
                                     </a>
                                 </div>
                             </c:if>
@@ -115,18 +123,18 @@
                     <c:choose>
                         <c:when test="${empty activityReviews}">
                             <div class="activity-empty-state">
-                                <p>No hay reseñas recientes sobre tus autos favoritos.</p>
+                                <p><spring:message code="activity.empty.favorites"/></p>
                             </div>
                         </c:when>
                         <c:otherwise>
                             <div class="activity-panel-layout">
-                                <div class="activity-feed" aria-label="Reseñas de autos favoritos">
+                                <div class="activity-feed" aria-label="${activityFavoritesAria}">
                                     <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
                                         <pa:activity-review-card reviewCard="${activityReview}"
                                                                  idPrefix="activityFavoriteReviewPreview-${activityCurrentPage}-${status.index}"/>
                                     </c:forEach>
                                 </div>
-                                <aside class="activity-preview-column" aria-label="Vista previa de reseña">
+                                <aside class="activity-preview-column" aria-label="${activityPreviewAria}">
                                     <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
                                         <pa:activity-review-preview-panel reviewCard="${activityReview}"
                                                                           idPrefix="activityFavoriteReviewPreview-${activityCurrentPage}-${status.index}"/>
@@ -148,7 +156,7 @@
                                        data-item-selector=".activity-feed > .activity-review-card"
                                        data-preview-list-selector=".activity-preview-column"
                                        data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                        Mostrar más reseñas
+                                        <spring:message code="common.action.showMoreReviews"/>
                                     </a>
                                 </div>
                             </c:if>
@@ -161,18 +169,18 @@
                     <c:choose>
                         <c:when test="${empty activityReviews}">
                             <div class="activity-empty-state">
-                                <p>No hay reseñas recientes para mostrar.</p>
+                                <p><spring:message code="activity.empty.all"/></p>
                             </div>
                         </c:when>
                         <c:otherwise>
                             <div class="activity-panel-layout">
-                                <div class="activity-feed" aria-label="Últimas reseñas">
+                                <div class="activity-feed" aria-label="${activityLatestAria}">
                                     <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
                                         <pa:activity-review-card reviewCard="${activityReview}"
                                                                  idPrefix="activityNewsReviewPreview-${activityCurrentPage}-${status.index}"/>
                                     </c:forEach>
                                 </div>
-                                <aside class="activity-preview-column" aria-label="Vista previa de reseña">
+                                <aside class="activity-preview-column" aria-label="${activityPreviewAria}">
                                     <c:forEach var="activityReview" items="${activityReviews}" varStatus="status">
                                         <pa:activity-review-preview-panel reviewCard="${activityReview}"
                                                                           idPrefix="activityNewsReviewPreview-${activityCurrentPage}-${status.index}"/>
@@ -194,7 +202,7 @@
                                        data-item-selector=".activity-feed > .activity-review-card"
                                        data-preview-list-selector=".activity-preview-column"
                                        data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                        Mostrar más reseñas
+                                        <spring:message code="common.action.showMoreReviews"/>
                                     </a>
                                 </div>
                             </c:if>

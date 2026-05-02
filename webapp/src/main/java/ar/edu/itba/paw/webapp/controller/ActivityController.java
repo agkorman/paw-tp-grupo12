@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -33,11 +33,14 @@ public class ActivityController {
 
     private final ReviewService reviewService;
     private final CarService carService;
+    private final RelativeTimeFormatter relativeTimeFormatter;
 
     @Autowired
-    public ActivityController(final ReviewService reviewService, final CarService carService) {
+    public ActivityController(final ReviewService reviewService, final CarService carService,
+                              final RelativeTimeFormatter relativeTimeFormatter) {
         this.reviewService = reviewService;
         this.carService = carService;
+        this.relativeTimeFormatter = relativeTimeFormatter;
     }
 
     @RequestMapping(value = "/activity", method = RequestMethod.GET)
@@ -87,7 +90,7 @@ public class ActivityController {
                 .stream()
                 .map(review -> new ActivityReviewCard(review, carsById.get(review.getCarId()),
                         reviewPagesById.getOrDefault(review.getId(), Pagination.DEFAULT_PAGE),
-                        timeAgo(review.getCreatedAt())))
+                        relativeTimeFormatter.format(review.getCreatedAt())))
                 .toList();
     }
 
@@ -100,36 +103,6 @@ public class ActivityController {
             return normalized;
         }
         return TAB_LATEST;
-    }
-
-    private String timeAgo(final LocalDateTime createdAt) {
-        if (createdAt == null) {
-            return "";
-        }
-
-        final Duration elapsed = Duration.between(createdAt, LocalDateTime.now());
-        if (elapsed.toMinutes() < 1) {
-            return "recién";
-        }
-        if (elapsed.toHours() < 1) {
-            final long minutes = elapsed.toMinutes();
-            return "hace " + minutes + " " + (minutes == 1 ? "minuto" : "minutos");
-        }
-        if (elapsed.toDays() < 1) {
-            final long hours = elapsed.toHours();
-            return "hace " + hours + " " + (hours == 1 ? "hora" : "horas");
-        }
-        if (elapsed.toDays() < 30) {
-            final long days = elapsed.toDays();
-            return "hace " + days + " " + (days == 1 ? "día" : "días");
-        }
-        if (elapsed.toDays() < 365) {
-            final long months = elapsed.toDays() / 30;
-            return "hace " + months + " " + (months == 1 ? "mes" : "meses");
-        }
-
-        final long years = elapsed.toDays() / 365;
-        return "hace " + years + " " + (years == 1 ? "año" : "años");
     }
 
     public static final class ActivityReviewCard {

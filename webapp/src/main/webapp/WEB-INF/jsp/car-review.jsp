@@ -3,12 +3,13 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reseñas | La Posta Autos</title>
+    <title><spring:message code="review.page.title"/></title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
@@ -27,16 +28,17 @@
                     <h1>
                         <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/>
                     </h1>
-                    <p class="subtitle">Datos sobre el vehículo y reseñas de los propietarios</p>
+                    <p class="subtitle"><spring:message code="review.page.subtitle"/></p>
                 </div>
                 <div class="review-hero-actions">
                     <c:if test="${not empty averageRating}">
-                        <div class="hero-stars-row" aria-label="${averageRating} de 5 estrellas">
+                        <spring:message var="ratingAria" code="review.rating.aria" arguments="${averageRating}"/>
+                        <div class="hero-stars-row" aria-label="${fn:escapeXml(ratingAria)}">
                             <pa:rating-stars rating="${averageRating}" size="32" idPrefix="reviewHeroStar"/>
                         </div>
                     </c:if>
                     <a href="#reviewsFeed" class="btn-secondary hero-see-reviews-btn">
-                        Ver reseñas
+                        <spring:message code="review.page.seeReviews"/>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
                             <path d="M12 5v14M5 12l7 7 7-7"/>
                         </svg>
@@ -44,24 +46,46 @@
                     <sec:authorize access="hasRole('ADMIN')">
                         <c:url var="selectedCarEditUrl" value="/admin/cars/${selectedCar.id}/edit"/>
                         <c:url var="selectedCarDeleteUrl" value="/admin/cars/${selectedCar.id}/delete"/>
-                        <pa:action-menu label="Abrir opciones de auto">
-                            <a href="${selectedCarEditUrl}">
-                                Editar
-                            </a>
+                        <c:url var="selectedCarImageUrl" value="/car-image">
+                            <c:param name="carId" value="${selectedCar.id}"/>
+                        </c:url>
+                        <spring:message var="carOptionsLabel" code="cars.actionMenu.open"/>
+                        <pa:action-menu label="${carOptionsLabel}">
+                            <button
+                                    type="button"
+                                    data-open-create-car-modal="edit-car"
+                                    data-car-action="${fn:escapeXml(selectedCarEditUrl)}"
+                                    data-car-id="${fn:escapeXml(selectedCar.id)}"
+                                    data-car-brand="${fn:escapeXml(selectedCar.brandName)}"
+                                    data-car-model="${fn:escapeXml(selectedCar.model)}"
+                                    data-car-year="${fn:escapeXml(selectedCar.year)}"
+                                    data-car-body-type="${fn:escapeXml(selectedCar.bodyType)}"
+                                    data-car-description="${fn:escapeXml(selectedCar.description)}"
+                                    data-car-fuel-type="${fn:escapeXml(selectedCar.fuelType)}"
+                                    data-car-horsepower="${fn:escapeXml(selectedCar.horsepower)}"
+                                    data-car-airbag-count="${fn:escapeXml(selectedCar.airbagCount)}"
+                                    data-car-transmission="${fn:escapeXml(selectedCar.transmission)}"
+                                    data-car-fuel-consumption="${fn:escapeXml(selectedCar.fuelConsumption)}"
+                                    data-car-max-speed-kmh="${fn:escapeXml(selectedCar.maxSpeedKmh)}"
+                                    data-car-price-usd="${fn:escapeXml(selectedCar.priceUsd)}"
+                                    data-car-image-url="${selectedCar.hasImage ? fn:escapeXml(selectedCarImageUrl) : ''}">
+                                <spring:message code="common.action.edit"/>
+                            </button>
                             <button
                                     type="button"
                                     class="action-menu-danger"
                                     data-open-delete-car-modal
                                     data-car-delete-action="${fn:escapeXml(selectedCarDeleteUrl)}"
                                     data-car-title="${fn:escapeXml(selectedCar.brandName)} ${fn:escapeXml(selectedCar.model)}${not empty selectedCar.year ? ' ' : ''}${fn:escapeXml(selectedCar.year)}">
-                                Eliminar
+                                <spring:message code="common.action.delete"/>
                             </button>
                         </pa:action-menu>
                     </sec:authorize>
                 </div>
             </div>
             <c:if test="${fn:length(yearVariants) gt 1}">
-                <nav class="car-year-switcher" aria-label="Años disponibles">
+                <spring:message var="availableYearsLabel" code="review.page.years"/>
+                <nav class="car-year-switcher" aria-label="${fn:escapeXml(availableYearsLabel)}">
                     <div class="car-year-switcher-track">
                         <c:forEach var="yearVariant" items="${yearVariants}">
                             <c:url var="yearVariantUrl" value="/reviews">
@@ -72,7 +96,7 @@
                                <c:if test="${yearVariant.selected}">aria-current="page"</c:if>>
                                 <c:choose>
                                     <c:when test="${not empty yearVariant.year}"><c:out value="${yearVariant.year}"/></c:when>
-                                    <c:otherwise>Sin año</c:otherwise>
+                                    <c:otherwise><spring:message code="review.page.noYear"/></c:otherwise>
                                 </c:choose>
                             </a>
                         </c:forEach>

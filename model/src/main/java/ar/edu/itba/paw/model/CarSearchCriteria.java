@@ -182,6 +182,10 @@ public class CarSearchCriteria {
         return Collections.unmodifiableList(fuelTypes);
     }
 
+    public boolean isElectricOnly() {
+        return fuelTypes.size() == 1 && "electric".equals(fuelTypes.get(0));
+    }
+
     public void setFuelTypes(final List<String> fuelTypes) {
         this.fuelTypes = normalizeFuelTypes(fuelTypes);
     }

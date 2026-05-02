@@ -16,17 +16,25 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.validation.Validator;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
 import javax.sql.DataSource;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
@@ -48,6 +56,11 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/js/**").addResourceLocations("/js/");
     }
 
+    @Override
+    public void addInterceptors(final InterceptorRegistry registry) {
+        registry.addInterceptor(localeChangeInterceptor());
+    }
+
     @Bean
     public ViewResolver viewResolver() {
         final InternalResourceViewResolver resolver = new InternalResourceViewResolver();
@@ -66,7 +79,38 @@ public class WebConfig implements WebMvcConfigurer {
         final ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasename("messages");
         messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setFallbackToSystemLocale(false);
         return messageSource;
+    }
+
+    @Bean
+    public LocaleResolver localeResolver() {
+        return new SessionLocaleResolver() {
+            @Override
+            protected Locale determineDefaultLocale(final HttpServletRequest request) {
+                return request.getLocale();
+            }
+        };
+    }
+
+    @Bean
+    public LocaleChangeInterceptor localeChangeInterceptor() {
+        final LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
+        interceptor.setParamName("lang");
+        interceptor.setIgnoreInvalidLocale(true);
+        return interceptor;
+    }
+
+    @Bean
+    public LocalValidatorFactoryBean validator(final MessageSource messageSource) {
+        final LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
+        validator.setValidationMessageSource(messageSource);
+        return validator;
+    }
+
+    @Override
+    public Validator getValidator() {
+        return validator(messageSource());
     }
 
     @Bean

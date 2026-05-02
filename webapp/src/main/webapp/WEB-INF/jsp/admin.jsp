@@ -2,12 +2,13 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin | La Posta Autos</title>
+    <title><spring:message code="admin.title"/></title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
     <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
@@ -23,26 +24,28 @@
         <section class="admin-hero">
             <div class="admin-hero-copy">
                 <div class="admin-hero-heading">
-                    <h1>Panel de administración</h1>
+                    <h1><spring:message code="admin.heading"/></h1>
 
                     <div class="admin-section-actions">
                         <form method="post" action="<c:url value='/admin/digest/preview'/>">
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <button type="submit" class="btn-secondary">
-                                Enviar resumen semanal
+                                <spring:message code="admin.digest.send"/>
                             </button>
                         </form>
-                        <div class="admin-status" aria-label="Solicitudes pendientes">
-                            <span>Pendientes</span>
+                        <spring:message var="pendingLabel" code="admin.pending"/>
+                        <div class="admin-status" aria-label="${pendingLabel}">
+                            <span><c:out value="${pendingLabel}"/></span>
                             <strong><c:out value="${totalPendingItems}"/></strong>
                         </div>
                     </div>
                 </div>
-                <p>Solicitudes enviadas por usuarios para revisar antes de cerrar su estado.</p>
+                <p><spring:message code="admin.pending.description"/></p>
             </div>
         </section>
 
-        <section class="admin-requests-section" aria-label="Solicitudes pendientes">
+        <spring:message var="requestTypesLabel" code="admin.requestTypes.aria"/>
+        <section class="admin-requests-section" aria-label="${pendingLabel}">
             <c:url var="carsTabUrl" value="/admin">
                 <c:param name="tab" value="cars"/>
             </c:url>
@@ -55,13 +58,17 @@
             <c:url var="moderatorsTabUrl" value="/admin">
                 <c:param name="tab" value="moderators"/>
             </c:url>
+            <spring:message var="adminCarsTabLabel" code="admin.tab.cars"/>
+            <spring:message var="adminBrandsTabLabel" code="admin.tab.brands"/>
+            <spring:message var="adminBodyTypesTabLabel" code="admin.tab.bodyTypes"/>
+            <spring:message var="adminModeratorsTabLabel" code="admin.tab.moderators"/>
             <pa:subtabs tabCount="4"
-                        labels="Autos|Marcas|Carrocerías|Moderador"
+                        labels="${adminCarsTabLabel}|${adminBrandsTabLabel}|${adminBodyTypesTabLabel}|${adminModeratorsTabLabel}"
                         hrefs="${carsTabUrl}|${brandsTabUrl}|${bodyTypesTabUrl}|${moderatorsTabUrl}"
                         counts="${carRequestCount}|${brandRequestCount}|${bodyTypeRequestCount}|${adminRequestCount}"
                         values="cars|brands|body-types|moderators"
                         activeValue="${activeTab}"
-                        ariaLabel="Tipos de solicitudes"/>
+                        ariaLabel="${requestTypesLabel}"/>
 
             <c:url var="adminBaseUrl" value="/admin"/>
             <jsp:useBean id="adminPaginationParams" class="java.util.LinkedHashMap" scope="page"/>
@@ -71,13 +78,13 @@
                 <c:when test="${activeTab eq 'brands'}">
                     <div class="admin-section-heading">
                         <div>
-                            <h2>Solicitudes de marcas</h2>
+                            <h2><spring:message code="admin.brandRequests.title"/></h2>
                         </div>
                     </div>
                     <c:choose>
                         <c:when test="${empty pendingBrandRequests}">
                             <div class="admin-empty-state">
-                                <p>No hay solicitudes de marcas pendientes.</p>
+                                <p><spring:message code="admin.brandRequests.empty"/></p>
                             </div>
                         </c:when>
                         <c:otherwise>
@@ -98,13 +105,13 @@
                 <c:when test="${activeTab eq 'body-types'}">
                     <div class="admin-section-heading">
                         <div>
-                            <h2>Solicitudes de carrocerías</h2>
+                            <h2><spring:message code="admin.bodyTypeRequests.title"/></h2>
                         </div>
                     </div>
                     <c:choose>
                         <c:when test="${empty pendingBodyTypeRequests}">
                             <div class="admin-empty-state">
-                                <p>No hay solicitudes de carrocerías pendientes.</p>
+                                <p><spring:message code="admin.bodyTypeRequests.empty"/></p>
                             </div>
                         </c:when>
                         <c:otherwise>
@@ -125,13 +132,13 @@
                 <c:when test="${activeTab eq 'moderators'}">
                     <div class="admin-section-heading">
                         <div>
-                            <h2>Solicitudes de moderador</h2>
+                            <h2><spring:message code="admin.moderatorRequests.title"/></h2>
                         </div>
                     </div>
                     <c:choose>
                         <c:when test="${empty pendingAdminRequests}">
                             <div class="admin-empty-state">
-                                <p>No hay solicitudes de moderador pendientes.</p>
+                                <p><spring:message code="admin.moderatorRequests.empty"/></p>
                             </div>
                         </c:when>
                         <c:otherwise>
@@ -145,7 +152,7 @@
                                             data-request-motivation="${fn:escapeXml(adminRequest.motivation)}"
                                             data-request-bio="${fn:escapeXml(adminRequest.bio)}"
                                             data-request-justification="${fn:escapeXml(adminRequest.justification)}">
-                                        <span class="admin-catalog-request-card-kicker">Moderador</span>
+                                        <span class="admin-catalog-request-card-kicker"><spring:message code="admin.tab.moderators"/></span>
                                         <span class="admin-catalog-request-card-name">
                                             <c:out value="${adminRequest.username}"/>
                                         </span>
@@ -158,13 +165,13 @@
                 <c:otherwise>
                     <div class="admin-section-heading">
                         <div>
-                            <h2>Solicitudes de autos</h2>
+                            <h2><spring:message code="admin.carRequests.title"/></h2>
                         </div>
                     </div>
                     <c:choose>
                         <c:when test="${empty pendingRequests}">
                             <div class="admin-empty-state">
-                                <p>No hay formularios pendientes para moderar.</p>
+                                <p><spring:message code="admin.carRequests.empty"/></p>
                             </div>
                         </c:when>
                         <c:otherwise>
@@ -189,12 +196,13 @@
                 </c:otherwise>
             </c:choose>
 
+            <spring:message var="adminPaginationLabel" code="admin.pagination.aria"/>
             <c:if test="${not empty totalPages and totalPages > 1}">
                 <pa:pagination currentPage="${currentPage}"
                                totalPages="${totalPages}"
                                baseUrl="${adminBaseUrl}"
                                extraParams="${adminPaginationParams}"
-                               ariaLabel="Paginación de solicitudes"/>
+                               ariaLabel="${adminPaginationLabel}"/>
             </c:if>
         </section>
 

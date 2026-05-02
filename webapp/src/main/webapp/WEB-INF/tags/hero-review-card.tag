@@ -56,6 +56,6 @@
                 <c:otherwise>anon</c:otherwise>
             </c:choose>
         </span>
-        <span><c:out value="${fn:substring(heroReview.createdAt, 0, 10)}"/></span>
+        <span><c:out value="${relativeTimeFormatter.format(heroReview.createdAt)}"/></span>
     </p>
 </a>

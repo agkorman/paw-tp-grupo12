@@ -364,11 +364,6 @@ ALTER TABLE car_requests ADD COLUMN IF NOT EXISTS year INT;
 
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS uq_cars_brand_model_body_type;
 ALTER TABLE cars DROP CONSTRAINT IF EXISTS uq_cars_brand_model_body_type_year;
-
-UPDATE cars
-SET year = 2026
-WHERE year IS NULL;
-
 ALTER TABLE cars
     ADD CONSTRAINT uq_cars_brand_model_body_type_year
     UNIQUE NULLS NOT DISTINCT (brand_id, model, body_type_id, year);
