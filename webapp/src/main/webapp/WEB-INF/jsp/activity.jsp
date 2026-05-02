@@ -102,7 +102,7 @@
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
                                                data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                                Mostrar más reseñas
+                                                <spring:message code="common.action.showMoreReviews"/>
                                             </a>
                                         </div>
                                     </c:if>
@@ -148,7 +148,7 @@
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
                                                data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                                Mostrar más reseñas
+                                                <spring:message code="common.action.showMoreReviews"/>
                                             </a>
                                         </div>
                                     </c:if>
@@ -194,7 +194,7 @@
                                                data-item-selector=".activity-feed > .activity-review-card"
                                                data-preview-list-selector=".activity-preview-column"
                                                data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                                Mostrar más reseñas
+                                                <spring:message code="common.action.showMoreReviews"/>
                                             </a>
                                         </div>
                                     </c:if>
