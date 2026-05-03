@@ -430,12 +430,25 @@ public class CarReviewController {
     }
 
     @RequestMapping(value = "/reviews/{reviewId}/delete", method = RequestMethod.POST)
-    public ModelAndView deleteReview(@PathVariable("reviewId") final long reviewId,
-                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+    public Object deleteReview(@PathVariable("reviewId") final long reviewId,
+                               @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
+                               @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
         final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
         validateReviewOwnership(existingReview, currentUser);
-        reviewService.deleteReview(reviewId);
-        LOGGER.info("user id={} deleted review id={}", currentUser.getId(), reviewId);
+        try {
+            reviewService.deleteReview(reviewId);
+            LOGGER.info("user id={} deleted review id={}", currentUser.getId(), reviewId);
+        } catch (final RuntimeException e) {
+            LOGGER.error("failed to delete review id={} userId={}", reviewId, currentUser.getId(), e);
+            if (ajax) {
+                return new ResponseEntity<String>(message("review.delete.toast.error"), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            return new ModelAndView("redirect:/profile");
+        }
+        if (ajax) {
+            return new ResponseEntity<String>("ok", HttpStatus.OK);
+        }
         return new ModelAndView("redirect:/profile");
     }
 

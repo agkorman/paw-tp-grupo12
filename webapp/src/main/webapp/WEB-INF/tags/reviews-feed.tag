@@ -22,6 +22,8 @@
 <spring:message var="likeLabel" code="review.like.label"/>
 <spring:message var="reviewActionMenuLabel" code="review.actionMenu.open"/>
 <spring:message var="reviewHideLabel" code="review.hide.action.aria"/>
+<spring:message var="reviewDeleteSuccessMsg" code="review.delete.toast.success"/>
+<spring:message var="reviewDeleteErrorMsg" code="review.delete.toast.error"/>
 
 <section id="reviewsFeed" class="reviews-feed">
     <c:set var="reviewTotalCount" value="${empty totalItems ? fn:length(reviews) : totalItems}"/>
@@ -81,7 +83,11 @@
                                                 <a href="${reviewEditPageUrl}">
                                                     <spring:message code="common.action.edit"/>
                                                 </a>
-                                                <form method="post" action="${reviewDeleteUrl}">
+                                                <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
+                                                      data-review-delete-form
+                                                      data-confirm-modal="deleteReviewConfirmModal"
+                                                      data-delete-success="${fn:escapeXml(reviewDeleteSuccessMsg)}"
+                                                      data-delete-error="${fn:escapeXml(reviewDeleteErrorMsg)}">
                                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                     <button type="submit" class="action-menu-danger">
                                                         <spring:message code="common.action.delete"/>

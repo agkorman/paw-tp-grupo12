@@ -1,9 +1,14 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <spring:message var="closeModalLabel" code="common.action.close"/>
+<spring:message var="deleteSuccessMsg" code="review.delete.toast.success"/>
+<spring:message var="deleteErrorMsg" code="review.delete.toast.error"/>
 
-<div id="deleteReviewModal" class="profile-modal" hidden>
+<div id="deleteReviewModal" class="profile-modal" hidden
+     data-delete-success-message="${fn:escapeXml(deleteSuccessMsg)}"
+     data-delete-error-message="${fn:escapeXml(deleteErrorMsg)}">
     <div class="profile-modal-overlay" data-close-profile-modal></div>
     <section class="profile-modal-dialog profile-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="deleteReviewTitle">
         <div class="profile-modal-header">

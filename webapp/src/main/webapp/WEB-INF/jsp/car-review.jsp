@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=4'/>">
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=6'/>">
     <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=5'/>">
 </head>
 <body>
     <pa:nav activePage="reviews"/>
@@ -167,6 +168,11 @@
     <sec:authorize access="hasRole('ADMIN')">
         <pa:toast/>
         <pa:review-hide-modal/>
+        <pa:confirmation-modal id="deleteReviewConfirmModal"
+                               titleCode="review.delete.title"
+                               bodyCode="review.delete.body"
+                               confirmCode="common.action.delete"
+                               confirmCssClass="btn-primary"/>
         <pa:car-delete-modal/>
     </sec:authorize>
 
@@ -181,6 +187,8 @@
         <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
         <script src="<c:url value='/js/toast.js'/>"></script>
         <script src="<c:url value='/js/review-moderation.js'/>"></script>
+        <script src="<c:url value='/js/confirmation-modal.js?v=1'/>"></script>
+        <script src="<c:url value='/js/review-delete.js?v=1'/>"></script>
     </sec:authorize>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <pa:footer/>

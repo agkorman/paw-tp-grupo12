@@ -370,30 +370,7 @@
         toggle.textContent = label;
     }
 
-    function openDeleteReviewModal(button) {
-        var modal = document.getElementById('deleteReviewModal');
-        var form = document.getElementById('deleteReviewForm');
-        var title = modal ? modal.querySelector('[data-delete-review-title]') : null;
-        if (!modal || !form) {
-            return;
-        }
-
-        form.setAttribute('action', button.getAttribute('data-review-delete-action') || '#');
-        if (title) {
-            title.textContent = button.getAttribute('data-review-title') || '';
-        }
-        closeActionMenus();
-        openModal(modal);
-    }
-
     document.addEventListener('click', function (event) {
-        var deleteReviewButton = closestByAttribute(event.target, 'data-open-delete-review-modal');
-        if (deleteReviewButton) {
-            event.preventDefault();
-            openDeleteReviewModal(deleteReviewButton);
-            return;
-        }
-
         var editButton = closestByAttribute(event.target, 'data-open-edit-profile-modal');
         if (editButton) {
             openModal(document.getElementById('editProfileModal'));

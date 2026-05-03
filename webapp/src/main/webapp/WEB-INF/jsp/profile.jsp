@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile.css?v=10'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=5'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-connections.css?v=1'/>">
     <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
 </head>
@@ -309,7 +309,11 @@
         </section>
     </main>
 
-    <pa:review-delete-modal/>
+    <pa:confirmation-modal id="deleteReviewConfirmModal"
+                           titleCode="review.delete.title"
+                           bodyCode="review.delete.body"
+                           confirmCode="common.action.delete"
+                           confirmCssClass="btn-primary"/>
     <pa:edit-profile-modal profile="${profile}"/>
     <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
     <pa:confirmation-modal id="logoutConfirmModal"
@@ -326,13 +330,14 @@
     <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
     <script src="<c:url value='/js/action-menu.js'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
-    <script src="<c:url value='/js/confirmation-modal.js'/>"></script>
+    <script src="<c:url value='/js/confirmation-modal.js?v=1'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/profile.js?v=8'/>"></script>
+    <script src="<c:url value='/js/profile.js?v=9'/>"></script>
     <c:if test="${ownProfile}">
         <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     </c:if>
     <script src="<c:url value='/js/toast.js'/>"></script>
+    <script src="<c:url value='/js/review-delete.js?v=1'/>"></script>
     <pa:footer/>
 </body>
 </html>
