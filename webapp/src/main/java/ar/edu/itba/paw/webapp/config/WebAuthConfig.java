@@ -3,6 +3,7 @@ package ar.edu.itba.paw.webapp.config;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.auth.PawUserDetailsService;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -143,7 +144,10 @@ public class WebAuthConfig {
         savedRequestHandler.setDefaultTargetUrl("/");
 
         return (request, response, authentication) -> {
-            LOGGER.info("login success user={}", authentication == null ? "<unknown>" : authentication.getName());
+            LOGGER.info("login success user={}",
+                    authentication == null
+                            ? "<unknown>"
+                            : LogSanitizer.forLog(authentication.getName(), LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS));
             final Optional<String> redirect = LoginRedirectUtils.safeRedirect(
                     request.getParameter(LoginRedirectUtils.REDIRECT_PARAM)
             );
@@ -169,7 +173,7 @@ public class WebAuthConfig {
     private AuthenticationFailureHandler loginFailureHandler() {
         return (request, response, exception) -> {
             LOGGER.warn("login failure email={} reason={}",
-                    request.getParameter("email"),
+                    LogSanitizer.forLog(request.getParameter("email"), LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS),
                     exception == null ? "<unknown>" : exception.getClass().getSimpleName());
             String target = "/login?error";
             final String redirect = request.getParameter(LoginRedirectUtils.REDIRECT_PARAM);

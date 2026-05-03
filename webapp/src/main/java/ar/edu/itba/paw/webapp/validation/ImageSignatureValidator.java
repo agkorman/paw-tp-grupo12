@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.validation;
 
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -39,12 +40,14 @@ public final class ImageSignatureValidator {
             valid = isWebp(header);
         } else {
             LOGGER.warn("rejected image upload: unsupported content type={} filename={}",
-                    contentType, file.getOriginalFilename());
+                    LogSanitizer.forLog(contentType, LogSanitizer.MAX_LOG_CONTENT_TYPE_CODE_POINTS),
+                    LogSanitizer.forLog(file.getOriginalFilename(), LogSanitizer.MAX_LOG_FILENAME_CODE_POINTS));
             return false;
         }
         if (!valid) {
             LOGGER.warn("rejected image upload: magic-byte mismatch declaredContentType={} filename={}",
-                    contentType, file.getOriginalFilename());
+                    LogSanitizer.forLog(contentType, LogSanitizer.MAX_LOG_CONTENT_TYPE_CODE_POINTS),
+                    LogSanitizer.forLog(file.getOriginalFilename(), LogSanitizer.MAX_LOG_FILENAME_CODE_POINTS));
         }
         return valid;
     }
