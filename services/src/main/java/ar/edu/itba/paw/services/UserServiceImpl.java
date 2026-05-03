@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import ar.edu.itba.paw.services.exception.UserNotFoundException;
+import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -98,12 +100,12 @@ public class UserServiceImpl implements UserService {
         }
         final Optional<User> existing = userDao.findByUsername(normalizedUsername);
         if (existing.isPresent() && existing.get().getId() != userId) {
-            throw new IllegalArgumentException("Username is already registered.");
+            throw new UsernameAlreadyExistsException(normalizedUsername);
         }
         if (!userDao.updateUsername(userId, normalizedUsername)) {
-            throw new IllegalArgumentException("User not found.");
+            throw new UserNotFoundException(userId);
         }
-        return userDao.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found."));
+        return userDao.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
     }
 
     @Override

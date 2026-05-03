@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import ar.edu.itba.paw.services.exception.UserNotFoundException;
+import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -241,11 +243,11 @@ public class UserServiceImplTest {
         when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.of(existing));
 
         // Exercise
-        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        final UsernameAlreadyExistsException ex = assertThrows(UsernameAlreadyExistsException.class,
                 () -> userService.updateUsername(USER_ID, RAW_USERNAME));
 
         // Assertions
-        assertEquals("Username is already registered.", ex.getMessage());
+        assertEquals("Username is already registered: " + NORMALIZED_USERNAME, ex.getMessage());
     }
 
     @Test
@@ -255,11 +257,11 @@ public class UserServiceImplTest {
         when(userDao.updateUsername(USER_ID, NORMALIZED_USERNAME)).thenReturn(false);
 
         // Exercise
-        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        final UserNotFoundException ex = assertThrows(UserNotFoundException.class,
                 () -> userService.updateUsername(USER_ID, RAW_USERNAME));
 
         // Assertions
-        assertEquals("User not found.", ex.getMessage());
+        assertEquals("User not found: " + USER_ID, ex.getMessage());
     }
 
     @Test

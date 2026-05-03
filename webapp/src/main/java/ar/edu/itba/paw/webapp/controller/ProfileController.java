@@ -12,6 +12,7 @@ import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
@@ -129,6 +130,8 @@ public class ProfileController {
             refreshAuthenticatedUser(currentUser, updatedUser);
             return new ModelAndView("redirect:/profile");
         } catch (final DataIntegrityViolationException e) {
+            return profileEditError("profile.edit.error.username.exists", normalizedUsername, redirectAttributes);
+        } catch (final UsernameAlreadyExistsException e) {
             return profileEditError("profile.edit.error.username.exists", normalizedUsername, redirectAttributes);
         } catch (final IllegalArgumentException e) {
             return profileEditError("profile.edit.error.generic", normalizedUsername, redirectAttributes);
