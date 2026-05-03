@@ -6,7 +6,8 @@
 <spring:message var="toastCloseLabel" code="toast.close"/>
 <div id="globalToast" class="global-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
     <span class="global-toast-icon" aria-hidden="true">
-        <pa:icon name="close" size="14"/>
+        <span data-toast-icon-success><pa:icon name="check-circle" size="14"/></span>
+        <span data-toast-icon-error><pa:icon name="close" size="14"/></span>
     </span>
     <span class="global-toast-message" data-toast-message></span>
     <button type="button" class="global-toast-close" data-toast-close aria-label="${fn:escapeXml(toastCloseLabel)}">

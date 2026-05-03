@@ -405,12 +405,26 @@
     color: var(--secondary);
 }
 
+.global-toast-icon [data-toast-icon-success],
+.global-toast-icon [data-toast-icon-error] {
+    display: none;
+    line-height: 0;
+}
+
 .global-toast-success .global-toast-icon {
     color: #9bd28f;
 }
 
+.global-toast-success .global-toast-icon [data-toast-icon-success] {
+    display: inline;
+}
+
 .global-toast-error .global-toast-icon {
     color: #ff9f92;
+}
+
+.global-toast-error .global-toast-icon [data-toast-icon-error] {
+    display: inline;
 }
 
 .global-toast-message {
