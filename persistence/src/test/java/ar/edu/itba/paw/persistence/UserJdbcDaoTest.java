@@ -39,6 +39,20 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldUpdatePersistedUsernameWhenUserExists() {
+        // Arrange
+        final User created = userDao.create("old-name", "rename@example.com", "password", "user");
+
+        // Exercise
+        final boolean result = userDao.updateUsername(created.getId(), "new-name");
+
+        // Assertions
+        assertTrue(result);
+        assertEquals("new-name", userDao.findById(created.getId()).orElseThrow().getUsername());
+        assertEquals("rename@example.com", userDao.findById(created.getId()).orElseThrow().getEmail());
+    }
+
+    @Test
     public void shouldFindEmailsByNormalizedRolesOnly() {
         // Arrange
         userDao.create("regular", "regular@example.com", "password", "user");

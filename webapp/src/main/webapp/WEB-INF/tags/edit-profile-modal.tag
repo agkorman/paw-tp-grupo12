@@ -5,8 +5,11 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <spring:message var="closeModalLabel" code="common.action.close"/>
+<spring:message var="emailLabel" code="common.form.email"/>
+<c:url var="profileUpdateUrl" value="/profile"/>
+<c:set var="resolvedProfileName" value="${empty profileEditUsername ? profile.name : profileEditUsername}"/>
 
-<div id="editProfileModal" class="profile-modal" hidden>
+<div id="editProfileModal" class="profile-modal" data-open-on-load="${openEditProfileModal}" hidden>
     <div class="profile-modal-overlay" data-close-profile-modal></div>
     <section class="profile-modal-dialog profile-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle">
         <header class="profile-modal-header">
@@ -16,16 +19,21 @@
             </button>
         </header>
 
-        <form class="profile-edit-form" method="post" action="#">
+        <form class="profile-edit-form" method="post" action="${profileUpdateUrl}" novalidate="novalidate">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <div class="profile-edit-fields">
                 <label class="profile-edit-field" for="profileNameInput">
                     <span><spring:message code="profile.edit.username"/></span>
-                    <input id="profileNameInput" name="displayName" type="text" value="${fn:escapeXml(profile.name)}" maxlength="80">
+                    <input id="profileNameInput" name="displayName" type="text" value="${fn:escapeXml(resolvedProfileName)}"
+                           maxlength="50" required class="${not empty profileEditErrorCode ? 'is-invalid' : ''}">
+                    <c:if test="${not empty profileEditErrorCode}">
+                        <span class="form-error" role="alert"><spring:message code="${profileEditErrorCode}"/></span>
+                    </c:if>
                 </label>
 
                 <div class="profile-edit-field">
-                    <span>Email</span>
-                    <div class="profile-readonly-value" aria-label="Email">
+                    <span><c:out value="${emailLabel}"/></span>
+                    <div class="profile-readonly-value" aria-label="${fn:escapeXml(emailLabel)}">
                         <c:out value="${profile.email}"/>
                     </div>
                 </div>
@@ -33,7 +41,7 @@
 
             <div class="profile-modal-actions">
                 <button type="button" class="btn-secondary" data-close-profile-modal><spring:message code="common.action.cancel"/></button>
-                <button type="button" class="btn-primary" data-close-profile-modal><spring:message code="common.action.save"/></button>
+                <button type="submit" class="btn-primary"><spring:message code="common.action.save"/></button>
             </div>
         </form>
 

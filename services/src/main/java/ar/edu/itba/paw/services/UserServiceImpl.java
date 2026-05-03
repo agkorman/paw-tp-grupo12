@@ -91,6 +91,23 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    public User updateUsername(final long userId, final String username) {
+        final String normalizedUsername = StringUtils.normalize(username);
+        if (normalizedUsername == null) {
+            throw new IllegalArgumentException("Username is required.");
+        }
+        final Optional<User> existing = userDao.findByUsername(normalizedUsername);
+        if (existing.isPresent() && existing.get().getId() != userId) {
+            throw new IllegalArgumentException("Username is already registered.");
+        }
+        if (!userDao.updateUsername(userId, normalizedUsername)) {
+            throw new IllegalArgumentException("User not found.");
+        }
+        return userDao.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found."));
+    }
+
+    @Override
+    @Transactional
     public boolean updateRole(final long userId, final String role) {
         final String normalizedRole = StringUtils.normalize(role);
         if (normalizedRole == null) {

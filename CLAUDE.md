@@ -62,6 +62,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Use `<c:url>` for all application URLs. Never hardcode context paths.
 - Custom tags use the `pa:` namespace prefix and live in `WEB-INF/tags/`.
 - Every JSP starts with `<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>`.
+- Forms with client-side constraints (`required`, `minlength`, `pattern`, etc.) must opt out of native browser validation UI with `novalidate` and render app-owned inline errors using localized bundle messages. Never rely on default browser messages such as "Please fill out this field."
 
 ## Internationalization (i18n)
 

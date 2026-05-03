@@ -16,23 +16,33 @@ import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
@@ -41,6 +51,8 @@ public class ProfileController {
     private static final String TAB_REVIEWS = "reviews";
     private static final String TAB_FAVORITES = "favorites";
     private static final String TAB_LIKED = "liked";
+    private static final int USERNAME_MAX_LENGTH = 50;
+    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z0-9._-]+$");
 
     private final ReviewService reviewService;
     private final ReviewLikeService reviewLikeService;
@@ -63,6 +75,11 @@ public class ProfileController {
         this.userService = userService;
         this.userFollowService = userFollowService;
         this.adminRequestService = adminRequestService;
+    }
+
+    @InitBinder
+    public void initBinder(final WebDataBinder binder) {
+        binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
     }
 
     @RequestMapping(value = "/profile", method = RequestMethod.GET)
@@ -91,6 +108,33 @@ public class ProfileController {
 
     ModelAndView publicProfile(final long userId, final AuthenticatedUser currentUser) {
         return publicProfile(userId, currentUser, null, 1, null);
+    }
+
+    @RequestMapping(value = "/profile", method = RequestMethod.POST)
+    public ModelAndView updateOwnProfile(@RequestParam(value = "displayName", required = false) final String displayName,
+                                         @AuthenticationPrincipal final AuthenticatedUser currentUser,
+                                         final RedirectAttributes redirectAttributes) {
+        if (currentUser == null) {
+            return new ModelAndView("redirect:/login");
+        }
+
+        final String normalizedUsername = ControllerUtils.normalize(displayName);
+        final String validationErrorCode = validateProfileUsername(currentUser.getId(), normalizedUsername);
+        if (validationErrorCode != null) {
+            return profileEditError(validationErrorCode, normalizedUsername, redirectAttributes);
+        }
+
+        try {
+            final User updatedUser = userService.updateUsername(currentUser.getId(), normalizedUsername);
+            refreshAuthenticatedUser(currentUser, updatedUser);
+            return new ModelAndView("redirect:/profile");
+        } catch (final DataIntegrityViolationException e) {
+            return profileEditError("profile.edit.error.username.exists", normalizedUsername, redirectAttributes);
+        } catch (final IllegalArgumentException e) {
+            return profileEditError("profile.edit.error.generic", normalizedUsername, redirectAttributes);
+        } catch (final DataAccessException e) {
+            return profileEditError("profile.edit.error.generic", normalizedUsername, redirectAttributes);
+        }
     }
 
     @RequestMapping(value = "/profiles/{userId}/follow", method = RequestMethod.POST)
@@ -125,6 +169,44 @@ public class ProfileController {
             return new ResponseEntity<String>(following + "|" + followerCount, HttpStatus.OK);
         }
         return new ModelAndView("redirect:/profiles/" + userId);
+    }
+
+    private String validateProfileUsername(final long currentUserId, final String username) {
+        if (username == null) {
+            return "profile.edit.error.username.required";
+        }
+        if (username.length() > USERNAME_MAX_LENGTH) {
+            return "profile.edit.error.username.max";
+        }
+        if (!USERNAME_PATTERN.matcher(username).matches()) {
+            return "profile.edit.error.username.pattern";
+        }
+        final Optional<User> existing = userService.findByUsername(username);
+        if (existing.isPresent() && existing.get().getId() != currentUserId) {
+            return "profile.edit.error.username.exists";
+        }
+        return null;
+    }
+
+    private ModelAndView profileEditError(final String errorCode, final String username,
+                                          final RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("profileEditErrorCode", errorCode);
+        redirectAttributes.addFlashAttribute("profileEditUsername", username);
+        redirectAttributes.addFlashAttribute("openEditProfileModal", true);
+        return new ModelAndView("redirect:/profile");
+    }
+
+    private void refreshAuthenticatedUser(final AuthenticatedUser currentUser, final User updatedUser) {
+        final AuthenticatedUser refreshed = new AuthenticatedUser(
+                currentUser.getId(),
+                updatedUser.getUsername(),
+                currentUser.getEmail(),
+                currentUser.getPassword(),
+                currentUser.getAuthorities()
+        );
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(refreshed, refreshed.getPassword(), refreshed.getAuthorities())
+        );
     }
 
     private ModelAndView profile(final long profileUserId, final AuthenticatedUser currentUser,
