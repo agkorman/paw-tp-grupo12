@@ -321,9 +321,7 @@
     <c:if test="${ownProfile}">
         <pa:request-admin-modal/>
     </c:if>
-    <c:if test="${showSubmittedToast}">
-        <pa:submitted-toast messageCode="${submittedToastMessageCode}"/>
-    </c:if>
+    <pa:toast messageCode="${submittedToastMessageCode}"/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
     <script src="<c:url value='/js/action-menu.js'/>"></script>
@@ -334,7 +332,7 @@
     <c:if test="${ownProfile}">
         <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     </c:if>
-    <script src="<c:url value='/js/submitted-toast.js'/>"></script>
+    <script src="<c:url value='/js/toast.js'/>"></script>
     <pa:footer/>
 </body>
 </html>

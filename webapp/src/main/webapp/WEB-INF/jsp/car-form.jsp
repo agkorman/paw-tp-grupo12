@@ -383,16 +383,14 @@
         <pa:request-brand-modal/>
         <pa:request-body-type-modal/>
     </c:if>
-    <c:if test="${showSubmittedToast}">
-        <pa:submitted-toast messageCode="${submittedToastMessageCode}"/>
-    </c:if>
+    <pa:toast messageCode="${submittedToastMessageCode}"/>
 
     <script src="<c:url value='/js/car-form.js?v=3'/>"></script>
     <c:if test="${catalogRequestLinksEnabled}">
         <script src="<c:url value='/js/catalog-request-modals.js'/>"></script>
     </c:if>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/submitted-toast.js'/>"></script>
+    <script src="<c:url value='/js/toast.js'/>"></script>
     <pa:footer/>
 </body>
 </html>

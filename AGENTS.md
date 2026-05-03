@@ -186,6 +186,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - Prefer JSP tag files (`WEB-INF/tags/`) for any UI piece that is reused or complex enough to deserve isolation. When building new views, modularize into tags rather than writing monolithic JSPs.
 - Tag attributes are declared at the top of the tag file with `<%@ attribute name="..." required="..." %>` before any markup.
+- User notifications must reuse the generic toast component in `webapp/src/main/webapp/WEB-INF/tags/toast.tag`. For server-rendered notifications, pass `messageCode`/`type` to that tag; for client-side notifications, use `window.PawToast.show(...)`. Do not introduce alternate toast components or duplicate notification patterns.
 
 ## Model Objects
 

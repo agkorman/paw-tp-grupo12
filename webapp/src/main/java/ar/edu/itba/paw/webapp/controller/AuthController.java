@@ -105,22 +105,24 @@ public class AuthController {
         final String normalizedEmail = ControllerUtils.normalizeEmail(email);
 
         try {
-            final String validationError = validateRegistration(normalizedUsername, normalizedEmail, password, confirmPassword);
-            if (validationError != null) {
-                LOGGER.warn("registration rejected email={} reason={}", normalizedEmail, validationError);
-                return registerFormWithError(validationError, normalizedUsername, normalizedEmail);
+            final String validationErrorCode =
+                    validateRegistration(normalizedUsername, normalizedEmail, password, confirmPassword);
+            if (validationErrorCode != null) {
+                LOGGER.warn("registration rejected email={} reasonCode={}", normalizedEmail, validationErrorCode);
+                return registerFormWithError(validationErrorCode, normalizedUsername, normalizedEmail);
             }
             userService.createUser(normalizedUsername, normalizedEmail, password);
             LOGGER.info("registered new user email={} username={}", normalizedEmail, normalizedUsername);
         } catch (final IllegalArgumentException e) {
-            LOGGER.warn("registration rejected email={} reason={}", normalizedEmail, e.getMessage());
-            return registerFormWithError(e.getMessage(), normalizedUsername, normalizedEmail);
+            final String errorCode = registrationErrorCode(e.getMessage());
+            LOGGER.warn("registration rejected email={} reasonCode={}", normalizedEmail, errorCode);
+            return registerFormWithError(errorCode, normalizedUsername, normalizedEmail);
         } catch (final DataIntegrityViolationException e) {
             LOGGER.warn("registration rejected: integrity violation email={}", normalizedEmail);
-            return registerFormWithError("Ese usuario o email ya está registrado.", normalizedUsername, normalizedEmail);
+            return registerFormWithError("auth.register.error.duplicate", normalizedUsername, normalizedEmail);
         } catch (final DataAccessException e) {
             LOGGER.error("Database error while creating user {}", normalizedEmail, e);
-            return registerFormWithError("No pudimos crear la cuenta en este momento. Intentá nuevamente.", normalizedUsername, normalizedEmail);
+            return registerFormWithError("auth.register.error.unavailable", normalizedUsername, normalizedEmail);
         }
 
         if (autoLogin(normalizedEmail, password, request, response)) {
@@ -148,44 +150,63 @@ public class AuthController {
     private String validateRegistration(final String username, final String email,
                                         final String password, final String confirmPassword) {
         if (username == null) {
-            return "El nombre de usuario es obligatorio.";
+            return "auth.register.error.username.required";
         }
         if (username.length() > USERNAME_MAX_LENGTH) {
-            return "El nombre de usuario debe tener como máximo 50 caracteres.";
+            return "auth.register.error.username.max";
         }
         if (!USERNAME_PATTERN.matcher(username).matches()) {
-            return "El nombre de usuario solo puede usar letras, números, punto, guion y guion bajo.";
+            return "auth.register.error.username.pattern";
         }
         if (userService.findByUsername(username).isPresent()) {
-            return "Ese nombre de usuario ya está en uso.";
+            return "auth.register.error.username.exists";
         }
 
         if (email == null) {
-            return "El email es obligatorio.";
+            return "auth.register.error.email.required";
         }
         if (email.length() > EMAIL_MAX_LENGTH || !SIMPLE_EMAIL_PATTERN.matcher(email).matches()) {
-            return "Ingresá un email válido.";
+            return "auth.register.error.email.invalid";
         }
         if (userService.findByEmail(email).isPresent()) {
-            return "Ese email ya está registrado.";
+            return "auth.register.error.email.exists";
         }
 
         if (password == null || password.length() < PASSWORD_MIN_LENGTH) {
-            return "La contraseña debe tener al menos 8 caracteres.";
+            return "auth.register.error.password.min";
         }
         if (password.length() > PASSWORD_MAX_LENGTH) {
-            return "La contraseña debe tener como máximo 72 caracteres.";
+            return "auth.register.error.password.max";
         }
         if (!password.equals(confirmPassword)) {
-            return "Las contraseñas no coinciden.";
+            return "auth.register.error.password.mismatch";
         }
 
         return null;
     }
 
-    private ModelAndView registerFormWithError(final String error, final String username, final String email) {
+    private String registrationErrorCode(final String errorMessage) {
+        if ("Username is required.".equals(errorMessage)) {
+            return "auth.register.error.username.required";
+        }
+        if ("Email is required.".equals(errorMessage)) {
+            return "auth.register.error.email.required";
+        }
+        if ("Password is required.".equals(errorMessage)) {
+            return "auth.register.error.password.min";
+        }
+        if ("Username is already registered.".equals(errorMessage)) {
+            return "auth.register.error.username.exists";
+        }
+        if ("Email is already registered.".equals(errorMessage)) {
+            return "auth.register.error.email.exists";
+        }
+        return "auth.register.error.unavailable";
+    }
+
+    private ModelAndView registerFormWithError(final String errorCode, final String username, final String email) {
         final ModelAndView mav = new ModelAndView("register.jsp");
-        mav.addObject("registrationError", error);
+        mav.addObject("registrationErrorCode", errorCode);
         mav.addObject("username", username);
         mav.addObject("email", email);
         return mav;
