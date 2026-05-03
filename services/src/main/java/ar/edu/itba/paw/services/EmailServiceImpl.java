@@ -203,7 +203,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(plainTextBody, htmlBody);
             mailSender.send(helper.getMimeMessage());
         } catch (final MessagingException | RuntimeException e) {
-            LOGGER.warn("{}: {}", failurePrefix, e.getMessage(), e);
+            LOGGER.warn("email send failed: {}", failurePrefix, e);
         }
     }
 

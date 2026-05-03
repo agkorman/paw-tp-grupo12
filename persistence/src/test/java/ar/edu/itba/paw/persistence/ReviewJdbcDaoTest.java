@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
@@ -47,8 +49,10 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
         // Arrange
         final User user = createUser("review-order");
         final Car car = createCar("review-order");
-        reviewDao.create(user.getId(), car.getId(), new BigDecimal("2.0"), "Low", "Body", "owner", 2024, 1000, false);
-        final Review high = reviewDao.create(user.getId(), car.getId(), new BigDecimal("5.0"), "High", "Body", "owner", 2025, 500, true);
+        insertReview(user.getId(), user.getUsername(), car.getId(), new BigDecimal("2.0"), "Low", "Body",
+                "owner", 2024, 1000, false);
+        final Review high = insertReview(user.getId(), user.getUsername(), car.getId(), new BigDecimal("5.0"),
+                "High", "Body", "owner", 2025, 500, true);
 
         // Exercise
         final List<Review> result = reviewDao.findByCarIdOrderByRatingDesc(car.getId());
@@ -60,12 +64,68 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldPaginateReviewsByCarAndClampOutOfRangePage() {
+        // Arrange
+        final User user = createUser("review-car-page");
+        final Car car = createCar("review-car-page");
+        for (int i = 0; i < Pagination.REVIEWS_PAGE_SIZE + 1; i++) {
+            insertReview(user.getId(), user.getUsername(), car.getId(), new BigDecimal("4.0"), "Paged " + i,
+                    "Body", "owner", 2026, 1000 + i, true);
+        }
+
+        // Exercise
+        final Page<Review> result = reviewDao.findByCarId(car.getId(), 999);
+
+        // Assertions
+        assertEquals(Pagination.REVIEWS_PAGE_SIZE + 1L, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(1, result.getItems().size());
+        assertEquals(car.getId(), result.getItems().get(0).getCarId());
+    }
+
+    @Test
+    public void shouldPaginateReviewsByFollowedUsersAndFavoriteCarsSeparately() {
+        // Arrange
+        final User follower = createUser("review-feed-follower");
+        final User followed = createUser("review-feed-followed");
+        final User other = createUser("review-feed-other");
+        final Car favorite = createCar("review-feed-favorite");
+        final Car otherCar = createCar("review-feed-other");
+        jdbcTemplate.update(
+                "INSERT INTO user_follows (follower_id, followed_id) VALUES (?, ?)",
+                follower.getId(), followed.getId()
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)",
+                follower.getId(), favorite.getId()
+        );
+        insertReview(followed.getId(), followed.getUsername(), otherCar.getId(), new BigDecimal("4.0"),
+                "Followed", "Body", "owner", 2026, 1000, true);
+        insertReview(other.getId(), other.getUsername(), favorite.getId(), new BigDecimal("5.0"),
+                "Favorite", "Body", "owner", 2026, 1000, true);
+        insertReview(other.getId(), other.getUsername(), otherCar.getId(), new BigDecimal("1.0"),
+                "Ignored", "Body", "owner", 2026, 1000, false);
+
+        // Exercise
+        final Page<Review> followedReviews = reviewDao.findByFollowedUsers(follower.getId(), 1, 5);
+        final Page<Review> favoriteReviews = reviewDao.findByFavoriteCars(follower.getId(), 1, 5);
+
+        // Assertions
+        assertEquals(1L, followedReviews.getTotalItems());
+        assertEquals("Followed", followedReviews.getItems().get(0).getTitle());
+        assertEquals(1L, favoriteReviews.getTotalItems());
+        assertEquals("Favorite", favoriteReviews.getItems().get(0).getTitle());
+    }
+
+    @Test
     public void shouldCalculateReviewStatsForCar() {
         // Arrange
         final User user = createUser("review-stats");
         final Car car = createCar("review-stats");
-        reviewDao.create(user.getId(), car.getId(), new BigDecimal("3.0"), "Three", "Body", "owner", 2024, 1000, true);
-        reviewDao.create(user.getId(), car.getId(), new BigDecimal("5.0"), "Five", "Body", "owner", 2025, 2000, true);
+        insertReview(user.getId(), user.getUsername(), car.getId(), new BigDecimal("3.0"), "Three", "Body",
+                "owner", 2024, 1000, true);
+        insertReview(user.getId(), user.getUsername(), car.getId(), new BigDecimal("5.0"), "Five", "Body",
+                "owner", 2025, 2000, true);
 
         // Exercise
         final Optional<ReviewStats> result = reviewDao.findStatsByCarId(car.getId());
@@ -113,8 +173,8 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
         final long anonymousId = jdbcTemplate.queryForObject(
                 "SELECT review_id FROM reviews WHERE title = ?", Long.class, "Anonymous Review"
         );
-        final Review alreadyAttributed = reviewDao.create(otherUser.getId(), car.getId(), new BigDecimal("4.0"),
-                "Attributed Review", "Attributed body", "owner", 2025, 12000, true);
+        final Review alreadyAttributed = insertReview(otherUser.getId(), otherUser.getUsername(), car.getId(),
+                new BigDecimal("4.0"), "Attributed Review", "Attributed body", "owner", 2025, 12000, true);
 
         // Exercise
         final int result = reviewDao.bindReviewsToUserByEmail(boundUser.getId(), "reviewer@example.com");

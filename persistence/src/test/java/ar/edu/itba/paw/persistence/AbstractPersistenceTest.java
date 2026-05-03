@@ -1,7 +1,10 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.BodyType;
+import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,21 +71,90 @@ abstract class AbstractPersistenceTest {
     protected JdbcTemplate jdbcTemplate;
 
     protected User createUser(final String suffix) {
-        return userDao.create("user-" + suffix, "user-" + suffix + "@example.com", "secret", "user");
+        return insertUser("user-" + suffix, "user-" + suffix + "@example.com", "secret", "user");
     }
 
     protected Car createCar(final String suffix) {
-        final long brandId = brandDao.create("Brand " + suffix).getId();
-        final long bodyTypeId = bodyTypeDao.create("Body " + suffix).getId();
-        return carDao.create(brandId, "Model " + suffix, bodyTypeId, 2026, "Description " + suffix,
-                "combustion", 200, 6, "automatic", new BigDecimal("8.5"), 230, new BigDecimal("35000.00"));
+        final long brandId = insertBrand("Brand " + suffix).getId();
+        final long bodyTypeId = insertBodyType("Body " + suffix).getId();
+        return insertCar(brandId, "Brand " + suffix, "Model " + suffix, bodyTypeId, "Body " + suffix,
+                2026, "Description " + suffix, "combustion", 200, 6, "automatic",
+                new BigDecimal("8.5"), 230, new BigDecimal("35000.00"));
     }
 
     protected Review createReview(final String suffix) {
         final User user = createUser("review-" + suffix);
         final Car car = createCar("review-" + suffix);
-        return reviewDao.create(user.getId(), car.getId(), new BigDecimal("4.0"), "Title " + suffix,
+        return insertReview(user.getId(), "user-review-" + suffix, car.getId(), new BigDecimal("4.0"), "Title " + suffix,
                 "Body " + suffix, "owner", 2026, 1000, true);
+    }
+
+    protected User insertUser(final String username, final String email, final String password, final String role) {
+        jdbcTemplate.update(
+                "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)",
+                username, email, password, role
+        );
+        final long id = jdbcTemplate.queryForObject("SELECT user_id FROM users WHERE email = ?", Long.class, email);
+        return new User(id, username, email, password, role, null);
+    }
+
+    protected Brand insertBrand(final String name) {
+        jdbcTemplate.update("INSERT INTO brands (name) VALUES (?)", name);
+        final long id = jdbcTemplate.queryForObject("SELECT brand_id FROM brands WHERE name = ?", Long.class, name);
+        return new Brand(id, name, null);
+    }
+
+    protected BodyType insertBodyType(final String name) {
+        jdbcTemplate.update("INSERT INTO body_types (name) VALUES (?)", name);
+        final long id = jdbcTemplate.queryForObject("SELECT body_type_id FROM body_types WHERE name = ?", Long.class, name);
+        return new BodyType(id, name, null);
+    }
+
+    protected Car insertCar(final long brandId, final String brandName, final String model, final long bodyTypeId,
+                            final String bodyType, final Integer year, final String description,
+                            final String fuelType, final Integer horsepower, final Integer airbagCount,
+                            final String transmission, final BigDecimal fuelConsumption,
+                            final Integer maxSpeedKmh, final BigDecimal priceUsd) {
+        jdbcTemplate.update(
+                "INSERT INTO cars (brand_id, model, body_type_id, year, description, fuel_type, horsepower, "
+                        + "airbag_count, transmission, fuel_consumption, max_speed_kmh, price_usd) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                brandId, model, bodyTypeId, year, description, fuelType, horsepower, airbagCount, transmission,
+                fuelConsumption, maxSpeedKmh, priceUsd
+        );
+        final long id = jdbcTemplate.queryForObject(
+                "SELECT car_id FROM cars WHERE brand_id = ? AND model = ? AND body_type_id = ? AND year = ?",
+                Long.class, brandId, model, bodyTypeId, year
+        );
+        return new Car(id, brandId, brandName, model, bodyTypeId, year, bodyType, description, null, false,
+                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
+    }
+
+    protected Review insertReview(final long userId, final String reviewerUsername, final long carId,
+                                  final BigDecimal rating, final String title, final String body,
+                                  final String ownershipStatus, final Integer modelYear,
+                                  final Integer mileageKm, final Boolean wouldRecommend) {
+        jdbcTemplate.update(
+                "INSERT INTO reviews (user_id, car_id, rating, title, body, ownership_status, model_year, "
+                        + "mileage_km, would_recommend) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                userId, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend
+        );
+        final long id = jdbcTemplate.queryForObject("SELECT review_id FROM reviews WHERE title = ?", Long.class, title);
+        return new Review(id, userId, null, reviewerUsername, carId, rating, title, body, ownershipStatus,
+                modelYear, mileageKm, wouldRecommend, null, null);
+    }
+
+    protected ReviewReply insertReviewReply(final long reviewId, final long userId, final String authorUsername,
+                                            final String body) {
+        jdbcTemplate.update(
+                "INSERT INTO review_replies (review_id, user_id, body) VALUES (?, ?, ?)",
+                reviewId, userId, body
+        );
+        final long id = jdbcTemplate.queryForObject(
+                "SELECT reply_id FROM review_replies WHERE review_id = ? AND user_id = ? AND body = ?",
+                Long.class, reviewId, userId, body
+        );
+        return new ReviewReply(id, reviewId, userId, authorUsername, body, null, null);
     }
 
     protected short createReviewTag(final String code, final String sentiment, final String dimension) {

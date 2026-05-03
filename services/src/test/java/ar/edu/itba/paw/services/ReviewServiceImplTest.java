@@ -79,6 +79,22 @@ public class ReviewServiceImplTest {
     }
 
     @Test
+    public void shouldCreateReviewAndReturnCreatedReviewWhenTagsAreEmpty() {
+        // Arrange
+        final List<Short> tagIds = List.of();
+        final Review created = review("Created title");
+        when(reviewDao.create(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true))
+                .thenReturn(created);
+
+        // Exercise
+        final Review result = reviewService.createReview(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true, tagIds);
+
+        // Assertions
+        assertEquals(REVIEW_ID, result.getId());
+        assertEquals("Created title", result.getTitle());
+    }
+
+    @Test
     public void shouldUpdateReviewAndReturnRefreshedReviewWhenDaoUpdates() {
         // Arrange
         final List<Short> tagIds = List.of((short) 1);
@@ -111,9 +127,81 @@ public class ReviewServiceImplTest {
     }
 
     @Test
+    public void shouldPropagateInvalidTagSelectionWhenUpdatingReview() {
+        // Arrange
+        final List<Short> tagIds = List.of((short) 99);
+        when(reviewTagService.validateSelection(tagIds)).thenThrow(new InvalidReviewTagSelectionException(
+                InvalidReviewTagSelectionException.Reason.UNKNOWN_TAG,
+                "Unknown tag"
+        ));
+
+        // Exercise
+        final InvalidReviewTagSelectionException ex = assertThrows(InvalidReviewTagSelectionException.class,
+                () -> reviewService.updateReview(REVIEW_ID, CAR_ID, new BigDecimal("3.5"), "Updated title",
+                        "Updated body", "former_owner", 2020, 50000, false, tagIds));
+
+        // Assertions
+        assertEquals(InvalidReviewTagSelectionException.Reason.UNKNOWN_TAG, ex.getReason());
+    }
+
+    @Test
+    public void shouldUpdateReviewAndReturnRefreshedReviewWhenTagIdsAreNull() {
+        // Arrange
+        final List<Short> tagIds = null;
+        final Review updated = review("Updated title");
+        final Review refreshed = review("Refreshed title");
+        when(reviewDao.update(REVIEW_ID, CAR_ID, new BigDecimal("3.5"), "Updated title", "Updated body",
+                "former_owner", 2020, 50000, false)).thenReturn(Optional.of(updated));
+        when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(refreshed));
+
+        // Exercise
+        final Optional<Review> result = reviewService.updateReview(REVIEW_ID, CAR_ID, new BigDecimal("3.5"), "Updated title", "Updated body", "former_owner", 2020, 50000, false, tagIds);
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals("Refreshed title", result.get().getTitle());
+    }
+
+    @Test
+    public void shouldReturnEmptyReviewsListWhenIdsAreNull() {
+        // Arrange
+        final List<Long> ids = null;
+
+        // Exercise
+        final List<Review> result = reviewService.getReviewsByIds(ids);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyReviewsListWhenIdsAreEmpty() {
+        // Arrange
+        final List<Long> ids = List.of();
+
+        // Exercise
+        final List<Review> result = reviewService.getReviewsByIds(ids);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
     public void shouldReturnEmptyStatsListWhenCarIdsAreNull() {
         // Arrange
         final List<Long> carIds = null;
+
+        // Exercise
+        final List<ReviewStats> result = reviewService.getReviewStatsByCarIds(carIds);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyStatsListWhenCarIdsAreEmpty() {
+        // Arrange
+        final List<Long> carIds = List.of();
 
         // Exercise
         final List<ReviewStats> result = reviewService.getReviewStatsByCarIds(carIds);

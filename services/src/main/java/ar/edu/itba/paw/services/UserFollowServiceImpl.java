@@ -29,14 +29,18 @@ public class UserFollowServiceImpl implements UserFollowService {
     @Transactional
     public boolean followUser(final long followerId, final long followedId) {
         validateFollow(followerId, followedId);
-        return userFollowDao.follow(followerId, followedId);
+        final boolean result = userFollowDao.follow(followerId, followedId);
+        LOGGER.info("user id={} followed user id={}", followerId, followedId);
+        return result;
     }
 
     @Override
     @Transactional
     public boolean unfollowUser(final long followerId, final long followedId) {
         validateFollow(followerId, followedId);
-        return userFollowDao.unfollow(followerId, followedId);
+        final boolean result = userFollowDao.unfollow(followerId, followedId);
+        LOGGER.info("user id={} unfollowed user id={}", followerId, followedId);
+        return result;
     }
 
     @Override

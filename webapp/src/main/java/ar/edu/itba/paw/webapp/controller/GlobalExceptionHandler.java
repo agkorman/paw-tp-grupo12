@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -21,26 +23,29 @@ public class GlobalExceptionHandler {
             "Cada imagen no debe superar los 10 MB y la carga total no debe superar los 50 MB.";
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ModelAndView handleResourceNotFound(final ResourceNotFoundException e) {
-        LOGGER.warn("resource not found", e);
+    public ModelAndView handleResourceNotFound(final ResourceNotFoundException e,
+                                               final HttpServletRequest request) {
+        LOGGER.warn("resource not found uri={}", request.getRequestURI(), e);
         return forwardToErrorPage(HttpStatus.NOT_FOUND, "/error/404");
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    public ModelAndView handleForbidden(final ForbiddenException e) {
-        LOGGER.warn("access forbidden", e);
+    public ModelAndView handleForbidden(final ForbiddenException e,
+                                        final HttpServletRequest request) {
+        LOGGER.warn("access forbidden uri={}", request.getRequestURI(), e);
         return forwardToErrorPage(HttpStatus.FORBIDDEN, "/error/403");
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<String> handleMaxUploadSizeExceeded(final MaxUploadSizeExceededException e) {
-        LOGGER.warn("upload exceeded max size", e);
+    public ResponseEntity<String> handleMaxUploadSizeExceeded(final MaxUploadSizeExceededException e,
+                                                              final HttpServletRequest request) {
+        LOGGER.warn("upload exceeded max size uri={}", request.getRequestURI(), e);
         return ResponseEntity.badRequest().body(MAX_UPLOAD_SIZE_MESSAGE);
     }
 
     @ExceptionHandler(InvalidReviewTagSelectionException.class)
     public ResponseEntity<String> handleInvalidReviewTagSelection(final InvalidReviewTagSelectionException e) {
-        LOGGER.warn("invalid review tag selection reason={}", e.getMessage());
+        LOGGER.warn("invalid review tag selection", e);
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 

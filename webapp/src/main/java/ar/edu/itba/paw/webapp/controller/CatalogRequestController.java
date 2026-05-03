@@ -123,7 +123,8 @@ public class CatalogRequestController {
             }
             final String query = withSubmitted(uri.getRawQuery(), submitted);
             return new ModelAndView("redirect:" + path + (query == null ? "" : "?" + query));
-        } catch (final IllegalArgumentException ignored) {
+        } catch (final IllegalArgumentException e) {
+            LOGGER.warn("invalid referer URI for redirect, falling back referer={}", referer, e);
             return new ModelAndView(withSubmittedRedirect(fallback, submitted));
         }
     }

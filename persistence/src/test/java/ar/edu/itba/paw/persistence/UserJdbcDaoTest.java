@@ -35,7 +35,7 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldFindUserByEmailIgnoringCaseWhenUserExists() {
         // Arrange
-        final User created = userDao.create("alice", "Alice@Example.com", "password", "user");
+        final User created = insertUser("alice", "Alice@Example.com", "password", "user");
 
         // Exercise
         final Optional<User> result = userDao.findByEmail("alice@example.com");
@@ -49,7 +49,7 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldUpdatePersistedRoleWhenUserExists() {
         // Arrange
-        final User created = userDao.create("admin-candidate", "admin-candidate@example.com", "password", "user");
+        final User created = insertUser("admin-candidate", "admin-candidate@example.com", "password", "user");
 
         // Exercise
         final boolean result = userDao.updateRole(created.getId(), "admin");
@@ -64,8 +64,8 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldFindEmailsByNormalizedRolesOnly() {
         // Arrange
-        userDao.create("regular", "regular@example.com", "password", "user");
-        userDao.create("admin", "admin@example.com", "password", "admin");
+        insertUser("regular", "regular@example.com", "password", "user");
+        insertUser("admin", "admin@example.com", "password", "admin");
 
         // Exercise
         final List<String> result = userDao.findEmailsByRoles(List.of(" ADMIN ", "missing"));
@@ -78,7 +78,7 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldReturnFalseWhenUpdatingMissingUserRole() {
         // Arrange
-        userDao.create("existing", "existing@example.com", "password", "user");
+        insertUser("existing", "existing@example.com", "password", "user");
 
         // Exercise
         final boolean result = userDao.updateRole(9999L, "admin");

@@ -348,7 +348,8 @@ public class CarController {
                 final String query = uri.getRawQuery();
                 return path + (query == null ? "" : "?" + query);
             }
-        } catch (final IllegalArgumentException ignored) {
+        } catch (final IllegalArgumentException e) {
+            LOGGER.warn("invalid referer URI for redirect, falling back to /cars referer={}", referer, e);
             return "/cars";
         }
         return "/cars";

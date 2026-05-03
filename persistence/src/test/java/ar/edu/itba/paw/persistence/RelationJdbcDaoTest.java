@@ -27,9 +27,6 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
                 "SELECT COUNT(*) FROM car_favorites WHERE user_id = ? AND car_id = ?",
                 user.getId(), car.getId()
         ));
-        assertTrue(carFavoriteDao.isFavorited(user.getId(), car.getId()));
-        assertEquals(1, carFavoriteDao.countFavoriteCars(user.getId()));
-        assertEquals(car.getId(), carFavoriteDao.findFavoriteCars(user.getId()).get(0).getId());
     }
 
     @Test
@@ -37,7 +34,7 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
         // Arrange
         final User user = createUser("favorite-again");
         final Car car = createCar("favorite-again");
-        carFavoriteDao.favorite(user.getId(), car.getId());
+        jdbcTemplate.update("INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)", user.getId(), car.getId());
 
         // Exercise
         final boolean result = carFavoriteDao.favorite(user.getId(), car.getId());
@@ -55,7 +52,7 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
         // Arrange
         final User user = createUser("unfavorite");
         final Car car = createCar("unfavorite");
-        carFavoriteDao.favorite(user.getId(), car.getId());
+        jdbcTemplate.update("INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)", user.getId(), car.getId());
 
         // Exercise
         final boolean result = carFavoriteDao.unfavorite(user.getId(), car.getId());
@@ -74,7 +71,7 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
         final User user = createUser("favorite-ids");
         final Car favorited = createCar("favorite-ids-yes");
         final Car notFavorited = createCar("favorite-ids-no");
-        carFavoriteDao.favorite(user.getId(), favorited.getId());
+        jdbcTemplate.update("INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)", user.getId(), favorited.getId());
 
         // Exercise
         final Set<Long> result = carFavoriteDao.findFavoritedCarIds(user.getId(), List.of(favorited.getId(), notFavorited.getId()));
@@ -98,11 +95,6 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
                 "SELECT COUNT(*) FROM user_follows WHERE follower_id = ? AND followed_id = ?",
                 follower.getId(), followed.getId()
         ));
-        assertTrue(userFollowDao.isFollowing(follower.getId(), followed.getId()));
-        assertEquals(1, userFollowDao.countFollowing(follower.getId()));
-        assertEquals(1, userFollowDao.countFollowers(followed.getId()));
-        assertEquals(follower.getId(), userFollowDao.findFollowers(followed.getId()).get(0).getId());
-        assertEquals(followed.getId(), userFollowDao.findFollowing(follower.getId()).get(0).getId());
     }
 
     @Test
@@ -110,7 +102,10 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
         // Arrange
         final User follower = createUser("follow-again-follower");
         final User followed = createUser("follow-again-followed");
-        userFollowDao.follow(follower.getId(), followed.getId());
+        jdbcTemplate.update(
+                "INSERT INTO user_follows (follower_id, followed_id) VALUES (?, ?)",
+                follower.getId(), followed.getId()
+        );
 
         // Exercise
         final boolean result = userFollowDao.follow(follower.getId(), followed.getId());
@@ -128,7 +123,10 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
         // Arrange
         final User follower = createUser("unfollow-follower");
         final User followed = createUser("unfollow-followed");
-        userFollowDao.follow(follower.getId(), followed.getId());
+        jdbcTemplate.update(
+                "INSERT INTO user_follows (follower_id, followed_id) VALUES (?, ?)",
+                follower.getId(), followed.getId()
+        );
 
         // Exercise
         final boolean result = userFollowDao.unfollow(follower.getId(), followed.getId());

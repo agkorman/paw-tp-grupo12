@@ -48,14 +48,18 @@ public class BodyTypeServiceImpl implements BodyTypeService {
     @Transactional
     public BodyType createBodyType(final String name) {
         final String normalized = StringUtils.normalizeRequired(name, "Body type name is required.");
-        return bodyTypeDao.create(normalized);
+        final BodyType bodyType = bodyTypeDao.create(normalized);
+        LOGGER.info("created body type id={} name={}", bodyType.getId(), normalized);
+        return bodyType;
     }
 
     @Override
     @Transactional
     public Optional<BodyType> updateBodyType(final long id, final String name) {
         final String normalized = StringUtils.normalizeRequired(name, "Body type name is required.");
-        return bodyTypeDao.update(id, normalized);
+        final Optional<BodyType> result = bodyTypeDao.update(id, normalized);
+        result.ifPresent(bt -> LOGGER.info("updated body type id={} name={}", id, normalized));
+        return result;
     }
 
     @Override
@@ -69,6 +73,10 @@ public class BodyTypeServiceImpl implements BodyTypeService {
             LOGGER.warn("delete body type rejected: cars still reference body type id={}", id);
             return false;
         }
-        return bodyTypeDao.delete(id);
+        final boolean deleted = bodyTypeDao.delete(id);
+        if (deleted) {
+            LOGGER.info("deleted body type id={}", id);
+        }
+        return deleted;
     }
 }
