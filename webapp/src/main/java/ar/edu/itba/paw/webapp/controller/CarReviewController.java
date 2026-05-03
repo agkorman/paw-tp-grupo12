@@ -276,9 +276,6 @@ public class CarReviewController {
         attributes.put("totalPages", pageData.totalPages);
         attributes.put("totalItems", pageData.totalItems);
         attributes.put("currentUserId", currentUserId(currentUser));
-        attributes.put("latestReview", pageData.latestReview.orElse(null));
-        attributes.put("latestReviewLikeCount", pageData.latestReviewLikeCount);
-        attributes.put("latestReviewLiked", pageData.latestReviewLiked);
         attributes.put("carImages", pageData.carImages);
         attributes.put("yearVariants", buildYearVariants(pageData.selectedCar));
         return attributes;
@@ -314,19 +311,9 @@ public class CarReviewController {
         final BigDecimal averageRating = reviewService.getReviewStatsByCar(selectedCar.getId())
                 .map(stats -> stats.getAverageRating())
                 .orElse(null);
-        final Optional<Review> latestReview = reviewService.getLatestReviewByCar(selectedCar.getId());
         final List<CarImage> carImages = carService.getCarImagesByCarId(selectedCar.getId());
         final List<ReviewThread> reviewThreads = buildReviewThreads(reviews, currentUserId);
-        final long latestReviewLikeCount = latestReview
-                .map(review -> reviewLikeService.countReviewLikes(review.getId()))
-                .orElse(0L);
-        final boolean latestReviewLiked = currentUserId != null
-                && latestReview
-                .map(review -> reviewLikeService.getLikedReviewIds(List.of(review.getId()), currentUserId)
-                        .contains(review.getId()))
-                .orElse(false);
-        return new ReviewPageData(selectedCar, reviews, reviewThreads, normalizedSort, latestReview, carImages,
-                latestReviewLikeCount, latestReviewLiked,
+        return new ReviewPageData(selectedCar, reviews, reviewThreads, normalizedSort, carImages,
                 reviewPage.getPageNumber(), reviewPage.getTotalPages(), reviewPage.getTotalItems(), averageRating);
     }
 
@@ -767,10 +754,7 @@ public class CarReviewController {
         private final List<Review> reviews;
         private final List<ReviewThread> reviewThreads;
         private final String currentSort;
-        private final Optional<Review> latestReview;
         private final List<CarImage> carImages;
-        private final long latestReviewLikeCount;
-        private final boolean latestReviewLiked;
         private final int currentPage;
         private final int totalPages;
         private final long totalItems;
@@ -778,18 +762,14 @@ public class CarReviewController {
 
         private ReviewPageData(final Car selectedCar, final List<Review> reviews,
                                final List<ReviewThread> reviewThreads, final String currentSort,
-                               final Optional<Review> latestReview, final List<CarImage> carImages,
-                               final long latestReviewLikeCount, final boolean latestReviewLiked,
+                               final List<CarImage> carImages,
                                final int currentPage, final int totalPages, final long totalItems,
                                final BigDecimal averageRating) {
             this.selectedCar = selectedCar;
             this.reviews = reviews;
             this.reviewThreads = reviewThreads;
             this.currentSort = currentSort;
-            this.latestReview = latestReview;
             this.carImages = carImages;
-            this.latestReviewLikeCount = latestReviewLikeCount;
-            this.latestReviewLiked = latestReviewLiked;
             this.currentPage = currentPage;
             this.totalPages = totalPages;
             this.totalItems = totalItems;

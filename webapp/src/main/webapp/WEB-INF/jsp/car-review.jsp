@@ -110,9 +110,6 @@
                 <pa:review-selected-car selectedCar="${selectedCar}"
                                         carImages="${carImages}"
                                         favorited="${selectedCarFavorited}"/>
-                <pa:latest-review latestReview="${latestReview}"
-                                  liked="${latestReviewLiked}"
-                                  likeCount="${latestReviewLikeCount}"/>
             </div>
 
             <div class="review-side-column">
