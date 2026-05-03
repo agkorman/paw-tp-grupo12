@@ -131,7 +131,7 @@
                         </span>
                         <div>
                             <pa:review-author-link review="${reviewCard.review}"/>
-                            <span>Publicado el <c:out value="${fn:substring(reviewCard.review.createdAt, 0, 10)}"/></span>
+                            <span><c:out value="${reviewCard.timeAgo}"/></span>
                         </div>
                     </div>
                     <div class="review-preview-rating" aria-label="${reviewCard.review.rating} de 5 estrellas">
@@ -149,38 +149,6 @@
                     <h3 id="${fn:escapeXml(panelTitleId)}"><c:out value="${reviewCard.review.title}"/></h3>
                     <p><c:out value="${reviewCard.review.body}"/></p>
                 </div>
-
-                <dl class="review-preview-review-facts" aria-label="Datos de la experiencia">
-                    <c:if test="${not empty reviewCard.review.ownershipStatus}">
-                        <div>
-                            <dt>Relación con el auto</dt>
-                            <dd><c:out value="${reviewCard.review.ownershipStatus}"/></dd>
-                        </div>
-                    </c:if>
-                    <c:if test="${not empty reviewCard.review.modelYear}">
-                        <div>
-                            <dt>Año manejado</dt>
-                            <dd><c:out value="${reviewCard.review.modelYear}"/></dd>
-                        </div>
-                    </c:if>
-                    <c:if test="${not empty reviewCard.review.mileageKm}">
-                        <div>
-                            <dt>Kilometraje</dt>
-                            <dd><fmt:formatNumber value="${reviewCard.review.mileageKm}" groupingUsed="true" maxFractionDigits="0"/> km</dd>
-                        </div>
-                    </c:if>
-                    <c:if test="${not empty reviewCard.review.wouldRecommend}">
-                        <div>
-                            <dt>Recomendación</dt>
-                            <dd>
-                                <c:choose>
-                                    <c:when test="${reviewCard.review.wouldRecommend}">Lo recomienda</c:when>
-                                    <c:otherwise>No lo recomienda</c:otherwise>
-                                </c:choose>
-                            </dd>
-                        </div>
-                    </c:if>
-                </dl>
 
                 <pa:review-tag-chips mode="display" tags="${reviewCard.review.tags}"/>
 

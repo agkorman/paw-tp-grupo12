@@ -1,0 +1,68 @@
+package ar.edu.itba.paw.persistence;
+
+import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarImagePayload;
+import org.junit.jupiter.api.Test;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class ImageJdbcDaoTest extends AbstractPersistenceTest {
+
+    @Test
+    public void shouldReplaceCarImagesAndReturnCoverByDisplayOrder() {
+        // Arrange
+        final Car car = createCar("images");
+        carImageDao.replaceAll(car.getId(), List.of(
+                new CarImagePayload("image/png", new byte[]{1, 2}),
+                new CarImagePayload("image/jpeg", new byte[]{3, 4})
+        ));
+
+        // Exercise
+        final Optional<CarImage> result = carImageDao.findByCarId(car.getId());
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals(0, result.get().getDisplayOrder());
+        assertEquals("image/png", result.get().getContentType());
+        assertArrayEquals(new byte[]{1, 2}, result.get().getImageData());
+        assertTrue(carDao.findById(car.getId()).orElseThrow().getHasImage());
+    }
+
+    @Test
+    public void shouldReplaceExistingGalleryWithNewImages() {
+        // Arrange
+        final Car car = createCar("replace-images");
+        carImageDao.replaceAll(car.getId(), List.of(new CarImagePayload("image/png", new byte[]{1})));
+
+        // Exercise
+        carImageDao.replaceAll(car.getId(), List.of(new CarImagePayload("image/jpeg", new byte[]{9})));
+
+        // Assertions
+        final List<CarImage> metadata = carImageDao.findAllByCarId(car.getId());
+        final CarImage image = carImageDao.findByCarId(car.getId()).orElseThrow();
+        assertEquals(1, metadata.size());
+        assertEquals("image/jpeg", image.getContentType());
+        assertArrayEquals(new byte[]{9}, image.getImageData());
+    }
+
+    @Test
+    public void shouldFindCarImageByCarAndImageId() {
+        // Arrange
+        final Car car = createCar("image-id");
+        carImageDao.replaceAll(car.getId(), List.of(new CarImagePayload("image/png", new byte[]{7, 8})));
+        final long imageId = carImageDao.findByCarId(car.getId()).orElseThrow().getImageId();
+
+        // Exercise
+        final Optional<CarImage> result = carImageDao.findByCarIdAndImageId(car.getId(), imageId);
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals(imageId, result.get().getImageId());
+        assertArrayEquals(new byte[]{7, 8}, result.get().getImageData());
+    }
+}

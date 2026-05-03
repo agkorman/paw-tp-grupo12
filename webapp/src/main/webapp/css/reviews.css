@@ -392,10 +392,25 @@
     gap: 0.75rem;
 }
 
+@keyframes infinite-scroll-spin {
+    to { transform: rotate(360deg); }
+}
+
 .reviews-feed-more {
     display: flex;
     justify-content: center;
+    align-items: center;
+    position: relative;
     padding: 0.75rem 0 0.25rem;
+}
+
+.reviews-show-more {
+    min-width: 12rem;
+    justify-content: center;
+}
+
+.reviews-feed-more.is-loading .reviews-show-more {
+    color: transparent;
 }
 
 .reviews-feed-more.is-loading {
@@ -403,9 +418,22 @@
     pointer-events: none;
 }
 
-.reviews-show-more {
-    min-width: 12rem;
-    justify-content: center;
+.reviews-feed-more.is-loading::after {
+    content: '';
+    display: block;
+    position: absolute;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 2px solid var(--surface-container-highest);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: infinite-scroll-spin 0.75s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reviews-feed-more.is-loading::after {
+        animation: none;
+    }
 }
 
 .review-item {
@@ -417,7 +445,8 @@
     transition: box-shadow 0.2s, background 0.2s;
 }
 
-.review-item:target {
+.review-item:target,
+.review-item.is-anchor-highlighted {
     background: var(--surface-container-highest);
     box-shadow: inset 0 0 0 1px rgba(255, 181, 158, 0.42);
 }
@@ -698,7 +727,7 @@
 .review-reply-form textarea {
     width: 100%;
     min-height: 2.75rem;
-    resize: vertical;
+    resize: none;
     border: 1px solid var(--outline-variant);
     border-radius: var(--radius-md);
     background: var(--surface-container);
@@ -825,7 +854,8 @@ body.review-modal-open {
 }
 
 .review-preview-image {
-    min-height: 12rem;
+    height: 13rem;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -889,6 +919,10 @@ body.review-modal-open {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
     margin: 0;
+}
+
+.review-preview-specs > div:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
 }
 
 .review-preview-spec {
@@ -1007,7 +1041,7 @@ body.review-modal-open {
 
 .review-preview-body h3 {
     margin: 0;
-    color: var(--primary);
+    color: var(--on-surface);
     font-family: var(--font-display);
     font-size: clamp(1.45rem, 2.3vw, 2rem);
     font-style: italic;
@@ -1279,7 +1313,7 @@ body.review-modal-open {
 }
 
 .review-modal-field textarea {
-    resize: vertical;
+    resize: none;
     min-height: 6rem;
 }
 

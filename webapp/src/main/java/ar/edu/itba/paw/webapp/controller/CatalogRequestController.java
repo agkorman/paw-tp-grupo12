@@ -51,7 +51,7 @@ public class CatalogRequestController {
             return redirectBack(referer);
         }
         brandRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
-        return redirectBack(referer);
+        return redirectToCatalog("brand");
     }
 
     @RequestMapping(value = "/body-type-requests", method = RequestMethod.POST)
@@ -66,7 +66,7 @@ public class CatalogRequestController {
             return redirectBack(referer);
         }
         bodyTypeRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
-        return redirectBack(referer);
+        return redirectToCatalog("body-type");
     }
 
     @RequestMapping(value = "/admin-requests", method = RequestMethod.POST)
@@ -88,24 +88,63 @@ public class CatalogRequestController {
         }
         adminRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(),
                 motivation, bio, justification);
-        return redirectBack(referer);
+        return redirectBack(referer, "moderator");
     }
 
     private ModelAndView redirectBack(final String referer) {
+        return redirectBack(referer, null);
+    }
+
+    private ModelAndView redirectToCatalog(final String submitted) {
+        return new ModelAndView(withSubmittedRedirect("redirect:/cars", submitted));
+    }
+
+    private ModelAndView redirectBack(final String referer, final String submitted) {
         final String fallback = "redirect:/cars";
         if (referer == null || referer.isBlank()) {
-            return new ModelAndView(fallback);
+            return new ModelAndView(withSubmittedRedirect(fallback, submitted));
         }
         try {
             final URI uri = URI.create(referer);
             final String path = uri.getRawPath();
-            if (path == null || path.isBlank()) {
-                return new ModelAndView(fallback);
+            if (path == null || path.isBlank() || path.startsWith("//")) {
+                return new ModelAndView(withSubmittedRedirect(fallback, submitted));
             }
-            final String query = uri.getRawQuery();
+            final String query = withSubmitted(uri.getRawQuery(), submitted);
             return new ModelAndView("redirect:" + path + (query == null ? "" : "?" + query));
         } catch (final IllegalArgumentException ignored) {
-            return new ModelAndView(fallback);
+            return new ModelAndView(withSubmittedRedirect(fallback, submitted));
         }
+    }
+
+    private String withSubmitted(final String rawQuery, final String submitted) {
+        if (submitted == null || submitted.isBlank()) {
+            return rawQuery;
+        }
+        final StringBuilder query = new StringBuilder();
+        if (rawQuery != null && !rawQuery.isBlank()) {
+            final String[] params = rawQuery.split("&");
+            for (final String param : params) {
+                if (param.isBlank() || param.equals("submitted") || param.startsWith("submitted=")) {
+                    continue;
+                }
+                if (query.length() > 0) {
+                    query.append('&');
+                }
+                query.append(param);
+            }
+        }
+        if (query.length() > 0) {
+            query.append('&');
+        }
+        query.append("submitted=").append(submitted);
+        return query.toString();
+    }
+
+    private String withSubmittedRedirect(final String redirectView, final String submitted) {
+        if (submitted == null || submitted.isBlank()) {
+            return redirectView;
+        }
+        return redirectView + (redirectView.contains("?") ? "&" : "?") + "submitted=" + submitted;
     }
 }

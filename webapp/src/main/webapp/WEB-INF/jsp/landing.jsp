@@ -11,7 +11,7 @@
     <title><spring:message code="landing.title"/></title>
     <link rel="icon" href="<c:url value='/favicon.ico'/>">
     <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=2'/>">
+    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
     <link rel="stylesheet" href="<c:url value='/css/components.css?v=2'/>">
     <link rel="stylesheet" href="<c:url value='/css/landing.css'/>">
@@ -212,5 +212,6 @@
     <pa:auth-required-modal/>
     <script src="<c:url value='/js/reactions.js'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
+    <pa:footer/>
 </body>
 </html>

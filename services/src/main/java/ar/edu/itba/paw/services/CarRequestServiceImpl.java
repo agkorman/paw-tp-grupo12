@@ -5,6 +5,8 @@ import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
 import ar.edu.itba.paw.persistence.CarRequestDao;
@@ -23,13 +25,25 @@ public class CarRequestServiceImpl implements CarRequestService {
     private final CarRequestDao carRequestDao;
     private final CarDao carDao;
     private final CarImageDao carImageDao;
+    private final BrandDao brandDao;
+    private final UserService userService;
+    private final EmailService emailService;
 
     @Autowired
     public CarRequestServiceImpl(final CarRequestDao carRequestDao, final CarDao carDao,
-                                 final CarImageDao carImageDao) {
+                                 final CarImageDao carImageDao, final BrandDao brandDao,
+                                 final UserService userService, final EmailService emailService) {
         this.carRequestDao = carRequestDao;
         this.carDao = carDao;
         this.carImageDao = carImageDao;
+        this.brandDao = brandDao;
+        this.userService = userService;
+        this.emailService = emailService;
+    }
+
+    public CarRequestServiceImpl(final CarRequestDao carRequestDao, final CarDao carDao,
+                                 final CarImageDao carImageDao) {
+        this(carRequestDao, carDao, carImageDao, null, null, null);
     }
 
     @Override
@@ -223,6 +237,7 @@ public class CarRequestServiceImpl implements CarRequestService {
                 carImageDao.replaceAll(createdCar.getId(), requestGallery);
             }
         }
+        sendCarApprovedNotification(request, brandId, normalizedModel, createdCar.getId());
         return true;
     }
 
@@ -243,8 +258,65 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    @Transactional
     public boolean rejectPendingRequest(final long id) {
-        return carRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
+        final CarRequest request = carRequestDao.findById(id).orElse(null);
+        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            return false;
+        }
+
+        final boolean statusUpdated = carRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
+        if (statusUpdated) {
+            sendCarRejectedNotification(request);
+        }
+        return statusUpdated;
+    }
+
+    private void sendCarApprovedNotification(final CarRequest request, final long brandId, final String model,
+                                             final long carId) {
+        if (emailService == null) {
+            return;
+        }
+        final String recipientEmail = resolveSubmitterEmail(request);
+        if (recipientEmail == null) {
+            return;
+        }
+        emailService.sendCarApprovedNotification(recipientEmail, resolveBrandName(brandId), model, carId);
+    }
+
+    private void sendCarRejectedNotification(final CarRequest request) {
+        if (emailService == null) {
+            return;
+        }
+        final String recipientEmail = resolveSubmitterEmail(request);
+        if (recipientEmail == null) {
+            return;
+        }
+        emailService.sendCarRejectedNotification(recipientEmail, resolveBrandName(request.getBrandId()),
+                request.getModel());
+    }
+
+    private String resolveSubmitterEmail(final CarRequest request) {
+        if (request.getSubmitterEmail() != null && !request.getSubmitterEmail().isBlank()) {
+            return request.getSubmitterEmail();
+        }
+        if (userService == null || request.getSubmittedByUserId() == null) {
+            return null;
+        }
+        return userService.getUserById(request.getSubmittedByUserId())
+                .map(User::getEmail)
+                .filter(email -> !email.isBlank())
+                .orElse(null);
+    }
+
+    private String resolveBrandName(final long brandId) {
+        if (brandDao == null) {
+            return "-";
+        }
+        return brandDao.findById(brandId)
+                .map(brand -> brand.getName())
+                .filter(name -> !name.isBlank())
+                .orElse("-");
     }
 
 }

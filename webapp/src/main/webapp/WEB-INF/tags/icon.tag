@@ -32,6 +32,11 @@
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </c:when>
 
+    <c:when test="${name eq 'check-circle'}">
+        <c:set var="s" value="${empty size ? 20 : size}"/>
+        <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.5l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </c:when>
+
     <c:when test="${name eq 'search'}">
         <c:set var="s" value="${empty size ? 18 : size}"/>
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>

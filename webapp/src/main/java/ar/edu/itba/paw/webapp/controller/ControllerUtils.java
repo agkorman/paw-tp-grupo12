@@ -71,4 +71,26 @@ final class ControllerUtils {
     static boolean isAjaxRequest(final String requestedWith) {
         return "XMLHttpRequest".equalsIgnoreCase(requestedWith);
     }
+
+    static String submittedToastMessageCode(final String submitted) {
+        if (submitted == null || submitted.isBlank()) {
+            return null;
+        }
+        final String normalized = submitted.trim().toLowerCase(Locale.ROOT);
+        switch (normalized) {
+            case "true":
+            case "car":
+                return "cars.submittedToast";
+            case "brand":
+                return "request.brand.submittedToast";
+            case "body-type":
+            case "bodytype":
+                return "request.bodyType.submittedToast";
+            case "moderator":
+            case "admin":
+                return "request.admin.submittedToast";
+            default:
+                return null;
+        }
+    }
 }

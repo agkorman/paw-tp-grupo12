@@ -1,19 +1,18 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarSearchCriteria;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarFavoriteDao;
 import ar.edu.itba.paw.persistence.UserDao;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,246 +21,185 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
-class CarFavoriteServiceImplTest {
+@ExtendWith(MockitoExtension.class)
+public class CarFavoriteServiceImplTest {
 
-    @Test
-    void setFavoriteAddsFavoriteWhenUserAndCarExist() {
-        final FakeCarFavoriteDao favoriteDao = new FakeCarFavoriteDao();
-        final CarFavoriteService service = service(favoriteDao, true, true);
+    private static final long USER_ID = 1L;
+    private static final long CAR_ID = 10L;
 
-        final boolean changed = service.setFavorite(7L, 10L, true);
+    @Mock
+    private CarFavoriteDao carFavoriteDao;
+    @Mock
+    private UserDao userDao;
+    @Mock
+    private CarDao carDao;
 
-        assertTrue(changed);
-        assertTrue(favoriteDao.isFavorited(7L, 10L));
+    @InjectMocks
+    private CarFavoriteServiceImpl carFavoriteService;
+
+    private static User user() {
+        return new User(USER_ID, "joaco", "joaco@example.com", "p", "user", LocalDateTime.now());
+    }
+
+    private static Car car(final long id) {
+        return new Car(id, 1L, "Toyota", "Corolla", 2L, "sedan", "desc", LocalDateTime.now());
     }
 
     @Test
-    void setFavoriteIsIdempotentWhenAlreadyFavorited() {
-        final FakeCarFavoriteDao favoriteDao = new FakeCarFavoriteDao();
-        favoriteDao.favorite(7L, 10L);
-        final CarFavoriteService service = service(favoriteDao, true, true);
+    public void shouldFavoriteWhenUserAndCarExist() {
+        // Arrange
+        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(carDao.findById(CAR_ID)).thenReturn(Optional.of(car(CAR_ID)));
+        when(carFavoriteDao.favorite(USER_ID, CAR_ID)).thenReturn(true);
 
-        final boolean changed = service.setFavorite(7L, 10L, true);
+        // Exercise
+        final boolean result = carFavoriteService.setFavorite(USER_ID, CAR_ID, true);
 
-        assertFalse(changed);
-        assertTrue(favoriteDao.isFavorited(7L, 10L));
+        // Assertions
+        assertTrue(result);
     }
 
     @Test
-    void setFavoriteRemovesFavorite() {
-        final FakeCarFavoriteDao favoriteDao = new FakeCarFavoriteDao();
-        favoriteDao.favorite(7L, 10L);
-        final CarFavoriteService service = service(favoriteDao, true, true);
+    public void shouldUnfavoriteWhenUserAndCarExist() {
+        // Arrange
+        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(carDao.findById(CAR_ID)).thenReturn(Optional.of(car(CAR_ID)));
+        when(carFavoriteDao.unfavorite(USER_ID, CAR_ID)).thenReturn(true);
 
-        final boolean changed = service.setFavorite(7L, 10L, false);
+        // Exercise
+        final boolean result = carFavoriteService.setFavorite(USER_ID, CAR_ID, false);
 
-        assertTrue(changed);
-        assertFalse(favoriteDao.isFavorited(7L, 10L));
+        // Assertions
+        assertTrue(result);
     }
 
     @Test
-    void setFavoriteRejectsMissingUser() {
-        final CarFavoriteService service = service(new FakeCarFavoriteDao(), false, true);
+    public void shouldRejectSetFavoriteWhenUserDoesNotExist() {
+        // Arrange
+        when(userDao.findById(USER_ID)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.setFavorite(7L, 10L, true));
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> carFavoriteService.setFavorite(USER_ID, CAR_ID, true));
+
+        // Assertions
+        assertEquals("User not found.", ex.getMessage());
     }
 
     @Test
-    void setFavoriteRejectsMissingCar() {
-        final CarFavoriteService service = service(new FakeCarFavoriteDao(), true, false);
+    public void shouldRejectSetFavoriteWhenCarDoesNotExist() {
+        // Arrange
+        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(carDao.findById(CAR_ID)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.setFavorite(7L, 10L, true));
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> carFavoriteService.setFavorite(USER_ID, CAR_ID, true));
+
+        // Assertions
+        assertEquals("Car not found.", ex.getMessage());
     }
 
     @Test
-    void getFavoritedCarIdsReturnsOnlyRequestedFavorites() {
-        final FakeCarFavoriteDao favoriteDao = new FakeCarFavoriteDao();
-        favoriteDao.favorite(7L, 10L);
-        favoriteDao.favorite(7L, 11L);
-        favoriteDao.favorite(8L, 12L);
-        final CarFavoriteService service = service(favoriteDao, true, true);
+    public void shouldReturnFavoriteCarIdsMappedFromCars() {
+        // Arrange
+        when(carFavoriteDao.findFavoriteCars(USER_ID)).thenReturn(List.of(car(7L), car(8L)));
 
-        final Set<Long> ids = service.getFavoritedCarIds(7L, List.of(10L, 12L));
+        // Exercise
+        final List<Long> result = carFavoriteService.findFavoriteCarIdsByUser(USER_ID);
 
-        assertEquals(Set.of(10L), ids);
+        // Assertions
+        assertEquals(List.of(7L, 8L), result);
     }
 
-    private CarFavoriteService service(final FakeCarFavoriteDao favoriteDao, final boolean userExists,
-                                       final boolean carExists) {
-        return new CarFavoriteServiceImpl(favoriteDao, new FakeUserDao(userExists), new FakeCarDao(carExists));
+    @Test
+    public void shouldReturnEmptyFavoriteCarIdsWhenDaoReturnsEmpty() {
+        // Arrange
+        when(carFavoriteDao.findFavoriteCars(USER_ID)).thenReturn(List.of());
+
+        // Exercise
+        final List<Long> result = carFavoriteService.findFavoriteCarIdsByUser(USER_ID);
+
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 
-    private static final class FakeCarFavoriteDao implements CarFavoriteDao {
-        private final Set<String> favorites = new LinkedHashSet<>();
+    @Test
+    public void shouldDelegateIsFavoritedToDao() {
+        // Arrange
+        when(carFavoriteDao.isFavorited(USER_ID, CAR_ID)).thenReturn(true);
 
-        @Override
-        public boolean favorite(final long userId, final long carId) {
-            return favorites.add(key(userId, carId));
-        }
+        // Exercise
+        final boolean result = carFavoriteService.isFavorited(USER_ID, CAR_ID);
 
-        @Override
-        public boolean unfavorite(final long userId, final long carId) {
-            return favorites.remove(key(userId, carId));
-        }
-
-        @Override
-        public boolean isFavorited(final long userId, final long carId) {
-            return favorites.contains(key(userId, carId));
-        }
-
-        @Override
-        public List<Car> findFavoriteCars(final long userId) {
-            final List<Car> cars = new ArrayList<>();
-            for (final String favorite : favorites) {
-                final String[] parts = favorite.split(":");
-                if (Long.parseLong(parts[0]) == userId) {
-                    final long carId = Long.parseLong(parts[1]);
-                    cars.add(car(carId));
-                }
-            }
-            return cars;
-        }
-
-        @Override
-        public ar.edu.itba.paw.model.Page<Car> findFavoriteCars(final long userId, final int page) {
-            final List<Car> cars = findFavoriteCars(userId);
-            return new ar.edu.itba.paw.model.Page<>(cars, 1, 16, cars.size());
-        }
-
-        @Override
-        public long countFavoriteCars(final long userId) {
-            return findFavoriteCars(userId).size();
-        }
-
-        @Override
-        public Set<Long> findFavoritedCarIds(final long userId, final Collection<Long> carIds) {
-            final Set<Long> result = new LinkedHashSet<>();
-            for (final Long carId : carIds) {
-                if (carId != null && isFavorited(userId, carId)) {
-                    result.add(carId);
-                }
-            }
-            return result;
-        }
-
-        private String key(final long userId, final long carId) {
-            return userId + ":" + carId;
-        }
+        // Assertions
+        assertTrue(result);
     }
 
-    private static final class FakeUserDao implements UserDao {
-        private final boolean userExists;
+    @Test
+    public void shouldReturnFalseWhenIsFavoritedDelegatesFalse() {
+        // Arrange
+        when(carFavoriteDao.isFavorited(USER_ID, CAR_ID)).thenReturn(false);
 
-        private FakeUserDao(final boolean userExists) {
-            this.userExists = userExists;
-        }
+        // Exercise
+        final boolean result = carFavoriteService.isFavorited(USER_ID, CAR_ID);
 
-        @Override
-        public Optional<User> findById(final long id) {
-            return userExists
-                    ? Optional.of(new User(id, "driver", "driver@example.com", "password", "user", LocalDateTime.now()))
-                    : Optional.empty();
-        }
-
-        @Override
-        public Optional<User> findByEmail(final String email) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<User> findByUsername(final String username) {
-            return Optional.empty();
-        }
-
-        @Override
-        public User create(final String username, final String email, final String password, final String role) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public List<String> findEmailsByRoles(final Collection<String> roles) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<User> findAll() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public boolean updateRole(final long userId, final String role) {
-            return false;
-        }
+        // Assertions
+        assertFalse(result);
     }
 
-    private static final class FakeCarDao implements CarDao {
-        private final boolean carExists;
+    @Test
+    public void shouldReturnFavoriteCarsFromDao() {
+        // Arrange
+        final List<Car> cars = List.of(car(7L), car(8L));
+        when(carFavoriteDao.findFavoriteCars(USER_ID)).thenReturn(cars);
 
-        private FakeCarDao(final boolean carExists) {
-            this.carExists = carExists;
-        }
+        // Exercise
+        final List<Car> result = carFavoriteService.getFavoriteCars(USER_ID);
 
-        @Override
-        public List<Car> findAll() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Optional<Car> findById(final long id) {
-            return carExists ? Optional.of(car(id)) : Optional.empty();
-        }
-
-        @Override
-        public List<Car> findByIds(final Collection<Long> ids) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<Car> findByBrandIdAndBodyTypeId(final long brandId, final long bodyTypeId) {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public ar.edu.itba.paw.model.Page<Car> findByCriteria(final CarSearchCriteria criteria) {
-            return ar.edu.itba.paw.model.Page.empty(1, 0);
-        }
-
-        @Override
-        public Car create(final long brandId, final String model, final long bodyTypeId, final Integer year,
-                          final String description,
-                          final String fuelType, final Integer horsepower, final Integer airbagCount,
-                          final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                          final BigDecimal priceUsd) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Optional<Car> update(final long id, final long brandId, final String model, final long bodyTypeId,
-                                    final Integer year, final String description, final String fuelType, final Integer horsepower,
-                                    final Integer airbagCount, final String transmission,
-                                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
-                                    final BigDecimal priceUsd) {
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean delete(final long id) {
-            return false;
-        }
-
-        @Override
-        public long countByBrandId(final long brandId) {
-            return 0L;
-        }
-
-        @Override
-        public long countByBodyTypeId(final long bodyTypeId) {
-            return 0L;
-        }
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals(7L, result.get(0).getId());
     }
 
-    private static Car car(final long carId) {
-        return new Car(carId, 1L, "Toyota", "Supra", 1L, "Coupe", "Desc", LocalDateTime.now());
+    @Test
+    public void shouldReturnPagedFavoriteCarsFromDao() {
+        // Arrange
+        final Page<Car> page = new Page<>(List.of(car(7L)), 1, 10, 1L);
+        when(carFavoriteDao.findFavoriteCars(USER_ID, 1)).thenReturn(page);
+
+        // Exercise
+        final Page<Car> result = carFavoriteService.getFavoriteCars(USER_ID, 1);
+
+        // Assertions
+        assertEquals(1, result.getItems().size());
+        assertEquals(1L, result.getTotalItems());
+    }
+
+    @Test
+    public void shouldReturnFavoriteCarCountFromDao() {
+        // Arrange
+        when(carFavoriteDao.countFavoriteCars(USER_ID)).thenReturn(5L);
+
+        // Exercise
+        final long result = carFavoriteService.countFavoriteCars(USER_ID);
+
+        // Assertions
+        assertEquals(5L, result);
+    }
+
+    @Test
+    public void shouldReturnFavoritedCarIdsForGivenSet() {
+        // Arrange
+        final Set<Long> ids = Set.of(7L, 8L);
+        when(carFavoriteDao.findFavoritedCarIds(USER_ID, ids)).thenReturn(Set.of(7L));
+
+        // Exercise
+        final Set<Long> result = carFavoriteService.getFavoritedCarIds(USER_ID, ids);
+
+        // Assertions
+        assertEquals(Set.of(7L), result);
     }
 }

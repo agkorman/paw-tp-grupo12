@@ -78,18 +78,63 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async("mailTaskExecutor")
     public void sendCarApprovedNotification(final String recipientEmail, final String brandName,
+                                            final String model, final long carId) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+
+        final String carUrl = appBaseUrl + "/reviews?carId=" + carId;
+        sendEmail(
+                buildApprovedSubject(brandName, model),
+                buildApprovedPlainTextBody(brandName, model, carUrl),
+                buildApprovedHtmlBody(brandName, model, carUrl),
+                "Failed to send car approved notification to " + recipientEmail,
+                helper -> helper.setTo(recipientEmail)
+        );
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendCarRejectedNotification(final String recipientEmail, final String brandName,
                                             final String model) {
         if (recipientEmail == null || recipientEmail.isBlank()) {
             return;
         }
 
         sendEmail(
-                buildApprovedSubject(brandName, model),
-                buildApprovedPlainTextBody(brandName, model),
-                buildApprovedHtmlBody(brandName, model),
-                "Failed to send car approved notification to " + recipientEmail,
+                buildRejectedSubject(brandName, model),
+                buildRejectedPlainTextBody(brandName, model),
+                buildRejectedHtmlBody(brandName, model),
+                "Failed to send car rejected notification to " + recipientEmail,
                 helper -> helper.setTo(recipientEmail)
         );
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendCatalogRequestApprovedNotification(final String recipientEmail, final String requestType,
+                                                       final String requestedName) {
+        sendRequestDecisionNotification(recipientEmail, requestType, requestedName, true);
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendCatalogRequestRejectedNotification(final String recipientEmail, final String requestType,
+                                                       final String requestedName) {
+        sendRequestDecisionNotification(recipientEmail, requestType, requestedName, false);
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendAdminRequestApprovedNotification(final String recipientEmail) {
+        sendRequestDecisionNotification(recipientEmail, "moderador", "Permisos de moderador", true,
+                appBaseUrl + "/admin", "Panel de administración");
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendAdminRequestRejectedNotification(final String recipientEmail) {
+        sendRequestDecisionNotification(recipientEmail, "moderador", "Permisos de moderador", false);
     }
 
     @Override
@@ -639,7 +684,7 @@ public class EmailServiceImpl implements EmailService {
                 + sanitizeHeaderValue(brandName) + " " + sanitizeHeaderValue(model);
     }
 
-    private String buildApprovedPlainTextBody(final String brandName, final String model) {
+    private String buildApprovedPlainTextBody(final String brandName, final String model, final String carUrl) {
         return """
                 ¡Buenas noticias!
 
@@ -650,14 +695,14 @@ public class EmailServiceImpl implements EmailService {
                 safeValue(brandName),
                 safeValue(model),
                 APP_NAME,
-                appBaseUrl + "/cars"
+                carUrl
         );
     }
 
-    private String buildApprovedHtmlBody(final String brandName, final String model) {
+    private String buildApprovedHtmlBody(final String brandName, final String model, final String carUrl) {
         final String carName = escapeHtml(safeValue(brandName) + " " + safeValue(model));
         final String bodyHtml = buildApprovedSummaryCard(carName)
-                + buildCenteredAction(escapeHtml(appBaseUrl + "/cars"), "Ver en el catálogo");
+                + buildCenteredAction(escapeHtml(carUrl), "Ver auto");
 
         return buildEmailShell(
                 escapeHtml("Tu auto " + safeValue(brandName) + " " + safeValue(model) + " ya está en el catálogo"),
@@ -686,6 +731,167 @@ public class EmailServiceImpl implements EmailService {
                 DISPLAY_FONT,
                 carName,
                 buildPill("Aprobado", "rgba(100,200,100,0.14)", "rgba(100,200,100,0.3)", "#88c888")
+        );
+    }
+
+    // ── Rejected notification helpers ────────────────────────────────────────
+
+    private String buildRejectedSubject(final String brandName, final String model) {
+        return "[" + APP_NAME + "] Tu auto no fue aprobado: "
+                + sanitizeHeaderValue(brandName) + " " + sanitizeHeaderValue(model);
+    }
+
+    private String buildRejectedPlainTextBody(final String brandName, final String model) {
+        return """
+                Gracias por enviar tu auto.
+
+                Tu solicitud para publicar %s %s fue revisada, pero no fue aprobada para el catálogo de %s.
+
+                Podés revisar el catálogo en: %s
+                """.formatted(
+                safeValue(brandName),
+                safeValue(model),
+                APP_NAME,
+                appBaseUrl + "/cars"
+        );
+    }
+
+    private String buildRejectedHtmlBody(final String brandName, final String model) {
+        final String carName = escapeHtml(safeValue(brandName) + " " + safeValue(model));
+        final String bodyHtml = buildRejectedSummaryCard(carName)
+                + buildCenteredAction(escapeHtml(appBaseUrl + "/cars"), "Ver catálogo");
+
+        return buildEmailShell(
+                escapeHtml("Tu solicitud para publicar " + safeValue(brandName) + " " + safeValue(model)
+                        + " no fue aprobada"),
+                "Tu auto no fue aprobado",
+                "El equipo revisó la solicitud y no la incorporó al catálogo.",
+                bodyHtml
+        );
+    }
+
+    private String buildRejectedSummaryCard(final String carName) {
+        return """
+                <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:28px;">
+                    %s
+                    <div style="font-size:28px;line-height:1.15;font-weight:700;color:%s;font-family:%s;">
+                        %s
+                    </div>
+                    <div style="margin-top:12px;">
+                        %s
+                    </div>
+                </div>
+                """.formatted(
+                COLOR_SURFACE_HIGH,
+                COLOR_OUTLINE,
+                buildSectionLabel("Vehículo revisado"),
+                COLOR_ON_SURFACE,
+                DISPLAY_FONT,
+                carName,
+                buildPill("Rechazado", "rgba(220,90,90,0.14)", "rgba(220,90,90,0.32)", "#f09494")
+        );
+    }
+
+    // ── Request decision notification helpers ────────────────────────────────
+
+    private void sendRequestDecisionNotification(final String recipientEmail, final String requestType,
+                                                 final String requestedName, final boolean approved) {
+        final String actionUrl = approved ? appBaseUrl + "/cars/new" : appBaseUrl + "/cars";
+        final String actionLabel = approved ? "Solicitar auto" : "Ver catálogo";
+        sendRequestDecisionNotification(recipientEmail, requestType, requestedName, approved, actionUrl, actionLabel);
+    }
+
+    private void sendRequestDecisionNotification(final String recipientEmail, final String requestType,
+                                                 final String requestedName, final boolean approved,
+                                                 final String actionUrl, final String actionLabel) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+
+        sendEmail(
+                buildRequestDecisionSubject(requestType, requestedName, approved),
+                buildRequestDecisionPlainTextBody(requestType, requestedName, approved, actionUrl),
+                buildRequestDecisionHtmlBody(requestType, requestedName, approved, actionUrl, actionLabel),
+                "Failed to send request decision notification to " + recipientEmail,
+                helper -> helper.setTo(recipientEmail)
+        );
+    }
+
+    private String buildRequestDecisionSubject(final String requestType, final String requestedName,
+                                               final boolean approved) {
+        return "[" + APP_NAME + "] Tu solicitud de " + sanitizeHeaderValue(requestType)
+                + " fue " + (approved ? "aprobada" : "rechazada")
+                + ": " + sanitizeHeaderValue(requestedName);
+    }
+
+    private String buildRequestDecisionPlainTextBody(final String requestType, final String requestedName,
+                                                     final boolean approved, final String actionUrl) {
+        return """
+                Tu solicitud de %s fue %s.
+
+                Solicitud: %s
+
+                %s
+
+                Link: %s
+                """.formatted(
+                safeValue(requestType),
+                approved ? "aprobada" : "rechazada",
+                safeValue(requestedName),
+                approved
+                        ? "El cambio ya fue aplicado en " + APP_NAME + "."
+                        : "Gracias por enviarla. Por ahora no fue incorporada.",
+                safeValue(actionUrl)
+        );
+    }
+
+    private String buildRequestDecisionHtmlBody(final String requestType, final String requestedName,
+                                                final boolean approved, final String actionUrl,
+                                                final String actionLabel) {
+        final String title = approved ? "Solicitud aprobada" : "Solicitud rechazada";
+        final String intro = approved
+                ? "El equipo revisó la solicitud y ya aplicó el cambio."
+                : "El equipo revisó la solicitud y decidió no incorporarla por ahora.";
+        final String bodyHtml = buildRequestDecisionSummaryCard(requestType, requestedName, approved)
+                + buildCenteredAction(escapeHtml(actionUrl), actionLabel);
+
+        return buildEmailShell(
+                escapeHtml("Tu solicitud de " + safeValue(requestType) + " fue "
+                        + (approved ? "aprobada" : "rechazada")),
+                title,
+                intro,
+                bodyHtml
+        );
+    }
+
+    private String buildRequestDecisionSummaryCard(final String requestType, final String requestedName,
+                                                   final boolean approved) {
+        return """
+                <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:28px;">
+                    %s
+                    <div style="font-size:28px;line-height:1.15;font-weight:700;color:%s;font-family:%s;">
+                        %s
+                    </div>
+                    <div style="margin-top:8px;font-size:15px;line-height:1.6;color:%s;font-family:%s;">
+                        Solicitud de %s
+                    </div>
+                    <div style="margin-top:12px;">
+                        %s
+                    </div>
+                </div>
+                """.formatted(
+                COLOR_SURFACE_HIGH,
+                COLOR_OUTLINE,
+                buildSectionLabel("Resultado de revisión"),
+                COLOR_ON_SURFACE,
+                DISPLAY_FONT,
+                escapeHtml(safeValue(requestedName)),
+                COLOR_ON_SURFACE_VARIANT,
+                BODY_FONT,
+                escapeHtml(safeValue(requestType)),
+                approved
+                        ? buildPill("Aprobada", "rgba(100,200,100,0.14)", "rgba(100,200,100,0.3)", "#88c888")
+                        : buildPill("Rechazada", "rgba(220,90,90,0.14)", "rgba(220,90,90,0.32)", "#f09494")
         );
     }
 
