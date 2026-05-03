@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile.css?v=10'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=1'/>">
+    <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=3'/>">
     <link rel="stylesheet" href="<c:url value='/css/profile-connections.css?v=1'/>">
     <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
 </head>
@@ -330,9 +330,9 @@
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/confirmation-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/profile.js?v=8'/>"></script>
+    <script src="<c:url value='/js/profile.js?v=9'/>"></script>
     <c:if test="${ownProfile}">
-        <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
+        <script src="<c:url value='/js/admin-request-modal.js?v=2'/>"></script>
     </c:if>
     <script src="<c:url value='/js/submitted-toast.js'/>"></script>
     <pa:footer/>

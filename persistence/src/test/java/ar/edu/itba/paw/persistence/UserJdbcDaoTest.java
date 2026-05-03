@@ -2,11 +2,13 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class UserJdbcDaoTest extends AbstractPersistenceTest {
@@ -36,6 +38,34 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
         // Assertions
         assertTrue(result);
         assertEquals("admin", userDao.findById(created.getId()).orElseThrow().getRole());
+    }
+
+    @Test
+    public void shouldUpdatePersistedUsernameWhenUserExists() {
+        // Arrange
+        final User created = userDao.create("old-name", "rename@example.com", "password", "user");
+
+        // Exercise
+        final boolean result = userDao.updateUsername(created.getId(), "new-name");
+
+        // Assertions
+        assertTrue(result);
+        assertEquals("new-name", userDao.findById(created.getId()).orElseThrow().getUsername());
+        assertEquals("rename@example.com", userDao.findById(created.getId()).orElseThrow().getEmail());
+    }
+
+    @Test
+    public void shouldRejectUsernameUpdateWhenNormalizedUsernameAlreadyExists() {
+        // Arrange
+        userDao.create("Nica", "nica@example.com", "password", "user");
+        final User created = userDao.create("other", "other@example.com", "password", "user");
+
+        // Exercise
+        assertThrows(DataIntegrityViolationException.class,
+                () -> userDao.updateUsername(created.getId(), "nica"));
+
+        // Assertions
+        assertEquals("other", userDao.findById(created.getId()).orElseThrow().getUsername());
     }
 
     @Test
