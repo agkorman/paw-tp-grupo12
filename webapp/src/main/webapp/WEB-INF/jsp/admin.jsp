@@ -204,8 +204,20 @@
 
     <pa:admin-catalog-request-modal/>
     <pa:admin-request-review-modal/>
-    <script src="<c:url value='/js/admin-catalog-modal.js'/>"></script>
-    <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
+    <c:choose>
+        <c:when test="${not empty param.carAccepted}">
+            <pa:toast messageCode="admin.carRequest.accept.toast.success"/>
+        </c:when>
+        <c:when test="${not empty param.carRejected}">
+            <pa:toast messageCode="admin.carRequest.reject.toast.success"/>
+        </c:when>
+        <c:otherwise>
+            <pa:toast/>
+        </c:otherwise>
+    </c:choose>
+    <script src="<c:url value='/js/toast.js'/>"></script>
+    <script src="<c:url value='/js/admin-catalog-modal.js?v=2'/>"></script>
+    <script src="<c:url value='/js/admin-request-modal.js?v=2'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <pa:footer/>
 </body>

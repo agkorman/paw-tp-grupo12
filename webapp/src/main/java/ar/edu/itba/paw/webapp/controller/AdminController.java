@@ -282,7 +282,7 @@ public class AdminController {
                 carForm.getPriceUsd()
         );
 
-        return redirectBackToAdmin(referer);
+        return new ModelAndView("redirect:/admin?carAccepted=1");
     }
 
     @RequestMapping(value = "/cars/{carId}", method = RequestMethod.POST, consumes = "multipart/form-data")
@@ -372,27 +372,34 @@ public class AdminController {
     }
 
     @RequestMapping(value = "/requests/{requestId}/reject", method = RequestMethod.POST)
-    public ModelAndView rejectRequest(@PathVariable("requestId") final long requestId,
-                                      @RequestHeader(value = "Referer", required = false) final String referer) {
+    public ModelAndView rejectRequest(@PathVariable("requestId") final long requestId) {
         LOGGER.info("admin reject car request id={}", requestId);
         carRequestService.rejectPendingRequest(requestId);
-        return redirectBackToAdmin(referer);
+        return new ModelAndView("redirect:/admin?carRejected=1");
     }
 
     @RequestMapping(value = "/brand-requests/{requestId}/accept", method = RequestMethod.POST)
-    public ModelAndView acceptBrandRequest(@PathVariable("requestId") final long requestId,
-                                           @RequestParam(value = "name", required = false) final String name,
-                                           @RequestHeader(value = "Referer", required = false) final String referer) {
+    public Object acceptBrandRequest(@PathVariable("requestId") final long requestId,
+                                     @RequestParam(value = "name", required = false) final String name,
+                                     @RequestHeader(value = "Referer", required = false) final String referer,
+                                     @RequestHeader(value = "X-Requested-With", required = false) final String xhr) {
         LOGGER.info("admin accept brand request id={} overrideName={}", requestId, name);
         brandRequestService.approvePendingRequest(requestId, name);
+        if ("XMLHttpRequest".equals(xhr)) {
+            return ResponseEntity.ok("ok");
+        }
         return redirectBackToAdmin(referer);
     }
 
     @RequestMapping(value = "/brand-requests/{requestId}/reject", method = RequestMethod.POST)
-    public ModelAndView rejectBrandRequest(@PathVariable("requestId") final long requestId,
-                                           @RequestHeader(value = "Referer", required = false) final String referer) {
+    public Object rejectBrandRequest(@PathVariable("requestId") final long requestId,
+                                     @RequestHeader(value = "Referer", required = false) final String referer,
+                                     @RequestHeader(value = "X-Requested-With", required = false) final String xhr) {
         LOGGER.info("admin reject brand request id={}", requestId);
         brandRequestService.rejectPendingRequest(requestId);
+        if ("XMLHttpRequest".equals(xhr)) {
+            return ResponseEntity.ok("ok");
+        }
         return redirectBackToAdmin(referer);
     }
 
@@ -414,19 +421,27 @@ public class AdminController {
     }
 
     @RequestMapping(value = "/body-type-requests/{requestId}/accept", method = RequestMethod.POST)
-    public ModelAndView acceptBodyTypeRequest(@PathVariable("requestId") final long requestId,
-                                              @RequestParam(value = "name", required = false) final String name,
-                                              @RequestHeader(value = "Referer", required = false) final String referer) {
+    public Object acceptBodyTypeRequest(@PathVariable("requestId") final long requestId,
+                                        @RequestParam(value = "name", required = false) final String name,
+                                        @RequestHeader(value = "Referer", required = false) final String referer,
+                                        @RequestHeader(value = "X-Requested-With", required = false) final String xhr) {
         LOGGER.info("admin accept body type request id={} overrideName={}", requestId, name);
         bodyTypeRequestService.approvePendingRequest(requestId, name);
+        if ("XMLHttpRequest".equals(xhr)) {
+            return ResponseEntity.ok("ok");
+        }
         return redirectBackToAdmin(referer);
     }
 
     @RequestMapping(value = "/body-type-requests/{requestId}/reject", method = RequestMethod.POST)
-    public ModelAndView rejectBodyTypeRequest(@PathVariable("requestId") final long requestId,
-                                              @RequestHeader(value = "Referer", required = false) final String referer) {
+    public Object rejectBodyTypeRequest(@PathVariable("requestId") final long requestId,
+                                        @RequestHeader(value = "Referer", required = false) final String referer,
+                                        @RequestHeader(value = "X-Requested-With", required = false) final String xhr) {
         LOGGER.info("admin reject body type request id={}", requestId);
         bodyTypeRequestService.rejectPendingRequest(requestId);
+        if ("XMLHttpRequest".equals(xhr)) {
+            return ResponseEntity.ok("ok");
+        }
         return redirectBackToAdmin(referer);
     }
 
@@ -448,18 +463,26 @@ public class AdminController {
     }
 
     @RequestMapping(value = "/admin-requests/{requestId}/accept", method = RequestMethod.POST)
-    public ModelAndView acceptAdminRequest(@PathVariable("requestId") final long requestId,
-                                           @RequestHeader(value = "Referer", required = false) final String referer) {
+    public Object acceptAdminRequest(@PathVariable("requestId") final long requestId,
+                                     @RequestHeader(value = "Referer", required = false) final String referer,
+                                     @RequestHeader(value = "X-Requested-With", required = false) final String xhr) {
         LOGGER.info("admin accept admin-role request id={}", requestId);
         adminRequestService.approvePendingRequest(requestId);
+        if ("XMLHttpRequest".equals(xhr)) {
+            return ResponseEntity.ok("ok");
+        }
         return redirectBackToAdmin(referer);
     }
 
     @RequestMapping(value = "/admin-requests/{requestId}/reject", method = RequestMethod.POST)
-    public ModelAndView rejectAdminRequest(@PathVariable("requestId") final long requestId,
-                                           @RequestHeader(value = "Referer", required = false) final String referer) {
+    public Object rejectAdminRequest(@PathVariable("requestId") final long requestId,
+                                     @RequestHeader(value = "Referer", required = false) final String referer,
+                                     @RequestHeader(value = "X-Requested-With", required = false) final String xhr) {
         LOGGER.info("admin reject admin-role request id={}", requestId);
         adminRequestService.rejectPendingRequest(requestId);
+        if ("XMLHttpRequest".equals(xhr)) {
+            return ResponseEntity.ok("ok");
+        }
         return redirectBackToAdmin(referer);
     }
 

@@ -79,6 +79,10 @@
         var rejectForm = document.getElementById('adminRequestRejectForm');
         var adminBaseUrl = (modal.getAttribute('data-admin-base-url') || '/admin').replace(/\/$/, '');
 
+        var acceptSuccessMsg = modal.getAttribute('data-accept-success-msg') || '';
+        var rejectSuccessMsg = modal.getAttribute('data-reject-success-msg') || '';
+        var errorMsg = modal.getAttribute('data-error-msg') || '';
+
         var lastTrigger = null;
 
         function findOpenTrigger(node) {
@@ -141,6 +145,49 @@
                 lastTrigger.focus();
             }
             lastTrigger = null;
+        }
+
+        function showToast(message, type) {
+            if (window.PawToast && typeof window.PawToast.show === 'function') {
+                window.PawToast.show(message, type);
+            }
+        }
+
+        function submitAjax(form, successMsg) {
+            var trigger = lastTrigger;
+            var action = form.getAttribute('action');
+            var data = new FormData(form);
+            close();
+            fetch(action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: data
+            }).then(function (res) {
+                if (res.ok) {
+                    if (trigger && trigger.parentNode) {
+                        trigger.parentNode.removeChild(trigger);
+                    }
+                    showToast(successMsg, 'success');
+                } else {
+                    showToast(errorMsg, 'error');
+                }
+            }).catch(function () {
+                showToast(errorMsg, 'error');
+            });
+        }
+
+        if (acceptForm) {
+            acceptForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                submitAjax(acceptForm, acceptSuccessMsg);
+            });
+        }
+
+        if (rejectForm) {
+            rejectForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                submitAjax(rejectForm, rejectSuccessMsg);
+            });
         }
 
         document.addEventListener('click', function (event) {

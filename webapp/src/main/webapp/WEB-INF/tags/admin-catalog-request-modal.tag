@@ -1,16 +1,23 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <c:url var="adminBaseUrl" value="/admin"/>
 <spring:message var="closeModalLabel" code="common.action.close"/>
 <spring:message var="commentsEmptyPlaceholder" code="admin.catalogRequest.comments.empty"/>
+<spring:message var="acceptSuccessMsg" code="admin.request.accept.toast.success"/>
+<spring:message var="rejectSuccessMsg" code="admin.request.reject.toast.success"/>
+<spring:message var="requestErrorMsg" code="admin.request.toast.error"/>
 
 <div id="adminCatalogRequestModal"
      class="review-modal admin-catalog-request-review-modal"
      hidden
-     data-admin-base-url="${adminBaseUrl}">
+     data-admin-base-url="${adminBaseUrl}"
+     data-accept-success-msg="${fn:escapeXml(acceptSuccessMsg)}"
+     data-reject-success-msg="${fn:escapeXml(rejectSuccessMsg)}"
+     data-error-msg="${fn:escapeXml(requestErrorMsg)}">
     <div class="review-modal-overlay" data-close-admin-catalog-request-modal></div>
     <section class="review-modal-dialog admin-catalog-request-review-dialog"
              role="dialog" aria-modal="true" aria-labelledby="adminCatalogRequestTitle">
