@@ -3,6 +3,8 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,6 +26,8 @@ import java.util.Set;
 @Repository
 public class ReviewLikeJdbcDao implements ReviewLikeDao {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReviewLikeJdbcDao.class);
+
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
@@ -36,23 +40,32 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
     @Override
     public boolean likeReview(final long reviewId, final long userId) {
         try {
-            return jdbcTemplate.update(
+            final boolean inserted = jdbcTemplate.update(
                     "INSERT INTO review_likes (review_id, user_id) VALUES (?, ?)",
                     reviewId,
                     userId
             ) > 0;
+            if (inserted) {
+                LOGGER.info("user id={} liked review id={}", userId, reviewId);
+            }
+            return inserted;
         } catch (final DuplicateKeyException ignored) {
+            LOGGER.debug("user id={} already liked review id={}", userId, reviewId);
             return false;
         }
     }
 
     @Override
     public boolean unlikeReview(final long reviewId, final long userId) {
-        return jdbcTemplate.update(
+        final boolean removed = jdbcTemplate.update(
                 "DELETE FROM review_likes WHERE review_id = ? AND user_id = ?",
                 reviewId,
                 userId
         ) > 0;
+        if (removed) {
+            LOGGER.info("user id={} unliked review id={}", userId, reviewId);
+        }
+        return removed;
     }
 
     @Override
@@ -113,23 +126,32 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
     @Override
     public boolean likeReply(final long replyId, final long userId) {
         try {
-            return jdbcTemplate.update(
+            final boolean inserted = jdbcTemplate.update(
                     "INSERT INTO review_reply_likes (reply_id, user_id) VALUES (?, ?)",
                     replyId,
                     userId
             ) > 0;
+            if (inserted) {
+                LOGGER.info("user id={} liked reply id={}", userId, replyId);
+            }
+            return inserted;
         } catch (final DuplicateKeyException ignored) {
+            LOGGER.debug("user id={} already liked reply id={}", userId, replyId);
             return false;
         }
     }
 
     @Override
     public boolean unlikeReply(final long replyId, final long userId) {
-        return jdbcTemplate.update(
+        final boolean removed = jdbcTemplate.update(
                 "DELETE FROM review_reply_likes WHERE reply_id = ? AND user_id = ?",
                 replyId,
                 userId
         ) > 0;
+        if (removed) {
+            LOGGER.info("user id={} unliked reply id={}", userId, replyId);
+        }
+        return removed;
     }
 
     @Override

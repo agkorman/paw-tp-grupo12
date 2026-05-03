@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
 
 @Repository
 public class UserJdbcDao implements UserDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserJdbcDao.class);
 
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
@@ -76,16 +80,23 @@ public class UserJdbcDao implements UserDao {
         params.put("created_at", Timestamp.valueOf(LocalDateTime.now()));
 
         long id = jdbcInsert.executeAndReturnKey(params).longValue();
+        LOGGER.info("created user id={} email={} role={}", id, email, role);
         return findById(id).orElseThrow();
     }
 
     @Override
     public boolean updateRole(final long userId, final String role) {
-        return jdbcTemplate.update(
+        final boolean updated = jdbcTemplate.update(
                 "UPDATE users SET role = ? WHERE user_id = ?",
                 role,
                 userId
         ) > 0;
+        if (updated) {
+            LOGGER.info("updated user role id={} role={}", userId, role);
+        } else {
+            LOGGER.warn("user role update affected 0 rows id={}", userId);
+        }
+        return updated;
     }
 
     @Override

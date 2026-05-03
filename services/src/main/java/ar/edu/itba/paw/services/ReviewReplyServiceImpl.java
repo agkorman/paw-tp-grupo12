@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewReplyDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class ReviewReplyServiceImpl implements ReviewReplyService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReviewReplyServiceImpl.class);
 
     public static final int MAX_BODY_LENGTH = 1000;
 
@@ -85,23 +89,29 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     @Transactional
     public ReviewReply createReply(final long reviewId, final long userId, final String body) {
         if (reviewDao.findById(reviewId).isEmpty()) {
+            LOGGER.warn("create reply rejected: review not found id={}", reviewId);
             throw new IllegalArgumentException("Review not found.");
         }
         if (userDao.findById(userId).isEmpty()) {
+            LOGGER.warn("create reply rejected: user not found id={}", userId);
             throw new IllegalArgumentException("User not found.");
         }
 
         final String normalizedBody = StringUtils.normalize(body);
         if (normalizedBody == null) {
+            LOGGER.warn("create reply rejected: empty body reviewId={} userId={}", reviewId, userId);
             throw new IllegalArgumentException("Reply body is required.");
         }
         if (normalizedBody.length() > MAX_BODY_LENGTH) {
+            LOGGER.warn("create reply rejected: body too long length={} reviewId={} userId={}",
+                    normalizedBody.length(), reviewId, userId);
             throw new IllegalArgumentException("Reply body is too long.");
         }
 
         try {
             return reviewReplyDao.create(reviewId, userId, normalizedBody);
         } catch (final RuntimeException e) {
+            LOGGER.error("failed to create review reply reviewId={} userId={}", reviewId, userId, e);
             throw new IllegalStateException("Failed to create review reply.", e);
         }
     }
@@ -110,13 +120,23 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     @Transactional
     public boolean deleteReply(final long id, final long userId) {
         final ReviewReply reply = reviewReplyDao.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Reply not found."));
+                .orElseThrow(() -> {
+                    LOGGER.warn("delete reply rejected: not found id={}", id);
+                    return new IllegalArgumentException("Reply not found.");
+                });
         if (reply.getUserId() != userId) {
+            LOGGER.warn("delete reply rejected: ownership mismatch id={} requestingUserId={} ownerId={}",
+                    id, userId, reply.getUserId());
             throw new IllegalArgumentException("Reply does not belong to the user.");
         }
         try {
-            return reviewReplyDao.delete(id);
+            final boolean deleted = reviewReplyDao.delete(id);
+            if (deleted) {
+                LOGGER.info("deleted reply id={} userId={}", id, userId);
+            }
+            return deleted;
         } catch (final RuntimeException e) {
+            LOGGER.error("failed to delete review reply id={} userId={}", id, userId, e);
             throw new IllegalStateException("Failed to delete review reply.", e);
         }
     }

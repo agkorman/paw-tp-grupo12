@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -23,6 +25,8 @@ import java.util.Optional;
 
 @Repository
 public class CarJdbcDao implements CarDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CarJdbcDao.class);
 
     private static final String FROM_JOIN =
             "FROM cars c "
@@ -134,6 +138,7 @@ public class CarJdbcDao implements CarDao {
         params.put("price_usd", priceUsd);
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
+        LOGGER.info("created car id={} brandId={} model={} bodyTypeId={}", id, brandId, model, bodyTypeId);
         return findById(id).orElseThrow();
     }
 
@@ -303,12 +308,23 @@ public class CarJdbcDao implements CarDao {
                 brandId, model, bodyTypeId, year, description, fuelType, horsepower, airbagCount, transmission,
                 fuelConsumption, maxSpeedKmh, priceUsd, id
         );
-        return updated > 0 ? findById(id) : Optional.empty();
+        if (updated == 0) {
+            LOGGER.warn("car update affected 0 rows id={}", id);
+            return Optional.empty();
+        }
+        LOGGER.info("updated car id={} brandId={} model={}", id, brandId, model);
+        return findById(id);
     }
 
     @Override
     public boolean delete(final long id) {
-        return jdbcTemplate.update("DELETE FROM cars WHERE car_id = ?", id) > 0;
+        final boolean deleted = jdbcTemplate.update("DELETE FROM cars WHERE car_id = ?", id) > 0;
+        if (deleted) {
+            LOGGER.info("deleted car id={}", id);
+        } else {
+            LOGGER.warn("car delete affected 0 rows id={}", id);
+        }
+        return deleted;
     }
 
     @Override

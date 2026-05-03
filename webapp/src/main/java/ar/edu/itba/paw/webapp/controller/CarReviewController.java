@@ -19,6 +19,8 @@ import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.context.MessageSource;
@@ -55,6 +57,8 @@ import java.util.stream.Collectors;
 
 @Controller
 public class CarReviewController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CarReviewController.class);
 
     private static final String SORT_RATING_ASC = "rating_asc";
     private static final String SORT_RATING_DESC = "rating_desc";
@@ -199,6 +203,8 @@ public class CarReviewController {
                 reviewForm.getModelYear(), reviewForm.getMileageKm());
 
         if (errors.hasErrors()) {
+            LOGGER.warn("create review rejected: validation errors carId={} userId={} errorCount={}",
+                    car.getId(), currentUser.getId(), errors.getErrorCount());
             model.addAttribute("selectedCar", car);
             return "review-form.jsp";
         }
@@ -215,7 +221,10 @@ public class CarReviewController {
                     reviewForm.getMileageKm(),
                     reviewForm.getWouldRecommend(),
                     reviewForm.getTagIds());
+            LOGGER.info("created review carId={} userId={}", car.getId(), currentUser.getId());
         } catch (final InvalidReviewTagSelectionException e) {
+            LOGGER.warn("create review rejected: invalid tag selection carId={} userId={}",
+                    car.getId(), currentUser.getId());
             errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
             model.addAttribute("selectedCar", car);
             return "review-form.jsp";
@@ -420,7 +429,10 @@ public class CarReviewController {
                     reviewForm.getWouldRecommend(),
                     reviewForm.getTagIds()
             );
+            LOGGER.info("updated review id={} userId={}", reviewId, currentUser.getId());
         } catch (final InvalidReviewTagSelectionException e) {
+            LOGGER.warn("update review rejected: invalid tag selection reviewId={} userId={}",
+                    reviewId, currentUser.getId());
             errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
             model.addAttribute("selectedCar", car);
             model.addAttribute("editMode", true);
@@ -436,6 +448,7 @@ public class CarReviewController {
         final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
         validateReviewOwnership(existingReview, currentUser);
         reviewService.deleteReview(reviewId);
+        LOGGER.info("user id={} deleted review id={}", currentUser.getId(), reviewId);
         return new ModelAndView("redirect:/profile");
     }
 
@@ -476,9 +489,12 @@ public class CarReviewController {
 
         try {
             if (!reviewService.deleteReview(reviewId)) {
+                LOGGER.warn("hide review failed: delete returned false reviewId={}", reviewId);
                 return reviewHideError(ajax, review.getCarId());
             }
-        } catch (final RuntimeException ignored) {
+            LOGGER.info("admin id={} hid review id={}", currentUser.getId(), reviewId);
+        } catch (final RuntimeException e) {
+            LOGGER.error("hide review failed reviewId={} adminId={}", reviewId, currentUser.getId(), e);
             return reviewHideError(ajax, review.getCarId());
         }
 
@@ -523,7 +539,9 @@ public class CarReviewController {
 
         try {
             reviewReplyService.createReply(reviewId, currentUser.getId(), body);
-        } catch (final RuntimeException ignored) {
+            LOGGER.info("user id={} replied to review id={}", currentUser.getId(), reviewId);
+        } catch (final RuntimeException e) {
+            LOGGER.error("failed to create reply reviewId={} userId={}", reviewId, currentUser.getId(), e);
             return carReviewPage(review.getCarId(), null,
                     "No pudimos publicar la respuesta. Intentá de nuevo en unos segundos.",
                     currentUser);
@@ -551,7 +569,8 @@ public class CarReviewController {
         final boolean liked;
         try {
             liked = reviewLikeService.toggleReviewLike(reviewId, currentUser.getId());
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.error("failed to toggle review like reviewId={} userId={}", reviewId, currentUser.getId(), e);
             if (ajax) {
                 return new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -559,6 +578,7 @@ public class CarReviewController {
                     "No pudimos actualizar el like. Intentá de nuevo en unos segundos.",
                     currentUser);
         }
+        LOGGER.info("user id={} toggled review like reviewId={} liked={}", currentUser.getId(), reviewId, liked);
         if (ajax) {
             final long count = reviewLikeService.countReviewLikes(reviewId);
             return new ResponseEntity<String>(liked + "|" + count, HttpStatus.OK);
@@ -588,7 +608,8 @@ public class CarReviewController {
         final boolean liked;
         try {
             liked = reviewLikeService.toggleReplyLike(replyId, currentUser.getId());
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.error("failed to toggle reply like replyId={} userId={}", replyId, currentUser.getId(), e);
             if (ajax) {
                 return new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -596,6 +617,7 @@ public class CarReviewController {
                     "No pudimos actualizar el like. Intentá de nuevo en unos segundos.",
                     currentUser);
         }
+        LOGGER.info("user id={} toggled reply like replyId={} liked={}", currentUser.getId(), replyId, liked);
         if (ajax) {
             final long count = reviewLikeService.countReplyLikes(replyId);
             return new ResponseEntity<String>(liked + "|" + count, HttpStatus.OK);

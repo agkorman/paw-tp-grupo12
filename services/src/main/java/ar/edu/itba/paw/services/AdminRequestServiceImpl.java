@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.AdminRequestDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +14,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class AdminRequestServiceImpl implements AdminRequestService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AdminRequestServiceImpl.class);
 
     private final AdminRequestDao adminRequestDao;
     private final UserService userService;
@@ -75,8 +80,10 @@ public class AdminRequestServiceImpl implements AdminRequestService {
         final String normalizedJustification = StringUtils.normalizeRequired(justification,
                 "Justification is required for admin requests.");
         if (adminRequestDao.existsPendingByUser(submittedByUserId)) {
+            LOGGER.warn("user id={} attempted to submit second pending admin request", submittedByUserId);
             throw new IllegalStateException("User already has a pending admin request.");
         }
+        LOGGER.info("submitting admin request for user id={}", submittedByUserId);
         return adminRequestDao.create(submittedByUserId, submitterEmail, normalizedMotivation,
                 normalizedBio, normalizedJustification, STATUS_PENDING);
     }
@@ -86,6 +93,7 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     public boolean approvePendingRequest(final long id) {
         final AdminRequest request = adminRequestDao.findById(id).orElse(null);
         if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            LOGGER.warn("approve admin request rejected: not found or not pending id={}", id);
             return false;
         }
 
@@ -96,6 +104,7 @@ public class AdminRequestServiceImpl implements AdminRequestService {
 
         userService.updateRole(request.getSubmittedByUserId(), GRANTED_ROLE);
         sendRequestApprovedNotification(request);
+        LOGGER.info("approved admin request id={} userId={} grantedRole={}", id, request.getSubmittedByUserId(), GRANTED_ROLE);
         return true;
     }
 
@@ -104,12 +113,14 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     public boolean rejectPendingRequest(final long id) {
         final AdminRequest request = adminRequestDao.findById(id).orElse(null);
         if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            LOGGER.warn("reject admin request rejected: not found or not pending id={}", id);
             return false;
         }
 
         final boolean statusUpdated = adminRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
         if (statusUpdated) {
             sendRequestRejectedNotification(request);
+            LOGGER.info("rejected admin request id={} userId={}", id, request.getSubmittedByUserId());
         }
         return statusUpdated;
     }

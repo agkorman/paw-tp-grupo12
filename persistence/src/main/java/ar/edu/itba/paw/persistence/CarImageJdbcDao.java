@@ -2,6 +2,8 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,6 +16,8 @@ import java.util.Optional;
 
 @Repository
 public class CarImageJdbcDao implements CarImageDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CarImageJdbcDao.class);
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -42,6 +46,7 @@ public class CarImageJdbcDao implements CarImageDao {
                     carId
             ).stream().findFirst();
         } catch (final DataAccessException e) {
+            LOGGER.error("failed to fetch cover image for car id={}", carId, e);
             throw new IllegalStateException("Failed to fetch cover image for car " + carId + ".", e);
         }
     }
@@ -56,6 +61,7 @@ public class CarImageJdbcDao implements CarImageDao {
                     carId
             );
         } catch (final DataAccessException e) {
+            LOGGER.error("failed to fetch image metadata for car id={}", carId, e);
             throw new IllegalStateException("Failed to fetch image metadata for car " + carId + ".", e);
         }
     }
@@ -71,6 +77,7 @@ public class CarImageJdbcDao implements CarImageDao {
                     imageId
             ).stream().findFirst();
         } catch (final DataAccessException e) {
+            LOGGER.error("failed to fetch image id={} for car id={}", imageId, carId, e);
             throw new IllegalStateException("Failed to fetch image " + imageId + " for car " + carId + ".", e);
         }
     }
@@ -95,7 +102,9 @@ public class CarImageJdbcDao implements CarImageDao {
                         image.getImageData()
                 );
             }
+            LOGGER.info("replaced image gallery for car id={} imageCount={}", carId, images.size());
         } catch (final DataAccessException e) {
+            LOGGER.error("failed to replace image gallery for car id={}", carId, e);
             throw new IllegalStateException("Failed to replace image gallery for car " + carId + ".", e);
         }
     }

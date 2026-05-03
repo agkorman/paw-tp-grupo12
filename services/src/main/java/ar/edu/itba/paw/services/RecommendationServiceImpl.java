@@ -9,6 +9,8 @@ import ar.edu.itba.paw.model.ReviewTag;
 import ar.edu.itba.paw.model.TagHighlight;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewTagDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class RecommendationServiceImpl implements RecommendationService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RecommendationServiceImpl.class);
 
     private static final int SCORE_SCALE = 6;
     private static final int DEFAULT_LIMIT = 5;
@@ -46,6 +50,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<RecommendationQuestion> getQuestions() {
         return RecommendationQuestionnaire.questions();
     }
@@ -55,6 +60,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     public List<CarRecommendation> recommend(final RecommendationCriteria criteria, final int limit) {
         final Map<String, BigDecimal> tagCodeWeights = buildTagCodeWeights(criteria);
         if (tagCodeWeights.isEmpty()) {
+            LOGGER.debug("recommendation produced no tag weights for criteria");
             return List.of();
         }
 
@@ -79,6 +85,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         final Map<Short, ReviewTag> tagsById = tags.stream()
                 .collect(Collectors.toMap(ReviewTag::getId, Function.identity()));
         final int effectiveLimit = limit > 0 ? limit : DEFAULT_LIMIT;
+        LOGGER.debug("computing recommendations from {} candidates limit={}", candidates.size(), effectiveLimit);
 
         return candidates.stream()
                 .map(car -> score(car, reviewCounts.getOrDefault(car.getId(), 0), tagCounts.get(car.getId()),

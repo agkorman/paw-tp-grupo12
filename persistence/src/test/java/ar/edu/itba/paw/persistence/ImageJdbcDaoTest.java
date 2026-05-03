@@ -27,6 +27,15 @@ public class ImageJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result.isPresent());
+        assertEquals(2, countRows("SELECT COUNT(*) FROM car_images WHERE car_id = ?", car.getId()));
+        assertEquals("image/png", jdbcTemplate.queryForObject(
+                "SELECT content_type FROM car_images WHERE car_id = ? AND display_order = 0",
+                String.class, car.getId()
+        ));
+        assertArrayEquals(new byte[]{1, 2}, jdbcTemplate.queryForObject(
+                "SELECT image_data FROM car_images WHERE car_id = ? AND display_order = 0",
+                byte[].class, car.getId()
+        ));
         assertEquals(0, result.get().getDisplayOrder());
         assertEquals("image/png", result.get().getContentType());
         assertArrayEquals(new byte[]{1, 2}, result.get().getImageData());
@@ -45,9 +54,36 @@ public class ImageJdbcDaoTest extends AbstractPersistenceTest {
         // Assertions
         final List<CarImage> metadata = carImageDao.findAllByCarId(car.getId());
         final CarImage image = carImageDao.findByCarId(car.getId()).orElseThrow();
+        assertEquals(1, countRows("SELECT COUNT(*) FROM car_images WHERE car_id = ?", car.getId()));
+        assertEquals(0, countRows(
+                "SELECT COUNT(*) FROM car_images WHERE car_id = ? AND content_type = ?",
+                car.getId(), "image/png"
+        ));
+        assertEquals("image/jpeg", jdbcTemplate.queryForObject(
+                "SELECT content_type FROM car_images WHERE car_id = ? AND display_order = 0",
+                String.class, car.getId()
+        ));
+        assertArrayEquals(new byte[]{9}, jdbcTemplate.queryForObject(
+                "SELECT image_data FROM car_images WHERE car_id = ? AND display_order = 0",
+                byte[].class, car.getId()
+        ));
         assertEquals(1, metadata.size());
         assertEquals("image/jpeg", image.getContentType());
         assertArrayEquals(new byte[]{9}, image.getImageData());
+    }
+
+    @Test
+    public void shouldClearCarImagesWhenReplacingWithEmptyGallery() {
+        // Arrange
+        final Car car = createCar("clear-images");
+        carImageDao.replaceAll(car.getId(), List.of(new CarImagePayload("image/png", new byte[]{1})));
+
+        // Exercise
+        carImageDao.replaceAll(car.getId(), List.of());
+
+        // Assertions
+        assertEquals(0, countRows("SELECT COUNT(*) FROM car_images WHERE car_id = ?", car.getId()));
+        assertEquals(0, carImageDao.findAllByCarId(car.getId()).size());
     }
 
     @Test

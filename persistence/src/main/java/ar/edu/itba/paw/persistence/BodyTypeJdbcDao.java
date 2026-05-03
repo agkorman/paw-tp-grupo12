@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.BodyType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -15,6 +17,8 @@ import java.util.Optional;
 
 @Repository
 public class BodyTypeJdbcDao implements BodyTypeDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BodyTypeJdbcDao.class);
 
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
@@ -64,6 +68,7 @@ public class BodyTypeJdbcDao implements BodyTypeDao {
         params.put("name", name);
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
+        LOGGER.info("created body type id={} name={}", id, name);
         return findById(id).orElseThrow();
     }
 
@@ -74,13 +79,21 @@ public class BodyTypeJdbcDao implements BodyTypeDao {
                 name, id
         );
         if (updated == 0) {
+            LOGGER.warn("body type update affected 0 rows id={}", id);
             return Optional.empty();
         }
+        LOGGER.info("updated body type id={} name={}", id, name);
         return findById(id);
     }
 
     @Override
     public boolean delete(final long id) {
-        return jdbcTemplate.update("DELETE FROM body_types WHERE body_type_id = ?", id) > 0;
+        final boolean deleted = jdbcTemplate.update("DELETE FROM body_types WHERE body_type_id = ?", id) > 0;
+        if (deleted) {
+            LOGGER.info("deleted body type id={}", id);
+        } else {
+            LOGGER.warn("body type delete affected 0 rows id={}", id);
+        }
+        return deleted;
     }
 }

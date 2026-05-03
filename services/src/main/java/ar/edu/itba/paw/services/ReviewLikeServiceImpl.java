@@ -6,6 +6,8 @@ import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewLikeDao;
 import ar.edu.itba.paw.persistence.ReviewReplyDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,8 @@ import java.util.Set;
 
 @Service
 public class ReviewLikeServiceImpl implements ReviewLikeService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReviewLikeServiceImpl.class);
 
     private final ReviewLikeDao reviewLikeDao;
     private final ReviewDao reviewDao;
@@ -46,6 +50,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
             reviewLikeDao.likeReview(reviewId, userId);
             return true;
         } catch (final RuntimeException e) {
+            LOGGER.error("failed to toggle review like reviewId={} userId={}", reviewId, userId, e);
             throw new IllegalStateException("Failed to toggle review like.", e);
         }
     }
@@ -62,6 +67,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
             reviewLikeDao.likeReply(replyId, userId);
             return true;
         } catch (final RuntimeException e) {
+            LOGGER.error("failed to toggle reply like replyId={} userId={}", replyId, userId, e);
             throw new IllegalStateException("Failed to toggle reply like.", e);
         }
     }
@@ -193,6 +199,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
 
     private void validateReviewAndUser(final long reviewId, final long userId) {
         if (reviewDao.findById(reviewId).isEmpty()) {
+            LOGGER.warn("review like rejected: review not found id={}", reviewId);
             throw new IllegalArgumentException("Review not found.");
         }
         validateUser(userId);
@@ -200,6 +207,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
 
     private void validateReplyAndUser(final long replyId, final long userId) {
         if (reviewReplyDao.findById(replyId).isEmpty()) {
+            LOGGER.warn("reply like rejected: reply not found id={}", replyId);
             throw new IllegalArgumentException("Reply not found.");
         }
         validateUser(userId);
@@ -207,6 +215,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
 
     private void validateUser(final long userId) {
         if (userDao.findById(userId).isEmpty()) {
+            LOGGER.warn("like action rejected: user not found id={}", userId);
             throw new IllegalArgumentException("User not found.");
         }
     }

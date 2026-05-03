@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
@@ -27,6 +26,16 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         final Review persisted = reviewDao.findById(result.getId()).orElseThrow();
+        assertEquals(1, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", result.getId()));
+        assertEquals(user.getId(), jdbcTemplate.queryForObject(
+                "SELECT user_id FROM reviews WHERE review_id = ?", Long.class, result.getId()
+        ));
+        assertEquals(car.getId(), jdbcTemplate.queryForObject(
+                "SELECT car_id FROM reviews WHERE review_id = ?", Long.class, result.getId()
+        ));
+        assertEquals(new BigDecimal("4.5"), jdbcTemplate.queryForObject(
+                "SELECT rating FROM reviews WHERE review_id = ?", BigDecimal.class, result.getId()
+        ));
         assertEquals(user.getId(), persisted.getUserId());
         assertEquals("user-review-create", persisted.getReviewerUsername());
         assertEquals(car.getId(), persisted.getCarId());
@@ -78,10 +87,61 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result.isPresent());
-        final Review persisted = reviewDao.findById(review.getId()).orElseThrow();
-        assertEquals("Updated title", persisted.getTitle());
-        assertEquals(new BigDecimal("1.5"), persisted.getRating());
-        assertEquals(false, persisted.getWouldRecommend());
+        assertEquals("Updated title", result.get().getTitle());
+        assertEquals("Updated title", jdbcTemplate.queryForObject(
+                "SELECT title FROM reviews WHERE review_id = ?", String.class, review.getId()
+        ));
+        assertEquals(new BigDecimal("1.5"), jdbcTemplate.queryForObject(
+                "SELECT rating FROM reviews WHERE review_id = ?", BigDecimal.class, review.getId()
+        ));
+        assertEquals(false, jdbcTemplate.queryForObject(
+                "SELECT would_recommend FROM reviews WHERE review_id = ?", Boolean.class, review.getId()
+        ));
+    }
+
+    @Test
+    public void shouldBindAnonymousReviewsToUserByEmailIgnoringCaseAndOnlyTouchingAnonymousRows() {
+        // Arrange
+        final User boundUser = createUser("review-bind");
+        final User otherUser = createUser("review-bind-other");
+        final Car car = createCar("review-bind");
+        jdbcTemplate.update(
+                "INSERT INTO reviews (user_id, reviewer_email, car_id, rating, title, body) "
+                        + "VALUES (NULL, ?, ?, ?, ?, ?)",
+                "  Reviewer@Example.com  ", car.getId(), new BigDecimal("3.5"), "Anonymous Review", "Anonymous body"
+        );
+        final long anonymousId = jdbcTemplate.queryForObject(
+                "SELECT review_id FROM reviews WHERE title = ?", Long.class, "Anonymous Review"
+        );
+        final Review alreadyAttributed = reviewDao.create(otherUser.getId(), car.getId(), new BigDecimal("4.0"),
+                "Attributed Review", "Attributed body", "owner", 2025, 12000, true);
+
+        // Exercise
+        final int result = reviewDao.bindReviewsToUserByEmail(boundUser.getId(), "reviewer@example.com");
+
+        // Assertions
+        assertEquals(1, result);
+        assertEquals(boundUser.getId(), jdbcTemplate.queryForObject(
+                "SELECT user_id FROM reviews WHERE review_id = ?", Long.class, anonymousId
+        ));
+        assertEquals(otherUser.getId(), jdbcTemplate.queryForObject(
+                "SELECT user_id FROM reviews WHERE review_id = ?", Long.class, alreadyAttributed.getId()
+        ));
+    }
+
+    @Test
+    public void shouldDeleteReviewByIdAndLeaveOtherReviewsUntouched() {
+        // Arrange
+        final Review deleted = createReview("delete-by-id");
+        final Review kept = createReview("keep-by-id");
+
+        // Exercise
+        final boolean result = reviewDao.delete(deleted.getId());
+
+        // Assertions
+        assertTrue(result);
+        assertEquals(0, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", deleted.getId()));
+        assertEquals(1, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", kept.getId()));
     }
 
     @Test
@@ -95,7 +155,7 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertEquals(1, result);
-        assertFalse(reviewDao.findById(deleted.getId()).isPresent());
-        assertTrue(reviewDao.findById(kept.getId()).isPresent());
+        assertEquals(0, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", deleted.getId()));
+        assertEquals(1, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", kept.getId()));
     }
 }

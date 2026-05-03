@@ -3,6 +3,8 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.CarDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +14,8 @@ import java.util.Optional;
 
 @Service
 public class BodyTypeServiceImpl implements BodyTypeService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BodyTypeServiceImpl.class);
 
     private final BodyTypeDao bodyTypeDao;
     private final CarDao carDao;
@@ -58,9 +62,11 @@ public class BodyTypeServiceImpl implements BodyTypeService {
     @Transactional
     public boolean deleteBodyType(final long id) {
         if (bodyTypeDao.findById(id).isEmpty()) {
+            LOGGER.warn("delete body type rejected: not found id={}", id);
             return false;
         }
         if (carDao.countByBodyTypeId(id) > 0) {
+            LOGGER.warn("delete body type rejected: cars still reference body type id={}", id);
             return false;
         }
         return bodyTypeDao.delete(id);

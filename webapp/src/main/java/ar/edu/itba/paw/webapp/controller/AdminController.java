@@ -22,6 +22,8 @@ import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.form.CarForm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -59,6 +61,8 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AdminController.class);
 
     private static final String TAB_CARS = "cars";
     private static final String TAB_BRANDS = "brands";
@@ -245,6 +249,8 @@ public class AdminController {
         }
 
         if (errors.hasErrors()) {
+            LOGGER.warn("car request approval rejected: validation errors requestId={} errorCount={}",
+                    requestId, errors.getErrorCount());
             return carRequestFormPage(pendingRequest, carForm, errors);
         }
 
@@ -253,9 +259,12 @@ public class AdminController {
             imagePayloads = requestImagePayloads(pendingRequest, retainedImageIds);
             imagePayloads.addAll(toImagePayloads(files));
         } catch (final IOException e) {
+            LOGGER.error("failed to read uploaded image for car request id={}", requestId, e);
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
 
+        LOGGER.info("approving car request id={} brandId={} bodyTypeId={}", requestId,
+                resolvedBrand.getId(), resolvedBodyType.getId());
         carRequestService.approvePendingRequest(
                 requestId,
                 resolvedBrand.getId(),
@@ -316,6 +325,8 @@ public class AdminController {
         }
 
         if (errors.hasErrors()) {
+            LOGGER.warn("car update rejected: validation errors carId={} errorCount={}",
+                    carId, errors.getErrorCount());
             return carEditFormPage(existingCar, carForm, errors);
         }
 
@@ -324,6 +335,7 @@ public class AdminController {
             imagePayloads = carImagePayloads(existingCar, retainedImageIds);
             imagePayloads.addAll(toImagePayloads(files));
         } catch (final IOException e) {
+            LOGGER.error("failed to read uploaded image for car id={}", carId, e);
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
 
@@ -346,6 +358,7 @@ public class AdminController {
         );
         if (updated.isPresent()) {
             carService.saveCarImages(carId, imagePayloads);
+            LOGGER.info("admin updated car id={}", carId);
         }
         return new ModelAndView("redirect:/reviews?carId=" + carId);
     }
@@ -353,6 +366,7 @@ public class AdminController {
     @RequestMapping(value = "/cars/{carId}/delete", method = RequestMethod.POST)
     public ModelAndView deleteCar(@PathVariable("carId") final long carId,
                                   @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin delete car id={}", carId);
         carService.deleteCar(carId);
         return redirectBackAfterDelete(referer);
     }
@@ -360,6 +374,7 @@ public class AdminController {
     @RequestMapping(value = "/requests/{requestId}/reject", method = RequestMethod.POST)
     public ModelAndView rejectRequest(@PathVariable("requestId") final long requestId,
                                       @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin reject car request id={}", requestId);
         carRequestService.rejectPendingRequest(requestId);
         return redirectBackToAdmin(referer);
     }
@@ -368,6 +383,7 @@ public class AdminController {
     public ModelAndView acceptBrandRequest(@PathVariable("requestId") final long requestId,
                                            @RequestParam(value = "name", required = false) final String name,
                                            @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin accept brand request id={} overrideName={}", requestId, name);
         brandRequestService.approvePendingRequest(requestId, name);
         return redirectBackToAdmin(referer);
     }
@@ -375,6 +391,7 @@ public class AdminController {
     @RequestMapping(value = "/brand-requests/{requestId}/reject", method = RequestMethod.POST)
     public ModelAndView rejectBrandRequest(@PathVariable("requestId") final long requestId,
                                            @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin reject brand request id={}", requestId);
         brandRequestService.rejectPendingRequest(requestId);
         return redirectBackToAdmin(referer);
     }
@@ -383,6 +400,7 @@ public class AdminController {
     public ModelAndView updateBrand(@PathVariable("brandId") final long brandId,
                                     @RequestParam("name") final String name,
                                     @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin update brand id={} name={}", brandId, name);
         brandService.updateBrand(brandId, name);
         return redirectBackToCatalog(referer);
     }
@@ -390,6 +408,7 @@ public class AdminController {
     @RequestMapping(value = "/brands/{brandId}/delete", method = RequestMethod.POST)
     public ModelAndView deleteBrand(@PathVariable("brandId") final long brandId,
                                     @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin delete brand id={}", brandId);
         brandService.deleteBrand(brandId);
         return redirectBackAfterDelete(referer);
     }
@@ -398,6 +417,7 @@ public class AdminController {
     public ModelAndView acceptBodyTypeRequest(@PathVariable("requestId") final long requestId,
                                               @RequestParam(value = "name", required = false) final String name,
                                               @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin accept body type request id={} overrideName={}", requestId, name);
         bodyTypeRequestService.approvePendingRequest(requestId, name);
         return redirectBackToAdmin(referer);
     }
@@ -405,6 +425,7 @@ public class AdminController {
     @RequestMapping(value = "/body-type-requests/{requestId}/reject", method = RequestMethod.POST)
     public ModelAndView rejectBodyTypeRequest(@PathVariable("requestId") final long requestId,
                                               @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin reject body type request id={}", requestId);
         bodyTypeRequestService.rejectPendingRequest(requestId);
         return redirectBackToAdmin(referer);
     }
@@ -413,6 +434,7 @@ public class AdminController {
     public ModelAndView updateBodyType(@PathVariable("bodyTypeId") final long bodyTypeId,
                                        @RequestParam("name") final String name,
                                        @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin update body type id={} name={}", bodyTypeId, name);
         bodyTypeService.updateBodyType(bodyTypeId, name);
         return redirectBackToCatalog(referer);
     }
@@ -420,6 +442,7 @@ public class AdminController {
     @RequestMapping(value = "/body-types/{bodyTypeId}/delete", method = RequestMethod.POST)
     public ModelAndView deleteBodyType(@PathVariable("bodyTypeId") final long bodyTypeId,
                                        @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin delete body type id={}", bodyTypeId);
         bodyTypeService.deleteBodyType(bodyTypeId);
         return redirectBackAfterDelete(referer);
     }
@@ -427,6 +450,7 @@ public class AdminController {
     @RequestMapping(value = "/admin-requests/{requestId}/accept", method = RequestMethod.POST)
     public ModelAndView acceptAdminRequest(@PathVariable("requestId") final long requestId,
                                            @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin accept admin-role request id={}", requestId);
         adminRequestService.approvePendingRequest(requestId);
         return redirectBackToAdmin(referer);
     }
@@ -434,6 +458,7 @@ public class AdminController {
     @RequestMapping(value = "/admin-requests/{requestId}/reject", method = RequestMethod.POST)
     public ModelAndView rejectAdminRequest(@PathVariable("requestId") final long requestId,
                                            @RequestHeader(value = "Referer", required = false) final String referer) {
+        LOGGER.info("admin reject admin-role request id={}", requestId);
         adminRequestService.rejectPendingRequest(requestId);
         return redirectBackToAdmin(referer);
     }

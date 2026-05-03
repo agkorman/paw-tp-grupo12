@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CarJdbcDaoTest extends AbstractPersistenceTest {
@@ -26,6 +25,16 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         final Car persisted = carDao.findById(result.getId()).orElseThrow();
+        assertEquals(1, countRows("SELECT COUNT(*) FROM cars WHERE car_id = ?", result.getId()));
+        assertEquals("M3", jdbcTemplate.queryForObject(
+                "SELECT model FROM cars WHERE car_id = ?", String.class, result.getId()
+        ));
+        assertEquals(473, jdbcTemplate.queryForObject(
+                "SELECT horsepower FROM cars WHERE car_id = ?", Integer.class, result.getId()
+        ));
+        assertEquals(new BigDecimal("76900.00"), jdbcTemplate.queryForObject(
+                "SELECT price_usd FROM cars WHERE car_id = ?", BigDecimal.class, result.getId()
+        ));
         assertEquals("BMW", persisted.getBrandName());
         assertEquals("Sedan", persisted.getBodyType());
         assertEquals("M3", persisted.getModel());
@@ -64,10 +73,16 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result.isPresent());
-        final Car persisted = carDao.findById(created.getId()).orElseThrow();
-        assertEquals("Updated Model", persisted.getModel());
-        assertEquals("hybrid", persisted.getFuelType());
-        assertEquals(new BigDecimal("52000.00"), persisted.getPriceUsd());
+        assertEquals("Updated Model", result.get().getModel());
+        assertEquals("Updated Model", jdbcTemplate.queryForObject(
+                "SELECT model FROM cars WHERE car_id = ?", String.class, created.getId()
+        ));
+        assertEquals("hybrid", jdbcTemplate.queryForObject(
+                "SELECT fuel_type FROM cars WHERE car_id = ?", String.class, created.getId()
+        ));
+        assertEquals(new BigDecimal("52000.00"), jdbcTemplate.queryForObject(
+                "SELECT price_usd FROM cars WHERE car_id = ?", BigDecimal.class, created.getId()
+        ));
     }
 
     @Test
@@ -80,9 +95,11 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result);
-        assertFalse(carDao.findById(created.getId()).isPresent());
-        assertEquals(0, carDao.countByBrandId(created.getBrandId()));
-        assertEquals(0, carDao.countByBodyTypeId(created.getBodyTypeId()));
+        assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE car_id = ?", created.getId()));
+        assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE brand_id = ?", created.getBrandId()));
+        assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE body_type_id = ?", created.getBodyTypeId()));
+        assertEquals(1, countRows("SELECT COUNT(*) FROM brands WHERE brand_id = ?", created.getBrandId()));
+        assertEquals(1, countRows("SELECT COUNT(*) FROM body_types WHERE body_type_id = ?", created.getBodyTypeId()));
     }
 
     @Test

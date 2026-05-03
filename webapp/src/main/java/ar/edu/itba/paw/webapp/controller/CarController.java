@@ -18,6 +18,8 @@ import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.form.CarForm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.CacheControl;
@@ -63,6 +65,8 @@ import java.util.stream.Collectors;
 
 @Controller
 public class CarController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CarController.class);
 
     private static final int FEATURED_REVIEW_COUNT = 3;
     private static final int MAX_IMAGE_COUNT = 5;
@@ -203,6 +207,8 @@ public class CarController {
         }
 
         if (errors.hasErrors()) {
+            LOGGER.warn("car request submission rejected: validation errors userId={} errorCount={}",
+                    currentUser.getId(), errors.getErrorCount());
             return "car-form.jsp";
         }
 
@@ -210,6 +216,7 @@ public class CarController {
         try {
             imagePayloads = toImagePayloads(files);
         } catch (final IOException e) {
+            LOGGER.error("failed to read uploaded image during car request creation userId={}", currentUser.getId(), e);
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
 
@@ -231,6 +238,8 @@ public class CarController {
                 carForm.getPriceUsd()
         );
         emailService.sendNewCarRequestNotification(carRequest, resolvedBrand.getName(), resolvedBodyType.getName());
+        LOGGER.info("submitted car request id={} userId={} brandId={} bodyTypeId={}",
+                carRequest.getId(), currentUser.getId(), resolvedBrand.getId(), resolvedBodyType.getId());
 
         return "redirect:/cars?submitted=true";
     }
@@ -269,6 +278,7 @@ public class CarController {
 
         carFavoriteService.setFavorite(currentUser.getId(), carId, favorite);
         final boolean favorited = carFavoriteService.isFavorited(currentUser.getId(), carId);
+        LOGGER.info("user id={} set favorite carId={} favorited={}", currentUser.getId(), carId, favorited);
         if (ControllerUtils.isAjaxRequest(requestedWith)) {
             return new ResponseEntity<String>(Boolean.toString(favorited), HttpStatus.OK);
         }
@@ -425,7 +435,9 @@ public class CarController {
 
         try {
             carService.saveCarImages(carId, toImagePayloads(selectedFiles));
+            LOGGER.info("uploaded {} image(s) for car id={}", selectedFiles.size(), carId);
         } catch (final IOException e) {
+            LOGGER.error("failed to read uploaded image for car id={}", carId, e);
             throw new IllegalStateException("Failed to read uploaded image.", e);
         }
 

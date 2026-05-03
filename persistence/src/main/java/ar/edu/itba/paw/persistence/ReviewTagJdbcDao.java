@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.ReviewTag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -20,6 +22,8 @@ import java.util.Set;
 
 @Repository
 public class ReviewTagJdbcDao implements ReviewTagDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReviewTagJdbcDao.class);
 
     private static final String TAG_SELECT =
             "SELECT tag_id, code, label_es, sentiment, dimension, created_at FROM review_tags ";
@@ -83,6 +87,9 @@ public class ReviewTagJdbcDao implements ReviewTagDao {
                     "INSERT INTO review_tag_assignments (review_id, tag_id) VALUES (?, ?)",
                     batchArgs
             );
+            LOGGER.info("replaced tag assignments for review id={} tagCount={}", reviewId, batchArgs.size());
+        } else {
+            LOGGER.info("cleared tag assignments for review id={}", reviewId);
         }
     }
 

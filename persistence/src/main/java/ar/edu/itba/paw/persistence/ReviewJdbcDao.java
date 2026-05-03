@@ -5,6 +5,8 @@ import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.ReviewTag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 
 @Repository
 public class ReviewJdbcDao implements ReviewDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReviewJdbcDao.class);
 
     private static final String REVIEW_SELECT =
             "SELECT r.review_id, r.user_id, r.reviewer_email, u.username AS reviewer_username, "
@@ -395,18 +399,23 @@ public class ReviewJdbcDao implements ReviewDao {
         params.put("would_recommend", wouldRecommend);
 
         long id = jdbcInsert.executeAndReturnKey(params).longValue();
+        LOGGER.info("created review id={} userId={} carId={} rating={}", id, userId, carId, rating);
         return findById(id).orElseThrow();
     }
 
     @Override
     public int bindReviewsToUserByEmail(final long userId, final String email) {
-        return jdbcTemplate.update(
+        final int bound = jdbcTemplate.update(
                 "UPDATE reviews SET user_id = ? "
                         + "WHERE user_id IS NULL AND reviewer_email IS NOT NULL "
                         + "AND LOWER(BTRIM(reviewer_email)) = LOWER(?)",
                 userId,
                 email
         );
+        if (bound > 0) {
+            LOGGER.info("bound {} reviews to user id={} email={}", bound, userId, email);
+        }
+        return bound;
     }
 
     @Override
@@ -420,16 +429,31 @@ public class ReviewJdbcDao implements ReviewDao {
                         + "updated_at = CURRENT_TIMESTAMP WHERE review_id = ?",
                 carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend, id
         );
-        return updated > 0 ? findById(id) : Optional.empty();
+        if (updated == 0) {
+            LOGGER.warn("review update affected 0 rows id={}", id);
+            return Optional.empty();
+        }
+        LOGGER.info("updated review id={} rating={}", id, rating);
+        return findById(id);
     }
 
     @Override
     public boolean delete(long id) {
-        return jdbcTemplate.update("DELETE FROM reviews WHERE review_id = ?", id) > 0;
+        final boolean deleted = jdbcTemplate.update("DELETE FROM reviews WHERE review_id = ?", id) > 0;
+        if (deleted) {
+            LOGGER.info("deleted review id={}", id);
+        } else {
+            LOGGER.warn("review delete affected 0 rows id={}", id);
+        }
+        return deleted;
     }
 
     @Override
     public int deleteByCarId(final long carId) {
-        return jdbcTemplate.update("DELETE FROM reviews WHERE car_id = ?", carId);
+        final int deleted = jdbcTemplate.update("DELETE FROM reviews WHERE car_id = ?", carId);
+        if (deleted > 0) {
+            LOGGER.info("deleted {} reviews for car id={}", deleted, carId);
+        }
+        return deleted;
     }
 }

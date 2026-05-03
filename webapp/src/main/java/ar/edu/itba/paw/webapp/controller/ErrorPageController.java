@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 
 @Controller
 public class ErrorPageController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ErrorPageController.class);
 
     @RequestMapping("/error/400")
     public ModelAndView badRequest(final HttpServletRequest request, final HttpServletResponse response) {
@@ -66,6 +70,12 @@ public class ErrorPageController {
         final Integer attrStatus = (Integer) request.getAttribute("javax.servlet.error.status_code");
         final int status = attrStatus == null || attrStatus < 400 ? fallbackStatus : attrStatus;
 
+        final String requestUri = (String) request.getAttribute("javax.servlet.error.request_uri");
+        if (status >= 500) {
+            LOGGER.error("rendering error page status={} uri={}", status, requestUri);
+        } else {
+            LOGGER.warn("rendering error page status={} uri={}", status, requestUri);
+        }
         final ModelAndView mav = new ModelAndView("error.jsp");
         response.setStatus(status);
         final HttpStatus httpStatus = HttpStatus.resolve(status);

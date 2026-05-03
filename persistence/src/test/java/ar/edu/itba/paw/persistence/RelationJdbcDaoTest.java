@@ -23,6 +23,10 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result);
+        assertEquals(1, countRows(
+                "SELECT COUNT(*) FROM car_favorites WHERE user_id = ? AND car_id = ?",
+                user.getId(), car.getId()
+        ));
         assertTrue(carFavoriteDao.isFavorited(user.getId(), car.getId()));
         assertEquals(1, carFavoriteDao.countFavoriteCars(user.getId()));
         assertEquals(car.getId(), carFavoriteDao.findFavoriteCars(user.getId()).get(0).getId());
@@ -40,7 +44,10 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertFalse(result);
-        assertEquals(1, carFavoriteDao.countFavoriteCars(user.getId()));
+        assertEquals(1, countRows(
+                "SELECT COUNT(*) FROM car_favorites WHERE user_id = ? AND car_id = ?",
+                user.getId(), car.getId()
+        ));
     }
 
     @Test
@@ -55,8 +62,10 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result);
-        assertFalse(carFavoriteDao.isFavorited(user.getId(), car.getId()));
-        assertEquals(0, carFavoriteDao.countFavoriteCars(user.getId()));
+        assertEquals(0, countRows(
+                "SELECT COUNT(*) FROM car_favorites WHERE user_id = ? AND car_id = ?",
+                user.getId(), car.getId()
+        ));
     }
 
     @Test
@@ -85,6 +94,10 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result);
+        assertEquals(1, countRows(
+                "SELECT COUNT(*) FROM user_follows WHERE follower_id = ? AND followed_id = ?",
+                follower.getId(), followed.getId()
+        ));
         assertTrue(userFollowDao.isFollowing(follower.getId(), followed.getId()));
         assertEquals(1, userFollowDao.countFollowing(follower.getId()));
         assertEquals(1, userFollowDao.countFollowers(followed.getId()));
@@ -104,7 +117,10 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertFalse(result);
-        assertEquals(1, userFollowDao.countFollowing(follower.getId()));
+        assertEquals(1, countRows(
+                "SELECT COUNT(*) FROM user_follows WHERE follower_id = ? AND followed_id = ?",
+                follower.getId(), followed.getId()
+        ));
     }
 
     @Test
@@ -119,8 +135,9 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result);
-        assertFalse(userFollowDao.isFollowing(follower.getId(), followed.getId()));
-        assertEquals(0, userFollowDao.countFollowing(follower.getId()));
-        assertEquals(0, userFollowDao.countFollowers(followed.getId()));
+        assertEquals(0, countRows(
+                "SELECT COUNT(*) FROM user_follows WHERE follower_id = ? AND followed_id = ?",
+                follower.getId(), followed.getId()
+        ));
     }
 }

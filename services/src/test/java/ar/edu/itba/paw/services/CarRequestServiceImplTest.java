@@ -125,9 +125,10 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldReturnEmptyListWhenStatusFilterIsBlank() {
         // Arrange
+        final String blankStatus = "  ";
 
         // Exercise
-        final List<CarRequest> result = carRequestService.getCarRequestsByStatus("  ");
+        final List<CarRequest> result = carRequestService.getCarRequestsByStatus(blankStatus);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -136,9 +137,10 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldReturnZeroCountWhenStatusFilterIsNull() {
         // Arrange
+        final String nullStatus = null;
 
         // Exercise
-        final long result = carRequestService.countCarRequestsByStatus(null);
+        final long result = carRequestService.countCarRequestsByStatus(nullStatus);
 
         // Assertions
         assertEquals(0L, result);

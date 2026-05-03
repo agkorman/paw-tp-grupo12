@@ -5,6 +5,8 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BodyTypeRequestDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +15,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BodyTypeRequestServiceImpl.class);
 
     private final BodyTypeRequestDao bodyTypeRequestDao;
     private final BodyTypeDao bodyTypeDao;
@@ -70,6 +75,7 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
         if (submittedByUserId == null && (submitterEmail == null || submitterEmail.isBlank())) {
             throw new IllegalArgumentException("A submitter user id or email is required for body type requests.");
         }
+        LOGGER.info("submitting body type request name={} userId={}", normalizedName, submittedByUserId);
         return bodyTypeRequestDao.create(submittedByUserId, submitterEmail, normalizedName, normalizedComments, STATUS_PENDING);
     }
 
@@ -84,16 +90,19 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
     public boolean approvePendingRequest(final long id, final String overrideName) {
         final BodyTypeRequest request = bodyTypeRequestDao.findById(id).orElse(null);
         if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            LOGGER.warn("approve body type request rejected: not found or not pending id={}", id);
             return false;
         }
 
         final String resolvedName = StringUtils.normalize(overrideName);
         final String nameToCreate = resolvedName != null ? resolvedName : request.getName();
         if (nameToCreate == null || nameToCreate.isBlank()) {
+            LOGGER.warn("approve body type request rejected: blank name id={}", id);
             return false;
         }
 
         if (bodyTypeDao.findByName(nameToCreate).isPresent()) {
+            LOGGER.warn("approve body type request rejected: name already exists id={} name={}", id, nameToCreate);
             return false;
         }
 
@@ -104,6 +113,7 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
 
         bodyTypeDao.create(nameToCreate);
         sendRequestApprovedNotification(request, nameToCreate);
+        LOGGER.info("approved body type request id={} createdName={}", id, nameToCreate);
         return true;
     }
 
@@ -112,12 +122,14 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
     public boolean rejectPendingRequest(final long id) {
         final BodyTypeRequest request = bodyTypeRequestDao.findById(id).orElse(null);
         if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            LOGGER.warn("reject body type request rejected: not found or not pending id={}", id);
             return false;
         }
 
         final boolean statusUpdated = bodyTypeRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
         if (statusUpdated) {
             sendRequestRejectedNotification(request);
+            LOGGER.info("rejected body type request id={}", id);
         }
         return statusUpdated;
     }

@@ -67,10 +67,11 @@ public class AdminRequestServiceImplTest {
     @Test
     public void shouldRejectCreateWhenMotivationIsBlank() {
         // Arrange
+        final String blankMotivation = "  ";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> adminRequestService.createPendingRequest(USER_ID, EMAIL, "  ", BIO, JUSTIFICATION));
+                () -> adminRequestService.createPendingRequest(USER_ID, EMAIL, blankMotivation, BIO, JUSTIFICATION));
 
         // Assertions
         assertEquals("Motivation is required for admin requests.", ex.getMessage());
@@ -79,10 +80,11 @@ public class AdminRequestServiceImplTest {
     @Test
     public void shouldRejectCreateWhenBioIsBlank() {
         // Arrange
+        final String blankBio = "  ";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> adminRequestService.createPendingRequest(USER_ID, EMAIL, MOTIVATION, "  ", JUSTIFICATION));
+                () -> adminRequestService.createPendingRequest(USER_ID, EMAIL, MOTIVATION, blankBio, JUSTIFICATION));
 
         // Assertions
         assertEquals("Bio is required for admin requests.", ex.getMessage());
@@ -91,10 +93,11 @@ public class AdminRequestServiceImplTest {
     @Test
     public void shouldRejectCreateWhenJustificationIsBlank() {
         // Arrange
+        final String blankJustification = "  ";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> adminRequestService.createPendingRequest(USER_ID, EMAIL, MOTIVATION, BIO, "  "));
+                () -> adminRequestService.createPendingRequest(USER_ID, EMAIL, MOTIVATION, BIO, blankJustification));
 
         // Assertions
         assertEquals("Justification is required for admin requests.", ex.getMessage());
@@ -185,9 +188,10 @@ public class AdminRequestServiceImplTest {
     @Test
     public void shouldReturnEmptyListWhenStatusFilterIsBlank() {
         // Arrange
+        final String blankStatus = "   ";
 
         // Exercise
-        final List<AdminRequest> result = adminRequestService.getAdminRequestsByStatus("   ");
+        final List<AdminRequest> result = adminRequestService.getAdminRequestsByStatus(blankStatus);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -196,9 +200,11 @@ public class AdminRequestServiceImplTest {
     @Test
     public void shouldReturnEmptyPageWhenStatusFilterIsBlankForPaged() {
         // Arrange
+        final String blankStatus = "  ";
+        final int requestedPage = 3;
 
         // Exercise
-        final Page<AdminRequest> result = adminRequestService.getAdminRequestsByStatus("  ", 3);
+        final Page<AdminRequest> result = adminRequestService.getAdminRequestsByStatus(blankStatus, requestedPage);
 
         // Assertions
         assertTrue(result.getItems().isEmpty());
@@ -208,9 +214,11 @@ public class AdminRequestServiceImplTest {
     @Test
     public void shouldClampNegativePageToOneWhenStatusIsBlank() {
         // Arrange
+        final String nullStatus = null;
+        final int requestedPage = -5;
 
         // Exercise
-        final Page<AdminRequest> result = adminRequestService.getAdminRequestsByStatus(null, -5);
+        final Page<AdminRequest> result = adminRequestService.getAdminRequestsByStatus(nullStatus, requestedPage);
 
         // Assertions
         assertEquals(1, result.getPageNumber());
@@ -220,9 +228,10 @@ public class AdminRequestServiceImplTest {
     @Test
     public void shouldReturnZeroCountWhenStatusFilterIsBlank() {
         // Arrange
+        final String nullStatus = null;
 
         // Exercise
-        final long result = adminRequestService.countAdminRequestsByStatus(null);
+        final long result = adminRequestService.countAdminRequestsByStatus(nullStatus);
 
         // Assertions
         assertEquals(0L, result);

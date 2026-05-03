@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.ReviewReply;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -21,6 +23,8 @@ import java.util.Optional;
 
 @Repository
 public class ReviewReplyJdbcDao implements ReviewReplyDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReviewReplyJdbcDao.class);
 
     private static final String REPLY_SELECT =
             "SELECT rr.reply_id, rr.review_id, rr.user_id, u.username AS author_username, "
@@ -102,6 +106,7 @@ public class ReviewReplyJdbcDao implements ReviewReplyDao {
         params.put("body", body);
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
+        LOGGER.info("created reply id={} reviewId={} userId={}", id, reviewId, userId);
         return findById(id).orElseThrow();
     }
 
@@ -123,6 +128,12 @@ public class ReviewReplyJdbcDao implements ReviewReplyDao {
 
     @Override
     public boolean delete(final long id) {
-        return jdbcTemplate.update("DELETE FROM review_replies WHERE reply_id = ?", id) > 0;
+        final boolean deleted = jdbcTemplate.update("DELETE FROM review_replies WHERE reply_id = ?", id) > 0;
+        if (deleted) {
+            LOGGER.info("deleted reply id={}", id);
+        } else {
+            LOGGER.warn("reply delete affected 0 rows id={}", id);
+        }
+        return deleted;
     }
 }

@@ -2,6 +2,8 @@ package ar.edu.itba.paw.webapp.auth;
 
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,6 +13,8 @@ import java.util.Collections;
 import java.util.Locale;
 
 public class PawUserDetailsService implements UserDetailsService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(PawUserDetailsService.class);
 
     private static final String ROLE_PREFIX = "ROLE_";
 
@@ -22,8 +26,12 @@ public class PawUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(final String email) throws UsernameNotFoundException {
+        LOGGER.debug("loading user details for email={}", email);
         final User user = userService.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("No user found for email " + email));
+                .orElseThrow(() -> {
+                    LOGGER.warn("no user found for email={}", email);
+                    return new UsernameNotFoundException("No user found for email " + email);
+                });
 
         return new AuthenticatedUser(
                 user.getId(),

@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Brand;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -15,6 +17,8 @@ import java.util.Optional;
 
 @Repository
 public class BrandJdbcDao implements BrandDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrandJdbcDao.class);
 
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
@@ -64,6 +68,7 @@ public class BrandJdbcDao implements BrandDao {
         params.put("name", name);
 
         long id = jdbcInsert.executeAndReturnKey(params).longValue();
+        LOGGER.info("created brand id={} name={}", id, name);
         return findById(id).orElseThrow();
     }
 
@@ -74,13 +79,21 @@ public class BrandJdbcDao implements BrandDao {
                 name, id
         );
         if (updated == 0) {
+            LOGGER.warn("brand update affected 0 rows id={}", id);
             return Optional.empty();
         }
+        LOGGER.info("updated brand id={} name={}", id, name);
         return findById(id);
     }
 
     @Override
     public boolean delete(final long id) {
-        return jdbcTemplate.update("DELETE FROM brands WHERE brand_id = ?", id) > 0;
+        final boolean deleted = jdbcTemplate.update("DELETE FROM brands WHERE brand_id = ?", id) > 0;
+        if (deleted) {
+            LOGGER.info("deleted brand id={}", id);
+        } else {
+            LOGGER.warn("brand delete affected 0 rows id={}", id);
+        }
+        return deleted;
     }
 }

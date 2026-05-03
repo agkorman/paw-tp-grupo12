@@ -1,9 +1,12 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -14,7 +17,10 @@ import java.util.Optional;
 import java.util.Set;
 
 @Service
+@Transactional(readOnly = true)
 public class WeeklyDigestServiceImpl implements WeeklyDigestService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(WeeklyDigestServiceImpl.class);
 
     private static final ZoneId DIGEST_ZONE = ZoneId.of("America/Argentina/Buenos_Aires");
 
@@ -48,12 +54,15 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
     @Scheduled(cron = "0 0 23 * * SUN", zone = "America/Argentina/Buenos_Aires")
     public void sendWeeklyDigest() {
         final LocalDateTime since = LocalDateTime.now(DIGEST_ZONE).minusDays(7);
+        LOGGER.info("starting weekly digest since={}", since);
 
         sendModeratorDigest();
 
-        for (final User user : userService.getAllUsers()) {
+        final List<User> users = userService.getAllUsers();
+        for (final User user : users) {
             sendUserDigest(user, since);
         }
+        LOGGER.info("weekly digest completed userCount={}", users.size());
     }
 
     private void sendModeratorDigest() {

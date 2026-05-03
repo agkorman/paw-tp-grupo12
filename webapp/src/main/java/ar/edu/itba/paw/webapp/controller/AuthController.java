@@ -2,6 +2,8 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -27,6 +29,7 @@ import java.util.regex.Pattern;
 @Controller
 public class AuthController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
     private static final int USERNAME_MAX_LENGTH = 50;
     private static final int EMAIL_MAX_LENGTH = 100;
     private static final int PASSWORD_MIN_LENGTH = 8;
@@ -104,14 +107,19 @@ public class AuthController {
         try {
             final String validationError = validateRegistration(normalizedUsername, normalizedEmail, password, confirmPassword);
             if (validationError != null) {
+                LOGGER.warn("registration rejected email={} reason={}", normalizedEmail, validationError);
                 return registerFormWithError(validationError, normalizedUsername, normalizedEmail);
             }
             userService.createUser(normalizedUsername, normalizedEmail, password);
+            LOGGER.info("registered new user email={} username={}", normalizedEmail, normalizedUsername);
         } catch (final IllegalArgumentException e) {
+            LOGGER.warn("registration rejected email={} reason={}", normalizedEmail, e.getMessage());
             return registerFormWithError(e.getMessage(), normalizedUsername, normalizedEmail);
         } catch (final DataIntegrityViolationException e) {
+            LOGGER.warn("registration rejected: integrity violation email={}", normalizedEmail);
             return registerFormWithError("Ese usuario o email ya está registrado.", normalizedUsername, normalizedEmail);
         } catch (final DataAccessException e) {
+            LOGGER.error("Database error while creating user {}", normalizedEmail, e);
             return registerFormWithError("No pudimos crear la cuenta en este momento. Intentá nuevamente.", normalizedUsername, normalizedEmail);
         }
 
@@ -132,6 +140,7 @@ public class AuthController {
             SECURITY_CONTEXT_REPOSITORY.saveContext(context, request, response);
             return true;
         } catch (final AuthenticationException e) {
+            LOGGER.warn("auto-login failed after registration email={}", email, e);
             return false;
         }
     }

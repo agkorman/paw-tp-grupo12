@@ -12,6 +12,27 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class UserJdbcDaoTest extends AbstractPersistenceTest {
 
     @Test
+    public void shouldCreateUserAndPersistFields() {
+        // Arrange
+        final String username = "created-user";
+        final String email = "created@example.com";
+        final String role = "admin";
+
+        // Exercise
+        final User result = userDao.create(username, email, "password", role);
+
+        // Assertions
+        assertEquals(username, result.getUsername());
+        assertEquals(1, countRows("SELECT COUNT(*) FROM users WHERE user_id = ?", result.getId()));
+        assertEquals(email, jdbcTemplate.queryForObject(
+                "SELECT email FROM users WHERE user_id = ?", String.class, result.getId()
+        ));
+        assertEquals(role, jdbcTemplate.queryForObject(
+                "SELECT role FROM users WHERE user_id = ?", String.class, result.getId()
+        ));
+    }
+
+    @Test
     public void shouldFindUserByEmailIgnoringCaseWhenUserExists() {
         // Arrange
         final User created = userDao.create("alice", "Alice@Example.com", "password", "user");
@@ -35,7 +56,9 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result);
-        assertEquals("admin", userDao.findById(created.getId()).orElseThrow().getRole());
+        assertEquals("admin", jdbcTemplate.queryForObject(
+                "SELECT role FROM users WHERE user_id = ?", String.class, created.getId()
+        ));
     }
 
     @Test
@@ -62,6 +85,9 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertFalse(result);
-        assertEquals(1, userDao.findAll().size());
+        assertEquals(1, countRows("SELECT COUNT(*) FROM users"));
+        assertEquals("user", jdbcTemplate.queryForObject(
+                "SELECT role FROM users WHERE email = ?", String.class, "existing@example.com"
+        ));
     }
 }

@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,8 +17,10 @@ import java.util.Locale;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String DEFAULT_ROLE = "user";
     private static final List<String> MODERATOR_EMAIL_ROLES = Arrays.asList("moderator", "admin");
 
@@ -86,6 +90,7 @@ public class UserServiceImpl implements UserService {
         );
         reviewDao.bindReviewsToUserByEmail(user.getId(), normalizedEmail);
         carRequestDao.bindRequestsToUserByEmail(user.getId(), normalizedEmail);
+        LOGGER.info("Created user id={} username={} role={}", user.getId(), normalizedUsername, DEFAULT_ROLE);
         return user;
     }
 

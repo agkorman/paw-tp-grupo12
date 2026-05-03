@@ -15,6 +15,8 @@ import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +39,8 @@ import java.util.stream.Collectors;
 
 @Controller
 public class ProfileController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProfileController.class);
 
     private static final String TAB_REVIEWS = "reviews";
     private static final String TAB_FAVORITES = "favorites";
@@ -105,6 +109,7 @@ public class ProfileController {
             return new ModelAndView("redirect:/login");
         }
         if (currentUser.getId() == userId) {
+            LOGGER.warn("follow toggle rejected: self-follow attempt userId={}", userId);
             if (ajax) {
                 return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
             }
@@ -119,8 +124,10 @@ public class ProfileController {
         } else {
             userFollowService.followUser(currentUser.getId(), userId);
         }
+        final boolean following = userFollowService.isFollowing(currentUser.getId(), userId);
+        LOGGER.info("user id={} toggled follow targetUserId={} following={}",
+                currentUser.getId(), userId, following);
         if (ajax) {
-            final boolean following = userFollowService.isFollowing(currentUser.getId(), userId);
             final long followerCount = userFollowService.countFollowers(userId);
             return new ResponseEntity<String>(following + "|" + followerCount, HttpStatus.OK);
         }

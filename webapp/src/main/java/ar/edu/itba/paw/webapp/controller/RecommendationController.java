@@ -8,6 +8,8 @@ import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.RecommendationService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.form.RecommendationForm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.stereotype.Controller;
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
 
 @Controller
 public class RecommendationController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RecommendationController.class);
 
     private static final int DEFAULT_LIMIT = 5;
 
@@ -92,6 +96,7 @@ public class RecommendationController {
                 .map(BodyType::getName)
                 .anyMatch(bodyType::equals);
         if (!exists) {
+            LOGGER.warn("recommendation rejected: invalid body type name={}", bodyType);
             errors.rejectValue("bodyType", "recommend.bodyType.invalid", "Tipo de carrocería inválido.");
         }
     }

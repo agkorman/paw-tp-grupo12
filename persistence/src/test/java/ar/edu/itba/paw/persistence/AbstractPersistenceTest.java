@@ -95,4 +95,8 @@ abstract class AbstractPersistenceTest {
         );
         return jdbcTemplate.queryForObject("SELECT tag_id FROM review_tags WHERE code = ?", Short.class, code);
     }
+
+    protected int countRows(final String sql, final Object... args) {
+        return jdbcTemplate.queryForObject(sql, Integer.class, args);
+    }
 }

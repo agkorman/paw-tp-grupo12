@@ -4,6 +4,8 @@ import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.BodyTypeRequestService;
 import ar.edu.itba.paw.services.BrandRequestService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,6 +22,8 @@ import java.net.URI;
 
 @Controller
 public class CatalogRequestController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CatalogRequestController.class);
 
     private final BrandRequestService brandRequestService;
     private final BodyTypeRequestService bodyTypeRequestService;
@@ -48,9 +52,11 @@ public class CatalogRequestController {
             return new ModelAndView("redirect:/login");
         }
         if (name == null || name.isBlank()) {
+            LOGGER.warn("brand request rejected: blank name userId={}", currentUser.getId());
             return redirectBack(referer);
         }
         brandRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
+        LOGGER.info("user id={} submitted brand request name={}", currentUser.getId(), name);
         return redirectToCatalog("brand");
     }
 
@@ -63,9 +69,11 @@ public class CatalogRequestController {
             return new ModelAndView("redirect:/login");
         }
         if (name == null || name.isBlank()) {
+            LOGGER.warn("body type request rejected: blank name userId={}", currentUser.getId());
             return redirectBack(referer);
         }
         bodyTypeRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
+        LOGGER.info("user id={} submitted body type request name={}", currentUser.getId(), name);
         return redirectToCatalog("body-type");
     }
 
@@ -81,13 +89,16 @@ public class CatalogRequestController {
         if (motivation == null || motivation.isBlank()
                 || bio == null || bio.isBlank()
                 || justification == null || justification.isBlank()) {
+            LOGGER.warn("admin request rejected: missing fields userId={}", currentUser.getId());
             return redirectBack(referer);
         }
         if (adminRequestService.hasPendingRequest(currentUser.getId())) {
+            LOGGER.warn("admin request rejected: already has pending userId={}", currentUser.getId());
             return redirectBack(referer);
         }
         adminRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(),
                 motivation, bio, justification);
+        LOGGER.info("user id={} submitted admin moderator request", currentUser.getId());
         return redirectBack(referer, "moderator");
     }
 

@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.webapp.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -45,6 +47,8 @@ import java.util.concurrent.Executor;
 @ComponentScan({ "ar.edu.itba.paw.webapp.controller", "ar.edu.itba.paw.services", "ar.edu.itba.paw.persistence" })
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebConfig.class);
 
     private static final String DB_PROPERTIES_RESOURCE = "db.properties";
     private static final String MAIL_PROPERTIES_RESOURCE = "mail.properties";
@@ -288,6 +292,7 @@ public class WebConfig implements WebMvcConfigurer {
         try (InputStream inputStream = resource.getInputStream()) {
             properties.load(inputStream);
         } catch (final IOException e) {
+            LOGGER.error("failed to load classpath properties resource={}", resourceName, e);
             throw new IllegalStateException("Failed to load " + resourceName, e);
         }
         return properties;
