@@ -165,8 +165,15 @@
     </main>
 
     <pa:auth-required-modal/>
+    <c:choose>
+        <c:when test="${not empty param.reviewCreated}">
+            <pa:toast messageCode="review.create.toast.success"/>
+        </c:when>
+        <c:otherwise>
+            <pa:toast/>
+        </c:otherwise>
+    </c:choose>
     <sec:authorize access="hasRole('ADMIN')">
-        <pa:toast/>
         <pa:review-hide-modal/>
         <pa:confirmation-modal id="deleteReviewConfirmModal"
                                titleCode="review.delete.title"
@@ -183,12 +190,12 @@
     <script src="<c:url value='/js/review-anchor-highlight.js?v=1'/>"></script>
     <script src="<c:url value='/js/review-tag-chips.js'/>" defer></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
+    <script src="<c:url value='/js/toast.js'/>"></script>
     <sec:authorize access="hasRole('ADMIN')">
         <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
-        <script src="<c:url value='/js/toast.js'/>"></script>
         <script src="<c:url value='/js/review-moderation.js'/>"></script>
         <script src="<c:url value='/js/confirmation-modal.js?v=1'/>"></script>
-        <script src="<c:url value='/js/review-delete.js?v=1'/>"></script>
+        <script src="<c:url value='/js/review-delete.js?v=2'/>"></script>
     </sec:authorize>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <pa:footer/>

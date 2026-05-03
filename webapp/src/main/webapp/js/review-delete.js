@@ -45,9 +45,7 @@
                 removeReviewCard(form);
                 if (window.PawToast) { window.PawToast.show(successMsg, 'success'); }
             } else {
-                return response.text().then(function (body) {
-                    if (window.PawToast) { window.PawToast.show(body || errorMsg, 'error'); }
-                });
+                if (window.PawToast) { window.PawToast.show(errorMsg, 'error'); }
             }
         }).catch(function () {
             if (window.PawToast) { window.PawToast.show(errorMsg, 'error'); }

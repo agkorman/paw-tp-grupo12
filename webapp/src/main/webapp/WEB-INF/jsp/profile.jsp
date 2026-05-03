@@ -337,7 +337,7 @@
         <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
     </c:if>
     <script src="<c:url value='/js/toast.js'/>"></script>
-    <script src="<c:url value='/js/review-delete.js?v=1'/>"></script>
+    <script src="<c:url value='/js/review-delete.js?v=2'/>"></script>
     <pa:footer/>
 </body>
 </html>

@@ -200,7 +200,7 @@ public class CarReviewController {
         }
 
         rejectInvalidReviewFields(errors, reviewForm.getRating(), reviewForm.getOwnershipStatus(),
-                reviewForm.getModelYear(), reviewForm.getMileageKm());
+                reviewForm.getMileageKm());
 
         if (errors.hasErrors()) {
             LOGGER.warn("create review rejected: validation errors carId={} userId={} errorCount={}",
@@ -217,7 +217,7 @@ public class CarReviewController {
                     reviewForm.getTitle(),
                     reviewForm.getBody(),
                     normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                    reviewForm.getModelYear(),
+                    null,
                     reviewForm.getMileageKm(),
                     reviewForm.getWouldRecommend(),
                     reviewForm.getTagIds());
@@ -230,7 +230,7 @@ public class CarReviewController {
             return "review-form.jsp";
         }
 
-        return "redirect:/reviews?carId=" + car.getId();
+        return "redirect:/reviews?carId=" + car.getId() + "&reviewCreated=1";
     }
 
     private ModelAndView carReviewPage(final long carId, final String sort, final String error,
@@ -394,7 +394,7 @@ public class CarReviewController {
                         "El auto referenciado no existe."));
         reviewForm.setCarId(existingReview.getCarId());
         rejectInvalidReviewFields(errors, reviewForm.getRating(), reviewForm.getOwnershipStatus(),
-                reviewForm.getModelYear(), reviewForm.getMileageKm());
+                reviewForm.getMileageKm());
 
         if (errors.hasErrors()) {
             model.addAttribute("selectedCar", car);
@@ -411,7 +411,7 @@ public class CarReviewController {
                     reviewForm.getTitle(),
                     reviewForm.getBody(),
                     normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                    reviewForm.getModelYear(),
+                    null,
                     reviewForm.getMileageKm(),
                     reviewForm.getWouldRecommend(),
                     reviewForm.getTagIds()
@@ -629,7 +629,11 @@ public class CarReviewController {
         if (review == null) {
             throw new ResourceNotFoundException();
         }
-        if (currentUser == null || review.getUserId() == null || !review.getUserId().equals(currentUser.getId())) {
+        if (currentUser == null) {
+            throw new ForbiddenException();
+        }
+        final boolean isOwner = review.getUserId() != null && review.getUserId().equals(currentUser.getId());
+        if (!isOwner && !isAdmin(currentUser)) {
             throw new ForbiddenException();
         }
     }
@@ -698,8 +702,7 @@ public class CarReviewController {
     }
 
     private void rejectInvalidReviewFields(final BindingResult errors, final BigDecimal rating,
-                                           final String ownershipStatus, final Integer modelYear,
-                                           final Integer mileageKm) {
+                                           final String ownershipStatus, final Integer mileageKm) {
         if (rating != null && rating.multiply(RATING_STEP_DOUBLED).remainder(BigDecimal.ONE).signum() != 0) {
             errors.rejectValue("rating", "rating.step", "La puntuación debe ser múltiplo de 0,5.");
         }
@@ -707,19 +710,6 @@ public class CarReviewController {
         final String ownership = ownershipStatus == null ? "" : ownershipStatus;
         if (!ALLOWED_OWNERSHIP_STATUSES.contains(ownership)) {
             errors.rejectValue("ownershipStatus", "ownership.invalid", "Estado de propiedad no válido.");
-        }
-
-        if (modelYear == null) {
-            if (!errors.hasFieldErrors("modelYear")) {
-                errors.rejectValue("modelYear", "modelYear.required", "El año del modelo es obligatorio.");
-            }
-        } else {
-            final int minModelYear = 1886;
-            final int maxModelYear = 2100;
-            if (modelYear < minModelYear || modelYear > maxModelYear) {
-                errors.rejectValue("modelYear", "modelYear.range",
-                        "Ingresá un año entre " + minModelYear + " y " + maxModelYear + ".");
-            }
         }
 
         if (mileageKm == null && !errors.hasFieldErrors("mileageKm")) {
@@ -748,7 +738,6 @@ public class CarReviewController {
         form.setTitle(review.getTitle());
         form.setBody(review.getBody());
         form.setOwnershipStatus(review.getOwnershipStatus());
-        form.setModelYear(review.getModelYear());
         form.setMileageKm(review.getMileageKm());
         form.setWouldRecommend(review.getWouldRecommend());
         form.setTagIds(review.getTags()

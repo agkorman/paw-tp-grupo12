@@ -30,7 +30,6 @@
     <c:set var="reviewFormCancelUrl" value="${editMode ? profileUrl : reviewCancelUrl}"/>
     <spring:message var="reviewTitlePlaceholder" code="review.form.placeholder.title"/>
     <spring:message var="reviewBodyPlaceholder" code="review.form.placeholder.body"/>
-    <spring:message var="reviewYearPlaceholder" code="review.form.placeholder.year"/>
     <spring:message var="reviewMileagePlaceholder" code="review.form.placeholder.mileage"/>
 
     <main class="form-page">
@@ -128,12 +127,6 @@
                                        required="required"
                                        placeholder="${reviewBodyPlaceholder}"/>
                         <form:errors path="body" cssClass="form-error" element="span"/>
-                    </div>
-                    <div class="review-modal-field">
-                        <label for="modalModelYear"><spring:message code="review.form.modelYear"/></label>
-                        <form:input id="modalModelYear" path="modelYear" type="text" inputmode="numeric"
-                                    maxlength="4" required="required" placeholder="${reviewYearPlaceholder}"/>
-                        <form:errors path="modelYear" cssClass="form-error" element="span"/>
                     </div>
                     <div class="review-modal-field">
                         <label for="modalMileageKm"><spring:message code="review.form.mileage"/></label>
