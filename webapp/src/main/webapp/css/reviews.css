@@ -51,6 +51,7 @@
 
 .review-detail-layout {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: stretch;
 }
 
 .review-media-column,
@@ -59,6 +60,32 @@
     gap: var(--spacing-8);
     align-content: start;
     min-width: 0;
+}
+
+.review-detail-layout .selected-car-panel {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.review-description-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-6);
+    background: var(--surface-container-low);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-8) var(--spacing-6);
+}
+
+.review-description-content {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 0.375rem;
+}
+
+.review-description-bar .add-review-btn {
+    align-self: center;
+    flex-shrink: 0;
 }
 
 .review-form-panel,
