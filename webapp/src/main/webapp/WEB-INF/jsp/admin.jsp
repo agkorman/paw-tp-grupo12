@@ -67,6 +67,8 @@
             <c:url var="adminBaseUrl" value="/admin"/>
             <jsp:useBean id="adminPaginationParams" class="java.util.LinkedHashMap" scope="page"/>
             <c:set target="${adminPaginationParams}" property="tab" value="${activeTab}"/>
+            <spring:message var="brandKicker"    code="admin.brandRequests.kicker"/>
+            <spring:message var="bodyTypeKicker" code="admin.bodyTypeRequests.kicker"/>
 
             <c:choose>
                 <c:when test="${activeTab eq 'brands'}">
@@ -90,7 +92,7 @@
                                             submitter="${brandRequest.submitter}"
                                             comments="${brandRequest.comments}"
                                             type="brand"
-                                            kicker="Marca"/>
+                                            kicker="${brandKicker}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -117,7 +119,7 @@
                                             submitter="${bodyTypeRequest.submitter}"
                                             comments="${bodyTypeRequest.comments}"
                                             type="body-type"
-                                            kicker="Carrocería"/>
+                                            kicker="${bodyTypeKicker}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
