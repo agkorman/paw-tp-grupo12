@@ -7,10 +7,6 @@
             && typeof window.Promise === 'function';
     }
 
-    function supportsEnhancedReplyForm() {
-        return supportsFetchFormData() && typeof window.DOMParser === 'function';
-    }
-
     function hasAttribute(node, attrName) {
         return node && node.nodeType === 1 && node.getAttribute(attrName) !== null;
     }
@@ -299,106 +295,6 @@
         });
     }
 
-    function setControlsDisabled(form, disabled) {
-        var controls = form.querySelectorAll('button, select, textarea, input');
-
-        Array.prototype.forEach.call(controls, function (control) {
-            control.disabled = disabled;
-        });
-    }
-
-    function showReplyError(form, message) {
-        var error = form.querySelector('[data-review-reply-error]');
-
-        if (!error) {
-            error = document.createElement('p');
-            error.className = 'review-reply-inline-error';
-            error.setAttribute('data-review-reply-error', 'true');
-            error.setAttribute('role', 'alert');
-            form.appendChild(error);
-        }
-
-        error.textContent = message;
-    }
-
-    function submitEnhancedReplyForm(form) {
-        var targetSelector = form.dataset.target;
-        var target = targetSelector ? document.querySelector(targetSelector) : null;
-        var body = form.querySelector('textarea[name="body"]');
-        var formData;
-
-        if (form.dataset.loading === 'true') {
-            return;
-        }
-
-        if (!target) {
-            nativeSubmit.call(form);
-            return;
-        }
-
-        if (body && body.value.trim().length === 0) {
-            showReplyError(form, 'La respuesta no puede estar vacía.');
-            body.focus();
-            return;
-        }
-
-        formData = new FormData(form);
-        form.dataset.loading = 'true';
-        setControlsDisabled(form, true);
-        target.classList.add('is-loading');
-        target.setAttribute('aria-busy', 'true');
-
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'same-origin'
-        }).then(function (response) {
-            if (isLoginRedirect(response)) {
-                window.location.href = response.url;
-                return '';
-            }
-            if (!response.ok) {
-                throw new Error('Review reply request failed');
-            }
-            return response.text();
-        }).then(function (html) {
-            var parsed;
-            var replacement;
-            var currentTarget;
-
-            if (!html) {
-                return;
-            }
-
-            parsed = new DOMParser().parseFromString(html, 'text/html');
-            replacement = parsed.querySelector(targetSelector);
-            currentTarget = document.querySelector(targetSelector);
-
-            if (!replacement || !currentTarget) {
-                throw new Error('Review feed target not found');
-            }
-
-            currentTarget.replaceWith(replacement);
-        }).catch(function () {
-            showReplyError(form, 'No pudimos publicar la respuesta. Intenta de nuevo.');
-        }).finally(function () {
-            delete form.dataset.loading;
-
-            if (document.contains(form)) {
-                setControlsDisabled(form, false);
-            }
-
-            var currentTarget = document.querySelector(targetSelector);
-            if (currentTarget) {
-                currentTarget.classList.remove('is-loading');
-                currentTarget.removeAttribute('aria-busy');
-            }
-        });
-    }
-
     document.addEventListener('submit', function (event) {
         var form = event.target;
 
@@ -415,13 +311,6 @@
             return;
         }
 
-        if (form.dataset.enhancedReviewReply === 'true') {
-            if (!supportsEnhancedReplyForm()) {
-                return;
-            }
-            event.preventDefault();
-            submitEnhancedReplyForm(form);
-        }
     });
 
     document.addEventListener('click', function (event) {

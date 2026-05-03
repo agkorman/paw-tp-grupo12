@@ -13,12 +13,10 @@
     </c:if>
 </c:url>
 <c:set var="activityReviewHref" value="${activityReviewUrl}#review-${reviewCard.review.id}"/>
-<c:set var="activityReviewStyle" value=""/>
 <c:if test="${reviewCard.hasCarImage}">
     <c:url var="activityCarImageUrl" value="/car-image">
         <c:param name="carId" value="${reviewCard.review.carId}"/>
     </c:url>
-    <c:set var="activityReviewStyle" value="--activity-car-image: url('${activityCarImageUrl}');"/>
 </c:if>
 <spring:message var="activityReviewAria" code="activity.review.view.aria" arguments="${reviewCard.carName}"/>
 <c:set var="activityPreviewModalId" value="${idPrefix}-${reviewCard.review.id}"/>
@@ -28,8 +26,12 @@
    data-activity-review-card
    data-activity-preview-target="${fn:escapeXml(activityPreviewModalId)}"
    aria-controls="${fn:escapeXml(activityPreviewModalId)}"
-   style="${activityReviewStyle}"
    aria-label="${fn:escapeXml(activityReviewAria)}">
+    <c:if test="${reviewCard.hasCarImage}">
+        <span class="activity-review-card-media" aria-hidden="true">
+            <img src="${activityCarImageUrl}" alt="">
+        </span>
+    </c:if>
     <span class="activity-review-author">
         <span class="activity-review-author-copy">
             <strong><c:out value="${reviewCard.authorName}"/></strong>
@@ -40,11 +42,9 @@
     <span class="activity-review-copy">
         <span class="activity-review-car-row">
             <span class="activity-review-car"><c:out value="${reviewCard.carName}"/></span>
-            <span class="card-rating-row activity-review-rating-row">
-                <span class="card-rating-badge">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M12 2.75l2.91 5.9 6.51.95-4.71 4.59 1.11 6.48L12 17.62l-5.82 3.05 1.11-6.48-4.71-4.59 6.51-.95L12 2.75z"/>
-                    </svg>
+                <span class="card-rating-row activity-review-rating-row">
+                    <span class="card-rating-badge">
+                    <pa:icon name="star-filled" size="12"/>
                     <span class="card-rating-value"><c:out value="${reviewCard.review.rating}"/></span>
                 </span>
             </span>

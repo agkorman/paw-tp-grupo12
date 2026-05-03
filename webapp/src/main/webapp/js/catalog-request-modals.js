@@ -3,75 +3,52 @@
         brand: document.getElementById('requestBrandModal'),
         'body-type': document.getElementById('requestBodyTypeModal')
     };
+    var controllers = {
+        brand: window.PawModal.createController({ modal: modals.brand }),
+        'body-type': window.PawModal.createController({ modal: modals['body-type'] })
+    };
 
-    var lastTrigger = null;
-
-    function openModal(key) {
+    function openModal(key, trigger) {
         var modal = modals[key];
         if (!modal) {
             return;
         }
-        modal.removeAttribute('hidden');
-        document.body.classList.add('modal-open');
-        var firstField = modal.querySelector('input[type="text"], textarea');
-        if (firstField && typeof firstField.focus === 'function') {
-            firstField.focus();
-        }
+        controllers[key].open(trigger, modal.querySelector('input[type="text"], textarea'));
     }
 
     function closeModal(modal) {
-        if (!modal) {
-            return;
-        }
-        modal.setAttribute('hidden', 'hidden');
-        var anyOpen = Object.keys(modals).some(function (k) {
-            return modals[k] && !modals[k].hasAttribute('hidden');
+        Object.keys(modals).some(function (key) {
+            if (modals[key] === modal) {
+                controllers[key].close();
+                return true;
+            }
+            return false;
         });
-        if (!anyOpen) {
-            document.body.classList.remove('modal-open');
-        }
-        if (lastTrigger && document.contains(lastTrigger) && typeof lastTrigger.focus === 'function') {
-            lastTrigger.focus();
-        }
-        lastTrigger = null;
     }
 
     function findOpenTrigger(node) {
-        while (node && node !== document) {
-            if (node.nodeType === 1 && node.hasAttribute && node.hasAttribute('data-open-catalog-request')) {
-                return node;
-            }
-            node = node.parentNode;
-        }
-        return null;
+        return window.PawModal.closest(node, function (candidate) {
+            return candidate.hasAttribute('data-open-catalog-request');
+        });
     }
 
     function findCloseAncestor(node) {
-        while (node && node !== document) {
-            if (node.nodeType === 1 && node.hasAttribute && node.hasAttribute('data-close-catalog-request-modal')) {
-                return node;
-            }
-            node = node.parentNode;
-        }
-        return null;
+        return window.PawModal.closest(node, function (candidate) {
+            return candidate.hasAttribute('data-close-catalog-request-modal');
+        });
     }
 
     function modalOf(node) {
-        while (node && node !== document) {
-            if (node.nodeType === 1 && node.classList && node.classList.contains('catalog-request-modal')) {
-                return node;
-            }
-            node = node.parentNode;
-        }
-        return null;
+        return window.PawModal.closest(node, function (candidate) {
+            return candidate.classList.contains('catalog-request-modal');
+        });
     }
 
     document.addEventListener('click', function (event) {
         var openTrigger = findOpenTrigger(event.target);
         if (openTrigger) {
             event.preventDefault();
-            lastTrigger = openTrigger;
-            openModal(openTrigger.getAttribute('data-open-catalog-request'));
+            openModal(openTrigger.getAttribute('data-open-catalog-request'), openTrigger);
             return;
         }
 
@@ -88,8 +65,8 @@
         }
         Object.keys(modals).forEach(function (key) {
             var modal = modals[key];
-            if (modal && !modal.hasAttribute('hidden')) {
-                closeModal(modal);
+            if (modal && controllers[key].isOpen()) {
+                controllers[key].close();
             }
         });
     });

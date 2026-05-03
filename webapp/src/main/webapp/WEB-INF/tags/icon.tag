@@ -27,6 +27,11 @@
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </c:when>
 
+    <c:when test="${name eq 'arrow-down'}">
+        <c:set var="s" value="${empty size ? 14 : size}"/>
+        <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </c:when>
+
     <c:when test="${name eq 'close'}">
         <c:set var="s" value="${empty size ? 18 : size}"/>
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M18 6 6 18M6 6l12 12"/></svg>

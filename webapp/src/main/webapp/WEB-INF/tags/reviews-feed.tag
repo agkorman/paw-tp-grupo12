@@ -148,7 +148,8 @@
                                     <form method="post" action="${replyCreateUrl}" class="review-reply-form"
                                           data-enhanced-review-reply="true"
                                           data-target="#reviewsFeed"
-                                          data-auth-resume-intent="reply-${review.id}">
+                                          data-auth-resume-intent="reply-${review.id}"
+                                          novalidate="novalidate">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                         <label for="replyBody-${review.id}"><spring:message code="review.feed.reply"/></label>
                                         <div class="review-reply-form-row">

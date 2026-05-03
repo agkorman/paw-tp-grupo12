@@ -5,17 +5,7 @@
 <spring:message var="registerSubmittingLabel" code="auth.register.submitting"/>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="auth.register.title"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/auth.css'/>">
-</head>
+<pa:page-head titleCode="auth.register.title" styles="/css/auth.css"/>
 <body>
     <pa:nav/>
 
@@ -94,8 +84,8 @@
         </section>
     </main>
 
-    <script src="<c:url value='/js/auth-form.js'/>"></script>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:script src="/js/auth-form.js"/>
+    <pa:script src="/js/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>

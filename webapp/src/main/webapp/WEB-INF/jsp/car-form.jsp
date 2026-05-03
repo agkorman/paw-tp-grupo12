@@ -17,6 +17,7 @@
 <c:set var="resolvedFormSubtitle" value="${empty formSubtitle ? defaultFormSubtitle : formSubtitle}"/>
 <c:set var="resolvedSubmitLabel" value="${empty submitLabel ? defaultSubmitLabel : submitLabel}"/>
 <c:set var="resolvedRejectLabel" value="${empty rejectLabel ? defaultRejectLabel : rejectLabel}"/>
+<c:set var="carFormPageTitle" value="${resolvedFormTitle} | La Posta Autos"/>
 <c:url var="resolvedFormAction" value="${empty formAction ? '/cars' : formAction}"/>
 <c:url var="resolvedCancelUrl" value="${empty cancelUrl ? '/cars' : cancelUrl}"/>
 <c:if test="${not empty rejectAction}">
@@ -77,18 +78,7 @@
 <spring:message var="jsImageAddMore" code="js.car.image.addMore"/>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><c:out value="${resolvedFormTitle}"/> | La Posta Autos</title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=6'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=5'/>">
-    <link rel="stylesheet" href="<c:url value='/css/form-pages.css'/>">
-</head>
+<pa:page-head title="${carFormPageTitle}" styles="/css/reviews.css|/css/car-image-upload.css|/css/catalog-request-modal.css|/css/form-pages.css"/>
 <body>
     <pa:nav activePage="reviews"/>
 
@@ -387,12 +377,14 @@
         <pa:submitted-toast messageCode="${submittedToastMessageCode}"/>
     </c:if>
 
-    <script src="<c:url value='/js/car-form.js?v=3'/>"></script>
+    <pa:script src="/js/car-form.js"/>
     <c:if test="${catalogRequestLinksEnabled}">
-        <script src="<c:url value='/js/catalog-request-modals.js'/>"></script>
+        <pa:script src="/js/modal-utils.js"/>
+        <pa:script src="/js/catalog-request-modals.js"/>
+        <pa:script src="/js/catalog-request-validation.js"/>
     </c:if>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/submitted-toast.js'/>"></script>
+    <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/submitted-toast.js"/>
     <pa:footer/>
 </body>
 </html>

@@ -3,21 +3,12 @@
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<spring:message var="reviewFormTitleText" code="${editMode ? 'review.form.title.edit' : 'review.form.title.new'}"/>
+<spring:message var="appNameTitleText" code="app.name"/>
+<c:set var="reviewFormPageTitle" value="${reviewFormTitleText} | ${appNameTitleText}"/>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="${editMode ? 'review.form.title.edit' : 'review.form.title.new'}"/> | <spring:message code="app.name"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
-    <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/form-pages.css'/>">
-</head>
+<pa:page-head title="${reviewFormPageTitle}" styles="/css/reviews.css|/css/review-form-controls.css|/css/review-tags.css|/css/form-pages.css"/>
 <body>
     <pa:nav activePage="reviews"/>
     <c:url var="reviewCancelUrl" value="/reviews">
@@ -75,15 +66,7 @@
                             <div class="star-rating-stars">
                                 <c:forEach var="i" begin="1" end="5">
                                     <div class="star-slot" data-star="${i}">
-                                        <svg viewBox="0 0 24 24" width="36" height="36">
-                                            <defs>
-                                                <linearGradient id="starGrad${i}">
-                                                    <stop offset="0%" stop-color="#2e2e2e"/>
-                                                    <stop offset="100%" stop-color="#2e2e2e"/>
-                                                </linearGradient>
-                                            </defs>
-                                            <path fill="url(#starGrad${i})" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                        </svg>
+                                        <pa:star-icon size="36" gradientId="starGrad${i}" fillPercent="0"/>
                                         <spring:message var="halfStarLabel" code="review.rating.halfStars.aria" arguments="${i - 1}"/>
                                         <spring:message var="fullStarLabel" code="review.rating.fullStars.aria" arguments="${i}"/>
                                         <button type="button" class="star-hit star-hit-left" data-star="${i}" data-half="true" aria-label="${halfStarLabel}"></button>
@@ -184,9 +167,9 @@
         </section>
     </main>
 
-    <script src="<c:url value='/js/review-form.js?v=2'/>"></script>
-    <script src="<c:url value='/js/review-tag-chips.js'/>" defer></script>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:script src="/js/review-form.js"/>
+    <pa:script src="/js/review-tag-chips.js" defer="true"/>
+    <pa:script src="/js/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>

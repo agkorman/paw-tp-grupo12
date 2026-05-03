@@ -9,7 +9,7 @@
 
 <c:set var="favoriteLabel">
     <c:choose>
-        <c:when test="${not empty label}">${label}</c:when>
+        <c:when test="${not empty label}"><c:out value="${label}"/></c:when>
         <c:otherwise>Favorito</c:otherwise>
     </c:choose>
 </c:set>

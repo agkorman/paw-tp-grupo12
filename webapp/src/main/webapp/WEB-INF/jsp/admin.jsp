@@ -5,18 +5,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="admin.title"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=5'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/admin.css?v=10'/>">
-</head>
+<pa:page-head titleCode="admin.title" styles="/css/reviews.css|/css/admin.css"/>
 <body>
     <pa:nav activePage="admin"/>
 
@@ -204,9 +193,10 @@
 
     <pa:admin-catalog-request-modal/>
     <pa:admin-request-review-modal/>
-    <script src="<c:url value='/js/admin-catalog-modal.js'/>"></script>
-    <script src="<c:url value='/js/admin-request-modal.js?v=2'/>"></script>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:script src="/js/modal-utils.js"/>
+    <pa:script src="/js/admin-catalog-modal.js"/>
+    <pa:script src="/js/admin-request-modal.js"/>
+    <pa:script src="/js/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>

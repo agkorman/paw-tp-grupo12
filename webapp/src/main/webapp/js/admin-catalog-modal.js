@@ -13,6 +13,7 @@
     var acceptForm = document.getElementById('adminCatalogAcceptForm');
     var acceptNameInput = document.getElementById('adminCatalogAcceptName');
     var adminBaseUrl = (modal.getAttribute('data-admin-base-url') || '/admin').replace(/\/$/, '');
+    var modalController = window.PawModal.createController({ modal: modal });
 
     var COPY = {
         'brand': {
@@ -27,26 +28,16 @@
         }
     };
 
-    var lastTrigger = null;
-
     function findOpenTrigger(node) {
-        while (node && node !== document) {
-            if (node.nodeType === 1 && node.hasAttribute && node.hasAttribute('data-open-admin-catalog-request')) {
-                return node;
-            }
-            node = node.parentNode;
-        }
-        return null;
+        return window.PawModal.closest(node, function (candidate) {
+            return candidate.hasAttribute('data-open-admin-catalog-request');
+        });
     }
 
     function findCloseAncestor(node) {
-        while (node && node !== document) {
-            if (node.nodeType === 1 && node.hasAttribute && node.hasAttribute('data-close-admin-catalog-request-modal')) {
-                return node;
-            }
-            node = node.parentNode;
-        }
-        return null;
+        return window.PawModal.closest(node, function (candidate) {
+            return candidate.hasAttribute('data-close-admin-catalog-request-modal');
+        });
     }
 
     function openModal(trigger) {
@@ -88,18 +79,11 @@
             rejectForm.setAttribute('action', basePath + '/reject');
         }
 
-        lastTrigger = trigger;
-        modal.removeAttribute('hidden');
-        document.body.classList.add('modal-open');
+        modalController.open(trigger);
     }
 
     function closeModal() {
-        modal.setAttribute('hidden', 'hidden');
-        document.body.classList.remove('modal-open');
-        if (lastTrigger && document.contains(lastTrigger) && typeof lastTrigger.focus === 'function') {
-            lastTrigger.focus();
-        }
-        lastTrigger = null;
+        modalController.close();
     }
 
     document.addEventListener('click', function (event) {
@@ -116,7 +100,7 @@
     });
 
     document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
+        if (event.key === 'Escape' && modalController.isOpen()) {
             closeModal();
         }
     });

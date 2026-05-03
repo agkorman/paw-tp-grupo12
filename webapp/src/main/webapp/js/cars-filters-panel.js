@@ -132,11 +132,18 @@
         if (!slider || !display) { return function () {}; }
 
         function updateDisplay() {
+            var valueNode;
             updateSingleRangeFill(slider, fillMode);
-            display.innerHTML = (prefix ? prefix + ' <strong>' : '<strong>') +
-                                slider.value +
-                                '</strong>' +
-                                (unit ? ' ' + unit : '');
+            display.textContent = '';
+            if (prefix) {
+                display.appendChild(document.createTextNode(prefix + ' '));
+            }
+            valueNode = document.createElement('strong');
+            valueNode.textContent = slider.value;
+            display.appendChild(valueNode);
+            if (unit) {
+                display.appendChild(document.createTextNode(' ' + unit));
+            }
         }
 
         slider.addEventListener('input', updateDisplay);
