@@ -2,20 +2,11 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<spring:message var="errorTitleSuffix" code="error.titleSuffix"/>
+<c:set var="errorPageTitle" value="${statusCode} ${errorTitleSuffix}"/>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><c:out value="${statusCode}"/> <spring:message code="error.titleSuffix"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/landing.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/error.css'/>">
-</head>
+<pa:page-head title="${errorPageTitle}" styles="/css/landing.css|/css/error.css"/>
 <body>
 
     <pa:nav activePage=""/>

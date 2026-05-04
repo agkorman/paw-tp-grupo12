@@ -118,7 +118,7 @@
 }
 
 .auth-field input.is-invalid {
-    border-bottom-color: #ffb4ab;
+    border-bottom-color: var(--error);
     background: rgba(255, 180, 171, 0.08);
 }
 
@@ -131,7 +131,7 @@
 }
 
 .auth-field .form-error {
-    color: #ffb4ab;
+    color: var(--error);
     font-size: 0.78rem;
     font-weight: 700;
     line-height: 1.35;
@@ -193,12 +193,12 @@
 
 .alert-error {
     background: rgba(255, 111, 97, 0.14);
-    color: #ffb7ad;
+    color: var(--error);
 }
 
 .alert-success {
     background: rgba(94, 212, 255, 0.12);
-    color: #a7e8ff;
+    color: var(--tertiary-content);
 }
 
 @media (min-width: 920px) {

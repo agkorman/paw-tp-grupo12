@@ -5,16 +5,6 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
-<c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
-<c:url var="newReviewUrl" value="/reviews/new">
-    <c:param name="carId" value="${selectedCar.id}"/>
-</c:url>
-<c:url var="newReviewLoginUrl" value="/login">
-    <c:param name="redirect" value="/reviews/new?carId=${selectedCar.id}"/>
-    <c:param name="intent" value="create-review"/>
-</c:url>
-<spring:message var="createReviewAuthAction" code="review.authRequired.createAction"/>
-
 <aside class="review-form-panel car-info-panel">
     <h2><spring:message code="review.carInfo.title"/></h2>
     <div class="car-info-list">
@@ -116,35 +106,5 @@
                 </c:choose>
             </span>
         </div>
-        <div class="car-info-row car-info-row-description">
-            <span class="car-info-label"><spring:message code="review.carInfo.description"/></span>
-            <span class="car-info-value car-info-description">
-                <c:choose>
-                    <c:when test="${not empty selectedCar.description}"><c:out value="${selectedCar.description}"/></c:when>
-                    <c:otherwise>N/A</c:otherwise>
-                </c:choose>
-            </span>
-        </div>
     </div>
-
-    <c:choose>
-        <c:when test="${authenticated}">
-            <a id="openReviewFormBtn"
-               href="${newReviewUrl}"
-               class="btn-primary add-review-btn"
-               data-auth-resume-intent="create-review">
-                <spring:message code="review.carInfo.addReview"/>
-            </a>
-        </c:when>
-        <c:otherwise>
-            <a id="openReviewFormBtn"
-               href="${newReviewLoginUrl}"
-               class="btn-primary add-review-btn"
-               data-auth-required="true"
-               data-auth-required-action="${createReviewAuthAction}"
-               data-auth-required-intent="create-review">
-                <spring:message code="review.carInfo.addReview"/>
-            </a>
-        </c:otherwise>
-    </c:choose>
 </aside>

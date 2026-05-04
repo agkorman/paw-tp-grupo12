@@ -13,7 +13,7 @@
 
     function setModalOpen(open) {
         modal.hidden = !open;
-        document.body.classList.toggle('review-modal-open', open);
+        document.body.classList.toggle('modal-open', open);
         if (open) {
             reasonField.focus();
         }

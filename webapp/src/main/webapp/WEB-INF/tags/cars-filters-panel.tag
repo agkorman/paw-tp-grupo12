@@ -8,6 +8,17 @@
 <spring:message var="filterMinPlaceholder" code="cars.filter.placeholder.min"/>
 <spring:message var="filterMaxPlaceholder" code="cars.filter.placeholder.max"/>
 <spring:message var="closeFiltersLabel" code="cars.filter.close"/>
+<spring:message var="fuelTypeInvalidMsg" code="js.cars.filters.fuelType.invalid"/>
+<spring:message var="transmissionInvalidMsg" code="js.cars.filters.transmission.invalid"/>
+<spring:message var="airbagsInvalidMsg" code="js.cars.filters.airbags.invalid"/>
+<spring:message var="yearRangeInvalidMsg" code="js.cars.filters.year.range"/>
+<spring:message var="yearOrderInvalidMsg" code="js.cars.filters.year.order"/>
+<spring:message var="priceRangeInvalidMsg" code="js.cars.filters.price.range"/>
+<spring:message var="priceOrderInvalidMsg" code="js.cars.filters.price.order"/>
+<spring:message var="horsepowerRangeInvalidMsg" code="js.cars.filters.horsepower.range"/>
+<spring:message var="horsepowerOrderInvalidMsg" code="js.cars.filters.horsepower.order"/>
+<spring:message var="consumptionRangeInvalidMsg" code="js.cars.filters.consumption.range"/>
+<spring:message var="speedRangeInvalidMsg" code="js.cars.filters.speed.range"/>
 <c:set var="electricOnlyFilter" value="${criteria.electricOnly}"/>
 <div id="carsFiltersOverlay" class="cars-filters-overlay" data-close-filters-panel></div>
 
@@ -16,7 +27,18 @@
        hidden
        role="dialog"
        aria-modal="true"
-       aria-labelledby="filtersPanelTitle">
+       aria-labelledby="filtersPanelTitle"
+       data-msg-fuel-type-invalid="${fn:escapeXml(fuelTypeInvalidMsg)}"
+       data-msg-transmission-invalid="${fn:escapeXml(transmissionInvalidMsg)}"
+       data-msg-airbags-invalid="${fn:escapeXml(airbagsInvalidMsg)}"
+       data-msg-year-range="${fn:escapeXml(yearRangeInvalidMsg)}"
+       data-msg-year-order="${fn:escapeXml(yearOrderInvalidMsg)}"
+       data-msg-price-range="${fn:escapeXml(priceRangeInvalidMsg)}"
+       data-msg-price-order="${fn:escapeXml(priceOrderInvalidMsg)}"
+       data-msg-horsepower-range="${fn:escapeXml(horsepowerRangeInvalidMsg)}"
+       data-msg-horsepower-order="${fn:escapeXml(horsepowerOrderInvalidMsg)}"
+       data-msg-consumption-range="${fn:escapeXml(consumptionRangeInvalidMsg)}"
+       data-msg-speed-range="${fn:escapeXml(speedRangeInvalidMsg)}">
 
     <div class="cars-filters-panel-inner">
 

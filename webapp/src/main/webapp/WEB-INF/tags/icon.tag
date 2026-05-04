@@ -27,6 +27,11 @@
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </c:when>
 
+    <c:when test="${name eq 'arrow-down'}">
+        <c:set var="s" value="${empty size ? 14 : size}"/>
+        <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </c:when>
+
     <c:when test="${name eq 'close'}">
         <c:set var="s" value="${empty size ? 18 : size}"/>
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -35,6 +40,11 @@
     <c:when test="${name eq 'check-circle'}">
         <c:set var="s" value="${empty size ? 20 : size}"/>
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.5l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </c:when>
+
+    <c:when test="${name eq 'error-circle'}">
+        <c:set var="s" value="${empty size ? 20 : size}"/>
+        <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 6.8v6.4M12 17.2h.01" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </c:when>
 
     <c:when test="${name eq 'search'}">

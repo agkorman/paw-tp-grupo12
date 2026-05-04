@@ -28,6 +28,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -217,7 +218,7 @@ public class CarReviewController {
                     reviewForm.getTitle(),
                     reviewForm.getBody(),
                     normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                    reviewForm.getModelYear(),
+                    null,
                     reviewForm.getMileageKm(),
                     reviewForm.getWouldRecommend(),
                     reviewForm.getTagIds());
@@ -230,7 +231,7 @@ public class CarReviewController {
             return "review-form.jsp";
         }
 
-        return "redirect:/reviews?carId=" + car.getId();
+        return "redirect:/reviews?carId=" + car.getId() + "&reviewCreated=1";
     }
 
     private ModelAndView carReviewPage(final long carId, final String sort, final String error,
@@ -276,9 +277,6 @@ public class CarReviewController {
         attributes.put("totalPages", pageData.totalPages);
         attributes.put("totalItems", pageData.totalItems);
         attributes.put("currentUserId", currentUserId(currentUser));
-        attributes.put("latestReview", pageData.latestReview.orElse(null));
-        attributes.put("latestReviewLikeCount", pageData.latestReviewLikeCount);
-        attributes.put("latestReviewLiked", pageData.latestReviewLiked);
         attributes.put("carImages", pageData.carImages);
         attributes.put("yearVariants", buildYearVariants(pageData.selectedCar));
         return attributes;
@@ -314,19 +312,9 @@ public class CarReviewController {
         final BigDecimal averageRating = reviewService.getReviewStatsByCar(selectedCar.getId())
                 .map(stats -> stats.getAverageRating())
                 .orElse(null);
-        final Optional<Review> latestReview = reviewService.getLatestReviewByCar(selectedCar.getId());
         final List<CarImage> carImages = carService.getCarImagesByCarId(selectedCar.getId());
         final List<ReviewThread> reviewThreads = buildReviewThreads(reviews, currentUserId);
-        final long latestReviewLikeCount = latestReview
-                .map(review -> reviewLikeService.countReviewLikes(review.getId()))
-                .orElse(0L);
-        final boolean latestReviewLiked = currentUserId != null
-                && latestReview
-                .map(review -> reviewLikeService.getLikedReviewIds(List.of(review.getId()), currentUserId)
-                        .contains(review.getId()))
-                .orElse(false);
-        return new ReviewPageData(selectedCar, reviews, reviewThreads, normalizedSort, latestReview, carImages,
-                latestReviewLikeCount, latestReviewLiked,
+        return new ReviewPageData(selectedCar, reviews, reviewThreads, normalizedSort, carImages,
                 reviewPage.getPageNumber(), reviewPage.getTotalPages(), reviewPage.getTotalItems(), averageRating);
     }
 
@@ -421,7 +409,7 @@ public class CarReviewController {
                     reviewForm.getTitle(),
                     reviewForm.getBody(),
                     normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                    reviewForm.getModelYear(),
+                    null,
                     reviewForm.getMileageKm(),
                     reviewForm.getWouldRecommend(),
                     reviewForm.getTagIds()
@@ -440,12 +428,17 @@ public class CarReviewController {
     }
 
     @RequestMapping(value = "/reviews/{reviewId}/delete", method = RequestMethod.POST)
-    public ModelAndView deleteReview(@PathVariable("reviewId") final long reviewId,
-                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+    public Object deleteReview(@PathVariable("reviewId") final long reviewId,
+                               @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
+                               @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
         final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
         validateReviewOwnership(reviewId, existingReview, currentUser);
         reviewService.deleteReview(reviewId);
         LOGGER.info("user id={} deleted review id={}", currentUser.getId(), reviewId);
+        if (ajax) {
+            return new ResponseEntity<String>("ok", HttpStatus.OK);
+        }
         return new ModelAndView("redirect:/profile");
     }
 
@@ -588,7 +581,11 @@ public class CarReviewController {
         if (review == null) {
             throw new ResourceNotFoundException("Review", reviewId);
         }
-        if (currentUser == null || review.getUserId() == null || !review.getUserId().equals(currentUser.getId())) {
+        if (currentUser == null) {
+            throw new ForbiddenException("modify", "review", review.getId());
+        }
+        final boolean isOwner = review.getUserId() != null && review.getUserId().equals(currentUser.getId());
+        if (!isOwner && !isAdmin(currentUser)) {
             throw new ForbiddenException("modify", "review", review.getId());
         }
     }
@@ -645,6 +642,13 @@ public class CarReviewController {
         return brand + " " + model;
     }
 
+    private boolean isAdmin(final AuthenticatedUser currentUser) {
+        return currentUser.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+    }
+
     private String message(final String code, final Object... args) {
         return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
     }
@@ -670,7 +674,6 @@ public class CarReviewController {
         form.setTitle(review.getTitle());
         form.setBody(review.getBody());
         form.setOwnershipStatus(review.getOwnershipStatus());
-        form.setModelYear(review.getModelYear());
         form.setMileageKm(review.getMileageKm());
         form.setWouldRecommend(review.getWouldRecommend());
         form.setTagIds(review.getTags()
@@ -689,10 +692,7 @@ public class CarReviewController {
         private final List<Review> reviews;
         private final List<ReviewThread> reviewThreads;
         private final String currentSort;
-        private final Optional<Review> latestReview;
         private final List<CarImage> carImages;
-        private final long latestReviewLikeCount;
-        private final boolean latestReviewLiked;
         private final int currentPage;
         private final int totalPages;
         private final long totalItems;
@@ -700,18 +700,14 @@ public class CarReviewController {
 
         private ReviewPageData(final Car selectedCar, final List<Review> reviews,
                                final List<ReviewThread> reviewThreads, final String currentSort,
-                               final Optional<Review> latestReview, final List<CarImage> carImages,
-                               final long latestReviewLikeCount, final boolean latestReviewLiked,
+                               final List<CarImage> carImages,
                                final int currentPage, final int totalPages, final long totalItems,
                                final BigDecimal averageRating) {
             this.selectedCar = selectedCar;
             this.reviews = reviews;
             this.reviewThreads = reviewThreads;
             this.currentSort = currentSort;
-            this.latestReview = latestReview;
             this.carImages = carImages;
-            this.latestReviewLikeCount = latestReviewLikeCount;
-            this.latestReviewLiked = latestReviewLiked;
             this.currentPage = currentPage;
             this.totalPages = totalPages;
             this.totalItems = totalItems;

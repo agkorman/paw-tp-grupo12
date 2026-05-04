@@ -7,9 +7,9 @@
 
     var actionText = modal.querySelector('[data-auth-required-action]');
     var loginLink = modal.querySelector('[data-auth-required-login]');
-    var closeElements = Array.prototype.slice.call(modal.querySelectorAll('[data-close-auth-required-modal]'));
     var contextPath = modal.getAttribute('data-context-path') || '';
     var loginUrl = modal.getAttribute('data-login-url') || '/login';
+    var defaultAction = modal.getAttribute('data-default-action') || '';
     var lastTrigger = null;
     var INTENT_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -49,7 +49,7 @@
     function openModal(trigger) {
         lastTrigger = trigger;
         if (actionText) {
-            actionText.textContent = trigger.getAttribute('data-auth-required-action') || 'hacer esta acción';
+            actionText.textContent = trigger.getAttribute('data-auth-required-action') || defaultAction;
         }
         if (loginLink) {
             loginLink.setAttribute('href', buildLoginHref(trigger));
@@ -155,15 +155,8 @@
         openModal(trigger);
     }, true);
 
-    closeElements.forEach(function (element) {
-        element.addEventListener('click', closeModal);
-    });
-
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
-            closeModal();
-        }
-    });
+    window.PawModal.bindCloseAttr(modal, closeModal);
+    window.PawModal.bindEscKey(modal, closeModal);
 
     window.setTimeout(resumeIntent, 0);
 }());

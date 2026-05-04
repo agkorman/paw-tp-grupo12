@@ -6,24 +6,14 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="recommend.title"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/cars.css'/>">
-</head>
+<pa:page-head titleCode="recommend.title" styles="/css/cars.css"/>
 <body>
     <pa:nav/>
 
     <main class="recommend-page wizard-page">
         <c:url var="recommendResultsUrl" value="/cars/recommend/results"/>
         <spring:message code="recommend.question.index" var="recommendQuestionIndexTpl" arguments="__PAW_0__,__PAW_1__"/>
-        <form:form method="get" action="${recommendResultsUrl}" modelAttribute="recommendationForm" cssClass="wizard-form" id="recommend-wizard">
+        <form:form method="get" action="${recommendResultsUrl}" modelAttribute="recommendationForm" cssClass="wizard-form" id="recommend-wizard" novalidate="novalidate">
             <div class="wizard-progress" aria-hidden="true" data-recommend-question-index-template="${fn:escapeXml(recommendQuestionIndexTpl)}">
                 <div class="wizard-progress-bar"></div>
             </div>
@@ -115,7 +105,7 @@
         </form:form>
     </main>
 
-    <script src="<c:url value='/js/recommend-wizard.js'/>"></script>
+    <pa:script src="/js/recommend-wizard.js"/>
     <pa:footer/>
 </body>
 </html>

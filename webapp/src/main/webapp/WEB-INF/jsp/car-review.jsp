@@ -6,18 +6,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="review.page.title"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=4'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=6'/>">
-    <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
-</head>
+<pa:page-head titleCode="review.page.title" styles="/css/reviews.css|/css/car-image-carousel.css|/css/review-tags.css"/>
 <body>
     <pa:nav activePage="reviews"/>
 
@@ -39,9 +28,7 @@
                     </c:if>
                     <a href="#reviewsFeed" class="btn-secondary hero-see-reviews-btn">
                         <spring:message code="review.page.seeReviews"/>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                            <path d="M12 5v14M5 12l7 7 7-7"/>
-                        </svg>
+                        <pa:icon name="arrow-down" size="14"/>
                     </a>
                     <sec:authorize access="hasRole('ADMIN')">
                         <c:url var="selectedCarEditUrl" value="/admin/cars/${selectedCar.id}/edit"/>
@@ -110,14 +97,51 @@
                 <pa:review-selected-car selectedCar="${selectedCar}"
                                         carImages="${carImages}"
                                         favorited="${selectedCarFavorited}"/>
-                <pa:latest-review latestReview="${latestReview}"
-                                  liked="${latestReviewLiked}"
-                                  likeCount="${latestReviewLikeCount}"/>
             </div>
 
             <div class="review-side-column">
                 <pa:review-car-info selectedCar="${selectedCar}" averageRating="${averageRating}"/>
             </div>
+        </section>
+
+        <section class="review-description-bar">
+            <c:url var="newReviewUrl" value="/reviews/new">
+                <c:param name="carId" value="${selectedCar.id}"/>
+            </c:url>
+            <c:url var="newReviewLoginUrl" value="/login">
+                <c:param name="redirect" value="/reviews/new?carId=${selectedCar.id}"/>
+                <c:param name="intent" value="create-review"/>
+            </c:url>
+            <spring:message var="createReviewAuthAction" code="review.authRequired.createAction"/>
+            <div class="review-description-content">
+                <span class="car-info-label"><spring:message code="review.carInfo.description"/></span>
+                <p class="car-info-description">
+                    <c:choose>
+                        <c:when test="${not empty selectedCar.description}"><c:out value="${selectedCar.description}"/></c:when>
+                        <c:otherwise>N/A</c:otherwise>
+                    </c:choose>
+                </p>
+            </div>
+            <c:choose>
+                <c:when test="${not empty pageContext.request.userPrincipal}">
+                    <a id="openReviewFormBtn"
+                       href="${newReviewUrl}"
+                       class="btn-primary add-review-btn"
+                       data-auth-resume-intent="create-review">
+                        <spring:message code="review.carInfo.addReview"/>
+                    </a>
+                </c:when>
+                <c:otherwise>
+                    <a id="openReviewFormBtn"
+                       href="${newReviewLoginUrl}"
+                       class="btn-primary add-review-btn"
+                       data-auth-required="true"
+                       data-auth-required-action="${fn:escapeXml(createReviewAuthAction)}"
+                       data-auth-required-intent="create-review">
+                        <spring:message code="review.carInfo.addReview"/>
+                    </a>
+                </c:otherwise>
+            </c:choose>
         </section>
 
         <pa:reviews-feed reviews="${reviews}" reviewThreads="${reviewThreads}" carId="${selectedCar.id}"
@@ -127,25 +151,41 @@
     </main>
 
     <pa:auth-required-modal/>
+    <c:choose>
+        <c:when test="${not empty param.reviewCreated}">
+            <pa:toast messageCode="review.create.toast.success"/>
+        </c:when>
+        <c:otherwise>
+            <pa:toast/>
+        </c:otherwise>
+    </c:choose>
     <sec:authorize access="hasRole('ADMIN')">
-        <pa:toast/>
         <pa:review-hide-modal/>
+        <pa:confirmation-modal id="deleteReviewConfirmModal"
+                               titleCode="review.delete.title"
+                               bodyCode="review.delete.body"
+                               confirmCode="common.action.delete"
+                               confirmCssClass="btn-primary"/>
         <pa:car-delete-modal/>
     </sec:authorize>
 
-    <script src="<c:url value='/js/reactions.js'/>"></script>
-    <script src="<c:url value='/js/action-menu.js'/>"></script>
-    <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
-    <script src="<c:url value='/js/car-image-carousel.js'/>"></script>
-    <script src="<c:url value='/js/review-anchor-highlight.js?v=1'/>"></script>
-    <script src="<c:url value='/js/review-tag-chips.js'/>" defer></script>
-    <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
+    <pa:script src="/js/reactions.js"/>
+    <pa:script src="/js/review-replies.js"/>
+    <pa:script src="/js/action-menu.js"/>
+    <pa:script src="/js/enhanced-filters.js"/>
+    <pa:script src="/js/car-image-carousel.js"/>
+    <pa:script src="/js/review-anchor-highlight.js"/>
+    <pa:script src="/js/review-tag-chips.js" defer="true"/>
+    <pa:script src="/js/modal-utils.js"/>
+    <pa:script src="/js/auth-required-modal.js"/>
+    <pa:script src="/js/toast.js"/>
     <sec:authorize access="hasRole('ADMIN')">
-        <script src="<c:url value='/js/car-admin.js?v=1'/>"></script>
-        <script src="<c:url value='/js/toast.js'/>"></script>
-        <script src="<c:url value='/js/review-moderation.js'/>"></script>
+        <pa:script src="/js/car-admin.js"/>
+        <pa:script src="/js/review-moderation.js"/>
+        <pa:script src="/js/confirmation-modal.js"/>
+        <pa:script src="/js/review-delete.js"/>
     </sec:authorize>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:script src="/js/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>
