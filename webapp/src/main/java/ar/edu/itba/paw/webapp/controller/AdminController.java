@@ -384,7 +384,7 @@ public class AdminController {
     public ModelAndView acceptBrandRequest(@PathVariable("requestId") final long requestId,
                                            @RequestParam(value = "name", required = false) final String name,
                                            @RequestHeader(value = "Referer", required = false) final String referer) {
-        LOGGER.info("admin accept brand request id={} overrideName={}", requestId, name);
+        LOGGER.info("admin accept brand request id={} overrideName={}", requestId, LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         brandRequestService.approvePendingRequest(requestId, name);
         return redirectBackToAdmin(referer);
     }
@@ -401,7 +401,7 @@ public class AdminController {
     public ModelAndView updateBrand(@PathVariable("brandId") final long brandId,
                                     @RequestParam("name") final String name,
                                     @RequestHeader(value = "Referer", required = false) final String referer) {
-        LOGGER.info("admin update brand id={} name={}", brandId, name);
+        LOGGER.info("admin update brand id={} name={}", brandId, LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         brandService.updateBrand(brandId, name);
         return redirectBackToCatalog(referer);
     }
@@ -418,7 +418,7 @@ public class AdminController {
     public ModelAndView acceptBodyTypeRequest(@PathVariable("requestId") final long requestId,
                                               @RequestParam(value = "name", required = false) final String name,
                                               @RequestHeader(value = "Referer", required = false) final String referer) {
-        LOGGER.info("admin accept body type request id={} overrideName={}", requestId, name);
+        LOGGER.info("admin accept body type request id={} overrideName={}", requestId, LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         bodyTypeRequestService.approvePendingRequest(requestId, name);
         return redirectBackToAdmin(referer);
     }
@@ -435,7 +435,7 @@ public class AdminController {
     public ModelAndView updateBodyType(@PathVariable("bodyTypeId") final long bodyTypeId,
                                        @RequestParam("name") final String name,
                                        @RequestHeader(value = "Referer", required = false) final String referer) {
-        LOGGER.info("admin update body type id={} name={}", bodyTypeId, name);
+        LOGGER.info("admin update body type id={} name={}", bodyTypeId, LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         bodyTypeService.updateBodyType(bodyTypeId, name);
         return redirectBackToCatalog(referer);
     }

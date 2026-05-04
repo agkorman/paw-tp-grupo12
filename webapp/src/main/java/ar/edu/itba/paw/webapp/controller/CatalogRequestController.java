@@ -57,7 +57,7 @@ public class CatalogRequestController {
             return redirectBack(referer);
         }
         brandRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
-        LOGGER.info("user id={} submitted brand request name={}", currentUser.getId(), name);
+        LOGGER.info("user id={} submitted brand request name={}", currentUser.getId(), LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         return redirectToCatalog("brand");
     }
 
@@ -74,7 +74,7 @@ public class CatalogRequestController {
             return redirectBack(referer);
         }
         bodyTypeRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
-        LOGGER.info("user id={} submitted body type request name={}", currentUser.getId(), name);
+        LOGGER.info("user id={} submitted body type request name={}", currentUser.getId(), LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         return redirectToCatalog("body-type");
     }
 

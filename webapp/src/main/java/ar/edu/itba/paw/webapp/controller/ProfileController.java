@@ -166,12 +166,13 @@ public class ProfileController {
             throw new ResourceNotFoundException();
         }
 
-        if (userFollowService.isFollowing(currentUser.getId(), userId)) {
+        final boolean wasFollowing = userFollowService.isFollowing(currentUser.getId(), userId);
+        if (wasFollowing) {
             userFollowService.unfollowUser(currentUser.getId(), userId);
         } else {
             userFollowService.followUser(currentUser.getId(), userId);
         }
-        final boolean following = userFollowService.isFollowing(currentUser.getId(), userId);
+        final boolean following = !wasFollowing;
         LOGGER.info("user id={} toggled follow targetUserId={} following={}",
                 currentUser.getId(), userId, following);
         if (ajax) {
