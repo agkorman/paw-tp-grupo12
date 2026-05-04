@@ -156,12 +156,21 @@ body.activity-preview-scroll-lock {
 }
 
 .activity-review-rating-row .card-rating-badge {
+    display: inline-flex;
+    align-items: center;
     gap: 0.35rem;
+    background: rgba(255, 87, 25, 0.14);
+    color: var(--primary);
+    border: 1px solid rgba(255, 181, 158, 0.16);
+    border-radius: var(--radius-full);
     padding: 0.32rem 0.65rem;
     font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }
 
 .activity-review-rating-row .card-rating-badge svg {
+    flex: 0 0 auto;
     width: 12px;
     height: 12px;
 }

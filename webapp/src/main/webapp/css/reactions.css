@@ -17,6 +17,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    justify-self: start;
     gap: 0.45rem;
     min-height: 2.25rem;
     padding: 0.45rem 0.75rem;

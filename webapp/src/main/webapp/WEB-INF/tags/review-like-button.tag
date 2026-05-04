@@ -17,18 +17,20 @@
 <spring:message var="likeRemoveLabel" code="review.like.remove.aria"/>
 <c:set var="likeLabel" value="${empty label ? defaultLikeLabel : label}"/>
 <c:set var="likeDisabled" value="${empty disabled ? false : disabled}"/>
-<c:url var="loginUrl" value="/login"/>
+<c:set var="likeCurrentPath" value="${pageContext.request.requestURI}"/>
+<c:set var="likeQueryStr" value="${pageContext.request.queryString}"/>
+<c:url var="likeLoginUrl" value="/login">
+    <c:param name="redirect" value="${empty likeQueryStr ? likeCurrentPath : likeCurrentPath.concat('?').concat(likeQueryStr)}"/>
+    <c:param name="intent" value="like-${reviewId}"/>
+</c:url>
 
 <c:choose>
     <c:when test="${not empty action}">
         <c:choose>
             <c:when test="${likeDisabled}">
-                <a href="${loginUrl}"
+                <a href="${likeLoginUrl}"
                    class="review-like-toggle ${liked ? 'is-active' : ''}"
                    data-auth-resume-intent="like-${fn:escapeXml(reviewId)}"
-                   data-auth-required="true"
-                   data-auth-required-action="${likeActionLabel}"
-                   data-auth-required-intent="like-${fn:escapeXml(reviewId)}"
                    aria-label="${likeLoginLabel}">
                     <pa:icon name="heart" size="17"/>
                     <span class="review-like-label"><c:out value="${likeLabel}"/></span>

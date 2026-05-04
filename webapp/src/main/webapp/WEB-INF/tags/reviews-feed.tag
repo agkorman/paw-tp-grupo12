@@ -177,10 +177,7 @@
                                     </c:url>
                                     <p class="review-reply-login">
                                         <a href="${replyLoginUrl}"
-                                           class="review-reply-login-button"
-                                           data-auth-required="true"
-                                           data-auth-required-action="${replyAuthAction}"
-                                           data-auth-required-intent="reply-${review.id}">
+                                           class="review-reply-login-button">
                                             <spring:message code="review.feed.loginPrefix"/>
                                         </a>
                                         <spring:message code="review.feed.loginSuffix"/>
