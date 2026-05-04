@@ -284,6 +284,40 @@ class CarControllerTest {
     }
 
     @Test
+    void createCar_ignoresSubmittedEditContextForImageValidation() throws Exception {
+        // Arrange
+        stubCarFormValidationPartners();
+        when(carService.getCarById(eq(1L))).thenReturn(Optional.of(aCar(1L)));
+        when(carService.getCarImagesByCarId(eq(1L))).thenReturn(List.of(aCarImage(1L)));
+        bindPrincipal(testUser());
+        try {
+            final MockMvc mockMvc = carMockMvc();
+            // Exercise
+            final ResultActions resultActions =
+                    mockMvc.perform(
+                            multipart("/cars")
+                                    .param("brand", "Toyota")
+                                    .param("bodyType", "Sedan")
+                                    .param("model", "Corolla")
+                                    .param("year", "2020")
+                                    .param("description", "A sedan description that is valid.")
+                                    .param("fuelType", CarSearchCriteria.FUEL_TYPE_COMBUSTION)
+                                    .param("horsepower", "120")
+                                    .param("airbagCount", "6")
+                                    .param("transmission", CarSearchCriteria.TRANSMISSION_AUTOMATIC)
+                                    .param("fuelConsumption", "8.5")
+                                    .param("maxSpeedKmh", "200")
+                                    .param("formMode", "edit-car")
+                                    .param("carId", "1")
+                                    .param("retainedImageIds", "1"));
+            // Assertions
+            resultActions.andExpect(status().isOk()).andExpect(view().name("car-form.jsp"));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
     void updateFavorite_anonymous_ajaxRequest_returns401() throws Exception {
         // Arrange
         final MockMvc mockMvc = carMockMvc();

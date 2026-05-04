@@ -241,8 +241,13 @@ public class AdminController {
             return carRequestFormPage(pendingRequest, carForm, errors);
         }
 
-        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElseThrow(IllegalStateException::new);
-        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElseThrow(IllegalStateException::new);
+        final Brand resolvedBrand = resolveBrand(carForm, errors);
+        final BodyType resolvedBodyType = resolveBodyType(carForm, errors);
+        if (errors.hasErrors()) {
+            LOGGER.warn("car request approval rejected: catalog validation errors requestId={} errorCount={}",
+                    requestId, errors.getErrorCount());
+            return carRequestFormPage(pendingRequest, carForm, errors);
+        }
 
         final List<CarImagePayload> imagePayloads;
         try {
@@ -294,8 +299,13 @@ public class AdminController {
             return carEditFormPage(existingCar, carForm, errors);
         }
 
-        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElseThrow(IllegalStateException::new);
-        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElseThrow(IllegalStateException::new);
+        final Brand resolvedBrand = resolveBrand(carForm, errors);
+        final BodyType resolvedBodyType = resolveBodyType(carForm, errors);
+        if (errors.hasErrors()) {
+            LOGGER.warn("car update rejected: catalog validation errors carId={} errorCount={}",
+                    carId, errors.getErrorCount());
+            return carEditFormPage(existingCar, carForm, errors);
+        }
 
         final List<CarImagePayload> imagePayloads;
         try {
@@ -857,6 +867,24 @@ public class AdminController {
         }
         return payloads;
     }
+
+    private Brand resolveBrand(final CarForm carForm, final BindingResult errors) {
+        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
+        if (resolvedBrand == null) {
+            errors.rejectValue("brand", "validation.car.brand.invalid", message("validation.car.brand.invalid"));
+        }
+        return resolvedBrand;
+    }
+
+    private BodyType resolveBodyType(final CarForm carForm, final BindingResult errors) {
+        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
+        if (resolvedBodyType == null) {
+            errors.rejectValue("bodyType", "validation.car.bodyType.invalid",
+                    message("validation.car.bodyType.invalid"));
+        }
+        return resolvedBodyType;
+    }
+
     private ModelAndView redirectBackToCatalog(final String referer) {
         return redirectBackToCatalog(referer, true);
     }

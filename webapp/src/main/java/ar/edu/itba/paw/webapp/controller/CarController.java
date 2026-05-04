@@ -96,6 +96,7 @@ public class CarController {
     @InitBinder
     public void initBinder(final WebDataBinder binder) {
         binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
+        binder.setDisallowedFields("formMode", "carId", "requestId", "retainedImageIds");
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
@@ -176,6 +177,10 @@ public class CarController {
         }
 
         final List<MultipartFile> files = selectedImageFiles(carForm.getFiles());
+        carForm.setFormMode("create");
+        carForm.setCarId(null);
+        carForm.setRequestId(null);
+        carForm.setRetainedImageIds(Collections.emptyList());
 
         if (errors.hasErrors()) {
             LOGGER.warn("car request submission rejected: validation errors userId={} errorCount={}",
@@ -184,8 +189,14 @@ public class CarController {
             return "car-form.jsp";
         }
 
-        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElseThrow(IllegalStateException::new);
-        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElseThrow(IllegalStateException::new);
+        final Brand resolvedBrand = resolveBrand(carForm, errors);
+        final BodyType resolvedBodyType = resolveBodyType(carForm, errors);
+        if (errors.hasErrors()) {
+            LOGGER.warn("car request submission rejected: catalog validation errors userId={} errorCount={}",
+                    currentUser.getId(), errors.getErrorCount());
+            model.addAttribute("carFormMaxImageCount", UploadedImageValidation.MAX_IMAGE_COUNT);
+            return "car-form.jsp";
+        }
 
         final List<CarImagePayload> imagePayloads;
         try {
@@ -450,6 +461,23 @@ public class CarController {
             payloads.add(new CarImagePayload(resolveImageContentType(file), file.getBytes()));
         }
         return payloads;
+    }
+
+    private Brand resolveBrand(final CarForm carForm, final BindingResult errors) {
+        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
+        if (resolvedBrand == null) {
+            errors.rejectValue("brand", "validation.car.brand.invalid", message("validation.car.brand.invalid"));
+        }
+        return resolvedBrand;
+    }
+
+    private BodyType resolveBodyType(final CarForm carForm, final BindingResult errors) {
+        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
+        if (resolvedBodyType == null) {
+            errors.rejectValue("bodyType", "validation.car.bodyType.invalid",
+                    message("validation.car.bodyType.invalid"));
+        }
+        return resolvedBodyType;
     }
 
     private CarCatalogData resolveCatalogData(final CarSearchCriteria criteria, final BindingResult errors) {
