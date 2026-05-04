@@ -337,7 +337,20 @@
 
     form.noValidate = true;
 
-    if (mileageInput) mileageInput.addEventListener('input', function () { clearInlineError(mileageInput); });
+    if (mileageInput) {
+        mileageInput.addEventListener('input', function () {
+            validateNumerics();
+            if (mileageInput.value.trim() === '') {
+                clearInlineError(mileageInput);
+            }
+        });
+        mileageInput.addEventListener('blur', function () {
+            validateNumerics();
+            if (mileageInput.value.trim() === '') {
+                clearInlineError(mileageInput);
+            }
+        });
+    }
     Array.prototype.slice.call(form.querySelectorAll('[required]')).forEach(function (input) {
         input.addEventListener('input', function () {
             validateRequiredField(input);
@@ -345,6 +358,7 @@
     });
 
     form.addEventListener('submit', function (event) {
+        clearAllClientErrors();
         if (!validateRating()) {
             event.preventDefault();
             return;
