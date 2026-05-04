@@ -3,6 +3,9 @@ package ar.edu.itba.paw.webapp.config;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.auth.PawUserDetailsService;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,6 +30,8 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 @Configuration
 @EnableWebSecurity
 public class WebAuthConfig {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebAuthConfig.class);
 
     private static final String REMEMBER_ME_KEY_ENV = "AUTH_REMEMBER_ME_KEY";
     private static final String LOCAL_REMEMBER_ME_KEY = "local-development-remember-me-key-change-me";
@@ -127,6 +132,7 @@ public class WebAuthConfig {
     private String rememberMeKey() {
         final String configuredKey = System.getenv(REMEMBER_ME_KEY_ENV);
         if (configuredKey == null || configuredKey.trim().isEmpty()) {
+            LOGGER.warn("AUTH_REMEMBER_ME_KEY not configured; falling back to local development key");
             return LOCAL_REMEMBER_ME_KEY;
         }
         return configuredKey.trim();
@@ -139,6 +145,10 @@ public class WebAuthConfig {
         savedRequestHandler.setDefaultTargetUrl("/");
 
         return (request, response, authentication) -> {
+            LOGGER.info("login success user={}",
+                    authentication == null
+                            ? "<unknown>"
+                            : LogSanitizer.forLog(authentication.getName(), LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS));
             final Optional<String> redirect = LoginRedirectUtils.safeRedirect(
                     request.getParameter(LoginRedirectUtils.REDIRECT_PARAM)
             );
@@ -163,6 +173,9 @@ public class WebAuthConfig {
 
     private AuthenticationFailureHandler loginFailureHandler() {
         return (request, response, exception) -> {
+            LOGGER.warn("login failure email={} reason={}",
+                    LogSanitizer.forLog(request.getParameter("email"), LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS),
+                    exception == null ? "<unknown>" : exception.getClass().getSimpleName());
             String target = "/login?error";
             final String redirect = request.getParameter(LoginRedirectUtils.REDIRECT_PARAM);
             if (LoginRedirectUtils.safeRedirect(redirect).isPresent()) {

@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,6 +14,8 @@ import java.util.List;
 
 @Repository
 public class UserFollowJdbcDao implements UserFollowDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserFollowJdbcDao.class);
 
     private static final String USER_SELECT =
             "SELECT u.user_id, u.username, u.email, u.password, u.role, u.created_at FROM users u ";
@@ -35,23 +39,32 @@ public class UserFollowJdbcDao implements UserFollowDao {
     @Override
     public boolean follow(final long followerId, final long followedId) {
         try {
-            return jdbcTemplate.update(
+            final boolean inserted = jdbcTemplate.update(
                     "INSERT INTO user_follows (follower_id, followed_id) VALUES (?, ?)",
                     followerId,
                     followedId
             ) > 0;
+            if (inserted) {
+                LOGGER.info("user id={} followed user id={}", followerId, followedId);
+            }
+            return inserted;
         } catch (final DuplicateKeyException ignored) {
+            LOGGER.debug("user id={} already follows user id={}", followerId, followedId);
             return false;
         }
     }
 
     @Override
     public boolean unfollow(final long followerId, final long followedId) {
-        return jdbcTemplate.update(
+        final boolean removed = jdbcTemplate.update(
                 "DELETE FROM user_follows WHERE follower_id = ? AND followed_id = ?",
                 followerId,
                 followedId
         ) > 0;
+        if (removed) {
+            LOGGER.info("user id={} unfollowed user id={}", followerId, followedId);
+        }
+        return removed;
     }
 
     @Override

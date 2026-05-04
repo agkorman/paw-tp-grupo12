@@ -79,21 +79,24 @@ public class RecommendationServiceImplTest {
     @Test
     public void shouldReturnQuestionnaireQuestions() {
         // Arrange
+        final String expectedQuestionId = "driving";
 
         // Exercise
         final List<RecommendationQuestion> questions = recommendationService.getQuestions();
 
         // Assertions
         assertFalse(questions.isEmpty());
-        assertTrue(questions.stream().anyMatch(q -> "driving".equals(q.getId())));
+        assertTrue(questions.stream().anyMatch(q -> expectedQuestionId.equals(q.getId())));
     }
 
     @Test
     public void shouldReturnEmptyWhenCriteriaIsNull() {
         // Arrange
+        final RecommendationCriteria criteria = null;
+        final int limit = 5;
 
         // Exercise
-        final List<CarRecommendation> result = recommendationService.recommend(null, 5);
+        final List<CarRecommendation> result = recommendationService.recommend(criteria, limit);
 
         // Assertions
         assertTrue(result.isEmpty());

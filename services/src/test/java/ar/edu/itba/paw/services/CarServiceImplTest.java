@@ -87,10 +87,11 @@ public class CarServiceImplTest {
     @Test
     public void shouldRejectUpdateCarWhenModelIsBlank() {
         // Arrange
+        final String blankModel = "  ";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> carService.updateCar(CAR_ID, BRAND_ID, "  ", BODY_TYPE_ID, 2024, "desc",
+                () -> carService.updateCar(CAR_ID, BRAND_ID, blankModel, BODY_TYPE_ID, 2024, "desc",
                         Optional.empty(), Optional.empty(),
                         "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00")));
 
@@ -101,10 +102,11 @@ public class CarServiceImplTest {
     @Test
     public void shouldRejectUpdateCarWhenDescriptionIsBlank() {
         // Arrange
+        final String blankDescription = "  ";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> carService.updateCar(CAR_ID, BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, "  ",
+                () -> carService.updateCar(CAR_ID, BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, blankDescription,
                         Optional.empty(), Optional.empty(),
                         "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00")));
 
@@ -115,11 +117,13 @@ public class CarServiceImplTest {
     @Test
     public void shouldRejectUpdateCarWithMismatchedImagePair() {
         // Arrange
+        final Optional<String> contentType = Optional.of("image/png");
+        final Optional<byte[]> imageData = Optional.empty();
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> carService.updateCar(CAR_ID, BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, "desc",
-                        Optional.of("image/png"), Optional.empty(),
+                        contentType, imageData,
                         "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00")));
 
         // Assertions
@@ -160,11 +164,12 @@ public class CarServiceImplTest {
     @Test
     public void shouldRejectRequestCarCreationWhenNoImagesProvided() {
         // Arrange
+        final List<CarImagePayload> images = List.of();
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> carService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, 1L, "u@x.com",
-                        Optional.of("desc"), List.of(), "GASOLINE", 100, 6, "MANUAL",
+                        Optional.of("desc"), images, "GASOLINE", 100, 6, "MANUAL",
                         new BigDecimal("6.0"), 180, new BigDecimal("20000.00")));
 
         // Assertions

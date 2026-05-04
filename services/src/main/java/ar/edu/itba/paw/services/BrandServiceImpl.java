@@ -3,6 +3,8 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +14,8 @@ import java.util.Optional;
 
 @Service
 public class BrandServiceImpl implements BrandService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrandServiceImpl.class);
 
     private final BrandDao brandDao;
     private final CarDao carDao;
@@ -44,25 +48,35 @@ public class BrandServiceImpl implements BrandService {
     @Transactional
     public Brand createBrand(final String name) {
         final String normalized = StringUtils.normalizeRequired(name, "Brand name is required.");
-        return brandDao.create(normalized);
+        final Brand brand = brandDao.create(normalized);
+        LOGGER.info("created brand id={} name={}", brand.getId(), normalized);
+        return brand;
     }
 
     @Override
     @Transactional
     public Optional<Brand> updateBrand(final long id, final String name) {
         final String normalized = StringUtils.normalizeRequired(name, "Brand name is required.");
-        return brandDao.update(id, normalized);
+        final Optional<Brand> result = brandDao.update(id, normalized);
+        result.ifPresent(b -> LOGGER.info("updated brand id={} name={}", id, normalized));
+        return result;
     }
 
     @Override
     @Transactional
     public boolean deleteBrand(final long id) {
         if (brandDao.findById(id).isEmpty()) {
+            LOGGER.warn("delete brand rejected: not found id={}", id);
             return false;
         }
         if (carDao.countByBrandId(id) > 0) {
+            LOGGER.warn("delete brand rejected: cars still reference brand id={}", id);
             return false;
         }
-        return brandDao.delete(id);
+        final boolean deleted = brandDao.delete(id);
+        if (deleted) {
+            LOGGER.info("deleted brand id={}", id);
+        }
+        return deleted;
     }
 }

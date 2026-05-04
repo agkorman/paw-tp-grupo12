@@ -26,10 +26,6 @@
                 <h1 id="registerTitle"><spring:message code="auth.register.heading"/></h1>
             </div>
 
-            <c:if test="${not empty registrationError}">
-                <div class="alert alert-error" role="alert"><c:out value="${registrationError}"/></div>
-            </c:if>
-
             <form id="registerForm" class="auth-form" method="post" action="<c:url value='/register'/>"
                   data-auth-form="register" data-submit-lock="true" novalidate="novalidate">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
@@ -94,8 +90,10 @@
         </section>
     </main>
 
+    <pa:toast messageCode="${registrationErrorCode}" type="error"/>
     <script src="<c:url value='/js/auth-form.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <script src="<c:url value='/js/toast.js'/>"></script>
     <pa:footer/>
 </body>
 </html>

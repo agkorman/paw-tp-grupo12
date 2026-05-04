@@ -14,9 +14,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class UserJdbcDaoTest extends AbstractPersistenceTest {
 
     @Test
+    public void shouldCreateUserAndPersistFields() {
+        // Arrange
+        final String username = "created-user";
+        final String email = "created@example.com";
+        final String role = "admin";
+
+        // Exercise
+        final User result = userDao.create(username, email, "password", role);
+
+        // Assertions
+        assertEquals(username, result.getUsername());
+        assertEquals(1, countRows("SELECT COUNT(*) FROM users WHERE user_id = ?", result.getId()));
+        assertEquals(email, jdbcTemplate.queryForObject(
+                "SELECT email FROM users WHERE user_id = ?", String.class, result.getId()
+        ));
+        assertEquals(role, jdbcTemplate.queryForObject(
+                "SELECT role FROM users WHERE user_id = ?", String.class, result.getId()
+        ));
+    }
+
+    @Test
     public void shouldFindUserByEmailIgnoringCaseWhenUserExists() {
         // Arrange
-        final User created = userDao.create("alice", "Alice@Example.com", "password", "user");
+        final User created = insertUser("alice", "Alice@Example.com", "password", "user");
 
         // Exercise
         final Optional<User> result = userDao.findByEmail("alice@example.com");
@@ -30,14 +51,16 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldUpdatePersistedRoleWhenUserExists() {
         // Arrange
-        final User created = userDao.create("admin-candidate", "admin-candidate@example.com", "password", "user");
+        final User created = insertUser("admin-candidate", "admin-candidate@example.com", "password", "user");
 
         // Exercise
         final boolean result = userDao.updateRole(created.getId(), "admin");
 
         // Assertions
         assertTrue(result);
-        assertEquals("admin", userDao.findById(created.getId()).orElseThrow().getRole());
+        assertEquals("admin", jdbcTemplate.queryForObject(
+                "SELECT role FROM users WHERE user_id = ?", String.class, created.getId()
+        ));
     }
 
     @Test
@@ -71,8 +94,8 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldFindEmailsByNormalizedRolesOnly() {
         // Arrange
-        userDao.create("regular", "regular@example.com", "password", "user");
-        userDao.create("admin", "admin@example.com", "password", "admin");
+        insertUser("regular", "regular@example.com", "password", "user");
+        insertUser("admin", "admin@example.com", "password", "admin");
 
         // Exercise
         final List<String> result = userDao.findEmailsByRoles(List.of(" ADMIN ", "missing"));
@@ -85,13 +108,16 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldReturnFalseWhenUpdatingMissingUserRole() {
         // Arrange
-        userDao.create("existing", "existing@example.com", "password", "user");
+        insertUser("existing", "existing@example.com", "password", "user");
 
         // Exercise
         final boolean result = userDao.updateRole(9999L, "admin");
 
         // Assertions
         assertFalse(result);
-        assertEquals(1, userDao.findAll().size());
+        assertEquals(1, countRows("SELECT COUNT(*) FROM users"));
+        assertEquals("user", jdbcTemplate.queryForObject(
+                "SELECT role FROM users WHERE email = ?", String.class, "existing@example.com"
+        ));
     }
 }

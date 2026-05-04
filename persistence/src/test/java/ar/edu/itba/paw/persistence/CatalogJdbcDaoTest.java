@@ -13,9 +13,41 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class CatalogJdbcDaoTest extends AbstractPersistenceTest {
 
     @Test
+    public void shouldCreateBrandAndPersistName() {
+        // Arrange
+        final String brandName = "Persisted Brand";
+
+        // Exercise
+        final Brand result = brandDao.create(brandName);
+
+        // Assertions
+        assertEquals(brandName, result.getName());
+        assertEquals(1, countRows("SELECT COUNT(*) FROM brands WHERE brand_id = ?", result.getId()));
+        assertEquals(brandName, jdbcTemplate.queryForObject(
+                "SELECT name FROM brands WHERE brand_id = ?", String.class, result.getId()
+        ));
+    }
+
+    @Test
+    public void shouldCreateBodyTypeAndPersistName() {
+        // Arrange
+        final String bodyTypeName = "Persisted Body";
+
+        // Exercise
+        final BodyType result = bodyTypeDao.create(bodyTypeName);
+
+        // Assertions
+        assertEquals(bodyTypeName, result.getName());
+        assertEquals(1, countRows("SELECT COUNT(*) FROM body_types WHERE body_type_id = ?", result.getId()));
+        assertEquals(bodyTypeName, jdbcTemplate.queryForObject(
+                "SELECT name FROM body_types WHERE body_type_id = ?", String.class, result.getId()
+        ));
+    }
+
+    @Test
     public void shouldFindBrandByNameIgnoringCaseWhenBrandExists() {
         // Arrange
-        final Brand created = brandDao.create("Toyota");
+        final Brand created = insertBrand("Toyota");
 
         // Exercise
         final Optional<Brand> result = brandDao.findByName("toyota");
@@ -29,8 +61,8 @@ public class CatalogJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldReturnBrandsOrderedByNameWhenFindingAll() {
         // Arrange
-        brandDao.create("Volvo");
-        brandDao.create("Audi");
+        insertBrand("Volvo");
+        insertBrand("Audi");
 
         // Exercise
         final List<Brand> result = brandDao.findAll();
@@ -44,7 +76,7 @@ public class CatalogJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldUpdateBrandNameWhenBrandExists() {
         // Arrange
-        final Brand created = brandDao.create("Old Brand");
+        final Brand created = insertBrand("Old Brand");
 
         // Exercise
         final Optional<Brand> result = brandDao.update(created.getId(), "New Brand");
@@ -52,26 +84,59 @@ public class CatalogJdbcDaoTest extends AbstractPersistenceTest {
         // Assertions
         assertTrue(result.isPresent());
         assertEquals("New Brand", result.get().getName());
-        assertEquals("New Brand", brandDao.findById(created.getId()).orElseThrow().getName());
+        assertEquals("New Brand", jdbcTemplate.queryForObject(
+                "SELECT name FROM brands WHERE brand_id = ?", String.class, created.getId()
+        ));
+    }
+
+    @Test
+    public void shouldUpdateBodyTypeNameWhenBodyTypeExists() {
+        // Arrange
+        final BodyType created = insertBodyType("Old Body");
+
+        // Exercise
+        final Optional<BodyType> result = bodyTypeDao.update(created.getId(), "New Body");
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals("New Body", result.get().getName());
+        assertEquals("New Body", jdbcTemplate.queryForObject(
+                "SELECT name FROM body_types WHERE body_type_id = ?", String.class, created.getId()
+        ));
+    }
+
+    @Test
+    public void shouldDeleteBrandWhenBrandExists() {
+        // Arrange
+        final Brand created = insertBrand("Disposable Brand");
+
+        // Exercise
+        final boolean result = brandDao.delete(created.getId());
+
+        // Assertions
+        assertTrue(result);
+        assertEquals(0, countRows("SELECT COUNT(*) FROM brands WHERE brand_id = ?", created.getId()));
     }
 
     @Test
     public void shouldDeleteBodyTypeWhenBodyTypeExists() {
         // Arrange
-        final BodyType created = bodyTypeDao.create("Coupe");
+        final BodyType created = insertBodyType("Coupe");
 
         // Exercise
         final boolean result = bodyTypeDao.delete(created.getId());
 
         // Assertions
         assertTrue(result);
-        assertFalse(bodyTypeDao.findById(created.getId()).isPresent());
+        assertEquals(0, countRows(
+                "SELECT COUNT(*) FROM body_types WHERE body_type_id = ?", created.getId()
+        ));
     }
 
     @Test
     public void shouldReturnEmptyWhenBodyTypeDoesNotExist() {
         // Arrange
-        bodyTypeDao.create("Sedan");
+        insertBodyType("Sedan");
 
         // Exercise
         final Optional<BodyType> result = bodyTypeDao.findByName("Hatchback");

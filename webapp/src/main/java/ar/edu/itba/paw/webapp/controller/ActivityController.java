@@ -8,6 +8,8 @@ import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 
 @Controller
 public class ActivityController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
     private static final String TAB_LATEST = "latest";
     private static final String TAB_FOLLOWING = "following";
@@ -49,6 +53,7 @@ public class ActivityController {
                                  @RequestParam(value = "page", defaultValue = "1") final int page) {
         final boolean authenticated = currentUser != null;
         final String activeTab = normalizeActivityTab(tab, authenticated);
+        LOGGER.debug("rendering activity feed tab={} page={} authenticated={}", activeTab, page, authenticated);
         final int pageSize = ACTIVITY_PAGE_SIZE;
 
         final Page<Review> reviewsPage;

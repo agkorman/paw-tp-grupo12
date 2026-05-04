@@ -51,7 +51,7 @@
     <pa:auth-required-modal/>
 
     <c:if test="${showSubmittedToast}">
-        <pa:submitted-toast messageCode="${submittedToastMessageCode}"/>
+        <pa:toast messageCode="${submittedToastMessageCode}"/>
     </c:if>
 
     <script src="<c:url value='/js/reactions.js'/>"></script>
@@ -59,7 +59,7 @@
     <script src="<c:url value='/js/cars-filters-panel.js?v=15'/>"></script>
     <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/submitted-toast.js'/>"></script>
+    <script src="<c:url value='/js/toast.js'/>"></script>
 
     <pa:footer/>
 </body>

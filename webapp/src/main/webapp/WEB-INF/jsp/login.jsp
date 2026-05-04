@@ -26,13 +26,6 @@
                 <h1 id="loginTitle"><spring:message code="auth.login.heading"/></h1>
             </div>
 
-            <c:if test="${not empty loginErrorCode}">
-                <div class="alert alert-error" role="alert"><spring:message code="${loginErrorCode}"/></div>
-            </c:if>
-            <c:if test="${not empty loginMessageCode}">
-                <div class="alert alert-success" role="status"><spring:message code="${loginMessageCode}"/></div>
-            </c:if>
-
             <form id="loginForm" class="auth-form" method="post" action="<c:url value='/login'/>"
                   data-auth-form="login" data-submit-lock="true" novalidate="novalidate">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
@@ -70,8 +63,17 @@
         </section>
     </main>
 
+    <c:choose>
+        <c:when test="${not empty loginErrorCode}">
+            <pa:toast messageCode="${loginErrorCode}" type="error"/>
+        </c:when>
+        <c:when test="${not empty loginMessageCode}">
+            <pa:toast messageCode="${loginMessageCode}"/>
+        </c:when>
+    </c:choose>
     <script src="<c:url value='/js/auth-form.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <script src="<c:url value='/js/toast.js'/>"></script>
     <pa:footer/>
 </body>
 </html>

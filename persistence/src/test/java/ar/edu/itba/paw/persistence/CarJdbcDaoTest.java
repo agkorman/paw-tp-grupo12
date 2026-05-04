@@ -3,13 +3,13 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CarJdbcDaoTest extends AbstractPersistenceTest {
@@ -17,19 +17,32 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldCreateAndFindCarWithJoinedBrandAndBodyType() {
         // Arrange
-        final long brandId = brandDao.create("BMW").getId();
-        final long bodyTypeId = bodyTypeDao.create("Sedan").getId();
+        final long brandId = insertBrand("BMW").getId();
+        final long bodyTypeId = insertBodyType("Sedan").getId();
 
         // Exercise
         final Car result = carDao.create(brandId, "M3", bodyTypeId, 2026, "Sport sedan",
                 "combustion", 473, 8, "manual", new BigDecimal("9.9"), 290, new BigDecimal("76900.00"));
 
         // Assertions
-        final Car persisted = carDao.findById(result.getId()).orElseThrow();
-        assertEquals("BMW", persisted.getBrandName());
-        assertEquals("Sedan", persisted.getBodyType());
-        assertEquals("M3", persisted.getModel());
-        assertEquals(473, persisted.getHorsepower());
+        assertEquals(1, countRows("SELECT COUNT(*) FROM cars WHERE car_id = ?", result.getId()));
+        assertEquals("M3", jdbcTemplate.queryForObject(
+                "SELECT model FROM cars WHERE car_id = ?", String.class, result.getId()
+        ));
+        assertEquals(473, jdbcTemplate.queryForObject(
+                "SELECT horsepower FROM cars WHERE car_id = ?", Integer.class, result.getId()
+        ));
+        assertEquals(new BigDecimal("76900.00"), jdbcTemplate.queryForObject(
+                "SELECT price_usd FROM cars WHERE car_id = ?", BigDecimal.class, result.getId()
+        ));
+        assertEquals("BMW", jdbcTemplate.queryForObject(
+                "SELECT b.name FROM cars c JOIN brands b ON c.brand_id = b.brand_id WHERE c.car_id = ?",
+                String.class, result.getId()
+        ));
+        assertEquals("Sedan", jdbcTemplate.queryForObject(
+                "SELECT bt.name FROM cars c JOIN body_types bt ON c.body_type_id = bt.body_type_id WHERE c.car_id = ?",
+                String.class, result.getId()
+        ));
     }
 
     @Test
@@ -53,6 +66,70 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldFilterCarsByAdvancedCriteriaCombination() {
+        // Arrange
+        final long brandId = insertBrand("Advanced Brand").getId();
+        final long bodyTypeId = insertBodyType("Advanced Body").getId();
+        final Car matching = insertCar(brandId, "Advanced Brand", "Advanced Match", bodyTypeId, "Advanced Body",
+                2025, "Small city car", "hybrid", 220, 8, "automatic", new BigDecimal("5.5"),
+                240, new BigDecimal("42000.00"));
+        insertCar(brandId, "Advanced Brand", "Advanced Miss", bodyTypeId, "Advanced Body",
+                2021, "Fast auto", "hybrid", 120, 4, "manual", new BigDecimal("9.5"),
+                190, new BigDecimal("90000.00"));
+        final CarSearchCriteria criteria = new CarSearchCriteria();
+        // Search is intentionally naive here because HSQLDB does not support PostgreSQL full-text search.
+        criteria.setQ("y");
+        criteria.setBrand("Advanced Brand");
+        criteria.setBodyType("Advanced Body");
+        criteria.setFuelTypes(List.of("hybrid"));
+        criteria.setYearMin(2024);
+        criteria.setYearMax(2026);
+        criteria.setHorsepowerMin(200);
+        criteria.setHorsepowerMax(300);
+        criteria.setAirbagMin(6);
+        criteria.setTransmission("automatic");
+        criteria.setFuelConsumptionMax(new BigDecimal("6.0"));
+        criteria.setMaxSpeedMin(220);
+        criteria.setPriceMin(new BigDecimal("40000.00"));
+        criteria.setPriceMax(new BigDecimal("50000.00"));
+        criteria.setSortBy("price_asc");
+
+        // Exercise
+        final Page<Car> result = carDao.findByCriteria(criteria);
+
+        // Assertions
+        assertEquals(1, result.getTotalItems());
+        assertEquals(matching.getId(), result.getItems().get(0).getId());
+        assertEquals("hybrid", result.getItems().get(0).getFuelType());
+        assertEquals("automatic", result.getItems().get(0).getTransmission());
+    }
+
+    @Test
+    public void shouldPaginateAndClampCarsByCriteria() {
+        // Arrange
+        final long brandId = insertBrand("Paged Brand").getId();
+        final long bodyTypeId = insertBodyType("Paged Body").getId();
+        for (int i = 0; i < Pagination.CARS_PAGE_SIZE + 1; i++) {
+            insertCar(brandId, "Paged Brand", String.format("Paged Model %02d", i), bodyTypeId, "Paged Body",
+                    2026, "Paged description " + i, "combustion", 150 + i, 6, "automatic",
+                    new BigDecimal("8.0"), 200 + i, new BigDecimal("30000.00"));
+        }
+        final CarSearchCriteria criteria = new CarSearchCriteria();
+        criteria.setBrand("Paged Brand");
+        criteria.setSortBy("name_asc");
+        criteria.setPage(999);
+
+        // Exercise
+        final Page<Car> result = carDao.findByCriteria(criteria);
+
+        // Assertions
+        assertEquals(Pagination.CARS_PAGE_SIZE + 1L, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(1, result.getItems().size());
+        assertEquals("Paged Model 16", result.getItems().get(0).getModel());
+    }
+
+    @Test
     public void shouldUpdatePersistedCarSpecsWhenCarExists() {
         // Arrange
         final Car created = createCar("update");
@@ -64,10 +141,16 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result.isPresent());
-        final Car persisted = carDao.findById(created.getId()).orElseThrow();
-        assertEquals("Updated Model", persisted.getModel());
-        assertEquals("hybrid", persisted.getFuelType());
-        assertEquals(new BigDecimal("52000.00"), persisted.getPriceUsd());
+        assertEquals("Updated Model", result.get().getModel());
+        assertEquals("Updated Model", jdbcTemplate.queryForObject(
+                "SELECT model FROM cars WHERE car_id = ?", String.class, created.getId()
+        ));
+        assertEquals("hybrid", jdbcTemplate.queryForObject(
+                "SELECT fuel_type FROM cars WHERE car_id = ?", String.class, created.getId()
+        ));
+        assertEquals(new BigDecimal("52000.00"), jdbcTemplate.queryForObject(
+                "SELECT price_usd FROM cars WHERE car_id = ?", BigDecimal.class, created.getId()
+        ));
     }
 
     @Test
@@ -80,9 +163,11 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result);
-        assertFalse(carDao.findById(created.getId()).isPresent());
-        assertEquals(0, carDao.countByBrandId(created.getBrandId()));
-        assertEquals(0, carDao.countByBodyTypeId(created.getBodyTypeId()));
+        assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE car_id = ?", created.getId()));
+        assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE brand_id = ?", created.getBrandId()));
+        assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE body_type_id = ?", created.getBodyTypeId()));
+        assertEquals(1, countRows("SELECT COUNT(*) FROM brands WHERE brand_id = ?", created.getBrandId()));
+        assertEquals(1, countRows("SELECT COUNT(*) FROM body_types WHERE body_type_id = ?", created.getBodyTypeId()));
     }
 
     @Test
@@ -99,5 +184,69 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
         assertEquals(2, result.size());
         assertEquals(first.getId(), result.get(0).getId());
         assertEquals(second.getId(), result.get(1).getId());
+    }
+
+    @Test
+    public void shouldReturnEmptyPageWhenCriteriaHasNoMatches() {
+        // Arrange
+        createCar("no-match");
+        final CarSearchCriteria criteria = new CarSearchCriteria();
+        criteria.setBrand("Missing Brand");
+
+        // Exercise
+        final Page<Car> result = carDao.findByCriteria(criteria);
+
+        // Assertions
+        assertEquals(0L, result.getTotalItems());
+        assertTrue(result.getItems().isEmpty());
+        assertEquals(Pagination.DEFAULT_PAGE, result.getPageNumber());
+    }
+
+    @Test
+    public void shouldSortCarsByPriceDescending() {
+        // Arrange
+        final long brandId = insertBrand("Sort Price Brand").getId();
+        final long bodyTypeId = insertBodyType("Sort Price Body").getId();
+        final Car cheaper = insertCar(brandId, "Sort Price Brand", "Cheaper", bodyTypeId, "Sort Price Body",
+                2026, "Cheaper car", "combustion", 150, 6, "automatic", new BigDecimal("8.0"),
+                200, new BigDecimal("20000.00"));
+        final Car expensive = insertCar(brandId, "Sort Price Brand", "Expensive", bodyTypeId, "Sort Price Body",
+                2026, "Expensive car", "combustion", 150, 6, "automatic", new BigDecimal("8.0"),
+                200, new BigDecimal("50000.00"));
+        final CarSearchCriteria criteria = new CarSearchCriteria();
+        criteria.setBrand("Sort Price Brand");
+        criteria.setSortBy("price_desc");
+
+        // Exercise
+        final Page<Car> result = carDao.findByCriteria(criteria);
+
+        // Assertions
+        assertEquals(2L, result.getTotalItems());
+        assertEquals(expensive.getId(), result.getItems().get(0).getId());
+        assertEquals(cheaper.getId(), result.getItems().get(1).getId());
+    }
+
+    @Test
+    public void shouldSortCarsByHorsepowerAscending() {
+        // Arrange
+        final long brandId = insertBrand("Sort Hp Brand").getId();
+        final long bodyTypeId = insertBodyType("Sort Hp Body").getId();
+        final Car weak = insertCar(brandId, "Sort Hp Brand", "Weak", bodyTypeId, "Sort Hp Body",
+                2026, "Weak car", "combustion", 120, 6, "automatic", new BigDecimal("8.0"),
+                200, new BigDecimal("30000.00"));
+        final Car strong = insertCar(brandId, "Sort Hp Brand", "Strong", bodyTypeId, "Sort Hp Body",
+                2026, "Strong car", "combustion", 400, 6, "automatic", new BigDecimal("8.0"),
+                250, new BigDecimal("30000.00"));
+        final CarSearchCriteria criteria = new CarSearchCriteria();
+        criteria.setBrand("Sort Hp Brand");
+        criteria.setSortBy("hp_asc");
+
+        // Exercise
+        final Page<Car> result = carDao.findByCriteria(criteria);
+
+        // Assertions
+        assertEquals(2L, result.getTotalItems());
+        assertEquals(weak.getId(), result.getItems().get(0).getId());
+        assertEquals(strong.getId(), result.getItems().get(1).getId());
     }
 }

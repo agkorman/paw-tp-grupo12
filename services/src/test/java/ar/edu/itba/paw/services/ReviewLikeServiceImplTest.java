@@ -146,6 +146,20 @@ public class ReviewLikeServiceImplTest {
     }
 
     @Test
+    public void shouldUnlikeReplyWhenPreviouslyLiked() {
+        // Arrange
+        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(java.util.Optional.of(reply()));
+        when(userDao.findById(USER_ID)).thenReturn(java.util.Optional.of(user()));
+        when(reviewLikeDao.isReplyLikedByUser(REPLY_ID, USER_ID)).thenReturn(true);
+
+        // Exercise
+        final boolean result = reviewLikeService.toggleReplyLike(REPLY_ID, USER_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
     public void shouldRejectToggleReplyLikeWhenReplyMissing() {
         // Arrange
         when(reviewReplyDao.findById(REPLY_ID)).thenReturn(java.util.Optional.empty());
@@ -156,6 +170,21 @@ public class ReviewLikeServiceImplTest {
 
         // Assertions
         assertEquals("Reply not found.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldWrapDaoFailureAsIllegalStateOnToggleReplyLike() {
+        // Arrange
+        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(java.util.Optional.of(reply()));
+        when(userDao.findById(USER_ID)).thenReturn(java.util.Optional.of(user()));
+        when(reviewLikeDao.isReplyLikedByUser(REPLY_ID, USER_ID)).thenThrow(new RuntimeException("db"));
+
+        // Exercise
+        final IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> reviewLikeService.toggleReplyLike(REPLY_ID, USER_ID));
+
+        // Assertions
+        assertEquals("Failed to toggle reply like.", ex.getMessage());
     }
 
     @Test
@@ -185,9 +214,10 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldReturnEmptyMapWhenReviewIdsCollectionIsNull() {
         // Arrange
+        final Collection<Long> reviewIds = null;
 
         // Exercise
-        final Map<Long, Long> result = reviewLikeService.countReviewLikesByReviewIds(null);
+        final Map<Long, Long> result = reviewLikeService.countReviewLikesByReviewIds(reviewIds);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -196,9 +226,10 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldReturnEmptyMapWhenReviewIdsCollectionIsEmpty() {
         // Arrange
+        final Collection<Long> reviewIds = List.of();
 
         // Exercise
-        final Map<Long, Long> result = reviewLikeService.countReviewLikesByReviewIds(List.of());
+        final Map<Long, Long> result = reviewLikeService.countReviewLikesByReviewIds(reviewIds);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -232,9 +263,10 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldReturnEmptySetForLikedReviewIdsWithNullCollection() {
         // Arrange
+        final Collection<Long> reviewIds = null;
 
         // Exercise
-        final Set<Long> result = reviewLikeService.getLikedReviewIds(null, USER_ID);
+        final Set<Long> result = reviewLikeService.getLikedReviewIds(reviewIds, USER_ID);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -255,9 +287,10 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldReturnEmptyMapWhenSinceIsNull() {
         // Arrange
+        final LocalDateTime since = null;
 
         // Exercise
-        final Map<Long, Long> result = reviewLikeService.countNewLikesPerReview(USER_ID, null);
+        final Map<Long, Long> result = reviewLikeService.countNewLikesPerReview(USER_ID, since);
 
         // Assertions
         assertTrue(result.isEmpty());

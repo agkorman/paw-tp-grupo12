@@ -52,10 +52,11 @@ public class BrandServiceImplTest {
     @Test
     public void shouldRejectCreatingBrandWithBlankName() {
         // Arrange
+        final String blankName = "   ";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> brandService.createBrand("   "));
+                () -> brandService.createBrand(blankName));
 
         // Assertions
         assertEquals("Brand name is required.", ex.getMessage());
@@ -77,10 +78,11 @@ public class BrandServiceImplTest {
     @Test
     public void shouldRejectUpdatingBrandWithBlankName() {
         // Arrange
+        final String blankName = null;
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> brandService.updateBrand(BRAND_ID, null));
+                () -> brandService.updateBrand(BRAND_ID, blankName));
 
         // Assertions
         assertEquals("Brand name is required.", ex.getMessage());
