@@ -8,11 +8,8 @@ import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.util.Collections;
@@ -115,36 +112,16 @@ public class ValidCarFormValidator implements ConstraintValidator<ValidCarForm, 
     }
 
     private FormContext currentFormContext(final CarForm form) {
-        final ServletRequestAttributes attributes =
-                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        final HttpServletRequest request = attributes == null ? null : attributes.getRequest();
-        final String uri = request == null ? "" : request.getRequestURI();
-        final Long requestId = extractId(uri, "/admin/requests/", "/accept");
-        if (requestId != null) {
-            return new FormContext(MODE_REVIEW_REQUEST, requestId);
+        final String rawMode = form.getFormMode();
+        final String mode = rawMode == null ? ""
+                : rawMode.trim().toLowerCase(Locale.ROOT);
+        if (MODE_REVIEW_REQUEST.equals(mode) && form.getRequestId() != null) {
+            return new FormContext(MODE_REVIEW_REQUEST, form.getRequestId());
         }
-        final Long carId = extractId(uri, "/admin/cars/", null);
-        if (carId != null) {
-            return new FormContext(MODE_EDIT_CAR, carId);
+        if (MODE_EDIT_CAR.equals(mode) && form.getCarId() != null) {
+            return new FormContext(MODE_EDIT_CAR, form.getCarId());
         }
         return new FormContext("create", null);
-    }
-
-    private Long extractId(final String uri, final String prefix, final String suffix) {
-        final int start = uri.indexOf(prefix);
-        if (start < 0) {
-            return null;
-        }
-        int end = suffix == null ? uri.length() : uri.indexOf(suffix, start + prefix.length());
-        if (end < 0) {
-            end = uri.length();
-        }
-        final String value = uri.substring(start + prefix.length(), end);
-        try {
-            return Long.valueOf(value);
-        } catch (final NumberFormatException e) {
-            return null;
-        }
     }
 
     private List<Long> requestImageIds(final CarRequest request) {

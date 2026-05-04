@@ -22,10 +22,14 @@ import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
+import ar.edu.itba.paw.webapp.validation.UploadedImageValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -59,7 +63,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 @Controller
 @RequestMapping("/admin")
@@ -81,6 +84,7 @@ public class AdminController {
     private final BodyTypeRequestService bodyTypeRequestService;
     private final AdminRequestService adminRequestService;
     private final UserService userService;
+    private final MessageSource messageSource;
 
     @Autowired
     public AdminController(final CarRequestService carRequestService, final CarService carService,
@@ -89,7 +93,8 @@ public class AdminController {
                            final BrandRequestService brandRequestService,
                            final BodyTypeRequestService bodyTypeRequestService,
                            final AdminRequestService adminRequestService,
-                           final UserService userService) {
+                           final UserService userService,
+                           final MessageSource messageSource) {
         this.carRequestService = carRequestService;
         this.carService = carService;
         this.brandService = brandService;
@@ -98,6 +103,7 @@ public class AdminController {
         this.bodyTypeRequestService = bodyTypeRequestService;
         this.adminRequestService = adminRequestService;
         this.userService = userService;
+        this.messageSource = messageSource;
     }
 
     @InitBinder
@@ -513,15 +519,16 @@ public class AdminController {
         carForm.setRequestId(request.getId());
         addCarFormBinding(mav, carForm, errors);
         mav.addObject("carFormMode", "review-request");
-        mav.addObject("formKicker", "Solicitud pendiente");
-        mav.addObject("formTitle", "Revisar formulario");
-        mav.addObject("formSubtitle", "Corregí los datos que haga falta antes de aprobar o rechazar la solicitud.");
+        mav.addObject("formKicker", message("cars.form.mode.review.kicker"));
+        mav.addObject("formTitle", message("cars.form.mode.review.title"));
+        mav.addObject("formSubtitle", message("cars.form.mode.review.editSubtitle"));
         mav.addObject("formAction", "/admin/requests/" + request.getId() + "/accept");
         mav.addObject("cancelUrl", "/admin?tab=cars");
-        mav.addObject("submitLabel", "Confirmar auto");
+        mav.addObject("submitLabel", message("cars.form.confirm"));
         mav.addObject("rejectAction", "/admin/requests/" + request.getId() + "/reject");
-        mav.addObject("rejectLabel", "Rechazar");
+        mav.addObject("rejectLabel", message("common.action.reject"));
         mav.addObject("showCatalogRequestLinks", false);
+        mav.addObject("carFormMaxImageCount", UploadedImageValidation.MAX_IMAGE_COUNT);
         final List<Long> retainedImageIds = retainedImageIds(carForm.getRetainedImageIds(), buildRequestImageIds(request));
         final List<String> imageUrls = buildRequestImageUrls(request, retainedImageIds);
         mav.addObject("existingImageUrls", imageUrls);
@@ -535,13 +542,14 @@ public class AdminController {
         carForm.setCarId(car.getId());
         addCarFormBinding(mav, carForm, errors);
         mav.addObject("carFormMode", "edit-car");
-        mav.addObject("formKicker", "Catálogo");
-        mav.addObject("formTitle", "Editar auto");
-        mav.addObject("formSubtitle", "Modificá los datos del auto publicado y ajustá su galería de imágenes.");
+        mav.addObject("formKicker", message("cars.form.mode.edit.kicker"));
+        mav.addObject("formTitle", message("cars.form.mode.edit.title"));
+        mav.addObject("formSubtitle", message("cars.form.mode.edit.subtitle"));
         mav.addObject("formAction", "/admin/cars/" + car.getId());
         mav.addObject("cancelUrl", "/reviews?carId=" + car.getId());
-        mav.addObject("submitLabel", "Guardar cambios");
+        mav.addObject("submitLabel", message("cars.form.save"));
         mav.addObject("showCatalogRequestLinks", false);
+        mav.addObject("carFormMaxImageCount", UploadedImageValidation.MAX_IMAGE_COUNT);
         final List<Long> retainedImageIds = retainedImageIds(carForm.getRetainedImageIds(), buildCarImageIds(car));
         final List<String> imageUrls = buildCarImageUrls(car, retainedImageIds);
         mav.addObject("existingImageUrls", imageUrls);
@@ -604,10 +612,10 @@ public class AdminController {
         final List<String> imageUrls = buildRequestImageUrls(request);
         return new AdminCarRequestCard(
                 request.getId(),
-                valueOrFallback(brandName, "Marca pendiente"),
+                valueOrFallback(brandName, message("admin.carRequests.placeholderBrand")),
                 request.getModel(),
                 request.getYear(),
-                valueOrFallback(bodyTypeName, "Carrocería pendiente"),
+                valueOrFallback(bodyTypeName, message("admin.carRequests.placeholderBodyType")),
                 request.getDescription(),
                 submitterLabel(request),
                 !imageUrls.isEmpty(),
@@ -693,9 +701,9 @@ public class AdminController {
             return submitterEmail;
         }
         if (request.getSubmittedByUserId() != null) {
-            return "Usuario #" + request.getSubmittedByUserId();
+            return message("admin.user.byId", request.getSubmittedByUserId());
         }
-        return "Usuario sin identificar";
+        return message("admin.user.unidentified");
     }
 
     private String submitterLabel(final String submitterEmail, final Long submittedByUserId) {
@@ -710,9 +718,9 @@ public class AdminController {
             if (resolvedEmail != null) {
                 return resolvedEmail;
             }
-            return "Usuario #" + submittedByUserId;
+            return message("admin.user.byId", submittedByUserId);
         }
-        return "Usuario sin identificar";
+        return message("admin.user.unidentified");
     }
 
     private AdminCatalogRequestCard toBrandCard(final BrandRequest request) {
@@ -738,7 +746,7 @@ public class AdminController {
         final String username = submitter != null && submitter.getUsername() != null
                 && !submitter.getUsername().isBlank()
                 ? submitter.getUsername()
-                : "Usuario sin identificar";
+                : message("admin.user.unidentified");
         final String label = username;
         return new AdminAdminRequestCard(
                 request.getId(),
@@ -920,6 +928,14 @@ public class AdminController {
             default:
                 return TAB_CARS;
         }
+    }
+
+    private String message(final String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+    }
+
+    private String message(final String code, final Object arg) {
+        return messageSource.getMessage(code, new Object[]{arg}, LocaleContextHolder.getLocale());
     }
 
     public static final class AdminCarRequestCard {

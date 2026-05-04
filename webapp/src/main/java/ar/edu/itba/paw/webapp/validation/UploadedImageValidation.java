@@ -8,11 +8,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Set;
 
-final class UploadedImageValidation {
+public final class UploadedImageValidation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UploadedImageValidation.class);
 
-    static final int MAX_IMAGE_COUNT = 5;
+    public static final int MAX_IMAGE_COUNT = 5;
     private static final long MAX_IMAGE_SIZE_BYTES = 10L * 1024 * 1024;
     private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
             MediaType.IMAGE_JPEG_VALUE,

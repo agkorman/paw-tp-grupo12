@@ -16,13 +16,13 @@
 
     var COPY = {
         'brand': {
-            kicker: 'Solicitud de marca',
-            title: 'Revisar marca solicitada',
+            kicker: modal.getAttribute('data-catalog-brand-kicker') || '',
+            title: modal.getAttribute('data-catalog-brand-title') || '',
             collection: 'brand-requests'
         },
         'body-type': {
-            kicker: 'Solicitud de carrocería',
-            title: 'Revisar carrocería solicitada',
+            kicker: modal.getAttribute('data-catalog-body-type-kicker') || '',
+            title: modal.getAttribute('data-catalog-body-type-title') || '',
             collection: 'body-type-requests'
         }
     };

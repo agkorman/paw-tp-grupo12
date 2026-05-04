@@ -6,11 +6,19 @@
 <c:url var="adminBaseUrl" value="/admin"/>
 <spring:message var="closeModalLabel" code="common.action.close"/>
 <spring:message var="commentsEmptyPlaceholder" code="admin.catalogRequest.comments.empty"/>
+<spring:message var="modalBrandKicker" code="admin.catalogModal.brand.kicker"/>
+<spring:message var="modalBrandTitle" code="admin.catalogModal.brand.title"/>
+<spring:message var="modalBodyTypeKicker" code="admin.catalogModal.bodyType.kicker"/>
+<spring:message var="modalBodyTypeTitle" code="admin.catalogModal.bodyType.title"/>
 
 <div id="adminCatalogRequestModal"
      class="review-modal admin-catalog-request-review-modal"
      hidden
-     data-admin-base-url="${adminBaseUrl}">
+     data-admin-base-url="${adminBaseUrl}"
+     data-catalog-brand-kicker="${fn:escapeXml(modalBrandKicker)}"
+     data-catalog-brand-title="${fn:escapeXml(modalBrandTitle)}"
+     data-catalog-body-type-kicker="${fn:escapeXml(modalBodyTypeKicker)}"
+     data-catalog-body-type-title="${fn:escapeXml(modalBodyTypeTitle)}">
     <div class="review-modal-overlay" data-close-admin-catalog-request-modal></div>
     <section class="review-modal-dialog admin-catalog-request-review-dialog"
              role="dialog" aria-modal="true" aria-labelledby="adminCatalogRequestTitle">

@@ -28,6 +28,11 @@
     var previewObjectUrls = [];
     var previewIndex = 0;
     var accumulatedFiles = [];
+    var maxTotalImages = parseInt(page.dataset.maxImageCount, 10);
+    if (!Number.isFinite(maxTotalImages) || maxTotalImages < 1) {
+        maxTotalImages = 5;
+    }
+    var msgImageMaxCount = page.dataset.msgImageMaxCount || '';
 
     function formatMessage(template) {
         var args = Array.prototype.slice.call(arguments, 1);
@@ -60,6 +65,10 @@
         fileInput.files = dt.files;
     }
 
+    function maxNewSlotsBudget() {
+        return Math.max(0, maxTotalImages - existingImageCount);
+    }
+
     function syncRetainedImageInputs() {
         if (!retainedImageInputs) {
             return;
@@ -75,8 +84,18 @@
     }
 
     function appendToAccumulator(newFiles) {
+        var maxNew = maxNewSlotsBudget();
         if (!canSyncFileInput) {
-            accumulatedFiles = newFiles.slice();
+            accumulatedFiles = [];
+            var seenLegacy = {};
+            for (var i = 0; i < newFiles.length && accumulatedFiles.length < maxNew; i += 1) {
+                var f = newFiles[i];
+                var k = fileKey(f);
+                if (!seenLegacy[k]) {
+                    seenLegacy[k] = true;
+                    accumulatedFiles.push(f);
+                }
+            }
             return;
         }
         var existing = {};
@@ -84,6 +103,9 @@
             existing[fileKey(file)] = true;
         });
         newFiles.forEach(function (file) {
+            if (accumulatedFiles.length >= maxNew) {
+                return;
+            }
             var key = fileKey(file);
             if (!existing[key]) {
                 existing[key] = true;
@@ -180,6 +202,10 @@
             return;
         }
         var files = selectedFiles(fileInput);
+        var maxNew = maxNewSlotsBudget();
+        if (files.length > maxNew && maxNew >= 0) {
+            files = files.slice(0, maxNew);
+        }
         fileUpload.classList.toggle('has-file', files.length > 0 || existingImageUrls.length > 0);
         if (files.length === 1) {
             fileStatus.textContent = existingImageCount > 0 ? files[0].name + ' ' + messages.msgImageAddSuffix : files[0].name;
@@ -208,8 +234,12 @@
                 syncInputFromAccumulator();
                 return;
             }
+            var room = Math.max(0, maxNewSlotsBudget() - accumulatedFiles.length);
             appendToAccumulator(picked);
             updateFileState();
+            if (picked.length > room && msgImageMaxCount && fileStatus) {
+                fileStatus.textContent = formatMessage(msgImageMaxCount, maxTotalImages);
+            }
         });
     }
     if (filePreviewPrev) {

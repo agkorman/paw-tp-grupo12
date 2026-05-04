@@ -82,6 +82,7 @@
                             </div>
                         </c:when>
                         <c:otherwise>
+                            <spring:message var="adminCatalogCardKickerBrand" code="admin.catalogRequestCard.kickerBrand"/>
                             <div class="admin-catalog-request-grid">
                                 <c:forEach var="brandRequest" items="${pendingBrandRequests}">
                                     <pa:admin-catalog-request-card
@@ -90,7 +91,7 @@
                                             submitter="${brandRequest.submitter}"
                                             comments="${brandRequest.comments}"
                                             type="brand"
-                                            kicker="Marca"/>
+                                            kicker="${adminCatalogCardKickerBrand}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -109,6 +110,7 @@
                             </div>
                         </c:when>
                         <c:otherwise>
+                            <spring:message var="adminCatalogCardKickerBodyType" code="admin.catalogRequestCard.kickerBodyType"/>
                             <div class="admin-catalog-request-grid">
                                 <c:forEach var="bodyTypeRequest" items="${pendingBodyTypeRequests}">
                                     <pa:admin-catalog-request-card
@@ -117,7 +119,7 @@
                                             submitter="${bodyTypeRequest.submitter}"
                                             comments="${bodyTypeRequest.comments}"
                                             type="body-type"
-                                            kicker="Carrocería"/>
+                                            kicker="${adminCatalogCardKickerBodyType}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -169,6 +171,8 @@
                             </div>
                         </c:when>
                         <c:otherwise>
+                            <spring:message var="adminCarRequestCardFooter" code="common.status.pending"/>
+                            <spring:message var="adminCarRequestReviewAction" code="admin.carRequests.review"/>
                             <div class="admin-requests-grid">
                                 <c:forEach var="request" items="${pendingRequests}">
                                     <c:url var="requestReviewUrl" value="/admin/requests/${request.id}/review"/>
@@ -181,8 +185,8 @@
                                             imageUrl="${request.imageUrl}"
                                             href="${requestReviewUrl}"
                                             submitter="${request.submitter}"
-                                            footerText="Solicitud pendiente"
-                                            actionText="Revisar"/>
+                                            footerText="${fn:escapeXml(adminCarRequestCardFooter)}"
+                                            actionText="${fn:escapeXml(adminCarRequestReviewAction)}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>

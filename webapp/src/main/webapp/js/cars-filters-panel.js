@@ -20,6 +20,9 @@
         return;
     }
 
+    var msgYearRange = panel.getAttribute('data-msg-year-range') || '';
+    var msgYearOrder = panel.getAttribute('data-msg-year-order') || '';
+
     /* ── OPEN / CLOSE ── */
 
     function openPanel() {
@@ -770,13 +773,13 @@
         }
         if (!isValidNumberParam(panelParams.yearMin, 1950, 2100)
                 || !isValidNumberParam(panelParams.yearMax, 1950, 2100)) {
-            showYearValidationError('Usá años entre 1950 y 2100.', focusOnError);
+            showYearValidationError(msgYearRange, focusOnError);
             return false;
         }
 
         if (panelParams.yearMin !== undefined && panelParams.yearMax !== undefined
                 && Number(panelParams.yearMin) > Number(panelParams.yearMax)) {
-            showYearValidationError('El año mínimo no puede superar al máximo.', focusOnError);
+            showYearValidationError(msgYearOrder, focusOnError);
             return false;
         }
 
