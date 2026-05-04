@@ -6,6 +6,7 @@ import ar.edu.itba.paw.services.exception.CarNotFoundException;
 import ar.edu.itba.paw.services.exception.InvalidImagePayloadException;
 import ar.edu.itba.paw.services.exception.ReviewNotFoundException;
 import ar.edu.itba.paw.services.exception.ReviewReplyNotFoundException;
+import ar.edu.itba.paw.services.exception.ReviewOwnershipException;
 import ar.edu.itba.paw.services.exception.ReviewReplyOwnershipException;
 import ar.edu.itba.paw.services.exception.SelfFollowException;
 import ar.edu.itba.paw.services.exception.PendingAdminRequestExistsException;
@@ -56,6 +57,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             ForbiddenException.class,
+            ReviewOwnershipException.class,
             ReviewReplyOwnershipException.class
     })
     public ModelAndView handleForbidden(final RuntimeException e,

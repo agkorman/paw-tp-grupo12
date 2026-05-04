@@ -12,9 +12,8 @@ public interface EmailService {
     void sendCatalogRequestRejectedNotification(String recipientEmail, String requestType, String requestedName);
     void sendAdminRequestApprovedNotification(String recipientEmail);
     void sendAdminRequestRejectedNotification(String recipientEmail);
-    void sendReviewHiddenNotification(String recipientEmail, String subject, String heading, String intro,
-                                      String reviewLabel, String carLabel, String reasonLabel,
-                                      String reviewTitle, String carName, String moderatorReason);
+    void sendReviewHiddenNotification(String recipientEmail, String reviewTitle, String carName,
+                                      String moderatorReason);
     void sendWeeklyModeratorDigest(List<String> moderatorEmails, int pendingRequestCount);
     void sendWeeklyUserDigest(String recipientEmail, String username,
                               List<ReviewActivityItem> reviewActivity,

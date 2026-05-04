@@ -48,4 +48,6 @@ public interface CarRequestService {
                                   BigDecimal priceUsd);
 
     boolean rejectPendingRequest(long id);
+
+    List<CarImagePayload> collectRetainedImagePayloads(long requestId, List<Long> retainedImageIds);
 }

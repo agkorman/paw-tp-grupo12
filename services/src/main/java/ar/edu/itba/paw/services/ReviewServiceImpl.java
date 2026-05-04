@@ -1,10 +1,14 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewTagDao;
+import ar.edu.itba.paw.services.exception.ReviewNotFoundException;
+import ar.edu.itba.paw.services.exception.ReviewOwnershipException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +19,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,13 +32,21 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewDao reviewDao;
     private final ReviewTagDao reviewTagDao;
     private final ReviewTagService reviewTagService;
+    private final CarService carService;
+    private final UserService userService;
+    private final EmailService emailService;
 
     @Autowired
     public ReviewServiceImpl(final ReviewDao reviewDao, final ReviewTagDao reviewTagDao,
-                             final ReviewTagService reviewTagService) {
+                             final ReviewTagService reviewTagService,
+                             final CarService carService, final UserService userService,
+                             final EmailService emailService) {
         this.reviewDao = reviewDao;
         this.reviewTagDao = reviewTagDao;
         this.reviewTagService = reviewTagService;
+        this.carService = carService;
+        this.userService = userService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -207,5 +220,90 @@ public class ReviewServiceImpl implements ReviewService {
             return Collections.emptyList();
         }
         return reviewDao.findStatsByCarIds(carIds);
+    }
+
+    @Override
+    public Page<Review> getActivityFeedReviews(final String feedMode, final Long userId,
+                                               final int page, final int pageSize) {
+        if (FEED_FOLLOWING.equals(feedMode) && userId != null) {
+            return reviewDao.findByFollowedUsers(userId, page, pageSize);
+        }
+        if (FEED_FAVORITES.equals(feedMode) && userId != null) {
+            return reviewDao.findByFavoriteCars(userId, page, pageSize);
+        }
+        return reviewDao.findLatest(page, pageSize);
+    }
+
+    @Override
+    public Review getReviewAndCheckAccess(final long reviewId, final long requestingUserId,
+                                          final boolean isAdmin) {
+        final Review review = reviewDao.findById(reviewId)
+                .orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        final boolean isOwner = review.getUserId() != null && review.getUserId().equals(requestingUserId);
+        if (!isOwner && !isAdmin) {
+            throw new ReviewOwnershipException(reviewId);
+        }
+        return review;
+    }
+
+    @Override
+    @Transactional
+    public boolean hideReview(final long reviewId, final String reason) {
+        final Review review = reviewDao.findById(reviewId).orElse(null);
+        if (review == null) {
+            return false;
+        }
+        final String carName = resolveCarDisplayName(review.getCarId());
+        final String recipientEmail = resolveRecipientEmail(review);
+        final boolean deleted = reviewDao.delete(reviewId);
+        if (!deleted) {
+            return false;
+        }
+        LOGGER.info("deleted review id={} (hidden by moderator)", reviewId);
+        if (recipientEmail != null) {
+            emailService.sendReviewHiddenNotification(recipientEmail, review.getTitle(), carName, reason);
+        }
+        return true;
+    }
+
+    private String resolveCarDisplayName(final long carId) {
+        return carService.getCarById(carId)
+                .map(car -> {
+                    final String brand = car.getBrandName();
+                    final String model = car.getModel();
+                    if (brand == null && model == null) {
+                        return null;
+                    }
+                    if (brand == null) {
+                        return model;
+                    }
+                    if (model == null) {
+                        return brand;
+                    }
+                    return brand + " " + model;
+                })
+                .orElse(null);
+    }
+
+    private String resolveRecipientEmail(final Review review) {
+        final String reviewerEmail = normalizeEmail(review.getReviewerEmail());
+        if (reviewerEmail != null) {
+            return reviewerEmail;
+        }
+        if (review.getUserId() == null) {
+            return null;
+        }
+        return userService.getUserById(review.getUserId())
+                .map(User::getEmail)
+                .map(ReviewServiceImpl::normalizeEmail)
+                .orElse(null);
+    }
+
+    private static String normalizeEmail(final String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        final String trimmed = email.trim().toLowerCase(Locale.ROOT);
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

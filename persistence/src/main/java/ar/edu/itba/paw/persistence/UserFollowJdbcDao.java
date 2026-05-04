@@ -1,6 +1,11 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.User;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,19 +20,22 @@ import java.util.List;
 @Repository
 public class UserFollowJdbcDao implements UserFollowDao {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserFollowJdbcDao.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+        UserFollowJdbcDao.class
+    );
 
     private static final String USER_SELECT =
-            "SELECT u.user_id, u.username, u.email, u.password, u.role, u.created_at FROM users u ";
+        "SELECT u.user_id, u.username, u.email, u.password, u.role, u.created_at FROM users u ";
 
-    private static final RowMapper<User> USER_ROW_MAPPER = (rs, rowNum) -> new User(
+    private static final RowMapper<User> USER_ROW_MAPPER = (rs, rowNum) ->
+        new User(
             rs.getLong("user_id"),
             rs.getString("username"),
             rs.getString("email"),
             rs.getString("password"),
             rs.getString("role"),
             rs.getTimestamp("created_at").toLocalDateTime()
-    );
+        );
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -39,30 +47,46 @@ public class UserFollowJdbcDao implements UserFollowDao {
     @Override
     public boolean follow(final long followerId, final long followedId) {
         try {
-            final boolean inserted = jdbcTemplate.update(
+            final boolean inserted =
+                jdbcTemplate.update(
                     "INSERT INTO user_follows (follower_id, followed_id) VALUES (?, ?)",
                     followerId,
                     followedId
-            ) > 0;
+                ) >
+                0;
             if (inserted) {
-                LOGGER.info("user id={} followed user id={}", followerId, followedId);
+                LOGGER.info(
+                    "user id={} followed user id={}",
+                    followerId,
+                    followedId
+                );
             }
             return inserted;
         } catch (final DuplicateKeyException ignored) {
-            LOGGER.debug("user id={} already follows user id={}", followerId, followedId);
+            LOGGER.debug(
+                "user id={} already follows user id={}",
+                followerId,
+                followedId
+            );
             return false;
         }
     }
 
     @Override
     public boolean unfollow(final long followerId, final long followedId) {
-        final boolean removed = jdbcTemplate.update(
+        final boolean removed =
+            jdbcTemplate.update(
                 "DELETE FROM user_follows WHERE follower_id = ? AND followed_id = ?",
                 followerId,
                 followedId
-        ) > 0;
+            ) >
+            0;
         if (removed) {
-            LOGGER.info("user id={} unfollowed user id={}", followerId, followedId);
+            LOGGER.info(
+                "user id={} unfollowed user id={}",
+                followerId,
+                followedId
+            );
         }
         return removed;
     }
@@ -70,10 +94,10 @@ public class UserFollowJdbcDao implements UserFollowDao {
     @Override
     public boolean isFollowing(final long followerId, final long followedId) {
         final Boolean exists = jdbcTemplate.queryForObject(
-                "SELECT EXISTS (SELECT 1 FROM user_follows WHERE follower_id = ? AND followed_id = ?)",
-                Boolean.class,
-                followerId,
-                followedId
+            "SELECT EXISTS (SELECT 1 FROM user_follows WHERE follower_id = ? AND followed_id = ?)",
+            Boolean.class,
+            followerId,
+            followedId
         );
         return Boolean.TRUE.equals(exists);
     }
@@ -81,9 +105,9 @@ public class UserFollowJdbcDao implements UserFollowDao {
     @Override
     public long countFollowers(final long userId) {
         final Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM user_follows WHERE followed_id = ?",
-                Long.class,
-                userId
+            "SELECT COUNT(*) FROM user_follows WHERE followed_id = ?",
+            Long.class,
+            userId
         );
         return count == null ? 0 : count;
     }
@@ -91,9 +115,9 @@ public class UserFollowJdbcDao implements UserFollowDao {
     @Override
     public long countFollowing(final long userId) {
         final Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM user_follows WHERE follower_id = ?",
-                Long.class,
-                userId
+            "SELECT COUNT(*) FROM user_follows WHERE follower_id = ?",
+            Long.class,
+            userId
         );
         return count == null ? 0 : count;
     }
@@ -101,22 +125,22 @@ public class UserFollowJdbcDao implements UserFollowDao {
     @Override
     public List<User> findFollowers(final long userId) {
         return jdbcTemplate.query(
-                USER_SELECT
-                        + "JOIN user_follows f ON f.follower_id = u.user_id "
-                        + "WHERE f.followed_id = ? ORDER BY f.created_at DESC, u.username ASC",
-                USER_ROW_MAPPER,
-                userId
+            USER_SELECT +
+                "JOIN user_follows f ON f.follower_id = u.user_id " +
+                "WHERE f.followed_id = ? ORDER BY f.created_at DESC, u.username ASC",
+            USER_ROW_MAPPER,
+            userId
         );
     }
 
     @Override
     public List<User> findFollowing(final long userId) {
         return jdbcTemplate.query(
-                USER_SELECT
-                        + "JOIN user_follows f ON f.followed_id = u.user_id "
-                        + "WHERE f.follower_id = ? ORDER BY f.created_at DESC, u.username ASC",
-                USER_ROW_MAPPER,
-                userId
+            USER_SELECT +
+                "JOIN user_follows f ON f.followed_id = u.user_id " +
+                "WHERE f.follower_id = ? ORDER BY f.created_at DESC, u.username ASC",
+            USER_ROW_MAPPER,
+            userId
         );
     }
 }

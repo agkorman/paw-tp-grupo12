@@ -30,9 +30,6 @@ public class ActivityController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
-    private static final String TAB_LATEST = "latest";
-    private static final String TAB_FOLLOWING = "following";
-    private static final String TAB_FAVORITES = "favorites";
     private static final int ACTIVITY_PAGE_SIZE = 10;
 
     private final ReviewService reviewService;
@@ -56,14 +53,8 @@ public class ActivityController {
         LOGGER.debug("rendering activity feed tab={} page={} authenticated={}", activeTab, page, authenticated);
         final int pageSize = ACTIVITY_PAGE_SIZE;
 
-        final Page<Review> reviewsPage;
-        if (TAB_FOLLOWING.equals(activeTab)) {
-            reviewsPage = reviewService.getReviewsByFollowedUsers(currentUser.getId(), page, pageSize);
-        } else if (TAB_FAVORITES.equals(activeTab)) {
-            reviewsPage = reviewService.getReviewsByFavoriteCars(currentUser.getId(), page, pageSize);
-        } else {
-            reviewsPage = reviewService.getLatestReviews(page, pageSize);
-        }
+        final Page<Review> reviewsPage = reviewService.getActivityFeedReviews(
+                activeTab, authenticated ? currentUser.getId() : null, page, pageSize);
 
         final List<ActivityReviewCard> activityReviews = toActivityReviewCards(reviewsPage.getItems());
         final long latestCount = reviewService.countAllReviews();
@@ -101,13 +92,13 @@ public class ActivityController {
 
     private String normalizeActivityTab(final String tab, final boolean authenticated) {
         if (tab == null || tab.isBlank()) {
-            return TAB_LATEST;
+            return ReviewService.FEED_LATEST;
         }
         final String normalized = tab.trim().toLowerCase(Locale.ROOT);
-        if (authenticated && (TAB_FOLLOWING.equals(normalized) || TAB_FAVORITES.equals(normalized))) {
+        if (authenticated && (ReviewService.FEED_FOLLOWING.equals(normalized) || ReviewService.FEED_FAVORITES.equals(normalized))) {
             return normalized;
         }
-        return TAB_LATEST;
+        return ReviewService.FEED_LATEST;
     }
 
     public static final class ActivityReviewCard {

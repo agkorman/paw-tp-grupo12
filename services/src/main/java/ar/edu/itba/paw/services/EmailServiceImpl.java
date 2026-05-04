@@ -140,15 +140,18 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async("mailTaskExecutor")
-    public void sendReviewHiddenNotification(final String recipientEmail, final String subject,
-                                             final String heading, final String intro,
-                                             final String reviewLabel, final String carLabel,
-                                             final String reasonLabel, final String reviewTitle,
+    public void sendReviewHiddenNotification(final String recipientEmail, final String reviewTitle,
                                              final String carName, final String moderatorReason) {
         if (recipientEmail == null || recipientEmail.isBlank()) {
             return;
         }
 
+        final String subject = "[" + APP_NAME + "] Tu reseña fue ocultada";
+        final String heading = "Tu reseña fue ocultada";
+        final String intro = "Un moderador ocultó una reseña que publicaste en " + APP_NAME + ".";
+        final String reviewLabel = "Reseña";
+        final String carLabel = "Auto";
+        final String reasonLabel = "Motivo del moderador";
         sendEmail(
                 sanitizeHeaderValue(subject),
                 buildReviewHiddenPlainText(heading, intro, reviewLabel, carLabel, reasonLabel,

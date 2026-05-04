@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.User;
-
 import java.util.List;
 
 public interface UserFollowService {
