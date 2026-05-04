@@ -396,7 +396,7 @@ public class CarController {
                 .contentLength(carImage.getImageData().length)
                 .cacheControl(cacheControl)
                 .eTag(eTag)
-                .lastModified(Timestamp.valueOf(carImage.getUpdatedAt()).getTime())
+                .lastModified(carImage.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                 .body(carImage.getImageData());
     }
 

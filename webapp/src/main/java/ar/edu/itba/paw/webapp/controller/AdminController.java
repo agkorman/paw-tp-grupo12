@@ -516,7 +516,7 @@ public class AdminController {
                 .contentLength(request.getImageData().length)
                 .eTag(eTag)
                 .cacheControl(cacheControl)
-                .lastModified(Timestamp.valueOf(request.getCreatedAt()).getTime())
+                .lastModified(request.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                 .body(request.getImageData());
     }
 
@@ -545,7 +545,7 @@ public class AdminController {
                 .contentLength(requestImage.getImageData().length)
                 .eTag(eTag)
                 .cacheControl(cacheControl)
-                .lastModified(Timestamp.valueOf(requestImage.getUpdatedAt()).getTime())
+                .lastModified(requestImage.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                 .body(requestImage.getImageData());
     }
 
