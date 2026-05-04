@@ -7,11 +7,15 @@ import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CarJdbcDaoTest extends AbstractPersistenceTest {
@@ -230,6 +234,75 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
         assertEquals(2L, result.getTotalItems());
         assertEquals(expensive.getId(), result.getItems().get(0).getId());
         assertEquals(cheaper.getId(), result.getItems().get(1).getId());
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenFindByIdHasNoMatch() {
+        // Arrange
+        final long missingId = 9999L;
+
+        // Exercise
+        final Optional<Car> result = carDao.findById(missingId);
+
+        // Assertions
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenUpdatingMissingCar() {
+        // Arrange
+        final long missingId = 9999L;
+
+        // Exercise
+        final Optional<Car> result = carDao.update(missingId, 1L, "Ghost Model", 1L, 2026,
+                "Description", "combustion", 200, 6, "automatic",
+                new BigDecimal("8.0"), 220, new BigDecimal("30000.00"));
+
+        // Assertions
+        assertFalse(result.isPresent());
+        assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE car_id = ?", missingId));
+    }
+
+    @Test
+    public void shouldReturnFalseWhenDeletingMissingCar() {
+        // Arrange
+        final long missingId = 9999L;
+
+        // Exercise
+        final boolean result = carDao.delete(missingId);
+
+        // Assertions
+        assertFalse(result);
+        assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE car_id = ?", missingId));
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenFindByIdsReceivesEmptyCollection() {
+        // Arrange
+        final List<Long> emptyIds = Collections.emptyList();
+
+        // Exercise
+        final List<Car> result = carDao.findByIds(emptyIds);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldRejectDuplicateCarBrandModelBodyTypeYear() {
+        // Arrange
+        final Car existing = createCar("dup-car");
+
+        // Exercise
+        assertThrows(DataIntegrityViolationException.class, () ->
+                carDao.create(existing.getBrandId(), existing.getModel(), existing.getBodyTypeId(),
+                        existing.getYear(), "Another description", "combustion", 150, 6, "manual",
+                        new BigDecimal("7.0"), 200, new BigDecimal("25000.00"))
+        );
+
+        // Assertions
+        assertEquals(1, countRows("SELECT COUNT(*) FROM cars WHERE brand_id = ? AND model = ? AND body_type_id = ? AND year = ?",
+                existing.getBrandId(), existing.getModel(), existing.getBodyTypeId(), existing.getYear()));
     }
 
     @Test

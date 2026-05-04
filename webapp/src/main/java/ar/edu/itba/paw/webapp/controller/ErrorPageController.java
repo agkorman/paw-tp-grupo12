@@ -2,6 +2,9 @@ package ar.edu.itba.paw.webapp.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,58 +19,65 @@ public class ErrorPageController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorPageController.class);
 
+    private final MessageSource messageSource;
+
+    @Autowired
+    public ErrorPageController(final MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
+
     @RequestMapping("/error/400")
     public ModelAndView badRequest(final HttpServletRequest request, final HttpServletResponse response) {
         return errorPage(request, response, 400,
-                "Pedido inválido",
-                "El formulario o la URL que enviaste no son válidos. Revisá los campos e intentá de nuevo.");
+                "error.page.400.title",
+                "error.page.400.description");
     }
 
     @RequestMapping("/error/403")
     public ModelAndView forbidden(final HttpServletRequest request, final HttpServletResponse response) {
         return errorPage(request, response, 403,
-                "Acceso restringido",
-                "No tenés permisos para entrar a esta sección.");
+                "error.page.403.title",
+                "error.page.403.description");
     }
 
     @RequestMapping("/error/404")
     public ModelAndView notFound(final HttpServletRequest request, final HttpServletResponse response) {
         return errorPage(request, response, 404,
-                "No encontrado",
-                "El recurso que buscás no existe o fue movido.");
+                "error.page.404.title",
+                "error.page.404.description");
     }
 
     @RequestMapping("/error/405")
     public ModelAndView methodNotAllowed(final HttpServletRequest request, final HttpServletResponse response) {
         return errorPage(request, response, 405,
-                "Acción no permitida",
-                "La acción que intentaste realizar no está disponible para esta URL.");
+                "error.page.405.title",
+                "error.page.405.description");
     }
 
     @RequestMapping("/error/413")
     public ModelAndView payloadTooLarge(final HttpServletRequest request, final HttpServletResponse response) {
         return errorPage(request, response, 413,
-                "Archivo demasiado grande",
-                "El contenido que intentaste subir supera el tamaño permitido.");
+                "error.page.413.title",
+                "error.page.413.description");
     }
 
     @RequestMapping("/error/415")
     public ModelAndView unsupportedMediaType(final HttpServletRequest request, final HttpServletResponse response) {
         return errorPage(request, response, 415,
-                "Formato no compatible",
-                "El tipo de contenido enviado no es compatible con esta acción.");
+                "error.page.415.title",
+                "error.page.415.description");
     }
 
     @RequestMapping("/error/500")
     public ModelAndView serverError(final HttpServletRequest request, final HttpServletResponse response) {
         return errorPage(request, response, 500,
-                "Algo salió mal",
-                "Tuvimos un problema inesperado. Intentá de nuevo en unos instantes.");
+                "error.page.500.title",
+                "error.page.500.description");
     }
 
     private ModelAndView errorPage(final HttpServletRequest request, final HttpServletResponse response,
                                    final int fallbackStatus,
-                                   final String title, final String description) {
+                                   final String titleCode, final String descriptionCode) {
         final Integer attrStatus = (Integer) request.getAttribute("javax.servlet.error.status_code");
         final int status = attrStatus == null || attrStatus < 400 ? fallbackStatus : attrStatus;
 
@@ -84,8 +94,12 @@ public class ErrorPageController {
             mav.setStatus(httpStatus);
         }
         mav.addObject("statusCode", status);
-        mav.addObject("title", title);
-        mav.addObject("description", description);
+        mav.addObject("title", resolveMessage(titleCode));
+        mav.addObject("description", resolveMessage(descriptionCode));
         return mav;
+    }
+
+    private String resolveMessage(final String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 }

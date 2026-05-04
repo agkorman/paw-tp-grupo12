@@ -67,7 +67,7 @@
 <spring:message var="jsNumberInvalid" code="js.car.validation.number"/>
 <spring:message var="jsNumberMin" code="js.car.validation.min"/>
 <spring:message var="jsNumberMax" code="js.car.validation.max"/>
-<spring:message var="jsImageMaxCount" code="js.car.image.maxCount"/>
+<spring:message var="jsImageMaxCountTemplate" code="js.car.image.maxCount"/>
 <spring:message var="jsImageUnsupportedType" code="js.car.image.unsupportedType"/>
 <spring:message var="jsImageTooLarge" code="js.car.image.tooLarge"/>
 <spring:message var="jsImageMultiple" code="js.car.image.multiple"/>
@@ -76,6 +76,7 @@
 <spring:message var="jsImageLoadedOne" code="js.car.image.loadedOne"/>
 <spring:message var="jsImageLoadedMultiple" code="js.car.image.loadedMultiple"/>
 <spring:message var="jsImageAddMore" code="js.car.image.addMore"/>
+<c:set var="carFormMaxImageCount" value="${empty carFormMaxImageCount ? 5 : carFormMaxImageCount}"/>
 <!DOCTYPE html>
 <html lang="es">
 <pa:page-head title="${carFormPageTitle}" styles="/css/reviews.css|/css/car-image-upload.css|/css/catalog-request-modal.css|/css/form-pages.css"/>
@@ -106,7 +107,7 @@
                  data-msg-number-invalid="${fn:escapeXml(jsNumberInvalid)}"
                  data-msg-number-min="${fn:escapeXml(jsNumberMin)}"
                  data-msg-number-max="${fn:escapeXml(jsNumberMax)}"
-                 data-msg-image-max-count="${fn:escapeXml(jsImageMaxCount)}"
+                 data-msg-image-max-count="${fn:escapeXml(jsImageMaxCountTemplate)}"
                  data-msg-image-unsupported-type="${fn:escapeXml(jsImageUnsupportedType)}"
                  data-msg-image-too-large="${fn:escapeXml(jsImageTooLarge)}"
                  data-msg-image-multiple="${fn:escapeXml(jsImageMultiple)}"
@@ -115,6 +116,7 @@
                  data-msg-image-loaded-one="${fn:escapeXml(jsImageLoadedOne)}"
                  data-msg-image-loaded-multiple="${fn:escapeXml(jsImageLoadedMultiple)}"
                  data-msg-image-add-more="${fn:escapeXml(jsImageAddMore)}"
+                 data-max-image-count="${carFormMaxImageCount}"
                  aria-labelledby="carFormTitle">
             <div class="modal-header">
                 <div>
@@ -132,6 +134,9 @@
                 <c:if test="${not empty carFormError}">
                     <div class="alert alert-error" role="alert"><c:out value="${carFormError}"/></div>
                 </c:if>
+                <form:hidden path="formMode"/>
+                <form:hidden path="carId"/>
+                <form:hidden path="requestId"/>
 
                 <p id="carFormSubtitle" class="car-modal-subtitle"><c:out value="${resolvedFormSubtitle}"/></p>
 

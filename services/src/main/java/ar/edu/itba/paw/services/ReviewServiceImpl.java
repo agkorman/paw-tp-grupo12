@@ -121,6 +121,14 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public List<Review> getReviewsByCarIds(final Collection<Long> carIds) {
+        if (carIds == null || carIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return reviewDao.findByCarIds(carIds);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Map<Long, Integer> getDefaultPagesForReviewIds(final Collection<Long> reviewIds) {
         return reviewDao.findDefaultPagesByReviewIds(reviewIds);

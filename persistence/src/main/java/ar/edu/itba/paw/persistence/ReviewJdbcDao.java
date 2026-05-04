@@ -254,6 +254,18 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
+    public List<Review> findByCarIds(final Collection<Long> carIds) {
+        if (carIds == null || carIds.isEmpty()) {
+            return List.of();
+        }
+        return attachTagsToList(namedParameterJdbcTemplate.query(
+                REVIEW_SELECT + "WHERE r.car_id IN (:carIds) ORDER BY " + DEFAULT_REVIEW_ORDER,
+                new MapSqlParameterSource("carIds", carIds),
+                ROW_MAPPER
+        ));
+    }
+
+    @Override
     public List<Review> findByCarId(long carId) {
         return findByCarIdOrdered(carId, DEFAULT_REVIEW_ORDER);
     }

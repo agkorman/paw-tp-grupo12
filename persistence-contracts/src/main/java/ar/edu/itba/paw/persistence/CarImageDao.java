@@ -12,6 +12,8 @@ public interface CarImageDao {
 
     List<CarImage> findAllByCarId(long carId);
 
+    List<CarImage> findAllByCarIdWithData(long carId);
+
     Optional<CarImage> findByCarIdAndImageId(long carId, long imageId);
 
     void saveOrReplace(long carId, String contentType, byte[] imageData);

@@ -22,7 +22,8 @@
       data-enhanced-filter="true"
       data-fragment-url="${carsContentUrl}"
       data-target="#carsCatalogContent"
-      data-auto-submit="true">
+      data-auto-submit="true"
+      novalidate="novalidate">
     <div class="cars-toolbar-shell">
         <label class="cars-toolbar-search" for="cars-toolbar-search">
             <span class="cars-toolbar-icon" aria-hidden="true">
@@ -32,7 +33,6 @@
                     id="cars-toolbar-search"
                     type="search"
                     name="q"
-                    maxlength="120"
                     value="<c:out value='${searchQuery}'/>"
                     placeholder="${toolbarSearchPlaceholder}"
                     autocomplete="off"

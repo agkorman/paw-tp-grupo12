@@ -32,6 +32,7 @@ public interface ReviewService {
     long countReviewsByFavoriteCars(long userId);
     Optional<Review> getReviewById(long id);
     List<Review> getReviewsByIds(Collection<Long> ids);
+    List<Review> getReviewsByCarIds(Collection<Long> carIds);
     Optional<Review> updateReview(long id, long carId, BigDecimal rating, String title, String body,
                                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                                   Collection<Short> tagIds);

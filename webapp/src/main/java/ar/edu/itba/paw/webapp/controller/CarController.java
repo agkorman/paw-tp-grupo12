@@ -112,6 +112,12 @@ public class CarController {
             String.class,
             new StringTrimmerEditor(true)
         );
+        binder.setDisallowedFields(
+            "formMode",
+            "carId",
+            "requestId",
+            "retainedImageIds"
+        );
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
@@ -230,6 +236,10 @@ public class CarController {
         }
 
         final List<MultipartFile> files = selectedImageFiles(carForm.getFiles());
+        carForm.setFormMode("create");
+        carForm.setCarId(null);
+        carForm.setRequestId(null);
+        carForm.setRetainedImageIds(Collections.emptyList());
         final String imageError = validateUploadedImages(files, true);
         if (imageError != null) {
             errors.rejectValue("files", "image.invalid", imageError);

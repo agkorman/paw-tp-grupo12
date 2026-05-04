@@ -25,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -237,6 +239,92 @@ public class CarServiceImplTest {
         // Assertions
         assertEquals(1, result.size());
         assertEquals(CAR_ID, result.get(0).getId());
+    }
+
+    @Test
+    public void shouldReturnTopRatedCarsWhenCountMeetsLimit() {
+        // Arrange
+        final int limit = 2;
+        when(carDao.findTopRated(limit)).thenReturn(List.of(car(), car()));
+
+        // Exercise
+        final List<Car> result = carService.getFeaturedCars(limit);
+
+        // Assertions
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    public void shouldFillWithRecentlyAddedCarsWhenTopRatedBelowLimit() {
+        // Arrange
+        final int limit = 3;
+        final Car recent = new Car(6L, BRAND_ID, "Honda", "Civic", BODY_TYPE_ID, 2023, "sedan",
+                "desc", LocalDateTime.now(), false, "GASOLINE", 90, 4, "MANUAL",
+                new BigDecimal("5.0"), 160, new BigDecimal("15000.00"));
+        when(carDao.findTopRated(limit)).thenReturn(List.of(car()));
+        when(carDao.findRecentlyAdded(anyInt(), anyCollection())).thenReturn(List.of(recent, recent));
+
+        // Exercise
+        final List<Car> result = carService.getFeaturedCars(limit);
+
+        // Assertions
+        assertEquals(3, result.size());
+        assertEquals(CAR_ID, result.get(0).getId());
+        assertEquals(6L, result.get(1).getId());
+    }
+
+    @Test
+    public void shouldReturnFalseForDuplicateWhenModelIsBlank() {
+        // Arrange
+        final String blankModel = "   ";
+
+        // Exercise
+        final boolean result = carService.existsDuplicateCar("Toyota", "sedan", blankModel, 2024, 0L);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldDetectDuplicateCarInCatalog() {
+        // Arrange
+        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
+        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+
+        // Exercise
+        final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "  Corolla  ", 2024, 0L);
+
+        // Assertions
+        assertTrue(result);
+    }
+
+    @Test
+    public void shouldNotFlagIgnoredCarAsDuplicate() {
+        // Arrange
+        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
+        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+
+        // Exercise
+        final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "Corolla", 2024, CAR_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldNotFlagCarWithDifferentYear() {
+        // Arrange
+        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
+        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+
+        // Exercise
+        final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "Corolla", 2025, 0L);
+
+        // Assertions
+        assertFalse(result);
     }
 
     @Test
