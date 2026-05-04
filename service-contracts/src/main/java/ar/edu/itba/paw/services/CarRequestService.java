@@ -47,6 +47,8 @@ public interface CarRequestService {
                                   String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
                                   BigDecimal priceUsd);
 
+    boolean updateRequestStatus(long id, String oldStatus, String newStatus);
+
     boolean rejectPendingRequest(long id);
 
     List<CarImagePayload> collectRetainedImagePayloads(long requestId, List<Long> retainedImageIds);

@@ -35,7 +35,7 @@
     <span class="activity-review-author">
         <span class="activity-review-author-copy">
             <strong><c:out value="${reviewCard.authorName}"/></strong>
-            <span><c:out value="${reviewCard.timeAgo}"/></span>
+            <span><c:out value="${relativeTimeFormatter.format(reviewCard.review.createdAt)}"/></span>
         </span>
     </span>
 

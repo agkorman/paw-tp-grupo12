@@ -15,7 +15,7 @@ public interface BrandRequestDao {
 
     long countByStatus(String status);
 
-    BrandRequest create(Long submittedByUserId, String submitterEmail, String name, String comments, String status);
+    BrandRequest insertAndFetch(Long submittedByUserId, String submitterEmail, String name, String comments, String status);
 
     boolean updateStatus(long id, String expectedStatus, String newStatus);
 }

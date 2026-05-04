@@ -7,7 +7,6 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
-import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -34,14 +32,11 @@ public class ActivityController {
 
     private final ReviewService reviewService;
     private final CarService carService;
-    private final RelativeTimeFormatter relativeTimeFormatter;
 
     @Autowired
-    public ActivityController(final ReviewService reviewService, final CarService carService,
-                              final RelativeTimeFormatter relativeTimeFormatter) {
+    public ActivityController(final ReviewService reviewService, final CarService carService) {
         this.reviewService = reviewService;
         this.carService = carService;
-        this.relativeTimeFormatter = relativeTimeFormatter;
     }
 
     @RequestMapping(value = "/activity", method = RequestMethod.GET)
@@ -84,8 +79,7 @@ public class ActivityController {
         return reviews
                 .stream()
                 .map(review -> new ActivityReviewCard(review, carsById.get(review.getCarId()),
-                        reviewPagesById.getOrDefault(review.getId(), Pagination.DEFAULT_PAGE),
-                        relativeTimeFormatter.format(review.getCreatedAt())))
+                        reviewPagesById.getOrDefault(review.getId(), Pagination.DEFAULT_PAGE)))
                 .toList();
     }
 
@@ -104,13 +98,11 @@ public class ActivityController {
         private final Review review;
         private final Car car;
         private final int reviewPage;
-        private final String timeAgo;
 
-        private ActivityReviewCard(final Review review, final Car car, final int reviewPage, final String timeAgo) {
+        private ActivityReviewCard(final Review review, final Car car, final int reviewPage) {
             this.review = review;
             this.car = car;
             this.reviewPage = reviewPage;
-            this.timeAgo = timeAgo;
         }
 
         public Review getReview() {
@@ -153,10 +145,6 @@ public class ActivityController {
                 return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase(Locale.ROOT);
             }
             return value.substring(0, Math.min(2, value.length())).toUpperCase(Locale.ROOT);
-        }
-
-        public String getTimeAgo() {
-            return timeAgo;
         }
     }
 }

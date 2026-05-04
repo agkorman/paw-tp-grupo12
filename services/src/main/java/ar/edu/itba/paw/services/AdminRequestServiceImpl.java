@@ -126,7 +126,7 @@ public class AdminRequestServiceImpl implements AdminRequestService {
             "submitting admin request for user id={}",
             submittedByUserId
         );
-        return adminRequestDao.create(
+        return adminRequestDao.insertAndFetch(
             submittedByUserId,
             submitterEmail,
             normalizedMotivation,
@@ -134,6 +134,12 @@ public class AdminRequestServiceImpl implements AdminRequestService {
             normalizedJustification,
             STATUS_PENDING
         );
+    }
+
+    @Override
+    @Transactional
+    public boolean updateRequestStatus(final long id, final String oldStatus, final String newStatus) {
+        return adminRequestDao.updateStatus(id, oldStatus, newStatus);
     }
 
     @Override
@@ -148,12 +154,7 @@ public class AdminRequestServiceImpl implements AdminRequestService {
             return false;
         }
 
-        final boolean statusUpdated = adminRequestDao.updateStatus(
-            id,
-            STATUS_PENDING,
-            STATUS_APPROVED
-        );
-        if (!statusUpdated) {
+        if (!updateRequestStatus(id, STATUS_PENDING, STATUS_APPROVED)) {
             return false;
         }
 
@@ -180,20 +181,16 @@ public class AdminRequestServiceImpl implements AdminRequestService {
             return false;
         }
 
-        final boolean statusUpdated = adminRequestDao.updateStatus(
-            id,
-            STATUS_PENDING,
-            STATUS_REJECTED
-        );
-        if (statusUpdated) {
+        if (updateRequestStatus(id, STATUS_PENDING, STATUS_REJECTED)) {
             sendRequestRejectedNotification(request);
             LOGGER.info(
                 "rejected admin request id={} userId={}",
                 id,
                 request.getSubmittedByUserId()
             );
+            return true;
         }
-        return statusUpdated;
+        return false;
     }
 
     private void sendRequestApprovedNotification(final AdminRequest request) {

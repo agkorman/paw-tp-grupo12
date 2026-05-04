@@ -77,7 +77,13 @@ public class BrandRequestServiceImpl implements BrandRequestService {
             throw new InvalidServiceInputException("A submitter user id or email is required for brand requests.");
         }
         LOGGER.info("submitting brand request name={} userId={}", normalizedName, submittedByUserId);
-        return brandRequestDao.create(submittedByUserId, submitterEmail, normalizedName, normalizedComments, STATUS_PENDING);
+        return brandRequestDao.insertAndFetch(submittedByUserId, submitterEmail, normalizedName, normalizedComments, STATUS_PENDING);
+    }
+
+    @Override
+    @Transactional
+    public boolean updateRequestStatus(final long id, final String oldStatus, final String newStatus) {
+        return brandRequestDao.updateStatus(id, oldStatus, newStatus);
     }
 
     @Override
@@ -107,12 +113,11 @@ public class BrandRequestServiceImpl implements BrandRequestService {
             return false;
         }
 
-        final boolean statusUpdated = brandRequestDao.updateStatus(id, STATUS_PENDING, STATUS_APPROVED);
-        if (!statusUpdated) {
+        if (!updateRequestStatus(id, STATUS_PENDING, STATUS_APPROVED)) {
             return false;
         }
 
-        brandDao.create(nameToCreate);
+        brandDao.insertAndFetch(nameToCreate);
         sendRequestApprovedNotification(request, nameToCreate);
         LOGGER.info("approved brand request id={} createdName={}", id, nameToCreate);
         return true;
@@ -127,12 +132,12 @@ public class BrandRequestServiceImpl implements BrandRequestService {
             return false;
         }
 
-        final boolean statusUpdated = brandRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
-        if (statusUpdated) {
+        if (updateRequestStatus(id, STATUS_PENDING, STATUS_REJECTED)) {
             sendRequestRejectedNotification(request);
             LOGGER.info("rejected brand request id={}", id);
+            return true;
         }
-        return statusUpdated;
+        return false;
     }
 
     private void sendRequestApprovedNotification(final BrandRequest request, final String approvedName) {

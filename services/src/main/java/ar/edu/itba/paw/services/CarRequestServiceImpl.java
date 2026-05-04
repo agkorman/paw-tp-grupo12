@@ -103,6 +103,12 @@ public class CarRequestServiceImpl implements CarRequestService {
 
     @Override
     @Transactional
+    public boolean updateRequestStatus(final long id, final String oldStatus, final String newStatus) {
+        return carRequestDao.updateStatus(id, oldStatus, newStatus);
+    }
+
+    @Override
+    @Transactional
     public CarRequest createPendingRequest(
         final long submittedByUserId,
         final String submitterEmail,
@@ -135,7 +141,7 @@ public class CarRequestServiceImpl implements CarRequestService {
             : normalizedImages.get(0);
 
         try {
-            final CarRequest request = carRequestDao.create(
+            final CarRequest request = carRequestDao.insertAndFetch(
                 submittedByUserId,
                 submitterEmail,
                 brandId,
@@ -325,16 +331,11 @@ public class CarRequestServiceImpl implements CarRequestService {
         final List<CarImagePayload> normalizedImages =
             ImagePayloadUtils.normalizeImages(images);
 
-        final boolean statusUpdated = carRequestDao.updateStatus(
-            id,
-            STATUS_PENDING,
-            STATUS_APPROVED
-        );
-        if (!statusUpdated) {
+        if (!updateRequestStatus(id, STATUS_PENDING, STATUS_APPROVED)) {
             return false;
         }
 
-        final Car createdCar = carDao.create(
+        final Car createdCar = carDao.insertAndFetch(
             brandId,
             normalizedModel,
             bodyTypeId,
@@ -497,16 +498,12 @@ public class CarRequestServiceImpl implements CarRequestService {
             return false;
         }
 
-        final boolean statusUpdated = carRequestDao.updateStatus(
-            id,
-            STATUS_PENDING,
-            STATUS_REJECTED
-        );
-        if (statusUpdated) {
+        if (updateRequestStatus(id, STATUS_PENDING, STATUS_REJECTED)) {
             sendCarRejectedNotification(request);
             LOGGER.info("Rejected car request id={}", id);
+            return true;
         }
-        return statusUpdated;
+        return false;
     }
 
     private void sendCarApprovedNotification(

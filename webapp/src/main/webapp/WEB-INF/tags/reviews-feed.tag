@@ -73,7 +73,7 @@
                     <c:url var="replyCreateUrl" value="/reviews/${review.id}/replies"/>
                     <c:url var="reviewEditPageUrl" value="/reviews/${review.id}/edit"/>
                     <c:url var="reviewDeleteUrl" value="/reviews/${review.id}/delete"/>
-                    <c:url var="reviewHideUrl" value="/reviews/${review.id}/hide"/>
+                    <c:url var="reviewDeleteByModeratorUrl" value="/reviews/${review.id}/delete"/>
                     <article class="review-item" id="review-${review.id}">
                         <div class="review-item-top">
                             <strong><c:out value="${review.title}"/></strong>
@@ -100,14 +100,14 @@
                                         </c:when>
                                         <c:otherwise>
                                             <button type="button"
-                                                    class="review-hide-button"
-                                                    aria-label="${fn:escapeXml(reviewHideLabel)}"
-                                                    title="${fn:escapeXml(reviewHideLabel)}"
-                                                    data-open-hide-review-modal
+                                                    class="review-delete-button"
+                                                    aria-label="${fn:escapeXml(reviewDeleteLabel)}"
+                                                    title="${fn:escapeXml(reviewDeleteLabel)}"
+                                                    data-open-delete-review-modal
                                                     data-review-id="${fn:escapeXml(review.id)}"
-                                                    data-review-hide-action="${fn:escapeXml(reviewHideUrl)}"
+                                                    data-review-delete-action="${fn:escapeXml(reviewDeleteByModeratorUrl)}"
                                                     data-review-title="${fn:escapeXml(review.title)}">
-                                                <pa:icon name="visibility-off" size="18"/>
+                                                <pa:icon name="delete" size="18"/>
                                             </button>
                                         </c:otherwise>
                                     </c:choose>

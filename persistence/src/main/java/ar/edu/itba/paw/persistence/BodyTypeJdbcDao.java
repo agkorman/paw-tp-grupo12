@@ -63,7 +63,7 @@ public class BodyTypeJdbcDao implements BodyTypeDao {
     }
 
     @Override
-    public BodyType create(final String name) {
+    public BodyType insertAndFetch(String name) {
         final Map<String, Object> params = new HashMap<>();
         params.put("name", name);
 

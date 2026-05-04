@@ -12,7 +12,7 @@ public interface BodyTypeDao {
 
     Optional<BodyType> findByName(String name);
 
-    BodyType create(String name);
+    BodyType insertAndFetch(String name);
 
     Optional<BodyType> update(long id, String name);
 

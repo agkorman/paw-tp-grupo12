@@ -49,7 +49,7 @@ public class ReviewServiceImplTest {
         final List<Short> tagIds = List.of((short) 1, (short) 2);
         final Review created = review("Original title");
         final Review refreshed = review("Refreshed title");
-        when(reviewDao.create(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true))
+        when(reviewDao.insertAndFetch(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true))
                 .thenReturn(created);
         when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(refreshed));
 
@@ -83,7 +83,7 @@ public class ReviewServiceImplTest {
         // Arrange
         final List<Short> tagIds = List.of();
         final Review created = review("Created title");
-        when(reviewDao.create(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true))
+        when(reviewDao.insertAndFetch(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true))
                 .thenReturn(created);
 
         // Exercise

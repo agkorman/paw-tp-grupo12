@@ -567,7 +567,8 @@ public class CarReviewController {
 
     @RequestMapping(
         value = "/reviews/{reviewId}/delete",
-        method = RequestMethod.POST
+        method = RequestMethod.POST,
+        params = "!reason"
     )
     public Object deleteReview(
         @PathVariable("reviewId") final long reviewId,
@@ -596,10 +597,11 @@ public class CarReviewController {
     }
 
     @RequestMapping(
-        value = "/reviews/{reviewId}/hide",
-        method = RequestMethod.POST
+        value = "/reviews/{reviewId}/delete",
+        method = RequestMethod.POST,
+        params = "reason"
     )
-    public Object hideReview(
+    public Object deleteReviewByModerator(
         @PathVariable("reviewId") final long reviewId,
         @RequestParam(value = "reason", required = false) final String reason,
         @RequestHeader(
@@ -639,12 +641,12 @@ public class CarReviewController {
             );
         final long carId = review.getCarId();
 
-        if (!reviewService.hideReview(reviewId, normalizedReason)) {
-            LOGGER.warn("hide review failed reviewId={}", reviewId);
+        if (!reviewService.deleteReviewByModerator(reviewId, normalizedReason)) {
+            LOGGER.warn("delete review failed reviewId={}", reviewId);
             return reviewHideError(ajax, carId);
         }
         LOGGER.info(
-            "admin id={} hid review id={}",
+            "admin id={} deleted review id={}",
             currentUser.getId(),
             reviewId
         );

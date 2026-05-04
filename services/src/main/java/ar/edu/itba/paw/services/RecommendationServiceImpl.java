@@ -57,7 +57,7 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CarRecommendation> recommend(final RecommendationCriteria criteria, final int limit) {
+    public List<CarRecommendation> recommendByScoringAllCandidates(final RecommendationCriteria criteria, final int limit) {
         final Map<String, BigDecimal> tagCodeWeights = buildTagCodeWeights(criteria);
         if (tagCodeWeights.isEmpty()) {
             LOGGER.debug("recommendation produced no tag weights for criteria");
@@ -72,7 +72,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             return List.of();
         }
 
-        final List<Car> candidates = loadCandidates(criteria);
+        final List<Car> candidates = loadAllCarsFromDatabase(criteria);
         if (candidates.isEmpty()) {
             return List.of();
         }
@@ -125,7 +125,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         return tagIdWeights;
     }
 
-    private List<Car> loadCandidates(final RecommendationCriteria criteria) {
+    private List<Car> loadAllCarsFromDatabase(final RecommendationCriteria criteria) {
         final CarSearchCriteria searchCriteria = new CarSearchCriteria();
         if (criteria != null) {
             searchCriteria.setBodyType(criteria.getBodyType());

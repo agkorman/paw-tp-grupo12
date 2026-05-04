@@ -8,5 +8,5 @@ public interface RecommendationService {
 
     List<RecommendationQuestion> getQuestions();
 
-    List<CarRecommendation> recommend(RecommendationCriteria criteria, int limit);
+    List<CarRecommendation> recommendByScoringAllCandidates(RecommendationCriteria criteria, int limit);
 }

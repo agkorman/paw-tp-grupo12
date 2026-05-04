@@ -23,7 +23,7 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
         final Car car = createCar("review-create");
 
         // Exercise
-        final Review result = reviewDao.create(user.getId(), car.getId(), new BigDecimal("4.5"),
+        final Review result = reviewDao.insertAndFetch(user.getId(), car.getId(), new BigDecimal("4.5"),
                 "Great car", "Detailed body", "owner", 2026, 1500, true);
 
         // Assertions

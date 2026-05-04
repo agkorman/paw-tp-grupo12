@@ -61,7 +61,7 @@ public class ReviewReplyServiceImplTest {
         final ReviewReply created = reply(USER_ID);
         when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(review()));
         when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
-        when(reviewReplyDao.create(REVIEW_ID, USER_ID, "Reply body")).thenReturn(created);
+        when(reviewReplyDao.insertAndFetch(REVIEW_ID, USER_ID, "Reply body")).thenReturn(created);
 
         // Exercise
         final ReviewReply result = reviewReplyService.createReply(REVIEW_ID, USER_ID, "  Reply body  ");
@@ -91,7 +91,7 @@ public class ReviewReplyServiceImplTest {
         // Arrange
         when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(review()));
         when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
-        when(reviewReplyDao.create(REVIEW_ID, USER_ID, "Reply body")).thenThrow(new DataAccessResourceFailureException("db"));
+        when(reviewReplyDao.insertAndFetch(REVIEW_ID, USER_ID, "Reply body")).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
         final IllegalStateException ex = assertThrows(IllegalStateException.class,

@@ -9,7 +9,7 @@ public interface UserService {
     Optional<User> getUserById(long id);
     Optional<User> findByEmail(String email);
     Optional<User> findByUsername(String username);
-    User createUser(String username, String email, String rawPassword);
+    User registerUserWithLegacyBinding(String username, String email, String rawPassword);
     User updateUsername(long userId, String username);
     boolean updateRole(long userId, String role);
     List<String> getModeratorsEmails();

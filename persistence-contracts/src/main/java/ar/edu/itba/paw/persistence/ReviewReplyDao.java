@@ -13,7 +13,7 @@ public interface ReviewReplyDao {
     List<ReviewReply> findByIds(Collection<Long> ids);
     List<ReviewReply> findByReviewId(long reviewId);
     List<ReviewReply> findByReviewIds(Collection<Long> reviewIds);
-    ReviewReply create(long reviewId, long userId, String body);
+    ReviewReply insertAndFetch(long reviewId, long userId, String body);
     Map<Long, Long> countNewRepliesPerReview(long userId, LocalDateTime since);
     boolean delete(long id);
 }

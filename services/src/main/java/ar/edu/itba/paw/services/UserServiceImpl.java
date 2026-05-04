@@ -67,7 +67,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User createUser(final String username, final String email, final String rawPassword) {
+    public User registerUserWithLegacyBinding(final String username, final String email, final String rawPassword) {
         final String normalizedUsername = StringUtils.normalize(username);
         final String normalizedEmail = normalizeEmail(email);
         if (normalizedUsername == null) {
@@ -86,7 +86,7 @@ public class UserServiceImpl implements UserService {
             throw new EmailAlreadyExistsException(normalizedEmail);
         }
 
-        final User user = userDao.create(
+        final User user = userDao.insertAndFetch(
                 normalizedUsername,
                 normalizedEmail,
                 passwordEncoder.encode(rawPassword),

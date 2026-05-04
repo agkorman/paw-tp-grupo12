@@ -63,7 +63,7 @@ public class BrandJdbcDao implements BrandDao {
     }
 
     @Override
-    public Brand create(String name) {
+    public Brand insertAndFetch(String name) {
         Map<String, Object> params = new HashMap<>();
         params.put("name", name);
 

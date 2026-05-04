@@ -76,7 +76,7 @@ public class RecommendationController {
         }
 
         final List<CarRecommendation> recommendations =
-                recommendationService.recommend(recommendationForm.toCriteria(), DEFAULT_LIMIT);
+                recommendationService.recommendByScoringAllCandidates(recommendationForm.toCriteria(), DEFAULT_LIMIT);
         final List<Long> carIds = recommendations.stream()
                 .map(recommendation -> recommendation.getCar().getId())
                 .collect(Collectors.toList());

@@ -1,10 +1,10 @@
 (function () {
     'use strict';
 
-    var modal = document.querySelector('[data-hide-review-modal]');
-    var form = document.getElementById('hideReviewForm');
-    var reasonField = document.getElementById('hideReviewReason');
-    var errorNode = modal ? modal.querySelector('[data-hide-review-error]') : null;
+    var modal = document.querySelector('[data-delete-review-modal]');
+    var form = document.getElementById('deleteReviewForm');
+    var reasonField = document.getElementById('deleteReviewReason');
+    var errorNode = modal ? modal.querySelector('[data-delete-review-error]') : null;
     var activeReviewId = null;
 
     if (!modal || !form || !reasonField) {
@@ -51,7 +51,7 @@
 
     function openModal(button) {
         activeReviewId = button.getAttribute('data-review-id');
-        form.action = button.getAttribute('data-review-hide-action');
+        form.action = button.getAttribute('data-review-delete-action');
         reasonField.value = '';
         clearError();
         setModalOpen(true);
@@ -97,14 +97,14 @@
     }
 
     document.addEventListener('click', function (event) {
-        var openButton = event.target.closest('[data-open-hide-review-modal]');
+        var openButton = event.target.closest('[data-open-delete-review-modal]');
         if (openButton) {
             event.preventDefault();
             openModal(openButton);
             return;
         }
 
-        if (event.target.closest('[data-close-hide-review-modal]')) {
+        if (event.target.closest('[data-close-delete-review-modal]')) {
             event.preventDefault();
             closeModal();
         }

@@ -47,7 +47,7 @@ public class BodyTypeRequestServiceImplTest {
     public void shouldCreatePendingRequestWithNormalizedNameAndComments() {
         // Arrange
         final BodyTypeRequest created = pendingRequest("Roadster");
-        when(bodyTypeRequestDao.create(USER_ID, EMAIL, "Roadster", "comment",
+        when(bodyTypeRequestDao.insertAndFetch(USER_ID, EMAIL, "Roadster", "comment",
                 BodyTypeRequestService.STATUS_PENDING)).thenReturn(created);
 
         // Exercise

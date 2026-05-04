@@ -120,7 +120,7 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
                 throw new InvalidServiceInputException("Reply body is too long.");
             }
 
-            return reviewReplyDao.create(reviewId, userId, normalizedBody);
+            return reviewReplyDao.insertAndFetch(reviewId, userId, normalizedBody);
         } catch (final DataAccessException e) {
             LOGGER.error("failed to create review reply reviewId={} userId={}", reviewId, userId, e);
             throw new ServiceOperationException("Failed to create review reply.", e);

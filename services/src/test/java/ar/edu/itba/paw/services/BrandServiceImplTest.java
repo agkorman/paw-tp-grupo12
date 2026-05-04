@@ -39,7 +39,7 @@ public class BrandServiceImplTest {
     public void shouldCreateBrandWithTrimmedName() {
         // Arrange
         final Brand created = new Brand(BRAND_ID, "Toyota", LocalDateTime.now());
-        when(brandDao.create("Toyota")).thenReturn(created);
+        when(brandDao.insertAndFetch("Toyota")).thenReturn(created);
 
         // Exercise
         final Brand result = brandService.createBrand("  Toyota  ");

@@ -240,13 +240,13 @@ public class CarServiceImplTest {
     }
 
     @Test
-    public void shouldRejectAppendCarImagesWithInvalidPayload() {
+    public void shouldRejectSyncCarImagesWithInvalidPayload() {
         // Arrange
         final List<CarImagePayload> images = List.of(new CarImagePayload("image/png", new byte[0]));
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> carService.appendCarImages(CAR_ID, images));
+                () -> carService.syncCarImages(CAR_ID, images));
 
         // Assertions
         assertEquals("Image metadata and payload must be provided together.", ex.getMessage());

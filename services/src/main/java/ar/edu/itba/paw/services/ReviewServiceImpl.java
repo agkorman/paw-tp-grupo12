@@ -55,7 +55,7 @@ public class ReviewServiceImpl implements ReviewService {
                                String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                                Collection<Short> tagIds) {
         reviewTagService.validateSelection(tagIds);
-        final Review review = reviewDao.create(userId, carId, rating, title, body, ownershipStatus, modelYear,
+        final Review review = reviewDao.insertAndFetch(userId, carId, rating, title, body, ownershipStatus, modelYear,
                 mileageKm, wouldRecommend);
         if (tagIds != null && !tagIds.isEmpty()) {
             reviewTagDao.replaceAssignments(review.getId(), tagIds);
@@ -248,7 +248,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public boolean hideReview(final long reviewId, final String reason) {
+    public boolean deleteReviewByModerator(final long reviewId, final String reason) {
         final Review review = reviewDao.findById(reviewId).orElse(null);
         if (review == null) {
             return false;

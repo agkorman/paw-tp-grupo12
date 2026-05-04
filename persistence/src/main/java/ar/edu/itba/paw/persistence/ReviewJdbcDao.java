@@ -384,8 +384,8 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
-    public Review create(long userId, long carId, BigDecimal rating, String title, String body,
-                         String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend) {
+    public Review insertAndFetch(long userId, long carId, BigDecimal rating, String title, String body,
+                                String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend) {
         Map<String, Object> params = new HashMap<>();
         params.put("user_id", userId);
         params.put("reviewer_email", null);

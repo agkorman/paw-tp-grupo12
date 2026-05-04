@@ -108,7 +108,7 @@ public class AdminRequestJdbcDao implements AdminRequestDao {
     }
 
     @Override
-    public AdminRequest create(final long submittedByUserId, final String submitterEmail,
+    public AdminRequest insertAndFetch(final long submittedByUserId, final String submitterEmail,
                                final String motivation, final String bio, final String justification,
                                final String status) {
         final Map<String, Object> params = new HashMap<>();

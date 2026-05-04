@@ -108,7 +108,7 @@ public class AuthController {
                 LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), validationErrorCode);
                 return registerFormWithError(validationErrorCode, normalizedUsername, normalizedEmail);
             }
-            userService.createUser(normalizedUsername, normalizedEmail, registrationForm.getPassword());
+            userService.registerUserWithLegacyBinding(normalizedUsername, normalizedEmail, registrationForm.getPassword());
             LOGGER.info("registered new user email={} username={}", normalizedEmail, normalizedUsername);
         } catch (final UsernameAlreadyExistsException e) {
             LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), "auth.register.error.username.exists");

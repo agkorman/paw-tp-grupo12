@@ -25,5 +25,7 @@ public interface BodyTypeRequestService {
 
     boolean approvePendingRequest(long id, String overrideName);
 
+    boolean updateRequestStatus(long id, String oldStatus, String newStatus);
+
     boolean rejectPendingRequest(long id);
 }
