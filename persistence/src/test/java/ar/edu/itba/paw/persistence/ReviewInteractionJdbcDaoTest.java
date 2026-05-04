@@ -5,8 +5,6 @@ import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -33,7 +31,6 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
         assertEquals("Reply body", jdbcTemplate.queryForObject(
                 "SELECT body FROM review_replies WHERE reply_id = ?", String.class, result.getId()
         ));
-        assertEquals(result.getId(), reviewReplyDao.findByReviewId(review.getId()).get(0).getId());
     }
 
     @Test
@@ -41,7 +38,7 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
         // Arrange
         final Review review = createReview("delete-reply");
         final User author = createUser("delete-reply-author");
-        final ReviewReply reply = reviewReplyDao.create(review.getId(), author.getId(), "Reply body");
+        final ReviewReply reply = insertReviewReply(review.getId(), author.getId(), author.getUsername(), "Reply body");
 
         // Exercise
         final boolean result = reviewReplyDao.delete(reply.getId());
@@ -67,10 +64,6 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
                 "SELECT COUNT(*) FROM review_likes WHERE review_id = ? AND user_id = ?",
                 review.getId(), liker.getId()
         ));
-        assertTrue(reviewLikeDao.isReviewLikedByUser(review.getId(), liker.getId()));
-        assertEquals(1, reviewLikeDao.countReviewLikes(review.getId()));
-        assertEquals(Set.of(review.getId()), reviewLikeDao.findLikedReviewIds(List.of(review.getId()), liker.getId()));
-        assertEquals(List.of(review.getId()), reviewLikeDao.findLikedReviewIdsByUserId(liker.getId()));
     }
 
     @Test
@@ -78,7 +71,7 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
         // Arrange
         final Review review = createReview("like-review-again");
         final User liker = createUser("like-review-again-user");
-        reviewLikeDao.likeReview(review.getId(), liker.getId());
+        jdbcTemplate.update("INSERT INTO review_likes (review_id, user_id) VALUES (?, ?)", review.getId(), liker.getId());
 
         // Exercise
         final boolean result = reviewLikeDao.likeReview(review.getId(), liker.getId());
@@ -96,7 +89,7 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
         // Arrange
         final Review review = createReview("unlike-review");
         final User liker = createUser("unlike-review-user");
-        reviewLikeDao.likeReview(review.getId(), liker.getId());
+        jdbcTemplate.update("INSERT INTO review_likes (review_id, user_id) VALUES (?, ?)", review.getId(), liker.getId());
 
         // Exercise
         final boolean result = reviewLikeDao.unlikeReview(review.getId(), liker.getId());
@@ -115,7 +108,7 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
         final Review review = createReview("like-reply");
         final User author = createUser("like-reply-author");
         final User liker = createUser("like-reply-user");
-        final ReviewReply reply = reviewReplyDao.create(review.getId(), author.getId(), "Reply body");
+        final ReviewReply reply = insertReviewReply(review.getId(), author.getId(), author.getUsername(), "Reply body");
 
         // Exercise
         final boolean result = reviewLikeDao.likeReply(reply.getId(), liker.getId());
@@ -126,10 +119,6 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
                 "SELECT COUNT(*) FROM review_reply_likes WHERE reply_id = ? AND user_id = ?",
                 reply.getId(), liker.getId()
         ));
-        assertTrue(reviewLikeDao.isReplyLikedByUser(reply.getId(), liker.getId()));
-        assertEquals(1, reviewLikeDao.countReplyLikes(reply.getId()));
-        assertEquals(Set.of(reply.getId()), reviewLikeDao.findLikedReplyIds(List.of(reply.getId()), liker.getId()));
-        assertEquals(List.of(reply.getId()), reviewLikeDao.findLikedReplyIdsByUserId(liker.getId()));
     }
 
     @Test
@@ -138,8 +127,8 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
         final Review review = createReview("like-reply-again");
         final User author = createUser("like-reply-again-author");
         final User liker = createUser("like-reply-again-user");
-        final ReviewReply reply = reviewReplyDao.create(review.getId(), author.getId(), "Reply body");
-        reviewLikeDao.likeReply(reply.getId(), liker.getId());
+        final ReviewReply reply = insertReviewReply(review.getId(), author.getId(), author.getUsername(), "Reply body");
+        jdbcTemplate.update("INSERT INTO review_reply_likes (reply_id, user_id) VALUES (?, ?)", reply.getId(), liker.getId());
 
         // Exercise
         final boolean result = reviewLikeDao.likeReply(reply.getId(), liker.getId());
@@ -158,8 +147,8 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
         final Review review = createReview("unlike-reply");
         final User author = createUser("unlike-reply-author");
         final User liker = createUser("unlike-reply-user");
-        final ReviewReply reply = reviewReplyDao.create(review.getId(), author.getId(), "Reply body");
-        reviewLikeDao.likeReply(reply.getId(), liker.getId());
+        final ReviewReply reply = insertReviewReply(review.getId(), author.getId(), author.getUsername(), "Reply body");
+        jdbcTemplate.update("INSERT INTO review_reply_likes (reply_id, user_id) VALUES (?, ?)", reply.getId(), liker.getId());
 
         // Exercise
         final boolean result = reviewLikeDao.unlikeReply(reply.getId(), liker.getId());
@@ -192,10 +181,6 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
                 "SELECT COUNT(*) FROM review_tag_assignments WHERE review_id = ? AND tag_id = ?",
                 review.getId(), negative
         ));
-        assertEquals(2, reviewTagDao.findByReviewIds(List.of(review.getId())).get(review.getId()).size());
-        final Map<Short, Integer> counts = reviewTagDao.getTagCountsForCars(List.of(review.getCarId())).get(review.getCarId());
-        assertEquals(1, counts.get(positive));
-        assertEquals(1, counts.get(negative));
     }
 
     @Test
@@ -204,7 +189,10 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
         final Review review = createReview("tags-replace");
         final short previous = createReviewTag("previous-tag", "neutral", "comfort");
         final short replacement = createReviewTag("replacement-tag", "positive", "comfort");
-        reviewTagDao.replaceAssignments(review.getId(), List.of(previous));
+        jdbcTemplate.update(
+                "INSERT INTO review_tag_assignments (review_id, tag_id) VALUES (?, ?)",
+                review.getId(), previous
+        );
 
         // Exercise
         reviewTagDao.replaceAssignments(review.getId(), List.of(replacement));

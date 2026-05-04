@@ -57,6 +57,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 @Controller
 @RequestMapping("/admin")
@@ -383,7 +384,7 @@ public class AdminController {
                                      @RequestParam(value = "name", required = false) final String name,
                                      @RequestHeader(value = "Referer", required = false) final String referer,
                                      @RequestHeader(value = "X-Requested-With", required = false) final String xhr) {
-        LOGGER.info("admin accept brand request id={} overrideName={}", requestId, name);
+        LOGGER.info("admin accept brand request id={} overrideName={}", requestId, LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         brandRequestService.approvePendingRequest(requestId, name);
         if ("XMLHttpRequest".equals(xhr)) {
             return ResponseEntity.ok("ok");
@@ -407,7 +408,7 @@ public class AdminController {
     public ModelAndView updateBrand(@PathVariable("brandId") final long brandId,
                                     @RequestParam("name") final String name,
                                     @RequestHeader(value = "Referer", required = false) final String referer) {
-        LOGGER.info("admin update brand id={} name={}", brandId, name);
+        LOGGER.info("admin update brand id={} name={}", brandId, LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         brandService.updateBrand(brandId, name);
         return redirectBackToCatalog(referer);
     }
@@ -425,7 +426,7 @@ public class AdminController {
                                         @RequestParam(value = "name", required = false) final String name,
                                         @RequestHeader(value = "Referer", required = false) final String referer,
                                         @RequestHeader(value = "X-Requested-With", required = false) final String xhr) {
-        LOGGER.info("admin accept body type request id={} overrideName={}", requestId, name);
+        LOGGER.info("admin accept body type request id={} overrideName={}", requestId, LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         bodyTypeRequestService.approvePendingRequest(requestId, name);
         if ("XMLHttpRequest".equals(xhr)) {
             return ResponseEntity.ok("ok");
@@ -449,7 +450,7 @@ public class AdminController {
     public ModelAndView updateBodyType(@PathVariable("bodyTypeId") final long bodyTypeId,
                                        @RequestParam("name") final String name,
                                        @RequestHeader(value = "Referer", required = false) final String referer) {
-        LOGGER.info("admin update body type id={} name={}", bodyTypeId, name);
+        LOGGER.info("admin update body type id={} name={}", bodyTypeId, LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         bodyTypeService.updateBodyType(bodyTypeId, name);
         return redirectBackToCatalog(referer);
     }
@@ -988,7 +989,8 @@ public class AdminController {
             }
             final String query = uri.getRawQuery();
             return new ModelAndView("redirect:/admin" + (query == null ? "" : "?" + query));
-        } catch (final IllegalArgumentException ignored) {
+        } catch (final IllegalArgumentException e) {
+            LOGGER.warn("invalid referer URI for admin redirect, falling back referer={}", LogSanitizer.forLog(referer, LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
             return new ModelAndView(fallback);
         }
     }
@@ -1008,7 +1010,8 @@ public class AdminController {
                 final String query = uri.getRawQuery();
                 return new ModelAndView("redirect:" + path + (query == null ? "" : "?" + query));
             }
-        } catch (final IllegalArgumentException ignored) {
+        } catch (final IllegalArgumentException e) {
+            LOGGER.warn("invalid referer URI for catalog redirect, falling back referer={}", LogSanitizer.forLog(referer, LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
             return new ModelAndView(fallback);
         }
         return new ModelAndView(fallback);

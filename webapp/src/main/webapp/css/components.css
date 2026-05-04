@@ -365,7 +365,7 @@
 }
 
 .global-toast-error .global-toast-icon {
-    display: none;
+    visibility: hidden;
 }
 
 .global-toast-message {

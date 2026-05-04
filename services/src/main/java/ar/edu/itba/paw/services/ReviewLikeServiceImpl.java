@@ -77,7 +77,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     public long countReviewLikes(final long reviewId) {
         try {
             return reviewLikeDao.countReviewLikes(reviewId);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("count review likes failed reviewId={}", reviewId, e);
             return 0;
         }
     }
@@ -90,7 +91,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         }
         try {
             return reviewLikeDao.countReviewLikesByReviewIds(reviewIds);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("count review likes by ids failed count={}", reviewIds.size(), e);
             return Collections.emptyMap();
         }
     }
@@ -103,7 +105,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         }
         try {
             return reviewLikeDao.findLikedReviewIds(reviewIds, userId);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("get liked review ids failed userId={}", userId, e);
             return Collections.emptySet();
         }
     }
@@ -113,7 +116,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     public List<Long> getLikedReviewIdsByUser(final long userId) {
         try {
             return reviewLikeDao.findLikedReviewIdsByUserId(userId);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("get liked review ids by user failed userId={}", userId, e);
             return Collections.emptyList();
         }
     }
@@ -123,7 +127,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     public Page<Long> getLikedReviewIdsByUser(final long userId, final int page) {
         try {
             return reviewLikeDao.findLikedReviewIdsByUserId(userId, page);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("get liked review ids by user paged failed userId={}", userId, e);
             return Page.empty(Pagination.normalizePage(page), Pagination.REVIEWS_PAGE_SIZE);
         }
     }
@@ -133,7 +138,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     public long countLikedReviewsByUser(final long userId) {
         try {
             return reviewLikeDao.countLikedReviewsByUserId(userId);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("count liked reviews by user failed userId={}", userId, e);
             return 0L;
         }
     }
@@ -143,7 +149,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     public long countReplyLikes(final long replyId) {
         try {
             return reviewLikeDao.countReplyLikes(replyId);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("count reply likes failed replyId={}", replyId, e);
             return 0;
         }
     }
@@ -156,7 +163,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         }
         try {
             return reviewLikeDao.countReplyLikesByReplyIds(replyIds);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("count reply likes by ids failed count={}", replyIds.size(), e);
             return Collections.emptyMap();
         }
     }
@@ -169,7 +177,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         }
         try {
             return reviewLikeDao.findLikedReplyIds(replyIds, userId);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("get liked reply ids failed userId={}", userId, e);
             return Collections.emptySet();
         }
     }
@@ -179,7 +188,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     public List<Long> getLikedReplyIdsByUser(final long userId) {
         try {
             return reviewLikeDao.findLikedReplyIdsByUserId(userId);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("get liked reply ids by user failed userId={}", userId, e);
             return Collections.emptyList();
         }
     }
@@ -192,7 +202,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         }
         try {
             return reviewLikeDao.countNewLikesPerReview(userId, since);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("count new likes per review failed userId={}", userId, e);
             return Collections.emptyMap();
         }
     }

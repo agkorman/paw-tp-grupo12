@@ -48,14 +48,18 @@ public class BrandServiceImpl implements BrandService {
     @Transactional
     public Brand createBrand(final String name) {
         final String normalized = StringUtils.normalizeRequired(name, "Brand name is required.");
-        return brandDao.create(normalized);
+        final Brand brand = brandDao.create(normalized);
+        LOGGER.info("created brand id={} name={}", brand.getId(), normalized);
+        return brand;
     }
 
     @Override
     @Transactional
     public Optional<Brand> updateBrand(final long id, final String name) {
         final String normalized = StringUtils.normalizeRequired(name, "Brand name is required.");
-        return brandDao.update(id, normalized);
+        final Optional<Brand> result = brandDao.update(id, normalized);
+        result.ifPresent(b -> LOGGER.info("updated brand id={} name={}", id, normalized));
+        return result;
     }
 
     @Override
@@ -69,6 +73,10 @@ public class BrandServiceImpl implements BrandService {
             LOGGER.warn("delete brand rejected: cars still reference brand id={}", id);
             return false;
         }
-        return brandDao.delete(id);
+        final boolean deleted = brandDao.delete(id);
+        if (deleted) {
+            LOGGER.info("deleted brand id={}", id);
+        }
+        return deleted;
     }
 }

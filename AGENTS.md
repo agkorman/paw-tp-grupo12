@@ -69,6 +69,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Custom tags use the `pa:` namespace prefix and live in `WEB-INF/tags/`.
 - Reuse the existing confirmation modal component whenever a confirmation UI is needed. Do not create a second modal pattern or inline ad hoc confirmation dialogs.
 - Every JSP starts with `<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>`.
+- Forms with client-side constraints (`required`, `minlength`, `pattern`, etc.) must opt out of native browser validation UI with `novalidate` and render app-owned inline errors using localized bundle messages. Never rely on default browser messages such as "Please fill out this field."
 
 ## Internationalization (i18n)
 

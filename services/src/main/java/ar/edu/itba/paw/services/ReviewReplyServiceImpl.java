@@ -42,7 +42,8 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     public Optional<ReviewReply> getReplyById(final long id) {
         try {
             return reviewReplyDao.findById(id);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("get reply by id failed id={}", id, e);
             return Optional.empty();
         }
     }
@@ -55,7 +56,8 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
         }
         try {
             return reviewReplyDao.findByIds(ids);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("get replies by ids failed count={}", ids.size(), e);
             return Collections.emptyList();
         }
     }
@@ -65,7 +67,8 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     public List<ReviewReply> getRepliesByReview(final long reviewId) {
         try {
             return reviewReplyDao.findByReviewId(reviewId);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("get replies by review failed reviewId={}", reviewId, e);
             return Collections.emptyList();
         }
     }
@@ -80,7 +83,8 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
             return reviewReplyDao.findByReviewIds(reviewIds)
                     .stream()
                     .collect(Collectors.groupingBy(ReviewReply::getReviewId));
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("get replies by review ids failed count={}", reviewIds.size(), e);
             return Collections.emptyMap();
         }
     }
@@ -149,7 +153,8 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
         }
         try {
             return reviewReplyDao.countNewRepliesPerReview(userId, since);
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.warn("count new replies per review failed userId={}", userId, e);
             return Collections.emptyMap();
         }
     }

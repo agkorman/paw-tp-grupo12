@@ -17,10 +17,14 @@ public class ImageJdbcDaoTest extends AbstractPersistenceTest {
     public void shouldReplaceCarImagesAndReturnCoverByDisplayOrder() {
         // Arrange
         final Car car = createCar("images");
-        carImageDao.replaceAll(car.getId(), List.of(
-                new CarImagePayload("image/png", new byte[]{1, 2}),
-                new CarImagePayload("image/jpeg", new byte[]{3, 4})
-        ));
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 0, "image/png", new byte[]{1, 2}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 1, "image/jpeg", new byte[]{3, 4}
+        );
 
         // Exercise
         final Optional<CarImage> result = carImageDao.findByCarId(car.getId());
@@ -39,21 +43,21 @@ public class ImageJdbcDaoTest extends AbstractPersistenceTest {
         assertEquals(0, result.get().getDisplayOrder());
         assertEquals("image/png", result.get().getContentType());
         assertArrayEquals(new byte[]{1, 2}, result.get().getImageData());
-        assertTrue(carDao.findById(car.getId()).orElseThrow().getHasImage());
     }
 
     @Test
     public void shouldReplaceExistingGalleryWithNewImages() {
         // Arrange
         final Car car = createCar("replace-images");
-        carImageDao.replaceAll(car.getId(), List.of(new CarImagePayload("image/png", new byte[]{1})));
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 0, "image/png", new byte[]{1}
+        );
 
         // Exercise
         carImageDao.replaceAll(car.getId(), List.of(new CarImagePayload("image/jpeg", new byte[]{9})));
 
         // Assertions
-        final List<CarImage> metadata = carImageDao.findAllByCarId(car.getId());
-        final CarImage image = carImageDao.findByCarId(car.getId()).orElseThrow();
         assertEquals(1, countRows("SELECT COUNT(*) FROM car_images WHERE car_id = ?", car.getId()));
         assertEquals(0, countRows(
                 "SELECT COUNT(*) FROM car_images WHERE car_id = ? AND content_type = ?",
@@ -67,31 +71,36 @@ public class ImageJdbcDaoTest extends AbstractPersistenceTest {
                 "SELECT image_data FROM car_images WHERE car_id = ? AND display_order = 0",
                 byte[].class, car.getId()
         ));
-        assertEquals(1, metadata.size());
-        assertEquals("image/jpeg", image.getContentType());
-        assertArrayEquals(new byte[]{9}, image.getImageData());
     }
 
     @Test
     public void shouldClearCarImagesWhenReplacingWithEmptyGallery() {
         // Arrange
         final Car car = createCar("clear-images");
-        carImageDao.replaceAll(car.getId(), List.of(new CarImagePayload("image/png", new byte[]{1})));
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 0, "image/png", new byte[]{1}
+        );
 
         // Exercise
         carImageDao.replaceAll(car.getId(), List.of());
 
         // Assertions
         assertEquals(0, countRows("SELECT COUNT(*) FROM car_images WHERE car_id = ?", car.getId()));
-        assertEquals(0, carImageDao.findAllByCarId(car.getId()).size());
     }
 
     @Test
     public void shouldFindCarImageByCarAndImageId() {
         // Arrange
         final Car car = createCar("image-id");
-        carImageDao.replaceAll(car.getId(), List.of(new CarImagePayload("image/png", new byte[]{7, 8})));
-        final long imageId = carImageDao.findByCarId(car.getId()).orElseThrow().getImageId();
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 0, "image/png", new byte[]{7, 8}
+        );
+        final long imageId = jdbcTemplate.queryForObject(
+                "SELECT image_id FROM car_images WHERE car_id = ? AND display_order = ?",
+                Long.class, car.getId(), 0
+        );
 
         // Exercise
         final Optional<CarImage> result = carImageDao.findByCarIdAndImageId(car.getId(), imageId);

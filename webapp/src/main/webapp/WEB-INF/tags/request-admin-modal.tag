@@ -1,5 +1,6 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
@@ -7,6 +8,10 @@
 <spring:message var="motivationPlaceholder" code="request.admin.placeholder.motivation"/>
 <spring:message var="bioPlaceholder" code="request.admin.placeholder.bio"/>
 <spring:message var="justificationPlaceholder" code="request.admin.placeholder.justification"/>
+<spring:message var="genericRequiredMessage" code="js.form.required.generic"/>
+<spring:message var="motivationRequiredMessage" code="js.adminRequest.required.motivation"/>
+<spring:message var="bioRequiredMessage" code="js.adminRequest.required.bio"/>
+<spring:message var="justificationRequiredMessage" code="js.adminRequest.required.justification"/>
 
 <div id="requestAdminModal" class="review-modal admin-request-submit-modal" hidden>
     <div class="review-modal-overlay" data-close-request-admin-modal></div>
@@ -23,7 +28,12 @@
             <spring:message code="request.admin.description"/>
         </p>
 
-        <form id="requestAdminForm" class="admin-request-submit-form" method="post" action="${requestAdminUrl}">
+        <form id="requestAdminForm" class="admin-request-submit-form" method="post" action="${requestAdminUrl}"
+              novalidate="novalidate"
+              data-msg-required-generic="${fn:escapeXml(genericRequiredMessage)}"
+              data-msg-required-motivation="${fn:escapeXml(motivationRequiredMessage)}"
+              data-msg-required-bio="${fn:escapeXml(bioRequiredMessage)}"
+              data-msg-required-justification="${fn:escapeXml(justificationRequiredMessage)}">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
             <div class="review-modal-field review-modal-field-wide">

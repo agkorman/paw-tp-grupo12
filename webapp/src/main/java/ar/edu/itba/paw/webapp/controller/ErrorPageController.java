@@ -9,6 +9,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 @Controller
 public class ErrorPageController {
@@ -72,9 +73,9 @@ public class ErrorPageController {
 
         final String requestUri = (String) request.getAttribute("javax.servlet.error.request_uri");
         if (status >= 500) {
-            LOGGER.error("rendering error page status={} uri={}", status, requestUri);
+            LOGGER.error("rendering error page status={} uri={}", status, LogSanitizer.forLog(requestUri, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
         } else {
-            LOGGER.warn("rendering error page status={} uri={}", status, requestUri);
+            LOGGER.warn("rendering error page status={} uri={}", status, LogSanitizer.forLog(requestUri, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
         }
         final ModelAndView mav = new ModelAndView("error.jsp");
         response.setStatus(status);

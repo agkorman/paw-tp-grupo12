@@ -334,7 +334,7 @@
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/profile.js?v=9'/>"></script>
     <c:if test="${ownProfile}">
-        <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
+        <script src="<c:url value='/js/admin-request-modal.js?v=2'/>"></script>
     </c:if>
     <script src="<c:url value='/js/toast.js'/>"></script>
     <script src="<c:url value='/js/review-delete.js?v=2'/>"></script>

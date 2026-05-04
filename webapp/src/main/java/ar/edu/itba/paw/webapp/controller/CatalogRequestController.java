@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 import java.net.URI;
 
@@ -56,7 +57,7 @@ public class CatalogRequestController {
             return redirectBack(referer);
         }
         brandRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
-        LOGGER.info("user id={} submitted brand request name={}", currentUser.getId(), name);
+        LOGGER.info("user id={} submitted brand request name={}", currentUser.getId(), LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         return redirectToCatalog("brand");
     }
 
@@ -73,7 +74,7 @@ public class CatalogRequestController {
             return redirectBack(referer);
         }
         bodyTypeRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
-        LOGGER.info("user id={} submitted body type request name={}", currentUser.getId(), name);
+        LOGGER.info("user id={} submitted body type request name={}", currentUser.getId(), LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         return redirectToCatalog("body-type");
     }
 
@@ -123,7 +124,8 @@ public class CatalogRequestController {
             }
             final String query = withSubmitted(uri.getRawQuery(), submitted);
             return new ModelAndView("redirect:" + path + (query == null ? "" : "?" + query));
-        } catch (final IllegalArgumentException ignored) {
+        } catch (final IllegalArgumentException e) {
+            LOGGER.warn("invalid referer URI for redirect, falling back referer={}", LogSanitizer.forLog(referer, LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
             return new ModelAndView(withSubmittedRedirect(fallback, submitted));
         }
     }

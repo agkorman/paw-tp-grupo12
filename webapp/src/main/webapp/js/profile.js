@@ -355,6 +355,13 @@
         }
     }
 
+    function setupAutoOpenModals() {
+        var modals = document.querySelectorAll('.profile-modal[data-open-on-load="true"]');
+        for (var i = 0; i < modals.length; i += 1) {
+            openModal(modals[i]);
+        }
+    }
+
     function setCollapsibleSectionExpanded(toggle, expanded) {
         var section = closestByAttribute(toggle, 'data-collapsible-section');
         var extras = section ? section.querySelectorAll('[data-collapsible-extra]') : [];
@@ -516,4 +523,5 @@
 
     setupProfileTabs();
     setupCollapsibleSections();
+    setupAutoOpenModals();
 }());
