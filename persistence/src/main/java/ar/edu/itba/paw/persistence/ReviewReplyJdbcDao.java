@@ -98,7 +98,7 @@ public class ReviewReplyJdbcDao implements ReviewReplyDao {
     }
 
     @Override
-    public ReviewReply create(final long reviewId, final long userId, final String body) {
+    public ReviewReply insertAndFetch(final long reviewId, final long userId, final String body) {
         final Map<String, Object> params = new HashMap<>();
         params.put("review_id", reviewId);
         params.put("user_id", userId);

@@ -33,7 +33,7 @@ public interface CarService {
 
     void saveCarImages(long carId, List<CarImagePayload> images);
 
-    void appendCarImages(long carId, List<CarImagePayload> images);
+    void syncCarImages(long carId, List<CarImagePayload> images);
 
     CarRequest requestCarCreation(
         long brandId,

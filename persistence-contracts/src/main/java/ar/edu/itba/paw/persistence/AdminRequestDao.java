@@ -17,7 +17,7 @@ public interface AdminRequestDao {
 
     boolean existsPendingByUser(long userId);
 
-    AdminRequest create(long submittedByUserId, String submitterEmail, String motivation,
+    AdminRequest insertAndFetch(long submittedByUserId, String submitterEmail, String motivation,
                         String bio, String justification, String status);
 
     boolean updateStatus(long id, String expectedStatus, String newStatus);

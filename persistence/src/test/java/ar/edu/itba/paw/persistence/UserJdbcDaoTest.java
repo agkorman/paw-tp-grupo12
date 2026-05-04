@@ -21,7 +21,7 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
         final String role = "admin";
 
         // Exercise
-        final User result = userDao.create(username, email, "password", role);
+        final User result = userDao.insertAndFetch(username, email, "password", role);
 
         // Assertions
         assertEquals(username, result.getUsername());
@@ -66,7 +66,7 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldUpdatePersistedUsernameWhenUserExists() {
         // Arrange
-        final User created = userDao.create("old-name", "rename@example.com", "password", "user");
+        final User created = userDao.insertAndFetch("old-name", "rename@example.com", "password", "user");
 
         // Exercise
         final boolean result = userDao.updateUsername(created.getId(), "new-name");
@@ -80,8 +80,8 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     @Test
     public void shouldRejectUsernameUpdateWhenNormalizedUsernameAlreadyExists() {
         // Arrange
-        userDao.create("Nica", "nica@example.com", "password", "user");
-        final User created = userDao.create("other", "other@example.com", "password", "user");
+        userDao.insertAndFetch("Nica", "nica@example.com", "password", "user");
+        final User created = userDao.insertAndFetch("other", "other@example.com", "password", "user");
 
         // Exercise
         assertThrows(DataIntegrityViolationException.class,

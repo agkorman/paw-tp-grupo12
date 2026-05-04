@@ -71,7 +71,7 @@ public class UserJdbcDao implements UserDao {
     }
 
     @Override
-    public User create(String username, String email, String password, String role) {
+    public User insertAndFetch(String username, String email, String password, String role) {
         Map<String, Object> params = new HashMap<>();
         params.put("username", username);
         params.put("email", email);

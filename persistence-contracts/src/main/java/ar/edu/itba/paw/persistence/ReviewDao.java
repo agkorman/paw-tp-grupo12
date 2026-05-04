@@ -35,8 +35,8 @@ public interface ReviewDao {
     long countByUserId(long userId);
     Optional<ReviewStats> findStatsByCarId(long carId);
     List<ReviewStats> findStatsByCarIds(Collection<Long> carIds);
-    Review create(long userId, long carId, BigDecimal rating, String title, String body,
-                  String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
+    Review insertAndFetch(long userId, long carId, BigDecimal rating, String title, String body,
+                         String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
     int bindReviewsToUserByEmail(long userId, String email);
     Optional<Review> update(long id, long carId, BigDecimal rating, String title, String body,
                             String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);

@@ -15,7 +15,7 @@ public interface BodyTypeRequestDao {
 
     long countByStatus(String status);
 
-    BodyTypeRequest create(Long submittedByUserId, String submitterEmail, String name, String comments, String status);
+    BodyTypeRequest insertAndFetch(Long submittedByUserId, String submitterEmail, String name, String comments, String status);
 
     boolean updateStatus(long id, String expectedStatus, String newStatus);
 }

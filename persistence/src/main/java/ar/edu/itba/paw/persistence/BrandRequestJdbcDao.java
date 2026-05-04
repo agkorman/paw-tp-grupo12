@@ -101,7 +101,7 @@ public class BrandRequestJdbcDao implements BrandRequestDao {
     }
 
     @Override
-    public BrandRequest create(final Long submittedByUserId, final String submitterEmail,
+    public BrandRequest insertAndFetch(final Long submittedByUserId, final String submitterEmail,
                                final String name, final String comments, final String status) {
         final Map<String, Object> params = new HashMap<>();
         params.put("submitted_by_user_id", submittedByUserId);

@@ -19,7 +19,7 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
         final User author = createUser("reply-author");
 
         // Exercise
-        final ReviewReply result = reviewReplyDao.create(review.getId(), author.getId(), "Reply body");
+        final ReviewReply result = reviewReplyDao.insertAndFetch(review.getId(), author.getId(), "Reply body");
 
         // Assertions
         assertEquals("Reply body", result.getBody());

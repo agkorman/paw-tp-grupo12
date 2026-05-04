@@ -32,6 +32,8 @@ public interface AdminRequestService {
 
     boolean approvePendingRequest(long id);
 
+    boolean updateRequestStatus(long id, String oldStatus, String newStatus);
+
     boolean rejectPendingRequest(long id);
 
     boolean isEligibleForModeratorRequest(long userId);

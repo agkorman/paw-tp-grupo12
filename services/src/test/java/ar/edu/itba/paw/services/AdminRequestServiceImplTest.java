@@ -57,7 +57,7 @@ public class AdminRequestServiceImplTest {
         final AdminRequest created = new AdminRequest(REQUEST_ID, USER_ID, EMAIL, "motivation text",
                 "bio text", "justification text", AdminRequestService.STATUS_PENDING, LocalDateTime.now());
         when(adminRequestDao.existsPendingByUser(USER_ID)).thenReturn(false);
-        when(adminRequestDao.create(USER_ID, EMAIL, "motivation text", "bio text", "justification text",
+        when(adminRequestDao.insertAndFetch(USER_ID, EMAIL, "motivation text", "bio text", "justification text",
                 AdminRequestService.STATUS_PENDING)).thenReturn(created);
 
         // Exercise

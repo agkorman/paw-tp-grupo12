@@ -85,5 +85,5 @@ public interface ReviewService {
 
     Review getReviewAndCheckAccess(long reviewId, long requestingUserId, boolean isAdmin);
 
-    boolean hideReview(long reviewId, String reason);
+    boolean deleteReviewByModerator(long reviewId, String reason);
 }

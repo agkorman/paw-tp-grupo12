@@ -141,7 +141,7 @@ public class CarServiceImpl implements CarService {
 
     @Override
     @Transactional
-    public void appendCarImages(
+    public void syncCarImages(
         final long carId,
         final List<CarImagePayload> images
     ) {

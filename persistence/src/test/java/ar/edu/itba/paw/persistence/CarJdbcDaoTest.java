@@ -23,7 +23,7 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
         final long bodyTypeId = insertBodyType("Sedan").getId();
 
         // Exercise
-        final Car result = carDao.create(brandId, "M3", bodyTypeId, 2026, "Sport sedan",
+        final Car result = carDao.insertAndFetch(brandId, "M3", bodyTypeId, 2026, "Sport sedan",
                 "combustion", 473, 8, "manual", new BigDecimal("9.9"), 290, new BigDecimal("76900.00"));
 
         // Assertions

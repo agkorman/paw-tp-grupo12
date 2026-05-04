@@ -48,7 +48,7 @@ public class BrandRequestServiceImplTest {
     public void shouldCreatePendingRequestWithNormalizedNameAndComments() {
         // Arrange
         final BrandRequest created = pendingRequest("New Brand");
-        when(brandRequestDao.create(USER_ID, EMAIL, "New Brand", "comment",
+        when(brandRequestDao.insertAndFetch(USER_ID, EMAIL, "New Brand", "comment",
                 BrandRequestService.STATUS_PENDING)).thenReturn(created);
 
         // Exercise

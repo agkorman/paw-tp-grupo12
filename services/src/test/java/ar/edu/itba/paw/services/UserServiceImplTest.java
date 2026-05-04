@@ -112,17 +112,17 @@ public class UserServiceImplTest {
     }
 
     @Test
-    public void shouldCreateUserWithNormalizedFieldsAndEncodedPassword() {
+    public void shouldRegisterUserWithNormalizedFieldsAndEncodedPassword() {
         // Arrange
         final User created = new User(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user",
                 LocalDateTime.now());
         when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
         when(userDao.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.empty());
         when(passwordEncoder.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
-        when(userDao.create(NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user")).thenReturn(created);
+        when(userDao.insertAndFetch(NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user")).thenReturn(created);
 
         // Exercise
-        final User result = userService.createUser(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD);
+        final User result = userService.registerUserWithLegacyBinding(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD);
 
         // Assertions
         assertEquals(USER_ID, result.getId());
@@ -133,73 +133,73 @@ public class UserServiceImplTest {
     }
 
     @Test
-    public void shouldRejectCreateUserWhenUsernameIsBlank() {
+    public void shouldRejectRegisterUserWhenUsernameIsBlank() {
         // Arrange
         final String blankUsername = "   ";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser(blankUsername, RAW_EMAIL, RAW_PASSWORD));
+                () -> userService.registerUserWithLegacyBinding(blankUsername, RAW_EMAIL, RAW_PASSWORD));
 
         // Assertions
         assertEquals("Username is required.", ex.getMessage());
     }
 
     @Test
-    public void shouldRejectCreateUserWhenEmailIsBlank() {
+    public void shouldRejectRegisterUserWhenEmailIsBlank() {
         // Arrange
         final String blankEmail = "   ";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser(RAW_USERNAME, blankEmail, RAW_PASSWORD));
+                () -> userService.registerUserWithLegacyBinding(RAW_USERNAME, blankEmail, RAW_PASSWORD));
 
         // Assertions
         assertEquals("Email is required.", ex.getMessage());
     }
 
     @Test
-    public void shouldRejectCreateUserWhenPasswordIsEmpty() {
+    public void shouldRejectRegisterUserWhenPasswordIsEmpty() {
         // Arrange
         final String emptyPassword = "";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, emptyPassword));
+                () -> userService.registerUserWithLegacyBinding(RAW_USERNAME, RAW_EMAIL, emptyPassword));
 
         // Assertions
         assertEquals("Password is required.", ex.getMessage());
     }
 
     @Test
-    public void shouldRejectCreateUserWhenPasswordIsNull() {
+    public void shouldRejectRegisterUserWhenPasswordIsNull() {
         // Arrange
         final String nullPassword = null;
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, nullPassword));
+                () -> userService.registerUserWithLegacyBinding(RAW_USERNAME, RAW_EMAIL, nullPassword));
 
         // Assertions
         assertEquals("Password is required.", ex.getMessage());
     }
 
     @Test
-    public void shouldRejectCreateUserWhenUsernameAlreadyExists() {
+    public void shouldRejectRegisterUserWhenUsernameAlreadyExists() {
         // Arrange
         final User existing = new User(99L, NORMALIZED_USERNAME, "other@example.com", "x", "user", LocalDateTime.now());
         when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.of(existing));
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD));
+                () -> userService.registerUserWithLegacyBinding(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD));
 
         // Assertions
         assertEquals("Username is already registered: Joaco", ex.getMessage());
     }
 
     @Test
-    public void shouldRejectCreateUserWhenEmailAlreadyExists() {
+    public void shouldRejectRegisterUserWhenEmailAlreadyExists() {
         // Arrange
         final User existing = new User(99L, "other", NORMALIZED_EMAIL, "x", "user", LocalDateTime.now());
         when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
@@ -207,7 +207,7 @@ public class UserServiceImplTest {
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD));
+                () -> userService.registerUserWithLegacyBinding(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD));
 
         // Assertions
         assertEquals("Email is already registered: joaco@example.com", ex.getMessage());

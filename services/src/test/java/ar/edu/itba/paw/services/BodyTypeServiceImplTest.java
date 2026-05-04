@@ -39,7 +39,7 @@ public class BodyTypeServiceImplTest {
     public void shouldCreateBodyTypeWithTrimmedName() {
         // Arrange
         final BodyType created = bodyType();
-        when(bodyTypeDao.create("Sedan")).thenReturn(created);
+        when(bodyTypeDao.insertAndFetch("Sedan")).thenReturn(created);
 
         // Exercise
         final BodyType result = bodyTypeService.createBodyType("  Sedan  ");

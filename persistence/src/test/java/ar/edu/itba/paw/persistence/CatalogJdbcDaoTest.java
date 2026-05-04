@@ -18,7 +18,7 @@ public class CatalogJdbcDaoTest extends AbstractPersistenceTest {
         final String brandName = "Persisted Brand";
 
         // Exercise
-        final Brand result = brandDao.create(brandName);
+        final Brand result = brandDao.insertAndFetch(brandName);
 
         // Assertions
         assertEquals(brandName, result.getName());
@@ -34,7 +34,7 @@ public class CatalogJdbcDaoTest extends AbstractPersistenceTest {
         final String bodyTypeName = "Persisted Body";
 
         // Exercise
-        final BodyType result = bodyTypeDao.create(bodyTypeName);
+        final BodyType result = bodyTypeDao.insertAndFetch(bodyTypeName);
 
         // Assertions
         assertEquals(bodyTypeName, result.getName());

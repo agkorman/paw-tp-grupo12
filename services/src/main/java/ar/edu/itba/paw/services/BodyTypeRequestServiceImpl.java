@@ -77,7 +77,13 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
             throw new InvalidServiceInputException("A submitter user id or email is required for body type requests.");
         }
         LOGGER.info("submitting body type request name={} userId={}", normalizedName, submittedByUserId);
-        return bodyTypeRequestDao.create(submittedByUserId, submitterEmail, normalizedName, normalizedComments, STATUS_PENDING);
+        return bodyTypeRequestDao.insertAndFetch(submittedByUserId, submitterEmail, normalizedName, normalizedComments, STATUS_PENDING);
+    }
+
+    @Override
+    @Transactional
+    public boolean updateRequestStatus(final long id, final String oldStatus, final String newStatus) {
+        return bodyTypeRequestDao.updateStatus(id, oldStatus, newStatus);
     }
 
     @Override
@@ -107,8 +113,7 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
             return false;
         }
 
-        final boolean statusUpdated = bodyTypeRequestDao.updateStatus(id, STATUS_PENDING, STATUS_APPROVED);
-        if (!statusUpdated) {
+        if (!updateRequestStatus(id, STATUS_PENDING, STATUS_APPROVED)) {
             return false;
         }
 
@@ -127,12 +132,12 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
             return false;
         }
 
-        final boolean statusUpdated = bodyTypeRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
-        if (statusUpdated) {
+        if (updateRequestStatus(id, STATUS_PENDING, STATUS_REJECTED)) {
             sendRequestRejectedNotification(request);
             LOGGER.info("rejected body type request id={}", id);
+            return true;
         }
-        return statusUpdated;
+        return false;
     }
 
     private void sendRequestApprovedNotification(final BodyTypeRequest request, final String approvedName) {

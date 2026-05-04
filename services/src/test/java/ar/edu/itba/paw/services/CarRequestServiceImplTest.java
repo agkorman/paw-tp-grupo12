@@ -61,7 +61,7 @@ public class CarRequestServiceImplTest {
         // Arrange
         final CarImagePayload image = new CarImagePayload(CONTENT_TYPE, IMAGE_BYTES);
         final CarRequest created = pendingRequest();
-        when(carRequestDao.create(eq(USER_ID), eq(EMAIL), eq(BRAND_ID), eq(BODY_TYPE_ID), eq(2024),
+        when(carRequestDao.insertAndFetch(eq(USER_ID), eq(EMAIL), eq(BRAND_ID), eq(BODY_TYPE_ID), eq(2024),
                 eq("Corolla"), eq("A nice car description."), eq(CONTENT_TYPE), any(byte[].class),
                 eq(CarRequestService.STATUS_PENDING), eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"),
                 eq(new BigDecimal("6.5")), eq(190), eq(new BigDecimal("25000.00"))))
@@ -127,7 +127,7 @@ public class CarRequestServiceImplTest {
     public void shouldWrapDaoExceptionWhenCreatingPendingRequestFails() {
         // Arrange
         final DataAccessResourceFailureException cause = new DataAccessResourceFailureException("database unavailable");
-        when(carRequestDao.create(eq(USER_ID), eq(EMAIL), eq(BRAND_ID), eq(BODY_TYPE_ID), eq(2024),
+        when(carRequestDao.insertAndFetch(eq(USER_ID), eq(EMAIL), eq(BRAND_ID), eq(BODY_TYPE_ID), eq(2024),
                 eq("Corolla"), eq("desc"), eq(null), eq(null), eq(CarRequestService.STATUS_PENDING),
                 eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"), eq(new BigDecimal("6.5")), eq(190),
                 eq(new BigDecimal("25000.00")))).thenThrow(cause);
@@ -244,7 +244,7 @@ public class CarRequestServiceImplTest {
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
         when(carRequestDao.updateStatus(REQUEST_ID, CarRequestService.STATUS_PENDING,
                 CarRequestService.STATUS_APPROVED)).thenReturn(true);
-        when(carDao.create(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("desc"),
+        when(carDao.insertAndFetch(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("desc"),
                 eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"), eq(new BigDecimal("6.5")), eq(190),
                 eq(new BigDecimal("25000.00")))).thenReturn(createdCar);
 
@@ -269,7 +269,7 @@ public class CarRequestServiceImplTest {
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
         when(carRequestDao.updateStatus(REQUEST_ID, CarRequestService.STATUS_PENDING,
                 CarRequestService.STATUS_APPROVED)).thenReturn(true);
-        when(carDao.create(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("A nice car description."),
+        when(carDao.insertAndFetch(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("A nice car description."),
                 eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"), eq(new BigDecimal("6.5")), eq(190),
                 eq(new BigDecimal("25000.00")))).thenReturn(createdCar);
         when(carRequestDao.findImagesByRequestId(REQUEST_ID)).thenReturn(List.of(metadata));
@@ -291,7 +291,7 @@ public class CarRequestServiceImplTest {
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
         when(carRequestDao.updateStatus(REQUEST_ID, CarRequestService.STATUS_PENDING,
                 CarRequestService.STATUS_APPROVED)).thenReturn(true);
-        when(carDao.create(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("desc"),
+        when(carDao.insertAndFetch(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("desc"),
                 eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"), eq(new BigDecimal("6.5")), eq(190),
                 eq(new BigDecimal("25000.00")))).thenReturn(createdCar);
         when(carRequestDao.findImagesByRequestId(REQUEST_ID)).thenReturn(List.of());

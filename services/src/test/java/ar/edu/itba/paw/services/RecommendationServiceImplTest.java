@@ -96,7 +96,7 @@ public class RecommendationServiceImplTest {
         final int limit = 5;
 
         // Exercise
-        final List<CarRecommendation> result = recommendationService.recommend(criteria, limit);
+        final List<CarRecommendation> result = recommendationService.recommendByScoringAllCandidates(criteria, limit);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -108,7 +108,7 @@ public class RecommendationServiceImplTest {
         final RecommendationCriteria criteria = new RecommendationCriteria(Map.of(), null, null);
 
         // Exercise
-        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+        final List<CarRecommendation> result = recommendationService.recommendByScoringAllCandidates(criteria, 5);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -125,7 +125,7 @@ public class RecommendationServiceImplTest {
         final RecommendationCriteria criteria = new RecommendationCriteria(answers, null, null);
 
         // Exercise
-        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+        final List<CarRecommendation> result = recommendationService.recommendByScoringAllCandidates(criteria, 5);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -139,7 +139,7 @@ public class RecommendationServiceImplTest {
         mockSinglePageOfCars(List.of());
 
         // Exercise
-        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+        final List<CarRecommendation> result = recommendationService.recommendByScoringAllCandidates(criteria, 5);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -156,7 +156,7 @@ public class RecommendationServiceImplTest {
         when(reviewTagDao.getTagCountsForCars(List.of(1L))).thenReturn(Map.of());
 
         // Exercise
-        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+        final List<CarRecommendation> result = recommendationService.recommendByScoringAllCandidates(criteria, 5);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -177,7 +177,7 @@ public class RecommendationServiceImplTest {
         ));
 
         // Exercise
-        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+        final List<CarRecommendation> result = recommendationService.recommendByScoringAllCandidates(criteria, 5);
 
         // Assertions
         assertEquals(2, result.size());
@@ -204,7 +204,7 @@ public class RecommendationServiceImplTest {
         ));
 
         // Exercise
-        final List<CarRecommendation> result = recommendationService.recommend(criteria, 2);
+        final List<CarRecommendation> result = recommendationService.recommendByScoringAllCandidates(criteria, 2);
 
         // Assertions
         assertEquals(2, result.size());
@@ -228,7 +228,7 @@ public class RecommendationServiceImplTest {
         when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(counts);
 
         // Exercise
-        final List<CarRecommendation> result = recommendationService.recommend(criteria, 0);
+        final List<CarRecommendation> result = recommendationService.recommendByScoringAllCandidates(criteria, 0);
 
         // Assertions
         assertEquals(5, result.size());
@@ -247,7 +247,7 @@ public class RecommendationServiceImplTest {
                 1L, Map.of(COMFORT_TAG_ID, 6, UNCOMFORT_TAG_ID, 5)));
 
         // Exercise
-        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+        final List<CarRecommendation> result = recommendationService.recommendByScoringAllCandidates(criteria, 5);
 
         // Assertions
         assertEquals(1, result.size());
@@ -270,7 +270,7 @@ public class RecommendationServiceImplTest {
                 1L, Map.of(COMFORT_TAG_ID, 1)));
 
         // Exercise
-        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+        final List<CarRecommendation> result = recommendationService.recommendByScoringAllCandidates(criteria, 5);
 
         // Assertions
         assertEquals(1, result.size());

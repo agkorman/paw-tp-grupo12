@@ -25,7 +25,7 @@ public class RequestJdbcDaoTest extends AbstractPersistenceTest {
         final User user = createUser("admin-request");
 
         // Exercise
-        final AdminRequest result = adminRequestDao.create(user.getId(), user.getEmail(), "Motivation", "Bio", "Justification", "pending");
+        final AdminRequest result = adminRequestDao.insertAndFetch(user.getId(), user.getEmail(), "Motivation", "Bio", "Justification", "pending");
 
         // Assertions
         assertEquals(user.getId(), result.getSubmittedByUserId());
@@ -72,7 +72,7 @@ public class RequestJdbcDaoTest extends AbstractPersistenceTest {
         final User user = createUser("brand-request-create");
 
         // Exercise
-        final BrandRequest result = brandRequestDao.create(user.getId(), user.getEmail(), "Created Brand", "Comment", "pending");
+        final BrandRequest result = brandRequestDao.insertAndFetch(user.getId(), user.getEmail(), "Created Brand", "Comment", "pending");
 
         // Assertions
         assertEquals("Created Brand", result.getName());
@@ -114,7 +114,7 @@ public class RequestJdbcDaoTest extends AbstractPersistenceTest {
         final User user = createUser("body-request");
 
         // Exercise
-        final var result = bodyTypeRequestDao.create(user.getId(), user.getEmail(), "Roadster", "Comment", "pending");
+        final var result = bodyTypeRequestDao.insertAndFetch(user.getId(), user.getEmail(), "Roadster", "Comment", "pending");
 
         // Assertions
         assertEquals("Roadster", result.getName());
@@ -210,7 +210,7 @@ public class RequestJdbcDaoTest extends AbstractPersistenceTest {
         final Car car = createCar("car-request-create");
 
         // Exercise
-        final CarRequest result = carRequestDao.create(submitter.getId(), submitter.getEmail(), car.getBrandId(),
+        final CarRequest result = carRequestDao.insertAndFetch(submitter.getId(), submitter.getEmail(), car.getBrandId(),
                 car.getBodyTypeId(), 2026, "Requested Model", "Requested description", "image/png", new byte[]{1},
                 "pending", "electric", 320, 8, "automatic", new BigDecimal("0.0"), 240, new BigDecimal("61000.00"));
 

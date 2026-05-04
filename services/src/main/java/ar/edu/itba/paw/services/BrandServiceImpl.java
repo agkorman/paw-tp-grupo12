@@ -48,7 +48,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional
     public Brand createBrand(final String name) {
         final String normalized = StringUtils.normalizeRequired(name, "Brand name is required.");
-        final Brand brand = brandDao.create(normalized);
+        final Brand brand = brandDao.insertAndFetch(normalized);
         LOGGER.info("created brand id={} name={}", brand.getId(), normalized);
         return brand;
     }

@@ -20,7 +20,7 @@ public interface CarDao {
 
     Page<Car> findByCriteria(CarSearchCriteria criteria);
 
-    Car create(long brandId, String model, long bodyTypeId, Integer year, String description,
+    Car insertAndFetch(long brandId, String model, long bodyTypeId, Integer year, String description,
                String fuelType, Integer horsepower, Integer airbagCount,
                String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh, BigDecimal priceUsd);
 

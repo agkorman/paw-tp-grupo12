@@ -118,7 +118,7 @@ public class CarJdbcDao implements CarDao {
     }
 
     @Override
-    public Car create(final long brandId, final String model, final long bodyTypeId, final Integer year,
+    public Car insertAndFetch(final long brandId, final String model, final long bodyTypeId, final Integer year,
                       final String description,
                       final String fuelType, final Integer horsepower, final Integer airbagCount,
                       final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh,

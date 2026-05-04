@@ -54,7 +54,7 @@ public class BodyTypeServiceImpl implements BodyTypeService {
     @Transactional
     public BodyType createBodyType(final String name) {
         final String normalized = StringUtils.normalizeRequired(name, "Body type name is required.");
-        final BodyType bodyType = bodyTypeDao.create(normalized);
+        final BodyType bodyType = bodyTypeDao.insertAndFetch(normalized);
         LOGGER.info("created body type id={} name={}", bodyType.getId(), normalized);
         return bodyType;
     }
