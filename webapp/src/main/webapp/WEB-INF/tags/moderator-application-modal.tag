@@ -13,13 +13,13 @@
 <spring:message var="bioRequiredMessage" code="js.adminRequest.required.bio"/>
 <spring:message var="justificationRequiredMessage" code="js.adminRequest.required.justification"/>
 
-<div id="requestAdminModal" class="review-modal admin-request-submit-modal" hidden>
-    <div class="review-modal-overlay" data-close-request-admin-modal></div>
-    <section class="review-modal-dialog admin-request-submit-dialog"
+<div id="requestAdminModal" class="modal admin-request-submit-modal" hidden>
+    <div class="modal-overlay" data-close-request-admin-modal></div>
+    <section class="modal-dialog admin-request-submit-dialog"
              role="dialog" aria-modal="true" aria-labelledby="requestAdminModalTitle">
-        <header class="review-modal-header">
+        <header class="modal-header">
             <div>
-                <span class="review-modal-kicker"><spring:message code="request.admin.kicker"/></span>
+                <span class="modal-kicker"><spring:message code="request.admin.kicker"/></span>
                 <h2 id="requestAdminModalTitle"><spring:message code="request.admin.title"/></h2>
             </div>
         </header>
@@ -36,28 +36,28 @@
               data-msg-required-justification="${fn:escapeXml(justificationRequiredMessage)}">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
-            <div class="review-modal-field review-modal-field-wide">
+            <div class="modal-field modal-field-wide">
                 <label for="requestAdminMotivation"><spring:message code="request.admin.motivation"/></label>
                 <textarea id="requestAdminMotivation" name="motivation" rows="5"
                           maxlength="2000" required
                           placeholder="${motivationPlaceholder}"></textarea>
             </div>
 
-            <div class="review-modal-field review-modal-field-wide">
+            <div class="modal-field modal-field-wide">
                 <label for="requestAdminBio"><spring:message code="request.admin.bio"/></label>
                 <textarea id="requestAdminBio" name="bio" rows="5"
                           maxlength="2000" required
                           placeholder="${bioPlaceholder}"></textarea>
             </div>
 
-            <div class="review-modal-field review-modal-field-wide">
+            <div class="modal-field modal-field-wide">
                 <label for="requestAdminJustification"><spring:message code="request.admin.justification"/></label>
                 <textarea id="requestAdminJustification" name="justification" rows="5"
                           maxlength="2000" required
                           placeholder="${justificationPlaceholder}"></textarea>
             </div>
 
-            <div class="review-modal-actions">
+            <div class="modal-actions">
                 <button type="button" class="btn-secondary" data-close-request-admin-modal><spring:message code="common.action.cancel"/></button>
                 <button type="submit" class="btn-primary"><spring:message code="request.admin.submit"/></button>
             </div>

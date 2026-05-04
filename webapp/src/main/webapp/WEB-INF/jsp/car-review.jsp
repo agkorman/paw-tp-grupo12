@@ -127,6 +127,7 @@
     <pa:script src="/js/car-image-carousel.js"/>
     <pa:script src="/js/review-anchor-highlight.js"/>
     <pa:script src="/js/review-tag-chips.js" defer="true"/>
+    <pa:script src="/js/modal-utils.js"/>
     <pa:script src="/js/auth-required-modal.js"/>
     <sec:authorize access="hasRole('ADMIN')">
         <pa:script src="/js/car-admin.js"/>

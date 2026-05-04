@@ -191,11 +191,11 @@
 
     </main>
 
-    <pa:admin-catalog-request-modal/>
-    <pa:admin-request-review-modal/>
+    <pa:admin-catalog-request-review-modal/>
+    <pa:moderator-application-review-modal/>
     <pa:script src="/js/modal-utils.js"/>
-    <pa:script src="/js/admin-catalog-modal.js"/>
-    <pa:script src="/js/admin-request-modal.js"/>
+    <pa:script src="/js/admin-catalog-request-modal.js"/>
+    <pa:script src="/js/moderator-application-review-modal.js"/>
     <pa:script src="/js/form-submit-lock.js"/>
     <pa:footer/>
 </body>

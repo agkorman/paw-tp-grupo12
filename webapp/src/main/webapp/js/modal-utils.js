@@ -14,7 +14,7 @@
     function createController(options) {
         var modal = options.modal;
         var bodyClass = options.bodyClass || 'modal-open';
-        var modalSelector = options.modalSelector || '.review-modal';
+        var modalSelector = options.modalSelector || '.modal';
         var lastTrigger = null;
 
         function hasOpenModal() {
@@ -58,6 +58,28 @@
         };
     }
 
+    function bindCloseAttr(modal, closeFn) {
+        var id = modal.id;
+        document.addEventListener('click', function (event) {
+            var el = closest(event.target, function (node) {
+                return node.getAttribute('data-close-modal') === id;
+            });
+            if (el) {
+                closeFn();
+            }
+        });
+    }
+
+    function bindEscKey(modal, closeFn) {
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
+                closeFn();
+            }
+        });
+    }
+
     window.PawModal.closest = closest;
     window.PawModal.createController = createController;
+    window.PawModal.bindCloseAttr = bindCloseAttr;
+    window.PawModal.bindEscKey = bindEscKey;
 }());

@@ -46,6 +46,7 @@
     <pa:script src="/js/reactions.js"/>
     <pa:script src="/js/enhanced-filters.js"/>
     <pa:script src="/js/cars-filters-panel.js"/>
+    <pa:script src="/js/modal-utils.js"/>
     <pa:script src="/js/auth-required-modal.js"/>
     <pa:script src="/js/form-submit-lock.js"/>
     <pa:script src="/js/submitted-toast.js"/>

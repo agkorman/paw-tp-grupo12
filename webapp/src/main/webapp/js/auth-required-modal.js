@@ -7,7 +7,6 @@
 
     var actionText = modal.querySelector('[data-auth-required-action]');
     var loginLink = modal.querySelector('[data-auth-required-login]');
-    var closeElements = Array.prototype.slice.call(modal.querySelectorAll('[data-close-auth-required-modal]'));
     var contextPath = modal.getAttribute('data-context-path') || '';
     var loginUrl = modal.getAttribute('data-login-url') || '/login';
     var lastTrigger = null;
@@ -155,15 +154,8 @@
         openModal(trigger);
     }, true);
 
-    closeElements.forEach(function (element) {
-        element.addEventListener('click', closeModal);
-    });
-
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
-            closeModal();
-        }
-    });
+    window.PawModal.bindCloseAttr(modal, closeModal);
+    window.PawModal.bindEscKey(modal, closeModal);
 
     window.setTimeout(resumeIntent, 0);
 }());

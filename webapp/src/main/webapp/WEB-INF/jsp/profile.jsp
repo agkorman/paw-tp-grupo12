@@ -5,7 +5,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="profile.title" styles="/css/reviews.css|/css/profile.css|/css/profile-review-card.css|/css/profile-modals.css|/css/profile-connections.css|/css/review-tags.css"/>
+<pa:page-head titleCode="profile.title" styles="/css/reviews.css|/css/profile.css|/css/profile-review-card.css|/css/profile-modal.css|/css/profile-connections.css|/css/review-tags.css|/css/catalog-request-modal.css|/css/moderator-application-modal.css|/css/cars.css"/>
 <body>
     <pa:nav activePage="profile"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -301,7 +301,7 @@
                            confirmCssClass="btn-primary"/>
     <pa:auth-required-modal/>
     <c:if test="${ownProfile}">
-        <pa:request-admin-modal/>
+        <pa:moderator-application-modal/>
     </c:if>
     <c:if test="${showSubmittedToast}">
         <pa:submitted-toast messageCode="${submittedToastMessageCode}"/>
@@ -309,12 +309,13 @@
     <pa:script src="/js/reactions.js"/>
     <pa:script src="/js/enhanced-filters.js"/>
     <pa:script src="/js/action-menu.js"/>
+    <pa:script src="/js/modal-utils.js"/>
     <pa:script src="/js/auth-required-modal.js"/>
     <pa:script src="/js/confirmation-modal.js"/>
     <pa:script src="/js/form-submit-lock.js"/>
     <pa:script src="/js/profile.js"/>
     <c:if test="${ownProfile}">
-        <pa:script src="/js/admin-request-modal.js"/>
+        <pa:script src="/js/moderator-application-modal.js"/>
     </c:if>
     <pa:script src="/js/submitted-toast.js"/>
     <pa:footer/>

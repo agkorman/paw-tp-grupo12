@@ -115,7 +115,7 @@
     function fieldContainer(input) {
         var node = input;
         while (node && node !== modal) {
-            if (node.classList && node.classList.contains('review-modal-field')) {
+            if (node.classList && node.classList.contains('modal-field')) {
                 return node;
             }
             node = node.parentNode;

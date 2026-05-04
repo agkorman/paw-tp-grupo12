@@ -27,7 +27,7 @@
              aria-labelledby="${fn:escapeXml(panelTitleId)}"
              hidden>
         <button type="button"
-                class="review-modal-close review-preview-close activity-preview-close"
+                class="modal-close review-preview-close activity-preview-close"
                 data-close-activity-preview
                 aria-label="Cerrar preview">
             <pa:icon name="close" size="20"/>

@@ -195,6 +195,7 @@
         </section>
     </main>
     <pa:auth-required-modal/>
+    <pa:script src="/js/modal-utils.js"/>
     <pa:script src="/js/reactions.js"/>
     <pa:script src="/js/auth-required-modal.js"/>
     <pa:footer/>

@@ -20,7 +20,15 @@
     <pa:font-head/>
     <pa:stylesheet href="/css/design-system.css"/>
     <pa:stylesheet href="/css/layout.css"/>
-    <pa:stylesheet href="/css/components.css"/>
+    <pa:stylesheet href="/css/buttons.css"/>
+    <pa:stylesheet href="/css/toast.css"/>
+    <pa:stylesheet href="/css/controls.css"/>
+    <pa:stylesheet href="/css/auth-required-modal.css"/>
+    <pa:stylesheet href="/css/action-menu.css"/>
+    <pa:stylesheet href="/css/reactions.css"/>
+    <pa:stylesheet href="/css/tabs.css"/>
+    <pa:stylesheet href="/css/pagination.css"/>
+    <pa:stylesheet href="/css/modal.css"/>
     <c:if test="${not empty styles}">
         <c:forEach var="styleHref" items="${fn:split(styles, '|')}">
             <c:if test="${not empty styleHref}">

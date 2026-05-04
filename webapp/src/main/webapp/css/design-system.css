@@ -27,6 +27,23 @@
     /* Ghost border */
     --outline-variant: rgba(229, 226, 225, 0.15);
 
+    /* Semantic: error */
+    --error:              #ffb4ab;
+    --error-dim:          #ff9f92;
+    --on-error-container: #ffdad6;
+
+    /* Semantic: success */
+    --success:            #9bd28f;
+    --success-dim:        #81c784;
+
+    /* Semantic: destructive action */
+    --destructive:        #ff8f73;
+    --destructive-dark:   #c84636;
+    --destructive-light:  #ff6f61;
+
+    /* Tertiary container content */
+    --tertiary-content:   #a7e8ff;
+
     /* Typography */
     --font-display: 'Space Grotesk', sans-serif;
     --font-body:    'Inter', sans-serif;
