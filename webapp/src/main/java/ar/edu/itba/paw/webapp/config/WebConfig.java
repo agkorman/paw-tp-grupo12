@@ -59,6 +59,11 @@ public class WebConfig implements WebMvcConfigurer {
     private static final String DB_PROPERTIES_RESOURCE = "db.properties";
     private static final String MAIL_PROPERTIES_RESOURCE = "mail.properties";
 
+    /**
+     * Default when {@code APP_BASE_URL} and {@code app.baseUrl} are unset (local {@code mvn jetty:run}).
+     */
+    private static final String DEFAULT_LOCAL_APP_BASE_URL = "http://localhost:8080/";
+
     @Override
     public void addResourceHandlers(final ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/favicon.ico").addResourceLocations("/");
@@ -225,15 +230,16 @@ public class WebConfig implements WebMvcConfigurer {
         final Properties properties = loadPropertiesIfExists(MAIL_PROPERTIES_RESOURCE);
         if (properties != null) {
             final String propValue = normalizeBaseUrl(properties.getProperty("app.baseUrl"));
-            if (propValue != null) {
-                return propValue;
+            if (propValue != null) {                return propValue;
             }
         }
 
-        throw new WebAppConfigurationException(
-                "App base URL not configured. Set APP_BASE_URL environment variable "
-                        + "or provide app.baseUrl in classpath mail.properties"
+        LOGGER.warn(
+                "APP_BASE_URL / app.baseUrl not set; using local default {} for links in outbound mail. "
+                        + "Set APP_BASE_URL (or app.baseUrl in classpath mail.properties) for non-local deployments.",
+                DEFAULT_LOCAL_APP_BASE_URL
         );
+        return DEFAULT_LOCAL_APP_BASE_URL;
     }
 
     private String normalizeBaseUrl(final String value) {
