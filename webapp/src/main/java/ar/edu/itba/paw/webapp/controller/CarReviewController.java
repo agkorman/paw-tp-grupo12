@@ -110,7 +110,7 @@ public class CarReviewController {
 
         final ReviewPageData pageData = resolveReviewPageData(carId, sort, page, currentUserId(currentUser));
         if (pageData == null) {
-            throw new ResourceNotFoundException("El auto referenciado no existe.");
+            throw new ResourceNotFoundException(message("error.review.referencedCarNotFound"));
         }
 
         if (reviewForm.getCarId() == null) {
@@ -141,7 +141,7 @@ public class CarReviewController {
         assertReviewOwnership(reviewId, review, currentUser);
 
         final Car car = carService.getCarById(review.getCarId())
-                .orElseThrow(() -> new ResourceNotFoundException("El auto referenciado no existe."));
+                .orElseThrow(() -> new ResourceNotFoundException(message("error.review.referencedCarNotFound")));
 
         final ModelAndView mav = new ModelAndView("review-form.jsp");
         mav.addObject("selectedCar", car);
@@ -158,7 +158,7 @@ public class CarReviewController {
                                    @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final ReviewPageData pageData = resolveReviewPageData(carId, sort, page, currentUserId(currentUser));
         if (pageData == null) {
-            throw new ResourceNotFoundException("El auto referenciado no existe.");
+            throw new ResourceNotFoundException(message("error.review.referencedCarNotFound"));
         }
 
         final ModelAndView mav = new ModelAndView("reviews-feed-fragment.jsp");
@@ -187,7 +187,7 @@ public class CarReviewController {
                 ? null
                 : carService.getCarById(reviewForm.getCarId()).orElse(null);
         if (car == null) {
-            throw new ResourceNotFoundException("El auto referenciado no existe.");
+            throw new ResourceNotFoundException(message("error.review.referencedCarNotFound"));
         }
 
         if (errors.hasErrors()) {
@@ -383,7 +383,7 @@ public class CarReviewController {
         assertReviewOwnership(reviewId, existingReview, currentUser);
 
         final Car car = carService.getCarById(existingReview.getCarId())
-                .orElseThrow(() -> new ResourceNotFoundException("El auto referenciado no existe."));
+                .orElseThrow(() -> new ResourceNotFoundException(message("error.review.referencedCarNotFound")));
         reviewForm.setCarId(existingReview.getCarId());
 
         if (errors.hasErrors()) {

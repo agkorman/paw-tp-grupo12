@@ -8,6 +8,8 @@
 <spring:message var="filterMinPlaceholder" code="cars.filter.placeholder.min"/>
 <spring:message var="filterMaxPlaceholder" code="cars.filter.placeholder.max"/>
 <spring:message var="closeFiltersLabel" code="cars.filter.close"/>
+<spring:message var="filterYearRangeValidation" code="validation.carSearch.year.range"/>
+<spring:message var="filterYearOrderValidation" code="validation.carSearch.year.order"/>
 <c:set var="electricOnlyFilter" value="${criteria.electricOnly}"/>
 <div id="carsFiltersOverlay" class="cars-filters-overlay" data-close-filters-panel></div>
 
@@ -16,7 +18,9 @@
        hidden
        role="dialog"
        aria-modal="true"
-       aria-labelledby="filtersPanelTitle">
+       aria-labelledby="filtersPanelTitle"
+       data-msg-year-range="${fn:escapeXml(filterYearRangeValidation)}"
+       data-msg-year-order="${fn:escapeXml(filterYearOrderValidation)}">
 
     <div class="cars-filters-panel-inner">
 

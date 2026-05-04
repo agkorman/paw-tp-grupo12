@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -40,6 +41,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -88,10 +90,14 @@ class CarControllerTest {
     @Mock
     private CarRequestService carRequestService;
 
+    @Mock
+    private MessageSource messageSource;
+
     @InjectMocks
     private CarController controller;
 
     private MockMvc carMockMvc() throws Exception {
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenAnswer(inv -> inv.getArgument(0));
         return MockMvcBuilders.standaloneSetup(controller)
                 .setValidator(
                         ControllerTestValidationSupport.carFormSpringValidator(

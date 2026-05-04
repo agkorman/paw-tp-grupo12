@@ -57,6 +57,8 @@
 <spring:message var="jsImageLoadedOne" code="js.car.image.loadedOne"/>
 <spring:message var="jsImageLoadedMultiple" code="js.car.image.loadedMultiple"/>
 <spring:message var="jsImageAddMore" code="js.car.image.addMore"/>
+<c:set var="carFormMaxImageCount" value="${empty carFormMaxImageCount ? 5 : carFormMaxImageCount}"/>
+<spring:message var="jsImageMaxCountMsg" code="js.car.image.maxCount" arguments="${carFormMaxImageCount}" htmlEscape="true"/>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -89,6 +91,8 @@
                  data-msg-image-loaded-one="${fn:escapeXml(jsImageLoadedOne)}"
                  data-msg-image-loaded-multiple="${fn:escapeXml(jsImageLoadedMultiple)}"
                  data-msg-image-add-more="${fn:escapeXml(jsImageAddMore)}"
+                 data-max-image-count="${carFormMaxImageCount}"
+                 data-msg-image-max-count="${fn:escapeXml(jsImageMaxCountMsg)}"
                  aria-labelledby="carFormTitle">
             <div class="review-modal-header">
                 <div>

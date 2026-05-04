@@ -22,10 +22,14 @@ import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import ar.edu.itba.paw.webapp.form.CarImageUploadForm;
 import ar.edu.itba.paw.webapp.form.CarSearchForm;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
+import ar.edu.itba.paw.webapp.validation.UploadedImageValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -60,7 +64,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 @Controller
 public class CarController {
@@ -74,17 +77,20 @@ public class CarController {
     private final BodyTypeService bodyTypeService;
     private final ReviewService reviewService;
     private final EmailService emailService;
+    private final MessageSource messageSource;
 
     @Autowired
     public CarController(final CarService carService, final CarFavoriteService carFavoriteService,
                          final BrandService brandService, final BodyTypeService bodyTypeService,
-                         final ReviewService reviewService, final EmailService emailService) {
+                         final ReviewService reviewService, final EmailService emailService,
+                         final MessageSource messageSource) {
         this.carService = carService;
         this.carFavoriteService = carFavoriteService;
         this.brandService = brandService;
         this.bodyTypeService = bodyTypeService;
         this.reviewService = reviewService;
         this.emailService = emailService;
+        this.messageSource = messageSource;
     }
 
     @InitBinder
@@ -174,6 +180,7 @@ public class CarController {
         if (errors.hasErrors()) {
             LOGGER.warn("car request submission rejected: validation errors userId={} errorCount={}",
                     currentUser.getId(), errors.getErrorCount());
+            model.addAttribute("carFormMaxImageCount", UploadedImageValidation.MAX_IMAGE_COUNT);
             return "car-form.jsp";
         }
 
@@ -215,6 +222,7 @@ public class CarController {
     private void populateCarFormPageModel(final ModelAndView mav) {
         mav.addObject("brands", brandService.findAll());
         mav.addObject("bodyTypes", bodyTypeService.findAll());
+        mav.addObject("carFormMaxImageCount", UploadedImageValidation.MAX_IMAGE_COUNT);
     }
 
     private void addSubmittedToast(final ModelAndView mav, final String submitted) {
@@ -239,7 +247,7 @@ public class CarController {
         }
         if (carService.getCarById(carId).isEmpty()) {
             if (ControllerUtils.isAjaxRequest(requestedWith)) {
-                return new ResponseEntity<String>("Auto no encontrado.", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(message("validation.car.notFound"), HttpStatus.NOT_FOUND);
             }
             return new ModelAndView("redirect:/cars");
         }
@@ -393,11 +401,12 @@ public class CarController {
     }
 
     @ModelAttribute("carImageUploadForm")
-    public CarImageUploadForm carImageUploadForm(@PathVariable final Map<String, String> pathVariables,
-                                                 @RequestParam(value = "carId", required = false) final Long queryCarId,
-                                                 @RequestParam(value = "file", required = false) final List<MultipartFile> files) {
+    public CarImageUploadForm carImageUploadForm(
+            @PathVariable(value = "carId", required = false) final Long pathCarId,
+            @RequestParam(value = "carId", required = false) final Long queryCarId,
+            @RequestParam(value = "file", required = false) final List<MultipartFile> files) {
         final CarImageUploadForm form = new CarImageUploadForm();
-        form.setCarId(pathVariables.containsKey("carId") ? Long.valueOf(pathVariables.get("carId")) : queryCarId);
+        form.setCarId(pathCarId != null ? pathCarId : queryCarId);
         form.setFiles(files);
         return form;
     }
@@ -468,6 +477,10 @@ public class CarController {
         if (criteria.isElectricOnly()) {
             criteria.setFuelConsumptionMax(null);
         }
+    }
+
+    private String message(final String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 
     private Map<Long, ReviewStats> getReviewStatsByCarId(final List<Car> cars) {
