@@ -118,8 +118,8 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
-    public Page<Review> findLatest(final int page, final int pageSize) {
-        return findPaginated("", new Object[0], page, pageSize, countAll());
+    public Page<Review> findLatest(final int page) {
+        return findPaginated("", new Object[0], page, Pagination.REVIEWS_PAGE_SIZE, countAll());
     }
 
     @Override
@@ -128,12 +128,12 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
-    public Page<Review> findByFollowedUsers(final long followerId, final int page, final int pageSize) {
+    public Page<Review> findByFollowedUsers(final long followerId, final int page) {
         return findPaginated(
                 "JOIN user_follows uf ON uf.followed_id = r.user_id WHERE uf.follower_id = ? ",
                 new Object[]{followerId},
                 page,
-                pageSize,
+                Pagination.REVIEWS_PAGE_SIZE,
                 countByFollowedUsers(followerId)
         );
     }
@@ -149,12 +149,12 @@ public class ReviewJdbcDao implements ReviewDao {
     }
 
     @Override
-    public Page<Review> findByFavoriteCars(final long userId, final int page, final int pageSize) {
+    public Page<Review> findByFavoriteCars(final long userId, final int page) {
         return findPaginated(
                 "JOIN car_favorites cf ON cf.car_id = r.car_id WHERE cf.user_id = ? ",
                 new Object[]{userId},
                 page,
-                pageSize,
+                Pagination.REVIEWS_PAGE_SIZE,
                 countByFavoriteCars(userId)
         );
     }

@@ -2,7 +2,6 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.Page;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -23,10 +22,23 @@ public interface AdminRequestService {
 
     boolean hasPendingRequest(long userId);
 
-    AdminRequest createPendingRequest(long submittedByUserId, String submitterEmail,
-                                      String motivation, String bio, String justification);
+    AdminRequest createPendingRequest(
+        long submittedByUserId,
+        String submitterEmail,
+        String motivation,
+        String bio,
+        String justification
+    );
 
     boolean approvePendingRequest(long id);
 
     boolean rejectPendingRequest(long id);
+
+    boolean isEligibleForModeratorRequest(long userId);
+
+    long getTotalPendingItems();
+
+    String resolveSubmitterEmail(String submitterEmail, Long submittedByUserId);
+
+    String getSubmitterLabel(String submitterEmail, Long submittedByUserId);
 }
