@@ -136,7 +136,7 @@
                         </span>
                         <div>
                             <pa:review-author-link review="${reviewCard.review}"/>
-                            <span><c:out value="${reviewCard.timeAgo}"/></span>
+                            <span><c:out value="${relativeTimeFormatter.format(reviewCard.review.createdAt)}"/></span>
                         </div>
                     </div>
                     <div class="review-preview-rating" aria-label="${fn:escapeXml(ratingAria)}">
