@@ -567,7 +567,8 @@ public class CarReviewController {
 
     @RequestMapping(
         value = "/reviews/{reviewId}/delete",
-        method = RequestMethod.POST
+        method = RequestMethod.POST,
+        params = "!reason"
     )
     public Object deleteReview(
         @PathVariable("reviewId") final long reviewId,
@@ -597,7 +598,8 @@ public class CarReviewController {
 
     @RequestMapping(
         value = "/reviews/{reviewId}/delete",
-        method = RequestMethod.POST
+        method = RequestMethod.POST,
+        params = "reason"
     )
     public Object deleteReviewByModerator(
         @PathVariable("reviewId") final long reviewId,

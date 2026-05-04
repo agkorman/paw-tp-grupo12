@@ -117,7 +117,7 @@ public class BrandRequestServiceImpl implements BrandRequestService {
             return false;
         }
 
-        brandDao.create(nameToCreate);
+        brandDao.insertAndFetch(nameToCreate);
         sendRequestApprovedNotification(request, nameToCreate);
         LOGGER.info("approved brand request id={} createdName={}", id, nameToCreate);
         return true;

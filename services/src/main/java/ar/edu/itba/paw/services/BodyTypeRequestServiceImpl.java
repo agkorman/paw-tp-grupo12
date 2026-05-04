@@ -117,7 +117,7 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
             return false;
         }
 
-        bodyTypeDao.create(nameToCreate);
+        bodyTypeDao.insertAndFetch(nameToCreate);
         sendRequestApprovedNotification(request, nameToCreate);
         LOGGER.info("approved body type request id={} createdName={}", id, nameToCreate);
         return true;
