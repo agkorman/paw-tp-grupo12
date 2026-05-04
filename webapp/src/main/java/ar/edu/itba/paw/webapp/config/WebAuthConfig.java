@@ -80,6 +80,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/reviews/*/replies"),
                                 antMatcher(HttpMethod.POST, "/reviews/replies/*/like"),
                                 antMatcher(HttpMethod.POST, "/logout"),
+                                antMatcher(HttpMethod.POST, "/profile"),
                                 antMatcher(HttpMethod.POST, "/cars/*/favorite"),
                                 antMatcher(HttpMethod.POST, "/profiles/*/follow"),
                                 antMatcher(HttpMethod.POST, "/brand-requests"),

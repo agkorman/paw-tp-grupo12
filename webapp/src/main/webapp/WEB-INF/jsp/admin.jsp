@@ -205,7 +205,7 @@
     <pa:admin-catalog-request-modal/>
     <pa:admin-request-review-modal/>
     <script src="<c:url value='/js/admin-catalog-modal.js'/>"></script>
-    <script src="<c:url value='/js/admin-request-modal.js'/>"></script>
+    <script src="<c:url value='/js/admin-request-modal.js?v=2'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <pa:footer/>
 </body>
