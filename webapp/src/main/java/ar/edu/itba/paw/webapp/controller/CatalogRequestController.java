@@ -3,6 +3,7 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.BodyTypeRequestService;
 import ar.edu.itba.paw.services.BrandRequestService;
+import ar.edu.itba.paw.services.exception.PendingAdminRequestExistsException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.form.AdminRoleRequestForm;
 import ar.edu.itba.paw.webapp.form.CatalogNameRequestForm;
@@ -97,12 +98,13 @@ public class CatalogRequestController {
                     currentUser.getId(), errors.getErrorCount());
             return redirectBack(referer);
         }
-        if (adminRequestService.hasPendingRequest(currentUser.getId())) {
+        try {
+            adminRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(),
+                    form.getMotivation(), form.getBio(), form.getJustification());
+        } catch (final PendingAdminRequestExistsException e) {
             LOGGER.warn("admin request rejected: already has pending userId={}", currentUser.getId());
             return redirectBack(referer);
         }
-        adminRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(),
-                form.getMotivation(), form.getBio(), form.getJustification());
         LOGGER.info("user id={} submitted admin moderator request", currentUser.getId());
         return redirectBack(referer, "moderator");
     }

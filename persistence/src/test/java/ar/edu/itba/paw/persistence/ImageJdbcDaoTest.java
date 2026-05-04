@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ImageJdbcDaoTest extends AbstractPersistenceTest {
@@ -87,6 +88,35 @@ public class ImageJdbcDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertEquals(0, countRows("SELECT COUNT(*) FROM car_images WHERE car_id = ?", car.getId()));
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenCarHasNoImages() {
+        // Arrange
+        final Car car = createCar("no-images");
+
+        // Exercise
+        final Optional<CarImage> result = carImageDao.findByCarId(car.getId());
+
+        // Assertions
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenImageDoesNotExistForCar() {
+        // Arrange
+        final Car car = createCar("wrong-image-id");
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 0, "image/png", new byte[]{1}
+        );
+        final long wrongImageId = 9999L;
+
+        // Exercise
+        final Optional<CarImage> result = carImageDao.findByCarIdAndImageId(car.getId(), wrongImageId);
+
+        // Assertions
+        assertFalse(result.isPresent());
     }
 
     @Test

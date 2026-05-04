@@ -33,7 +33,7 @@
     </ul>
     <div class="nav-right">
         <c:if test="${not empty searchAction}">
-            <form class="nav-search-form search-box" method="get" action="${fn:escapeXml(searchAction)}">
+            <form class="nav-search-form search-box" method="get" action="${fn:escapeXml(searchAction)}" novalidate="novalidate">
                 <c:if test="${not empty searchBrand}">
                     <input type="hidden" name="brand" value="${fn:escapeXml(searchBrand)}">
                 </c:if>
@@ -44,7 +44,6 @@
                 <input
                         type="search"
                         name="q"
-                        maxlength="120"
                         value="${fn:escapeXml(searchValue)}"
                         placeholder="${fn:escapeXml(searchPlaceholder)}"
                         aria-label="${fn:escapeXml(searchPlaceholder)}">

@@ -387,6 +387,109 @@ public class RequestJdbcDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldReturnFalseWhenUpdatingAdminRequestStatusWithMismatch() {
+        // Arrange
+        final User user = createUser("admin-request-mismatch");
+        jdbcTemplate.update(
+                "INSERT INTO admin_requests (submitted_by_user_id, submitter_email, motivation, bio, justification, status) "
+                        + "VALUES (?, ?, ?, ?, ?, ?)",
+                user.getId(), user.getEmail(), "Motivation", "Bio", "Justification", "pending"
+        );
+        final long requestId = jdbcTemplate.queryForObject(
+                "SELECT admin_request_id FROM admin_requests WHERE submitter_email = ?",
+                Long.class, user.getEmail()
+        );
+
+        // Exercise
+        final boolean result = adminRequestDao.updateStatus(requestId, "approved", "rejected");
+
+        // Assertions
+        assertFalse(result);
+        assertEquals("pending", jdbcTemplate.queryForObject(
+                "SELECT status FROM admin_requests WHERE admin_request_id = ?", String.class, requestId
+        ));
+    }
+
+    @Test
+    public void shouldReturnFalseWhenUpdatingBodyTypeRequestStatusWhenExpectedDoesNotMatch() {
+        // Arrange
+        final User user = createUser("body-request-mismatch");
+        jdbcTemplate.update(
+                "INSERT INTO body_type_requests (submitted_by_user_id, submitter_email, name, comments, status) "
+                        + "VALUES (?, ?, ?, ?, ?)",
+                user.getId(), user.getEmail(), "Mismatch Body", "Comment", "pending"
+        );
+        final long requestId = jdbcTemplate.queryForObject(
+                "SELECT body_type_request_id FROM body_type_requests WHERE name = ?", Long.class, "Mismatch Body"
+        );
+
+        // Exercise
+        final boolean result = bodyTypeRequestDao.updateStatus(requestId, "approved", "rejected");
+
+        // Assertions
+        assertFalse(result);
+        assertEquals("pending", jdbcTemplate.queryForObject(
+                "SELECT status FROM body_type_requests WHERE body_type_request_id = ?", String.class, requestId
+        ));
+    }
+
+    @Test
+    public void shouldReturnFalseWhenUpdatingCarRequestStatusWhenExpectedDoesNotMatch() {
+        // Arrange
+        final User submitter = createUser("car-request-mismatch");
+        final Car car = createCar("car-request-mismatch");
+        jdbcTemplate.update(
+                "INSERT INTO car_requests (submitted_by_user_id, submitter_email, brand_id, body_type_id, year, "
+                        + "model, description, status, fuel_type, horsepower, airbag_count, transmission, "
+                        + "fuel_consumption, max_speed_kmh, price_usd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                submitter.getId(), submitter.getEmail(), car.getBrandId(), car.getBodyTypeId(), 2026,
+                "Mismatch Model", "Description", "pending", "combustion", 200, 6, "manual",
+                new BigDecimal("8.0"), 220, new BigDecimal("30000.00")
+        );
+        final long requestId = jdbcTemplate.queryForObject(
+                "SELECT car_request_id FROM car_requests WHERE model = ?", Long.class, "Mismatch Model"
+        );
+
+        // Exercise
+        final boolean result = carRequestDao.updateStatus(requestId, "approved", "rejected");
+
+        // Assertions
+        assertFalse(result);
+        assertEquals("pending", jdbcTemplate.queryForObject(
+                "SELECT status FROM car_requests WHERE car_request_id = ?", String.class, requestId
+        ));
+    }
+
+    @Test
+    public void shouldReturnTrueWhenPendingAdminRequestExistsForUser() {
+        // Arrange
+        final User user = createUser("admin-request-exists");
+        jdbcTemplate.update(
+                "INSERT INTO admin_requests (submitted_by_user_id, submitter_email, motivation, bio, justification, status) "
+                        + "VALUES (?, ?, ?, ?, ?, ?)",
+                user.getId(), user.getEmail(), "Motivation", "Bio", "Justification", "pending"
+        );
+
+        // Exercise
+        final boolean result = adminRequestDao.existsPendingByUser(user.getId());
+
+        // Assertions
+        assertTrue(result);
+    }
+
+    @Test
+    public void shouldReturnFalseWhenNoPendingAdminRequestExistsForUser() {
+        // Arrange
+        final User user = createUser("admin-request-none");
+
+        // Exercise
+        final boolean result = adminRequestDao.existsPendingByUser(user.getId());
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
     public void shouldReplaceCarRequestImagesAndRemovePreviousImages() {
         // Arrange
         final User user = createUser("request-images-replace");
@@ -425,5 +528,26 @@ public class RequestJdbcDaoTest extends AbstractPersistenceTest {
                 "SELECT image_data FROM car_request_images WHERE car_request_id = ?",
                 byte[].class, requestId
         ));
+    }
+
+    @Test
+    public void shouldPaginateBodyTypeRequestsByStatusAcrossMultiplePages() {
+        // Arrange
+        final User user = createUser("body-req-paged");
+        for (int i = 0; i < Pagination.REQUESTS_PAGE_SIZE + 1; i++) {
+            jdbcTemplate.update(
+                    "INSERT INTO body_type_requests (submitted_by_user_id, submitter_email, name, comments, status) "
+                            + "VALUES (?, ?, ?, ?, ?)",
+                    user.getId(), user.getEmail(), "Body Type " + i, "Comment", "pending"
+            );
+        }
+
+        // Exercise
+        final var result = bodyTypeRequestDao.findByStatus("pending", 2);
+
+        // Assertions
+        assertEquals(Pagination.REQUESTS_PAGE_SIZE + 1L, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(1, result.getItems().size());
     }
 }

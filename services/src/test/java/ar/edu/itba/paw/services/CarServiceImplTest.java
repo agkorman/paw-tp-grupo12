@@ -25,7 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +49,8 @@ public class CarServiceImplTest {
     private BrandDao brandDao;
     @Mock
     private BodyTypeDao bodyTypeDao;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private CarServiceImpl carService;
@@ -182,6 +187,8 @@ public class CarServiceImplTest {
                 "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00"));
         when(carRequestService.createPendingRequest(anyLong(), any(), anyLong(), anyLong(), any(), any(), any(),
                 any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(createdRequest);
+        when(brandDao.findById(BRAND_ID)).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findById(BODY_TYPE_ID)).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
 
         // Exercise
         final CarRequest result = carService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, 1L, "u@x.com",
@@ -191,6 +198,7 @@ public class CarServiceImplTest {
         // Assertions
         assertEquals(99L, result.getId());
         assertEquals("Corolla", result.getModel());
+        verify(emailService).sendNewCarRequestNotification(createdRequest, "Toyota", "sedan");
     }
 
     @Test
@@ -234,6 +242,92 @@ public class CarServiceImplTest {
     }
 
     @Test
+    public void shouldReturnTopRatedCarsWhenCountMeetsLimit() {
+        // Arrange
+        final int limit = 2;
+        when(carDao.findTopRated(limit)).thenReturn(List.of(car(), car()));
+
+        // Exercise
+        final List<Car> result = carService.getFeaturedCars(limit);
+
+        // Assertions
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    public void shouldFillWithRecentlyAddedCarsWhenTopRatedBelowLimit() {
+        // Arrange
+        final int limit = 3;
+        final Car recent = new Car(6L, BRAND_ID, "Honda", "Civic", BODY_TYPE_ID, 2023, "sedan",
+                "desc", LocalDateTime.now(), false, "GASOLINE", 90, 4, "MANUAL",
+                new BigDecimal("5.0"), 160, new BigDecimal("15000.00"));
+        when(carDao.findTopRated(limit)).thenReturn(List.of(car()));
+        when(carDao.findRecentlyAdded(anyInt(), anyCollection())).thenReturn(List.of(recent, recent));
+
+        // Exercise
+        final List<Car> result = carService.getFeaturedCars(limit);
+
+        // Assertions
+        assertEquals(3, result.size());
+        assertEquals(CAR_ID, result.get(0).getId());
+        assertEquals(6L, result.get(1).getId());
+    }
+
+    @Test
+    public void shouldReturnFalseForDuplicateWhenModelIsBlank() {
+        // Arrange
+        final String blankModel = "   ";
+
+        // Exercise
+        final boolean result = carService.existsDuplicateCar("Toyota", "sedan", blankModel, 2024, 0L);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldDetectDuplicateCarInCatalog() {
+        // Arrange
+        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
+        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+
+        // Exercise
+        final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "  Corolla  ", 2024, 0L);
+
+        // Assertions
+        assertTrue(result);
+    }
+
+    @Test
+    public void shouldNotFlagIgnoredCarAsDuplicate() {
+        // Arrange
+        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
+        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+
+        // Exercise
+        final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "Corolla", 2024, CAR_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldNotFlagCarWithDifferentYear() {
+        // Arrange
+        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
+        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+
+        // Exercise
+        final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "Corolla", 2025, 0L);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
     public void shouldRejectAppendCarImagesWithInvalidPayload() {
         // Arrange
         final List<CarImagePayload> images = List.of(new CarImagePayload("image/png", new byte[0]));
@@ -244,5 +338,22 @@ public class CarServiceImplTest {
 
         // Assertions
         assertEquals("Image metadata and payload must be provided together.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldNormalizeElectricOnlySearchByRemovingFuelConsumptionFilter() {
+        // Arrange
+        final ar.edu.itba.paw.model.CarSearchCriteria criteria = new ar.edu.itba.paw.model.CarSearchCriteria();
+        criteria.setFuelTypes(List.of("electric"));
+        criteria.setFuelConsumptionMax(new BigDecimal("15.0"));
+        final ar.edu.itba.paw.model.Page<Car> expectedPage = new ar.edu.itba.paw.model.Page<>(List.of(), 1, 10, 0);
+        when(carDao.findByCriteria(any())).thenReturn(expectedPage);
+
+        // Exercise
+        carService.searchCars(criteria);
+
+        // Assertions
+        assertTrue(criteria.isElectricOnly());
+        assertTrue(criteria.getFuelConsumptionMax() == null);
     }
 }

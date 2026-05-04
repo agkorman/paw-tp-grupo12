@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -137,5 +138,24 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
                 "SELECT COUNT(*) FROM user_follows WHERE follower_id = ? AND followed_id = ?",
                 follower.getId(), followed.getId()
         ));
+    }
+
+    @Test
+    public void shouldPaginateFavoriteCarsAcrossMultiplePages() {
+        // Arrange
+        final User user = createUser("favorite-paged");
+        // Insert 17 cars (Pagination.CARS_PAGE_SIZE + 1)
+        for (int i = 0; i < 17; i++) {
+            Car car = createCar("fav-paged-" + i);
+            jdbcTemplate.update("INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)", user.getId(), car.getId());
+        }
+
+        // Exercise
+        final Page<Car> result = carFavoriteDao.findFavoriteCars(user.getId(), 2);
+
+        // Assertions
+        assertEquals(17L, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(1, result.getItems().size());
     }
 }

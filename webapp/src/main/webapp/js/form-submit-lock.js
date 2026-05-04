@@ -3,7 +3,7 @@
  * is actually submitted. Opt-in per form with data-submit-lock="true".
  *
  * Plays nicely with other submit handlers: if any earlier handler calls
- * event.preventDefault() (e.g. client-side validation fails), we do NOT
+ * event.preventDefault() (e.g. an enhanced flow handles the submit), we do NOT
  * lock the button, because the form will not actually be submitted.
  */
 (function () {

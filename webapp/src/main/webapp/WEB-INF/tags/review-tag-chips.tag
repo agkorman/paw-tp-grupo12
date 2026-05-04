@@ -11,9 +11,13 @@
 <c:choose>
     <c:when test="${mode eq 'edit'}">
         <c:if test="${not empty tagsBySentiment}">
+            <spring:message var="jsMsgTagMaxSelected" code="js.review.tags.maxSelected"/>
+            <spring:message var="jsMsgTagOpposites" code="js.review.tags.opposites"/>
             <div class="review-tag-chips review-tag-chips--edit"
                  data-review-tag-chips
-                 data-review-tag-max="6">
+                 data-max-selected="6"
+                 data-msg-max-selected="${fn:escapeXml(jsMsgTagMaxSelected)}"
+                 data-msg-opposites="${fn:escapeXml(jsMsgTagOpposites)}">
                 <fieldset class="review-tag-chips-group review-tag-chips-group--positive">
                     <legend><spring:message code="review.tags.positive"/></legend>
                     <div class="review-tag-chips-row">

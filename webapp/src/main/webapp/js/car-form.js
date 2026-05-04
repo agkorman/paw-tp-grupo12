@@ -55,7 +55,10 @@
     var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     var ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
     var MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-    var MAX_IMAGE_COUNT = 5;
+    var maxTotalImages = parseInt(page.dataset.maxImageCount, 10);
+    if (!Number.isFinite(maxTotalImages) || maxTotalImages < 1) {
+        maxTotalImages = 5;
+    }
 
     var selectedFiles = function (field) {
         if (!field || !field.files) {
@@ -226,8 +229,8 @@
                 setInlineError(field, requiredMessages[field.id] || messages.msgRequiredGeneric);
                 return false;
             }
-            if (existingImageCount + files.length > MAX_IMAGE_COUNT) {
-                setInlineError(field, formatMessage(messages.msgImageMaxCount, MAX_IMAGE_COUNT));
+            if (existingImageCount + files.length > maxTotalImages) {
+                setInlineError(field, formatMessage(messages.msgImageMaxCount, maxTotalImages));
                 return false;
             }
             for (var i = 0; i < files.length; i++) {
@@ -292,7 +295,7 @@
 
     var appendToAccumulator = function (newFiles) {
         if (!canSyncFileInput) {
-            accumulatedFiles = newFiles.slice(0, Math.max(0, MAX_IMAGE_COUNT - existingImageCount));
+            accumulatedFiles = newFiles.slice(0, Math.max(0, maxTotalImages - existingImageCount));
             return;
         }
 
@@ -302,7 +305,7 @@
         });
         var added = false;
         newFiles.forEach(function (file) {
-            if (existingImageCount + accumulatedFiles.length >= MAX_IMAGE_COUNT) {
+            if (existingImageCount + accumulatedFiles.length >= maxTotalImages) {
                 return;
             }
             var key = fileKey(file);
@@ -380,7 +383,7 @@
         });
 
         var totalVisibleImages = existingImageCount + accumulatedFiles.length;
-        var showAddMore = canSyncFileInput && totalVisibleImages >= 1 && totalVisibleImages < MAX_IMAGE_COUNT;
+        var showAddMore = canSyncFileInput && totalVisibleImages >= 1 && totalVisibleImages < maxTotalImages;
         if (showAddMore) {
             var addMore = document.createElement('button');
             addMore.type = 'button';

@@ -12,15 +12,16 @@ import java.util.Optional;
 
 public interface ReviewDao {
     List<Review> findAll();
-    Page<Review> findLatest(int page, int pageSize);
+    Page<Review> findLatest(int page);
     long countAll();
-    Page<Review> findByFollowedUsers(long followerId, int page, int pageSize);
+    Page<Review> findByFollowedUsers(long followerId, int page);
     long countByFollowedUsers(long followerId);
-    Page<Review> findByFavoriteCars(long userId, int page, int pageSize);
+    Page<Review> findByFavoriteCars(long userId, int page);
     long countByFavoriteCars(long userId);
     Map<Long, Integer> findDefaultPagesByReviewIds(Collection<Long> reviewIds);
     Optional<Review> findById(long id);
     List<Review> findByIds(Collection<Long> ids);
+    List<Review> findByCarIds(Collection<Long> carIds);
     List<Review> findByCarId(long carId);
     Page<Review> findByCarId(long carId, int page);
     Optional<Review> findLatestByCarId(long carId);

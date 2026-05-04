@@ -7,11 +7,15 @@ import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CarJdbcDaoTest extends AbstractPersistenceTest {
@@ -233,6 +237,75 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldReturnEmptyWhenFindByIdHasNoMatch() {
+        // Arrange
+        final long missingId = 9999L;
+
+        // Exercise
+        final Optional<Car> result = carDao.findById(missingId);
+
+        // Assertions
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenUpdatingMissingCar() {
+        // Arrange
+        final long missingId = 9999L;
+
+        // Exercise
+        final Optional<Car> result = carDao.update(missingId, 1L, "Ghost Model", 1L, 2026,
+                "Description", "combustion", 200, 6, "automatic",
+                new BigDecimal("8.0"), 220, new BigDecimal("30000.00"));
+
+        // Assertions
+        assertFalse(result.isPresent());
+        assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE car_id = ?", missingId));
+    }
+
+    @Test
+    public void shouldReturnFalseWhenDeletingMissingCar() {
+        // Arrange
+        final long missingId = 9999L;
+
+        // Exercise
+        final boolean result = carDao.delete(missingId);
+
+        // Assertions
+        assertFalse(result);
+        assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE car_id = ?", missingId));
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenFindByIdsReceivesEmptyCollection() {
+        // Arrange
+        final List<Long> emptyIds = Collections.emptyList();
+
+        // Exercise
+        final List<Car> result = carDao.findByIds(emptyIds);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldRejectDuplicateCarBrandModelBodyTypeYear() {
+        // Arrange
+        final Car existing = createCar("dup-car");
+
+        // Exercise
+        assertThrows(DataIntegrityViolationException.class, () ->
+                carDao.create(existing.getBrandId(), existing.getModel(), existing.getBodyTypeId(),
+                        existing.getYear(), "Another description", "combustion", 150, 6, "manual",
+                        new BigDecimal("7.0"), 200, new BigDecimal("25000.00"))
+        );
+
+        // Assertions
+        assertEquals(1, countRows("SELECT COUNT(*) FROM cars WHERE brand_id = ? AND model = ? AND body_type_id = ? AND year = ?",
+                existing.getBrandId(), existing.getModel(), existing.getBodyTypeId(), existing.getYear()));
+    }
+
+    @Test
     public void shouldSortCarsByHorsepowerAscending() {
         // Arrange
         final long brandId = insertBrand("Sort Hp Brand").getId();
@@ -254,5 +327,86 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
         assertEquals(2L, result.getTotalItems());
         assertEquals(weak.getId(), result.getItems().get(0).getId());
         assertEquals(strong.getId(), result.getItems().get(1).getId());
+    }
+
+    @Test
+    public void shouldFilterByMultipleFuelTypesAndPaginate() {
+        // Arrange
+        final long brandId = insertBrand("Multi Fuel Brand").getId();
+        final long bodyTypeId = insertBodyType("Multi Fuel Body").getId();
+        // 3 matching (hybrid or electric)
+        insertCar(brandId, "Multi Fuel Brand", "Hybrid 1", bodyTypeId, "Multi Fuel Body",
+                2026, "Desc", "hybrid", 200, 6, "automatic", new BigDecimal("5.0"), 220, new BigDecimal("40000"));
+        insertCar(brandId, "Multi Fuel Brand", "Electric 1", bodyTypeId, "Multi Fuel Body",
+                2026, "Desc", "electric", 300, 6, "automatic", new BigDecimal("0.0"), 240, new BigDecimal("50000"));
+        insertCar(brandId, "Multi Fuel Brand", "Hybrid 2", bodyTypeId, "Multi Fuel Body",
+                2026, "Desc", "hybrid", 250, 6, "automatic", new BigDecimal("5.5"), 230, new BigDecimal("45000"));
+        // 1 non-matching (combustion)
+        insertCar(brandId, "Multi Fuel Brand", "Combustion", bodyTypeId, "Multi Fuel Body",
+                2026, "Desc", "combustion", 150, 6, "manual", new BigDecimal("8.0"), 200, new BigDecimal("30000"));
+
+        final CarSearchCriteria criteria = new CarSearchCriteria();
+        criteria.setBrand("Multi Fuel Brand");
+        criteria.setFuelTypes(List.of("hybrid", "electric"));
+        criteria.setSortBy("hp_asc");
+        criteria.setPage(1);
+        // Page size is 16, so all 3 should be on page 1
+
+        // Exercise
+        final Page<Car> result = carDao.findByCriteria(criteria);
+
+        // Assertions
+        assertEquals(3L, result.getTotalItems());
+        assertEquals(3, result.getItems().size());
+        assertEquals("Hybrid 1", result.getItems().get(0).getModel()); // 200 hp
+        assertEquals("Hybrid 2", result.getItems().get(1).getModel()); // 250 hp
+        assertEquals("Electric 1", result.getItems().get(2).getModel()); // 300 hp
+    }
+
+    @Test
+    public void shouldCombineMultipleFiltersWithPagination() {
+        // Arrange
+        final long brandId = insertBrand("Combo Brand").getId();
+        final long bodyTypeId = insertBodyType("Combo Body").getId();
+        // Insert 5 matching cars
+        for (int i = 0; i < 5; i++) {
+            insertCar(brandId, "Combo Brand", "Match " + i, bodyTypeId, "Combo Body",
+                    2025, "Matching", "hybrid", 200 + i, 8, "automatic", new BigDecimal("5.0"),
+                    220, new BigDecimal("40000.00"));
+        }
+        // Insert 1 non-matching (wrong year)
+        insertCar(brandId, "Combo Brand", "Miss Year", bodyTypeId, "Combo Body",
+                2020, "Non-matching", "hybrid", 205, 8, "automatic", new BigDecimal("5.0"),
+                220, new BigDecimal("40000.00"));
+
+        final CarSearchCriteria criteria = new CarSearchCriteria();
+        criteria.setBrand("Combo Brand");
+        criteria.setYearMin(2024);
+        criteria.setFuelTypes(List.of("hybrid"));
+        criteria.setTransmission("automatic");
+        criteria.setSortBy("hp_desc");
+
+        // We want to test page 2 with a small page size, but CARS_PAGE_SIZE is 16.
+        // Since we can't easily change Pagination.CARS_PAGE_SIZE in tests without side effects,
+        // we'll just verify page 1 and the total count, or insert 17 items if we really want to test page 2.
+        // Let's insert enough for page 2.
+        for (int i = 5; i < 17; i++) {
+            insertCar(brandId, "Combo Brand", "Match " + i, bodyTypeId, "Combo Body",
+                    2025, "Matching", "hybrid", 200 + i, 8, "automatic", new BigDecimal("5.0"),
+                    220, new BigDecimal("40000.00"));
+        }
+
+        criteria.setPage(2);
+
+        // Exercise
+        final Page<Car> result = carDao.findByCriteria(criteria);
+
+        // Assertions
+        assertEquals(17L, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(1, result.getItems().size());
+        // Sorted by hp_desc: Match 16 (216hp) is top, Match 0 (200hp) is bottom.
+        // Page 1 has Match 16 to Match 1. Page 2 has Match 0.
+        assertEquals("Match 0", result.getItems().get(0).getModel());
     }
 }

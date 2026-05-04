@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
@@ -292,6 +293,114 @@ public class ReviewLikeServiceImplTest {
 
         // Exercise
         final Map<Long, Long> result = reviewLikeService.countNewLikesPerReview(USER_ID, since);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenDaoThrowsForLikedReviewIdsByUser() {
+        // Arrange
+        when(reviewLikeDao.findLikedReviewIdsByUserId(USER_ID)).thenThrow(new DataAccessResourceFailureException("db"));
+
+        // Exercise
+        final List<Long> result = reviewLikeService.getLikedReviewIdsByUser(USER_ID);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyPageWhenDaoThrowsForPagedLikedReviewIdsByUser() {
+        // Arrange
+        when(reviewLikeDao.findLikedReviewIdsByUserId(USER_ID, 1)).thenThrow(new DataAccessResourceFailureException("db"));
+
+        // Exercise
+        final Page<Long> result = reviewLikeService.getLikedReviewIdsByUser(USER_ID, 1);
+
+        // Assertions
+        assertTrue(result.getItems().isEmpty());
+    }
+
+    @Test
+    public void shouldReturnZeroWhenDaoThrowsForCountLikedReviewsByUser() {
+        // Arrange
+        when(reviewLikeDao.countLikedReviewsByUserId(USER_ID)).thenThrow(new DataAccessResourceFailureException("db"));
+
+        // Exercise
+        final long result = reviewLikeService.countLikedReviewsByUser(USER_ID);
+
+        // Assertions
+        assertEquals(0L, result);
+    }
+
+    @Test
+    public void shouldReturnZeroWhenDaoThrowsForCountReplyLikes() {
+        // Arrange
+        when(reviewLikeDao.countReplyLikes(REPLY_ID)).thenThrow(new DataAccessResourceFailureException("db"));
+
+        // Exercise
+        final long result = reviewLikeService.countReplyLikes(REPLY_ID);
+
+        // Assertions
+        assertEquals(0L, result);
+    }
+
+    @Test
+    public void shouldReturnEmptyMapWhenReplyIdsCollectionIsNull() {
+        // Arrange
+        final Collection<Long> replyIds = null;
+
+        // Exercise
+        final Map<Long, Long> result = reviewLikeService.countReplyLikesByReplyIds(replyIds);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyMapWhenDaoThrowsForReplyLikeCounts() {
+        // Arrange
+        when(reviewLikeDao.countReplyLikesByReplyIds(anyCollection())).thenThrow(new DataAccessResourceFailureException("db"));
+
+        // Exercise
+        final Map<Long, Long> result = reviewLikeService.countReplyLikesByReplyIds(List.of(1L, 2L));
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptySetForLikedReplyIdsWithNullCollection() {
+        // Arrange
+        final Collection<Long> replyIds = null;
+
+        // Exercise
+        final Set<Long> result = reviewLikeService.getLikedReplyIds(replyIds, USER_ID);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldSwallowDaoFailureForLikedReplyIds() {
+        // Arrange
+        when(reviewLikeDao.findLikedReplyIds(anyCollection(), anyLong())).thenThrow(new DataAccessResourceFailureException("db"));
+
+        // Exercise
+        final Set<Long> result = reviewLikeService.getLikedReplyIds(List.of(1L), USER_ID);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenDaoThrowsForLikedReplyIdsByUser() {
+        // Arrange
+        when(reviewLikeDao.findLikedReplyIdsByUserId(USER_ID)).thenThrow(new DataAccessResourceFailureException("db"));
+
+        // Exercise
+        final List<Long> result = reviewLikeService.getLikedReplyIdsByUser(USER_ID);
 
         // Assertions
         assertTrue(result.isEmpty());

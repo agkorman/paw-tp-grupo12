@@ -12,15 +12,14 @@ public interface EmailService {
     void sendCatalogRequestRejectedNotification(String recipientEmail, String requestType, String requestedName);
     void sendAdminRequestApprovedNotification(String recipientEmail);
     void sendAdminRequestRejectedNotification(String recipientEmail);
-    void sendReviewHiddenNotification(String recipientEmail, String subject, String heading, String intro,
-                                      String reviewLabel, String carLabel, String reasonLabel,
-                                      String reviewTitle, String carName, String moderatorReason);
+    void sendReviewHiddenNotification(String recipientEmail, String reviewTitle, String carName,
+                                      String moderatorReason);
     void sendWeeklyModeratorDigest(List<String> moderatorEmails, int pendingRequestCount);
     void sendWeeklyUserDigest(String recipientEmail, String username,
                               List<ReviewActivityItem> reviewActivity,
                               List<FavoriteActivityItem> favoriteActivity);
 
-    final class ReviewActivityItem {
+    public static final class ReviewActivityItem {
         public final String reviewTitle;
         public final String carName;
         public final long newLikes;
@@ -35,7 +34,7 @@ public interface EmailService {
         }
     }
 
-    final class FavoriteActivityItem {
+    public static final class FavoriteActivityItem {
         public final String carName;
         public final long newReviewCount;
 
