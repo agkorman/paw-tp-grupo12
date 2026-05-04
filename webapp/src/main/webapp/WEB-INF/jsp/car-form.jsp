@@ -373,9 +373,7 @@
         <pa:catalog-request-brand-modal/>
         <pa:catalog-request-body-type-modal/>
     </c:if>
-    <c:if test="${showSubmittedToast}">
-        <pa:submitted-toast messageCode="${submittedToastMessageCode}"/>
-    </c:if>
+    <pa:toast messageCode="${submittedToastMessageCode}"/>
 
     <pa:script src="/js/car-form.js"/>
     <c:if test="${catalogRequestLinksEnabled}">
@@ -384,7 +382,7 @@
         <pa:script src="/js/catalog-request-validation.js"/>
     </c:if>
     <pa:script src="/js/form-submit-lock.js"/>
-    <pa:script src="/js/submitted-toast.js"/>
+    <pa:script src="/js/toast.js"/>
     <pa:footer/>
 </body>
 </html>

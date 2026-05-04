@@ -3,6 +3,8 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.BodyTypeRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -18,6 +20,8 @@ import java.util.Optional;
 
 @Repository
 public class BodyTypeRequestJdbcDao implements BodyTypeRequestDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BodyTypeRequestJdbcDao.class);
 
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
@@ -107,16 +111,23 @@ public class BodyTypeRequestJdbcDao implements BodyTypeRequestDao {
         params.put("status", status);
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
+        LOGGER.info("created body type request id={} userId={} name={} status={}", id, submittedByUserId, name, status);
         return findById(id).orElseThrow();
     }
 
     @Override
     public boolean updateStatus(final long id, final String expectedStatus, final String newStatus) {
-        return jdbcTemplate.update(
+        final boolean updated = jdbcTemplate.update(
                 "UPDATE body_type_requests SET status = ? WHERE body_type_request_id = ? AND status = ?",
                 newStatus,
                 id,
                 expectedStatus
         ) > 0;
+        if (updated) {
+            LOGGER.info("updated body type request id={} status {}->{}", id, expectedStatus, newStatus);
+        } else {
+            LOGGER.warn("body type request status update affected 0 rows id={} expectedStatus={} newStatus={}", id, expectedStatus, newStatus);
+        }
+        return updated;
     }
 }

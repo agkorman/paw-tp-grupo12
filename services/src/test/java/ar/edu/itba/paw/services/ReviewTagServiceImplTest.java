@@ -38,9 +38,10 @@ public class ReviewTagServiceImplTest {
     @Test
     public void shouldReturnEmptyListWhenValidatingNullSelection() {
         // Arrange
+        final List<Short> selectedIds = null;
 
         // Exercise
-        final List<ReviewTag> result = reviewTagService.validateSelection(null);
+        final List<ReviewTag> result = reviewTagService.validateSelection(selectedIds);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -49,9 +50,10 @@ public class ReviewTagServiceImplTest {
     @Test
     public void shouldReturnEmptyListWhenValidatingEmptySelection() {
         // Arrange
+        final List<Short> selectedIds = List.of();
 
         // Exercise
-        final List<ReviewTag> result = reviewTagService.validateSelection(List.of());
+        final List<ReviewTag> result = reviewTagService.validateSelection(selectedIds);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -142,8 +144,10 @@ public class ReviewTagServiceImplTest {
 
         // Assertions
         assertEquals(2, grouped.size());
-        assertEquals(List.of(positive), grouped.get(ReviewTag.SENTIMENT_POSITIVE));
-        assertEquals(List.of(negative), grouped.get(ReviewTag.SENTIMENT_NEGATIVE));
+        assertEquals(1, grouped.get(ReviewTag.SENTIMENT_POSITIVE).size());
+        assertEquals("comfort", grouped.get(ReviewTag.SENTIMENT_POSITIVE).get(0).getCode());
+        assertEquals(1, grouped.get(ReviewTag.SENTIMENT_NEGATIVE).size());
+        assertEquals("uncomfortable", grouped.get(ReviewTag.SENTIMENT_NEGATIVE).get(0).getCode());
     }
 
     @Test

@@ -19,6 +19,8 @@ import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.context.MessageSource;
@@ -55,6 +57,8 @@ import java.util.stream.Collectors;
 
 @Controller
 public class CarReviewController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CarReviewController.class);
 
     private static final String SORT_RATING_ASC = "rating_asc";
     private static final String SORT_RATING_DESC = "rating_desc";
@@ -196,9 +200,11 @@ public class CarReviewController {
         }
 
         rejectInvalidReviewFields(errors, reviewForm.getRating(), reviewForm.getOwnershipStatus(),
-                reviewForm.getModelYear(), reviewForm.getMileageKm());
+                reviewForm.getMileageKm());
 
         if (errors.hasErrors()) {
+            LOGGER.warn("create review rejected: validation errors carId={} userId={} errorCount={}",
+                    car.getId(), currentUser.getId(), errors.getErrorCount());
             model.addAttribute("selectedCar", car);
             return "review-form.jsp";
         }
@@ -211,17 +217,20 @@ public class CarReviewController {
                     reviewForm.getTitle(),
                     reviewForm.getBody(),
                     normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                    reviewForm.getModelYear(),
+                    null,
                     reviewForm.getMileageKm(),
                     reviewForm.getWouldRecommend(),
                     reviewForm.getTagIds());
+            LOGGER.info("created review carId={} userId={}", car.getId(), currentUser.getId());
         } catch (final InvalidReviewTagSelectionException e) {
+            LOGGER.warn("create review rejected: invalid tag selection carId={} userId={}",
+                    car.getId(), currentUser.getId());
             errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
             model.addAttribute("selectedCar", car);
             return "review-form.jsp";
         }
 
-        return "redirect:/reviews?carId=" + car.getId();
+        return "redirect:/reviews?carId=" + car.getId() + "&reviewCreated=1";
     }
 
     private ModelAndView carReviewPage(final long carId, final String sort, final String error,
@@ -267,9 +276,6 @@ public class CarReviewController {
         attributes.put("totalPages", pageData.totalPages);
         attributes.put("totalItems", pageData.totalItems);
         attributes.put("currentUserId", currentUserId(currentUser));
-        attributes.put("latestReview", pageData.latestReview.orElse(null));
-        attributes.put("latestReviewLikeCount", pageData.latestReviewLikeCount);
-        attributes.put("latestReviewLiked", pageData.latestReviewLiked);
         attributes.put("carImages", pageData.carImages);
         attributes.put("yearVariants", buildYearVariants(pageData.selectedCar));
         return attributes;
@@ -305,19 +311,9 @@ public class CarReviewController {
         final BigDecimal averageRating = reviewService.getReviewStatsByCar(selectedCar.getId())
                 .map(stats -> stats.getAverageRating())
                 .orElse(null);
-        final Optional<Review> latestReview = reviewService.getLatestReviewByCar(selectedCar.getId());
         final List<CarImage> carImages = carService.getCarImagesByCarId(selectedCar.getId());
         final List<ReviewThread> reviewThreads = buildReviewThreads(reviews, currentUserId);
-        final long latestReviewLikeCount = latestReview
-                .map(review -> reviewLikeService.countReviewLikes(review.getId()))
-                .orElse(0L);
-        final boolean latestReviewLiked = currentUserId != null
-                && latestReview
-                .map(review -> reviewLikeService.getLikedReviewIds(List.of(review.getId()), currentUserId)
-                        .contains(review.getId()))
-                .orElse(false);
-        return new ReviewPageData(selectedCar, reviews, reviewThreads, normalizedSort, latestReview, carImages,
-                latestReviewLikeCount, latestReviewLiked,
+        return new ReviewPageData(selectedCar, reviews, reviewThreads, normalizedSort, carImages,
                 reviewPage.getPageNumber(), reviewPage.getTotalPages(), reviewPage.getTotalItems(), averageRating);
     }
 
@@ -398,7 +394,7 @@ public class CarReviewController {
                         "El auto referenciado no existe."));
         reviewForm.setCarId(existingReview.getCarId());
         rejectInvalidReviewFields(errors, reviewForm.getRating(), reviewForm.getOwnershipStatus(),
-                reviewForm.getModelYear(), reviewForm.getMileageKm());
+                reviewForm.getMileageKm());
 
         if (errors.hasErrors()) {
             model.addAttribute("selectedCar", car);
@@ -415,12 +411,15 @@ public class CarReviewController {
                     reviewForm.getTitle(),
                     reviewForm.getBody(),
                     normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                    reviewForm.getModelYear(),
+                    null,
                     reviewForm.getMileageKm(),
                     reviewForm.getWouldRecommend(),
                     reviewForm.getTagIds()
             );
+            LOGGER.info("updated review id={} userId={}", reviewId, currentUser.getId());
         } catch (final InvalidReviewTagSelectionException e) {
+            LOGGER.warn("update review rejected: invalid tag selection reviewId={} userId={}",
+                    reviewId, currentUser.getId());
             errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
             model.addAttribute("selectedCar", car);
             model.addAttribute("editMode", true);
@@ -431,11 +430,25 @@ public class CarReviewController {
     }
 
     @RequestMapping(value = "/reviews/{reviewId}/delete", method = RequestMethod.POST)
-    public ModelAndView deleteReview(@PathVariable("reviewId") final long reviewId,
-                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+    public Object deleteReview(@PathVariable("reviewId") final long reviewId,
+                               @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
+                               @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
         final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
         validateReviewOwnership(existingReview, currentUser);
-        reviewService.deleteReview(reviewId);
+        try {
+            reviewService.deleteReview(reviewId);
+            LOGGER.info("user id={} deleted review id={}", currentUser.getId(), reviewId);
+        } catch (final RuntimeException e) {
+            LOGGER.error("failed to delete review id={} userId={}", reviewId, currentUser.getId(), e);
+            if (ajax) {
+                return new ResponseEntity<String>(message("review.delete.toast.error"), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            return new ModelAndView("redirect:/profile");
+        }
+        if (ajax) {
+            return new ResponseEntity<String>("ok", HttpStatus.OK);
+        }
         return new ModelAndView("redirect:/profile");
     }
 
@@ -476,9 +489,12 @@ public class CarReviewController {
 
         try {
             if (!reviewService.deleteReview(reviewId)) {
+                LOGGER.warn("hide review failed: delete returned false reviewId={}", reviewId);
                 return reviewHideError(ajax, review.getCarId());
             }
-        } catch (final RuntimeException ignored) {
+            LOGGER.info("admin id={} hid review id={}", currentUser.getId(), reviewId);
+        } catch (final RuntimeException e) {
+            LOGGER.error("hide review failed reviewId={} adminId={}", reviewId, currentUser.getId(), e);
             return reviewHideError(ajax, review.getCarId());
         }
 
@@ -523,7 +539,9 @@ public class CarReviewController {
 
         try {
             reviewReplyService.createReply(reviewId, currentUser.getId(), body);
-        } catch (final RuntimeException ignored) {
+            LOGGER.info("user id={} replied to review id={}", currentUser.getId(), reviewId);
+        } catch (final RuntimeException e) {
+            LOGGER.error("failed to create reply reviewId={} userId={}", reviewId, currentUser.getId(), e);
             return carReviewPage(review.getCarId(), null,
                     "No pudimos publicar la respuesta. Intentá de nuevo en unos segundos.",
                     currentUser);
@@ -551,7 +569,8 @@ public class CarReviewController {
         final boolean liked;
         try {
             liked = reviewLikeService.toggleReviewLike(reviewId, currentUser.getId());
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.error("failed to toggle review like reviewId={} userId={}", reviewId, currentUser.getId(), e);
             if (ajax) {
                 return new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -559,6 +578,7 @@ public class CarReviewController {
                     "No pudimos actualizar el like. Intentá de nuevo en unos segundos.",
                     currentUser);
         }
+        LOGGER.info("user id={} toggled review like reviewId={} liked={}", currentUser.getId(), reviewId, liked);
         if (ajax) {
             final long count = reviewLikeService.countReviewLikes(reviewId);
             return new ResponseEntity<String>(liked + "|" + count, HttpStatus.OK);
@@ -588,7 +608,8 @@ public class CarReviewController {
         final boolean liked;
         try {
             liked = reviewLikeService.toggleReplyLike(replyId, currentUser.getId());
-        } catch (final RuntimeException ignored) {
+        } catch (final RuntimeException e) {
+            LOGGER.error("failed to toggle reply like replyId={} userId={}", replyId, currentUser.getId(), e);
             if (ajax) {
                 return new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -596,6 +617,7 @@ public class CarReviewController {
                     "No pudimos actualizar el like. Intentá de nuevo en unos segundos.",
                     currentUser);
         }
+        LOGGER.info("user id={} toggled reply like replyId={} liked={}", currentUser.getId(), replyId, liked);
         if (ajax) {
             final long count = reviewLikeService.countReplyLikes(replyId);
             return new ResponseEntity<String>(liked + "|" + count, HttpStatus.OK);
@@ -607,7 +629,11 @@ public class CarReviewController {
         if (review == null) {
             throw new ResourceNotFoundException();
         }
-        if (currentUser == null || review.getUserId() == null || !review.getUserId().equals(currentUser.getId())) {
+        if (currentUser == null) {
+            throw new ForbiddenException();
+        }
+        final boolean isOwner = review.getUserId() != null && review.getUserId().equals(currentUser.getId());
+        if (!isOwner && !isAdmin(currentUser)) {
             throw new ForbiddenException();
         }
     }
@@ -676,8 +702,7 @@ public class CarReviewController {
     }
 
     private void rejectInvalidReviewFields(final BindingResult errors, final BigDecimal rating,
-                                           final String ownershipStatus, final Integer modelYear,
-                                           final Integer mileageKm) {
+                                           final String ownershipStatus, final Integer mileageKm) {
         if (rating != null && rating.multiply(RATING_STEP_DOUBLED).remainder(BigDecimal.ONE).signum() != 0) {
             errors.rejectValue("rating", "rating.step", "La puntuación debe ser múltiplo de 0,5.");
         }
@@ -685,19 +710,6 @@ public class CarReviewController {
         final String ownership = ownershipStatus == null ? "" : ownershipStatus;
         if (!ALLOWED_OWNERSHIP_STATUSES.contains(ownership)) {
             errors.rejectValue("ownershipStatus", "ownership.invalid", "Estado de propiedad no válido.");
-        }
-
-        if (modelYear == null) {
-            if (!errors.hasFieldErrors("modelYear")) {
-                errors.rejectValue("modelYear", "modelYear.required", "El año del modelo es obligatorio.");
-            }
-        } else {
-            final int minModelYear = 1886;
-            final int maxModelYear = 2100;
-            if (modelYear < minModelYear || modelYear > maxModelYear) {
-                errors.rejectValue("modelYear", "modelYear.range",
-                        "Ingresá un año entre " + minModelYear + " y " + maxModelYear + ".");
-            }
         }
 
         if (mileageKm == null && !errors.hasFieldErrors("mileageKm")) {
@@ -726,7 +738,6 @@ public class CarReviewController {
         form.setTitle(review.getTitle());
         form.setBody(review.getBody());
         form.setOwnershipStatus(review.getOwnershipStatus());
-        form.setModelYear(review.getModelYear());
         form.setMileageKm(review.getMileageKm());
         form.setWouldRecommend(review.getWouldRecommend());
         form.setTagIds(review.getTags()
@@ -745,10 +756,7 @@ public class CarReviewController {
         private final List<Review> reviews;
         private final List<ReviewThread> reviewThreads;
         private final String currentSort;
-        private final Optional<Review> latestReview;
         private final List<CarImage> carImages;
-        private final long latestReviewLikeCount;
-        private final boolean latestReviewLiked;
         private final int currentPage;
         private final int totalPages;
         private final long totalItems;
@@ -756,18 +764,14 @@ public class CarReviewController {
 
         private ReviewPageData(final Car selectedCar, final List<Review> reviews,
                                final List<ReviewThread> reviewThreads, final String currentSort,
-                               final Optional<Review> latestReview, final List<CarImage> carImages,
-                               final long latestReviewLikeCount, final boolean latestReviewLiked,
+                               final List<CarImage> carImages,
                                final int currentPage, final int totalPages, final long totalItems,
                                final BigDecimal averageRating) {
             this.selectedCar = selectedCar;
             this.reviews = reviews;
             this.reviewThreads = reviewThreads;
             this.currentSort = currentSort;
-            this.latestReview = latestReview;
             this.carImages = carImages;
-            this.latestReviewLikeCount = latestReviewLikeCount;
-            this.latestReviewLiked = latestReviewLiked;
             this.currentPage = currentPage;
             this.totalPages = totalPages;
             this.totalItems = totalItems;

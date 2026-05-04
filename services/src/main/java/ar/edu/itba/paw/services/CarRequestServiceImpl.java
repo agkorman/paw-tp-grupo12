@@ -10,6 +10,8 @@ import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
 import ar.edu.itba.paw.persistence.CarRequestDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +22,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class CarRequestServiceImpl implements CarRequestService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CarRequestServiceImpl.class);
 
     private final CarRequestDao carRequestDao;
     private final CarDao carDao;
@@ -238,6 +243,7 @@ public class CarRequestServiceImpl implements CarRequestService {
             }
         }
         sendCarApprovedNotification(request, brandId, normalizedModel, createdCar.getId());
+        LOGGER.info("Approved car request id={} -> car id={} model={}", id, createdCar.getId(), normalizedModel);
         return true;
     }
 
@@ -268,6 +274,7 @@ public class CarRequestServiceImpl implements CarRequestService {
         final boolean statusUpdated = carRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
         if (statusUpdated) {
             sendCarRejectedNotification(request);
+            LOGGER.info("Rejected car request id={}", id);
         }
         return statusUpdated;
     }

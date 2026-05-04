@@ -5,12 +5,14 @@
 
 <c:url var="loginUrl" value="/login"/>
 <spring:message var="closeModalLabel" code="common.action.close"/>
+<spring:message var="defaultActionLabel" code="auth.required.defaultAction"/>
 
 <div id="authRequiredModal"
      class="modal auth-required-modal"
      hidden
      data-login-url="${loginUrl}"
-     data-context-path="${pageContext.request.contextPath}">
+     data-context-path="${pageContext.request.contextPath}"
+     data-default-action="${defaultActionLabel}">
     <div class="modal-overlay" data-close-modal="authRequiredModal"></div>
     <section class="modal-dialog auth-required-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="authRequiredTitle">
         <header class="modal-header">
@@ -24,7 +26,7 @@
         </header>
 
         <p class="auth-required-modal-copy">
-            <spring:message code="auth.required.prefix"/> <span data-auth-required-action><spring:message code="auth.required.defaultAction"/></span>.
+            <spring:message code="auth.required.prefix"/> <span data-auth-required-action><c:out value="${defaultActionLabel}"/></span>.
         </p>
 
         <div class="auth-required-modal-actions">

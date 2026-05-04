@@ -22,8 +22,12 @@
 <c:set var="showCarRequestCard" value="${empty totalPages or totalPages <= 1 or currentPage >= totalPages}"/>
 <spring:message var="addCarAuthAction" code="cars.authRequired.addAction"/>
 <spring:message var="carsPaginationAria" code="cars.pagination.aria"/>
+<spring:message var="carsToolbarCountTemplate" code="cars.toolbar.count"/>
 
-<div id="carsCatalogContent" class="catalog-content" data-result-count="${resultCount}">
+<div id="carsCatalogContent"
+     class="catalog-content"
+     data-result-count="${resultCount}"
+     data-result-count-template="${carsToolbarCountTemplate}">
     <section class="catalog-section">
         <div class="cars-grid">
             <c:forEach var="car" items="${cars}">

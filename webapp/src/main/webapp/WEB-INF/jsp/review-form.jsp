@@ -5,6 +5,22 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <spring:message var="reviewFormTitleText" code="${editMode ? 'review.form.title.edit' : 'review.form.title.new'}"/>
 <spring:message var="appNameTitleText" code="app.name"/>
+<spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
+<spring:message var="jsReviewRequiredTitle" code="js.review.required.title"/>
+<spring:message var="jsReviewRequiredBody" code="js.review.required.body"/>
+<spring:message var="jsReviewRequiredModelYear" code="js.review.required.modelYear"/>
+<spring:message var="jsReviewRequiredMileage" code="js.review.required.mileage"/>
+<spring:message var="jsReviewRequiredRating" code="js.review.required.rating"/>
+<spring:message var="jsReviewModelYearNumeric" code="js.review.modelYear.numeric"/>
+<spring:message var="jsReviewModelYearRange" code="js.review.modelYear.range"/>
+<spring:message var="jsReviewMileageNumeric" code="js.review.mileage.numeric"/>
+<spring:message var="jsReviewMileageRange" code="js.review.mileage.range"/>
+<spring:message var="jsRatingNone" code="review.form.rating.none"/>
+<spring:message var="jsRatingPoor" code="review.rating.poor"/>
+<spring:message var="jsRatingRegular" code="review.rating.regular"/>
+<spring:message var="jsRatingGood" code="review.rating.good"/>
+<spring:message var="jsRatingVeryGood" code="review.rating.veryGood"/>
+<spring:message var="jsRatingExcellent" code="review.rating.excellent"/>
 <c:set var="reviewFormPageTitle" value="${reviewFormTitleText} | ${appNameTitleText}"/>
 <!DOCTYPE html>
 <html lang="es">
@@ -42,6 +58,22 @@
                        method="post" action="${reviewFormAction}"
                        data-create-action="${reviewCreateUrl}"
                        data-submit-lock="true"
+                       data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
+                       data-msg-required-modal-title="${fn:escapeXml(jsReviewRequiredTitle)}"
+                       data-msg-required-modal-body="${fn:escapeXml(jsReviewRequiredBody)}"
+                       data-msg-required-modal-model-year="${fn:escapeXml(jsReviewRequiredModelYear)}"
+                       data-msg-required-modal-mileage-km="${fn:escapeXml(jsReviewRequiredMileage)}"
+                       data-msg-required-rating="${fn:escapeXml(jsReviewRequiredRating)}"
+                       data-msg-model-year-numeric="${fn:escapeXml(jsReviewModelYearNumeric)}"
+                       data-msg-model-year-range="${fn:escapeXml(jsReviewModelYearRange)}"
+                       data-msg-mileage-numeric="${fn:escapeXml(jsReviewMileageNumeric)}"
+                       data-msg-mileage-range="${fn:escapeXml(jsReviewMileageRange)}"
+                       data-rating-none="${fn:escapeXml(jsRatingNone)}"
+                       data-rating-poor="${fn:escapeXml(jsRatingPoor)}"
+                       data-rating-regular="${fn:escapeXml(jsRatingRegular)}"
+                       data-rating-good="${fn:escapeXml(jsRatingGood)}"
+                       data-rating-very-good="${fn:escapeXml(jsRatingVeryGood)}"
+                       data-rating-excellent="${fn:escapeXml(jsRatingExcellent)}"
                        novalidate="novalidate">
                 <form:errors cssClass="alert alert-error" element="div"/>
                 <c:if test="${not empty error}">

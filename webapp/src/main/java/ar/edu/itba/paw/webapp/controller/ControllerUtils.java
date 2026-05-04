@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.webapp.validation.ImageSignatureValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -9,6 +11,9 @@ import java.util.Locale;
 import java.util.Set;
 
 final class ControllerUtils {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ControllerUtils.class);
+
     static final long MAX_IMAGE_SIZE_BYTES = 10L * 1024 * 1024;
     static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
             MediaType.IMAGE_JPEG_VALUE,
@@ -63,6 +68,7 @@ final class ControllerUtils {
                 return "El archivo no coincide con una imagen JPEG, PNG o WEBP válida.";
             }
         } catch (final IOException e) {
+            LOGGER.warn("failed to read uploaded image bytes for signature check", e);
             return "No pudimos leer la imagen. Intentá con otro archivo.";
         }
         return null;

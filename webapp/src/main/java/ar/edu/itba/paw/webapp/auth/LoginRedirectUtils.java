@@ -1,5 +1,8 @@
 package ar.edu.itba.paw.webapp.auth;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -7,6 +10,8 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 public final class LoginRedirectUtils {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoginRedirectUtils.class);
 
     public static final String REDIRECT_PARAM = "redirect";
     public static final String INTENT_PARAM = "intent";
@@ -27,14 +32,17 @@ public final class LoginRedirectUtils {
                 || trimmed.startsWith("//")
                 || trimmed.indexOf('\r') >= 0
                 || trimmed.indexOf('\n') >= 0) {
+            LOGGER.warn("rejected unsafe redirect target reason={}", rejectionReason(trimmed));
             return Optional.empty();
         }
         try {
             final URI uri = URI.create(trimmed);
             if (uri.isAbsolute() || uri.getHost() != null) {
+                LOGGER.warn("rejected unsafe redirect target reason={}", "absolute");
                 return Optional.empty();
             }
         } catch (final IllegalArgumentException e) {
+            LOGGER.warn("rejected unsafe redirect target reason={}", "malformed");
             return Optional.empty();
         }
         return Optional.of(trimmed);
@@ -75,5 +83,21 @@ public final class LoginRedirectUtils {
 
     private static String encode(final String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private static String rejectionReason(final String value) {
+        if (value.isEmpty()) {
+            return "empty";
+        }
+        if (!value.startsWith("/")) {
+            return "relative";
+        }
+        if (value.startsWith("//")) {
+            return "protocol-relative";
+        }
+        if (value.indexOf('\r') >= 0 || value.indexOf('\n') >= 0) {
+            return "control-character";
+        }
+        return "invalid";
     }
 }

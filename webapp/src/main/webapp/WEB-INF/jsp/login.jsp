@@ -1,8 +1,15 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <spring:message var="loginSubmittingLabel" code="auth.login.submitting"/>
+<spring:message var="jsRequiredEmail" code="js.auth.required.email"/>
+<spring:message var="jsRequiredPassword" code="js.auth.required.password"/>
+<spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
+<spring:message var="jsLengthMin" code="js.form.length.min"/>
+<spring:message var="jsLengthMax" code="js.form.length.max"/>
+<spring:message var="jsEmailInvalid" code="js.auth.email.invalid"/>
 <!DOCTYPE html>
 <html lang="es">
 <pa:page-head titleCode="auth.login.title" styles="/css/auth.css"/>
@@ -16,15 +23,14 @@
                 <h1 id="loginTitle"><spring:message code="auth.login.heading"/></h1>
             </div>
 
-            <c:if test="${not empty loginErrorCode}">
-                <div class="alert alert-error" role="alert"><spring:message code="${loginErrorCode}"/></div>
-            </c:if>
-            <c:if test="${not empty loginMessageCode}">
-                <div class="alert alert-success" role="status"><spring:message code="${loginMessageCode}"/></div>
-            </c:if>
-
             <form id="loginForm" class="auth-form" method="post" action="<c:url value='/login'/>"
-                  data-auth-form="login" data-submit-lock="true" novalidate="novalidate">
+                  data-auth-form="login" data-submit-lock="true" novalidate="novalidate"
+                  data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
+                  data-msg-required-login-email="${fn:escapeXml(jsRequiredEmail)}"
+                  data-msg-required-login-password="${fn:escapeXml(jsRequiredPassword)}"
+                  data-msg-length-min="${fn:escapeXml(jsLengthMin)}"
+                  data-msg-length-max="${fn:escapeXml(jsLengthMax)}"
+                  data-msg-email-invalid="${fn:escapeXml(jsEmailInvalid)}">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <c:if test="${not empty loginRedirect}">
                     <input type="hidden" name="redirect" value="<c:out value='${loginRedirect}'/>">
@@ -60,8 +66,20 @@
         </section>
     </main>
 
+    <c:choose>
+        <c:when test="${not empty loginErrorCode}">
+            <pa:toast messageCode="${loginErrorCode}" type="error"/>
+        </c:when>
+        <c:when test="${not empty loginMessageCode}">
+            <pa:toast messageCode="${loginMessageCode}"/>
+        </c:when>
+        <c:otherwise>
+            <pa:toast/>
+        </c:otherwise>
+    </c:choose>
     <pa:script src="/js/auth-form.js"/>
     <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/toast.js"/>
     <pa:footer/>
 </body>
 </html>

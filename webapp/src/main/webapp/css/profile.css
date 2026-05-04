@@ -5,7 +5,6 @@
     display: grid;
     gap: var(--spacing-10, 2.5rem);
 }
-
 .profile-hero {
     min-height: 220px;
     padding: var(--spacing-8);
@@ -298,4 +297,3 @@
         gap: 1rem;
     }
 }
-

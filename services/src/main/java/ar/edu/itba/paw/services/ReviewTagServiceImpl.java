@@ -3,6 +3,8 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.ReviewTag;
 import ar.edu.itba.paw.persistence.ReviewTagDao;
 import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class ReviewTagServiceImpl implements ReviewTagService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReviewTagServiceImpl.class);
 
     private final ReviewTagDao reviewTagDao;
 
@@ -52,12 +56,15 @@ public class ReviewTagServiceImpl implements ReviewTagService {
         }
         final Set<Short> uniqueIds = new HashSet<>(tagIds);
         if (uniqueIds.size() > MAX_TAGS_PER_REVIEW) {
+            LOGGER.warn("review tag selection rejected: too many tags count={}", uniqueIds.size());
             throw new InvalidReviewTagSelectionException(
                     InvalidReviewTagSelectionException.Reason.TOO_MANY,
                     "Podés elegir hasta " + MAX_TAGS_PER_REVIEW + " etiquetas.");
         }
         final List<ReviewTag> resolved = reviewTagDao.findByIds(uniqueIds);
         if (resolved.size() != uniqueIds.size()) {
+            LOGGER.warn("review tag selection rejected: unknown tag selectedCount={} resolvedCount={}",
+                    uniqueIds.size(), resolved.size());
             throw new InvalidReviewTagSelectionException(
                     InvalidReviewTagSelectionException.Reason.UNKNOWN_TAG,
                     "Una de las etiquetas seleccionadas no es válida.");
@@ -66,6 +73,7 @@ public class ReviewTagServiceImpl implements ReviewTagService {
                 .map(ReviewTag::getDimension)
                 .collect(Collectors.toSet());
         if (dimensions.size() != resolved.size()) {
+            LOGGER.warn("review tag selection rejected: duplicate dimension");
             throw new InvalidReviewTagSelectionException(
                     InvalidReviewTagSelectionException.Reason.DUPLICATE_DIMENSION,
                     "No podés elegir dos etiquetas opuestas para la misma característica.");

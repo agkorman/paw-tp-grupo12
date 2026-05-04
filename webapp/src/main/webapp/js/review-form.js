@@ -18,20 +18,31 @@
 
     var modelYearInput = $('modalModelYear');
     var mileageInput = $('modalMileageKm');
-    var requiredMessages = {
-        modalTitle: 'Ingresá un título.',
-        modalBody: 'Ingresá una descripción.',
-        modalModelYear: 'Ingresá el año del modelo.',
-        modalMileageKm: 'Ingresá el kilometraje.'
-    };
+    function formatMessage(template, value) {
+        return (template || '').replace('{0}', value);
+    }
+
+    function dataKeyForInput(prefix, input) {
+        return prefix + input.id.charAt(0).toLowerCase() + input.id.slice(1).replace(/[A-Z]/g, function (letter) {
+            return '-' + letter.toLowerCase();
+        });
+    }
+
+    function message(key) {
+        return form.getAttribute('data-msg-' + key) || '';
+    }
+
+    function requiredMessage(input) {
+        return message(dataKeyForInput('required-', input)) || message('required-generic');
+    }
 
     function starTextFor(value) {
-        if (value === 0) return 'Sin puntuación';
-        if (value <= 1) return 'Malo';
-        if (value <= 2) return 'Regular';
-        if (value <= 3) return 'Bueno';
-        if (value <= 4) return 'Muy bueno';
-        return 'Excelente';
+        if (value === 0) return form.getAttribute('data-rating-none') || '';
+        if (value <= 1) return form.getAttribute('data-rating-poor') || '';
+        if (value <= 2) return form.getAttribute('data-rating-regular') || '';
+        if (value <= 3) return form.getAttribute('data-rating-good') || '';
+        if (value <= 4) return form.getAttribute('data-rating-very-good') || '';
+        return form.getAttribute('data-rating-excellent') || '';
     }
 
     function paintStar(slot, starNum, rating) {
@@ -213,7 +224,7 @@
 
     function validateRating() {
         if (!starInput || !starInput.value) {
-            setRatingError('Seleccioná una puntuación.');
+            setRatingError(message('required-rating'));
             if (starWrap) {
                 starWrap.focus();
             }
@@ -261,7 +272,7 @@
 
         clearInlineError(input);
         if (input.required && (!input.value || input.value.trim() === '')) {
-            setInlineError(input, requiredMessages[input.id] || 'Completá este campo.');
+            setInlineError(input, requiredMessage(input));
             return false;
         }
         return true;
@@ -285,12 +296,12 @@
             modelYearInput.value = year;
             if (year.length > 0) {
                 if (!isInt(year)) {
-                    setInlineError(modelYearInput, 'El año del modelo debe ser numérico.');
+                    setInlineError(modelYearInput, message('model-year-numeric'));
                     ok = false;
                 } else {
                     var parsedYear = Number(year);
                     if (parsedYear < minYear || parsedYear > maxYear) {
-                        setInlineError(modelYearInput, 'Ingresá un año entre ' + minYear + ' y ' + maxYear + '.');
+                        setInlineError(modelYearInput, formatMessage(message('model-year-range'), maxYear));
                         ok = false;
                     }
                 }
@@ -302,12 +313,12 @@
             mileageInput.value = mileage;
             if (mileage.length > 0) {
                 if (!isInt(mileage)) {
-                    setInlineError(mileageInput, 'El kilometraje debe ser numérico.');
+                    setInlineError(mileageInput, message('mileage-numeric'));
                     ok = false;
                 } else {
                     var parsedMileage = Number(mileage);
                     if (parsedMileage < 0 || parsedMileage > 2000000) {
-                        setInlineError(mileageInput, 'Ingresá un kilometraje entre 0 y 2.000.000 km.');
+                        setInlineError(mileageInput, message('mileage-range'));
                         ok = false;
                     }
                 }

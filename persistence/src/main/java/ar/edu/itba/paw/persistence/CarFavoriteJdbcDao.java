@@ -3,6 +3,8 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 
 @Repository
 public class CarFavoriteJdbcDao implements CarFavoriteDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CarFavoriteJdbcDao.class);
 
     private static final String SELECT_COLUMNS =
             "SELECT c.car_id, c.brand_id, b.name AS brand_name, c.model, c.body_type_id, bt.name AS body_type, "
@@ -61,23 +65,32 @@ public class CarFavoriteJdbcDao implements CarFavoriteDao {
     @Override
     public boolean favorite(final long userId, final long carId) {
         try {
-            return jdbcTemplate.update(
+            final boolean inserted = jdbcTemplate.update(
                     "INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)",
                     userId,
                     carId
             ) > 0;
+            if (inserted) {
+                LOGGER.info("user id={} favorited car id={}", userId, carId);
+            }
+            return inserted;
         } catch (final DuplicateKeyException ignored) {
+            LOGGER.debug("user id={} already favorited car id={}", userId, carId);
             return false;
         }
     }
 
     @Override
     public boolean unfavorite(final long userId, final long carId) {
-        return jdbcTemplate.update(
+        final boolean removed = jdbcTemplate.update(
                 "DELETE FROM car_favorites WHERE user_id = ? AND car_id = ?",
                 userId,
                 carId
         ) > 0;
+        if (removed) {
+            LOGGER.info("user id={} unfavorited car id={}", userId, carId);
+        }
+        return removed;
     }
 
     @Override

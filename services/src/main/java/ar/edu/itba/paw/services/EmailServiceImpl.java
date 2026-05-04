@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.CarRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ByteArrayResource;
@@ -13,12 +15,11 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.logging.Logger;
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
-    private static final Logger LOGGER = Logger.getLogger(EmailServiceImpl.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmailServiceImpl.class);
     private static final String APP_NAME = "La Posta Autos";
     private static final int DESCRIPTION_PREVIEW_LENGTH = 220;
     private static final String CAR_IMAGE_CID = "car-image";
@@ -202,7 +203,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(plainTextBody, htmlBody);
             mailSender.send(helper.getMimeMessage());
         } catch (final MessagingException | RuntimeException e) {
-            LOGGER.warning(failurePrefix + ": " + e.getMessage());
+            LOGGER.warn("email send failed: {}", failurePrefix, e);
         }
     }
 

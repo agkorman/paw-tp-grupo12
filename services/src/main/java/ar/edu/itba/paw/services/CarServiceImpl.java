@@ -11,6 +11,8 @@ import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +24,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class CarServiceImpl implements CarService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CarServiceImpl.class);
 
     private final CarDao carDao;
     private final CarImageDao carImageDao;
@@ -168,6 +173,9 @@ public class CarServiceImpl implements CarService {
         if (updated.isPresent() && imageContentType.isPresent()) {
             carImageDao.saveOrReplace(id, imageContentType.get(), imageData.orElseThrow());
         }
+        if (updated.isPresent()) {
+            LOGGER.info("updated car id={} brandId={} model={}", id, brandId, normalizedModel);
+        }
         return updated;
     }
 
@@ -175,10 +183,15 @@ public class CarServiceImpl implements CarService {
     @Transactional
     public boolean deleteCar(final long id) {
         if (carDao.findById(id).isEmpty()) {
+            LOGGER.warn("delete car rejected: not found id={}", id);
             return false;
         }
         reviewDao.deleteByCarId(id);
-        return carDao.delete(id);
+        final boolean deleted = carDao.delete(id);
+        if (deleted) {
+            LOGGER.info("deleted car id={} (and associated reviews)", id);
+        }
+        return deleted;
     }
 
     private void validateImagePair(final Optional<String> imageContentType, final Optional<byte[]> imageData) {

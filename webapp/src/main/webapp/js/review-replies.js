@@ -61,7 +61,7 @@
         }
 
         if (body && body.value.trim().length === 0) {
-            showReplyError(form, 'La respuesta no puede estar vacía.');
+            showReplyError(form, form.getAttribute('data-msg-empty') || '');
             body.focus();
             return;
         }
@@ -107,7 +107,7 @@
 
             currentTarget.replaceWith(replacement);
         }).catch(function () {
-            showReplyError(form, 'No pudimos publicar la respuesta. Intenta de nuevo.');
+            showReplyError(form, form.getAttribute('data-msg-error') || '');
         }).finally(function () {
             var currentTarget;
 

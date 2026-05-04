@@ -64,9 +64,10 @@ public class UserServiceImplTest {
     @Test
     public void shouldReturnEmptyWhenFindByEmailReceivesBlank() {
         // Arrange
+        final String blankEmail = "   ";
 
         // Exercise
-        final Optional<User> result = userService.findByEmail("   ");
+        final Optional<User> result = userService.findByEmail(blankEmail);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -75,9 +76,10 @@ public class UserServiceImplTest {
     @Test
     public void shouldReturnEmptyWhenFindByEmailReceivesNull() {
         // Arrange
+        final String nullEmail = null;
 
         // Exercise
-        final Optional<User> result = userService.findByEmail(null);
+        final Optional<User> result = userService.findByEmail(nullEmail);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -100,9 +102,10 @@ public class UserServiceImplTest {
     @Test
     public void shouldReturnEmptyWhenFindByUsernameReceivesBlank() {
         // Arrange
+        final String blankUsername = "   ";
 
         // Exercise
-        final Optional<User> result = userService.findByUsername("   ");
+        final Optional<User> result = userService.findByUsername(blankUsername);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -132,10 +135,11 @@ public class UserServiceImplTest {
     @Test
     public void shouldRejectCreateUserWhenUsernameIsBlank() {
         // Arrange
+        final String blankUsername = "   ";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser("   ", RAW_EMAIL, RAW_PASSWORD));
+                () -> userService.createUser(blankUsername, RAW_EMAIL, RAW_PASSWORD));
 
         // Assertions
         assertEquals("Username is required.", ex.getMessage());
@@ -144,10 +148,11 @@ public class UserServiceImplTest {
     @Test
     public void shouldRejectCreateUserWhenEmailIsBlank() {
         // Arrange
+        final String blankEmail = "   ";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser(RAW_USERNAME, "   ", RAW_PASSWORD));
+                () -> userService.createUser(RAW_USERNAME, blankEmail, RAW_PASSWORD));
 
         // Assertions
         assertEquals("Email is required.", ex.getMessage());
@@ -156,10 +161,11 @@ public class UserServiceImplTest {
     @Test
     public void shouldRejectCreateUserWhenPasswordIsEmpty() {
         // Arrange
+        final String emptyPassword = "";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, ""));
+                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, emptyPassword));
 
         // Assertions
         assertEquals("Password is required.", ex.getMessage());
@@ -168,10 +174,11 @@ public class UserServiceImplTest {
     @Test
     public void shouldRejectCreateUserWhenPasswordIsNull() {
         // Arrange
+        final String nullPassword = null;
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, null));
+                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, nullPassword));
 
         // Assertions
         assertEquals("Password is required.", ex.getMessage());
@@ -279,10 +286,11 @@ public class UserServiceImplTest {
     @Test
     public void shouldRejectUpdateRoleWhenRoleIsBlank() {
         // Arrange
+        final String blankRole = "   ";
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userService.updateRole(USER_ID, "   "));
+                () -> userService.updateRole(USER_ID, blankRole));
 
         // Assertions
         assertEquals("Role is required.", ex.getMessage());

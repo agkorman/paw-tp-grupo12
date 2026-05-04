@@ -1,6 +1,7 @@
 (function () {
-    var REQUIRED_MESSAGE = 'Completá este campo.';
-    var MAX_LENGTH_MESSAGE = 'Usá como máximo {0} caracteres.';
+    function message(form, key) {
+        return form.getAttribute('data-msg-' + key) || '';
+    }
 
     function fieldContainer(input) {
         var node = input;
@@ -67,11 +68,11 @@
 
         clearInlineError(input);
         if (input.required && value.length === 0) {
-            setInlineError(input, REQUIRED_MESSAGE);
+            setInlineError(input, message(input.form, 'required-generic'));
             return false;
         }
         if (maxLength && input.value.length > Number(maxLength)) {
-            setInlineError(input, MAX_LENGTH_MESSAGE.replace('{0}', maxLength));
+            setInlineError(input, message(input.form, 'length-max').replace('{0}', maxLength));
             return false;
         }
         return true;

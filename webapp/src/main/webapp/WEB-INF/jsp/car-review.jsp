@@ -97,14 +97,51 @@
                 <pa:review-selected-car selectedCar="${selectedCar}"
                                         carImages="${carImages}"
                                         favorited="${selectedCarFavorited}"/>
-                <pa:latest-review latestReview="${latestReview}"
-                                  liked="${latestReviewLiked}"
-                                  likeCount="${latestReviewLikeCount}"/>
             </div>
 
             <div class="review-side-column">
                 <pa:review-car-info selectedCar="${selectedCar}" averageRating="${averageRating}"/>
             </div>
+        </section>
+
+        <section class="review-description-bar">
+            <c:url var="newReviewUrl" value="/reviews/new">
+                <c:param name="carId" value="${selectedCar.id}"/>
+            </c:url>
+            <c:url var="newReviewLoginUrl" value="/login">
+                <c:param name="redirect" value="/reviews/new?carId=${selectedCar.id}"/>
+                <c:param name="intent" value="create-review"/>
+            </c:url>
+            <spring:message var="createReviewAuthAction" code="review.authRequired.createAction"/>
+            <div class="review-description-content">
+                <span class="car-info-label"><spring:message code="review.carInfo.description"/></span>
+                <p class="car-info-description">
+                    <c:choose>
+                        <c:when test="${not empty selectedCar.description}"><c:out value="${selectedCar.description}"/></c:when>
+                        <c:otherwise>N/A</c:otherwise>
+                    </c:choose>
+                </p>
+            </div>
+            <c:choose>
+                <c:when test="${not empty pageContext.request.userPrincipal}">
+                    <a id="openReviewFormBtn"
+                       href="${newReviewUrl}"
+                       class="btn-primary add-review-btn"
+                       data-auth-resume-intent="create-review">
+                        <spring:message code="review.carInfo.addReview"/>
+                    </a>
+                </c:when>
+                <c:otherwise>
+                    <a id="openReviewFormBtn"
+                       href="${newReviewLoginUrl}"
+                       class="btn-primary add-review-btn"
+                       data-auth-required="true"
+                       data-auth-required-action="${fn:escapeXml(createReviewAuthAction)}"
+                       data-auth-required-intent="create-review">
+                        <spring:message code="review.carInfo.addReview"/>
+                    </a>
+                </c:otherwise>
+            </c:choose>
         </section>
 
         <pa:reviews-feed reviews="${reviews}" reviewThreads="${reviewThreads}" carId="${selectedCar.id}"
@@ -114,9 +151,21 @@
     </main>
 
     <pa:auth-required-modal/>
+    <c:choose>
+        <c:when test="${not empty param.reviewCreated}">
+            <pa:toast messageCode="review.create.toast.success"/>
+        </c:when>
+        <c:otherwise>
+            <pa:toast/>
+        </c:otherwise>
+    </c:choose>
     <sec:authorize access="hasRole('ADMIN')">
-        <pa:toast/>
         <pa:review-hide-modal/>
+        <pa:confirmation-modal id="deleteReviewConfirmModal"
+                               titleCode="review.delete.title"
+                               bodyCode="review.delete.body"
+                               confirmCode="common.action.delete"
+                               confirmCssClass="btn-primary"/>
         <pa:car-delete-modal/>
     </sec:authorize>
 
@@ -129,10 +178,12 @@
     <pa:script src="/js/review-tag-chips.js" defer="true"/>
     <pa:script src="/js/modal-utils.js"/>
     <pa:script src="/js/auth-required-modal.js"/>
+    <pa:script src="/js/toast.js"/>
     <sec:authorize access="hasRole('ADMIN')">
         <pa:script src="/js/car-admin.js"/>
-        <pa:script src="/js/toast.js"/>
         <pa:script src="/js/review-moderation.js"/>
+        <pa:script src="/js/confirmation-modal.js"/>
+        <pa:script src="/js/review-delete.js"/>
     </sec:authorize>
     <pa:script src="/js/form-submit-lock.js"/>
     <pa:footer/>

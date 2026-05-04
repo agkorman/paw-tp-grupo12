@@ -17,6 +17,8 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <spring:message var="closeModalLabel" code="common.action.close"/>
+<spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
+<spring:message var="jsLengthMax" code="js.form.length.max"/>
 
 <div id="${fn:escapeXml(id)}" class="modal catalog-request-modal" hidden>
     <div class="modal-overlay" data-close-catalog-request-modal></div>
@@ -36,7 +38,9 @@
         </p>
 
         <form id="${fn:escapeXml(formId)}" class="catalog-request-form" method="post" action="${fn:escapeXml(action)}"
-              novalidate="novalidate" data-catalog-request-form="true">
+              novalidate="novalidate" data-catalog-request-form="true"
+              data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
+              data-msg-length-max="${fn:escapeXml(jsLengthMax)}">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
             <div class="modal-field modal-field-wide">

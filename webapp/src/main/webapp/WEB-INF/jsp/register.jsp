@@ -1,8 +1,19 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <spring:message var="registerSubmittingLabel" code="auth.register.submitting"/>
+<spring:message var="jsRequiredUsername" code="js.auth.required.username"/>
+<spring:message var="jsRequiredEmail" code="js.auth.required.email"/>
+<spring:message var="jsRequiredPassword" code="js.auth.required.password"/>
+<spring:message var="jsRequiredConfirmPassword" code="js.auth.required.confirmPassword"/>
+<spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
+<spring:message var="jsLengthMin" code="js.form.length.min"/>
+<spring:message var="jsLengthMax" code="js.form.length.max"/>
+<spring:message var="jsEmailInvalid" code="js.auth.email.invalid"/>
+<spring:message var="jsUsernamePattern" code="js.auth.username.pattern"/>
+<spring:message var="jsPasswordMatch" code="js.auth.password.match"/>
 <!DOCTYPE html>
 <html lang="es">
 <pa:page-head titleCode="auth.register.title" styles="/css/auth.css"/>
@@ -16,12 +27,18 @@
                 <h1 id="registerTitle"><spring:message code="auth.register.heading"/></h1>
             </div>
 
-            <c:if test="${not empty registrationError}">
-                <div class="alert alert-error" role="alert"><c:out value="${registrationError}"/></div>
-            </c:if>
-
             <form id="registerForm" class="auth-form" method="post" action="<c:url value='/register'/>"
-                  data-auth-form="register" data-submit-lock="true" novalidate="novalidate">
+                  data-auth-form="register" data-submit-lock="true" novalidate="novalidate"
+                  data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
+                  data-msg-required-register-username="${fn:escapeXml(jsRequiredUsername)}"
+                  data-msg-required-register-email="${fn:escapeXml(jsRequiredEmail)}"
+                  data-msg-required-register-password="${fn:escapeXml(jsRequiredPassword)}"
+                  data-msg-required-register-confirm-password="${fn:escapeXml(jsRequiredConfirmPassword)}"
+                  data-msg-length-min="${fn:escapeXml(jsLengthMin)}"
+                  data-msg-length-max="${fn:escapeXml(jsLengthMax)}"
+                  data-msg-email-invalid="${fn:escapeXml(jsEmailInvalid)}"
+                  data-msg-username-pattern="${fn:escapeXml(jsUsernamePattern)}"
+                  data-msg-password-match="${fn:escapeXml(jsPasswordMatch)}">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
                 <div class="auth-field">
@@ -84,8 +101,10 @@
         </section>
     </main>
 
+    <pa:toast messageCode="${registrationErrorCode}" type="error"/>
     <pa:script src="/js/auth-form.js"/>
     <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/toast.js"/>
     <pa:footer/>
 </body>
 </html>

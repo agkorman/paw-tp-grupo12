@@ -10,7 +10,6 @@
     text-underline-offset: 2px;
     cursor: pointer;
 }
-
 .catalog-request-link:hover,
 .catalog-request-link:focus-visible {
     color: var(--on-surface);
@@ -32,4 +31,3 @@
     gap: 1rem;
     margin-top: 1rem;
 }
-

@@ -54,10 +54,11 @@ public class UserFollowServiceImplTest {
     @Test
     public void shouldRejectFollowingSelf() {
         // Arrange
+        final long sameUserId = FOLLOWER_ID;
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userFollowService.followUser(FOLLOWER_ID, FOLLOWER_ID));
+                () -> userFollowService.followUser(sameUserId, sameUserId));
 
         // Assertions
         assertEquals("Users cannot follow themselves.", ex.getMessage());
@@ -107,10 +108,11 @@ public class UserFollowServiceImplTest {
     @Test
     public void shouldRejectUnfollowingSelf() {
         // Arrange
+        final long sameUserId = FOLLOWER_ID;
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> userFollowService.unfollowUser(FOLLOWER_ID, FOLLOWER_ID));
+                () -> userFollowService.unfollowUser(sameUserId, sameUserId));
 
         // Assertions
         assertEquals("Users cannot follow themselves.", ex.getMessage());
@@ -119,9 +121,10 @@ public class UserFollowServiceImplTest {
     @Test
     public void shouldReturnFalseWhenIsFollowingSelf() {
         // Arrange
+        final long sameUserId = FOLLOWER_ID;
 
         // Exercise
-        final boolean result = userFollowService.isFollowing(FOLLOWER_ID, FOLLOWER_ID);
+        final boolean result = userFollowService.isFollowing(sameUserId, sameUserId);
 
         // Assertions
         assertFalse(result);

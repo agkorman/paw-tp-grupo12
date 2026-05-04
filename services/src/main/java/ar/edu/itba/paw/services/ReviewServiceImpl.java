@@ -5,6 +5,8 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewTagDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +19,10 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class ReviewServiceImpl implements ReviewService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReviewServiceImpl.class);
 
     private final ReviewDao reviewDao;
     private final ReviewTagDao reviewTagDao;
@@ -41,8 +46,10 @@ public class ReviewServiceImpl implements ReviewService {
                 mileageKm, wouldRecommend);
         if (tagIds != null && !tagIds.isEmpty()) {
             reviewTagDao.replaceAssignments(review.getId(), tagIds);
+            LOGGER.info("created review id={} userId={} carId={} tagCount={}", review.getId(), userId, carId, tagIds.size());
             return reviewDao.findById(review.getId()).orElse(review);
         }
+        LOGGER.info("created review id={} userId={} carId={}", review.getId(), userId, carId);
         return review;
     }
 
@@ -118,14 +125,20 @@ public class ReviewServiceImpl implements ReviewService {
                 modelYear, mileageKm, wouldRecommend);
         if (updated.isPresent()) {
             reviewTagDao.replaceAssignments(id, tagIds == null ? Collections.emptyList() : tagIds);
+            LOGGER.info("updated review id={} carId={} rating={}", id, carId, rating);
             return reviewDao.findById(id);
         }
         return updated;
     }
 
     @Override
+    @Transactional
     public boolean deleteReview(final long id) {
-        return reviewDao.delete(id);
+        final boolean deleted = reviewDao.delete(id);
+        if (deleted) {
+            LOGGER.info("deleted review id={}", id);
+        }
+        return deleted;
     }
 
     @Override

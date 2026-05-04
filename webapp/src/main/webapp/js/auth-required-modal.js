@@ -9,6 +9,7 @@
     var loginLink = modal.querySelector('[data-auth-required-login]');
     var contextPath = modal.getAttribute('data-context-path') || '';
     var loginUrl = modal.getAttribute('data-login-url') || '/login';
+    var defaultAction = modal.getAttribute('data-default-action') || '';
     var lastTrigger = null;
     var INTENT_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -48,7 +49,7 @@
     function openModal(trigger) {
         lastTrigger = trigger;
         if (actionText) {
-            actionText.textContent = trigger.getAttribute('data-auth-required-action') || 'hacer esta acción';
+            actionText.textContent = trigger.getAttribute('data-auth-required-action') || defaultAction;
         }
         if (loginLink) {
             loginLink.setAttribute('href', buildLoginHref(trigger));

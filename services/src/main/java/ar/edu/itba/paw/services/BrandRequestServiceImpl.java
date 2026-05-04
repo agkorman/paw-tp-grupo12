@@ -5,6 +5,8 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.BrandRequestDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +15,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class BrandRequestServiceImpl implements BrandRequestService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrandRequestServiceImpl.class);
 
     private final BrandRequestDao brandRequestDao;
     private final BrandDao brandDao;
@@ -70,6 +75,7 @@ public class BrandRequestServiceImpl implements BrandRequestService {
         if (submittedByUserId == null && (submitterEmail == null || submitterEmail.isBlank())) {
             throw new IllegalArgumentException("A submitter user id or email is required for brand requests.");
         }
+        LOGGER.info("submitting brand request name={} userId={}", normalizedName, submittedByUserId);
         return brandRequestDao.create(submittedByUserId, submitterEmail, normalizedName, normalizedComments, STATUS_PENDING);
     }
 
@@ -84,16 +90,19 @@ public class BrandRequestServiceImpl implements BrandRequestService {
     public boolean approvePendingRequest(final long id, final String overrideName) {
         final BrandRequest request = brandRequestDao.findById(id).orElse(null);
         if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            LOGGER.warn("approve brand request rejected: not found or not pending id={}", id);
             return false;
         }
 
         final String resolvedName = StringUtils.normalize(overrideName);
         final String nameToCreate = resolvedName != null ? resolvedName : request.getName();
         if (nameToCreate == null || nameToCreate.isBlank()) {
+            LOGGER.warn("approve brand request rejected: blank name id={}", id);
             return false;
         }
 
         if (brandDao.findByName(nameToCreate).isPresent()) {
+            LOGGER.warn("approve brand request rejected: name already exists id={} name={}", id, nameToCreate);
             return false;
         }
 
@@ -104,6 +113,7 @@ public class BrandRequestServiceImpl implements BrandRequestService {
 
         brandDao.create(nameToCreate);
         sendRequestApprovedNotification(request, nameToCreate);
+        LOGGER.info("approved brand request id={} createdName={}", id, nameToCreate);
         return true;
     }
 
@@ -112,12 +122,14 @@ public class BrandRequestServiceImpl implements BrandRequestService {
     public boolean rejectPendingRequest(final long id) {
         final BrandRequest request = brandRequestDao.findById(id).orElse(null);
         if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+            LOGGER.warn("reject brand request rejected: not found or not pending id={}", id);
             return false;
         }
 
         final boolean statusUpdated = brandRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
         if (statusUpdated) {
             sendRequestRejectedNotification(request);
+            LOGGER.info("rejected brand request id={}", id);
         }
         return statusUpdated;
     }

@@ -5,6 +5,8 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarFavoriteDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,8 @@ import java.util.Set;
 
 @Service
 public class CarFavoriteServiceImpl implements CarFavoriteService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CarFavoriteServiceImpl.class);
 
     private final CarFavoriteDao carFavoriteDao;
     private final UserDao userDao;
@@ -39,9 +43,11 @@ public class CarFavoriteServiceImpl implements CarFavoriteService {
     @Transactional
     public boolean setFavorite(final long userId, final long carId, final boolean favorite) {
         validateFavorite(userId, carId);
-        return favorite
+        final boolean result = favorite
                 ? carFavoriteDao.favorite(userId, carId)
                 : carFavoriteDao.unfavorite(userId, carId);
+        LOGGER.info("user id={} set favorite carId={} favorited={}", userId, carId, favorite);
+        return result;
     }
 
     @Override
@@ -76,9 +82,11 @@ public class CarFavoriteServiceImpl implements CarFavoriteService {
 
     private void validateFavorite(final long userId, final long carId) {
         if (userDao.findById(userId).isEmpty()) {
+            LOGGER.warn("favorite rejected: user not found id={}", userId);
             throw new IllegalArgumentException("User not found.");
         }
         if (carDao.findById(carId).isEmpty()) {
+            LOGGER.warn("favorite rejected: car not found id={}", carId);
             throw new IllegalArgumentException("Car not found.");
         }
     }

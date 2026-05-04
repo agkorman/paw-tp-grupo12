@@ -291,7 +291,11 @@
         </section>
     </main>
 
-    <pa:review-delete-modal/>
+    <pa:confirmation-modal id="deleteReviewConfirmModal"
+                           titleCode="review.delete.title"
+                           bodyCode="review.delete.body"
+                           confirmCode="common.action.delete"
+                           confirmCssClass="btn-primary"/>
     <pa:edit-profile-modal profile="${profile}"/>
     <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
     <pa:confirmation-modal id="logoutConfirmModal"
@@ -303,9 +307,7 @@
     <c:if test="${ownProfile}">
         <pa:moderator-application-modal/>
     </c:if>
-    <c:if test="${showSubmittedToast}">
-        <pa:submitted-toast messageCode="${submittedToastMessageCode}"/>
-    </c:if>
+    <pa:toast messageCode="${submittedToastMessageCode}"/>
     <pa:script src="/js/reactions.js"/>
     <pa:script src="/js/enhanced-filters.js"/>
     <pa:script src="/js/action-menu.js"/>
@@ -317,7 +319,8 @@
     <c:if test="${ownProfile}">
         <pa:script src="/js/moderator-application-modal.js"/>
     </c:if>
-    <pa:script src="/js/submitted-toast.js"/>
+    <pa:script src="/js/toast.js"/>
+    <pa:script src="/js/review-delete.js"/>
     <pa:footer/>
 </body>
 </html>

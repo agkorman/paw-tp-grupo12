@@ -40,7 +40,7 @@
     <pa:auth-required-modal/>
 
     <c:if test="${showSubmittedToast}">
-        <pa:submitted-toast messageCode="${submittedToastMessageCode}"/>
+        <pa:toast messageCode="${submittedToastMessageCode}"/>
     </c:if>
 
     <pa:script src="/js/reactions.js"/>
@@ -49,7 +49,7 @@
     <pa:script src="/js/modal-utils.js"/>
     <pa:script src="/js/auth-required-modal.js"/>
     <pa:script src="/js/form-submit-lock.js"/>
-    <pa:script src="/js/submitted-toast.js"/>
+    <pa:script src="/js/toast.js"/>
 
     <pa:footer/>
 </body>

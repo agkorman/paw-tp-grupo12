@@ -8,6 +8,10 @@
 <pa:page-head titleCode="admin.title" styles="/css/reviews.css|/css/admin.css"/>
 <body>
     <pa:nav activePage="admin"/>
+    <spring:message var="brandKicker" code="cars.form.brand"/>
+    <spring:message var="bodyTypeKicker" code="cars.form.bodyType"/>
+    <spring:message var="pendingStatusLabel" code="common.status.pending"/>
+    <spring:message var="reviewActionLabel" code="common.action.review"/>
 
     <main class="admin-page">
         <section class="admin-hero">
@@ -79,7 +83,7 @@
                                             submitter="${brandRequest.submitter}"
                                             comments="${brandRequest.comments}"
                                             type="brand"
-                                            kicker="Marca"/>
+                                            kicker="${brandKicker}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -106,7 +110,7 @@
                                             submitter="${bodyTypeRequest.submitter}"
                                             comments="${bodyTypeRequest.comments}"
                                             type="body-type"
-                                            kicker="Carrocería"/>
+                                            kicker="${bodyTypeKicker}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -170,8 +174,8 @@
                                             imageUrl="${request.imageUrl}"
                                             href="${requestReviewUrl}"
                                             submitter="${request.submitter}"
-                                            footerText="Solicitud pendiente"
-                                            actionText="Revisar"/>
+                                            footerText="${pendingStatusLabel}"
+                                            actionText="${reviewActionLabel}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -193,10 +197,22 @@
 
     <pa:admin-catalog-request-review-modal/>
     <pa:moderator-application-review-modal/>
+    <c:choose>
+        <c:when test="${not empty param.carAccepted}">
+            <pa:toast messageCode="admin.carRequest.accept.toast.success"/>
+        </c:when>
+        <c:when test="${not empty param.carRejected}">
+            <pa:toast messageCode="admin.carRequest.reject.toast.success"/>
+        </c:when>
+        <c:otherwise>
+            <pa:toast/>
+        </c:otherwise>
+    </c:choose>
     <pa:script src="/js/modal-utils.js"/>
     <pa:script src="/js/admin-catalog-request-modal.js"/>
     <pa:script src="/js/moderator-application-review-modal.js"/>
     <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/toast.js"/>
     <pa:footer/>
 </body>
 </html>

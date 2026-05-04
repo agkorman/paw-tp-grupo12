@@ -105,6 +105,23 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - To gate UI sections by role in JSPs, use the Spring Security tag: `<sec:authorize access="hasRole('ADMIN')">`. Don't rely on a model attribute for role checks in views.
 - CSRF tokens must be included in every mutating form. The hidden input pattern is: `<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">`. Spring's `<form:form>` includes it automatically; plain HTML `<form>` elements require it explicitly.
 
+## Logging
+
+- Logging API is **SLF4J**, backed by **Logback**. Spring framework logs route through `spring-jcl` to SLF4J automatically. Do not use `java.util.logging`, `System.out`, `System.err`, Log4j, or commons-logging directly.
+- Every class that logs declares a single static final logger as its first field:
+  ```java
+  private static final Logger LOGGER = LoggerFactory.getLogger(CurrentClass.class);
+  ```
+  Imports are `org.slf4j.Logger` and `org.slf4j.LoggerFactory`.
+- Always use parameterized logging (`LOGGER.info("created user id={}", id)`) — never string concatenation. When logging an exception, pass it as the LAST argument and do NOT include `e.getMessage()` in the format string: `LOGGER.error("failed to load car id={}", carId, e);`.
+- Log level conventions:
+  - `DEBUG`: routine reads/lookups, verbose flow used only for troubleshooting.
+  - `INFO`: business state changes — creates, updates, deletes, approvals, rejections, login success, registration, follow/unfollow, like/unlike, favorite toggle, role grants.
+  - `WARN`: recoverable problems — validation failures the system handled, missing optional resource, async retry, swallowed non-critical exceptions.
+  - `ERROR`: unexpected exceptions, persistence/IO failures that prevent an operation from succeeding. `GlobalExceptionHandler` logs unhandled 5xx as `ERROR` and 4xx as `WARN`.
+- Never log secrets: passwords, raw tokens, CSRF values, full image bytes, or full email bodies. Logging emails, usernames, and IDs is fine.
+- Logback configs live under `webapp/src/main/resources/logback.xml` (production: root `WARN`, `RollingFileAppender` to `logs/paw-2026a-12.%d{yyyy-MM-dd}.log`, `maxHistory=5`) and `webapp/src/test/resources/logback-test.xml` (test/local: root `INFO`, `ConsoleAppender` to stdout). Both define a `logFormat` property used by the encoder pattern.
+
 ## Email
 
 - All email sending is done from the service layer via `EmailService`. Controllers and JSPs must never send email directly.
@@ -170,6 +187,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - Prefer JSP tag files (`WEB-INF/tags/`) for any UI piece that is reused or complex enough to deserve isolation. When building new views, modularize into tags rather than writing monolithic JSPs.
 - Tag attributes are declared at the top of the tag file with `<%@ attribute name="..." required="..." %>` before any markup.
+- User notifications must reuse the generic toast component in `webapp/src/main/webapp/WEB-INF/tags/toast.tag`. For server-rendered notifications, pass `messageCode`/`type` to that tag; for client-side notifications, use `window.PawToast.show(...)`. Do not introduce alternate toast components or duplicate notification patterns.
 
 ## Model Objects
 
@@ -184,8 +202,8 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - The HSQLDB schema is `persistence/src/test/resources/test-schema.sql`. Keep it minimal and faithful to the DAO behavior under test: table/column names, relevant FKs, uniqueness, checks, nullability, and relationships. Do not try to port the full PostgreSQL production schema.
 - Do not add global seed data. Each test prepares its own state explicitly in `// Arrange`; tests must not depend on execution order or data created by another test.
 - The shared persistence test base uses Spring Test with `@Transactional` and `@Rollback` so every test method runs in its own transaction and rolls back automatically. Keep rollback explicit in the base class.
-- Test layout follows Arrange / Exercise / Assertions, separated by comment markers. The Exercise section must be a single-line invocation of the DAO method under test.
-- Mutating DAO tests must assert both the returned value and the persisted side effect by querying the database back through DAOs or simple test helpers.
+- Test layout follows Arrange / Exercise / Assertions, separated by comment markers. `// Arrange` must never be empty; even null, blank, or empty-collection cases should assign the input to a local variable first. The Exercise section must be a single-line invocation of the DAO method under test.
+- Mutating DAO tests must assert both the returned value and the real persisted side effect in the database. Validate DB state with the `JdbcTemplate` available in `AbstractPersistenceTest`, using explicit SQL queries for inserted, updated, deleted, created relation, removed relation, and untouched-row checks. Do not rely only on the returned object, affected row count, Optional/list presence, DAO read-back methods, or `JdbcTestUtils`.
 - Run with `mvn -pl persistence test`.
 
 ## Testing (Service Layer)
@@ -195,8 +213,9 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Each test class uses `@ExtendWith(MockitoExtension.class)`, `@Mock` for DAOs/collaborators, and `@InjectMocks` for the service under test. Do not use `@BeforeEach`, `@RunWith(MockitoJUnitRunner.class)`, manual mock init, or `MockitoAnnotations.openMocks(this)`.
 - Interaction verification is forbidden in this layer: do not use `Mockito.verify`, `verify(...)`, `Mockito.spy`, `spy(...)`, `times(...)`, `never(...)`, `atLeast(...)`, `atMost(...)`, or any other interaction check. Tests assert observable results, not implementation details.
 - Every test must have at least one meaningful assertion on the returned value or thrown exception. Tests without assertions, or that only check non-null, are not allowed.
-- Test layout follows Arrange / Exercise / Assertions, separated by comment markers. The Exercise section must be a single-line invocation of the method under test.
-- Scope: only services with non-trivial logic are covered (validation, normalization, state transitions, scoring, exception swallowing). Pure delegation methods are not tested artificially.
+- Test layout follows Arrange / Exercise / Assertions, separated by comment markers. `// Arrange` must never be empty; even null, blank, or empty-collection cases should assign the input to a local variable first. The Exercise section must be a single-line invocation of the method under test.
+- Scope: only services with non-trivial logic are covered (validation, normalization, state transitions, scoring, exception swallowing, and meaningful branching around missing data or collaborator failures). Pure delegation methods are not tested artificially.
+- When adding or changing service implementations, review the corresponding service test coverage and add focused tests for new non-trivial behavior in the same change.
 - DB, network, filesystem, sleeps, and shared mutable state are forbidden in unit tests. Run with `mvn -pl services test`.
 
 ## Maven

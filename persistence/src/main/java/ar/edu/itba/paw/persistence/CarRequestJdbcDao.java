@@ -5,6 +5,8 @@ import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -22,6 +24,8 @@ import java.util.Optional;
 
 @Repository
 public class CarRequestJdbcDao implements CarRequestDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CarRequestJdbcDao.class);
 
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
@@ -162,6 +166,7 @@ public class CarRequestJdbcDao implements CarRequestDao {
         params.put("price_usd", priceUsd);
 
         final long id = jdbcInsert.executeAndReturnKey(params).longValue();
+        LOGGER.info("created car request id={} userId={} model={} status={}", id, submittedByUserId, model, status);
         return findById(id).orElseThrow();
     }
 
@@ -176,6 +181,7 @@ public class CarRequestJdbcDao implements CarRequestDao {
                     requestId
             );
         } catch (final DataAccessException e) {
+            LOGGER.error("failed to fetch image metadata for car request id={}", requestId, e);
             throw new IllegalStateException("Failed to fetch image metadata for car request " + requestId + ".", e);
         }
     }
@@ -191,6 +197,7 @@ public class CarRequestJdbcDao implements CarRequestDao {
                     imageId
             ).stream().findFirst();
         } catch (final DataAccessException e) {
+            LOGGER.error("failed to fetch image id={} for car request id={}", imageId, requestId, e);
             throw new IllegalStateException("Failed to fetch image " + imageId
                     + " for car request " + requestId + ".", e);
         }
@@ -209,29 +216,41 @@ public class CarRequestJdbcDao implements CarRequestDao {
                 params.put("image_data", image.getImageData());
                 imageJdbcInsert.execute(params);
             }
+            LOGGER.info("replaced image gallery for car request id={} imageCount={}", requestId, images.size());
         } catch (final DataAccessException e) {
+            LOGGER.error("failed to replace image gallery for car request id={}", requestId, e);
             throw new IllegalStateException("Failed to replace image gallery for car request " + requestId + ".", e);
         }
     }
 
     @Override
     public boolean updateStatus(final long id, final String expectedStatus, final String newStatus) {
-        return jdbcTemplate.update(
+        final boolean updated = jdbcTemplate.update(
                 "UPDATE car_requests SET status = ? WHERE car_request_id = ? AND status = ?",
                 newStatus,
                 id,
                 expectedStatus
         ) > 0;
+        if (updated) {
+            LOGGER.info("updated car request id={} status {}->{}", id, expectedStatus, newStatus);
+        } else {
+            LOGGER.warn("car request status update affected 0 rows id={} expectedStatus={} newStatus={}", id, expectedStatus, newStatus);
+        }
+        return updated;
     }
 
     @Override
     public int bindRequestsToUserByEmail(final long userId, final String email) {
-        return jdbcTemplate.update(
+        final int bound = jdbcTemplate.update(
                 "UPDATE car_requests SET submitted_by_user_id = ? "
                         + "WHERE submitted_by_user_id IS NULL "
                         + "AND submitter_email IS NOT NULL AND LOWER(BTRIM(submitter_email)) = LOWER(?)",
                 userId,
                 email
         );
+        if (bound > 0) {
+            LOGGER.info("bound {} pending car requests to user id={} email={}", bound, userId, email);
+        }
+        return bound;
     }
 }

@@ -1,5 +1,8 @@
 package ar.edu.itba.paw.webapp.validation;
 
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -7,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public final class ImageSignatureValidator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImageSignatureValidator.class);
 
     private static final String WEBP_CONTENT_TYPE = "image/webp";
     private static final int MAX_SIGNATURE_BYTES = 12;
@@ -26,16 +31,25 @@ public final class ImageSignatureValidator {
             header = inputStream.readNBytes(MAX_SIGNATURE_BYTES);
         }
 
+        final boolean valid;
         if (MediaType.IMAGE_JPEG_VALUE.equals(contentType)) {
-            return isJpeg(header);
+            valid = isJpeg(header);
+        } else if (MediaType.IMAGE_PNG_VALUE.equals(contentType)) {
+            valid = isPng(header);
+        } else if (WEBP_CONTENT_TYPE.equals(contentType)) {
+            valid = isWebp(header);
+        } else {
+            LOGGER.warn("rejected image upload: unsupported content type={} filename={}",
+                    LogSanitizer.forLog(contentType, LogSanitizer.MAX_LOG_CONTENT_TYPE_CODE_POINTS),
+                    LogSanitizer.forLog(file.getOriginalFilename(), LogSanitizer.MAX_LOG_FILENAME_CODE_POINTS));
+            return false;
         }
-        if (MediaType.IMAGE_PNG_VALUE.equals(contentType)) {
-            return isPng(header);
+        if (!valid) {
+            LOGGER.warn("rejected image upload: magic-byte mismatch declaredContentType={} filename={}",
+                    LogSanitizer.forLog(contentType, LogSanitizer.MAX_LOG_CONTENT_TYPE_CODE_POINTS),
+                    LogSanitizer.forLog(file.getOriginalFilename(), LogSanitizer.MAX_LOG_FILENAME_CODE_POINTS));
         }
-        if (WEBP_CONTENT_TYPE.equals(contentType)) {
-            return isWebp(header);
-        }
-        return false;
+        return valid;
     }
 
     private static boolean isJpeg(final byte[] header) {
