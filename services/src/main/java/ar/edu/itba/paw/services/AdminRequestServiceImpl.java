@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.AdminRequestDao;
+import ar.edu.itba.paw.services.exception.PendingAdminRequestExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +82,7 @@ public class AdminRequestServiceImpl implements AdminRequestService {
                 "Justification is required for admin requests.");
         if (adminRequestDao.existsPendingByUser(submittedByUserId)) {
             LOGGER.warn("user id={} attempted to submit second pending admin request", submittedByUserId);
-            throw new IllegalStateException("User already has a pending admin request.");
+            throw new PendingAdminRequestExistsException(submittedByUserId);
         }
         LOGGER.info("submitting admin request for user id={}", submittedByUserId);
         return adminRequestDao.create(submittedByUserId, submitterEmail, normalizedMotivation,

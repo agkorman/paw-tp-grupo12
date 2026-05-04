@@ -1,7 +1,11 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.exception.EmailAlreadyExistsException;
+import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
+import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
+import ar.edu.itba.paw.webapp.form.RegistrationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,28 +21,23 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import org.springframework.web.bind.annotation.RequestParam;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.regex.Pattern;
+import javax.validation.Valid;
 
 @Controller
 public class AuthController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
-    private static final int USERNAME_MAX_LENGTH = 50;
-    private static final int EMAIL_MAX_LENGTH = 100;
-    private static final int PASSWORD_MIN_LENGTH = 8;
-    private static final int PASSWORD_MAX_LENGTH = 72;
-    private static final Pattern SIMPLE_EMAIL_PATTERN =
-            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
-    private static final Pattern USERNAME_PATTERN =
-            Pattern.compile("^[A-Za-z0-9._-]+$");
 
     private static final SecurityContextRepository SECURITY_CONTEXT_REPOSITORY = new HttpSessionSecurityContextRepository();
 
@@ -91,10 +90,8 @@ public class AuthController {
     }
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
-    public ModelAndView createAccount(@RequestParam(value = "username", required = false) final String username,
-                                      @RequestParam(value = "email", required = false) final String email,
-                                      @RequestParam(value = "password", required = false) final String password,
-                                      @RequestParam(value = "confirmPassword", required = false) final String confirmPassword,
+    public ModelAndView createAccount(@Valid @ModelAttribute("registrationForm") final RegistrationForm registrationForm,
+                                      final BindingResult errors,
                                       final Authentication authentication,
                                       final HttpServletRequest request,
                                       final HttpServletResponse response) {
@@ -102,22 +99,26 @@ public class AuthController {
             return new ModelAndView("redirect:/");
         }
 
-        final String normalizedUsername = ControllerUtils.normalize(username);
-        final String normalizedEmail = ControllerUtils.normalizeEmail(email);
+        final String normalizedUsername = ControllerUtils.normalize(registrationForm.getUsername());
+        final String normalizedEmail = ControllerUtils.normalizeEmail(registrationForm.getEmail());
 
         try {
-            final String validationErrorCode =
-                    validateRegistration(normalizedUsername, normalizedEmail, password, confirmPassword);
-            if (validationErrorCode != null) {
+            if (errors.hasErrors()) {
+                final String validationErrorCode = registrationErrorCode(errors);
                 LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), validationErrorCode);
                 return registerFormWithError(validationErrorCode, normalizedUsername, normalizedEmail);
             }
-            userService.createUser(normalizedUsername, normalizedEmail, password);
+            userService.createUser(normalizedUsername, normalizedEmail, registrationForm.getPassword());
             LOGGER.info("registered new user email={} username={}", normalizedEmail, normalizedUsername);
-        } catch (final IllegalArgumentException e) {
-            final String errorCode = registrationErrorCode(e.getMessage());
-            LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), errorCode);
-            return registerFormWithError(errorCode, normalizedUsername, normalizedEmail);
+        } catch (final UsernameAlreadyExistsException e) {
+            LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), "auth.register.error.username.exists");
+            return registerFormWithError("auth.register.error.username.exists", normalizedUsername, normalizedEmail);
+        } catch (final EmailAlreadyExistsException e) {
+            LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), "auth.register.error.email.exists");
+            return registerFormWithError("auth.register.error.email.exists", normalizedUsername, normalizedEmail);
+        } catch (final InvalidServiceInputException e) {
+            LOGGER.warn("registration rejected by service validation email={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), e);
+            return registerFormWithError("auth.register.error.unavailable", normalizedUsername, normalizedEmail);
         } catch (final DataIntegrityViolationException e) {
             LOGGER.warn("registration rejected: integrity violation email={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS));
             return registerFormWithError("auth.register.error.duplicate", normalizedUsername, normalizedEmail);
@@ -126,7 +127,7 @@ public class AuthController {
             return registerFormWithError("auth.register.error.unavailable", normalizedUsername, normalizedEmail);
         }
 
-        if (autoLogin(normalizedEmail, password, request, response)) {
+        if (autoLogin(normalizedEmail, registrationForm.getPassword(), request, response)) {
             return new ModelAndView("redirect:/");
         }
         return new ModelAndView("redirect:/login?registered");
@@ -148,61 +149,36 @@ public class AuthController {
         }
     }
 
-    private String validateRegistration(final String username, final String email,
-                                        final String password, final String confirmPassword) {
-        if (username == null) {
-            return "auth.register.error.username.required";
-        }
-        if (username.length() > USERNAME_MAX_LENGTH) {
-            return "auth.register.error.username.max";
-        }
-        if (!USERNAME_PATTERN.matcher(username).matches()) {
-            return "auth.register.error.username.pattern";
-        }
-        if (userService.findByUsername(username).isPresent()) {
-            return "auth.register.error.username.exists";
-        }
-
-        if (email == null) {
-            return "auth.register.error.email.required";
-        }
-        if (email.length() > EMAIL_MAX_LENGTH || !SIMPLE_EMAIL_PATTERN.matcher(email).matches()) {
-            return "auth.register.error.email.invalid";
-        }
-        if (userService.findByEmail(email).isPresent()) {
-            return "auth.register.error.email.exists";
-        }
-
-        if (password == null || password.length() < PASSWORD_MIN_LENGTH) {
-            return "auth.register.error.password.min";
-        }
-        if (password.length() > PASSWORD_MAX_LENGTH) {
-            return "auth.register.error.password.max";
-        }
-        if (!password.equals(confirmPassword)) {
+    private String registrationErrorCode(final BindingResult errors) {
+        final FieldError fieldError = errors.getFieldError();
+        if (fieldError == null) {
             return "auth.register.error.password.mismatch";
         }
-
-        return null;
-    }
-
-    private String registrationErrorCode(final String errorMessage) {
-        if ("Username is required.".equals(errorMessage)) {
-            return "auth.register.error.username.required";
+        switch (fieldError.getField()) {
+            case "username":
+                if ("NotBlank".equals(fieldError.getCode())) {
+                    return "auth.register.error.username.required";
+                }
+                if ("Size".equals(fieldError.getCode())) {
+                    return "auth.register.error.username.max";
+                }
+                return "auth.register.error.username.pattern";
+            case "email":
+                if ("NotBlank".equals(fieldError.getCode())) {
+                    return "auth.register.error.email.required";
+                }
+                return "auth.register.error.email.invalid";
+            case "password":
+                if ("Size".equals(fieldError.getCode())) {
+                    final Object rejected = fieldError.getRejectedValue();
+                    return rejected instanceof String && ((String) rejected).length() > 72
+                            ? "auth.register.error.password.max"
+                            : "auth.register.error.password.min";
+                }
+                return "auth.register.error.password.min";
+            default:
+                return "auth.register.error.password.mismatch";
         }
-        if ("Email is required.".equals(errorMessage)) {
-            return "auth.register.error.email.required";
-        }
-        if ("Password is required.".equals(errorMessage)) {
-            return "auth.register.error.password.min";
-        }
-        if ("Username is already registered.".equals(errorMessage)) {
-            return "auth.register.error.username.exists";
-        }
-        if ("Email is already registered.".equals(errorMessage)) {
-            return "auth.register.error.email.exists";
-        }
-        return "auth.register.error.unavailable";
     }
 
     private ModelAndView registerFormWithError(final String errorCode, final String username, final String email) {

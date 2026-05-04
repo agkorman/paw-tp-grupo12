@@ -204,18 +204,4 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
         assertEquals(1, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", kept.getId()));
     }
 
-    @Test
-    public void shouldDeleteReviewsByCarIdAndLeaveOtherReviewsUntouched() {
-        // Arrange
-        final Review deleted = createReview("delete-by-car");
-        final Review kept = createReview("keep-by-car");
-
-        // Exercise
-        final int result = reviewDao.deleteByCarId(deleted.getCarId());
-
-        // Assertions
-        assertEquals(1, result);
-        assertEquals(0, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", deleted.getId()));
-        assertEquals(1, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", kept.getId()));
-    }
 }

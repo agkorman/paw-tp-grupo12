@@ -447,13 +447,4 @@ public class ReviewJdbcDao implements ReviewDao {
         }
         return deleted;
     }
-
-    @Override
-    public int deleteByCarId(final long carId) {
-        final int deleted = jdbcTemplate.update("DELETE FROM reviews WHERE car_id = ?", carId);
-        if (deleted > 0) {
-            LOGGER.info("deleted {} reviews for car id={}", deleted, carId);
-        }
-        return deleted;
-    }
 }

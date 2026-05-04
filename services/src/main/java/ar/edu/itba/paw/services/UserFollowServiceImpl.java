@@ -3,6 +3,8 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.persistence.UserFollowDao;
+import ar.edu.itba.paw.services.exception.SelfFollowException;
+import ar.edu.itba.paw.services.exception.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,15 +81,15 @@ public class UserFollowServiceImpl implements UserFollowService {
     private void validateFollow(final long followerId, final long followedId) {
         if (followerId == followedId) {
             LOGGER.warn("follow rejected: self-follow attempt userId={}", followerId);
-            throw new IllegalArgumentException("Users cannot follow themselves.");
+            throw new SelfFollowException(followerId);
         }
         if (userDao.findById(followerId).isEmpty()) {
             LOGGER.warn("follow rejected: follower not found id={}", followerId);
-            throw new IllegalArgumentException("Follower user not found.");
+            throw new UserNotFoundException(followerId);
         }
         if (userDao.findById(followedId).isEmpty()) {
             LOGGER.warn("follow rejected: followed not found id={}", followedId);
-            throw new IllegalArgumentException("Followed user not found.");
+            throw new UserNotFoundException(followedId);
         }
     }
 }

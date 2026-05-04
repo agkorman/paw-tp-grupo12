@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import ar.edu.itba.paw.services.exception.EmailAlreadyExistsException;
+import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ar.edu.itba.paw.services.exception.UserNotFoundException;
@@ -69,19 +71,19 @@ public class UserServiceImpl implements UserService {
         final String normalizedUsername = StringUtils.normalize(username);
         final String normalizedEmail = normalizeEmail(email);
         if (normalizedUsername == null) {
-            throw new IllegalArgumentException("Username is required.");
+            throw new InvalidServiceInputException("Username is required.");
         }
         if (normalizedEmail == null) {
-            throw new IllegalArgumentException("Email is required.");
+            throw new InvalidServiceInputException("Email is required.");
         }
         if (rawPassword == null || rawPassword.isEmpty()) {
-            throw new IllegalArgumentException("Password is required.");
+            throw new InvalidServiceInputException("Password is required.");
         }
         if (userDao.findByUsername(normalizedUsername).isPresent()) {
-            throw new IllegalArgumentException("Username is already registered.");
+            throw new UsernameAlreadyExistsException(normalizedUsername);
         }
         if (userDao.findByEmail(normalizedEmail).isPresent()) {
-            throw new IllegalArgumentException("Email is already registered.");
+            throw new EmailAlreadyExistsException(normalizedEmail);
         }
 
         final User user = userDao.create(
@@ -101,7 +103,7 @@ public class UserServiceImpl implements UserService {
     public User updateUsername(final long userId, final String username) {
         final String normalizedUsername = StringUtils.normalize(username);
         if (normalizedUsername == null) {
-            throw new IllegalArgumentException("Username is required.");
+            throw new InvalidServiceInputException("Username is required.");
         }
         final Optional<User> existing = userDao.findByUsername(normalizedUsername);
         if (existing.isPresent() && existing.get().getId() != userId) {
@@ -118,7 +120,7 @@ public class UserServiceImpl implements UserService {
     public boolean updateRole(final long userId, final String role) {
         final String normalizedRole = StringUtils.normalize(role);
         if (normalizedRole == null) {
-            throw new IllegalArgumentException("Role is required.");
+            throw new InvalidServiceInputException("Role is required.");
         }
         return userDao.updateRole(userId, normalizedRole.toLowerCase(Locale.ROOT));
     }

@@ -274,19 +274,19 @@ public class CarJdbcDao implements CarDao {
         final String sortBy = criteria.getSortBy();
         if (sortBy != null) {
             switch (sortBy) {
-                case "name_asc":
+                case CarSearchCriteria.SORT_NAME_ASC:
                     return "ORDER BY b.name ASC, c.model ASC";
-                case "hp_desc":
+                case CarSearchCriteria.SORT_HP_DESC:
                     return "ORDER BY c.horsepower DESC NULLS LAST, c.car_id ASC";
-                case "hp_asc":
+                case CarSearchCriteria.SORT_HP_ASC:
                     return "ORDER BY c.horsepower ASC NULLS LAST, c.car_id ASC";
-                case "speed_desc":
+                case CarSearchCriteria.SORT_SPEED_DESC:
                     return "ORDER BY c.max_speed_kmh DESC NULLS LAST, c.car_id ASC";
-                case "consumption_asc":
+                case CarSearchCriteria.SORT_CONSUMPTION_ASC:
                     return "ORDER BY c.fuel_consumption ASC NULLS LAST, c.car_id ASC";
-                case "price_asc":
+                case CarSearchCriteria.SORT_PRICE_ASC:
                     return "ORDER BY c.price_usd ASC NULLS LAST, c.car_id ASC";
-                case "price_desc":
+                case CarSearchCriteria.SORT_PRICE_DESC:
                     return "ORDER BY c.price_usd DESC NULLS LAST, c.car_id ASC";
                 default:
                     return "ORDER BY c.car_id ASC";
@@ -347,6 +347,39 @@ public class CarJdbcDao implements CarDao {
         final Long count = jdbcTemplate.queryForObject(
                 "SELECT count(*) FROM cars WHERE body_type_id = ?", Long.class, bodyTypeId);
         return count == null ? 0L : count;
+    }
+
+    @Override
+    public List<Car> findTopRated(final int limit) {
+        return jdbcTemplate.query(
+                SELECT_COLUMNS + FROM_JOIN + REVIEW_STATS_JOIN
+                        + "WHERE rs.review_count IS NOT NULL AND rs.review_count > 0 "
+                        + "ORDER BY rs.average_rating DESC, rs.review_count DESC "
+                        + "LIMIT ?",
+                ROW_MAPPER, limit
+        );
+    }
+
+    @Override
+    public List<Car> findRecentlyAdded(final int limit, final Collection<Long> excludedIds) {
+        if (excludedIds.isEmpty()) {
+            return jdbcTemplate.query(
+                    SELECT_COLUMNS + FROM_JOIN
+                            + "ORDER BY c.created_at DESC NULLS LAST, c.car_id "
+                            + "LIMIT ?",
+                    ROW_MAPPER, limit
+            );
+        }
+        final MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("excludedIds", excludedIds)
+                .addValue("limit", limit);
+        return namedJdbcTemplate.query(
+                SELECT_COLUMNS + FROM_JOIN
+                        + "WHERE c.car_id NOT IN (:excludedIds) "
+                        + "ORDER BY c.created_at DESC NULLS LAST, c.car_id "
+                        + "LIMIT :limit",
+                params, ROW_MAPPER
+        );
     }
 
 }

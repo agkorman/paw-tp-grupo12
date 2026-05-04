@@ -17,6 +17,8 @@ import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.exception.ETagGenerationException;
+import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,22 +45,16 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Timestamp;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -102,13 +98,12 @@ public class CarController {
     }
 
     private ModelAndView landingPage(final AuthenticatedUser currentUser) {
-        final List<Car> allCars = carService.getAllCars();
-        final Map<Long, ReviewStats> reviewStatsByCarId = getReviewStatsByCarId(allCars);
-        final List<Car> featuredCars = selectFeaturedCars(allCars, reviewStatsByCarId);
-        final Car heroCar = featuredCars.isEmpty() ? getFallbackHeroCar(allCars) : featuredCars.get(0);
+        final List<Car> featuredCars = carService.getFeaturedCars(FEATURED_REVIEW_COUNT);
+        final Car heroCar = featuredCars.isEmpty() ? null : featuredCars.get(0);
         final Review heroReview = heroCar == null
                 ? null
                 : reviewService.getTopRatedLatestReviewByCar(heroCar.getId()).orElse(null);
+        final Map<Long, ReviewStats> reviewStatsByCarId = getReviewStatsByCarId(featuredCars);
 
         final ModelAndView mav = new ModelAndView("landing.jsp");
         mav.addObject("featuredCars", featuredCars);
@@ -183,7 +178,7 @@ public class CarController {
         if (!errors.hasFieldErrors("brand")) {
             resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
             if (resolvedBrand == null) {
-                errors.rejectValue("brand", "brand.invalid", "Marca no válida.");
+                errors.rejectValue("brand", "brand.invalid");
             }
         }
 
@@ -191,20 +186,14 @@ public class CarController {
         if (!errors.hasFieldErrors("bodyType")) {
             resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
             if (resolvedBodyType == null) {
-                errors.rejectValue("bodyType", "bodyType.invalid", "Tipo de carrocería no válido.");
+                errors.rejectValue("bodyType", "bodyType.invalid");
             }
         }
 
-        if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null) {
-            final boolean duplicate = carService
-                    .getCarsByBrandAndBodyType(resolvedBrand.getName(), resolvedBodyType.getName())
-                    .stream()
-                    .anyMatch(car -> sameModel(car.getModel(), carForm.getModel())
-                            && Objects.equals(car.getYear(), carForm.getYear()));
-            if (duplicate) {
-                errors.reject("car.duplicate",
-                        "Ya existe un auto con esa marca, modelo, carrocería y año.");
-            }
+        if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null
+                && carService.existsDuplicateCar(resolvedBrand.getName(), resolvedBodyType.getName(),
+                        carForm.getModel(), carForm.getYear(), -1L)) {
+            errors.reject("car.duplicate");
         }
 
         if (errors.hasErrors()) {
@@ -218,7 +207,7 @@ public class CarController {
             imagePayloads = toImagePayloads(files);
         } catch (final IOException e) {
             LOGGER.error("failed to read uploaded image during car request creation userId={}", currentUser.getId(), e);
-            throw new IllegalStateException("Failed to read uploaded image.", e);
+            throw new UploadedImageReadException("creating car request for user " + currentUser.getId(), e);
         }
 
         final CarRequest carRequest = carService.requestCarCreation(
@@ -398,7 +387,7 @@ public class CarController {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                     .eTag(eTag)
                     .cacheControl(cacheControl)
-                    .lastModified(Timestamp.valueOf(carImage.getUpdatedAt()).getTime())
+                    .lastModified(carImage.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build();
         }
 
@@ -440,7 +429,7 @@ public class CarController {
             LOGGER.info("uploaded {} image(s) for car id={}", selectedFiles.size(), carId);
         } catch (final IOException e) {
             LOGGER.error("failed to read uploaded image for car id={}", carId, e);
-            throw new IllegalStateException("Failed to read uploaded image.", e);
+            throw new UploadedImageReadException("updating car " + carId, e);
         }
 
         return ResponseEntity.noContent().build();
@@ -523,71 +512,17 @@ public class CarController {
                 .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
     }
 
-    private List<Car> selectFeaturedCars(final List<Car> allCars, final Map<Long, ReviewStats> reviewStatsByCarId) {
-        if (allCars.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        final Comparator<Car> featuredComparator = Comparator
-                .comparing((Car car) -> getAverageRating(reviewStatsByCarId.get(car.getId())), Comparator.reverseOrder())
-                .thenComparing((Car car) -> getReviewCount(reviewStatsByCarId.get(car.getId())), Comparator.reverseOrder())
-                .thenComparingLong(Car::getId);
-
-        final List<Car> featuredCars = allCars.stream()
-                .filter(car -> getReviewCount(reviewStatsByCarId.get(car.getId())) > 0)
-                .sorted(featuredComparator)
-                .limit(FEATURED_REVIEW_COUNT)
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        if (featuredCars.size() == FEATURED_REVIEW_COUNT) {
-            return featuredCars;
-        }
-
-        final Set<Long> selectedIds = featuredCars.stream()
-                .map(Car::getId)
-                .collect(Collectors.toCollection(HashSet::new));
-
-        allCars.stream()
-                .filter(car -> !selectedIds.contains(car.getId()))
-                .sorted(Comparator.comparing(Car::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
-                        .thenComparingLong(Car::getId))
-                .limit(FEATURED_REVIEW_COUNT - featuredCars.size())
-                .forEach(featuredCars::add);
-
-        return featuredCars;
-    }
-
-    private Car getFallbackHeroCar(final List<Car> allCars) {
-        return allCars.isEmpty() ? null : allCars.get(0);
-    }
-
-    private BigDecimal getAverageRating(final ReviewStats stats) {
-        return stats == null || stats.getAverageRating() == null ? BigDecimal.ZERO : stats.getAverageRating();
-    }
-
-    private long getReviewCount(final ReviewStats stats) {
-        return stats == null ? 0 : stats.getReviewCount();
-    }
-
     private void rejectInvalidSpecFields(final BindingResult errors, final CarForm carForm) {
         if (!errors.hasFieldErrors("fuelType")
                 && !CarSearchCriteria.ALLOWED_FUEL_TYPES.contains(
                         ControllerUtils.normalizeSpecValue(carForm.getFuelType()))) {
-            errors.rejectValue("fuelType", "fuelType.invalid", "Tipo de motorización no válido.");
+            errors.rejectValue("fuelType", "fuelType.invalid");
         }
         if (!errors.hasFieldErrors("transmission")
                 && !CarSearchCriteria.ALLOWED_TRANSMISSIONS.contains(
                         ControllerUtils.normalizeSpecValue(carForm.getTransmission()))) {
-            errors.rejectValue("transmission", "transmission.invalid", "Transmisión no válida.");
+            errors.rejectValue("transmission", "transmission.invalid");
         }
-    }
-
-    private boolean sameModel(final String existingModel, final String submittedModel) {
-        final String normalizedExistingModel = ControllerUtils.normalize(existingModel);
-        final String normalizedSubmittedModel = ControllerUtils.normalize(submittedModel);
-        return normalizedExistingModel != null && normalizedSubmittedModel != null
-                && normalizedExistingModel.toLowerCase(Locale.ROOT)
-                .equals(normalizedSubmittedModel.toLowerCase(Locale.ROOT));
     }
 
     private static String buildImageEtag(final CarImage carImage) {
@@ -598,7 +533,7 @@ public class CarController {
             digest.update(carImage.getUpdatedAt().toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
             return "\"" + HexFormat.of().formatHex(digest.digest()) + "\"";
         } catch (final NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is not available.", e);
+            throw new ETagGenerationException("car image", carImage.getImageId(), e);
         }
     }
 

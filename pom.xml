@@ -264,6 +264,12 @@
             <scanIntervalSeconds>10</scanIntervalSeconds>
             <port>8080</port>
             <useTestScope>true</useTestScope>
+            <systemProperties>
+              <systemProperty>
+                <name>logback.configurationFile</name>
+                <value>src/test/resources/logback-test.xml</value>
+              </systemProperty>
+            </systemProperties>
           </configuration>
         </plugin>
       </plugins>

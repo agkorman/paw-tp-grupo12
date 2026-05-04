@@ -1,16 +1,19 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <c:url var="loginUrl" value="/login"/>
+<c:url var="contextRootUrl" value="/"/>
+<c:set var="contextPathUrl" value="${fn:substring(contextRootUrl, 0, fn:length(contextRootUrl) - 1)}"/>
 <spring:message var="closeModalLabel" code="common.action.close"/>
 
 <div id="authRequiredModal"
      class="auth-required-modal"
      hidden
      data-login-url="${loginUrl}"
-     data-context-path="${pageContext.request.contextPath}">
+     data-context-path="${contextPathUrl}">
     <div class="auth-required-modal-overlay" data-close-auth-required-modal></div>
     <section class="auth-required-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="authRequiredTitle">
         <header class="auth-required-modal-header">

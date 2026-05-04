@@ -252,6 +252,16 @@ ALTER TABLE reviews
 CREATE INDEX IF NOT EXISTS idx_reviews_car_id ON reviews (car_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews (user_id);
 
+ALTER TABLE reviews
+    DROP CONSTRAINT IF EXISTS reviews_car_id_fkey;
+
+ALTER TABLE reviews
+    DROP CONSTRAINT IF EXISTS fk_reviews_car_id;
+
+ALTER TABLE reviews
+    ADD CONSTRAINT fk_reviews_car_id
+    FOREIGN KEY (car_id) REFERENCES cars(car_id) ON DELETE CASCADE;
+
 CREATE TABLE IF NOT EXISTS review_replies (
     reply_id   SERIAL      PRIMARY KEY,
     review_id  INT         NOT NULL REFERENCES reviews(review_id) ON DELETE CASCADE,

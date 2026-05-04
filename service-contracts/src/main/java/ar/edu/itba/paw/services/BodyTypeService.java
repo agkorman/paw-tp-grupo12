@@ -9,6 +9,7 @@ public interface BodyTypeService {
     List<BodyType> findAll();
     Optional<BodyType> findById(long id);
     Optional<BodyType> findByName(String name);
+    boolean existsByName(String name);
     BodyType createBodyType(String name);
     Optional<BodyType> updateBodyType(long id, String name);
     boolean deleteBodyType(long id);

@@ -10,8 +10,11 @@ import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
 import ar.edu.itba.paw.persistence.CarRequestDao;
+import ar.edu.itba.paw.services.exception.InvalidImagePayloadException;
+import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -121,8 +124,8 @@ public class CarRequestServiceImpl implements CarRequestService {
                 carRequestDao.replaceImages(request.getId(), normalizedImages);
             }
             return request;
-        } catch (final RuntimeException e) {
-            throw new IllegalStateException("Failed to create pending car request with image gallery.", e);
+        } catch (final DataAccessException e) {
+            throw new ServiceOperationException("Failed to create pending car request with image gallery.", e);
         }
     }
 
@@ -184,7 +187,7 @@ public class CarRequestServiceImpl implements CarRequestService {
         final boolean hasImageContentType = imageContentType.isPresent();
         final boolean hasImageData = imageData.isPresent();
         if (hasImageContentType != hasImageData) {
-            throw new IllegalArgumentException("Image metadata and payload must be provided together.");
+            throw new InvalidImagePayloadException("Image metadata and payload must be provided together.");
         }
 
         final List<CarImagePayload> replacementImages = hasImageContentType

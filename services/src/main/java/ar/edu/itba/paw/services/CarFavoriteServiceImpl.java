@@ -5,6 +5,8 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarFavoriteDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import ar.edu.itba.paw.services.exception.CarNotFoundException;
+import ar.edu.itba.paw.services.exception.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,11 +85,11 @@ public class CarFavoriteServiceImpl implements CarFavoriteService {
     private void validateFavorite(final long userId, final long carId) {
         if (userDao.findById(userId).isEmpty()) {
             LOGGER.warn("favorite rejected: user not found id={}", userId);
-            throw new IllegalArgumentException("User not found.");
+            throw new UserNotFoundException(userId);
         }
         if (carDao.findById(carId).isEmpty()) {
             LOGGER.warn("favorite rejected: car not found id={}", carId);
-            throw new IllegalArgumentException("Car not found.");
+            throw new CarNotFoundException(carId);
         }
     }
 }

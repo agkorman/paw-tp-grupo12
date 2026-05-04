@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -112,18 +111,22 @@ public class ReviewReplyJdbcDao implements ReviewReplyDao {
 
     @Override
     public Map<Long, Long> countNewRepliesPerReview(final long userId, final LocalDateTime since) {
-        final Map<Long, Long> counts = new HashMap<>();
-        jdbcTemplate.query(
+        return jdbcTemplate.query(
                 "SELECT r.review_id, COUNT(*) AS reply_count "
                         + "FROM reviews r "
                         + "JOIN review_replies rr ON rr.review_id = r.review_id "
                         + "WHERE r.user_id = ? AND rr.created_at >= ? "
                         + "GROUP BY r.review_id",
-                (RowCallbackHandler) rs -> counts.put(rs.getLong("review_id"), rs.getLong("reply_count")),
+                rs -> {
+                    final Map<Long, Long> counts = new HashMap<>();
+                    while (rs.next()) {
+                        counts.put(rs.getLong("review_id"), rs.getLong("reply_count"));
+                    }
+                    return counts;
+                },
                 userId,
                 Timestamp.valueOf(since)
         );
-        return counts;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.config;
 
+import ar.edu.itba.paw.webapp.exception.WebAppConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -44,7 +45,12 @@ import java.util.concurrent.Executor;
 @EnableAsync
 @EnableScheduling
 @EnableTransactionManagement
-@ComponentScan({ "ar.edu.itba.paw.webapp.controller", "ar.edu.itba.paw.services", "ar.edu.itba.paw.persistence" })
+@ComponentScan({
+        "ar.edu.itba.paw.webapp.controller",
+        "ar.edu.itba.paw.webapp.validation",
+        "ar.edu.itba.paw.services",
+        "ar.edu.itba.paw.persistence"
+})
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
@@ -144,7 +150,7 @@ public class WebConfig implements WebMvcConfigurer {
             return propertiesConfig;
         }
 
-        throw new IllegalStateException(
+        throw new WebAppConfigurationException(
                 "Database configuration not found. Set DB_URL, DB_USERNAME and DB_PASSWORD environment variables "
                         + "or provide a classpath db.properties with db.url, db.username and db.password"
         );
@@ -224,7 +230,10 @@ public class WebConfig implements WebMvcConfigurer {
             }
         }
 
-        return "http://localhost:8080";
+        throw new WebAppConfigurationException(
+                "App base URL not configured. Set APP_BASE_URL environment variable "
+                        + "or provide app.baseUrl in classpath mail.properties"
+        );
     }
 
     private String normalizeBaseUrl(final String value) {
@@ -265,7 +274,7 @@ public class WebConfig implements WebMvcConfigurer {
             );
         }
 
-        throw new IllegalStateException(
+        throw new WebAppConfigurationException(
                 "Mail configuration not found. Set MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD "
                         + "or provide a classpath mail.properties file."
         );
@@ -293,7 +302,7 @@ public class WebConfig implements WebMvcConfigurer {
             properties.load(inputStream);
         } catch (final IOException e) {
             LOGGER.error("failed to load classpath properties resource={}", resourceName, e);
-            throw new IllegalStateException("Failed to load " + resourceName, e);
+            throw new WebAppConfigurationException("Failed to load " + resourceName, e);
         }
         return properties;
     }

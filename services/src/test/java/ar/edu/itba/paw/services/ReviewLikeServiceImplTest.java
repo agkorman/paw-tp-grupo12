@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -99,7 +100,7 @@ public class ReviewLikeServiceImplTest {
                 () -> reviewLikeService.toggleReviewLike(REVIEW_ID, USER_ID));
 
         // Assertions
-        assertEquals("Review not found.", ex.getMessage());
+        assertEquals("Review not found: 100", ex.getMessage());
     }
 
     @Test
@@ -113,7 +114,7 @@ public class ReviewLikeServiceImplTest {
                 () -> reviewLikeService.toggleReviewLike(REVIEW_ID, USER_ID));
 
         // Assertions
-        assertEquals("User not found.", ex.getMessage());
+        assertEquals("User not found: 7", ex.getMessage());
     }
 
     @Test
@@ -121,7 +122,7 @@ public class ReviewLikeServiceImplTest {
         // Arrange
         when(reviewDao.findById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
         when(userDao.findById(USER_ID)).thenReturn(java.util.Optional.of(user()));
-        when(reviewLikeDao.isReviewLikedByUser(REVIEW_ID, USER_ID)).thenThrow(new RuntimeException("db"));
+        when(reviewLikeDao.isReviewLikedByUser(REVIEW_ID, USER_ID)).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
         final IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -169,7 +170,7 @@ public class ReviewLikeServiceImplTest {
                 () -> reviewLikeService.toggleReplyLike(REPLY_ID, USER_ID));
 
         // Assertions
-        assertEquals("Reply not found.", ex.getMessage());
+        assertEquals("Review reply not found: 200", ex.getMessage());
     }
 
     @Test
@@ -177,7 +178,7 @@ public class ReviewLikeServiceImplTest {
         // Arrange
         when(reviewReplyDao.findById(REPLY_ID)).thenReturn(java.util.Optional.of(reply()));
         when(userDao.findById(USER_ID)).thenReturn(java.util.Optional.of(user()));
-        when(reviewLikeDao.isReplyLikedByUser(REPLY_ID, USER_ID)).thenThrow(new RuntimeException("db"));
+        when(reviewLikeDao.isReplyLikedByUser(REPLY_ID, USER_ID)).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
         final IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -190,7 +191,7 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldReturnZeroLikesWhenDaoThrows() {
         // Arrange
-        when(reviewLikeDao.countReviewLikes(REVIEW_ID)).thenThrow(new RuntimeException("db"));
+        when(reviewLikeDao.countReviewLikes(REVIEW_ID)).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
         final long result = reviewLikeService.countReviewLikes(REVIEW_ID);
@@ -238,7 +239,7 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldReturnEmptyMapWhenDaoThrowsForReviewLikeCounts() {
         // Arrange
-        when(reviewLikeDao.countReviewLikesByReviewIds(anyCollection())).thenThrow(new RuntimeException("db"));
+        when(reviewLikeDao.countReviewLikesByReviewIds(anyCollection())).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
         final Map<Long, Long> result = reviewLikeService.countReviewLikesByReviewIds(List.of(1L, 2L));
@@ -275,7 +276,7 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldSwallowDaoFailureForLikedReviewIds() {
         // Arrange
-        when(reviewLikeDao.findLikedReviewIds(anyCollection(), anyLong())).thenThrow(new RuntimeException("db"));
+        when(reviewLikeDao.findLikedReviewIds(anyCollection(), anyLong())).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
         final Set<Long> result = reviewLikeService.getLikedReviewIds(List.of(1L), USER_ID);

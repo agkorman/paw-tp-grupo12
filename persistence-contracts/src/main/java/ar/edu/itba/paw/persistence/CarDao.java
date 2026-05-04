@@ -33,4 +33,8 @@ public interface CarDao {
     long countByBrandId(long brandId);
 
     long countByBodyTypeId(long bodyTypeId);
+
+    List<Car> findTopRated(int limit);
+
+    List<Car> findRecentlyAdded(int limit, Collection<Long> excludedIds);
 }

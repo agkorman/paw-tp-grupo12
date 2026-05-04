@@ -4,8 +4,15 @@ import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewReplyDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
+import ar.edu.itba.paw.services.exception.ReviewNotFoundException;
+import ar.edu.itba.paw.services.exception.ReviewReplyNotFoundException;
+import ar.edu.itba.paw.services.exception.ReviewReplyOwnershipException;
+import ar.edu.itba.paw.services.exception.ServiceOperationException;
+import ar.edu.itba.paw.services.exception.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +49,7 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     public Optional<ReviewReply> getReplyById(final long id) {
         try {
             return reviewReplyDao.findById(id);
-        } catch (final RuntimeException e) {
+        } catch (final DataAccessException e) {
             LOGGER.warn("get reply by id failed id={}", id, e);
             return Optional.empty();
         }
@@ -56,7 +63,7 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
         }
         try {
             return reviewReplyDao.findByIds(ids);
-        } catch (final RuntimeException e) {
+        } catch (final DataAccessException e) {
             LOGGER.warn("get replies by ids failed count={}", ids.size(), e);
             return Collections.emptyList();
         }
@@ -67,7 +74,7 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     public List<ReviewReply> getRepliesByReview(final long reviewId) {
         try {
             return reviewReplyDao.findByReviewId(reviewId);
-        } catch (final RuntimeException e) {
+        } catch (final DataAccessException e) {
             LOGGER.warn("get replies by review failed reviewId={}", reviewId, e);
             return Collections.emptyList();
         }
@@ -83,7 +90,7 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
             return reviewReplyDao.findByReviewIds(reviewIds)
                     .stream()
                     .collect(Collectors.groupingBy(ReviewReply::getReviewId));
-        } catch (final RuntimeException e) {
+        } catch (final DataAccessException e) {
             LOGGER.warn("get replies by review ids failed count={}", reviewIds.size(), e);
             return Collections.emptyMap();
         }
@@ -94,29 +101,29 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     public ReviewReply createReply(final long reviewId, final long userId, final String body) {
         if (reviewDao.findById(reviewId).isEmpty()) {
             LOGGER.warn("create reply rejected: review not found id={}", reviewId);
-            throw new IllegalArgumentException("Review not found.");
+            throw new ReviewNotFoundException(reviewId);
         }
         if (userDao.findById(userId).isEmpty()) {
             LOGGER.warn("create reply rejected: user not found id={}", userId);
-            throw new IllegalArgumentException("User not found.");
+            throw new UserNotFoundException(userId);
         }
 
         final String normalizedBody = StringUtils.normalize(body);
         if (normalizedBody == null) {
             LOGGER.warn("create reply rejected: empty body reviewId={} userId={}", reviewId, userId);
-            throw new IllegalArgumentException("Reply body is required.");
+            throw new InvalidServiceInputException("Reply body is required.");
         }
         if (normalizedBody.length() > MAX_BODY_LENGTH) {
             LOGGER.warn("create reply rejected: body too long length={} reviewId={} userId={}",
                     normalizedBody.length(), reviewId, userId);
-            throw new IllegalArgumentException("Reply body is too long.");
+            throw new InvalidServiceInputException("Reply body is too long.");
         }
 
         try {
             return reviewReplyDao.create(reviewId, userId, normalizedBody);
-        } catch (final RuntimeException e) {
+        } catch (final DataAccessException e) {
             LOGGER.error("failed to create review reply reviewId={} userId={}", reviewId, userId, e);
-            throw new IllegalStateException("Failed to create review reply.", e);
+            throw new ServiceOperationException("Failed to create review reply.", e);
         }
     }
 
@@ -126,12 +133,12 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
         final ReviewReply reply = reviewReplyDao.findById(id)
                 .orElseThrow(() -> {
                     LOGGER.warn("delete reply rejected: not found id={}", id);
-                    return new IllegalArgumentException("Reply not found.");
+                    return new ReviewReplyNotFoundException(id);
                 });
         if (reply.getUserId() != userId) {
             LOGGER.warn("delete reply rejected: ownership mismatch id={} requestingUserId={} ownerId={}",
                     id, userId, reply.getUserId());
-            throw new IllegalArgumentException("Reply does not belong to the user.");
+            throw new ReviewReplyOwnershipException(id, userId);
         }
         try {
             final boolean deleted = reviewReplyDao.delete(id);
@@ -139,9 +146,9 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
                 LOGGER.info("deleted reply id={} userId={}", id, userId);
             }
             return deleted;
-        } catch (final RuntimeException e) {
+        } catch (final DataAccessException e) {
             LOGGER.error("failed to delete review reply id={} userId={}", id, userId, e);
-            throw new IllegalStateException("Failed to delete review reply.", e);
+            throw new ServiceOperationException("Failed to delete review reply.", e);
         }
     }
 
@@ -153,7 +160,7 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
         }
         try {
             return reviewReplyDao.countNewRepliesPerReview(userId, since);
-        } catch (final RuntimeException e) {
+        } catch (final DataAccessException e) {
             LOGGER.warn("count new replies per review failed userId={}", userId, e);
             return Collections.emptyMap();
         }

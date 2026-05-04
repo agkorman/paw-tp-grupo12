@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.List;
@@ -157,6 +159,9 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
     public void shouldDeleteCarAndRemoveItFromCountsWhenCarExists() {
         // Arrange
         final Car created = createCar("delete");
+        final User reviewer = createUser("delete-car-review");
+        final Review review = insertReview(reviewer.getId(), reviewer.getUsername(), created.getId(),
+                new BigDecimal("4.0"), "Delete car review", "Body delete car review", "owner", 2026, 1000, true);
 
         // Exercise
         final boolean result = carDao.delete(created.getId());
@@ -164,6 +169,7 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
         // Assertions
         assertTrue(result);
         assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE car_id = ?", created.getId()));
+        assertEquals(0, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", review.getId()));
         assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE brand_id = ?", created.getBrandId()));
         assertEquals(0, countRows("SELECT COUNT(*) FROM cars WHERE body_type_id = ?", created.getBodyTypeId()));
         assertEquals(1, countRows("SELECT COUNT(*) FROM brands WHERE brand_id = ?", created.getBrandId()));

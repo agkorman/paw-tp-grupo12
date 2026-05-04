@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.BrandRequestDao;
+import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,7 +74,7 @@ public class BrandRequestServiceImpl implements BrandRequestService {
         final String normalizedName = StringUtils.normalizeRequired(name, "Name is required for brand requests.");
         final String normalizedComments = StringUtils.normalize(comments);
         if (submittedByUserId == null && (submitterEmail == null || submitterEmail.isBlank())) {
-            throw new IllegalArgumentException("A submitter user id or email is required for brand requests.");
+            throw new InvalidServiceInputException("A submitter user id or email is required for brand requests.");
         }
         LOGGER.info("submitting brand request name={} userId={}", normalizedName, submittedByUserId);
         return brandRequestDao.create(submittedByUserId, submitterEmail, normalizedName, normalizedComments, STATUS_PENDING);
