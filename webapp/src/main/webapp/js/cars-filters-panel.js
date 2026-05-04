@@ -13,6 +13,7 @@
     var priceError = document.getElementById('panelPriceError');
     var consumptionSection = document.getElementById('panelConsumptionSection');
     var consumptionSlider = document.getElementById('panelConsumptionSlider');
+    var fuelConsumptionSubsection = document.getElementById('panelFuelConsumptionSubsection');
     var previewSubmitTimer = null;
     var INVALID_PARAM = '__invalid__';
 
@@ -160,13 +161,14 @@
     }
 
     function updateConsumptionFilterVisibility() {
-        if (!consumptionSection || !consumptionSlider) {
-            return;
-        }
         var hidden = isElectricOnlyFilter();
-        consumptionSection.hidden = hidden;
-        consumptionSlider.disabled = hidden;
-        if (hidden) {
+        if (consumptionSection) {
+            consumptionSection.hidden = hidden;
+        }
+        if (fuelConsumptionSubsection) {
+            fuelConsumptionSubsection.hidden = hidden;
+        }
+        if (hidden && consumptionSlider) {
             consumptionSlider.value = consumptionSlider.max;
             updateConsumptionDisplay();
         }
@@ -924,7 +926,6 @@
 
         if (consumptionSlider) {
             consumptionSlider.value = consumptionSlider.max;
-            consumptionSlider.disabled = false;
             updateConsumptionDisplay();
         }
 

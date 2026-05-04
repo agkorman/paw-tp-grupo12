@@ -130,32 +130,32 @@
         <section class="filters-panel-section">
             <h3 class="filters-panel-section-title"><spring:message code="cars.form.modelYear"/></h3>
             <div class="dual-range"
-                 data-range-min="1886"
-                 data-range-max="2100"
+                 data-range-min="1950"
+                 data-range-max="2026"
                  data-input-low="panelYearMin"
                  data-input-high="panelYearMax">
                 <div class="dual-range-track">
                     <div class="dual-range-fill" id="panelYearFill"></div>
                 </div>
-                <input type="range" class="dual-range-thumb dual-range-low" min="1886" max="2100" step="1"
-                       value="<c:out value='${not empty criteria.yearMin ? criteria.yearMin : 1886}'/>">
-                <input type="range" class="dual-range-thumb dual-range-high" min="1886" max="2100" step="1"
-                       value="<c:out value='${not empty criteria.yearMax ? criteria.yearMax : 2100}'/>">
+                <input type="range" class="dual-range-thumb dual-range-low" min="1950" max="2026" step="1"
+                       value="<c:out value='${not empty criteria.yearMin ? criteria.yearMin : 1950}'/>">
+                <input type="range" class="dual-range-thumb dual-range-high" min="1950" max="2026" step="1"
+                       value="<c:out value='${not empty criteria.yearMax ? criteria.yearMax : 2026}'/>">
                 <div class="dual-range-labels">
-                    <span>1886</span>
-                    <span>2100</span>
+                    <span>1950</span>
+                    <span>2026</span>
                 </div>
             </div>
             <div class="dual-range-inputs">
                 <input type="text" id="panelYearMin" name="yearMin" class="range-number-input"
                        inputmode="numeric" autocomplete="off" data-number-input="true"
-                       data-min="1886" data-max="2100" data-step="1" data-boundary="min" placeholder="${filterMinPlaceholder}"
+                       data-min="1950" data-max="2026" data-step="1" data-boundary="min" placeholder="${filterMinPlaceholder}"
                        aria-describedby="panelYearError"
                        value="<c:out value='${criteria.yearMin}'/>">
                 <span class="range-separator">–</span>
                 <input type="text" id="panelYearMax" name="yearMax" class="range-number-input"
                        inputmode="numeric" autocomplete="off" data-number-input="true"
-                       data-min="1886" data-max="2100" data-step="1" data-boundary="max" placeholder="${filterMaxPlaceholder}"
+                       data-min="1950" data-max="2026" data-step="1" data-boundary="max" placeholder="${filterMaxPlaceholder}"
                        aria-describedby="panelYearError"
                        value="<c:out value='${criteria.yearMax}'/>">
             </div>
@@ -219,7 +219,7 @@
                 </div>
             </div>
 
-            <div class="filters-panel-subsection">
+            <div class="filters-panel-subsection" id="panelFuelConsumptionSubsection" <c:if test="${electricOnlyFilter}">hidden</c:if>>
                 <div class="filter-range-header">
                     <h4 class="filters-panel-subsection-title"><spring:message code="cars.filter.consumption"/></h4>
                 </div>
@@ -227,8 +227,7 @@
                 <input type="range" id="panelConsumptionSlider" name="fuelConsumptionMax"
                        class="single-range"
                        min="0" max="30" step="1"
-                       value="<c:out value='${not empty criteria.fuelConsumptionMax ? criteria.fuelConsumptionMax : 30}'/>"
-                       <c:if test="${electricOnlyFilter}">disabled</c:if>>
+                       value="<c:out value='${not empty criteria.fuelConsumptionMax ? criteria.fuelConsumptionMax : 30}'/>">
                 <div class="single-range-labels">
                     <div class="single-range-label-col">
                         <span>0 L/100km</span>

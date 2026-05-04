@@ -112,6 +112,9 @@ textarea {
     border: 0;
 }
 
+/* Ensure [hidden] always wins regardless of author display rules */
+[hidden] { display: none !important; }
+
 /* ── Base ── */
 html, body {
     background-color: var(--surface);

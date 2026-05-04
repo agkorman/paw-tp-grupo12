@@ -60,7 +60,9 @@ public class ValidCarSearchCriteriaValidator implements ConstraintValidator<Vali
         if (criteria.getAirbagMin() != null && !ALLOWED_AIRBAG_MIN_VALUES.contains(criteria.getAirbagMin())) {
             valid = violation(context, "airbagMin", "{validation.carSearch.airbag.invalid}");
         }
-        if (!withinBounds(criteria.getFuelConsumptionMax(), FUEL_CONSUMPTION_MIN_BOUND, FUEL_CONSUMPTION_MAX_BOUND)) {
+        if (criteria.isElectricOnly() && criteria.getFuelConsumptionMax() != null) {
+            valid = violation(context, "fuelConsumptionMax", "{validation.carSearch.fuelConsumption.electricOnly}");
+        } else if (!withinBounds(criteria.getFuelConsumptionMax(), FUEL_CONSUMPTION_MIN_BOUND, FUEL_CONSUMPTION_MAX_BOUND)) {
             valid = violation(context, "fuelConsumptionMax", "{validation.carSearch.fuelConsumption.range}");
         }
         if (!withinBounds(criteria.getMaxSpeedMin(), MAX_SPEED_MIN_BOUND, MAX_SPEED_MAX_BOUND)) {
