@@ -25,6 +25,8 @@ import ar.edu.itba.paw.webapp.form.CarForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -79,6 +81,7 @@ public class AdminController {
     private final BodyTypeRequestService bodyTypeRequestService;
     private final AdminRequestService adminRequestService;
     private final UserService userService;
+    private final MessageSource messageSource;
 
     @Autowired
     public AdminController(final CarRequestService carRequestService, final CarService carService,
@@ -87,7 +90,8 @@ public class AdminController {
                            final BrandRequestService brandRequestService,
                            final BodyTypeRequestService bodyTypeRequestService,
                            final AdminRequestService adminRequestService,
-                           final UserService userService) {
+                           final UserService userService,
+                           final MessageSource messageSource) {
         this.carRequestService = carRequestService;
         this.carService = carService;
         this.brandService = brandService;
@@ -96,6 +100,11 @@ public class AdminController {
         this.bodyTypeRequestService = bodyTypeRequestService;
         this.adminRequestService = adminRequestService;
         this.userService = userService;
+        this.messageSource = messageSource;
+    }
+
+    private String message(final String code, final Object... args) {
+        return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
     }
 
     @RequestMapping(method = RequestMethod.GET)
@@ -231,7 +240,7 @@ public class AdminController {
         if (!errors.hasFieldErrors("brand")) {
             resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
             if (resolvedBrand == null) {
-                errors.rejectValue("brand", "brand.invalid", "Marca no válida.");
+                errors.rejectValue("brand", "validation.car.brand.invalid", message("validation.car.brand.invalid"));
             }
         }
 
@@ -239,13 +248,13 @@ public class AdminController {
         if (!errors.hasFieldErrors("bodyType")) {
             resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
             if (resolvedBodyType == null) {
-                errors.rejectValue("bodyType", "bodyType.invalid", "Tipo de carrocería no válido.");
+                errors.rejectValue("bodyType", "validation.car.bodyType.invalid", message("validation.car.bodyType.invalid"));
             }
         }
 
         if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null
                 && isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carForm.getYear(), -1L)) {
-            errors.reject("car.duplicate", "Ya existe un auto con esa marca, modelo, carrocería y año.");
+            errors.reject("validation.car.duplicate", message("validation.car.duplicate"));
         }
 
         if (errors.hasErrors()) {
@@ -307,7 +316,7 @@ public class AdminController {
         if (!errors.hasFieldErrors("brand")) {
             resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
             if (resolvedBrand == null) {
-                errors.rejectValue("brand", "brand.invalid", "Marca no válida.");
+                errors.rejectValue("brand", "validation.car.brand.invalid", message("validation.car.brand.invalid"));
             }
         }
 
@@ -315,13 +324,13 @@ public class AdminController {
         if (!errors.hasFieldErrors("bodyType")) {
             resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
             if (resolvedBodyType == null) {
-                errors.rejectValue("bodyType", "bodyType.invalid", "Tipo de carrocería no válido.");
+                errors.rejectValue("bodyType", "validation.car.bodyType.invalid", message("validation.car.bodyType.invalid"));
             }
         }
 
         if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null
                 && isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carForm.getYear(), carId)) {
-            errors.reject("car.duplicate", "Ya existe un auto con esa marca, modelo, carrocería y año.");
+            errors.reject("validation.car.duplicate", message("validation.car.duplicate"));
         }
 
         if (errors.hasErrors()) {
@@ -819,17 +828,18 @@ public class AdminController {
     }
 
     private String validateUploadedImage(final MultipartFile file, final boolean required) {
-        return ControllerUtils.validateUploadedImage(file, required);
+        final String key = ControllerUtils.validateUploadedImage(file, required);
+        return key == null ? null : message(key);
     }
 
     private String validateUploadedImages(final List<MultipartFile> files, final boolean required,
                                           final int existingImageCount) {
         final int totalImageCount = existingImageCount + files.size();
         if (totalImageCount == 0) {
-            return required ? "La imagen es obligatoria." : null;
+            return required ? message("validation.car.image.required") : null;
         }
         if (totalImageCount > MAX_IMAGE_COUNT) {
-            return "Podés cargar hasta " + MAX_IMAGE_COUNT + " imágenes.";
+            return message("validation.car.files.maxCount", MAX_IMAGE_COUNT);
         }
         for (final MultipartFile file : files) {
             final String imageError = validateUploadedImage(file, true);
@@ -868,7 +878,7 @@ public class AdminController {
         final List<Long> retainedImageIds = retainedImageIds(submittedImageIds, availableImageIds);
         carForm.setRetainedImageIds(retainedImageIds);
         if (hasUnknownRetainedImageIds(submittedImageIds, availableImageIds)) {
-            errors.rejectValue("files", "image.invalid", "Imagen precargada inválida.");
+            errors.rejectValue("files", "validation.car.image.preloaded.invalid", message("validation.car.image.preloaded.invalid"));
         }
         return retainedImageIds;
     }
@@ -959,12 +969,12 @@ public class AdminController {
         if (carForm.getFuelType() != null
                 && !CarSearchCriteria.ALLOWED_FUEL_TYPES.contains(
                         ControllerUtils.normalizeSpecValue(carForm.getFuelType()))) {
-            errors.rejectValue("fuelType", "fuelType.invalid", "Tipo de motorización no válido.");
+            errors.rejectValue("fuelType", "validation.car.fuelType.invalid", message("validation.car.fuelType.invalid"));
         }
         if (carForm.getTransmission() != null
                 && !CarSearchCriteria.ALLOWED_TRANSMISSIONS.contains(
                         ControllerUtils.normalizeSpecValue(carForm.getTransmission()))) {
-            errors.rejectValue("transmission", "transmission.invalid", "Transmisión no válida.");
+            errors.rejectValue("transmission", "validation.car.transmission.invalid", message("validation.car.transmission.invalid"));
         }
     }
 

@@ -25,6 +25,10 @@ public class CatalogRequestController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CatalogRequestController.class);
 
+    private static final int CATALOG_NAME_MAX_LENGTH    = 80;
+    private static final int CATALOG_COMMENTS_MAX_LENGTH = 500;
+    private static final int ADMIN_REQUEST_FIELD_MAX_LENGTH = 2000;
+
     private final BrandRequestService brandRequestService;
     private final BodyTypeRequestService bodyTypeRequestService;
     private final AdminRequestService adminRequestService;
@@ -51,8 +55,12 @@ public class CatalogRequestController {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
-        if (name == null || name.isBlank()) {
-            LOGGER.warn("brand request rejected: blank name userId={}", currentUser.getId());
+        if (name == null || name.isBlank() || name.length() > CATALOG_NAME_MAX_LENGTH) {
+            LOGGER.warn("brand request rejected: blank or too-long name userId={}", currentUser.getId());
+            return redirectBack(referer);
+        }
+        if (comments != null && comments.length() > CATALOG_COMMENTS_MAX_LENGTH) {
+            LOGGER.warn("brand request rejected: comments too long userId={}", currentUser.getId());
             return redirectBack(referer);
         }
         brandRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
@@ -68,8 +76,12 @@ public class CatalogRequestController {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
-        if (name == null || name.isBlank()) {
-            LOGGER.warn("body type request rejected: blank name userId={}", currentUser.getId());
+        if (name == null || name.isBlank() || name.length() > CATALOG_NAME_MAX_LENGTH) {
+            LOGGER.warn("body type request rejected: blank or too-long name userId={}", currentUser.getId());
+            return redirectBack(referer);
+        }
+        if (comments != null && comments.length() > CATALOG_COMMENTS_MAX_LENGTH) {
+            LOGGER.warn("body type request rejected: comments too long userId={}", currentUser.getId());
             return redirectBack(referer);
         }
         bodyTypeRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
@@ -90,6 +102,12 @@ public class CatalogRequestController {
                 || bio == null || bio.isBlank()
                 || justification == null || justification.isBlank()) {
             LOGGER.warn("admin request rejected: missing fields userId={}", currentUser.getId());
+            return redirectBack(referer);
+        }
+        if (motivation.length() > ADMIN_REQUEST_FIELD_MAX_LENGTH
+                || bio.length() > ADMIN_REQUEST_FIELD_MAX_LENGTH
+                || justification.length() > ADMIN_REQUEST_FIELD_MAX_LENGTH) {
+            LOGGER.warn("admin request rejected: field too long userId={}", currentUser.getId());
             return redirectBack(referer);
         }
         if (adminRequestService.hasPendingRequest(currentUser.getId())) {

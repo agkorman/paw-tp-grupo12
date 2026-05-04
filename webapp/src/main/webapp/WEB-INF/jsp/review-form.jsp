@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
@@ -31,9 +32,41 @@
     <spring:message var="reviewTitlePlaceholder" code="review.form.placeholder.title"/>
     <spring:message var="reviewBodyPlaceholder" code="review.form.placeholder.body"/>
     <spring:message var="reviewMileagePlaceholder" code="review.form.placeholder.mileage"/>
+    <spring:message var="jsMsgRequiredGeneric" code="js.form.required.generic"/>
+    <spring:message var="jsMsgRequiredTitle" code="js.review.required.title"/>
+    <spring:message var="jsMsgRequiredBody" code="js.review.required.body"/>
+    <spring:message var="jsMsgRequiredModelYear" code="js.review.required.modelYear"/>
+    <spring:message var="jsMsgRequiredMileage" code="js.review.required.mileage"/>
+    <spring:message var="jsMsgRequiredRating" code="js.review.required.rating"/>
+    <spring:message var="jsMsgModelYearNumeric" code="js.review.modelYear.numeric"/>
+    <spring:message var="jsMsgModelYearRange" code="js.review.modelYear.range" arguments="2026"/>
+    <spring:message var="jsMsgMileageNumeric" code="js.review.mileage.numeric"/>
+    <spring:message var="jsMsgMileageRange" code="js.review.mileage.range"/>
+    <spring:message var="jsMsgRatingNone" code="js.review.rating.none"/>
+    <spring:message var="jsMsgRatingBad" code="js.review.rating.bad"/>
+    <spring:message var="jsMsgRatingFair" code="js.review.rating.fair"/>
+    <spring:message var="jsMsgRatingGood" code="js.review.rating.good"/>
+    <spring:message var="jsMsgRatingVeryGood" code="js.review.rating.veryGood"/>
+    <spring:message var="jsMsgRatingExcellent" code="js.review.rating.excellent"/>
 
     <main class="form-page">
-        <section id="createReviewFormPage" class="form-page-panel" data-default-car-id="${selectedCar.id}" aria-labelledby="createReviewTitle">
+        <section id="createReviewFormPage" class="form-page-panel" data-default-car-id="${selectedCar.id}" aria-labelledby="createReviewTitle"
+                 data-msg-required-generic="${fn:escapeXml(jsMsgRequiredGeneric)}"
+                 data-msg-required-title="${fn:escapeXml(jsMsgRequiredTitle)}"
+                 data-msg-required-body="${fn:escapeXml(jsMsgRequiredBody)}"
+                 data-msg-required-model-year="${fn:escapeXml(jsMsgRequiredModelYear)}"
+                 data-msg-required-mileage="${fn:escapeXml(jsMsgRequiredMileage)}"
+                 data-msg-required-rating="${fn:escapeXml(jsMsgRequiredRating)}"
+                 data-msg-model-year-numeric="${fn:escapeXml(jsMsgModelYearNumeric)}"
+                 data-msg-model-year-range="${fn:escapeXml(jsMsgModelYearRange)}"
+                 data-msg-mileage-numeric="${fn:escapeXml(jsMsgMileageNumeric)}"
+                 data-msg-mileage-range="${fn:escapeXml(jsMsgMileageRange)}"
+                 data-msg-rating-none="${fn:escapeXml(jsMsgRatingNone)}"
+                 data-msg-rating-bad="${fn:escapeXml(jsMsgRatingBad)}"
+                 data-msg-rating-fair="${fn:escapeXml(jsMsgRatingFair)}"
+                 data-msg-rating-good="${fn:escapeXml(jsMsgRatingGood)}"
+                 data-msg-rating-very-good="${fn:escapeXml(jsMsgRatingVeryGood)}"
+                 data-msg-rating-excellent="${fn:escapeXml(jsMsgRatingExcellent)}">
             <div class="review-modal-header">
                 <div>
                     <span class="review-modal-kicker" data-review-modal-kicker><spring:message code="${editMode ? 'review.form.title.edit' : 'review.form.title.new'}"/></span>
@@ -130,8 +163,8 @@
                     </div>
                     <div class="review-modal-field">
                         <label for="modalMileageKm"><spring:message code="review.form.mileage"/></label>
-                        <form:input id="modalMileageKm" path="mileageKm" type="text" inputmode="numeric"
-                                    maxlength="7" required="required" placeholder="${reviewMileagePlaceholder}"/>
+                        <form:input id="modalMileageKm" path="mileageKm" type="number"
+                                    min="0" max="2000000" required="required" placeholder="${reviewMileagePlaceholder}"/>
                         <form:errors path="mileageKm" cssClass="form-error" element="span"/>
                     </div>
 
