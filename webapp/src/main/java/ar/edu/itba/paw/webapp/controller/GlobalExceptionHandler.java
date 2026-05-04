@@ -51,7 +51,9 @@ public class GlobalExceptionHandler {
     })
     public ModelAndView handleResourceNotFound(final RuntimeException e,
                                                final HttpServletRequest request) {
-        LOGGER.warn("resource not found uri={}", LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
+        LOGGER.warn("resource not found uri={} type={}",
+                LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                e.getClass().getSimpleName());
         return forwardToErrorPage(HttpStatus.NOT_FOUND, "/error/404");
     }
 
@@ -62,20 +64,24 @@ public class GlobalExceptionHandler {
     })
     public ModelAndView handleForbidden(final RuntimeException e,
                                         final HttpServletRequest request) {
-        LOGGER.warn("access forbidden uri={}", LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
+        LOGGER.warn("access forbidden uri={} type={}",
+                LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                e.getClass().getSimpleName());
         return forwardToErrorPage(HttpStatus.FORBIDDEN, "/error/403");
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<String> handleMaxUploadSizeExceeded(final MaxUploadSizeExceededException e,
                                                               final HttpServletRequest request) {
-        LOGGER.warn("upload exceeded max size uri={}", LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
+        LOGGER.warn("upload exceeded max size uri={} type={}",
+                LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                e.getClass().getSimpleName());
         return ResponseEntity.badRequest().body(message("upload.maxSize"));
     }
 
     @ExceptionHandler(InvalidReviewTagSelectionException.class)
     public ResponseEntity<String> handleInvalidReviewTagSelection(final InvalidReviewTagSelectionException e) {
-        LOGGER.warn("invalid review tag selection", e);
+        LOGGER.warn("invalid review tag selection type={}", e.getClass().getSimpleName());
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 
@@ -87,7 +93,9 @@ public class GlobalExceptionHandler {
     })
     public Object handleInvalidServiceInput(final RuntimeException e,
                                             final HttpServletRequest request) {
-        LOGGER.warn("invalid service input uri={}", LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
+        LOGGER.warn("invalid service input uri={} type={}",
+                LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                e.getClass().getSimpleName());
         if (ControllerUtils.isAjaxRequest(request.getHeader("X-Requested-With"))) {
             return ResponseEntity.badRequest().body(message("error.badRequest.ajax"));
         }
