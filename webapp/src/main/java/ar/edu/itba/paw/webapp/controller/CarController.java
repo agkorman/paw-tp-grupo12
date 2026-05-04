@@ -62,6 +62,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 @Controller
 public class CarController {
@@ -349,7 +350,7 @@ public class CarController {
                 return path + (query == null ? "" : "?" + query);
             }
         } catch (final IllegalArgumentException e) {
-            LOGGER.warn("invalid referer URI for redirect, falling back to /cars referer={}", referer, e);
+            LOGGER.warn("invalid referer URI for redirect, falling back to /cars referer={}", LogSanitizer.forLog(referer, LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
             return "/cars";
         }
         return "/cars";

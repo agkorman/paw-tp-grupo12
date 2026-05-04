@@ -19,6 +19,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -108,20 +109,20 @@ public class AuthController {
             final String validationErrorCode =
                     validateRegistration(normalizedUsername, normalizedEmail, password, confirmPassword);
             if (validationErrorCode != null) {
-                LOGGER.warn("registration rejected email={} reasonCode={}", normalizedEmail, validationErrorCode);
+                LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), validationErrorCode);
                 return registerFormWithError(validationErrorCode, normalizedUsername, normalizedEmail);
             }
             userService.createUser(normalizedUsername, normalizedEmail, password);
             LOGGER.info("registered new user email={} username={}", normalizedEmail, normalizedUsername);
         } catch (final IllegalArgumentException e) {
             final String errorCode = registrationErrorCode(e.getMessage());
-            LOGGER.warn("registration rejected email={} reasonCode={}", normalizedEmail, errorCode);
+            LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), errorCode);
             return registerFormWithError(errorCode, normalizedUsername, normalizedEmail);
         } catch (final DataIntegrityViolationException e) {
-            LOGGER.warn("registration rejected: integrity violation email={}", normalizedEmail);
+            LOGGER.warn("registration rejected: integrity violation email={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS));
             return registerFormWithError("auth.register.error.duplicate", normalizedUsername, normalizedEmail);
         } catch (final DataAccessException e) {
-            LOGGER.error("Database error while creating user {}", normalizedEmail, e);
+            LOGGER.error("Database error while creating user {}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), e);
             return registerFormWithError("auth.register.error.unavailable", normalizedUsername, normalizedEmail);
         }
 
@@ -142,7 +143,7 @@ public class AuthController {
             SECURITY_CONTEXT_REPOSITORY.saveContext(context, request, response);
             return true;
         } catch (final AuthenticationException e) {
-            LOGGER.warn("auto-login failed after registration email={}", email, e);
+            LOGGER.warn("auto-login failed after registration email={}", LogSanitizer.forLog(email, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), e);
             return false;
         }
     }

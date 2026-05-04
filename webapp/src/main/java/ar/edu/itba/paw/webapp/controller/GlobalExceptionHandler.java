@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -25,21 +26,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ModelAndView handleResourceNotFound(final ResourceNotFoundException e,
                                                final HttpServletRequest request) {
-        LOGGER.warn("resource not found uri={}", request.getRequestURI(), e);
+        LOGGER.warn("resource not found uri={}", LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
         return forwardToErrorPage(HttpStatus.NOT_FOUND, "/error/404");
     }
 
     @ExceptionHandler(ForbiddenException.class)
     public ModelAndView handleForbidden(final ForbiddenException e,
                                         final HttpServletRequest request) {
-        LOGGER.warn("access forbidden uri={}", request.getRequestURI(), e);
+        LOGGER.warn("access forbidden uri={}", LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
         return forwardToErrorPage(HttpStatus.FORBIDDEN, "/error/403");
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<String> handleMaxUploadSizeExceeded(final MaxUploadSizeExceededException e,
                                                               final HttpServletRequest request) {
-        LOGGER.warn("upload exceeded max size uri={}", request.getRequestURI(), e);
+        LOGGER.warn("upload exceeded max size uri={}", LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
         return ResponseEntity.badRequest().body(MAX_UPLOAD_SIZE_MESSAGE);
     }
 

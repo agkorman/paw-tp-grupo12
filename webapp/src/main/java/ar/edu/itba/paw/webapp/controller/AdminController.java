@@ -57,6 +57,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 @Controller
 @RequestMapping("/admin")
@@ -966,7 +967,7 @@ public class AdminController {
             final String query = uri.getRawQuery();
             return new ModelAndView("redirect:/admin" + (query == null ? "" : "?" + query));
         } catch (final IllegalArgumentException e) {
-            LOGGER.warn("invalid referer URI for admin redirect, falling back referer={}", referer, e);
+            LOGGER.warn("invalid referer URI for admin redirect, falling back referer={}", LogSanitizer.forLog(referer, LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
             return new ModelAndView(fallback);
         }
     }
@@ -987,7 +988,7 @@ public class AdminController {
                 return new ModelAndView("redirect:" + path + (query == null ? "" : "?" + query));
             }
         } catch (final IllegalArgumentException e) {
-            LOGGER.warn("invalid referer URI for catalog redirect, falling back referer={}", referer, e);
+            LOGGER.warn("invalid referer URI for catalog redirect, falling back referer={}", LogSanitizer.forLog(referer, LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
             return new ModelAndView(fallback);
         }
         return new ModelAndView(fallback);

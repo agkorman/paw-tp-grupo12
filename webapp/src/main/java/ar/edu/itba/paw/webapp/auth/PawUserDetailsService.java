@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import java.util.Collections;
 import java.util.Locale;
 
@@ -29,7 +30,7 @@ public class PawUserDetailsService implements UserDetailsService {
         LOGGER.debug("loading user details for email={}", email);
         final User user = userService.findByEmail(email)
                 .orElseThrow(() -> {
-                    LOGGER.warn("no user found for email={}", email);
+                    LOGGER.warn("no user found for email={}", LogSanitizer.forLog(email, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS));
                     return new UsernameNotFoundException("No user found for email " + email);
                 });
 

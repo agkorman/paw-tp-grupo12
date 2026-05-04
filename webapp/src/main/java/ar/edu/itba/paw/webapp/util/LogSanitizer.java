@@ -10,6 +10,8 @@ public final class LogSanitizer {
     public static final int MAX_LOG_EMAIL_CODE_POINTS = 254;
     public static final int MAX_LOG_CONTENT_TYPE_CODE_POINTS = 128;
     public static final int MAX_LOG_FILENAME_CODE_POINTS = 255;
+    public static final int MAX_LOG_URL_CODE_POINTS = 2048;
+    public static final int MAX_LOG_NAME_CODE_POINTS = 128;
 
     private LogSanitizer() {
         // Utility class.

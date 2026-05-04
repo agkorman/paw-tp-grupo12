@@ -25,6 +25,7 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 @Controller
 public class RecommendationController {
@@ -96,7 +97,7 @@ public class RecommendationController {
                 .map(BodyType::getName)
                 .anyMatch(bodyType::equals);
         if (!exists) {
-            LOGGER.warn("recommendation rejected: invalid body type name={}", bodyType);
+            LOGGER.warn("recommendation rejected: invalid body type name={}", LogSanitizer.forLog(bodyType, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
             errors.rejectValue("bodyType", "recommend.bodyType.invalid", "Tipo de carrocería inválido.");
         }
     }
