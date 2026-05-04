@@ -24,7 +24,8 @@
             <div class="profile-edit-fields">
                 <label class="profile-edit-field" for="profileNameInput">
                     <span><spring:message code="profile.edit.username"/></span>
-                    <input id="profileNameInput" name="displayName" type="text" value="${fn:escapeXml(resolvedProfileName)}"
+                    <input id="profileNameInput" name="displayName" type="text" maxlength="50"
+                           value="${fn:escapeXml(resolvedProfileName)}"
                            class="${not empty profileEditErrorCode ? 'is-invalid' : ''}">
                     <c:if test="${not empty profileEditErrorCode}">
                         <span class="form-error" role="alert"><spring:message code="${profileEditErrorCode}"/></span>

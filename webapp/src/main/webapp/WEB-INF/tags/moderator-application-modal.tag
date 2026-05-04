@@ -30,19 +30,19 @@
 
             <div class="modal-field modal-field-wide">
                 <label for="requestAdminMotivation"><spring:message code="request.admin.motivation"/></label>
-                <textarea id="requestAdminMotivation" name="motivation" rows="5"
+                <textarea id="requestAdminMotivation" name="motivation" rows="5" maxlength="2000"
                           placeholder="${motivationPlaceholder}"></textarea>
             </div>
 
             <div class="modal-field modal-field-wide">
                 <label for="requestAdminBio"><spring:message code="request.admin.bio"/></label>
-                <textarea id="requestAdminBio" name="bio" rows="5"
+                <textarea id="requestAdminBio" name="bio" rows="5" maxlength="2000"
                           placeholder="${bioPlaceholder}"></textarea>
             </div>
 
             <div class="modal-field modal-field-wide">
                 <label for="requestAdminJustification"><spring:message code="request.admin.justification"/></label>
-                <textarea id="requestAdminJustification" name="justification" rows="5"
+                <textarea id="requestAdminJustification" name="justification" rows="5" maxlength="2000"
                           placeholder="${justificationPlaceholder}"></textarea>
             </div>
 
