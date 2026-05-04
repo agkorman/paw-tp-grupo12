@@ -107,8 +107,8 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
                 "Ignored", "Body", "owner", 2026, 1000, false);
 
         // Exercise
-        final Page<Review> followedReviews = reviewDao.findByFollowedUsers(follower.getId(), 1, 5);
-        final Page<Review> favoriteReviews = reviewDao.findByFavoriteCars(follower.getId(), 1, 5);
+        final Page<Review> followedReviews = reviewDao.findByFollowedUsers(follower.getId(), 1);
+        final Page<Review> favoriteReviews = reviewDao.findByFavoriteCars(follower.getId(), 1);
 
         // Assertions
         assertEquals(1L, followedReviews.getTotalItems());

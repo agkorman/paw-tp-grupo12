@@ -79,14 +79,14 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Review> getLatestReviews(final int page, final int pageSize) {
-        return reviewDao.findLatest(page, pageSize);
+    public Page<Review> getLatestReviews(final int page) {
+        return reviewDao.findLatest(page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Review> getReviewsByFollowedUsers(final long followerId, final int page, final int pageSize) {
-        return reviewDao.findByFollowedUsers(followerId, page, pageSize);
+    public Page<Review> getReviewsByFollowedUsers(final long followerId, final int page) {
+        return reviewDao.findByFollowedUsers(followerId, page);
     }
 
     @Override
@@ -97,8 +97,8 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Review> getReviewsByFavoriteCars(final long userId, final int page, final int pageSize) {
-        return reviewDao.findByFavoriteCars(userId, page, pageSize);
+    public Page<Review> getReviewsByFavoriteCars(final long userId, final int page) {
+        return reviewDao.findByFavoriteCars(userId, page);
     }
 
     @Override
@@ -224,14 +224,14 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public Page<Review> getActivityFeedReviews(final String feedMode, final Long userId,
-                                               final int page, final int pageSize) {
+                                               final int page) {
         if (FEED_FOLLOWING.equals(feedMode) && userId != null) {
-            return reviewDao.findByFollowedUsers(userId, page, pageSize);
+            return reviewDao.findByFollowedUsers(userId, page);
         }
         if (FEED_FAVORITES.equals(feedMode) && userId != null) {
-            return reviewDao.findByFavoriteCars(userId, page, pageSize);
+            return reviewDao.findByFavoriteCars(userId, page);
         }
-        return reviewDao.findLatest(page, pageSize);
+        return reviewDao.findLatest(page);
     }
 
     @Override

@@ -51,10 +51,9 @@ public class ActivityController {
         final boolean authenticated = currentUser != null;
         final String activeTab = normalizeActivityTab(tab, authenticated);
         LOGGER.debug("rendering activity feed tab={} page={} authenticated={}", activeTab, page, authenticated);
-        final int pageSize = ACTIVITY_PAGE_SIZE;
 
         final Page<Review> reviewsPage = reviewService.getActivityFeedReviews(
-                activeTab, authenticated ? currentUser.getId() : null, page, pageSize);
+                activeTab, authenticated ? currentUser.getId() : null, page);
 
         final List<ActivityReviewCard> activityReviews = toActivityReviewCards(reviewsPage.getItems());
         final long latestCount = reviewService.countAllReviews();

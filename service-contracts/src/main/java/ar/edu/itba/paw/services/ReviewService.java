@@ -25,10 +25,10 @@ public interface ReviewService {
                         Collection<Short> tagIds);
     List<Review> getAllReviews();
     long countAllReviews();
-    Page<Review> getLatestReviews(int page, int pageSize);
-    Page<Review> getReviewsByFollowedUsers(long followerId, int page, int pageSize);
+    Page<Review> getLatestReviews(int page);
+    Page<Review> getReviewsByFollowedUsers(long followerId, int page);
     long countReviewsByFollowedUsers(long followerId);
-    Page<Review> getReviewsByFavoriteCars(long userId, int page, int pageSize);
+    Page<Review> getReviewsByFavoriteCars(long userId, int page);
     long countReviewsByFavoriteCars(long userId);
     Optional<Review> getReviewById(long id);
     List<Review> getReviewsByIds(Collection<Long> ids);
@@ -81,7 +81,7 @@ public interface ReviewService {
     Optional<ReviewStats> getReviewStatsByCar(long carId);
     List<ReviewStats> getReviewStatsByCarIds(Collection<Long> carIds);
 
-    Page<Review> getActivityFeedReviews(String feedMode, Long userId, int page, int pageSize);
+    Page<Review> getActivityFeedReviews(String feedMode, Long userId, int page);
 
     Review getReviewAndCheckAccess(long reviewId, long requestingUserId, boolean isAdmin);
 

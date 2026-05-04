@@ -24,13 +24,21 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     private final AdminRequestDao adminRequestDao;
     private final UserService userService;
     private final EmailService emailService;
+    private final CarRequestService carRequestService;
+    private final BrandRequestService brandRequestService;
+    private final BodyTypeRequestService bodyTypeRequestService;
 
     @Autowired
     public AdminRequestServiceImpl(final AdminRequestDao adminRequestDao, final UserService userService,
-                                   final EmailService emailService) {
+                                   final EmailService emailService, final CarRequestService carRequestService,
+                                   final BrandRequestService brandRequestService,
+                                   final BodyTypeRequestService bodyTypeRequestService) {
         this.adminRequestDao = adminRequestDao;
         this.userService = userService;
         this.emailService = emailService;
+        this.carRequestService = carRequestService;
+        this.brandRequestService = brandRequestService;
+        this.bodyTypeRequestService = bodyTypeRequestService;
     }
 
     @Override
@@ -210,5 +218,46 @@ public class AdminRequestServiceImpl implements AdminRequestService {
                 .map(User::getEmail)
                 .filter(email -> !email.isBlank())
                 .orElse(null);
+    }
+
+    @Override
+    public long getTotalPendingItems() {
+        final long carRequestCount = carRequestService.countCarRequestsByStatus(
+            CarRequestService.STATUS_PENDING
+        );
+        final long brandRequestCount = brandRequestService.countBrandRequestsByStatus(
+            BrandRequestService.STATUS_PENDING
+        );
+        final long bodyTypeRequestCount = bodyTypeRequestService.countBodyTypeRequestsByStatus(
+            BodyTypeRequestService.STATUS_PENDING
+        );
+        final long adminRequestCount = countAdminRequestsByStatus(STATUS_PENDING);
+        return carRequestCount + brandRequestCount + bodyTypeRequestCount + adminRequestCount;
+    }
+
+    @Override
+    public String resolveSubmitterEmail(final String submitterEmail, final Long submittedByUserId) {
+        if (submitterEmail != null && !submitterEmail.isBlank()) {
+            return submitterEmail;
+        }
+        if (submittedByUserId != null) {
+            return userService.getUserById(submittedByUserId)
+                .map(User::getEmail)
+                .filter(email -> !email.isBlank())
+                .orElse(null);
+        }
+        return null;
+    }
+
+    @Override
+    public String getSubmitterLabel(final String submitterEmail, final Long submittedByUserId) {
+        final String resolvedEmail = resolveSubmitterEmail(submitterEmail, submittedByUserId);
+        if (resolvedEmail != null) {
+            return resolvedEmail;
+        }
+        if (submittedByUserId != null) {
+            return "Usuario #" + submittedByUserId;
+        }
+        return "Usuario sin identificar";
     }
 }

@@ -24,6 +24,7 @@ import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.services.exception.DuplicateCarException;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
+import ar.edu.itba.paw.webapp.util.ImageValidationService;
 import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -85,6 +86,7 @@ public class AdminController {
     private final AdminRequestService adminRequestService;
     private final UserService userService;
     private final MessageSource messageSource;
+    private final ImageValidationService imageValidationService;
 
     @Autowired
     public AdminController(
@@ -96,7 +98,8 @@ public class AdminController {
         final BodyTypeRequestService bodyTypeRequestService,
         final AdminRequestService adminRequestService,
         final UserService userService,
-        final MessageSource messageSource
+        final MessageSource messageSource,
+        final ImageValidationService imageValidationService
     ) {
         this.carRequestService = carRequestService;
         this.carService = carService;
@@ -107,6 +110,7 @@ public class AdminController {
         this.adminRequestService = adminRequestService;
         this.userService = userService;
         this.messageSource = messageSource;
+        this.imageValidationService = imageValidationService;
     }
 
     private String message(final String code, final Object... args) {
@@ -234,8 +238,7 @@ public class AdminController {
         mav.addObject("brandRequestCount", brandRequestCount);
         mav.addObject("bodyTypeRequestCount", bodyTypeRequestCount);
         mav.addObject("adminRequestCount", adminRequestCount);
-        mav.addObject("totalPendingItems",
-                carRequestCount + brandRequestCount + bodyTypeRequestCount + adminRequestCount);
+        mav.addObject("totalPendingItems", adminRequestService.getTotalPendingItems());
         mav.addObject("pendingRequests", pendingRequests);
         mav.addObject("pendingBrandRequests", pendingBrandRequests);
         mav.addObject("pendingBodyTypeRequests", pendingBodyTypeRequests);
@@ -1157,35 +1160,17 @@ public class AdminController {
     }
 
     private String submitterLabel(final CarRequest request) {
-        final String submitterEmail = resolveSubmitterEmail(request);
-        if (submitterEmail != null) {
-            return submitterEmail;
-        }
-        if (request.getSubmittedByUserId() != null) {
-            return "Usuario #" + request.getSubmittedByUserId();
-        }
-        return "Usuario sin identificar";
+        return adminRequestService.getSubmitterLabel(
+            request.getSubmitterEmail(),
+            request.getSubmittedByUserId()
+        );
     }
 
     private String submitterLabel(
         final String submitterEmail,
         final Long submittedByUserId
     ) {
-        if (submitterEmail != null && !submitterEmail.isBlank()) {
-            return submitterEmail;
-        }
-        if (submittedByUserId != null) {
-            final String resolvedEmail = userService
-                .getUserById(submittedByUserId)
-                .map(User::getEmail)
-                .filter(email -> !email.isBlank())
-                .orElse(null);
-            if (resolvedEmail != null) {
-                return resolvedEmail;
-            }
-            return "Usuario #" + submittedByUserId;
-        }
-        return "Usuario sin identificar";
+        return adminRequestService.getSubmitterLabel(submitterEmail, submittedByUserId);
     }
 
     private AdminCatalogRequestCard toBrandCard(final BrandRequest request) {
@@ -1239,30 +1224,17 @@ public class AdminController {
     }
 
     private String resolveSubmitterEmail(final CarRequest request) {
-        if (
-            request.getSubmitterEmail() != null &&
-            !request.getSubmitterEmail().isBlank()
-        ) {
-            return request.getSubmitterEmail();
-        }
-        if (request.getSubmittedByUserId() != null) {
-            return userService
-                .getUserById(request.getSubmittedByUserId())
-                .map(User::getEmail)
-                .filter(email -> !email.isBlank())
-                .orElse(null);
-        }
-        return null;
+        return adminRequestService.resolveSubmitterEmail(
+            request.getSubmitterEmail(),
+            request.getSubmittedByUserId()
+        );
     }
 
     private String validateUploadedImage(
         final MultipartFile file,
         final boolean required
     ) {
-        final String key = ControllerUtils.validateUploadedImage(
-            file,
-            required
-        );
+        final String key = imageValidationService.validateUploadedImage(file, required);
         return key == null ? null : message(key);
     }
 

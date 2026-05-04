@@ -35,4 +35,10 @@ public interface AdminRequestService {
     boolean rejectPendingRequest(long id);
 
     boolean isEligibleForModeratorRequest(long userId);
+
+    long getTotalPendingItems();
+
+    String resolveSubmitterEmail(String submitterEmail, Long submittedByUserId);
+
+    String getSubmitterLabel(String submitterEmail, Long submittedByUserId);
 }

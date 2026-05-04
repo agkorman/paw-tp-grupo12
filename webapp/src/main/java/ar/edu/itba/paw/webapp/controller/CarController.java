@@ -21,6 +21,7 @@ import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ETagGenerationException;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
+import ar.edu.itba.paw.webapp.util.ImageValidationService;
 import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import java.io.IOException;
 import java.net.URI;
@@ -78,6 +79,7 @@ public class CarController {
     private final ReviewService reviewService;
     private final EmailService emailService;
     private final MessageSource messageSource;
+    private final ImageValidationService imageValidationService;
 
     @Autowired
     public CarController(
@@ -87,7 +89,8 @@ public class CarController {
         final BodyTypeService bodyTypeService,
         final ReviewService reviewService,
         final EmailService emailService,
-        final MessageSource messageSource
+        final MessageSource messageSource,
+        final ImageValidationService imageValidationService
     ) {
         this.carService = carService;
         this.carFavoriteService = carFavoriteService;
@@ -96,6 +99,7 @@ public class CarController {
         this.reviewService = reviewService;
         this.emailService = emailService;
         this.messageSource = messageSource;
+        this.imageValidationService = imageValidationService;
     }
 
     private String message(final String code, final Object... args) {
@@ -693,7 +697,7 @@ public class CarController {
     }
 
     private String validateUploadedImage(final MultipartFile file, final boolean required) {
-        final String key = ControllerUtils.validateUploadedImage(file, required);
+        final String key = imageValidationService.validateUploadedImage(file, required);
         return key == null ? null : message(key);
     }
 
