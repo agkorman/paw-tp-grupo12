@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.persistence.exception.PersistenceOperationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -182,7 +183,7 @@ public class CarRequestJdbcDao implements CarRequestDao {
             );
         } catch (final DataAccessException e) {
             LOGGER.error("failed to fetch image metadata for car request id={}", requestId, e);
-            throw new IllegalStateException("Failed to fetch image metadata for car request " + requestId + ".", e);
+            throw new PersistenceOperationException("fetch image metadata for car request " + requestId, e);
         }
     }
 
@@ -198,8 +199,7 @@ public class CarRequestJdbcDao implements CarRequestDao {
             ).stream().findFirst();
         } catch (final DataAccessException e) {
             LOGGER.error("failed to fetch image id={} for car request id={}", imageId, requestId, e);
-            throw new IllegalStateException("Failed to fetch image " + imageId
-                    + " for car request " + requestId + ".", e);
+            throw new PersistenceOperationException("fetch image " + imageId + " for car request " + requestId, e);
         }
     }
 
@@ -219,7 +219,7 @@ public class CarRequestJdbcDao implements CarRequestDao {
             LOGGER.info("replaced image gallery for car request id={} imageCount={}", requestId, images.size());
         } catch (final DataAccessException e) {
             LOGGER.error("failed to replace image gallery for car request id={}", requestId, e);
-            throw new IllegalStateException("Failed to replace image gallery for car request " + requestId + ".", e);
+            throw new PersistenceOperationException("replace image gallery for car request " + requestId, e);
         }
     }
 

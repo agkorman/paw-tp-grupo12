@@ -12,9 +12,11 @@ import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
+import ar.edu.itba.paw.webapp.form.ProfileForm;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +30,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -45,8 +50,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.validation.Valid;
 
 @Controller
 public class ProfileController {
@@ -56,8 +61,6 @@ public class ProfileController {
     private static final String TAB_REVIEWS = "reviews";
     private static final String TAB_FAVORITES = "favorites";
     private static final String TAB_LIKED = "liked";
-    private static final int USERNAME_MAX_LENGTH = 50;
-    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z0-9._-]+$");
 
     private final ReviewService reviewService;
     private final ReviewLikeService reviewLikeService;
@@ -116,17 +119,17 @@ public class ProfileController {
     }
 
     @RequestMapping(value = "/profile", method = RequestMethod.POST)
-    public ModelAndView updateOwnProfile(@RequestParam(value = "displayName", required = false) final String displayName,
+    public ModelAndView updateOwnProfile(@Valid @ModelAttribute("profileForm") final ProfileForm profileForm,
+                                         final BindingResult errors,
                                          @AuthenticationPrincipal final AuthenticatedUser currentUser,
                                          final RedirectAttributes redirectAttributes) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
 
-        final String normalizedUsername = ControllerUtils.normalize(displayName);
-        final String validationErrorCode = validateProfileUsername(currentUser.getId(), normalizedUsername);
-        if (validationErrorCode != null) {
-            return profileEditError(validationErrorCode, normalizedUsername, redirectAttributes);
+        final String normalizedUsername = ControllerUtils.normalize(profileForm.getDisplayName());
+        if (errors.hasErrors()) {
+            return profileEditError(profileErrorCode(errors), normalizedUsername, redirectAttributes);
         }
 
         try {
@@ -137,7 +140,7 @@ public class ProfileController {
             return profileEditError("profile.edit.error.username.exists", normalizedUsername, redirectAttributes);
         } catch (final UsernameAlreadyExistsException e) {
             return profileEditError("profile.edit.error.username.exists", normalizedUsername, redirectAttributes);
-        } catch (final IllegalArgumentException e) {
+        } catch (final InvalidServiceInputException e) {
             return profileEditError("profile.edit.error.generic", normalizedUsername, redirectAttributes);
         } catch (final DataAccessException e) {
             return profileEditError("profile.edit.error.generic", normalizedUsername, redirectAttributes);
@@ -163,7 +166,7 @@ public class ProfileController {
             return new ModelAndView("redirect:/profile");
         }
         if (userService.getUserById(userId).isEmpty()) {
-            throw new ResourceNotFoundException();
+            throw new ResourceNotFoundException("User", userId);
         }
 
         final boolean wasFollowing = userFollowService.isFollowing(currentUser.getId(), userId);
@@ -182,21 +185,18 @@ public class ProfileController {
         return new ModelAndView("redirect:/profiles/" + userId);
     }
 
-    private String validateProfileUsername(final long currentUserId, final String username) {
-        if (username == null) {
+    private String profileErrorCode(final BindingResult errors) {
+        final FieldError fieldError = errors.getFieldError("displayName");
+        if (fieldError == null) {
+            return "profile.edit.error.generic";
+        }
+        if ("NotBlank".equals(fieldError.getCode())) {
             return "profile.edit.error.username.required";
         }
-        if (username.length() > USERNAME_MAX_LENGTH) {
+        if ("Size".equals(fieldError.getCode())) {
             return "profile.edit.error.username.max";
         }
-        if (!USERNAME_PATTERN.matcher(username).matches()) {
-            return "profile.edit.error.username.pattern";
-        }
-        final Optional<User> existing = userService.findByUsername(username);
-        if (existing.isPresent() && existing.get().getId() != currentUserId) {
-            return "profile.edit.error.username.exists";
-        }
-        return null;
+        return "profile.edit.error.username.pattern";
     }
 
     private ModelAndView profileEditError(final String errorCode, final String username,
@@ -223,7 +223,7 @@ public class ProfileController {
     private ModelAndView profile(final long profileUserId, final AuthenticatedUser currentUser,
                                  final String tab, final int page, final String submitted) {
         final User profileUser = userService.getUserById(profileUserId)
-                .orElseThrow(ResourceNotFoundException::new);
+                .orElseThrow(() -> new ResourceNotFoundException("User", profileUserId));
         final Long currentUserId = currentUser == null ? null : currentUser.getId();
         final boolean ownProfile = currentUserId != null && currentUserId == profileUser.getId();
         final String activeTab = ownProfile ? normalizeProfileTab(tab) : TAB_REVIEWS;

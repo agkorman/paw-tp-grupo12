@@ -85,7 +85,7 @@ public class CarFavoriteServiceImplTest {
                 () -> carFavoriteService.setFavorite(USER_ID, CAR_ID, true));
 
         // Assertions
-        assertEquals("User not found.", ex.getMessage());
+        assertEquals("User not found: 1", ex.getMessage());
     }
 
     @Test
@@ -99,7 +99,7 @@ public class CarFavoriteServiceImplTest {
                 () -> carFavoriteService.setFavorite(USER_ID, CAR_ID, true));
 
         // Assertions
-        assertEquals("Car not found.", ex.getMessage());
+        assertEquals("Car not found: 10", ex.getMessage());
     }
 
     @Test

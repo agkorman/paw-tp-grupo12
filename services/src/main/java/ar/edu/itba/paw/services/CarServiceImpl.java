@@ -10,7 +10,8 @@ import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
-import ar.edu.itba.paw.persistence.ReviewDao;
+import ar.edu.itba.paw.services.exception.InvalidImagePayloadException;
+import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,8 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -31,19 +34,16 @@ public class CarServiceImpl implements CarService {
 
     private final CarDao carDao;
     private final CarImageDao carImageDao;
-    private final ReviewDao reviewDao;
     private final CarRequestService carRequestService;
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
 
     @Autowired
     public CarServiceImpl(final CarDao carDao, final CarImageDao carImageDao,
-                          final ReviewDao reviewDao,
                           final CarRequestService carRequestService,
                           final BrandDao brandDao, final BodyTypeDao bodyTypeDao) {
         this.carDao = carDao;
         this.carImageDao = carImageDao;
-        this.reviewDao = reviewDao;
         this.carRequestService = carRequestService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
@@ -129,10 +129,10 @@ public class CarServiceImpl implements CarService {
         final String normalizedDescription = description
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
-                .orElseThrow(() -> new IllegalArgumentException("Description is required for car creation."));
+                .orElseThrow(() -> new InvalidServiceInputException("Description is required for car creation."));
         final List<CarImagePayload> normalizedImages = ImagePayloadUtils.normalizeImages(images);
         if (normalizedImages.isEmpty()) {
-            throw new IllegalArgumentException("At least one image is required for car creation.");
+            throw new InvalidImagePayloadException("At least one image is required for car creation.");
         }
 
         return carRequestService.createPendingRequest(
@@ -180,16 +180,46 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    public List<Car> getFeaturedCars(final int limit) {
+        final List<Car> topRated = carDao.findTopRated(limit);
+        if (topRated.size() >= limit) {
+            return topRated;
+        }
+        final List<Long> excludedIds = topRated.stream().map(Car::getId).toList();
+        final List<Car> result = new java.util.ArrayList<>(topRated);
+        result.addAll(carDao.findRecentlyAdded(limit - topRated.size(), excludedIds));
+        return result;
+    }
+
+    @Override
+    public boolean existsDuplicateCar(final String brandName, final String bodyTypeName,
+                                      final String model, final Integer year, final long ignoredCarId) {
+        final String normalizedModel = StringUtils.normalize(model);
+        if (normalizedModel == null) {
+            return false;
+        }
+        final String lowerModel = normalizedModel.toLowerCase(Locale.ROOT);
+        return getCarsByBrandAndBodyType(brandName, bodyTypeName)
+                .stream()
+                .anyMatch(car -> {
+                    final String existingModel = StringUtils.normalize(car.getModel());
+                    return car.getId() != ignoredCarId
+                            && existingModel != null
+                            && lowerModel.equals(existingModel.toLowerCase(Locale.ROOT))
+                            && Objects.equals(car.getYear(), year);
+                });
+    }
+
+    @Override
     @Transactional
     public boolean deleteCar(final long id) {
         if (carDao.findById(id).isEmpty()) {
             LOGGER.warn("delete car rejected: not found id={}", id);
             return false;
         }
-        reviewDao.deleteByCarId(id);
         final boolean deleted = carDao.delete(id);
         if (deleted) {
-            LOGGER.info("deleted car id={} (and associated reviews)", id);
+            LOGGER.info("deleted car id={}", id);
         }
         return deleted;
     }
@@ -198,7 +228,7 @@ public class CarServiceImpl implements CarService {
         final boolean hasImageContentType = imageContentType.isPresent();
         final boolean hasImageData = imageData.isPresent();
         if (hasImageContentType != hasImageData) {
-            throw new IllegalArgumentException("Image metadata and payload must be provided together.");
+            throw new InvalidImagePayloadException("Image metadata and payload must be provided together.");
         }
     }
 }

@@ -1,6 +1,5 @@
 package ar.edu.itba.paw.webapp.controller;
 
-import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.CarRecommendation;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.ReviewStats;
@@ -8,6 +7,7 @@ import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.RecommendationService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.form.RecommendationForm;
+import ar.edu.itba.paw.webapp.validation.RecommendationFormValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,6 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 @Controller
 public class RecommendationController {
@@ -37,19 +36,27 @@ public class RecommendationController {
     private final RecommendationService recommendationService;
     private final BodyTypeService bodyTypeService;
     private final ReviewService reviewService;
+    private final RecommendationFormValidator recommendationFormValidator;
 
     @Autowired
     public RecommendationController(final RecommendationService recommendationService,
                                     final BodyTypeService bodyTypeService,
-                                    final ReviewService reviewService) {
+                                    final ReviewService reviewService,
+                                    final RecommendationFormValidator recommendationFormValidator) {
         this.recommendationService = recommendationService;
         this.bodyTypeService = bodyTypeService;
         this.reviewService = reviewService;
+        this.recommendationFormValidator = recommendationFormValidator;
     }
 
     @InitBinder
     public void initBinder(final WebDataBinder binder) {
         binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
+    }
+
+    @InitBinder("recommendationForm")
+    public void initRecommendationBinder(final WebDataBinder binder) {
+        binder.addValidators(recommendationFormValidator);
     }
 
     @RequestMapping(value = "/cars/recommend", method = RequestMethod.GET)
@@ -63,7 +70,6 @@ public class RecommendationController {
     public String results(@Valid @ModelAttribute("recommendationForm") final RecommendationForm recommendationForm,
                           final BindingResult errors,
                           final Model model) {
-        rejectInvalidBodyType(recommendationForm, errors);
         populateFormModel(model);
         if (errors.hasErrors()) {
             return "recommend.jsp";
@@ -88,17 +94,4 @@ public class RecommendationController {
         model.addAttribute("fuelTypes", CarSearchCriteria.ALLOWED_FUEL_TYPES);
     }
 
-    private void rejectInvalidBodyType(final RecommendationForm form, final BindingResult errors) {
-        final String bodyType = form.getBodyType();
-        if (bodyType == null || bodyType.trim().isEmpty()) {
-            return;
-        }
-        final boolean exists = bodyTypeService.findAll().stream()
-                .map(BodyType::getName)
-                .anyMatch(bodyType::equals);
-        if (!exists) {
-            LOGGER.warn("recommendation rejected: invalid body type name={}", LogSanitizer.forLog(bodyType, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
-            errors.rejectValue("bodyType", "recommend.bodyType.invalid", "Tipo de carrocería inválido.");
-        }
-    }
 }

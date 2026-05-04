@@ -45,6 +45,12 @@ public class BodyTypeServiceImpl implements BodyTypeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public boolean existsByName(final String name) {
+        return bodyTypeDao.findByName(name).isPresent();
+    }
+
+    @Override
     @Transactional
     public BodyType createBodyType(final String name) {
         final String normalized = StringUtils.normalizeRequired(name, "Body type name is required.");

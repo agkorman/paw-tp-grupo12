@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
+
 final class StringUtils {
     private StringUtils() {}
 
@@ -14,7 +16,7 @@ final class StringUtils {
     static String normalizeRequired(final String value, final String errorMessage) {
         final String trimmed = normalize(value);
         if (trimmed == null) {
-            throw new IllegalArgumentException(errorMessage);
+            throw new InvalidServiceInputException(errorMessage);
         }
         return trimmed;
     }

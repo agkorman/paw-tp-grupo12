@@ -21,6 +21,7 @@ import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,7 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
-import java.sql.Timestamp;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -254,7 +255,8 @@ public class AdminController {
         }
 
         if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null
-                && isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carForm.getYear(), -1L)) {
+                && carService.existsDuplicateCar(resolvedBrand.getName(), resolvedBodyType.getName(),
+                        carForm.getModel(), carForm.getYear(), -1L)) {
             errors.reject("validation.car.duplicate", message("validation.car.duplicate"));
         }
 
@@ -270,7 +272,7 @@ public class AdminController {
             imagePayloads.addAll(toImagePayloads(files));
         } catch (final IOException e) {
             LOGGER.error("failed to read uploaded image for car request id={}", requestId, e);
-            throw new IllegalStateException("Failed to read uploaded image.", e);
+            throw new UploadedImageReadException("approving car request " + requestId, e);
         }
 
         LOGGER.info("approving car request id={} brandId={} bodyTypeId={}", requestId,
@@ -330,7 +332,8 @@ public class AdminController {
         }
 
         if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null
-                && isDuplicateCar(resolvedBrand, resolvedBodyType, carForm.getModel(), carForm.getYear(), carId)) {
+                && carService.existsDuplicateCar(resolvedBrand.getName(), resolvedBodyType.getName(),
+                        carForm.getModel(), carForm.getYear(), carId)) {
             errors.reject("validation.car.duplicate", message("validation.car.duplicate"));
         }
 
@@ -346,7 +349,7 @@ public class AdminController {
             imagePayloads.addAll(toImagePayloads(files));
         } catch (final IOException e) {
             LOGGER.error("failed to read uploaded image for car id={}", carId, e);
-            throw new IllegalStateException("Failed to read uploaded image.", e);
+            throw new UploadedImageReadException("editing car " + carId, e);
         }
 
         final Optional<Car> updated = carService.updateCar(
@@ -536,7 +539,7 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                     .eTag(eTag)
                     .cacheControl(cacheControl)
-                    .lastModified(Timestamp.valueOf(request.getCreatedAt()).getTime())
+                    .lastModified(request.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build();
         }
 
@@ -545,7 +548,7 @@ public class AdminController {
                 .contentLength(request.getImageData().length)
                 .eTag(eTag)
                 .cacheControl(cacheControl)
-                .lastModified(Timestamp.valueOf(request.getCreatedAt()).getTime())
+                .lastModified(request.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                 .body(request.getImageData());
     }
 
@@ -565,7 +568,7 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                     .eTag(eTag)
                     .cacheControl(cacheControl)
-                    .lastModified(Timestamp.valueOf(requestImage.getUpdatedAt()).getTime())
+                    .lastModified(requestImage.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build();
         }
 
@@ -574,7 +577,7 @@ public class AdminController {
                 .contentLength(requestImage.getImageData().length)
                 .eTag(eTag)
                 .cacheControl(cacheControl)
-                .lastModified(Timestamp.valueOf(requestImage.getUpdatedAt()).getTime())
+                .lastModified(requestImage.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                 .body(requestImage.getImageData());
     }
 
@@ -952,19 +955,6 @@ public class AdminController {
         return payloads;
     }
 
-    private boolean isDuplicateCar(final Brand brand, final BodyType bodyType, final String model, final Integer year,
-                                   final long ignoredCarId) {
-        final String normalizedModel = ControllerUtils.normalize(model);
-        if (normalizedModel == null) {
-            return false;
-        }
-        return carService
-                .getCarsByBrandAndBodyType(brand.getName(), bodyType.getName())
-                .stream()
-                .anyMatch(car -> car.getId() != ignoredCarId
-                        && sameModel(car.getModel(), normalizedModel)
-                        && Objects.equals(car.getYear(), year));
-    }
 
     private void rejectInvalidSpecFields(final BindingResult errors, final CarForm carForm) {
         if (carForm.getFuelType() != null
@@ -1050,14 +1040,6 @@ public class AdminController {
             default:
                 return TAB_CARS;
         }
-    }
-
-    private boolean sameModel(final String existingModel, final String submittedModel) {
-        final String normalizedExistingModel = ControllerUtils.normalize(existingModel);
-        final String normalizedSubmittedModel = ControllerUtils.normalize(submittedModel);
-        return normalizedExistingModel != null && normalizedSubmittedModel != null
-                && normalizedExistingModel.toLowerCase(Locale.ROOT)
-                .equals(normalizedSubmittedModel.toLowerCase(Locale.ROOT));
     }
 
     public static final class AdminCarRequestCard {

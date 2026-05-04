@@ -61,7 +61,7 @@ public class UserFollowServiceImplTest {
                 () -> userFollowService.followUser(sameUserId, sameUserId));
 
         // Assertions
-        assertEquals("Users cannot follow themselves.", ex.getMessage());
+        assertEquals("User cannot follow themselves: 1", ex.getMessage());
     }
 
     @Test
@@ -74,7 +74,7 @@ public class UserFollowServiceImplTest {
                 () -> userFollowService.followUser(FOLLOWER_ID, FOLLOWED_ID));
 
         // Assertions
-        assertEquals("Follower user not found.", ex.getMessage());
+        assertEquals("User not found: 1", ex.getMessage());
     }
 
     @Test
@@ -88,7 +88,7 @@ public class UserFollowServiceImplTest {
                 () -> userFollowService.followUser(FOLLOWER_ID, FOLLOWED_ID));
 
         // Assertions
-        assertEquals("Followed user not found.", ex.getMessage());
+        assertEquals("User not found: 2", ex.getMessage());
     }
 
     @Test
@@ -115,7 +115,7 @@ public class UserFollowServiceImplTest {
                 () -> userFollowService.unfollowUser(sameUserId, sameUserId));
 
         // Assertions
-        assertEquals("Users cannot follow themselves.", ex.getMessage());
+        assertEquals("User cannot follow themselves: 1", ex.getMessage());
     }
 
     @Test

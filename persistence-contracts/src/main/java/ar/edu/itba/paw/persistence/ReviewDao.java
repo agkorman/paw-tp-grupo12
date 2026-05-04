@@ -41,5 +41,4 @@ public interface ReviewDao {
     Optional<Review> update(long id, long carId, BigDecimal rating, String title, String body,
                             String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend);
     boolean delete(long id);
-    int deleteByCarId(long carId);
 }

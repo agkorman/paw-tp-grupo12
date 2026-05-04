@@ -47,5 +47,9 @@ public interface CarService {
                             String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
                             BigDecimal priceUsd);
 
+    boolean existsDuplicateCar(String brandName, String bodyTypeName, String model, Integer year, long ignoredCarId);
+
+    List<Car> getFeaturedCars(int limit);
+
     boolean deleteCar(long id);
 }

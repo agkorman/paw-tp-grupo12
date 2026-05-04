@@ -4,31 +4,31 @@ import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.BodyTypeRequestService;
 import ar.edu.itba.paw.services.BrandRequestService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.form.AdminRoleRequestForm;
+import ar.edu.itba.paw.webapp.form.CatalogNameRequestForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
+import javax.validation.Valid;
 import java.net.URI;
 
 @Controller
 public class CatalogRequestController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CatalogRequestController.class);
-
-    private static final int CATALOG_NAME_MAX_LENGTH    = 80;
-    private static final int CATALOG_COMMENTS_MAX_LENGTH = 500;
-    private static final int ADMIN_REQUEST_FIELD_MAX_LENGTH = 2000;
 
     private final BrandRequestService brandRequestService;
     private final BodyTypeRequestService bodyTypeRequestService;
@@ -49,66 +49,52 @@ public class CatalogRequestController {
     }
 
     @RequestMapping(value = "/brand-requests", method = RequestMethod.POST)
-    public ModelAndView requestBrand(@RequestParam(value = "name", required = false) final String name,
-                                     @RequestParam(value = "comments", required = false) final String comments,
+    public ModelAndView requestBrand(@Valid @ModelAttribute("catalogNameRequestForm") final CatalogNameRequestForm form,
+                                     final BindingResult errors,
                                      @RequestHeader(value = "Referer", required = false) final String referer,
                                      @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
-        if (name == null || name.isBlank() || name.length() > CATALOG_NAME_MAX_LENGTH) {
-            LOGGER.warn("brand request rejected: blank or too-long name userId={}", currentUser.getId());
+        if (errors.hasErrors()) {
+            LOGGER.warn("brand request rejected: validation errors userId={} errorCount={}",
+                    currentUser.getId(), errors.getErrorCount());
             return redirectBack(referer);
         }
-        if (comments != null && comments.length() > CATALOG_COMMENTS_MAX_LENGTH) {
-            LOGGER.warn("brand request rejected: comments too long userId={}", currentUser.getId());
-            return redirectBack(referer);
-        }
-        brandRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
-        LOGGER.info("user id={} submitted brand request name={}", currentUser.getId(), LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
+        brandRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), form.getName(), form.getComments());
+        LOGGER.info("user id={} submitted brand request name={}", currentUser.getId(), LogSanitizer.forLog(form.getName(), LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         return redirectToCatalog("brand");
     }
 
     @RequestMapping(value = "/body-type-requests", method = RequestMethod.POST)
-    public ModelAndView requestBodyType(@RequestParam(value = "name", required = false) final String name,
-                                        @RequestParam(value = "comments", required = false) final String comments,
+    public ModelAndView requestBodyType(@Valid @ModelAttribute("catalogNameRequestForm") final CatalogNameRequestForm form,
+                                        final BindingResult errors,
                                         @RequestHeader(value = "Referer", required = false) final String referer,
                                         @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
-        if (name == null || name.isBlank() || name.length() > CATALOG_NAME_MAX_LENGTH) {
-            LOGGER.warn("body type request rejected: blank or too-long name userId={}", currentUser.getId());
+        if (errors.hasErrors()) {
+            LOGGER.warn("body type request rejected: validation errors userId={} errorCount={}",
+                    currentUser.getId(), errors.getErrorCount());
             return redirectBack(referer);
         }
-        if (comments != null && comments.length() > CATALOG_COMMENTS_MAX_LENGTH) {
-            LOGGER.warn("body type request rejected: comments too long userId={}", currentUser.getId());
-            return redirectBack(referer);
-        }
-        bodyTypeRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), name, comments);
-        LOGGER.info("user id={} submitted body type request name={}", currentUser.getId(), LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
+        bodyTypeRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), form.getName(), form.getComments());
+        LOGGER.info("user id={} submitted body type request name={}", currentUser.getId(), LogSanitizer.forLog(form.getName(), LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         return redirectToCatalog("body-type");
     }
 
     @RequestMapping(value = "/admin-requests", method = RequestMethod.POST)
-    public ModelAndView requestAdmin(@RequestParam(value = "motivation", required = false) final String motivation,
-                                     @RequestParam(value = "bio", required = false) final String bio,
-                                     @RequestParam(value = "justification", required = false) final String justification,
+    public ModelAndView requestAdmin(@Valid @ModelAttribute("adminRoleRequestForm") final AdminRoleRequestForm form,
+                                     final BindingResult errors,
                                      @RequestHeader(value = "Referer", required = false) final String referer,
                                      @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
-        if (motivation == null || motivation.isBlank()
-                || bio == null || bio.isBlank()
-                || justification == null || justification.isBlank()) {
-            LOGGER.warn("admin request rejected: missing fields userId={}", currentUser.getId());
-            return redirectBack(referer);
-        }
-        if (motivation.length() > ADMIN_REQUEST_FIELD_MAX_LENGTH
-                || bio.length() > ADMIN_REQUEST_FIELD_MAX_LENGTH
-                || justification.length() > ADMIN_REQUEST_FIELD_MAX_LENGTH) {
-            LOGGER.warn("admin request rejected: field too long userId={}", currentUser.getId());
+        if (errors.hasErrors()) {
+            LOGGER.warn("admin request rejected: validation errors userId={} errorCount={}",
+                    currentUser.getId(), errors.getErrorCount());
             return redirectBack(referer);
         }
         if (adminRequestService.hasPendingRequest(currentUser.getId())) {
@@ -116,7 +102,7 @@ public class CatalogRequestController {
             return redirectBack(referer);
         }
         adminRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(),
-                motivation, bio, justification);
+                form.getMotivation(), form.getBio(), form.getJustification());
         LOGGER.info("user id={} submitted admin moderator request", currentUser.getId());
         return redirectBack(referer, "moderator");
     }

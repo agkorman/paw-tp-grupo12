@@ -195,7 +195,7 @@ public class UserServiceImplTest {
                 () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD));
 
         // Assertions
-        assertEquals("Username is already registered.", ex.getMessage());
+        assertEquals("Username is already registered: Joaco", ex.getMessage());
     }
 
     @Test
@@ -210,7 +210,7 @@ public class UserServiceImplTest {
                 () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD));
 
         // Assertions
-        assertEquals("Email is already registered.", ex.getMessage());
+        assertEquals("Email is already registered: joaco@example.com", ex.getMessage());
     }
 
     @Test

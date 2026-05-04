@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -85,18 +84,22 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
 
     @Override
     public Map<Long, Long> countNewLikesPerReview(final long userId, final LocalDateTime since) {
-        final Map<Long, Long> counts = new HashMap<>();
-        jdbcTemplate.query(
+        return jdbcTemplate.query(
                 "SELECT r.review_id, COUNT(*) AS like_count "
                         + "FROM reviews r "
                         + "JOIN review_likes rl ON rl.review_id = r.review_id "
                         + "WHERE r.user_id = ? AND rl.created_at >= ? "
                         + "GROUP BY r.review_id",
-                (RowCallbackHandler) rs -> counts.put(rs.getLong("review_id"), rs.getLong("like_count")),
+                rs -> {
+                    final Map<Long, Long> counts = new HashMap<>();
+                    while (rs.next()) {
+                        counts.put(rs.getLong("review_id"), rs.getLong("like_count"));
+                    }
+                    return counts;
+                },
                 userId,
                 Timestamp.valueOf(since)
         );
-        return counts;
     }
 
     @Override
@@ -238,17 +241,19 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
             return Map.of();
         }
 
-        final Map<Long, Long> counts = new HashMap<>();
-        namedParameterJdbcTemplate.query(
+        return namedParameterJdbcTemplate.query(
                 "SELECT " + idColumn + " AS liked_id, COUNT(*) AS like_count "
                         + "FROM " + tableName + " WHERE " + idColumn + " IN (:" + paramName + ") "
                         + "GROUP BY " + idColumn,
                 new MapSqlParameterSource(paramName, ids),
                 rs -> {
-                    counts.put(rs.getLong("liked_id"), rs.getLong("like_count"));
+                    final Map<Long, Long> counts = new HashMap<>();
+                    while (rs.next()) {
+                        counts.put(rs.getLong("liked_id"), rs.getLong("like_count"));
+                    }
+                    return counts;
                 }
         );
-        return counts;
     }
 
     private Set<Long> findLikedIds(final String tableName, final String idColumn, final String paramName,

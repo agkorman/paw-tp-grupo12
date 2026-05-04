@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -125,7 +126,7 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldWrapDaoExceptionWhenCreatingPendingRequestFails() {
         // Arrange
-        final RuntimeException cause = new RuntimeException("database unavailable");
+        final DataAccessResourceFailureException cause = new DataAccessResourceFailureException("database unavailable");
         when(carRequestDao.create(eq(USER_ID), eq(EMAIL), eq(BRAND_ID), eq(BODY_TYPE_ID), eq(2024),
                 eq("Corolla"), eq("desc"), eq(null), eq(null), eq(CarRequestService.STATUS_PENDING),
                 eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"), eq(new BigDecimal("6.5")), eq(190),

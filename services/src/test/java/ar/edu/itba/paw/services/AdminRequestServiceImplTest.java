@@ -113,7 +113,7 @@ public class AdminRequestServiceImplTest {
                 () -> adminRequestService.createPendingRequest(USER_ID, EMAIL, MOTIVATION, BIO, JUSTIFICATION));
 
         // Assertions
-        assertEquals("User already has a pending admin request.", ex.getMessage());
+        assertEquals("User already has a pending admin request: 42", ex.getMessage());
     }
 
     @Test

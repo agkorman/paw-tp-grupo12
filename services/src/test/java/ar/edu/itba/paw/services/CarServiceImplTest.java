@@ -9,7 +9,6 @@ import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
-import ar.edu.itba.paw.persistence.ReviewDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -41,8 +40,6 @@ public class CarServiceImplTest {
     private CarDao carDao;
     @Mock
     private CarImageDao carImageDao;
-    @Mock
-    private ReviewDao reviewDao;
     @Mock
     private CarRequestService carRequestService;
     @Mock

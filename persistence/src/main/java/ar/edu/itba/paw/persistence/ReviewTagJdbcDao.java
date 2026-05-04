@@ -98,8 +98,7 @@ public class ReviewTagJdbcDao implements ReviewTagDao {
         if (carIds == null || carIds.isEmpty()) {
             return Map.of();
         }
-        final Map<Long, Map<Short, Integer>> result = new HashMap<>();
-        namedParameterJdbcTemplate.query(
+        return namedParameterJdbcTemplate.query(
                 "SELECT r.car_id, rta.tag_id, COUNT(*) AS mentions "
                         + "FROM review_tag_assignments rta "
                         + "JOIN reviews r ON r.review_id = rta.review_id "
@@ -107,13 +106,16 @@ public class ReviewTagJdbcDao implements ReviewTagDao {
                         + "GROUP BY r.car_id, rta.tag_id",
                 new MapSqlParameterSource("carIds", carIds),
                 rs -> {
-                    final long carId = rs.getLong("car_id");
-                    final short tagId = rs.getShort("tag_id");
-                    final int mentions = rs.getInt("mentions");
-                    result.computeIfAbsent(carId, k -> new HashMap<>()).put(tagId, mentions);
+                    final Map<Long, Map<Short, Integer>> result = new HashMap<>();
+                    while (rs.next()) {
+                        final long carId = rs.getLong("car_id");
+                        final short tagId = rs.getShort("tag_id");
+                        final int mentions = rs.getInt("mentions");
+                        result.computeIfAbsent(carId, k -> new HashMap<>()).put(tagId, mentions);
+                    }
+                    return result;
                 }
         );
-        return result;
     }
 
     @Override
@@ -121,8 +123,7 @@ public class ReviewTagJdbcDao implements ReviewTagDao {
         if (reviewIds == null || reviewIds.isEmpty()) {
             return Map.of();
         }
-        final Map<Long, List<ReviewTag>> result = new HashMap<>();
-        namedParameterJdbcTemplate.query(
+        return namedParameterJdbcTemplate.query(
                 "SELECT rta.review_id, rt.tag_id, rt.code, rt.label_es, rt.sentiment, rt.dimension, rt.created_at "
                         + "FROM review_tag_assignments rta "
                         + "JOIN review_tags rt ON rt.tag_id = rta.tag_id "
@@ -130,18 +131,21 @@ public class ReviewTagJdbcDao implements ReviewTagDao {
                         + "ORDER BY rta.review_id, rt.sentiment, rt.dimension, rt.label_es",
                 new MapSqlParameterSource("ids", reviewIds),
                 rs -> {
-                    final long reviewId = rs.getLong("review_id");
-                    final ReviewTag tag = new ReviewTag(
-                            rs.getShort("tag_id"),
-                            rs.getString("code"),
-                            rs.getString("label_es"),
-                            rs.getString("sentiment"),
-                            rs.getString("dimension"),
-                            rs.getTimestamp("created_at").toLocalDateTime()
-                    );
-                    result.computeIfAbsent(reviewId, k -> new ArrayList<>()).add(tag);
+                    final Map<Long, List<ReviewTag>> result = new HashMap<>();
+                    while (rs.next()) {
+                        final long reviewId = rs.getLong("review_id");
+                        final ReviewTag tag = new ReviewTag(
+                                rs.getShort("tag_id"),
+                                rs.getString("code"),
+                                rs.getString("label_es"),
+                                rs.getString("sentiment"),
+                                rs.getString("dimension"),
+                                rs.getTimestamp("created_at").toLocalDateTime()
+                        );
+                        result.computeIfAbsent(reviewId, k -> new ArrayList<>()).add(tag);
+                    }
+                    return result;
                 }
         );
-        return result;
     }
 }

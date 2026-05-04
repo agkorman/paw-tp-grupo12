@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -90,7 +91,7 @@ public class ReviewReplyServiceImplTest {
         // Arrange
         when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(review()));
         when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
-        when(reviewReplyDao.create(REVIEW_ID, USER_ID, "Reply body")).thenThrow(new RuntimeException("db"));
+        when(reviewReplyDao.create(REVIEW_ID, USER_ID, "Reply body")).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
         final IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -111,7 +112,7 @@ public class ReviewReplyServiceImplTest {
                 () -> reviewReplyService.deleteReply(REPLY_ID, requestingUserId));
 
         // Assertions
-        assertEquals("Reply does not belong to the user.", ex.getMessage());
+        assertEquals("Review reply 30 does not belong to user 99", ex.getMessage());
     }
 
     @Test
@@ -130,7 +131,7 @@ public class ReviewReplyServiceImplTest {
     @Test
     public void shouldReturnEmptyGroupedRepliesWhenDaoThrows() {
         // Arrange
-        when(reviewReplyDao.findByReviewIds(List.of(REVIEW_ID))).thenThrow(new RuntimeException("db"));
+        when(reviewReplyDao.findByReviewIds(List.of(REVIEW_ID))).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
         final Map<Long, List<ReviewReply>> result = reviewReplyService.getRepliesByReviewIds(List.of(REVIEW_ID));
