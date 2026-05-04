@@ -16,11 +16,7 @@
     var starLabel = modal.querySelector('.star-rating-value');
     var currentRating = 0;
 
-    var modelYearInput = $('modalModelYear');
     var mileageInput = $('modalMileageKm');
-    function formatMessage(template, value) {
-        return (template || '').replace('{0}', value);
-    }
 
     function dataKeyForInput(prefix, input) {
         return prefix + input.id.charAt(0).toLowerCase() + input.id.slice(1).replace(/[A-Z]/g, function (letter) {
@@ -38,8 +34,8 @@
 
     function starTextFor(value) {
         if (value === 0) return form.getAttribute('data-rating-none') || '';
-        if (value <= 1) return form.getAttribute('data-rating-poor') || '';
-        if (value <= 2) return form.getAttribute('data-rating-regular') || '';
+        if (value <= 1) return form.getAttribute('data-rating-bad') || '';
+        if (value <= 2) return form.getAttribute('data-rating-fair') || '';
         if (value <= 3) return form.getAttribute('data-rating-good') || '';
         if (value <= 4) return form.getAttribute('data-rating-very-good') || '';
         return form.getAttribute('data-rating-excellent') || '';
@@ -285,28 +281,8 @@
     }
 
     function validateNumerics() {
-        var minYear = 1950;
-        var maxYear = 2026;
         var ok = true;
-        clearInlineError(modelYearInput);
         clearInlineError(mileageInput);
-
-        if (modelYearInput) {
-            var year = modelYearInput.value.trim();
-            modelYearInput.value = year;
-            if (year.length > 0) {
-                if (!isInt(year)) {
-                    setInlineError(modelYearInput, message('model-year-numeric'));
-                    ok = false;
-                } else {
-                    var parsedYear = Number(year);
-                    if (parsedYear < minYear || parsedYear > maxYear) {
-                        setInlineError(modelYearInput, formatMessage(message('model-year-range'), maxYear));
-                        ok = false;
-                    }
-                }
-            }
-        }
 
         if (mileageInput) {
             var mileage = mileageInput.value.trim();
@@ -361,7 +337,6 @@
 
     form.noValidate = true;
 
-    if (modelYearInput) modelYearInput.addEventListener('input', function () { clearInlineError(modelYearInput); });
     if (mileageInput) mileageInput.addEventListener('input', function () { clearInlineError(mileageInput); });
     Array.prototype.slice.call(form.querySelectorAll('[required]')).forEach(function (input) {
         input.addEventListener('input', function () {

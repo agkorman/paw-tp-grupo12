@@ -61,9 +61,11 @@
 
     function applyReviewLikeState(button, state) {
         var countNode = button.querySelector('[data-review-like-count]');
+        var addLabel = button.getAttribute('data-like-add-label') || '';
+        var removeLabel = button.getAttribute('data-like-remove-label') || '';
 
         setPressedState(button, 'data-liked', state.liked);
-        button.setAttribute('aria-label', state.liked ? 'Quitar like' : 'Dar like');
+        button.setAttribute('aria-label', state.liked ? removeLabel : addLabel);
 
         if (countNode) {
             countNode.textContent = String(Math.max(0, state.count));
@@ -81,11 +83,15 @@
 
     function updateFavoriteButton(button, favorited) {
         var label = button.querySelector('span');
+        var addLabel = button.getAttribute('data-favorite-add-label') || '';
+        var removeLabel = button.getAttribute('data-favorite-remove-label') || '';
+        var activeLabel = button.getAttribute('data-favorite-active-label') || '';
+        var inactiveLabel = button.getAttribute('data-favorite-inactive-label') || '';
 
         setPressedState(button, 'data-favorited', favorited);
-        button.setAttribute('aria-label', favorited ? 'Quitar de favoritos' : 'Agregar a favoritos');
+        button.setAttribute('aria-label', favorited ? removeLabel : addLabel);
         if (label) {
-            label.textContent = favorited ? 'Favorito' : 'Agregar';
+            label.textContent = favorited ? activeLabel : inactiveLabel;
         }
     }
 

@@ -719,10 +719,10 @@ public class CarReviewController {
 
     private String validateReplyInput(final String body) {
         if (body == null || body.trim().isEmpty()) {
-            return "La respuesta no puede estar vacía.";
+            return message("review.reply.body.required");
         }
         if (body.trim().length() > MAX_REPLY_BODY_LENGTH) {
-            return "La respuesta debe tener como máximo " + MAX_REPLY_BODY_LENGTH + " caracteres.";
+            return message("review.reply.body.max", MAX_REPLY_BODY_LENGTH);
         }
         return null;
     }

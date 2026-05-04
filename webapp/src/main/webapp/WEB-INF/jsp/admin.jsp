@@ -5,7 +5,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="admin.title" styles="/css/reviews.css|/css/admin.css"/>
+<pa:page-head titleCode="admin.title" styles="/css/reviews.css|/css/cars.css|/css/admin.css"/>
 <body>
     <pa:nav activePage="admin"/>
     <spring:message var="brandKicker" code="cars.form.brand"/>
@@ -60,6 +60,8 @@
             <c:url var="adminBaseUrl" value="/admin"/>
             <jsp:useBean id="adminPaginationParams" class="java.util.LinkedHashMap" scope="page"/>
             <c:set target="${adminPaginationParams}" property="tab" value="${activeTab}"/>
+            <spring:message var="brandKicker"    code="admin.brandRequests.kicker"/>
+            <spring:message var="bodyTypeKicker" code="admin.bodyTypeRequests.kicker"/>
 
             <c:choose>
                 <c:when test="${activeTab eq 'brands'}">

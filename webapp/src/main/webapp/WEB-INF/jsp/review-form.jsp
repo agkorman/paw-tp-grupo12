@@ -1,26 +1,11 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <spring:message var="reviewFormTitleText" code="${editMode ? 'review.form.title.edit' : 'review.form.title.new'}"/>
 <spring:message var="appNameTitleText" code="app.name"/>
-<spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
-<spring:message var="jsReviewRequiredTitle" code="js.review.required.title"/>
-<spring:message var="jsReviewRequiredBody" code="js.review.required.body"/>
-<spring:message var="jsReviewRequiredModelYear" code="js.review.required.modelYear"/>
-<spring:message var="jsReviewRequiredMileage" code="js.review.required.mileage"/>
-<spring:message var="jsReviewRequiredRating" code="js.review.required.rating"/>
-<spring:message var="jsReviewModelYearNumeric" code="js.review.modelYear.numeric"/>
-<spring:message var="jsReviewModelYearRange" code="js.review.modelYear.range"/>
-<spring:message var="jsReviewMileageNumeric" code="js.review.mileage.numeric"/>
-<spring:message var="jsReviewMileageRange" code="js.review.mileage.range"/>
-<spring:message var="jsRatingNone" code="review.form.rating.none"/>
-<spring:message var="jsRatingPoor" code="review.rating.poor"/>
-<spring:message var="jsRatingRegular" code="review.rating.regular"/>
-<spring:message var="jsRatingGood" code="review.rating.good"/>
-<spring:message var="jsRatingVeryGood" code="review.rating.veryGood"/>
-<spring:message var="jsRatingExcellent" code="review.rating.excellent"/>
 <c:set var="reviewFormPageTitle" value="${reviewFormTitleText} | ${appNameTitleText}"/>
 <!DOCTYPE html>
 <html lang="es">
@@ -37,8 +22,20 @@
     <c:set var="reviewFormCancelUrl" value="${editMode ? profileUrl : reviewCancelUrl}"/>
     <spring:message var="reviewTitlePlaceholder" code="review.form.placeholder.title"/>
     <spring:message var="reviewBodyPlaceholder" code="review.form.placeholder.body"/>
-    <spring:message var="reviewYearPlaceholder" code="review.form.placeholder.year"/>
     <spring:message var="reviewMileagePlaceholder" code="review.form.placeholder.mileage"/>
+    <spring:message var="jsMsgRequiredGeneric" code="js.form.required.generic"/>
+    <spring:message var="jsMsgRequiredTitle" code="js.review.required.title"/>
+    <spring:message var="jsMsgRequiredBody" code="js.review.required.body"/>
+    <spring:message var="jsMsgRequiredMileage" code="js.review.required.mileage"/>
+    <spring:message var="jsMsgRequiredRating" code="js.review.required.rating"/>
+    <spring:message var="jsMsgMileageNumeric" code="js.review.mileage.numeric"/>
+    <spring:message var="jsMsgMileageRange" code="js.review.mileage.range"/>
+    <spring:message var="jsMsgRatingNone" code="js.review.rating.none"/>
+    <spring:message var="jsMsgRatingBad" code="js.review.rating.bad"/>
+    <spring:message var="jsMsgRatingFair" code="js.review.rating.fair"/>
+    <spring:message var="jsMsgRatingGood" code="js.review.rating.good"/>
+    <spring:message var="jsMsgRatingVeryGood" code="js.review.rating.veryGood"/>
+    <spring:message var="jsMsgRatingExcellent" code="js.review.rating.excellent"/>
 
     <main class="form-page">
         <section id="createReviewFormPage" class="form-page-panel" data-default-car-id="${selectedCar.id}" aria-labelledby="createReviewTitle">
@@ -58,22 +55,19 @@
                        method="post" action="${reviewFormAction}"
                        data-create-action="${reviewCreateUrl}"
                        data-submit-lock="true"
-                       data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
-                       data-msg-required-modal-title="${fn:escapeXml(jsReviewRequiredTitle)}"
-                       data-msg-required-modal-body="${fn:escapeXml(jsReviewRequiredBody)}"
-                       data-msg-required-modal-model-year="${fn:escapeXml(jsReviewRequiredModelYear)}"
-                       data-msg-required-modal-mileage-km="${fn:escapeXml(jsReviewRequiredMileage)}"
-                       data-msg-required-rating="${fn:escapeXml(jsReviewRequiredRating)}"
-                       data-msg-model-year-numeric="${fn:escapeXml(jsReviewModelYearNumeric)}"
-                       data-msg-model-year-range="${fn:escapeXml(jsReviewModelYearRange)}"
-                       data-msg-mileage-numeric="${fn:escapeXml(jsReviewMileageNumeric)}"
-                       data-msg-mileage-range="${fn:escapeXml(jsReviewMileageRange)}"
-                       data-rating-none="${fn:escapeXml(jsRatingNone)}"
-                       data-rating-poor="${fn:escapeXml(jsRatingPoor)}"
-                       data-rating-regular="${fn:escapeXml(jsRatingRegular)}"
-                       data-rating-good="${fn:escapeXml(jsRatingGood)}"
-                       data-rating-very-good="${fn:escapeXml(jsRatingVeryGood)}"
-                       data-rating-excellent="${fn:escapeXml(jsRatingExcellent)}"
+                       data-msg-required-generic="${fn:escapeXml(jsMsgRequiredGeneric)}"
+                       data-msg-required-modal-title="${fn:escapeXml(jsMsgRequiredTitle)}"
+                       data-msg-required-modal-body="${fn:escapeXml(jsMsgRequiredBody)}"
+                       data-msg-required-modal-mileage-km="${fn:escapeXml(jsMsgRequiredMileage)}"
+                       data-msg-required-rating="${fn:escapeXml(jsMsgRequiredRating)}"
+                       data-msg-mileage-numeric="${fn:escapeXml(jsMsgMileageNumeric)}"
+                       data-msg-mileage-range="${fn:escapeXml(jsMsgMileageRange)}"
+                       data-rating-none="${fn:escapeXml(jsMsgRatingNone)}"
+                       data-rating-bad="${fn:escapeXml(jsMsgRatingBad)}"
+                       data-rating-fair="${fn:escapeXml(jsMsgRatingFair)}"
+                       data-rating-good="${fn:escapeXml(jsMsgRatingGood)}"
+                       data-rating-very-good="${fn:escapeXml(jsMsgRatingVeryGood)}"
+                       data-rating-excellent="${fn:escapeXml(jsMsgRatingExcellent)}"
                        novalidate="novalidate">
                 <form:errors cssClass="alert alert-error" element="div"/>
                 <c:if test="${not empty error}">
@@ -145,15 +139,9 @@
                         <form:errors path="body" cssClass="form-error" element="span"/>
                     </div>
                     <div class="modal-field">
-                        <label for="modalModelYear"><spring:message code="review.form.modelYear"/></label>
-                        <form:input id="modalModelYear" path="modelYear" type="text" inputmode="numeric"
-                                    maxlength="4" required="required" placeholder="${reviewYearPlaceholder}"/>
-                        <form:errors path="modelYear" cssClass="form-error" element="span"/>
-                    </div>
-                    <div class="modal-field">
                         <label for="modalMileageKm"><spring:message code="review.form.mileage"/></label>
-                        <form:input id="modalMileageKm" path="mileageKm" type="text" inputmode="numeric"
-                                    maxlength="7" required="required" placeholder="${reviewMileagePlaceholder}"/>
+                        <form:input id="modalMileageKm" path="mileageKm" type="number"
+                                    min="0" max="2000000" required="required" placeholder="${reviewMileagePlaceholder}"/>
                         <form:errors path="mileageKm" cssClass="form-error" element="span"/>
                     </div>
 
