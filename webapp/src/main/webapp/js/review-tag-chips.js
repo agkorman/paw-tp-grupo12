@@ -29,6 +29,21 @@
             return Array.prototype.some.call(cbs, function (cb) { return cb.checked; });
         }
 
+        function selectedDimensions(container) {
+            if (!container) return new Set();
+            var dims = new Set();
+            var cbs = container.querySelectorAll('input[type="checkbox"][name="tagIds"]');
+            Array.prototype.forEach.call(cbs, function (cb) {
+                if (cb.checked) {
+                    var dim = cb.getAttribute('data-dimension') || '';
+                    if (dim) {
+                        dims.add(dim);
+                    }
+                }
+            });
+            return dims;
+        }
+
         function setGroupError(text) {
             var hint = group.querySelector('.review-tag-chips-hint');
             if (!hint) return;
@@ -48,12 +63,12 @@
             setGroupError('');
         }
 
-        function setDisabled(container, disabled) {
+        function setDisabled(container, predicate) {
             if (!container) return;
             var cbs = container.querySelectorAll('input[type="checkbox"][name="tagIds"]');
             Array.prototype.forEach.call(cbs, function (cb) {
                 if (!cb.checked) {
-                    cb.disabled = !!disabled;
+                    cb.disabled = !!(predicate && predicate(cb));
                 }
                 var label = cb.parentElement;
                 if (label) {
@@ -72,18 +87,16 @@
                 }
             });
 
-            var positiveSelected = hasCheckedIn(positiveWrap);
-            var negativeSelected = hasCheckedIn(negativeWrap);
-            if (positiveSelected && !negativeSelected) {
-                setDisabled(negativeWrap, true);
-                setDisabled(positiveWrap, false);
-            } else if (negativeSelected && !positiveSelected) {
-                setDisabled(positiveWrap, true);
-                setDisabled(negativeWrap, false);
-            } else {
-                setDisabled(positiveWrap, false);
-                setDisabled(negativeWrap, false);
-            }
+            var positiveDims = selectedDimensions(positiveWrap);
+            var negativeDims = selectedDimensions(negativeWrap);
+            setDisabled(positiveWrap, function (cb) {
+                var dim = cb.getAttribute('data-dimension') || '';
+                return dim && negativeDims.has(dim);
+            });
+            setDisabled(negativeWrap, function (cb) {
+                var dim = cb.getAttribute('data-dimension') || '';
+                return dim && positiveDims.has(dim);
+            });
         }
 
         Array.prototype.forEach.call(checkboxes, function (cb) {
@@ -99,13 +112,16 @@
                         return;
                     }
 
-                    var nowPositive = positiveWrap && positiveWrap.contains(cb);
-                    var nowNegative = negativeWrap && negativeWrap.contains(cb);
-                    if ((nowPositive && hasCheckedIn(negativeWrap)) || (nowNegative && hasCheckedIn(positiveWrap))) {
-                        cb.checked = false;
-                        setGroupError(message('opposites'));
-                        refresh();
-                        return;
+                    var dim = cb.getAttribute('data-dimension') || '';
+                    if (dim) {
+                        var nowPositive = positiveWrap && positiveWrap.contains(cb);
+                        var nowNegative = negativeWrap && negativeWrap.contains(cb);
+                        if ((nowPositive && selectedDimensions(negativeWrap).has(dim)) || (nowNegative && selectedDimensions(positiveWrap).has(dim))) {
+                            cb.checked = false;
+                            setGroupError(message('opposites'));
+                            refresh();
+                            return;
+                        }
                     }
                 }
 
