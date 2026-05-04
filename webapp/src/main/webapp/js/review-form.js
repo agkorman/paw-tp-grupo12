@@ -16,22 +16,29 @@
     var starLabel = modal.querySelector('.star-rating-value');
     var currentRating = 0;
 
-    var modelYearInput = $('modalModelYear');
     var mileageInput = $('modalMileageKm');
-    var requiredMessages = {
-        modalTitle: modal.dataset.msgRequiredTitle || '',
-        modalBody: modal.dataset.msgRequiredBody || '',
-        modalModelYear: modal.dataset.msgRequiredModelYear || '',
-        modalMileageKm: modal.dataset.msgRequiredMileage || ''
-    };
+
+    function dataKeyForInput(prefix, input) {
+        return prefix + input.id.charAt(0).toLowerCase() + input.id.slice(1).replace(/[A-Z]/g, function (letter) {
+            return '-' + letter.toLowerCase();
+        });
+    }
+
+    function message(key) {
+        return form.getAttribute('data-msg-' + key) || '';
+    }
+
+    function requiredMessage(input) {
+        return message(dataKeyForInput('required-', input)) || message('required-generic');
+    }
 
     function starTextFor(value) {
-        if (value === 0) return modal.dataset.msgRatingNone || '';
-        if (value <= 1) return modal.dataset.msgRatingBad || '';
-        if (value <= 2) return modal.dataset.msgRatingFair || '';
-        if (value <= 3) return modal.dataset.msgRatingGood || '';
-        if (value <= 4) return modal.dataset.msgRatingVeryGood || '';
-        return modal.dataset.msgRatingExcellent || '';
+        if (value === 0) return form.getAttribute('data-rating-none') || '';
+        if (value <= 1) return form.getAttribute('data-rating-bad') || '';
+        if (value <= 2) return form.getAttribute('data-rating-fair') || '';
+        if (value <= 3) return form.getAttribute('data-rating-good') || '';
+        if (value <= 4) return form.getAttribute('data-rating-very-good') || '';
+        return form.getAttribute('data-rating-excellent') || '';
     }
 
     function paintStar(slot, starNum, rating) {
@@ -115,7 +122,7 @@
     function fieldContainer(input) {
         var node = input;
         while (node && node !== modal) {
-            if (node.classList && node.classList.contains('review-modal-field')) {
+            if (node.classList && node.classList.contains('modal-field')) {
                 return node;
             }
             node = node.parentNode;
@@ -213,7 +220,7 @@
 
     function validateRating() {
         if (!starInput || !starInput.value) {
-            setRatingError(modal.dataset.msgRequiredRating || '');
+            setRatingError(message('required-rating'));
             if (starWrap) {
                 starWrap.focus();
             }
@@ -261,7 +268,7 @@
 
         clearInlineError(input);
         if (input.required && (!input.value || input.value.trim() === '')) {
-            setInlineError(input, requiredMessages[input.id] || modal.dataset.msgRequiredGeneric || '');
+            setInlineError(input, requiredMessage(input));
             return false;
         }
         return true;
@@ -274,40 +281,20 @@
     }
 
     function validateNumerics() {
-        var minYear = parseInt(modal.dataset.minYear, 10) || 1886;
-        var maxYear = parseInt(modal.dataset.maxYear, 10) || new Date().getFullYear();
         var ok = true;
-        clearInlineError(modelYearInput);
         clearInlineError(mileageInput);
-
-        if (modelYearInput) {
-            var year = modelYearInput.value.trim();
-            modelYearInput.value = year;
-            if (year.length > 0) {
-                if (!isInt(year)) {
-                    setInlineError(modelYearInput, modal.dataset.msgModelYearNumeric || '');
-                    ok = false;
-                } else {
-                    var parsedYear = Number(year);
-                    if (parsedYear < minYear || parsedYear > maxYear) {
-                        setInlineError(modelYearInput, modal.dataset.msgModelYearRange || '');
-                        ok = false;
-                    }
-                }
-            }
-        }
 
         if (mileageInput) {
             var mileage = mileageInput.value.trim();
             mileageInput.value = mileage;
             if (mileage.length > 0) {
                 if (!isInt(mileage)) {
-                    setInlineError(mileageInput, modal.dataset.msgMileageNumeric || '');
+                    setInlineError(mileageInput, message('mileage-numeric'));
                     ok = false;
                 } else {
                     var parsedMileage = Number(mileage);
                     if (parsedMileage < 0 || parsedMileage > 2000000) {
-                        setInlineError(mileageInput, modal.dataset.msgMileageRange || '');
+                        setInlineError(mileageInput, message('mileage-range'));
                         ok = false;
                     }
                 }
@@ -350,7 +337,6 @@
 
     form.noValidate = true;
 
-    if (modelYearInput) modelYearInput.addEventListener('input', function () { clearInlineError(modelYearInput); });
     if (mileageInput) mileageInput.addEventListener('input', function () { clearInlineError(mileageInput); });
     Array.prototype.slice.call(form.querySelectorAll('[required]')).forEach(function (input) {
         input.addEventListener('input', function () {

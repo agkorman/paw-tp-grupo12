@@ -5,20 +5,13 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="admin.title"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=5'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/admin.css?v=10'/>">
-</head>
+<pa:page-head titleCode="admin.title" styles="/css/reviews.css|/css/cars.css|/css/admin.css"/>
 <body>
     <pa:nav activePage="admin"/>
+    <spring:message var="brandKicker" code="cars.form.brand"/>
+    <spring:message var="bodyTypeKicker" code="cars.form.bodyType"/>
+    <spring:message var="pendingStatusLabel" code="common.status.pending"/>
+    <spring:message var="reviewActionLabel" code="common.action.review"/>
 
     <main class="admin-page">
         <section class="admin-hero">
@@ -183,8 +176,8 @@
                                             imageUrl="${request.imageUrl}"
                                             href="${requestReviewUrl}"
                                             submitter="${request.submitter}"
-                                            footerText="Solicitud pendiente"
-                                            actionText="Revisar"/>
+                                            footerText="${pendingStatusLabel}"
+                                            actionText="${reviewActionLabel}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -204,8 +197,8 @@
 
     </main>
 
-    <pa:admin-catalog-request-modal/>
-    <pa:admin-request-review-modal/>
+    <pa:admin-catalog-request-review-modal/>
+    <pa:moderator-application-review-modal/>
     <c:choose>
         <c:when test="${not empty param.carAccepted}">
             <pa:toast messageCode="admin.carRequest.accept.toast.success"/>
@@ -217,10 +210,11 @@
             <pa:toast/>
         </c:otherwise>
     </c:choose>
-    <script src="<c:url value='/js/toast.js'/>"></script>
-    <script src="<c:url value='/js/admin-catalog-modal.js?v=2'/>"></script>
-    <script src="<c:url value='/js/admin-request-modal.js?v=2'/>"></script>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:script src="/js/modal-utils.js"/>
+    <pa:script src="/js/admin-catalog-request-modal.js"/>
+    <pa:script src="/js/moderator-application-review-modal.js"/>
+    <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/toast.js"/>
     <pa:footer/>
 </body>
 </html>

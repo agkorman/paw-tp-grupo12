@@ -1,0 +1,147 @@
+(function () {
+    var modal = document.getElementById('adminRequestReviewModal');
+    if (!modal) {
+        return;
+    }
+
+    var submitterField = document.getElementById('adminRequestReviewSubmitter');
+    var motivationField = document.getElementById('adminRequestReviewMotivation');
+    var bioField = document.getElementById('adminRequestReviewBio');
+    var justificationField = document.getElementById('adminRequestReviewJustification');
+    var acceptForm = document.getElementById('adminRequestAcceptForm');
+    var rejectForm = document.getElementById('adminRequestRejectForm');
+    var adminBaseUrl = (modal.getAttribute('data-admin-base-url') || '/admin').replace(/\/$/, '');
+    var acceptSuccessMsg = modal.getAttribute('data-accept-success-msg') || '';
+    var rejectSuccessMsg = modal.getAttribute('data-reject-success-msg') || '';
+    var errorMsg = modal.getAttribute('data-error-msg') || '';
+
+    var lastTrigger = null;
+
+    function findOpenTrigger(node) {
+        while (node && node !== document) {
+            if (node.nodeType === 1 && node.hasAttribute && node.hasAttribute('data-open-admin-request-review')) {
+                return node;
+            }
+            node = node.parentNode;
+        }
+        return null;
+    }
+
+    function findCloseAncestor(node) {
+        while (node && node !== document) {
+            if (node.nodeType === 1 && node.hasAttribute && node.hasAttribute('data-close-admin-request-review-modal')) {
+                return node;
+            }
+            node = node.parentNode;
+        }
+        return null;
+    }
+
+    function open(trigger) {
+        var requestId = trigger.getAttribute('data-request-id') || '';
+        var submitter = trigger.getAttribute('data-request-submitter') || '';
+        var motivation = trigger.getAttribute('data-request-motivation') || '';
+        var bio = trigger.getAttribute('data-request-bio') || '';
+        var justification = trigger.getAttribute('data-request-justification') || '';
+
+        if (submitterField) {
+            submitterField.textContent = submitter;
+        }
+        if (motivationField) {
+            motivationField.value = motivation;
+        }
+        if (bioField) {
+            bioField.value = bio;
+        }
+        if (justificationField) {
+            justificationField.value = justification;
+        }
+
+        var basePath = adminBaseUrl + '/admin-requests/' + encodeURIComponent(requestId);
+        if (acceptForm) {
+            acceptForm.setAttribute('action', basePath + '/accept');
+        }
+        if (rejectForm) {
+            rejectForm.setAttribute('action', basePath + '/reject');
+        }
+
+        lastTrigger = trigger;
+        modal.removeAttribute('hidden');
+        document.body.classList.add('modal-open');
+    }
+
+    function close() {
+        modal.setAttribute('hidden', 'hidden');
+        document.body.classList.remove('modal-open');
+        if (lastTrigger && document.contains(lastTrigger) && typeof lastTrigger.focus === 'function') {
+            lastTrigger.focus();
+        }
+        lastTrigger = null;
+    }
+
+    function removeTriggerCard(trigger) {
+        if (trigger && trigger.parentNode) {
+            trigger.parentNode.removeChild(trigger);
+        }
+    }
+
+    function showToast(message, type) {
+        if (window.PawToast && typeof window.PawToast.show === 'function') {
+            window.PawToast.show(message, type);
+        }
+    }
+
+    function submitAjax(form, successMsg) {
+        var trigger = lastTrigger;
+        var action = form.getAttribute('action');
+        var data = new FormData(form);
+        close();
+        fetch(action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: data
+        }).then(function (res) {
+            if (res.ok) {
+                removeTriggerCard(trigger);
+                showToast(successMsg, 'success');
+            } else {
+                showToast(errorMsg, 'error');
+            }
+        }).catch(function () {
+            showToast(errorMsg, 'error');
+        });
+    }
+
+    if (acceptForm) {
+        acceptForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            submitAjax(acceptForm, acceptSuccessMsg);
+        });
+    }
+
+    if (rejectForm) {
+        rejectForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            submitAjax(rejectForm, rejectSuccessMsg);
+        });
+    }
+
+    document.addEventListener('click', function (event) {
+        var openTrigger = findOpenTrigger(event.target);
+        if (openTrigger) {
+            event.preventDefault();
+            open(openTrigger);
+            return;
+        }
+        if (findCloseAncestor(event.target)) {
+            event.preventDefault();
+            close();
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
+            close();
+        }
+    });
+}());

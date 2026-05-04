@@ -10,14 +10,10 @@
 
 <spring:message var="defaultFavoriteLabel"  code="common.label.favorite"/>
 <spring:message var="addFavoriteLabel"      code="cars.favorite.add"/>
+<spring:message var="shortAddFavoriteLabel" code="cars.favorite.add.short"/>
 <spring:message var="removeFavoriteLabel"   code="cars.favorite.remove"/>
 
-<c:set var="favoriteLabel">
-    <c:choose>
-        <c:when test="${not empty label}">${label}</c:when>
-        <c:otherwise>${defaultFavoriteLabel}</c:otherwise>
-    </c:choose>
-</c:set>
+<c:set var="favoriteLabel" value="${empty label ? defaultFavoriteLabel : label}"/>
 
 <c:url var="favoriteAction" value="/cars/${carId}/favorite"/>
 
@@ -30,6 +26,10 @@
             data-favorite-toggle
             data-car-id="${fn:escapeXml(carId)}"
             data-favorited="${favorited}"
+            data-favorite-add-label="${fn:escapeXml(addFavoriteLabel)}"
+            data-favorite-remove-label="${fn:escapeXml(removeFavoriteLabel)}"
+            data-favorite-active-label="${fn:escapeXml(favoriteLabel)}"
+            data-favorite-inactive-label="${fn:escapeXml(shortAddFavoriteLabel)}"
             aria-pressed="${favorited}"
             aria-label="${fn:escapeXml(favorited ? removeFavoriteLabel : addFavoriteLabel)}"
             <c:if test="${disabled}">disabled</c:if>>

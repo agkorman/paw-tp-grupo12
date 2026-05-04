@@ -243,7 +243,7 @@
         });
     }
 
-    // funciones para recordar la pestaña en la que se encuentra el usuario en caso de un reload
+    // Remember the selected tab across page reloads.
     function profileTabStorageKey() {
         return 'paw.profile.activeTab.' + window.location.pathname;
     }
@@ -351,7 +351,7 @@
             toggle.hidden = false;
             toggle.setAttribute('aria-expanded', 'false');
             toggle.setAttribute('data-expanded', 'false');
-            toggle.textContent = toggle.getAttribute('data-show-label') || 'Ver más';
+            toggle.textContent = toggle.getAttribute('data-show-label') || '';
         }
     }
 
@@ -366,8 +366,8 @@
         var section = closestByAttribute(toggle, 'data-collapsible-section');
         var extras = section ? section.querySelectorAll('[data-collapsible-extra]') : [];
         var label = expanded
-            ? toggle.getAttribute('data-hide-label') || 'Ver menos'
-            : toggle.getAttribute('data-show-label') || 'Ver más';
+            ? toggle.getAttribute('data-hide-label') || ''
+            : toggle.getAttribute('data-show-label') || '';
 
         for (var i = 0; i < extras.length; i += 1) {
             extras[i].hidden = !expanded;

@@ -6,8 +6,10 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
-<a class="hero-review-card" href="${fn:escapeXml(href)}" aria-label="Ver review destacada">
+<spring:message var="heroReviewLabel" code="review.hero.view"/>
+<a class="hero-review-card" href="${fn:escapeXml(href)}" aria-label="${fn:escapeXml(heroReviewLabel)}">
     <div class="hero-review-header">
         <div class="hero-review-thumb" aria-hidden="true">
             <c:choose>
@@ -39,7 +41,7 @@
                 “<c:out value="${heroReview.title}"/>”
             </c:when>
             <c:otherwise>
-                “Una reseña reciente de la comunidad sobre este modelo destacado.”
+                <spring:message code="review.hero.default"/>
             </c:otherwise>
         </c:choose>
     </p>

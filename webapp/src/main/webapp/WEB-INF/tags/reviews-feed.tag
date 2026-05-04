@@ -24,6 +24,9 @@
 <spring:message var="reviewHideLabel" code="review.hide.action.aria"/>
 <spring:message var="reviewDeleteSuccessMsg" code="review.delete.toast.success"/>
 <spring:message var="reviewDeleteErrorMsg" code="review.delete.toast.error"/>
+<spring:message var="replyEmptyMsg" code="review.feed.reply.empty"/>
+<spring:message var="replyErrorMsg" code="review.feed.reply.error"/>
+<spring:message var="reviewAuthorFallback" code="review.author.fallback"/>
 
 <section id="reviewsFeed" class="reviews-feed">
     <c:set var="reviewTotalCount" value="${empty totalItems ? fn:length(reviews) : totalItems}"/>
@@ -133,7 +136,7 @@
                                         <article class="review-reply" id="reply-${reply.id}">
                                             <div class="review-reply-header">
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">
-                                                    <c:out value="${empty reply.authorUsername ? 'Usuario' : reply.authorUsername}"/>
+                                                    <c:out value="${empty reply.authorUsername ? reviewAuthorFallback : reply.authorUsername}"/>
                                                 </a>
                                                 <span><c:out value="${relativeTimeFormatter.format(reply.createdAt)}"/></span>
                                             </div>
@@ -154,7 +157,10 @@
                                     <form method="post" action="${replyCreateUrl}" class="review-reply-form"
                                           data-enhanced-review-reply="true"
                                           data-target="#reviewsFeed"
-                                          data-auth-resume-intent="reply-${review.id}">
+                                          data-auth-resume-intent="reply-${review.id}"
+                                          data-msg-empty="${fn:escapeXml(replyEmptyMsg)}"
+                                          data-msg-error="${fn:escapeXml(replyErrorMsg)}"
+                                          novalidate="novalidate">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                         <label for="replyBody-${review.id}"><spring:message code="review.feed.reply"/></label>
                                         <div class="review-reply-form-row">

@@ -76,7 +76,7 @@
     var fieldContainer = function (field) {
         var node = field;
         while (node && node !== page) {
-            if (node.classList && node.classList.contains('review-modal-field')) {
+            if (node.classList && node.classList.contains('modal-field')) {
                 return node;
             }
             node = node.parentNode;

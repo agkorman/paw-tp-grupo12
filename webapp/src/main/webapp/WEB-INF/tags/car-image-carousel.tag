@@ -41,10 +41,11 @@
                 <div class="car-image-carousel-thumbs" aria-label="${carouselLabel}">
                     <c:forEach var="image" items="${images}" varStatus="status">
                         <c:url var="thumbUrl" value="/cars/${carId}/images/${image.imageId}"/>
+                        <spring:message var="viewImageLabel" code="cars.image.view" arguments="${status.count}"/>
                         <button type="button"
                                 class="car-image-carousel-thumb ${status.first ? 'is-active' : ''}"
                                 data-carousel-thumb="${status.index}"
-                                aria-label="Ver imagen ${status.count}">
+                                aria-label="${fn:escapeXml(viewImageLabel)}">
                             <img src="${thumbUrl}" alt="" loading="lazy">
                         </button>
                     </c:forEach>

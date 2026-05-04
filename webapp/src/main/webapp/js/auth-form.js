@@ -2,14 +2,23 @@
     var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     var USERNAME_PATTERN = /^[A-Za-z0-9._-]+$/;
 
-    var requiredMessages = {
-        loginEmail: 'Ingresá tu email.',
-        loginPassword: 'Ingresá tu contraseña.',
-        registerUsername: 'Ingresá un usuario.',
-        registerEmail: 'Ingresá tu email.',
-        registerPassword: 'Ingresá una contraseña.',
-        registerConfirmPassword: 'Confirmá tu contraseña.'
-    };
+    function formatMessage(template, value) {
+        return (template || '').replace('{0}', value);
+    }
+
+    function dataKeyForInput(prefix, input) {
+        return prefix + input.id.charAt(0).toLowerCase() + input.id.slice(1).replace(/[A-Z]/g, function (letter) {
+            return '-' + letter.toLowerCase();
+        });
+    }
+
+    function message(form, key) {
+        return form.getAttribute('data-msg-' + key) || '';
+    }
+
+    function requiredMessage(input, form) {
+        return message(form, dataKeyForInput('required-', input)) || message(form, 'required-generic');
+    }
 
     function fieldContainer(input) {
         var node = input;
@@ -93,24 +102,24 @@
         return input && input.value ? input.value.trim() : '';
     }
 
-    function validateRequired(input) {
+    function validateRequired(input, form) {
         if (input.required && normalizedValue(input) === '') {
-            setInlineError(input, requiredMessages[input.id] || 'Completá este campo.');
+            setInlineError(input, requiredMessage(input, form));
             return false;
         }
         return true;
     }
 
-    function validateLength(input) {
+    function validateLength(input, form) {
         var value = input.value || '';
         var minLength = input.getAttribute('minlength');
         var maxLength = input.getAttribute('maxlength');
         if (minLength && value.length > 0 && value.length < Number(minLength)) {
-            setInlineError(input, 'Usá al menos ' + minLength + ' caracteres.');
+            setInlineError(input, formatMessage(message(form, 'length-min'), minLength));
             return false;
         }
         if (maxLength && value.length > Number(maxLength)) {
-            setInlineError(input, 'Usá como máximo ' + maxLength + ' caracteres.');
+            setInlineError(input, formatMessage(message(form, 'length-max'), maxLength));
             return false;
         }
         return true;
@@ -123,29 +132,29 @@
 
         clearInlineError(input);
 
-        if (!validateRequired(input)) {
+        if (!validateRequired(input, form)) {
             return false;
         }
 
         var value = normalizedValue(input);
         if (input.type === 'email' && value.length > 0 && !EMAIL_PATTERN.test(value)) {
-            setInlineError(input, 'Ingresá un email válido.');
+            setInlineError(input, message(form, 'email-invalid'));
             return false;
         }
 
         if (input.id === 'registerUsername' && value.length > 0 && !USERNAME_PATTERN.test(value)) {
-            setInlineError(input, 'Usá letras, números, punto, guion o guion bajo.');
+            setInlineError(input, message(form, 'username-pattern'));
             return false;
         }
 
-        if (!validateLength(input)) {
+        if (!validateLength(input, form)) {
             return false;
         }
 
         if (input.id === 'registerConfirmPassword') {
             var password = form.querySelector('#registerPassword');
             if (password && input.value.length > 0 && input.value !== password.value) {
-                setInlineError(input, 'Las contraseñas no coinciden.');
+                setInlineError(input, message(form, 'password-match'));
                 return false;
             }
         }

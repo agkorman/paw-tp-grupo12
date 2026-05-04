@@ -5,22 +5,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="profile.title"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=6'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile.css?v=10'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile-review-card.css?v=2'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile-modals.css?v=5'/>">
-    <link rel="stylesheet" href="<c:url value='/css/profile-connections.css?v=1'/>">
-    <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
-</head>
+<pa:page-head titleCode="profile.title" styles="/css/reviews.css|/css/profile.css|/css/profile-review-card.css|/css/profile-modal.css|/css/profile-connections.css|/css/review-tags.css|/css/catalog-request-modal.css|/css/moderator-application-modal.css|/css/cars.css"/>
 <body>
     <pa:nav activePage="profile"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -36,10 +21,7 @@
     <main class="profile-page" data-profile-user-id="${profile.id}">
         <section class="profile-hero" aria-labelledby="profileName">
             <div class="profile-avatar" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" aria-hidden="true" focusable="false">
-                    <circle cx="12" cy="8" r="4"></circle>
-                    <path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"></path>
-                </svg>
+                <pa:icon name="user-avatar" size="24"/>
             </div>
 
             <div class="profile-summary">
@@ -323,21 +305,22 @@
                            confirmCssClass="btn-primary"/>
     <pa:auth-required-modal/>
     <c:if test="${ownProfile}">
-        <pa:request-admin-modal/>
+        <pa:moderator-application-modal/>
     </c:if>
     <pa:toast messageCode="${submittedToastMessageCode}"/>
-    <script src="<c:url value='/js/reactions.js'/>"></script>
-    <script src="<c:url value='/js/enhanced-filters.js?v=6'/>"></script>
-    <script src="<c:url value='/js/action-menu.js'/>"></script>
-    <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
-    <script src="<c:url value='/js/confirmation-modal.js?v=1'/>"></script>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/profile.js?v=9'/>"></script>
+    <pa:script src="/js/reactions.js"/>
+    <pa:script src="/js/enhanced-filters.js"/>
+    <pa:script src="/js/action-menu.js"/>
+    <pa:script src="/js/modal-utils.js"/>
+    <pa:script src="/js/auth-required-modal.js"/>
+    <pa:script src="/js/confirmation-modal.js"/>
+    <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/profile.js"/>
     <c:if test="${ownProfile}">
-        <script src="<c:url value='/js/admin-request-modal.js?v=2'/>"></script>
+        <pa:script src="/js/moderator-application-modal.js"/>
     </c:if>
-    <script src="<c:url value='/js/toast.js'/>"></script>
-    <script src="<c:url value='/js/review-delete.js?v=2'/>"></script>
+    <pa:script src="/js/toast.js"/>
+    <pa:script src="/js/review-delete.js"/>
     <pa:footer/>
 </body>
 </html>

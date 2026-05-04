@@ -4,18 +4,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="recommend.results.title"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/cars.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
-</head>
+<pa:page-head titleCode="recommend.results.title" styles="/css/cars.css|/css/review-tags.css"/>
 <body>
     <pa:nav activePage="recommend"/>
 
@@ -69,7 +58,7 @@
         </c:choose>
     </main>
 
-    <script src="<c:url value='/js/reactions.js'/>"></script>
+    <pa:script src="/js/reactions.js"/>
     <pa:footer/>
 </body>
 </html>

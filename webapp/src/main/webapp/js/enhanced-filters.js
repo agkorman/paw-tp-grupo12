@@ -16,7 +16,7 @@
             return;
         }
 
-        countTarget.textContent = resultCount + ' vehículos encontrados';
+        countTarget.textContent = (root.getAttribute('data-result-count-template') || '{0}').replace('{0}', resultCount);
     };
 
     var syncToolbarSelectValue = function (select) {

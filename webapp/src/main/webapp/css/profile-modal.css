@@ -108,12 +108,12 @@
 }
 
 .profile-edit-field input.is-invalid {
-    border-color: #ffb4ab;
+    border-color: var(--error);
     background: rgba(255, 180, 171, 0.08);
 }
 
 .profile-edit-field .form-error {
-    color: #ffb4ab;
+    color: var(--error);
     font-size: 0.78rem;
     font-weight: 700;
     line-height: 1.35;
@@ -191,7 +191,7 @@
 }
 
 .profile-delete-confirm-button {
-    background: #ff8f73;
+    background: var(--destructive);
     color: var(--on-primary-fixed);
 }
 

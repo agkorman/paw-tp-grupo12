@@ -1,25 +1,15 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<spring:message var="reviewFormTitleText" code="${editMode ? 'review.form.title.edit' : 'review.form.title.new'}"/>
+<spring:message var="appNameTitleText" code="app.name"/>
+<c:set var="reviewFormPageTitle" value="${reviewFormTitleText} | ${appNameTitleText}"/>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="${editMode ? 'review.form.title.edit' : 'review.form.title.new'}"/> | <spring:message code="app.name"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=4'/>">
-    <link rel="stylesheet" href="<c:url value='/css/review-tags.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/form-pages.css'/>">
-</head>
+<pa:page-head title="${reviewFormPageTitle}" styles="/css/reviews.css|/css/rating-controls.css|/css/review-tags.css|/css/form-pages.css"/>
 <body>
     <pa:nav activePage="reviews"/>
     <c:url var="reviewCancelUrl" value="/reviews">
@@ -30,20 +20,14 @@
     <c:url var="reviewUpdateUrl" value="/reviews/${reviewId}"/>
     <c:set var="reviewFormAction" value="${editMode ? reviewUpdateUrl : reviewCreateUrl}"/>
     <c:set var="reviewFormCancelUrl" value="${editMode ? profileUrl : reviewCancelUrl}"/>
-    <jsp:useBean id="reviewFormCurrentDate" class="java.util.Date" scope="request"/>
-    <fmt:formatDate var="reviewFormCurrentYear" value="${reviewFormCurrentDate}" pattern="yyyy"/>
-    <c:set var="reviewFormMinYear" value="1886"/>
     <spring:message var="reviewTitlePlaceholder" code="review.form.placeholder.title"/>
     <spring:message var="reviewBodyPlaceholder" code="review.form.placeholder.body"/>
     <spring:message var="reviewMileagePlaceholder" code="review.form.placeholder.mileage"/>
     <spring:message var="jsMsgRequiredGeneric" code="js.form.required.generic"/>
     <spring:message var="jsMsgRequiredTitle" code="js.review.required.title"/>
     <spring:message var="jsMsgRequiredBody" code="js.review.required.body"/>
-    <spring:message var="jsMsgRequiredModelYear" code="js.review.required.modelYear"/>
     <spring:message var="jsMsgRequiredMileage" code="js.review.required.mileage"/>
     <spring:message var="jsMsgRequiredRating" code="js.review.required.rating"/>
-    <spring:message var="jsMsgModelYearNumeric" code="js.review.modelYear.numeric"/>
-    <spring:message var="jsMsgModelYearRange" code="js.review.modelYear.range" arguments="${reviewFormCurrentYear}"/>
     <spring:message var="jsMsgMileageNumeric" code="js.review.mileage.numeric"/>
     <spring:message var="jsMsgMileageRange" code="js.review.mileage.range"/>
     <spring:message var="jsMsgRatingNone" code="js.review.rating.none"/>
@@ -54,29 +38,11 @@
     <spring:message var="jsMsgRatingExcellent" code="js.review.rating.excellent"/>
 
     <main class="form-page">
-        <section id="createReviewFormPage" class="form-page-panel" data-default-car-id="${selectedCar.id}" aria-labelledby="createReviewTitle"
-                 data-min-year="${reviewFormMinYear}"
-                 data-max-year="${reviewFormCurrentYear}"
-                 data-msg-required-generic="${fn:escapeXml(jsMsgRequiredGeneric)}"
-                 data-msg-required-title="${fn:escapeXml(jsMsgRequiredTitle)}"
-                 data-msg-required-body="${fn:escapeXml(jsMsgRequiredBody)}"
-                 data-msg-required-model-year="${fn:escapeXml(jsMsgRequiredModelYear)}"
-                 data-msg-required-mileage="${fn:escapeXml(jsMsgRequiredMileage)}"
-                 data-msg-required-rating="${fn:escapeXml(jsMsgRequiredRating)}"
-                 data-msg-model-year-numeric="${fn:escapeXml(jsMsgModelYearNumeric)}"
-                 data-msg-model-year-range="${fn:escapeXml(jsMsgModelYearRange)}"
-                 data-msg-mileage-numeric="${fn:escapeXml(jsMsgMileageNumeric)}"
-                 data-msg-mileage-range="${fn:escapeXml(jsMsgMileageRange)}"
-                 data-msg-rating-none="${fn:escapeXml(jsMsgRatingNone)}"
-                 data-msg-rating-bad="${fn:escapeXml(jsMsgRatingBad)}"
-                 data-msg-rating-fair="${fn:escapeXml(jsMsgRatingFair)}"
-                 data-msg-rating-good="${fn:escapeXml(jsMsgRatingGood)}"
-                 data-msg-rating-very-good="${fn:escapeXml(jsMsgRatingVeryGood)}"
-                 data-msg-rating-excellent="${fn:escapeXml(jsMsgRatingExcellent)}">
-            <div class="review-modal-header">
+        <section id="createReviewFormPage" class="form-page-panel" data-default-car-id="${selectedCar.id}" aria-labelledby="createReviewTitle">
+            <div class="modal-header">
                 <div>
-                    <span class="review-modal-kicker" data-review-modal-kicker><spring:message code="${editMode ? 'review.form.title.edit' : 'review.form.title.new'}"/></span>
-                    <h1 id="createReviewTitle" data-review-modal-title>
+                    <span class="modal-kicker" data-modal-kicker><spring:message code="${editMode ? 'review.form.title.edit' : 'review.form.title.new'}"/></span>
+                    <h1 id="createReviewTitle" data-modal-title>
                         <c:choose>
                             <c:when test="${editMode}"><spring:message code="review.form.heading.edit"/> <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/></c:when>
                             <c:otherwise><spring:message code="review.form.heading.new"/> <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/></c:otherwise>
@@ -85,10 +51,23 @@
                 </div>
             </div>
 
-            <form:form id="createReviewForm" cssClass="review-modal-form" modelAttribute="reviewForm"
+            <form:form id="createReviewForm" cssClass="modal-form" modelAttribute="reviewForm"
                        method="post" action="${reviewFormAction}"
                        data-create-action="${reviewCreateUrl}"
                        data-submit-lock="true"
+                       data-msg-required-generic="${fn:escapeXml(jsMsgRequiredGeneric)}"
+                       data-msg-required-modal-title="${fn:escapeXml(jsMsgRequiredTitle)}"
+                       data-msg-required-modal-body="${fn:escapeXml(jsMsgRequiredBody)}"
+                       data-msg-required-modal-mileage-km="${fn:escapeXml(jsMsgRequiredMileage)}"
+                       data-msg-required-rating="${fn:escapeXml(jsMsgRequiredRating)}"
+                       data-msg-mileage-numeric="${fn:escapeXml(jsMsgMileageNumeric)}"
+                       data-msg-mileage-range="${fn:escapeXml(jsMsgMileageRange)}"
+                       data-rating-none="${fn:escapeXml(jsMsgRatingNone)}"
+                       data-rating-bad="${fn:escapeXml(jsMsgRatingBad)}"
+                       data-rating-fair="${fn:escapeXml(jsMsgRatingFair)}"
+                       data-rating-good="${fn:escapeXml(jsMsgRatingGood)}"
+                       data-rating-very-good="${fn:escapeXml(jsMsgRatingVeryGood)}"
+                       data-rating-excellent="${fn:escapeXml(jsMsgRatingExcellent)}"
                        novalidate="novalidate">
                 <form:errors cssClass="alert alert-error" element="div"/>
                 <c:if test="${not empty error}">
@@ -98,30 +77,22 @@
                 <input id="modalReviewId" name="reviewId" type="hidden" value="">
                 <form:hidden id="modalCarId" path="carId"/>
 
-                <p class="review-modal-subtitle" data-review-modal-subtitle>
+                <p class="modal-subtitle" data-modal-subtitle>
                     <c:choose>
                         <c:when test="${editMode}"><spring:message code="review.form.subtitle.edit"/></c:when>
                         <c:otherwise><spring:message code="review.form.subtitle.new"/></c:otherwise>
                     </c:choose>
                 </p>
 
-                <div class="review-modal-grid">
-                    <div class="review-modal-field review-modal-field-wide">
+                <div class="modal-grid">
+                    <div class="modal-field modal-field-wide">
                         <label id="ratingLabel"><spring:message code="review.form.rating"/></label>
                         <div class="star-rating" role="slider" aria-labelledby="ratingLabel" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" tabindex="0">
                             <form:hidden id="modalRating" path="rating"/>
                             <div class="star-rating-stars">
                                 <c:forEach var="i" begin="1" end="5">
                                     <div class="star-slot" data-star="${i}">
-                                        <svg viewBox="0 0 24 24" width="36" height="36">
-                                            <defs>
-                                                <linearGradient id="starGrad${i}">
-                                                    <stop offset="0%" stop-color="#2e2e2e"/>
-                                                    <stop offset="100%" stop-color="#2e2e2e"/>
-                                                </linearGradient>
-                                            </defs>
-                                            <path fill="url(#starGrad${i})" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                        </svg>
+                                        <pa:star-icon size="36" gradientId="starGrad${i}" fillPercent="0"/>
                                         <spring:message var="halfStarLabel" code="review.rating.halfStars.aria" arguments="${i - 1}"/>
                                         <spring:message var="fullStarLabel" code="review.rating.fullStars.aria" arguments="${i}"/>
                                         <button type="button" class="star-hit star-hit-left" data-star="${i}" data-half="true" aria-label="${halfStarLabel}"></button>
@@ -134,7 +105,7 @@
                         <form:errors path="rating" cssClass="form-error" element="span"/>
                     </div>
 
-                    <div class="review-modal-field review-modal-field-wide">
+                    <div class="modal-field modal-field-wide">
                         <label><spring:message code="review.form.ownership"/></label>
                         <div class="toggle-group">
                             <label class="toggle-option">
@@ -153,28 +124,28 @@
                         <form:errors path="ownershipStatus" cssClass="form-error" element="span"/>
                     </div>
 
-                    <div class="review-modal-field review-modal-field-wide">
+                    <div class="modal-field modal-field-wide">
                         <label for="modalTitle"><spring:message code="review.form.titleField"/></label>
                         <form:input id="modalTitle" path="title" type="text" maxlength="200"
                                     required="required"
                                     placeholder="${reviewTitlePlaceholder}"/>
                         <form:errors path="title" cssClass="form-error" element="span"/>
                     </div>
-                    <div class="review-modal-field review-modal-field-wide">
+                    <div class="modal-field modal-field-wide">
                         <label for="modalBody"><spring:message code="review.form.body"/></label>
                         <form:textarea id="modalBody" path="body" rows="4" maxlength="2000"
                                        required="required"
                                        placeholder="${reviewBodyPlaceholder}"/>
                         <form:errors path="body" cssClass="form-error" element="span"/>
                     </div>
-                    <div class="review-modal-field">
+                    <div class="modal-field">
                         <label for="modalMileageKm"><spring:message code="review.form.mileage"/></label>
                         <form:input id="modalMileageKm" path="mileageKm" type="number"
                                     min="0" max="2000000" required="required" placeholder="${reviewMileagePlaceholder}"/>
                         <form:errors path="mileageKm" cssClass="form-error" element="span"/>
                     </div>
 
-                    <div class="review-modal-field review-modal-field-wide">
+                    <div class="modal-field modal-field-wide">
                         <label><spring:message code="review.form.recommend"/></label>
                         <div class="toggle-group">
                             <label class="toggle-option">
@@ -200,7 +171,7 @@
                         <form:errors path="wouldRecommend" cssClass="form-error" element="span"/>
                     </div>
 
-                    <div class="review-modal-field review-modal-field-wide">
+                    <div class="modal-field modal-field-wide">
                         <pa:review-tag-chips mode="edit"
                                              tagsBySentiment="${reviewTagsBySentiment}"
                                              selectedTagIds="${reviewForm.tagIds}"/>
@@ -208,7 +179,7 @@
                     </div>
                 </div>
 
-                <div class="review-modal-actions">
+                <div class="modal-actions">
                     <a id="reviewModalCancelButton" href="${reviewFormCancelUrl}" class="btn-secondary"><spring:message code="common.action.cancel"/></a>
                     <button id="reviewModalSubmitButton" type="submit" class="btn-primary"><spring:message code="${editMode ? 'review.form.submit.edit' : 'review.form.submit.new'}"/></button>
                 </div>
@@ -216,9 +187,9 @@
         </section>
     </main>
 
-    <script src="<c:url value='/js/review-form.js?v=2'/>"></script>
-    <script src="<c:url value='/js/review-tag-chips.js'/>" defer></script>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:script src="/js/review-form.js"/>
+    <pa:script src="/js/review-tag-chips.js" defer="true"/>
+    <pa:script src="/js/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>

@@ -13,6 +13,7 @@
     var acceptForm = document.getElementById('adminCatalogAcceptForm');
     var acceptNameInput = document.getElementById('adminCatalogAcceptName');
     var adminBaseUrl = (modal.getAttribute('data-admin-base-url') || '/admin').replace(/\/$/, '');
+    var modalController = window.PawModal.createController({ modal: modal });
 
     var acceptSuccessMsg = modal.getAttribute('data-accept-success-msg') || '';
     var rejectSuccessMsg = modal.getAttribute('data-reject-success-msg') || '';
@@ -20,38 +21,30 @@
 
     var COPY = {
         'brand': {
-            kicker: 'Solicitud de marca',
-            title: 'Revisar marca solicitada',
+            kicker: modal.getAttribute('data-brand-kicker') || '',
+            title: modal.getAttribute('data-brand-title') || '',
             collection: 'brand-requests'
         },
         'body-type': {
-            kicker: 'Solicitud de carrocería',
-            title: 'Revisar carrocería solicitada',
+            kicker: modal.getAttribute('data-body-type-kicker') || '',
+            title: modal.getAttribute('data-body-type-title') || '',
             collection: 'body-type-requests'
         }
     };
 
-    var lastTrigger = null;
-
     function findOpenTrigger(node) {
-        while (node && node !== document) {
-            if (node.nodeType === 1 && node.hasAttribute && node.hasAttribute('data-open-admin-catalog-request')) {
-                return node;
-            }
-            node = node.parentNode;
-        }
-        return null;
+        return window.PawModal.closest(node, function (candidate) {
+            return candidate.hasAttribute('data-open-admin-catalog-request');
+        });
     }
 
     function findCloseAncestor(node) {
-        while (node && node !== document) {
-            if (node.nodeType === 1 && node.hasAttribute && node.hasAttribute('data-close-admin-catalog-request-modal')) {
-                return node;
-            }
-            node = node.parentNode;
-        }
-        return null;
+        return window.PawModal.closest(node, function (candidate) {
+            return candidate.hasAttribute('data-close-admin-catalog-request-modal');
+        });
     }
+
+    var activeTrigger = null;
 
     function openModal(trigger) {
         var type = trigger.getAttribute('data-catalog-type') || '';
@@ -92,18 +85,13 @@
             rejectForm.setAttribute('action', basePath + '/reject');
         }
 
-        lastTrigger = trigger;
-        modal.removeAttribute('hidden');
-        document.body.classList.add('modal-open');
+        activeTrigger = trigger;
+        modalController.open(trigger);
     }
 
     function closeModal() {
-        modal.setAttribute('hidden', 'hidden');
-        document.body.classList.remove('modal-open');
-        if (lastTrigger && document.contains(lastTrigger) && typeof lastTrigger.focus === 'function') {
-            lastTrigger.focus();
-        }
-        lastTrigger = null;
+        modalController.close();
+        activeTrigger = null;
     }
 
     function removeTriggerCard(trigger) {
@@ -119,7 +107,7 @@
     }
 
     function submitAjax(form, successMsg) {
-        var trigger = lastTrigger;
+        var trigger = activeTrigger;
         var action = form.getAttribute('action');
         var data = new FormData(form);
         closeModal();
@@ -167,7 +155,7 @@
     });
 
     document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
+        if (event.key === 'Escape' && modalController.isOpen()) {
             closeModal();
         }
     });
