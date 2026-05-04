@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import ar.edu.itba.paw.services.exception.UserNotFoundException;
+import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +94,23 @@ public class UserServiceImpl implements UserService {
         carRequestDao.bindRequestsToUserByEmail(user.getId(), normalizedEmail);
         LOGGER.info("Created user id={} username={} role={}", user.getId(), normalizedUsername, DEFAULT_ROLE);
         return user;
+    }
+
+    @Override
+    @Transactional
+    public User updateUsername(final long userId, final String username) {
+        final String normalizedUsername = StringUtils.normalize(username);
+        if (normalizedUsername == null) {
+            throw new IllegalArgumentException("Username is required.");
+        }
+        final Optional<User> existing = userDao.findByUsername(normalizedUsername);
+        if (existing.isPresent() && existing.get().getId() != userId) {
+            throw new UsernameAlreadyExistsException(normalizedUsername);
+        }
+        if (!userDao.updateUsername(userId, normalizedUsername)) {
+            throw new UserNotFoundException(userId);
+        }
+        return userDao.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
     }
 
     @Override

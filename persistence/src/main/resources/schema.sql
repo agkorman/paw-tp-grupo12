@@ -14,6 +14,9 @@ CREATE TABLE IF NOT EXISTS users (
 ALTER TABLE users
     ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
 
+CREATE UNIQUE INDEX IF NOT EXISTS users_username_normalized_unique_idx
+    ON users (LOWER(BTRIM(username)));
+
 CREATE TABLE IF NOT EXISTS user_follows (
     follower_id INT         NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     followed_id INT         NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,

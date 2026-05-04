@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import ar.edu.itba.paw.services.exception.UserNotFoundException;
+import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -209,6 +211,64 @@ public class UserServiceImplTest {
 
         // Assertions
         assertEquals("Email is already registered.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldUpdateUsernameWithNormalizedValue() {
+        // Arrange
+        final User updated = new User(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user",
+                LocalDateTime.now());
+        when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
+        when(userDao.updateUsername(USER_ID, NORMALIZED_USERNAME)).thenReturn(true);
+        when(userDao.findById(USER_ID)).thenReturn(Optional.of(updated));
+
+        // Exercise
+        final User result = userService.updateUsername(USER_ID, RAW_USERNAME);
+
+        // Assertions
+        assertEquals(USER_ID, result.getId());
+        assertEquals(NORMALIZED_USERNAME, result.getUsername());
+        assertEquals(NORMALIZED_EMAIL, result.getEmail());
+    }
+
+    @Test
+    public void shouldRejectUpdateUsernameWhenBlank() {
+        // Arrange
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> userService.updateUsername(USER_ID, "   "));
+
+        // Assertions
+        assertEquals("Username is required.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldRejectUpdateUsernameWhenUsedByAnotherUser() {
+        // Arrange
+        final User existing = new User(99L, NORMALIZED_USERNAME, "other@example.com", "x", "user", LocalDateTime.now());
+        when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.of(existing));
+
+        // Exercise
+        final UsernameAlreadyExistsException ex = assertThrows(UsernameAlreadyExistsException.class,
+                () -> userService.updateUsername(USER_ID, RAW_USERNAME));
+
+        // Assertions
+        assertEquals("Username is already registered: " + NORMALIZED_USERNAME, ex.getMessage());
+    }
+
+    @Test
+    public void shouldRejectUpdateUsernameWhenUserDoesNotExist() {
+        // Arrange
+        when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
+        when(userDao.updateUsername(USER_ID, NORMALIZED_USERNAME)).thenReturn(false);
+
+        // Exercise
+        final UserNotFoundException ex = assertThrows(UserNotFoundException.class,
+                () -> userService.updateUsername(USER_ID, RAW_USERNAME));
+
+        // Assertions
+        assertEquals("User not found: " + USER_ID, ex.getMessage());
     }
 
     @Test
