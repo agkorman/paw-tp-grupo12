@@ -40,11 +40,6 @@ public class ReviewForm {
     @Size(max = 20, message = "{validation.review.ownershipStatus.max}")
     private String ownershipStatus;
 
-    @NotNull(message = "{validation.review.modelYear.required}")
-    @Min(value = 1886, message = "{validation.review.modelYear.range}")
-    @Max(value = 2100, message = "{validation.review.modelYear.range}")
-    private Integer modelYear;
-
     @NotNull(message = "{validation.review.mileage.required}")
     @Min(value = 0, message = "{validation.review.mileage.range}")
     @Max(value = 2_000_000, message = "{validation.review.mileage.range}")
@@ -101,14 +96,6 @@ public class ReviewForm {
 
     public void setOwnershipStatus(final String ownershipStatus) {
         this.ownershipStatus = ownershipStatus;
-    }
-
-    public Integer getModelYear() {
-        return modelYear;
-    }
-
-    public void setModelYear(final Integer modelYear) {
-        this.modelYear = modelYear;
     }
 
     public Integer getMileageKm() {

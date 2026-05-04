@@ -8,30 +8,32 @@
 <c:url var="contextRootUrl" value="/"/>
 <c:set var="contextPathUrl" value="${fn:substring(contextRootUrl, 0, fn:length(contextRootUrl) - 1)}"/>
 <spring:message var="closeModalLabel" code="common.action.close"/>
+<spring:message var="defaultActionLabel" code="auth.required.defaultAction"/>
 
 <div id="authRequiredModal"
-     class="auth-required-modal"
+     class="modal auth-required-modal"
      hidden
      data-login-url="${loginUrl}"
-     data-context-path="${contextPathUrl}">
-    <div class="auth-required-modal-overlay" data-close-auth-required-modal></div>
-    <section class="auth-required-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="authRequiredTitle">
-        <header class="auth-required-modal-header">
+     data-context-path="${contextPathUrl}"
+     data-default-action="${defaultActionLabel}">
+    <div class="modal-overlay" data-close-modal="authRequiredModal"></div>
+    <section class="modal-dialog auth-required-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="authRequiredTitle">
+        <header class="modal-header">
             <div>
                 <span class="auth-required-modal-kicker"><spring:message code="auth.required.title"/></span>
                 <h2 id="authRequiredTitle"><spring:message code="auth.required.heading"/></h2>
             </div>
-            <button type="button" class="auth-required-modal-close" data-close-auth-required-modal aria-label="${closeModalLabel}">
+            <button type="button" class="modal-close" data-close-modal="authRequiredModal" aria-label="${closeModalLabel}">
                 <pa:icon name="close" size="18"/>
             </button>
         </header>
 
         <p class="auth-required-modal-copy">
-            <spring:message code="auth.required.prefix"/> <span data-auth-required-action><spring:message code="auth.required.defaultAction"/></span>.
+            <spring:message code="auth.required.prefix"/> <span data-auth-required-action><c:out value="${defaultActionLabel}"/></span>.
         </p>
 
         <div class="auth-required-modal-actions">
-            <button type="button" class="btn-secondary" data-close-auth-required-modal><spring:message code="common.action.cancel"/></button>
+            <button type="button" class="btn-secondary" data-close-modal="authRequiredModal"><spring:message code="common.action.cancel"/></button>
             <a class="btn-primary" href="${loginUrl}" data-auth-required-login><spring:message code="common.action.login"/></a>
         </div>
     </section>

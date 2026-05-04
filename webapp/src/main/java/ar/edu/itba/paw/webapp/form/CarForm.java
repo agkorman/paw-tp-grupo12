@@ -76,7 +76,7 @@ public class CarForm {
     @Max(value = 600, message = "{validation.car.maxSpeed.max}")
     private Integer maxSpeedKmh;
 
-    @DecimalMin(value = "0.01", message = "{validation.car.price.min}")
+    @DecimalMin(value = "1.00", message = "{validation.car.price.min}")
     @DecimalMax(value = "5000000.00", message = "{validation.car.price.max}")
     private BigDecimal priceUsd;
 

@@ -53,14 +53,18 @@
                             <a href="${reviewEditPageUrl}">
                                 <spring:message code="common.action.edit"/>
                             </a>
-                            <button
-                                    type="button"
-                                    class="action-menu-danger"
-                                    data-open-delete-review-modal
-                                    data-review-delete-action="${fn:escapeXml(reviewDeleteUrl)}"
-                                    data-review-title="${fn:escapeXml(reviewCard.review.title)}">
-                                <spring:message code="common.action.delete"/>
-                            </button>
+                            <spring:message var="deleteSuccessMsg" code="review.delete.toast.success"/>
+                            <spring:message var="deleteErrorMsg" code="review.delete.toast.error"/>
+                            <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
+                                  data-review-delete-form
+                                  data-confirm-modal="deleteReviewConfirmModal"
+                                  data-delete-success="${fn:escapeXml(deleteSuccessMsg)}"
+                                  data-delete-error="${fn:escapeXml(deleteErrorMsg)}">
+                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                <button type="submit" class="action-menu-danger">
+                                    <spring:message code="common.action.delete"/>
+                                </button>
+                            </form>
                         </pa:action-menu>
                     </c:if>
                 </div>

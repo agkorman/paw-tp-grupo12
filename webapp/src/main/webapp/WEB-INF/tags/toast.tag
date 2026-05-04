@@ -21,6 +21,7 @@
      hidden>
     <span class="global-toast-icon" aria-hidden="true">
         <span data-toast-icon-success><pa:icon name="check-circle" size="20"/></span>
+        <span data-toast-icon-error><pa:icon name="error-circle" size="20"/></span>
     </span>
     <span class="global-toast-message" data-toast-message></span>
     <button type="button" class="global-toast-close" data-toast-close aria-label="${fn:escapeXml(toastCloseLabel)}">

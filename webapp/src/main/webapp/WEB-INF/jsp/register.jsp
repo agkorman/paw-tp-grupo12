@@ -1,21 +1,22 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <spring:message var="registerSubmittingLabel" code="auth.register.submitting"/>
+<spring:message var="jsRequiredUsername" code="js.auth.required.username"/>
+<spring:message var="jsRequiredEmail" code="js.auth.required.email"/>
+<spring:message var="jsRequiredPassword" code="js.auth.required.password"/>
+<spring:message var="jsRequiredConfirmPassword" code="js.auth.required.confirmPassword"/>
+<spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
+<spring:message var="jsLengthMin" code="js.form.length.min"/>
+<spring:message var="jsLengthMax" code="js.form.length.max"/>
+<spring:message var="jsEmailInvalid" code="js.auth.email.invalid"/>
+<spring:message var="jsUsernamePattern" code="js.auth.username.pattern"/>
+<spring:message var="jsPasswordMatch" code="js.auth.password.match"/>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="auth.register.title"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/auth.css'/>">
-</head>
+<pa:page-head titleCode="auth.register.title" styles="/css/auth.css"/>
 <body>
     <pa:nav/>
 
@@ -27,7 +28,17 @@
             </div>
 
             <form id="registerForm" class="auth-form" method="post" action="<c:url value='/register'/>"
-                  data-submit-lock="true" novalidate="novalidate">
+                  data-auth-form="register" data-submit-lock="true" novalidate="novalidate"
+                  data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
+                  data-msg-required-register-username="${fn:escapeXml(jsRequiredUsername)}"
+                  data-msg-required-register-email="${fn:escapeXml(jsRequiredEmail)}"
+                  data-msg-required-register-password="${fn:escapeXml(jsRequiredPassword)}"
+                  data-msg-required-register-confirm-password="${fn:escapeXml(jsRequiredConfirmPassword)}"
+                  data-msg-length-min="${fn:escapeXml(jsLengthMin)}"
+                  data-msg-length-max="${fn:escapeXml(jsLengthMax)}"
+                  data-msg-email-invalid="${fn:escapeXml(jsEmailInvalid)}"
+                  data-msg-username-pattern="${fn:escapeXml(jsUsernamePattern)}"
+                  data-msg-password-match="${fn:escapeXml(jsPasswordMatch)}">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
                 <div class="auth-field">
@@ -36,8 +47,10 @@
                             id="registerUsername"
                             name="username"
                             type="text"
+                            maxlength="50"
                             value="<c:out value='${username}'/>"
-                            autocomplete="username">
+                            autocomplete="username"
+                            required>
                 </div>
 
                 <div class="auth-field">
@@ -46,8 +59,10 @@
                             id="registerEmail"
                             name="email"
                             type="email"
+                            maxlength="100"
                             value="<c:out value='${email}'/>"
-                            autocomplete="email">
+                            autocomplete="email"
+                            required>
                 </div>
 
                 <div class="auth-field">
@@ -56,7 +71,10 @@
                             id="registerPassword"
                             name="password"
                             type="password"
-                            autocomplete="new-password">
+                            minlength="8"
+                            maxlength="72"
+                            autocomplete="new-password"
+                            required>
                 </div>
 
                 <div class="auth-field">
@@ -65,7 +83,10 @@
                             id="registerConfirmPassword"
                             name="confirmPassword"
                             type="password"
-                            autocomplete="new-password">
+                            minlength="8"
+                            maxlength="72"
+                            autocomplete="new-password"
+                            required>
                 </div>
 
                 <button type="submit" class="btn-primary auth-submit" data-loading-label="${registerSubmittingLabel}">
@@ -81,8 +102,9 @@
     </main>
 
     <pa:toast messageCode="${registrationErrorCode}" type="error"/>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/toast.js'/>"></script>
+    <pa:script src="/js/auth-form.js"/>
+    <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/toast.js"/>
     <pa:footer/>
 </body>
 </html>

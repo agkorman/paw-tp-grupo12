@@ -243,7 +243,7 @@
         });
     }
 
-    // funciones para recordar la pestaña en la que se encuentra el usuario en caso de un reload
+    // Remember the selected tab across page reloads.
     function profileTabStorageKey() {
         return 'paw.profile.activeTab.' + window.location.pathname;
     }
@@ -351,7 +351,7 @@
             toggle.hidden = false;
             toggle.setAttribute('aria-expanded', 'false');
             toggle.setAttribute('data-expanded', 'false');
-            toggle.textContent = toggle.getAttribute('data-show-label') || 'Ver más';
+            toggle.textContent = toggle.getAttribute('data-show-label') || '';
         }
     }
 
@@ -366,8 +366,8 @@
         var section = closestByAttribute(toggle, 'data-collapsible-section');
         var extras = section ? section.querySelectorAll('[data-collapsible-extra]') : [];
         var label = expanded
-            ? toggle.getAttribute('data-hide-label') || 'Ver menos'
-            : toggle.getAttribute('data-show-label') || 'Ver más';
+            ? toggle.getAttribute('data-hide-label') || ''
+            : toggle.getAttribute('data-show-label') || '';
 
         for (var i = 0; i < extras.length; i += 1) {
             extras[i].hidden = !expanded;
@@ -377,30 +377,7 @@
         toggle.textContent = label;
     }
 
-    function openDeleteReviewModal(button) {
-        var modal = document.getElementById('deleteReviewModal');
-        var form = document.getElementById('deleteReviewForm');
-        var title = modal ? modal.querySelector('[data-delete-review-title]') : null;
-        if (!modal || !form) {
-            return;
-        }
-
-        form.setAttribute('action', button.getAttribute('data-review-delete-action') || '#');
-        if (title) {
-            title.textContent = button.getAttribute('data-review-title') || '';
-        }
-        closeActionMenus();
-        openModal(modal);
-    }
-
     document.addEventListener('click', function (event) {
-        var deleteReviewButton = closestByAttribute(event.target, 'data-open-delete-review-modal');
-        if (deleteReviewButton) {
-            event.preventDefault();
-            openDeleteReviewModal(deleteReviewButton);
-            return;
-        }
-
         var editButton = closestByAttribute(event.target, 'data-open-edit-profile-modal');
         if (editButton) {
             openModal(document.getElementById('editProfileModal'));

@@ -62,7 +62,7 @@ public class WebConfig implements WebMvcConfigurer {
     /**
      * Default when {@code APP_BASE_URL} and {@code app.baseUrl} are unset (local {@code mvn jetty:run}).
      */
-    private static final String DEFAULT_LOCAL_APP_BASE_URL = "http://localhost:8080/";
+    private static final String DEFAULT_LOCAL_APP_BASE_URL = "http://localhost:8080";
 
     @Override
     public void addResourceHandlers(final ResourceHandlerRegistry registry) {
@@ -230,7 +230,8 @@ public class WebConfig implements WebMvcConfigurer {
         final Properties properties = loadPropertiesIfExists(MAIL_PROPERTIES_RESOURCE);
         if (properties != null) {
             final String propValue = normalizeBaseUrl(properties.getProperty("app.baseUrl"));
-            if (propValue != null) {                return propValue;
+            if (propValue != null) {
+                return propValue;
             }
         }
 

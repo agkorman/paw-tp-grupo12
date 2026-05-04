@@ -13,7 +13,7 @@
 
     function setModalOpen(open) {
         modal.hidden = !open;
-        document.body.classList.toggle('review-modal-open', open);
+        document.body.classList.toggle('modal-open', open);
         if (open) {
             reasonField.focus();
         }
@@ -33,6 +33,20 @@
             errorNode.textContent = message || modal.dataset.errorMessage || '';
             errorNode.hidden = false;
         }
+    }
+
+    function validateReason() {
+        var value = reasonField.value.trim();
+        if (!value) {
+            return form.dataset.reasonRequiredMessage;
+        }
+        if (value.length < 10) {
+            return form.dataset.reasonMinMessage;
+        }
+        if (value.length > 600) {
+            return form.dataset.reasonMaxMessage;
+        }
+        return null;
     }
 
     function openModal(button) {
@@ -101,6 +115,12 @@
     form.addEventListener('submit', function (event) {
         event.preventDefault();
         clearError();
+
+        var validationError = validateReason();
+        if (validationError) {
+            showError(validationError);
+            return;
+        }
 
         var submitButton = form.querySelector('[type="submit"]');
         if (submitButton) {

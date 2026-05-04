@@ -5,20 +5,13 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="admin.title"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=5'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/admin.css?v=10'/>">
-</head>
+<pa:page-head titleCode="admin.title" styles="/css/reviews.css|/css/cars.css|/css/admin.css"/>
 <body>
     <pa:nav activePage="admin"/>
+    <spring:message var="brandKicker" code="cars.form.brand"/>
+    <spring:message var="bodyTypeKicker" code="cars.form.bodyType"/>
+    <spring:message var="pendingStatusLabel" code="common.status.pending"/>
+    <spring:message var="reviewActionLabel" code="common.action.review"/>
 
     <main class="admin-page">
         <section class="admin-hero">
@@ -67,6 +60,8 @@
             <c:url var="adminBaseUrl" value="/admin"/>
             <jsp:useBean id="adminPaginationParams" class="java.util.LinkedHashMap" scope="page"/>
             <c:set target="${adminPaginationParams}" property="tab" value="${activeTab}"/>
+            <spring:message var="brandKicker"    code="admin.brandRequests.kicker"/>
+            <spring:message var="bodyTypeKicker" code="admin.bodyTypeRequests.kicker"/>
 
             <c:choose>
                 <c:when test="${activeTab eq 'brands'}">
@@ -82,7 +77,6 @@
                             </div>
                         </c:when>
                         <c:otherwise>
-                            <spring:message var="adminCatalogCardKickerBrand" code="admin.catalogRequestCard.kickerBrand"/>
                             <div class="admin-catalog-request-grid">
                                 <c:forEach var="brandRequest" items="${pendingBrandRequests}">
                                     <pa:admin-catalog-request-card
@@ -91,7 +85,7 @@
                                             submitter="${brandRequest.submitter}"
                                             comments="${brandRequest.comments}"
                                             type="brand"
-                                            kicker="${adminCatalogCardKickerBrand}"/>
+                                            kicker="${brandKicker}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -110,7 +104,6 @@
                             </div>
                         </c:when>
                         <c:otherwise>
-                            <spring:message var="adminCatalogCardKickerBodyType" code="admin.catalogRequestCard.kickerBodyType"/>
                             <div class="admin-catalog-request-grid">
                                 <c:forEach var="bodyTypeRequest" items="${pendingBodyTypeRequests}">
                                     <pa:admin-catalog-request-card
@@ -119,7 +112,7 @@
                                             submitter="${bodyTypeRequest.submitter}"
                                             comments="${bodyTypeRequest.comments}"
                                             type="body-type"
-                                            kicker="${adminCatalogCardKickerBodyType}"/>
+                                            kicker="${bodyTypeKicker}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -171,8 +164,6 @@
                             </div>
                         </c:when>
                         <c:otherwise>
-                            <spring:message var="adminCarRequestCardFooter" code="common.status.pending"/>
-                            <spring:message var="adminCarRequestReviewAction" code="admin.carRequests.review"/>
                             <div class="admin-requests-grid">
                                 <c:forEach var="request" items="${pendingRequests}">
                                     <c:url var="requestReviewUrl" value="/admin/requests/${request.id}/review"/>
@@ -185,8 +176,8 @@
                                             imageUrl="${request.imageUrl}"
                                             href="${requestReviewUrl}"
                                             submitter="${request.submitter}"
-                                            footerText="${fn:escapeXml(adminCarRequestCardFooter)}"
-                                            actionText="${fn:escapeXml(adminCarRequestReviewAction)}"/>
+                                            footerText="${pendingStatusLabel}"
+                                            actionText="${reviewActionLabel}"/>
                                 </c:forEach>
                             </div>
                         </c:otherwise>
@@ -206,11 +197,24 @@
 
     </main>
 
-    <pa:admin-catalog-request-modal/>
-    <pa:admin-request-review-modal/>
-    <script src="<c:url value='/js/admin-catalog-modal.js'/>"></script>
-    <script src="<c:url value='/js/admin-request-modal.js?v=2'/>"></script>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
+    <pa:admin-catalog-request-review-modal/>
+    <pa:moderator-application-review-modal/>
+    <c:choose>
+        <c:when test="${not empty param.carAccepted}">
+            <pa:toast messageCode="admin.carRequest.accept.toast.success"/>
+        </c:when>
+        <c:when test="${not empty param.carRejected}">
+            <pa:toast messageCode="admin.carRequest.reject.toast.success"/>
+        </c:when>
+        <c:otherwise>
+            <pa:toast/>
+        </c:otherwise>
+    </c:choose>
+    <pa:script src="/js/modal-utils.js"/>
+    <pa:script src="/js/admin-catalog-request-modal.js"/>
+    <pa:script src="/js/moderator-application-review-modal.js"/>
+    <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/toast.js"/>
     <pa:footer/>
 </body>
 </html>

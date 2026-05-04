@@ -42,14 +42,14 @@
         inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
-.form-page-panel .review-modal-header h1 {
+.form-page-panel .modal-header h1 {
     margin: 0.25rem 0 0;
     font-family: var(--font-display);
     font-size: clamp(1.5rem, 2vw, 2rem);
     line-height: 1.1;
 }
 
-.form-page-panel .review-modal-actions a.btn-secondary {
+.form-page-panel .modal-actions a.btn-secondary {
     display: inline-flex;
     align-items: center;
     justify-content: center;

@@ -1,24 +1,31 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <c:url var="adminBaseUrl" value="/admin"/>
 <spring:message var="closeModalLabel" code="common.action.close"/>
+<spring:message var="acceptSuccessMsg" code="admin.request.accept.toast.success"/>
+<spring:message var="rejectSuccessMsg" code="admin.request.reject.toast.success"/>
+<spring:message var="requestErrorMsg" code="admin.request.toast.error"/>
 
 <div id="adminRequestReviewModal"
-     class="review-modal admin-request-review-modal"
+     class="modal admin-request-review-modal"
      hidden
-     data-admin-base-url="${adminBaseUrl}">
-    <div class="review-modal-overlay" data-close-admin-request-review-modal></div>
-    <section class="review-modal-dialog admin-request-review-dialog"
+     data-admin-base-url="${adminBaseUrl}"
+     data-accept-success-msg="${fn:escapeXml(acceptSuccessMsg)}"
+     data-reject-success-msg="${fn:escapeXml(rejectSuccessMsg)}"
+     data-error-msg="${fn:escapeXml(requestErrorMsg)}">
+    <div class="modal-overlay" data-close-admin-request-review-modal></div>
+    <section class="modal-dialog admin-request-review-dialog"
              role="dialog" aria-modal="true" aria-labelledby="adminRequestReviewTitle">
-        <header class="review-modal-header">
+        <header class="modal-header">
             <div>
-                <span class="review-modal-kicker"><spring:message code="admin.moderatorRequest.kicker"/></span>
+                <span class="modal-kicker"><spring:message code="admin.moderatorRequest.kicker"/></span>
                 <h2 id="adminRequestReviewTitle"><spring:message code="admin.moderatorRequest.title"/></h2>
             </div>
-            <button type="button" class="review-modal-close"
+            <button type="button" class="modal-close"
                     data-close-admin-request-review-modal aria-label="${closeModalLabel}">
                 <pa:icon name="close" size="18"/>
             </button>
@@ -29,21 +36,21 @@
         </p>
 
         <div class="admin-request-review-fields">
-            <div class="review-modal-field review-modal-field-wide">
+            <div class="modal-field modal-field-wide">
                 <label for="adminRequestReviewMotivation"><spring:message code="admin.moderatorRequest.motivation"/></label>
                 <textarea id="adminRequestReviewMotivation" rows="4" readonly></textarea>
             </div>
-            <div class="review-modal-field review-modal-field-wide">
+            <div class="modal-field modal-field-wide">
                 <label for="adminRequestReviewBio"><spring:message code="admin.moderatorRequest.bio"/></label>
                 <textarea id="adminRequestReviewBio" rows="4" readonly></textarea>
             </div>
-            <div class="review-modal-field review-modal-field-wide">
+            <div class="modal-field modal-field-wide">
                 <label for="adminRequestReviewJustification"><spring:message code="admin.moderatorRequest.justification"/></label>
                 <textarea id="adminRequestReviewJustification" rows="4" readonly></textarea>
             </div>
         </div>
 
-        <div class="review-modal-actions">
+        <div class="modal-actions">
             <form id="adminRequestRejectForm" method="post" action="">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <button type="submit" class="btn-secondary admin-reject-btn"><spring:message code="common.action.reject"/></button>

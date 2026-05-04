@@ -5,19 +5,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="landing.title"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=2'/>">
-    <link rel="stylesheet" href="<c:url value='/css/landing.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/cars.css'/>">
-</head>
+<pa:page-head titleCode="landing.title" styles="/css/landing.css|/css/reviews.css|/css/cars.css"/>
 <body>
 
     <pa:nav activePage="explore"/>
@@ -75,10 +63,7 @@
                 <form class="hero-search" method="get" action="<c:url value='/cars'/>" novalidate="novalidate">
                     <label class="sr-only" for="hero-search-input"><c:out value="${landingSearchLabel}"/></label>
                     <div class="hero-search-field">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true">
-                            <circle cx="11" cy="11" r="7"></circle>
-                            <path d="m20 20-3.5-3.5"></path>
-                        </svg>
+                        <pa:icon name="search" size="18"/>
                         <input
                                 id="hero-search-input"
                                 type="search"
@@ -209,8 +194,9 @@
         </section>
     </main>
     <pa:auth-required-modal/>
-    <script src="<c:url value='/js/reactions.js'/>"></script>
-    <script src="<c:url value='/js/auth-required-modal.js'/>"></script>
+    <pa:script src="/js/modal-utils.js"/>
+    <pa:script src="/js/reactions.js"/>
+    <pa:script src="/js/auth-required-modal.js"/>
     <pa:footer/>
 </body>
 </html>

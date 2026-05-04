@@ -8,8 +8,17 @@
 <spring:message var="filterMinPlaceholder" code="cars.filter.placeholder.min"/>
 <spring:message var="filterMaxPlaceholder" code="cars.filter.placeholder.max"/>
 <spring:message var="closeFiltersLabel" code="cars.filter.close"/>
-<spring:message var="filterYearRangeValidation" code="validation.carSearch.year.range"/>
-<spring:message var="filterYearOrderValidation" code="validation.carSearch.year.order"/>
+<spring:message var="fuelTypeInvalidMsg" code="js.cars.filters.fuelType.invalid"/>
+<spring:message var="transmissionInvalidMsg" code="js.cars.filters.transmission.invalid"/>
+<spring:message var="airbagsInvalidMsg" code="js.cars.filters.airbags.invalid"/>
+<spring:message var="yearRangeInvalidMsg" code="js.cars.filters.year.range"/>
+<spring:message var="yearOrderInvalidMsg" code="js.cars.filters.year.order"/>
+<spring:message var="priceRangeInvalidMsg" code="js.cars.filters.price.range"/>
+<spring:message var="priceOrderInvalidMsg" code="js.cars.filters.price.order"/>
+<spring:message var="horsepowerRangeInvalidMsg" code="js.cars.filters.horsepower.range"/>
+<spring:message var="horsepowerOrderInvalidMsg" code="js.cars.filters.horsepower.order"/>
+<spring:message var="consumptionRangeInvalidMsg" code="js.cars.filters.consumption.range"/>
+<spring:message var="speedRangeInvalidMsg" code="js.cars.filters.speed.range"/>
 <c:set var="electricOnlyFilter" value="${criteria.electricOnly}"/>
 <div id="carsFiltersOverlay" class="cars-filters-overlay" data-close-filters-panel></div>
 
@@ -19,8 +28,17 @@
        role="dialog"
        aria-modal="true"
        aria-labelledby="filtersPanelTitle"
-       data-msg-year-range="${fn:escapeXml(filterYearRangeValidation)}"
-       data-msg-year-order="${fn:escapeXml(filterYearOrderValidation)}">
+       data-msg-fuel-type-invalid="${fn:escapeXml(fuelTypeInvalidMsg)}"
+       data-msg-transmission-invalid="${fn:escapeXml(transmissionInvalidMsg)}"
+       data-msg-airbags-invalid="${fn:escapeXml(airbagsInvalidMsg)}"
+       data-msg-year-range="${fn:escapeXml(yearRangeInvalidMsg)}"
+       data-msg-year-order="${fn:escapeXml(yearOrderInvalidMsg)}"
+       data-msg-price-range="${fn:escapeXml(priceRangeInvalidMsg)}"
+       data-msg-price-order="${fn:escapeXml(priceOrderInvalidMsg)}"
+       data-msg-horsepower-range="${fn:escapeXml(horsepowerRangeInvalidMsg)}"
+       data-msg-horsepower-order="${fn:escapeXml(horsepowerOrderInvalidMsg)}"
+       data-msg-consumption-range="${fn:escapeXml(consumptionRangeInvalidMsg)}"
+       data-msg-speed-range="${fn:escapeXml(speedRangeInvalidMsg)}">
 
     <div class="cars-filters-panel-inner">
 
@@ -112,32 +130,32 @@
         <section class="filters-panel-section">
             <h3 class="filters-panel-section-title"><spring:message code="cars.form.modelYear"/></h3>
             <div class="dual-range"
-                 data-range-min="1950"
+                 data-range-min="1886"
                  data-range-max="2100"
                  data-input-low="panelYearMin"
                  data-input-high="panelYearMax">
                 <div class="dual-range-track">
                     <div class="dual-range-fill" id="panelYearFill"></div>
                 </div>
-                <input type="range" class="dual-range-thumb dual-range-low" min="1950" max="2100" step="1"
-                       value="<c:out value='${not empty criteria.yearMin ? criteria.yearMin : 1950}'/>">
-                <input type="range" class="dual-range-thumb dual-range-high" min="1950" max="2100" step="1"
+                <input type="range" class="dual-range-thumb dual-range-low" min="1886" max="2100" step="1"
+                       value="<c:out value='${not empty criteria.yearMin ? criteria.yearMin : 1886}'/>">
+                <input type="range" class="dual-range-thumb dual-range-high" min="1886" max="2100" step="1"
                        value="<c:out value='${not empty criteria.yearMax ? criteria.yearMax : 2100}'/>">
                 <div class="dual-range-labels">
-                    <span>1950</span>
+                    <span>1886</span>
                     <span>2100</span>
                 </div>
             </div>
             <div class="dual-range-inputs">
                 <input type="text" id="panelYearMin" name="yearMin" class="range-number-input"
                        inputmode="numeric" autocomplete="off" data-number-input="true"
-                       data-min="1950" data-max="2100" data-step="1" data-boundary="min" placeholder="${filterMinPlaceholder}"
+                       data-min="1886" data-max="2100" data-step="1" data-boundary="min" placeholder="${filterMinPlaceholder}"
                        aria-describedby="panelYearError"
                        value="<c:out value='${criteria.yearMin}'/>">
                 <span class="range-separator">–</span>
                 <input type="text" id="panelYearMax" name="yearMax" class="range-number-input"
                        inputmode="numeric" autocomplete="off" data-number-input="true"
-                       data-min="1950" data-max="2100" data-step="1" data-boundary="max" placeholder="${filterMaxPlaceholder}"
+                       data-min="1886" data-max="2100" data-step="1" data-boundary="max" placeholder="${filterMaxPlaceholder}"
                        aria-describedby="panelYearError"
                        value="<c:out value='${criteria.yearMax}'/>">
             </div>
@@ -145,7 +163,7 @@
         </section>
 
         <section class="filters-panel-section">
-            <div class="filters-panel-subsection">
+            <div class="filters-panel-subsection" id="panelConsumptionSection" data-hide-when-electric-only="true" <c:if test="${electricOnlyFilter}">hidden</c:if>>
                 <h4 class="filters-panel-subsection-title"><spring:message code="cars.filter.horsepower"/></h4>
                 <div class="dual-range"
                      data-range-min="50"
@@ -201,28 +219,27 @@
                 </div>
             </div>
 
-            <c:if test="${not electricOnlyFilter}">
-                <div class="filters-panel-subsection" id="panelConsumptionSection" data-hide-when-electric-only="true">
-                    <div class="filter-range-header">
-                        <h4 class="filters-panel-subsection-title"><spring:message code="cars.filter.consumption"/></h4>
+            <div class="filters-panel-subsection">
+                <div class="filter-range-header">
+                    <h4 class="filters-panel-subsection-title"><spring:message code="cars.filter.consumption"/></h4>
+                </div>
+                <p class="filter-range-value-display" id="panelConsumptionDisplay"></p>
+                <input type="range" id="panelConsumptionSlider" name="fuelConsumptionMax"
+                       class="single-range"
+                       min="0" max="30" step="1"
+                       value="<c:out value='${not empty criteria.fuelConsumptionMax ? criteria.fuelConsumptionMax : 30}'/>"
+                       <c:if test="${electricOnlyFilter}">disabled</c:if>>
+                <div class="single-range-labels">
+                    <div class="single-range-label-col">
+                        <span>0 L/100km</span>
+                        <span class="single-range-sublabel"><spring:message code="cars.filter.consumption.low"/></span>
                     </div>
-                    <p class="filter-range-value-display" id="panelConsumptionDisplay"></p>
-                    <input type="range" id="panelConsumptionSlider" name="fuelConsumptionMax"
-                           class="single-range"
-                           min="0" max="30" step="1"
-                           value="<c:out value='${not empty criteria.fuelConsumptionMax ? criteria.fuelConsumptionMax : 30}'/>">
-                    <div class="single-range-labels">
-                        <div class="single-range-label-col">
-                            <span>0 L/100km</span>
-                            <span class="single-range-sublabel"><spring:message code="cars.filter.consumption.low"/></span>
-                        </div>
-                        <div class="single-range-label-col single-range-label-col--end">
-                            <span>30 L/100km</span>
-                            <span class="single-range-sublabel"><spring:message code="cars.filter.consumption.high"/></span>
-                        </div>
+                    <div class="single-range-label-col single-range-label-col--end">
+                        <span>30 L/100km</span>
+                        <span class="single-range-sublabel"><spring:message code="cars.filter.consumption.high"/></span>
                     </div>
                 </div>
-            </c:if>
+            </div>
         </section>
 
         <section class="filters-panel-section">

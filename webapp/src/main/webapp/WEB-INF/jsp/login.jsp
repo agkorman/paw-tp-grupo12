@@ -1,21 +1,18 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <spring:message var="loginSubmittingLabel" code="auth.login.submitting"/>
+<spring:message var="jsRequiredEmail" code="js.auth.required.email"/>
+<spring:message var="jsRequiredPassword" code="js.auth.required.password"/>
+<spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
+<spring:message var="jsLengthMin" code="js.form.length.min"/>
+<spring:message var="jsLengthMax" code="js.form.length.max"/>
+<spring:message var="jsEmailInvalid" code="js.auth.email.invalid"/>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><spring:message code="auth.login.title"/></title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/auth.css'/>">
-</head>
+<pa:page-head titleCode="auth.login.title" styles="/css/auth.css"/>
 <body>
     <pa:nav/>
 
@@ -27,7 +24,13 @@
             </div>
 
             <form id="loginForm" class="auth-form" method="post" action="<c:url value='/login'/>"
-                  data-submit-lock="true" novalidate="novalidate">
+                  data-auth-form="login" data-submit-lock="true" novalidate="novalidate"
+                  data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
+                  data-msg-required-login-email="${fn:escapeXml(jsRequiredEmail)}"
+                  data-msg-required-login-password="${fn:escapeXml(jsRequiredPassword)}"
+                  data-msg-length-min="${fn:escapeXml(jsLengthMin)}"
+                  data-msg-length-max="${fn:escapeXml(jsLengthMax)}"
+                  data-msg-email-invalid="${fn:escapeXml(jsEmailInvalid)}">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <c:if test="${not empty loginRedirect}">
                     <input type="hidden" name="redirect" value="<c:out value='${loginRedirect}'/>">
@@ -38,12 +41,12 @@
 
                 <div class="auth-field">
                     <label for="loginEmail"><spring:message code="common.form.email"/></label>
-                    <input id="loginEmail" name="email" type="email" autocomplete="email">
+                    <input id="loginEmail" name="email" type="email" maxlength="100" autocomplete="email" required>
                 </div>
 
                 <div class="auth-field">
                     <label for="loginPassword"><spring:message code="common.form.password"/></label>
-                    <input id="loginPassword" name="password" type="password" autocomplete="current-password">
+                    <input id="loginPassword" name="password" type="password" maxlength="72" autocomplete="current-password" required>
                 </div>
 
                 <label class="auth-check">
@@ -70,9 +73,13 @@
         <c:when test="${not empty loginMessageCode}">
             <pa:toast messageCode="${loginMessageCode}"/>
         </c:when>
+        <c:otherwise>
+            <pa:toast/>
+        </c:otherwise>
     </c:choose>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/toast.js'/>"></script>
+    <pa:script src="/js/auth-form.js"/>
+    <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/toast.js"/>
     <pa:footer/>
 </body>
 </html>

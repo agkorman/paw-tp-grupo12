@@ -20,9 +20,6 @@
         return;
     }
 
-    var msgYearRange = panel.getAttribute('data-msg-year-range') || '';
-    var msgYearOrder = panel.getAttribute('data-msg-year-order') || '';
-
     /* ── OPEN / CLOSE ── */
 
     function openPanel() {
@@ -135,11 +132,18 @@
         if (!slider || !display) { return function () {}; }
 
         function updateDisplay() {
+            var valueNode;
             updateSingleRangeFill(slider, fillMode);
-            display.innerHTML = (prefix ? prefix + ' <strong>' : '<strong>') +
-                                slider.value +
-                                '</strong>' +
-                                (unit ? ' ' + unit : '');
+            display.textContent = '';
+            if (prefix) {
+                display.appendChild(document.createTextNode(prefix + ' '));
+            }
+            valueNode = document.createElement('strong');
+            valueNode.textContent = slider.value;
+            display.appendChild(valueNode);
+            if (unit) {
+                display.appendChild(document.createTextNode(' ' + unit));
+            }
         }
 
         slider.addEventListener('input', updateDisplay);
@@ -760,59 +764,59 @@
         clearValidationErrors();
 
         if (!areAllowedCsvValues(panelParams.fuelType, ['combustion', 'hybrid', 'electric'])) {
-            showPanelValidationError('Elegí una motorización válida.');
+            showPanelValidationError(panel.getAttribute('data-msg-fuel-type-invalid') || '');
             return false;
         }
         if (!isAllowedValue(panelParams.transmission, ['', 'automatic', 'manual'])) {
-            showPanelValidationError('Elegí una transmisión válida.');
+            showPanelValidationError(panel.getAttribute('data-msg-transmission-invalid') || '');
             return false;
         }
         if (!isAllowedValue(panelParams.airbagMin, ['', '2', '4', '6', '8', '10'])) {
-            showPanelValidationError('Elegí una cantidad de airbags válida.');
+            showPanelValidationError(panel.getAttribute('data-msg-airbags-invalid') || '');
             return false;
         }
-        if (!isValidNumberParam(panelParams.yearMin, 1950, 2100)
-                || !isValidNumberParam(panelParams.yearMax, 1950, 2100)) {
-            showYearValidationError(msgYearRange, focusOnError);
+        if (!isValidNumberParam(panelParams.yearMin, 1950, 2026)
+                || !isValidNumberParam(panelParams.yearMax, 1950, 2026)) {
+            showYearValidationError(panel.getAttribute('data-msg-year-range') || '', focusOnError);
             return false;
         }
 
         if (panelParams.yearMin !== undefined && panelParams.yearMax !== undefined
                 && Number(panelParams.yearMin) > Number(panelParams.yearMax)) {
-            showYearValidationError(msgYearOrder, focusOnError);
+            showYearValidationError(panel.getAttribute('data-msg-year-order') || '', focusOnError);
             return false;
         }
 
         if (!isValidNumberParam(panelParams.priceMin, 10000, 5000000)
                 || !isValidNumberParam(panelParams.priceMax, 10000, 5000000)) {
-            showPriceValidationError('Usá precios entre USD 10.000 y USD 5.000.000.', focusOnError);
+            showPriceValidationError(panel.getAttribute('data-msg-price-range') || '', focusOnError);
             return false;
         }
 
         if (panelParams.priceMin !== undefined && panelParams.priceMax !== undefined
                 && Number(panelParams.priceMin) > Number(panelParams.priceMax)) {
-            showPriceValidationError('El precio mínimo no puede superar al máximo.', focusOnError);
+            showPriceValidationError(panel.getAttribute('data-msg-price-order') || '', focusOnError);
             return false;
         }
 
         if (!isValidNumberParam(panelParams.horsepowerMin, 50, 800)
                 || !isValidNumberParam(panelParams.horsepowerMax, 50, 800)) {
-            showHpValidationError('Usá valores de potencia entre 50 y 800 HP.', focusOnError);
+            showHpValidationError(panel.getAttribute('data-msg-horsepower-range') || '', focusOnError);
             return false;
         }
 
         if (panelParams.horsepowerMin !== undefined && panelParams.horsepowerMax !== undefined
                 && Number(panelParams.horsepowerMin) > Number(panelParams.horsepowerMax)) {
-            showHpValidationError('La potencia mínima no puede superar la máxima.', focusOnError);
+            showHpValidationError(panel.getAttribute('data-msg-horsepower-order') || '', focusOnError);
             return false;
         }
 
         if (!isValidNumberParam(panelParams.fuelConsumptionMax, 0, 30)) {
-            showPanelValidationError('Usá un consumo entre 0 y 30 L/100km.');
+            showPanelValidationError(panel.getAttribute('data-msg-consumption-range') || '');
             return false;
         }
         if (!isValidNumberParam(panelParams.maxSpeedMin, 0, 500)) {
-            showPanelValidationError('Usá una velocidad entre 0 y 500 km/h.');
+            showPanelValidationError(panel.getAttribute('data-msg-speed-range') || '');
             return false;
         }
 

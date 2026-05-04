@@ -14,6 +14,7 @@ import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
@@ -197,20 +198,28 @@ public class CarReviewController {
             return "review-form.jsp";
         }
 
-        reviewService.createReview(
-                currentUser.getId(),
-                car.getId(),
-                reviewForm.getRating(),
-                reviewForm.getTitle(),
-                reviewForm.getBody(),
-                normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                reviewForm.getModelYear(),
-                reviewForm.getMileageKm(),
-                reviewForm.getWouldRecommend(),
-                reviewForm.getTagIds());
-        LOGGER.info("created review carId={} userId={}", car.getId(), currentUser.getId());
+        try {
+            reviewService.createReview(
+                    currentUser.getId(),
+                    car.getId(),
+                    reviewForm.getRating(),
+                    reviewForm.getTitle(),
+                    reviewForm.getBody(),
+                    normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
+                    null,
+                    reviewForm.getMileageKm(),
+                    reviewForm.getWouldRecommend(),
+                    reviewForm.getTagIds());
+            LOGGER.info("created review carId={} userId={}", car.getId(), currentUser.getId());
+        } catch (final InvalidReviewTagSelectionException e) {
+            LOGGER.warn("create review rejected: invalid tag selection carId={} userId={}",
+                    car.getId(), currentUser.getId());
+            errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
+            model.addAttribute("selectedCar", car);
+            return "review-form.jsp";
+        }
 
-        return "redirect:/reviews?carId=" + car.getId();
+        return "redirect:/reviews?carId=" + car.getId() + "&reviewCreated=1";
     }
 
     private ModelAndView carReviewPage(final long carId, final String sort, final String error,
@@ -393,19 +402,29 @@ public class CarReviewController {
             return "review-form.jsp";
         }
 
-        reviewService.updateReview(
-                reviewId,
-                existingReview.getCarId(),
-                reviewForm.getRating(),
-                reviewForm.getTitle(),
-                reviewForm.getBody(),
-                normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                reviewForm.getModelYear(),
-                reviewForm.getMileageKm(),
-                reviewForm.getWouldRecommend(),
-                reviewForm.getTagIds()
-        );
-        LOGGER.info("updated review id={} userId={}", reviewId, currentUser.getId());
+        try {
+            reviewService.updateReview(
+                    reviewId,
+                    existingReview.getCarId(),
+                    reviewForm.getRating(),
+                    reviewForm.getTitle(),
+                    reviewForm.getBody(),
+                    normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
+                    null,
+                    reviewForm.getMileageKm(),
+                    reviewForm.getWouldRecommend(),
+                    reviewForm.getTagIds()
+            );
+            LOGGER.info("updated review id={} userId={}", reviewId, currentUser.getId());
+        } catch (final InvalidReviewTagSelectionException e) {
+            LOGGER.warn("update review rejected: invalid tag selection reviewId={} userId={}",
+                    reviewId, currentUser.getId());
+            errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
+            model.addAttribute("selectedCar", car);
+            model.addAttribute("editMode", true);
+            model.addAttribute("reviewId", reviewId);
+            return "review-form.jsp";
+        }
         return "redirect:/profile";
     }
 
@@ -623,7 +642,6 @@ public class CarReviewController {
         form.setTitle(review.getTitle());
         form.setBody(review.getBody());
         form.setOwnershipStatus(review.getOwnershipStatus());
-        form.setModelYear(review.getModelYear());
         form.setMileageKm(review.getMileageKm());
         form.setWouldRecommend(review.getWouldRecommend());
         form.setTagIds(review.getTags()

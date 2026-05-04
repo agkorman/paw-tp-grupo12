@@ -46,8 +46,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     @Override
     @Transactional
     public boolean toggleReviewLike(final long reviewId, final long userId) {
-        validateReviewAndUser(reviewId, userId);
         try {
+            validateReviewAndUser(reviewId, userId);
             if (reviewLikeDao.isReviewLikedByUser(reviewId, userId)) {
                 reviewLikeDao.unlikeReview(reviewId, userId);
                 return false;
@@ -63,8 +63,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     @Override
     @Transactional
     public boolean toggleReplyLike(final long replyId, final long userId) {
-        validateReplyAndUser(replyId, userId);
         try {
+            validateReplyAndUser(replyId, userId);
             if (reviewLikeDao.isReplyLikedByUser(replyId, userId)) {
                 reviewLikeDao.unlikeReply(replyId, userId);
                 return false;

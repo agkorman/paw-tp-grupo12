@@ -48,6 +48,8 @@
                             data-review-like-toggle
                             data-review-id="${fn:escapeXml(reviewId)}"
                             data-liked="${liked}"
+                            data-like-add-label="${fn:escapeXml(likeAddLabel)}"
+                            data-like-remove-label="${fn:escapeXml(likeRemoveLabel)}"
                             aria-pressed="${liked}"
                             aria-label="${liked ? likeRemoveLabel : likeAddLabel}">
                         <pa:icon name="heart" size="17"/>
@@ -65,6 +67,8 @@
                 data-review-like-toggle
                 data-review-id="${fn:escapeXml(reviewId)}"
                 data-liked="${liked}"
+                data-like-add-label="${fn:escapeXml(likeAddLabel)}"
+                data-like-remove-label="${fn:escapeXml(likeRemoveLabel)}"
                 aria-pressed="${liked}"
                 aria-label="${liked ? likeRemoveLabel : likeAddLabel}"
                 data-auth-resume-intent="like-${fn:escapeXml(reviewId)}"

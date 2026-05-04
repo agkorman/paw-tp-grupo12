@@ -22,6 +22,11 @@
 <spring:message var="likeLabel" code="review.like.label"/>
 <spring:message var="reviewActionMenuLabel" code="review.actionMenu.open"/>
 <spring:message var="reviewHideLabel" code="review.hide.action.aria"/>
+<spring:message var="reviewDeleteSuccessMsg" code="review.delete.toast.success"/>
+<spring:message var="reviewDeleteErrorMsg" code="review.delete.toast.error"/>
+<spring:message var="replyEmptyMsg" code="review.feed.reply.empty"/>
+<spring:message var="replyErrorMsg" code="review.feed.reply.error"/>
+<spring:message var="reviewAuthorFallback" code="review.author.fallback"/>
 
 <section id="reviewsFeed" class="reviews-feed">
     <c:set var="reviewTotalCount" value="${empty totalItems ? fn:length(reviews) : totalItems}"/>
@@ -81,7 +86,11 @@
                                                 <a href="${reviewEditPageUrl}">
                                                     <spring:message code="common.action.edit"/>
                                                 </a>
-                                                <form method="post" action="${reviewDeleteUrl}">
+                                                <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
+                                                      data-review-delete-form
+                                                      data-confirm-modal="deleteReviewConfirmModal"
+                                                      data-delete-success="${fn:escapeXml(reviewDeleteSuccessMsg)}"
+                                                      data-delete-error="${fn:escapeXml(reviewDeleteErrorMsg)}">
                                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                     <button type="submit" class="action-menu-danger">
                                                         <spring:message code="common.action.delete"/>
@@ -127,7 +136,7 @@
                                         <article class="review-reply" id="reply-${reply.id}">
                                             <div class="review-reply-header">
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">
-                                                    <c:out value="${empty reply.authorUsername ? 'Usuario' : reply.authorUsername}"/>
+                                                    <c:out value="${empty reply.authorUsername ? reviewAuthorFallback : reply.authorUsername}"/>
                                                 </a>
                                                 <span><c:out value="${relativeTimeFormatter.format(reply.createdAt)}"/></span>
                                             </div>
@@ -149,11 +158,13 @@
                                           data-enhanced-review-reply="true"
                                           data-target="#reviewsFeed"
                                           data-auth-resume-intent="reply-${review.id}"
+                                          data-msg-empty="${fn:escapeXml(replyEmptyMsg)}"
+                                          data-msg-error="${fn:escapeXml(replyErrorMsg)}"
                                           novalidate="novalidate">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                         <label for="replyBody-${review.id}"><spring:message code="review.feed.reply"/></label>
                                         <div class="review-reply-form-row">
-                                            <textarea id="replyBody-${review.id}" name="body" rows="2"
+                                            <textarea id="replyBody-${review.id}" name="body" rows="2" maxlength="1000" required
                                                       placeholder="${replyPlaceholder}"></textarea>
                                             <button type="submit" class="btn-secondary"><spring:message code="review.feed.reply"/></button>
                                         </div>

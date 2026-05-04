@@ -17,6 +17,7 @@
 <c:set var="resolvedFormSubtitle" value="${empty formSubtitle ? defaultFormSubtitle : formSubtitle}"/>
 <c:set var="resolvedSubmitLabel" value="${empty submitLabel ? defaultSubmitLabel : submitLabel}"/>
 <c:set var="resolvedRejectLabel" value="${empty rejectLabel ? defaultRejectLabel : rejectLabel}"/>
+<c:set var="carFormPageTitle" value="${resolvedFormTitle} | La Posta Autos"/>
 <c:url var="resolvedFormAction" value="${empty formAction ? '/cars' : formAction}"/>
 <c:url var="resolvedCancelUrl" value="${empty cancelUrl ? '/cars' : cancelUrl}"/>
 <c:if test="${not empty rejectAction}">
@@ -51,6 +52,24 @@
 <spring:message var="nextImageLabel" code="cars.image.next"/>
 <spring:message var="removeImageLabel" code="cars.form.image.remove"/>
 <spring:message var="emptyFileStatus" code="cars.form.image.none"/>
+<spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
+<spring:message var="jsRequiredBrand" code="js.car.required.brand"/>
+<spring:message var="jsRequiredBodyType" code="js.car.required.bodyType"/>
+<spring:message var="jsRequiredModel" code="js.car.required.model"/>
+<spring:message var="jsRequiredDescription" code="js.car.required.description"/>
+<spring:message var="jsRequiredHorsepower" code="js.car.required.horsepower"/>
+<spring:message var="jsRequiredAirbags" code="js.car.required.airbags"/>
+<spring:message var="jsRequiredConsumption" code="js.car.required.consumption"/>
+<spring:message var="jsRequiredMaxSpeed" code="js.car.required.maxSpeed"/>
+<spring:message var="jsRequiredImage" code="js.car.required.image"/>
+<spring:message var="jsRadioRequired" code="js.car.validation.radio"/>
+<spring:message var="jsEmailInvalid" code="js.car.validation.email"/>
+<spring:message var="jsNumberInvalid" code="js.car.validation.number"/>
+<spring:message var="jsNumberMin" code="js.car.validation.min"/>
+<spring:message var="jsNumberMax" code="js.car.validation.max"/>
+<spring:message var="jsImageMaxCountTemplate" code="js.car.image.maxCount"/>
+<spring:message var="jsImageUnsupportedType" code="js.car.image.unsupportedType"/>
+<spring:message var="jsImageTooLarge" code="js.car.image.tooLarge"/>
 <spring:message var="jsImageMultiple" code="js.car.image.multiple"/>
 <spring:message var="jsImagePreview" code="js.car.image.preview"/>
 <spring:message var="jsImageAddSuffix" code="js.car.image.addSuffix"/>
@@ -58,21 +77,9 @@
 <spring:message var="jsImageLoadedMultiple" code="js.car.image.loadedMultiple"/>
 <spring:message var="jsImageAddMore" code="js.car.image.addMore"/>
 <c:set var="carFormMaxImageCount" value="${empty carFormMaxImageCount ? 5 : carFormMaxImageCount}"/>
-<spring:message var="jsImageMaxCountMsg" code="js.car.image.maxCount" arguments="${carFormMaxImageCount}" htmlEscape="true"/>
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><c:out value="${resolvedFormTitle}"/> | La Posta Autos</title>
-    <link rel="icon" href="<c:url value='/favicon.ico'/>">
-    <pa:font-head/>
-    <link rel="stylesheet" href="<c:url value='/css/design-system.css?v=3'/>">
-    <link rel="stylesheet" href="<c:url value='/css/layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/components.css?v=6'/>">
-    <link rel="stylesheet" href="<c:url value='/css/reviews.css?v=5'/>">
-    <link rel="stylesheet" href="<c:url value='/css/form-pages.css'/>">
-</head>
+<pa:page-head title="${carFormPageTitle}" styles="/css/reviews.css|/css/car-image-upload.css|/css/catalog-request-modal.css|/css/form-pages.css"/>
 <body>
     <pa:nav activePage="reviews"/>
 
@@ -85,6 +92,24 @@
                  data-existing-image-ids="${fn:escapeXml(resolvedExistingImageIds)}"
                  data-existing-image-status="${fn:escapeXml(existingImageStatus)}"
                  data-msg-file-empty="${fn:escapeXml(emptyFileStatus)}"
+                 data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
+                 data-msg-required-brand="${fn:escapeXml(jsRequiredBrand)}"
+                 data-msg-required-body-type="${fn:escapeXml(jsRequiredBodyType)}"
+                 data-msg-required-model="${fn:escapeXml(jsRequiredModel)}"
+                 data-msg-required-description="${fn:escapeXml(jsRequiredDescription)}"
+                 data-msg-required-horsepower="${fn:escapeXml(jsRequiredHorsepower)}"
+                 data-msg-required-airbags="${fn:escapeXml(jsRequiredAirbags)}"
+                 data-msg-required-consumption="${fn:escapeXml(jsRequiredConsumption)}"
+                 data-msg-required-max-speed="${fn:escapeXml(jsRequiredMaxSpeed)}"
+                 data-msg-required-image="${fn:escapeXml(jsRequiredImage)}"
+                 data-msg-radio-required="${fn:escapeXml(jsRadioRequired)}"
+                 data-msg-email-invalid="${fn:escapeXml(jsEmailInvalid)}"
+                 data-msg-number-invalid="${fn:escapeXml(jsNumberInvalid)}"
+                 data-msg-number-min="${fn:escapeXml(jsNumberMin)}"
+                 data-msg-number-max="${fn:escapeXml(jsNumberMax)}"
+                 data-msg-image-max-count="${fn:escapeXml(jsImageMaxCountTemplate)}"
+                 data-msg-image-unsupported-type="${fn:escapeXml(jsImageUnsupportedType)}"
+                 data-msg-image-too-large="${fn:escapeXml(jsImageTooLarge)}"
                  data-msg-image-multiple="${fn:escapeXml(jsImageMultiple)}"
                  data-msg-image-preview="${fn:escapeXml(jsImagePreview)}"
                  data-msg-image-add-suffix="${fn:escapeXml(jsImageAddSuffix)}"
@@ -92,11 +117,10 @@
                  data-msg-image-loaded-multiple="${fn:escapeXml(jsImageLoadedMultiple)}"
                  data-msg-image-add-more="${fn:escapeXml(jsImageAddMore)}"
                  data-max-image-count="${carFormMaxImageCount}"
-                 data-msg-image-max-count="${fn:escapeXml(jsImageMaxCountMsg)}"
                  aria-labelledby="carFormTitle">
-            <div class="review-modal-header">
+            <div class="modal-header">
                 <div>
-                    <span id="carFormKicker" class="review-modal-kicker"><c:out value="${resolvedFormKicker}"/></span>
+                    <span id="carFormKicker" class="modal-kicker"><c:out value="${resolvedFormKicker}"/></span>
                     <h1 id="carFormTitle"><c:out value="${resolvedFormTitle}"/></h1>
                 </div>
             </div>
@@ -116,12 +140,12 @@
 
                 <p id="carFormSubtitle" class="car-modal-subtitle"><c:out value="${resolvedFormSubtitle}"/></p>
 
-                <div class="review-modal-grid car-modal-layout">
+                <div class="modal-grid car-modal-layout">
                     <div class="car-modal-column car-modal-column-details">
                         <div class="car-modal-inline-fields">
-                            <div class="review-modal-field">
+                            <div class="modal-field">
                                 <label for="modalCarBrand"><spring:message code="cars.form.brand"/></label>
-                                <form:select id="modalCarBrand" path="brand">
+                                <form:select id="modalCarBrand" path="brand" required="required">
                                     <form:option value="" label="${brandSelectLabel}"/>
                                     <c:forEach items="${brands}" var="brand">
                                         <form:option value="${brand.name}" label="${brand.name}"/>
@@ -136,9 +160,9 @@
                                 </c:if>
                             </div>
 
-                            <div class="review-modal-field">
+                            <div class="modal-field">
                                 <label for="modalCarBodyType"><spring:message code="cars.form.bodyType"/></label>
-                                <form:select id="modalCarBodyType" path="bodyType">
+                                <form:select id="modalCarBodyType" path="bodyType" required="required">
                                     <form:option value="" label="${bodyTypeSelectLabel}"/>
                                     <c:forEach items="${bodyTypes}" var="bodyType">
                                         <form:option value="${bodyType.name}" label="${bodyType.name}"/>
@@ -154,64 +178,72 @@
                             </div>
                         </div>
 
-                        <div class="review-modal-field review-modal-field-wide">
+                        <div class="modal-field modal-field-wide">
                             <label for="modalCarModel"><spring:message code="cars.form.model"/></label>
                             <form:input id="modalCarModel" path="model" type="text"
+                                        maxlength="120" required="required"
                                         placeholder="${carModelPlaceholder}"/>
                             <form:errors path="model" cssClass="form-error" element="span"/>
                         </div>
 
-                        <div class="review-modal-field">
+                        <div class="modal-field">
                             <label for="modalCarYear"><spring:message code="cars.form.year"/></label>
                             <form:input id="modalCarYear" path="year" type="number"
+                                        min="1886" max="2100"
                                         placeholder="${carYearPlaceholder}"/>
                             <form:errors path="year" cssClass="form-error" element="span"/>
                         </div>
 
-                        <div class="review-modal-field review-modal-field-wide">
+                        <div class="modal-field modal-field-wide">
                             <label for="modalCarDescription"><spring:message code="cars.form.description"/></label>
-                            <form:textarea id="modalCarDescription" path="description" rows="4"
+                            <form:textarea id="modalCarDescription" path="description" rows="4" maxlength="1500"
+                                           required="required"
                                            placeholder="${carDescriptionPlaceholder}"/>
                             <form:errors path="description" cssClass="form-error" element="span"/>
                         </div>
 
-                        <div class="review-modal-field review-modal-field-wide">
-                            <span class="review-modal-section-label"><spring:message code="cars.form.specs"/></span>
+                        <div class="modal-field modal-field-wide">
+                            <span class="modal-section-label"><spring:message code="cars.form.specs"/></span>
                         </div>
 
                         <div class="car-modal-spec-panel">
                             <div class="car-modal-spec-grid">
-                                <div class="review-modal-field">
+                                <div class="modal-field">
                                     <label for="modalCarHorsepower"><spring:message code="cars.form.horsepower"/></label>
                                     <form:input id="modalCarHorsepower" path="horsepower" type="number"
+                                                min="1" max="2000" required="required"
                                                 placeholder="${carHorsepowerPlaceholder}"/>
                                     <form:errors path="horsepower" cssClass="form-error" element="span"/>
                                 </div>
 
-                                <div class="review-modal-field">
+                                <div class="modal-field">
                                     <label for="modalCarAirbagCount"><spring:message code="cars.form.airbags"/></label>
                                     <form:input id="modalCarAirbagCount" path="airbagCount" type="number"
+                                                min="0" max="30" required="required"
                                                 placeholder="${carAirbagsPlaceholder}"/>
                                     <form:errors path="airbagCount" cssClass="form-error" element="span"/>
                                 </div>
 
-                                <div class="review-modal-field">
+                                <div class="modal-field">
                                     <label for="modalCarFuelConsumption"><spring:message code="cars.form.fuelConsumption"/></label>
                                     <form:input id="modalCarFuelConsumption" path="fuelConsumption" type="number"
+                                                step="0.1" min="0" max="99.9" required="required"
                                                 placeholder="${carConsumptionPlaceholder}"/>
                                     <form:errors path="fuelConsumption" cssClass="form-error" element="span"/>
                                 </div>
 
-                                <div class="review-modal-field">
+                                <div class="modal-field">
                                     <label for="modalCarMaxSpeed"><spring:message code="cars.form.maxSpeed"/></label>
                                     <form:input id="modalCarMaxSpeed" path="maxSpeedKmh" type="number"
+                                                min="1" max="600" required="required"
                                                 placeholder="${carSpeedPlaceholder}"/>
                                     <form:errors path="maxSpeedKmh" cssClass="form-error" element="span"/>
                                 </div>
 
-                                <div class="review-modal-field">
+                                <div class="modal-field">
                                     <label for="modalCarPrice"><spring:message code="cars.form.price"/></label>
                                     <form:input id="modalCarPrice" path="priceUsd" type="number"
+                                                step="1" min="1" max="5000000"
                                                 placeholder="${carPricePlaceholder}"/>
                                     <form:errors path="priceUsd" cssClass="form-error" element="span"/>
                                 </div>
@@ -220,11 +252,11 @@
                     </div>
 
                     <div class="car-modal-column car-modal-column-media">
-                        <div class="review-modal-field">
+                        <div class="modal-field">
                             <label><spring:message code="cars.form.fuelType"/></label>
                             <div class="segmented-control segmented-control-radio-group">
                                 <label class="segmented-control-radio-option">
-                                    <input type="radio" name="fuelType" value="combustion" <c:if test="${empty carForm.fuelType or carForm.fuelType eq 'combustion'}">checked="checked"</c:if>/>
+                                    <input type="radio" name="fuelType" value="combustion" required="required" <c:if test="${empty carForm.fuelType or carForm.fuelType eq 'combustion'}">checked="checked"</c:if>/>
                                     <span><spring:message code="domain.fuel.combustion"/></span>
                                 </label>
                                 <label class="segmented-control-radio-option">
@@ -239,11 +271,11 @@
                             <form:errors path="fuelType" cssClass="form-error" element="span"/>
                         </div>
 
-                        <div class="review-modal-field">
+                        <div class="modal-field">
                             <label><spring:message code="cars.form.transmission"/></label>
                             <div class="segmented-control segmented-control-radio-group">
                                 <label class="segmented-control-radio-option">
-                                    <input type="radio" name="transmission" value="manual" <c:if test="${empty carForm.transmission or carForm.transmission eq 'manual'}">checked="checked"</c:if>/>
+                                    <input type="radio" name="transmission" value="manual" required="required" <c:if test="${empty carForm.transmission or carForm.transmission eq 'manual'}">checked="checked"</c:if>/>
                                     <span><spring:message code="domain.transmission.manual"/></span>
                                 </label>
                                 <label class="segmented-control-radio-option">
@@ -254,7 +286,7 @@
                             <form:errors path="transmission" cssClass="form-error" element="span"/>
                         </div>
 
-                        <div class="review-modal-field review-modal-field-wide car-image-field">
+                        <div class="modal-field modal-field-wide car-image-field">
                             <span class="car-image-label"><spring:message code="cars.form.images"/></span>
                             <div class="car-image-upload">
                                 <c:choose>
@@ -266,13 +298,16 @@
                                         </span>
                                         <form:input id="modalCarFile" path="files" type="file"
                                                     cssClass="car-image-upload-input"
+                                                    accept="image/jpeg,image/png,image/webp"
                                                     multiple="multiple"
                                                     aria-describedby="modalCarFileHelp modalCarFileStatus"/>
                                     </c:when>
                                     <c:otherwise>
                                         <form:input id="modalCarFile" path="files" type="file"
                                                     cssClass="car-image-upload-input"
+                                                    accept="image/jpeg,image/png,image/webp"
                                                     multiple="multiple"
+                                                    required="required"
                                                     aria-describedby="modalCarFileHelp modalCarFileStatus"/>
                                     </c:otherwise>
                                 </c:choose>
@@ -317,8 +352,8 @@
                     </div>
                 </div>
 
-                <div class="review-modal-actions">
-                    <div id="createCarCreateActions" class="review-modal-action-group">
+                <div class="modal-actions">
+                    <div id="createCarCreateActions" class="modal-action-group">
                         <a href="${resolvedCancelUrl}" class="btn-secondary"><spring:message code="common.action.cancel"/></a>
                         <c:if test="${not empty resolvedRejectAction}">
                             <button type="submit" class="btn-secondary admin-reject-btn" form="rejectCarRequestForm">
@@ -340,17 +375,19 @@
     </main>
 
     <c:if test="${catalogRequestLinksEnabled}">
-        <pa:request-brand-modal/>
-        <pa:request-body-type-modal/>
+        <pa:catalog-request-brand-modal/>
+        <pa:catalog-request-body-type-modal/>
     </c:if>
     <pa:toast messageCode="${submittedToastMessageCode}"/>
 
-    <script src="<c:url value='/js/car-form.js?v=3'/>"></script>
+    <pa:script src="/js/car-form.js"/>
     <c:if test="${catalogRequestLinksEnabled}">
-        <script src="<c:url value='/js/catalog-request-modals.js'/>"></script>
+        <pa:script src="/js/modal-utils.js"/>
+        <pa:script src="/js/catalog-request-modal.js"/>
+        <pa:script src="/js/catalog-request-validation.js"/>
     </c:if>
-    <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
-    <script src="<c:url value='/js/toast.js'/>"></script>
+    <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/toast.js"/>
     <pa:footer/>
 </body>
 </html>
