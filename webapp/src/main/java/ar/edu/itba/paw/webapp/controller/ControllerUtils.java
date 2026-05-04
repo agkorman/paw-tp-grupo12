@@ -54,22 +54,22 @@ final class ControllerUtils {
 
     static String validateUploadedImage(final MultipartFile file, final boolean required) {
         if (file == null || file.isEmpty()) {
-            return required ? "La imagen es obligatoria." : null;
+            return required ? "validation.car.image.required" : null;
         }
         if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-            return "La imagen no debe superar los 10 MB.";
+            return "validation.car.image.maxSize";
         }
         final String contentType = normalizeContentType(file.getContentType());
         if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
-            return "Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.";
+            return "validation.car.image.unsupportedType";
         }
         try {
             if (!ImageSignatureValidator.hasMatchingImageSignature(file, contentType)) {
-                return "El archivo no coincide con una imagen JPEG, PNG o WEBP válida.";
+                return "validation.car.image.invalidSignature";
             }
         } catch (final IOException e) {
             LOGGER.warn("failed to read uploaded image bytes for signature check", e);
-            return "No pudimos leer la imagen. Intentá con otro archivo.";
+            return "validation.car.image.readError";
         }
         return null;
     }
