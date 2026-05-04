@@ -217,34 +217,26 @@ public class ProfileController {
             }
             return new ModelAndView("redirect:/login");
         }
-        if (currentUser.getId() == userId) {
-            LOGGER.warn("follow toggle rejected: self-follow attempt userId={}", userId);
+        if (userService.getUserById(userId).isEmpty()) {
+            throw new ResourceNotFoundException("User", userId);
+        }
+
+        try {
+            final boolean following = userFollowService.toggleFollow(currentUser.getId(), userId);
+            if (ajax) {
+                final long followerCount = userFollowService.countFollowers(userId);
+                return new ResponseEntity<String>(
+                    following + "|" + followerCount,
+                    HttpStatus.OK
+                );
+            }
+            return new ModelAndView("redirect:/profiles/" + userId);
+        } catch (final Exception e) {
             if (ajax) {
                 return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
             }
             return new ModelAndView("redirect:/profile");
         }
-        if (userService.getUserById(userId).isEmpty()) {
-            throw new ResourceNotFoundException("User", userId);
-        }
-
-        final boolean wasFollowing = userFollowService.isFollowing(currentUser.getId(), userId);
-        if (wasFollowing) {
-            userFollowService.unfollowUser(currentUser.getId(), userId);
-        } else {
-            userFollowService.followUser(currentUser.getId(), userId);
-        }
-        final boolean following = !wasFollowing;
-        LOGGER.info("user id={} toggled follow targetUserId={} following={}",
-                currentUser.getId(), userId, following);
-        if (ajax) {
-            final long followerCount = userFollowService.countFollowers(userId);
-            return new ResponseEntity<String>(
-                following + "|" + followerCount,
-                HttpStatus.OK
-            );
-        }
-        return new ModelAndView("redirect:/profiles/" + userId);
     }
 
     private String profileErrorCode(final BindingResult errors) {
@@ -590,9 +582,24 @@ public class ProfileController {
     }
 
     private List<ProfileConnection> toConnections(final List<User> users, final Long currentUserId) {
+        if (users.isEmpty() || currentUserId == null) {
+            return users.stream()
+                    .map(user -> toConnection(user, currentUserId))
+                    .toList();
+        }
+        final Set<Long> followedIds = userFollowService.getFollowedIds(
+            currentUserId,
+            users.stream().map(User::getId).toList()
+        );
         return users.stream()
-                .map(user -> toConnection(user, currentUserId))
+                .map(user -> toConnectionWithPreloadedStatus(user, currentUserId, followedIds))
                 .toList();
+    }
+
+    private ProfileConnection toConnectionWithPreloadedStatus(final User user, final Long currentUserId, final Set<Long> followedIds) {
+        final boolean currentUser = currentUserId != null && currentUserId == user.getId();
+        final boolean following = !currentUser && followedIds.contains(user.getId());
+        return new ProfileConnection(user.getId(), displayName(user), initials(user), following, !currentUser);
     }
 
     private ProfileConnection toConnection(final User user, final Long currentUserId) {

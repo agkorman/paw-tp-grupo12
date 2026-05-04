@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarYearVariant;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
@@ -368,19 +369,7 @@ public class CarReviewController {
     }
 
     private List<CarYearVariant> buildYearVariants(final Car selectedCar) {
-        if (selectedCar.getBrandName() == null || selectedCar.getBodyType() == null || selectedCar.getModel() == null) {
-            return Collections.emptyList();
-        }
-        final String selectedModel = selectedCar.getModel().trim().toLowerCase(Locale.ROOT);
-        return carService.getCarsByBrandAndBodyType(selectedCar.getBrandName(), selectedCar.getBodyType())
-                .stream()
-                .filter(car -> car.getModel() != null
-                        && car.getModel().trim().toLowerCase(Locale.ROOT).equals(selectedModel))
-                .sorted(Comparator
-                        .comparing(Car::getYear, Comparator.nullsLast(Comparator.reverseOrder()))
-                        .thenComparingLong(Car::getId))
-                .map(car -> new CarYearVariant(car.getId(), car.getYear(), car.getId() == selectedCar.getId()))
-                .collect(Collectors.toList());
+        return carService.getYearVariants(selectedCar.getId());
     }
 
     private ReviewPageData resolveReviewPageData(final long carId, final String sort, final Integer page,
@@ -977,30 +966,6 @@ public class CarReviewController {
 
         public List<ReviewReplyCard> getReplies() {
             return replies;
-        }
-    }
-
-    public static final class CarYearVariant {
-        private final long carId;
-        private final Integer year;
-        private final boolean selected;
-
-        private CarYearVariant(final long carId, final Integer year, final boolean selected) {
-            this.carId = carId;
-            this.year = year;
-            this.selected = selected;
-        }
-
-        public long getCarId() {
-            return carId;
-        }
-
-        public Integer getYear() {
-            return year;
-        }
-
-        public boolean isSelected() {
-            return selected;
         }
     }
 

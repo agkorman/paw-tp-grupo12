@@ -172,6 +172,78 @@ public class UserFollowServiceImplTest {
     }
 
     @Test
+    public void shouldToggleFollowFromFalseToTrue() {
+        // Arrange
+        when(userDao.findById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
+        when(userDao.findById(FOLLOWED_ID)).thenReturn(Optional.of(userWithId(FOLLOWED_ID)));
+        when(userFollowDao.isFollowing(FOLLOWER_ID, FOLLOWED_ID)).thenReturn(false);
+        when(userFollowDao.follow(FOLLOWER_ID, FOLLOWED_ID)).thenReturn(true);
+
+        // Exercise
+        final boolean result = userFollowService.toggleFollow(FOLLOWER_ID, FOLLOWED_ID);
+
+        // Assertions
+        assertTrue(result);
+    }
+
+    @Test
+    public void shouldToggleFollowFromTrueToFalse() {
+        // Arrange
+        when(userDao.findById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
+        when(userDao.findById(FOLLOWED_ID)).thenReturn(Optional.of(userWithId(FOLLOWED_ID)));
+        when(userFollowDao.isFollowing(FOLLOWER_ID, FOLLOWED_ID)).thenReturn(true);
+        when(userFollowDao.unfollow(FOLLOWER_ID, FOLLOWED_ID)).thenReturn(true);
+
+        // Exercise
+        final boolean result = userFollowService.toggleFollow(FOLLOWER_ID, FOLLOWED_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldRejectToggleFollowSelf() {
+        // Arrange
+        final long sameUserId = FOLLOWER_ID;
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> userFollowService.toggleFollow(sameUserId, sameUserId));
+
+        // Assertions
+        assertEquals("User cannot follow themselves: 1", ex.getMessage());
+    }
+
+    @Test
+    public void shouldReturnEmptySetWhenBatchLookupEmpty() {
+        // Arrange
+        final java.util.Collection<Long> targetIds = java.util.List.of();
+
+        // Exercise
+        final java.util.Set<Long> result = userFollowService.getFollowedIds(FOLLOWER_ID, targetIds);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnFollowedIdsFromDaoBatch() {
+        // Arrange
+        final java.util.Collection<Long> targetIds = java.util.List.of(2L, 3L, 4L);
+        when(userFollowDao.getFollowedIds(FOLLOWER_ID, targetIds))
+                .thenReturn(java.util.Set.of(2L, 4L));
+
+        // Exercise
+        final java.util.Set<Long> result = userFollowService.getFollowedIds(FOLLOWER_ID, targetIds);
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertTrue(result.contains(2L));
+        assertTrue(result.contains(4L));
+        assertFalse(result.contains(3L));
+    }
+
+    @Test
     public void shouldReturnFollowerCountFromDao() {
         // Arrange
         when(userFollowDao.countFollowers(FOLLOWED_ID)).thenReturn(7L);

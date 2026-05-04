@@ -245,4 +245,21 @@ public class CarServiceImplTest {
         // Assertions
         assertEquals("Image metadata and payload must be provided together.", ex.getMessage());
     }
+
+    @Test
+    public void shouldNormalizeElectricOnlySearchByRemovingFuelConsumptionFilter() {
+        // Arrange
+        final ar.edu.itba.paw.model.CarSearchCriteria criteria = new ar.edu.itba.paw.model.CarSearchCriteria();
+        criteria.setFuelTypes(List.of("electric"));
+        criteria.setFuelConsumptionMax(new BigDecimal("15.0"));
+        final ar.edu.itba.paw.model.Page<Car> expectedPage = new ar.edu.itba.paw.model.Page<>(List.of(), 1, 10, 0);
+        when(carDao.findByCriteria(any())).thenReturn(expectedPage);
+
+        // Exercise
+        carService.searchCars(criteria);
+
+        // Assertions
+        assertTrue(criteria.isElectricOnly());
+        assertTrue(criteria.getFuelConsumptionMax() == null);
+    }
 }

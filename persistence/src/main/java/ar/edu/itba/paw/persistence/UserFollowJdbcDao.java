@@ -143,4 +143,28 @@ public class UserFollowJdbcDao implements UserFollowDao {
             userId
         );
     }
+
+    @Override
+    public Set<Long> getFollowedIds(final long followerId, final Collection<Long> targetIds) {
+        if (targetIds.isEmpty()) {
+            return Set.of();
+        }
+        final String placeholders = String.join(",", targetIds.stream().map(id -> "?").toArray(String[]::new));
+        final List<Long> followedIds = jdbcTemplate.queryForList(
+            "SELECT followed_id FROM user_follows WHERE follower_id = ? AND followed_id IN (" + placeholders + ")",
+            Long.class,
+            buildFollowedIdsParams(followerId, targetIds)
+        );
+        return new HashSet<>(followedIds);
+    }
+
+    private Object[] buildFollowedIdsParams(final long followerId, final Collection<Long> targetIds) {
+        final Object[] params = new Object[targetIds.size() + 1];
+        params[0] = followerId;
+        int i = 1;
+        for (final Long id : targetIds) {
+            params[i++] = id;
+        }
+        return params;
+    }
 }

@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
+import ar.edu.itba.paw.model.CarYearVariant;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
@@ -17,10 +18,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,7 +93,15 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public Page<Car> searchCars(final CarSearchCriteria criteria) {
+        normalizeAndValidateSearchCriteria(criteria);
         return carDao.findByCriteria(criteria);
+    }
+
+    private void normalizeAndValidateSearchCriteria(final CarSearchCriteria criteria) {
+        // Ignore fuel consumption filter for electric-only searches
+        if (criteria.isElectricOnly()) {
+            criteria.setFuelConsumptionMax(null);
+        }
     }
 
     @Override
@@ -419,5 +430,27 @@ public class CarServiceImpl implements CarService {
                 "Image metadata and payload must be provided together."
             );
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CarYearVariant> getYearVariants(final long carId) {
+        final Car selectedCar = carDao.findById(carId).orElse(null);
+        if (selectedCar == null || selectedCar.getBrandName() == null || selectedCar.getBodyType() == null || selectedCar.getModel() == null) {
+            return Collections.emptyList();
+        }
+        final String selectedModel = selectedCar.getModel().trim().toLowerCase(Locale.ROOT);
+        return carDao.findByBrandIdAndBodyTypeId(
+            brandDao.findByName(selectedCar.getBrandName()).map(b -> b.getId()).orElse(-1L),
+            bodyTypeDao.findByName(selectedCar.getBodyType()).map(bt -> bt.getId()).orElse(-1L)
+        )
+            .stream()
+            .filter(car -> car.getModel() != null
+                && car.getModel().trim().toLowerCase(Locale.ROOT).equals(selectedModel))
+            .sorted(Comparator
+                .comparing(Car::getYear, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparingLong(Car::getId))
+            .map(car -> new CarYearVariant(car.getId(), car.getYear(), car.getId() == selectedCar.getId()))
+            .collect(Collectors.toList());
     }
 }

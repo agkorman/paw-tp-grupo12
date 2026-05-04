@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
+import ar.edu.itba.paw.model.CarYearVariant;
 import ar.edu.itba.paw.model.Page;
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -86,4 +87,6 @@ public interface CarService {
         long carId,
         List<Long> retainedImageIds
     );
+
+    List<CarYearVariant> getYearVariants(long carId);
 }

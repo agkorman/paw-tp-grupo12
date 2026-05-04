@@ -37,6 +37,21 @@ public class UserFollowServiceImpl implements UserFollowService {
 
     @Override
     @Transactional
+    public boolean toggleFollow(final long followerId, final long followedId) {
+        validateFollow(followerId, followedId);
+        final boolean wasFollowing = userFollowDao.isFollowing(followerId, followedId);
+        if (wasFollowing) {
+            userFollowDao.unfollow(followerId, followedId);
+        } else {
+            userFollowDao.follow(followerId, followedId);
+        }
+        final boolean following = !wasFollowing;
+        LOGGER.info("user id={} toggled follow targetUserId={} following={}", followerId, followedId, following);
+        return following;
+    }
+
+    @Override
+    @Transactional
     public boolean followUser(final long followerId, final long followedId) {
         validateFollow(followerId, followedId);
         final boolean result = userFollowDao.follow(followerId, followedId);
@@ -66,6 +81,15 @@ public class UserFollowServiceImpl implements UserFollowService {
     @Transactional(readOnly = true)
     public long countFollowers(final long userId) {
         return userFollowDao.countFollowers(userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<Long> getFollowedIds(final long followerId, final Collection<Long> targetIds) {
+        if (targetIds.isEmpty()) {
+            return Set.of();
+        }
+        return userFollowDao.getFollowedIds(followerId, targetIds);
     }
 
     @Override
