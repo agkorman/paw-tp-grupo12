@@ -255,4 +255,85 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
         assertEquals(weak.getId(), result.getItems().get(0).getId());
         assertEquals(strong.getId(), result.getItems().get(1).getId());
     }
+
+    @Test
+    public void shouldFilterByMultipleFuelTypesAndPaginate() {
+        // Arrange
+        final long brandId = insertBrand("Multi Fuel Brand").getId();
+        final long bodyTypeId = insertBodyType("Multi Fuel Body").getId();
+        // 3 matching (hybrid or electric)
+        insertCar(brandId, "Multi Fuel Brand", "Hybrid 1", bodyTypeId, "Multi Fuel Body",
+                2026, "Desc", "hybrid", 200, 6, "automatic", new BigDecimal("5.0"), 220, new BigDecimal("40000"));
+        insertCar(brandId, "Multi Fuel Brand", "Electric 1", bodyTypeId, "Multi Fuel Body",
+                2026, "Desc", "electric", 300, 6, "automatic", new BigDecimal("0.0"), 240, new BigDecimal("50000"));
+        insertCar(brandId, "Multi Fuel Brand", "Hybrid 2", bodyTypeId, "Multi Fuel Body",
+                2026, "Desc", "hybrid", 250, 6, "automatic", new BigDecimal("5.5"), 230, new BigDecimal("45000"));
+        // 1 non-matching (combustion)
+        insertCar(brandId, "Multi Fuel Brand", "Combustion", bodyTypeId, "Multi Fuel Body",
+                2026, "Desc", "combustion", 150, 6, "manual", new BigDecimal("8.0"), 200, new BigDecimal("30000"));
+
+        final CarSearchCriteria criteria = new CarSearchCriteria();
+        criteria.setBrand("Multi Fuel Brand");
+        criteria.setFuelTypes(List.of("hybrid", "electric"));
+        criteria.setSortBy("hp_asc");
+        criteria.setPage(1);
+        // Page size is 16, so all 3 should be on page 1
+
+        // Exercise
+        final Page<Car> result = carDao.findByCriteria(criteria);
+
+        // Assertions
+        assertEquals(3L, result.getTotalItems());
+        assertEquals(3, result.getItems().size());
+        assertEquals("Hybrid 1", result.getItems().get(0).getModel()); // 200 hp
+        assertEquals("Hybrid 2", result.getItems().get(1).getModel()); // 250 hp
+        assertEquals("Electric 1", result.getItems().get(2).getModel()); // 300 hp
+    }
+
+    @Test
+    public void shouldCombineMultipleFiltersWithPagination() {
+        // Arrange
+        final long brandId = insertBrand("Combo Brand").getId();
+        final long bodyTypeId = insertBodyType("Combo Body").getId();
+        // Insert 5 matching cars
+        for (int i = 0; i < 5; i++) {
+            insertCar(brandId, "Combo Brand", "Match " + i, bodyTypeId, "Combo Body",
+                    2025, "Matching", "hybrid", 200 + i, 8, "automatic", new BigDecimal("5.0"),
+                    220, new BigDecimal("40000.00"));
+        }
+        // Insert 1 non-matching (wrong year)
+        insertCar(brandId, "Combo Brand", "Miss Year", bodyTypeId, "Combo Body",
+                2020, "Non-matching", "hybrid", 205, 8, "automatic", new BigDecimal("5.0"),
+                220, new BigDecimal("40000.00"));
+
+        final CarSearchCriteria criteria = new CarSearchCriteria();
+        criteria.setBrand("Combo Brand");
+        criteria.setYearMin(2024);
+        criteria.setFuelTypes(List.of("hybrid"));
+        criteria.setTransmission("automatic");
+        criteria.setSortBy("hp_desc");
+
+        // We want to test page 2 with a small page size, but CARS_PAGE_SIZE is 16.
+        // Since we can't easily change Pagination.CARS_PAGE_SIZE in tests without side effects,
+        // we'll just verify page 1 and the total count, or insert 17 items if we really want to test page 2.
+        // Let's insert enough for page 2.
+        for (int i = 5; i < 17; i++) {
+            insertCar(brandId, "Combo Brand", "Match " + i, bodyTypeId, "Combo Body",
+                    2025, "Matching", "hybrid", 200 + i, 8, "automatic", new BigDecimal("5.0"),
+                    220, new BigDecimal("40000.00"));
+        }
+
+        criteria.setPage(2);
+
+        // Exercise
+        final Page<Car> result = carDao.findByCriteria(criteria);
+
+        // Assertions
+        assertEquals(17L, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(1, result.getItems().size());
+        // Sorted by hp_desc: Match 16 (216hp) is top, Match 0 (200hp) is bottom.
+        // Page 1 has Match 16 to Match 1. Page 2 has Match 0.
+        assertEquals("Match 0", result.getItems().get(0).getModel());
+    }
 }
