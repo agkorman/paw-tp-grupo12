@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.BodyType;
+import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarImagePayload;
@@ -43,6 +45,7 @@ public class CarServiceImpl implements CarService {
     private final CarRequestService carRequestService;
     private final BrandDao brandDao;
     private final BodyTypeDao bodyTypeDao;
+    private final EmailService emailService;
 
     @Autowired
     public CarServiceImpl(
@@ -50,13 +53,15 @@ public class CarServiceImpl implements CarService {
         final CarImageDao carImageDao,
         final CarRequestService carRequestService,
         final BrandDao brandDao,
-        final BodyTypeDao bodyTypeDao
+        final BodyTypeDao bodyTypeDao,
+        final EmailService emailService
     ) {
         this.carDao = carDao;
         this.carImageDao = carImageDao;
         this.carRequestService = carRequestService;
         this.brandDao = brandDao;
         this.bodyTypeDao = bodyTypeDao;
+        this.emailService = emailService;
     }
 
     @Override
@@ -207,7 +212,7 @@ public class CarServiceImpl implements CarService {
             throw new DuplicateCarException();
         }
 
-        return carRequestService.createPendingRequest(
+        final CarRequest carRequest = carRequestService.createPendingRequest(
             submittedByUserId,
             submitterEmail,
             brandId,
@@ -224,6 +229,22 @@ public class CarServiceImpl implements CarService {
             maxSpeedKmh,
             priceUsd
         );
+
+        final String brandName = brandDao
+            .findById(brandId)
+            .map(Brand::getName)
+            .orElse("-");
+        final String bodyTypeName = bodyTypeDao
+            .findById(bodyTypeId)
+            .map(BodyType::getName)
+            .orElse("-");
+        emailService.sendNewCarRequestNotification(
+            carRequest,
+            brandName,
+            bodyTypeName
+        );
+
+        return carRequest;
     }
 
     @Override

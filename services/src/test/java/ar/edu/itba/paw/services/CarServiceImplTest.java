@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +47,8 @@ public class CarServiceImplTest {
     private BrandDao brandDao;
     @Mock
     private BodyTypeDao bodyTypeDao;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private CarServiceImpl carService;
@@ -182,6 +185,8 @@ public class CarServiceImplTest {
                 "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00"));
         when(carRequestService.createPendingRequest(anyLong(), any(), anyLong(), anyLong(), any(), any(), any(),
                 any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(createdRequest);
+        when(brandDao.findById(BRAND_ID)).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findById(BODY_TYPE_ID)).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
 
         // Exercise
         final CarRequest result = carService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, 1L, "u@x.com",
@@ -191,6 +196,7 @@ public class CarServiceImplTest {
         // Assertions
         assertEquals(99L, result.getId());
         assertEquals("Corolla", result.getModel());
+        verify(emailService).sendNewCarRequestNotification(createdRequest, "Toyota", "sedan");
     }
 
     @Test

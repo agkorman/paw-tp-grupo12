@@ -14,7 +14,6 @@ import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
-import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.exception.DuplicateCarException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
@@ -77,7 +76,6 @@ public class CarController {
     private final BrandService brandService;
     private final BodyTypeService bodyTypeService;
     private final ReviewService reviewService;
-    private final EmailService emailService;
     private final MessageSource messageSource;
     private final ImageValidationService imageValidationService;
 
@@ -88,7 +86,6 @@ public class CarController {
         final BrandService brandService,
         final BodyTypeService bodyTypeService,
         final ReviewService reviewService,
-        final EmailService emailService,
         final MessageSource messageSource,
         final ImageValidationService imageValidationService
     ) {
@@ -97,7 +94,6 @@ public class CarController {
         this.brandService = brandService;
         this.bodyTypeService = bodyTypeService;
         this.reviewService = reviewService;
-        this.emailService = emailService;
         this.messageSource = messageSource;
         this.imageValidationService = imageValidationService;
     }
@@ -317,11 +313,6 @@ public class CarController {
             );
             return "car-form.jsp";
         }
-        emailService.sendNewCarRequestNotification(
-            carRequest,
-            resolvedBrand.getName(),
-            resolvedBodyType.getName()
-        );
         LOGGER.info(
             "submitted car request id={} userId={} brandId={} bodyTypeId={}",
             carRequest.getId(),
