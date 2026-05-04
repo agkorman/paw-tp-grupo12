@@ -99,27 +99,27 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     @Override
     @Transactional
     public ReviewReply createReply(final long reviewId, final long userId, final String body) {
-        if (reviewDao.findById(reviewId).isEmpty()) {
-            LOGGER.warn("create reply rejected: review not found id={}", reviewId);
-            throw new ReviewNotFoundException(reviewId);
-        }
-        if (userDao.findById(userId).isEmpty()) {
-            LOGGER.warn("create reply rejected: user not found id={}", userId);
-            throw new UserNotFoundException(userId);
-        }
-
-        final String normalizedBody = StringUtils.normalize(body);
-        if (normalizedBody == null) {
-            LOGGER.warn("create reply rejected: empty body reviewId={} userId={}", reviewId, userId);
-            throw new InvalidServiceInputException("Reply body is required.");
-        }
-        if (normalizedBody.length() > MAX_BODY_LENGTH) {
-            LOGGER.warn("create reply rejected: body too long length={} reviewId={} userId={}",
-                    normalizedBody.length(), reviewId, userId);
-            throw new InvalidServiceInputException("Reply body is too long.");
-        }
-
         try {
+            if (reviewDao.findById(reviewId).isEmpty()) {
+                LOGGER.warn("create reply rejected: review not found id={}", reviewId);
+                throw new ReviewNotFoundException(reviewId);
+            }
+            if (userDao.findById(userId).isEmpty()) {
+                LOGGER.warn("create reply rejected: user not found id={}", userId);
+                throw new UserNotFoundException(userId);
+            }
+
+            final String normalizedBody = StringUtils.normalize(body);
+            if (normalizedBody == null) {
+                LOGGER.warn("create reply rejected: empty body reviewId={} userId={}", reviewId, userId);
+                throw new InvalidServiceInputException("Reply body is required.");
+            }
+            if (normalizedBody.length() > MAX_BODY_LENGTH) {
+                LOGGER.warn("create reply rejected: body too long length={} reviewId={} userId={}",
+                        normalizedBody.length(), reviewId, userId);
+                throw new InvalidServiceInputException("Reply body is too long.");
+            }
+
             return reviewReplyDao.create(reviewId, userId, normalizedBody);
         } catch (final DataAccessException e) {
             LOGGER.error("failed to create review reply reviewId={} userId={}", reviewId, userId, e);
@@ -130,17 +130,18 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     @Override
     @Transactional
     public boolean deleteReply(final long id, final long userId) {
-        final ReviewReply reply = reviewReplyDao.findById(id)
-                .orElseThrow(() -> {
-                    LOGGER.warn("delete reply rejected: not found id={}", id);
-                    return new ReviewReplyNotFoundException(id);
-                });
-        if (reply.getUserId() != userId) {
-            LOGGER.warn("delete reply rejected: ownership mismatch id={} requestingUserId={} ownerId={}",
-                    id, userId, reply.getUserId());
-            throw new ReviewReplyOwnershipException(id, userId);
-        }
         try {
+            final ReviewReply reply = reviewReplyDao.findById(id)
+                    .orElseThrow(() -> {
+                        LOGGER.warn("delete reply rejected: not found id={}", id);
+                        return new ReviewReplyNotFoundException(id);
+                    });
+            if (reply.getUserId() != userId) {
+                LOGGER.warn("delete reply rejected: ownership mismatch id={} requestingUserId={} ownerId={}",
+                        id, userId, reply.getUserId());
+                throw new ReviewReplyOwnershipException(id, userId);
+            }
+
             final boolean deleted = reviewReplyDao.delete(id);
             if (deleted) {
                 LOGGER.info("deleted reply id={} userId={}", id, userId);
