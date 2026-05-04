@@ -72,7 +72,7 @@
                     <spring:message code="landing.hero.text"/>
                 </p>
 
-                <form class="hero-search" method="get" action="<c:url value='/cars'/>">
+                <form class="hero-search" method="get" action="<c:url value='/cars'/>" novalidate="novalidate">
                     <label class="sr-only" for="hero-search-input"><c:out value="${landingSearchLabel}"/></label>
                     <div class="hero-search-field">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true">
@@ -83,7 +83,6 @@
                                 id="hero-search-input"
                                 type="search"
                                 name="q"
-                                maxlength="120"
                                 placeholder="${fn:escapeXml(landingSearchPlaceholder)}"
                                 autocomplete="off">
                     </div>

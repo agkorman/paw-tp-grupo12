@@ -186,6 +186,20 @@ public class AdminRequestServiceImplTest {
     }
 
     @Test
+    public void shouldNotRejectWhenStatusUpdateFails() {
+        // Arrange
+        when(adminRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
+        when(adminRequestDao.updateStatus(REQUEST_ID, AdminRequestService.STATUS_PENDING,
+                AdminRequestService.STATUS_REJECTED)).thenReturn(false);
+
+        // Exercise
+        final boolean result = adminRequestService.rejectPendingRequest(REQUEST_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
     public void shouldReturnEmptyListWhenStatusFilterIsBlank() {
         // Arrange
         final String blankStatus = "   ";

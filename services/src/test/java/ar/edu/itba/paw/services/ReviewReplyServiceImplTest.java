@@ -20,8 +20,10 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -138,5 +140,106 @@ public class ReviewReplyServiceImplTest {
 
         // Assertions
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenDaoThrowsForGetReplyById() {
+        // Arrange
+        when(reviewReplyDao.findById(REPLY_ID)).thenThrow(new DataAccessResourceFailureException("db"));
+
+        // Exercise
+        final Optional<ReviewReply> result = reviewReplyService.getReplyById(REPLY_ID);
+
+        // Assertions
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void shouldReturnEmptyListForNullReplyIds() {
+        // Arrange
+        final List<Long> ids = null;
+
+        // Exercise
+        final List<ReviewReply> result = reviewReplyService.getRepliesByIds(ids);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenDaoThrowsForGetRepliesByIds() {
+        // Arrange
+        when(reviewReplyDao.findByIds(anyCollection())).thenThrow(new DataAccessResourceFailureException("db"));
+
+        // Exercise
+        final List<ReviewReply> result = reviewReplyService.getRepliesByIds(List.of(REPLY_ID));
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenDaoThrowsForGetRepliesByReview() {
+        // Arrange
+        when(reviewReplyDao.findByReviewId(REVIEW_ID)).thenThrow(new DataAccessResourceFailureException("db"));
+
+        // Exercise
+        final List<ReviewReply> result = reviewReplyService.getRepliesByReview(REVIEW_ID);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyMapWhenSinceIsNull() {
+        // Arrange
+        final LocalDateTime since = null;
+
+        // Exercise
+        final Map<Long, Long> result = reviewReplyService.countNewRepliesPerReview(USER_ID, since);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldSwallowDaoFailureForCountNewRepliesPerReview() {
+        // Arrange
+        final LocalDateTime since = LocalDateTime.now().minusDays(1);
+        when(reviewReplyDao.countNewRepliesPerReview(USER_ID, since)).thenThrow(new DataAccessResourceFailureException("db"));
+
+        // Exercise
+        final Map<Long, Long> result = reviewReplyService.countNewRepliesPerReview(USER_ID, since);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldRejectCreateReplyWhenBodyIsBlank() {
+        // Arrange
+        final String blankBody = "   ";
+        when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(review()));
+        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> reviewReplyService.createReply(REVIEW_ID, USER_ID, blankBody));
+
+        // Assertions
+        assertEquals("Reply body is required.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldRejectDeleteReplyWhenReplyNotFound() {
+        // Arrange
+        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(Optional.empty());
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> reviewReplyService.deleteReply(REPLY_ID, USER_ID));
+
+        // Assertions
+        assertEquals("Review reply not found: " + REPLY_ID, ex.getMessage());
     }
 }

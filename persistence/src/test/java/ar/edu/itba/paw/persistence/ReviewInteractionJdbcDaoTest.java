@@ -184,6 +184,72 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldReturnFalseWhenDeletingMissingReply() {
+        // Arrange
+        final long missingId = 9999L;
+
+        // Exercise
+        final boolean result = reviewReplyDao.delete(missingId);
+
+        // Assertions
+        assertFalse(result);
+        assertEquals(0, countRows("SELECT COUNT(*) FROM review_replies WHERE reply_id = ?", missingId));
+    }
+
+    @Test
+    public void shouldReturnFalseWhenUnlikingNonLikedReview() {
+        // Arrange
+        final Review review = createReview("unlike-missing-review");
+        final User user = createUser("unlike-missing-review-user");
+
+        // Exercise
+        final boolean result = reviewLikeDao.unlikeReview(review.getId(), user.getId());
+
+        // Assertions
+        assertFalse(result);
+        assertEquals(0, countRows(
+                "SELECT COUNT(*) FROM review_likes WHERE review_id = ? AND user_id = ?",
+                review.getId(), user.getId()
+        ));
+    }
+
+    @Test
+    public void shouldReturnFalseWhenUnlikingNonLikedReply() {
+        // Arrange
+        final Review review = createReview("unlike-missing-reply");
+        final User author = createUser("unlike-missing-reply-author");
+        final User liker = createUser("unlike-missing-reply-user");
+        final ReviewReply reply = insertReviewReply(review.getId(), author.getId(), author.getUsername(), "Reply body");
+
+        // Exercise
+        final boolean result = reviewLikeDao.unlikeReply(reply.getId(), liker.getId());
+
+        // Assertions
+        assertFalse(result);
+        assertEquals(0, countRows(
+                "SELECT COUNT(*) FROM review_reply_likes WHERE reply_id = ? AND user_id = ?",
+                reply.getId(), liker.getId()
+        ));
+    }
+
+    @Test
+    public void shouldClearTagAssignmentsWhenReplacingWithEmptyList() {
+        // Arrange
+        final Review review = createReview("tags-clear");
+        final short existing = createReviewTag("clear-tag", "positive", "comfort");
+        jdbcTemplate.update(
+                "INSERT INTO review_tag_assignments (review_id, tag_id) VALUES (?, ?)",
+                review.getId(), existing
+        );
+
+        // Exercise
+        reviewTagDao.replaceAssignments(review.getId(), List.of());
+
+        // Assertions
+        assertEquals(0, countRows("SELECT COUNT(*) FROM review_tag_assignments WHERE review_id = ?", review.getId()));
+    }
+
+    @Test
     public void shouldReplaceReviewTagAssignmentsAndRemovePreviousTags() {
         // Arrange
         final Review review = createReview("tags-replace");

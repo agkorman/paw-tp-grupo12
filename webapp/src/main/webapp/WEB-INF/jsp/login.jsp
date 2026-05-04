@@ -27,7 +27,7 @@
             </div>
 
             <form id="loginForm" class="auth-form" method="post" action="<c:url value='/login'/>"
-                  data-auth-form="login" data-submit-lock="true" novalidate="novalidate">
+                  data-submit-lock="true" novalidate="novalidate">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <c:if test="${not empty loginRedirect}">
                     <input type="hidden" name="redirect" value="<c:out value='${loginRedirect}'/>">
@@ -38,12 +38,12 @@
 
                 <div class="auth-field">
                     <label for="loginEmail"><spring:message code="common.form.email"/></label>
-                    <input id="loginEmail" name="email" type="email" maxlength="100" autocomplete="email" required>
+                    <input id="loginEmail" name="email" type="email" autocomplete="email">
                 </div>
 
                 <div class="auth-field">
                     <label for="loginPassword"><spring:message code="common.form.password"/></label>
-                    <input id="loginPassword" name="password" type="password" maxlength="72" autocomplete="current-password" required>
+                    <input id="loginPassword" name="password" type="password" autocomplete="current-password">
                 </div>
 
                 <label class="auth-check">
@@ -71,7 +71,6 @@
             <pa:toast messageCode="${loginMessageCode}"/>
         </c:when>
     </c:choose>
-    <script src="<c:url value='/js/auth-form.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/toast.js'/>"></script>
     <pa:footer/>

@@ -14,12 +14,12 @@ import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserService;
-import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
+import ar.edu.itba.paw.webapp.form.ReviewHideForm;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
-import ar.edu.itba.paw.webapp.validation.ReviewFormValidator;
+import ar.edu.itba.paw.webapp.form.ReviewReplyForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,10 +61,6 @@ public class CarReviewController {
 
     private static final String SORT_RATING_ASC = "rating_asc";
     private static final String SORT_RATING_DESC = "rating_desc";
-    private static final int MAX_REPLY_BODY_LENGTH = 1000;
-    private static final int REVIEW_HIDE_REASON_MIN_LENGTH = 10;
-    private static final int REVIEW_HIDE_REASON_MAX_LENGTH = 600;
-
     private final CarService carService;
     private final CarFavoriteService carFavoriteService;
     private final ReviewService reviewService;
@@ -73,7 +69,6 @@ public class CarReviewController {
     private final EmailService emailService;
     private final UserService userService;
     private final MessageSource messageSource;
-    private final ReviewFormValidator reviewFormValidator;
 
     @Autowired
     public CarReviewController(final CarService carService, final CarFavoriteService carFavoriteService,
@@ -82,8 +77,7 @@ public class CarReviewController {
                                final ReviewLikeService reviewLikeService,
                                final EmailService emailService,
                                final UserService userService,
-                               final MessageSource messageSource,
-                               final ReviewFormValidator reviewFormValidator) {
+                               final MessageSource messageSource) {
         this.carService = carService;
         this.carFavoriteService = carFavoriteService;
         this.reviewService = reviewService;
@@ -92,17 +86,11 @@ public class CarReviewController {
         this.emailService = emailService;
         this.userService = userService;
         this.messageSource = messageSource;
-        this.reviewFormValidator = reviewFormValidator;
     }
 
     @InitBinder
     public void initBinder(final WebDataBinder binder) {
         binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
-    }
-
-    @InitBinder("reviewForm")
-    public void initReviewBinder(final WebDataBinder binder) {
-        binder.addValidators(reviewFormValidator);
     }
 
     @RequestMapping(value = "/reviews", method = RequestMethod.GET)
@@ -150,7 +138,7 @@ public class CarReviewController {
     public ModelAndView editReview(@PathVariable("reviewId") final long reviewId,
                                    @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final Review review = reviewService.getReviewById(reviewId).orElse(null);
-        validateReviewOwnership(reviewId, review, currentUser);
+        assertReviewOwnership(reviewId, review, currentUser);
 
         final Car car = carService.getCarById(review.getCarId())
                 .orElseThrow(() -> new ResourceNotFoundException("El auto referenciado no existe."));
@@ -209,26 +197,18 @@ public class CarReviewController {
             return "review-form.jsp";
         }
 
-        try {
-            reviewService.createReview(
-                    currentUser.getId(),
-                    car.getId(),
-                    reviewForm.getRating(),
-                    reviewForm.getTitle(),
-                    reviewForm.getBody(),
-                    normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                    reviewForm.getModelYear(),
-                    reviewForm.getMileageKm(),
-                    reviewForm.getWouldRecommend(),
-                    reviewForm.getTagIds());
-            LOGGER.info("created review carId={} userId={}", car.getId(), currentUser.getId());
-        } catch (final InvalidReviewTagSelectionException e) {
-            LOGGER.warn("create review rejected: invalid tag selection carId={} userId={}",
-                    car.getId(), currentUser.getId());
-            errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
-            model.addAttribute("selectedCar", car);
-            return "review-form.jsp";
-        }
+        reviewService.createReview(
+                currentUser.getId(),
+                car.getId(),
+                reviewForm.getRating(),
+                reviewForm.getTitle(),
+                reviewForm.getBody(),
+                normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
+                reviewForm.getModelYear(),
+                reviewForm.getMileageKm(),
+                reviewForm.getWouldRecommend(),
+                reviewForm.getTagIds());
+        LOGGER.info("created review carId={} userId={}", car.getId(), currentUser.getId());
 
         return "redirect:/reviews?carId=" + car.getId();
     }
@@ -400,7 +380,7 @@ public class CarReviewController {
                                final Model model,
                                @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
-        validateReviewOwnership(reviewId, existingReview, currentUser);
+        assertReviewOwnership(reviewId, existingReview, currentUser);
 
         final Car car = carService.getCarById(existingReview.getCarId())
                 .orElseThrow(() -> new ResourceNotFoundException("El auto referenciado no existe."));
@@ -413,29 +393,19 @@ public class CarReviewController {
             return "review-form.jsp";
         }
 
-        try {
-            reviewService.updateReview(
-                    reviewId,
-                    existingReview.getCarId(),
-                    reviewForm.getRating(),
-                    reviewForm.getTitle(),
-                    reviewForm.getBody(),
-                    normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
-                    reviewForm.getModelYear(),
-                    reviewForm.getMileageKm(),
-                    reviewForm.getWouldRecommend(),
-                    reviewForm.getTagIds()
-            );
-            LOGGER.info("updated review id={} userId={}", reviewId, currentUser.getId());
-        } catch (final InvalidReviewTagSelectionException e) {
-            LOGGER.warn("update review rejected: invalid tag selection reviewId={} userId={}",
-                    reviewId, currentUser.getId());
-            errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
-            model.addAttribute("selectedCar", car);
-            model.addAttribute("editMode", true);
-            model.addAttribute("reviewId", reviewId);
-            return "review-form.jsp";
-        }
+        reviewService.updateReview(
+                reviewId,
+                existingReview.getCarId(),
+                reviewForm.getRating(),
+                reviewForm.getTitle(),
+                reviewForm.getBody(),
+                normalizeOwnershipStatus(reviewForm.getOwnershipStatus()),
+                reviewForm.getModelYear(),
+                reviewForm.getMileageKm(),
+                reviewForm.getWouldRecommend(),
+                reviewForm.getTagIds()
+        );
+        LOGGER.info("updated review id={} userId={}", reviewId, currentUser.getId());
         return "redirect:/profile";
     }
 
@@ -443,7 +413,7 @@ public class CarReviewController {
     public ModelAndView deleteReview(@PathVariable("reviewId") final long reviewId,
                                      @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final Review existingReview = reviewService.getReviewById(reviewId).orElse(null);
-        validateReviewOwnership(reviewId, existingReview, currentUser);
+        assertReviewOwnership(reviewId, existingReview, currentUser);
         reviewService.deleteReview(reviewId);
         LOGGER.info("user id={} deleted review id={}", currentUser.getId(), reviewId);
         return new ModelAndView("redirect:/profile");
@@ -451,7 +421,8 @@ public class CarReviewController {
 
     @RequestMapping(value = "/reviews/{reviewId}/hide", method = RequestMethod.POST)
     public Object hideReview(@PathVariable("reviewId") final long reviewId,
-                             @RequestParam(value = "reason", required = false) final String reason,
+                             @Valid @ModelAttribute("reviewHideForm") final ReviewHideForm form,
+                             final BindingResult errors,
                              @RequestHeader(value = "X-Requested-With", required = false) final String requestedWith,
                              @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
@@ -461,14 +432,16 @@ public class CarReviewController {
             }
             return new ModelAndView("redirect:/login");
         }
-        final String normalizedReason = ControllerUtils.normalize(reason);
-        final String validationError = validateReviewHideReason(normalizedReason);
-        if (validationError != null) {
+        if (errors.hasErrors()) {
+            final String validationError = errors.getFieldError("reason") == null
+                    ? message("review.hide.reason.required")
+                    : errors.getFieldError("reason").getDefaultMessage();
             if (ajax) {
                 return new ResponseEntity<String>(validationError, HttpStatus.BAD_REQUEST);
             }
             return new ModelAndView("redirect:/reviews");
         }
+        final String normalizedReason = ControllerUtils.normalize(form.getReason());
 
         final Review review = reviewService.getReviewById(reviewId).orElse(null);
         if (review == null) {
@@ -509,7 +482,8 @@ public class CarReviewController {
 
     @RequestMapping(value = "/reviews/{reviewId}/replies", method = RequestMethod.POST)
     public ModelAndView createReply(@PathVariable("reviewId") final long reviewId,
-                                    @RequestParam(value = "body", required = false) final String body,
+                                    @Valid @ModelAttribute("reviewReplyForm") final ReviewReplyForm form,
+                                    final BindingResult errors,
                                     @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
@@ -520,12 +494,14 @@ public class CarReviewController {
             throw new ResourceNotFoundException("Review", reviewId);
         }
 
-        final String validationError = validateReplyInput(body);
-        if (validationError != null) {
+        if (errors.hasErrors()) {
+            final String validationError = errors.getFieldError("body") == null
+                    ? message("review.reply.body.required")
+                    : errors.getFieldError("body").getDefaultMessage();
             return carReviewPage(review.getCarId(), null, validationError, currentUser);
         }
 
-        reviewReplyService.createReply(reviewId, currentUser.getId(), body);
+        reviewReplyService.createReply(reviewId, currentUser.getId(), form.getBody());
         LOGGER.info("user id={} replied to review id={}", currentUser.getId(), reviewId);
         return new ModelAndView("redirect:/reviews?carId=" + review.getCarId() + "#review-" + reviewId);
     }
@@ -584,7 +560,7 @@ public class CarReviewController {
         return new ModelAndView("redirect:/reviews?carId=" + review.getCarId() + "#review-" + review.getId());
     }
 
-    private void validateReviewOwnership(final long reviewId, final Review review, final AuthenticatedUser currentUser) {
+    private void assertReviewOwnership(final long reviewId, final Review review, final AuthenticatedUser currentUser) {
         if (review == null) {
             throw new ResourceNotFoundException("Review", reviewId);
         }
@@ -598,19 +574,6 @@ public class CarReviewController {
             return new ResponseEntity<String>(message("review.hide.toast.error"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ModelAndView("redirect:/reviews?carId=" + carId);
-    }
-
-    private String validateReviewHideReason(final String reason) {
-        if (reason == null) {
-            return message("review.hide.reason.required");
-        }
-        if (reason.length() < REVIEW_HIDE_REASON_MIN_LENGTH) {
-            return message("review.hide.reason.min", REVIEW_HIDE_REASON_MIN_LENGTH);
-        }
-        if (reason.length() > REVIEW_HIDE_REASON_MAX_LENGTH) {
-            return message("review.hide.reason.max", REVIEW_HIDE_REASON_MAX_LENGTH);
-        }
-        return null;
     }
 
     private String resolveReviewRecipientEmail(final Review review) {
@@ -647,16 +610,6 @@ public class CarReviewController {
 
     private String message(final String code, final Object... args) {
         return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
-    }
-
-    private String validateReplyInput(final String body) {
-        if (body == null || body.trim().isEmpty()) {
-            return message("review.reply.body.required");
-        }
-        if (body.trim().length() > MAX_REPLY_BODY_LENGTH) {
-            return message("review.reply.body.max", MAX_REPLY_BODY_LENGTH);
-        }
-        return null;
     }
 
     private String normalizeOwnershipStatus(final String ownershipStatus) {

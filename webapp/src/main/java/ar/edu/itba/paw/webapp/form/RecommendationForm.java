@@ -1,12 +1,14 @@
 package ar.edu.itba.paw.webapp.form;
 
 import ar.edu.itba.paw.services.RecommendationCriteria;
+import ar.edu.itba.paw.webapp.validation.ValidRecommendationForm;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@ValidRecommendationForm
 public class RecommendationForm {
 
     @NotBlank(message = "{validation.option.required}")

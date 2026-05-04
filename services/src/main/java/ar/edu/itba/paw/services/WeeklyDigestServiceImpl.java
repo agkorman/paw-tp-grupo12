@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,11 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -86,47 +89,51 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
         final Set<Long> activeReviewIds = new HashSet<>();
         activeReviewIds.addAll(likesPerReview.keySet());
         activeReviewIds.addAll(repliesPerReview.keySet());
-
+        if (activeReviewIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        final Map<Long, Review> reviewsById = reviewService.getReviewsByIds(activeReviewIds)
+                .stream()
+                .collect(Collectors.toMap(Review::getId, r -> r));
+        final Set<Long> carIds = reviewsById.values().stream()
+                .map(Review::getCarId)
+                .collect(Collectors.toSet());
+        final Map<Long, String> carNamesById = carService.getCarsByIds(carIds)
+                .stream()
+                .collect(Collectors.toMap(Car::getId, car -> car.getBrandName() + " " + car.getModel()));
         return activeReviewIds.stream()
-                .map(reviewId -> toReviewActivityItem(reviewId, likesPerReview, repliesPerReview))
-                .flatMap(Optional::stream)
-                .toList();
-    }
-
-    private Optional<EmailService.ReviewActivityItem> toReviewActivityItem(final long reviewId,
-                                                                           final Map<Long, Long> likesPerReview,
-                                                                           final Map<Long, Long> repliesPerReview) {
-        return reviewService.getReviewById(reviewId)
-                .map(review -> new EmailService.ReviewActivityItem(
-                        review.getTitle(),
-                        carNameOrFallback(review.getCarId()),
-                        likesPerReview.getOrDefault(reviewId, 0L),
-                        repliesPerReview.getOrDefault(reviewId, 0L)
-                ));
+                .filter(reviewsById::containsKey)
+                .map(reviewId -> {
+                    final Review review = reviewsById.get(reviewId);
+                    return new EmailService.ReviewActivityItem(
+                            review.getTitle(),
+                            carNamesById.getOrDefault(review.getCarId(), "un auto"),
+                            likesPerReview.getOrDefault(reviewId, 0L),
+                            repliesPerReview.getOrDefault(reviewId, 0L)
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
     private List<EmailService.FavoriteActivityItem> buildFavoriteActivities(final long userId,
                                                                             final LocalDateTime since) {
-        return carFavoriteService.findFavoriteCarIdsByUser(userId).stream()
-                .map(carId -> toFavoriteActivityItem(carId, since))
-                .flatMap(Optional::stream)
-                .toList();
-    }
-
-    private Optional<EmailService.FavoriteActivityItem> toFavoriteActivityItem(final long carId,
-                                                                               final LocalDateTime since) {
-        final long newReviews = reviewService.getReviewsByCar(carId).stream()
-                .filter(review -> review.getCreatedAt() != null && review.getCreatedAt().isAfter(since))
-                .count();
-        if (newReviews == 0) {
-            return Optional.empty();
+        final List<Long> favoriteCarIds = carFavoriteService.findFavoriteCarIdsByUser(userId);
+        if (favoriteCarIds.isEmpty()) {
+            return Collections.emptyList();
         }
-        return Optional.of(new EmailService.FavoriteActivityItem(carNameOrFallback(carId), newReviews));
-    }
-
-    private String carNameOrFallback(final long carId) {
-        return carService.getCarById(carId)
-                .map(car -> car.getBrandName() + " " + car.getModel())
-                .orElse("un auto");
+        final Map<Long, String> carNamesById = carService.getCarsByIds(favoriteCarIds)
+                .stream()
+                .collect(Collectors.toMap(Car::getId, car -> car.getBrandName() + " " + car.getModel()));
+        final Map<Long, Long> newReviewsPerCar = reviewService.getReviewsByCarIds(favoriteCarIds)
+                .stream()
+                .filter(review -> review.getCreatedAt() != null && review.getCreatedAt().isAfter(since))
+                .collect(Collectors.groupingBy(Review::getCarId, Collectors.counting()));
+        return favoriteCarIds.stream()
+                .filter(carId -> newReviewsPerCar.getOrDefault(carId, 0L) > 0)
+                .map(carId -> new EmailService.FavoriteActivityItem(
+                        carNamesById.getOrDefault(carId, "un auto"),
+                        newReviewsPerCar.get(carId)
+                ))
+                .collect(Collectors.toList());
     }
 }

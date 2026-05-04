@@ -768,9 +768,9 @@
             showPanelValidationError('Elegí una cantidad de airbags válida.');
             return false;
         }
-        if (!isValidNumberParam(panelParams.yearMin, 1950, 2026)
-                || !isValidNumberParam(panelParams.yearMax, 1950, 2026)) {
-            showYearValidationError('Usá años entre 1950 y 2026.', focusOnError);
+        if (!isValidNumberParam(panelParams.yearMin, 1950, 2100)
+                || !isValidNumberParam(panelParams.yearMax, 1950, 2100)) {
+            showYearValidationError('Usá años entre 1950 y 2100.', focusOnError);
             return false;
         }
 

@@ -120,4 +120,54 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
                 "SELECT role FROM users WHERE email = ?", String.class, "existing@example.com"
         ));
     }
+
+    @Test
+    public void shouldReturnEmptyWhenFindByEmailHasNoMatch() {
+        // Arrange
+        insertUser("ghost-email", "ghost@example.com", "password", "user");
+
+        // Exercise
+        final Optional<User> result = userDao.findByEmail("nobody@example.com");
+
+        // Assertions
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenFindByIdHasNoMatch() {
+        // Arrange
+        final long missingId = 9999L;
+
+        // Exercise
+        final Optional<User> result = userDao.findById(missingId);
+
+        // Assertions
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void shouldReturnFalseWhenUpdatingMissingUserUsername() {
+        // Arrange
+        insertUser("real-user", "real@example.com", "password", "user");
+
+        // Exercise
+        final boolean result = userDao.updateUsername(9999L, "ghost-name");
+
+        // Assertions
+        assertFalse(result);
+        assertEquals(0, countRows("SELECT COUNT(*) FROM users WHERE username = ?", "ghost-name"));
+    }
+
+    @Test
+    public void shouldRejectDuplicateEmailOnCreate() {
+        // Arrange
+        insertUser("first-user", "duplicate@example.com", "password", "user");
+
+        // Exercise
+        assertThrows(DataIntegrityViolationException.class,
+                () -> userDao.create("second-user", "duplicate@example.com", "password", "user"));
+
+        // Assertions
+        assertEquals(1, countRows("SELECT COUNT(*) FROM users WHERE email = ?", "duplicate@example.com"));
+    }
 }

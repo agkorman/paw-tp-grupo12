@@ -4,9 +4,6 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <spring:message var="closeModalLabel" code="common.action.close"/>
-<spring:message var="reasonRequiredMessage" code="review.hide.reason.required"/>
-<spring:message var="reasonMinMessage" code="review.hide.reason.min" arguments="10"/>
-<spring:message var="reasonMaxMessage" code="review.hide.reason.max" arguments="600"/>
 <spring:message var="reasonPlaceholder" code="review.hide.reason.placeholder"/>
 <spring:message var="successMessage" code="review.hide.toast.success"/>
 <spring:message var="errorMessage" code="review.hide.toast.error"/>
@@ -31,10 +28,7 @@
         <form id="hideReviewForm"
               class="review-modal-form review-hide-form"
               method="post"
-              novalidate="novalidate"
-              data-reason-required-message="${fn:escapeXml(reasonRequiredMessage)}"
-              data-reason-min-message="${fn:escapeXml(reasonMinMessage)}"
-              data-reason-max-message="${fn:escapeXml(reasonMaxMessage)}">
+              novalidate="novalidate">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <p class="review-modal-subtitle"><spring:message code="review.hide.body"/></p>
             <div class="review-modal-field review-modal-field-wide">

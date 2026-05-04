@@ -20,7 +20,7 @@ public interface EmailService {
                               List<ReviewActivityItem> reviewActivity,
                               List<FavoriteActivityItem> favoriteActivity);
 
-    final class ReviewActivityItem {
+    public static final class ReviewActivityItem {
         public final String reviewTitle;
         public final String carName;
         public final long newLikes;
@@ -35,7 +35,7 @@ public interface EmailService {
         }
     }
 
-    final class FavoriteActivityItem {
+    public static final class FavoriteActivityItem {
         public final String carName;
         public final long newReviewCount;
 

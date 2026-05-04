@@ -105,10 +105,9 @@ public class CarServiceImpl implements CarService {
         if (normalizedImages.isEmpty()) {
             return;
         }
-        final List<CarImagePayload> existingImages = carImageDao.findAllByCarId(carId)
+        final List<CarImagePayload> existingImages = carImageDao.findAllByCarIdWithData(carId)
                 .stream()
-                .map(image -> carImageDao.findByCarIdAndImageId(carId, image.getImageId()).orElse(null))
-                .filter(image -> image != null && image.getImageData() != null)
+                .filter(image -> image.getImageData() != null)
                 .map(image -> new CarImagePayload(image.getContentType(), image.getImageData()))
                 .toList();
         final List<CarImagePayload> combinedImages = new java.util.ArrayList<>(existingImages);

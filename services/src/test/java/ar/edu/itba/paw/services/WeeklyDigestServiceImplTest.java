@@ -15,12 +15,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
@@ -106,20 +107,22 @@ public class WeeklyDigestServiceImplTest {
                 .thenReturn(Map.of(REVIEW_ID, 3L));
         when(reviewReplyService.countNewRepliesPerReview(eq(USER_ID), any(LocalDateTime.class)))
                 .thenReturn(Map.of(REVIEW_ID, 1L, SECOND_REVIEW_ID, 2L));
-        when(reviewService.getReviewById(REVIEW_ID))
-                .thenReturn(Optional.of(review(REVIEW_ID, CAR_ID, "Daily driver", recent)));
-        when(reviewService.getReviewById(SECOND_REVIEW_ID))
-                .thenReturn(Optional.of(review(SECOND_REVIEW_ID, 99L, "Road trip", recent)));
-        when(carService.getCarById(CAR_ID)).thenReturn(Optional.of(car(CAR_ID, "Toyota", "Corolla")));
-        when(carService.getCarById(99L)).thenReturn(Optional.empty());
+        when(reviewService.getReviewsByIds(anyCollection()))
+                .thenReturn(List.of(
+                        review(REVIEW_ID, CAR_ID, "Daily driver", recent),
+                        review(SECOND_REVIEW_ID, 99L, "Road trip", recent)
+                ));
+        when(carService.getCarsByIds(argThat(c -> c != null && c.contains(CAR_ID))))
+                .thenReturn(List.of(car(CAR_ID, "Toyota", "Corolla")));
         when(carFavoriteService.findFavoriteCarIdsByUser(USER_ID)).thenReturn(List.of(FAVORITE_CAR_ID));
-        when(reviewService.getReviewsByCar(FAVORITE_CAR_ID)).thenReturn(List.of(
-                review(40L, FAVORITE_CAR_ID, "New favorite review", recent),
-                review(41L, FAVORITE_CAR_ID, "Old favorite review", old),
-                review(42L, FAVORITE_CAR_ID, "Undated favorite review", null)
-        ));
-        when(carService.getCarById(FAVORITE_CAR_ID))
-                .thenReturn(Optional.of(car(FAVORITE_CAR_ID, "Honda", "Civic")));
+        when(carService.getCarsByIds(argThat(c -> c != null && c.contains(FAVORITE_CAR_ID))))
+                .thenReturn(List.of(car(FAVORITE_CAR_ID, "Honda", "Civic")));
+        when(reviewService.getReviewsByCarIds(anyCollection()))
+                .thenReturn(List.of(
+                        review(40L, FAVORITE_CAR_ID, "New favorite review", recent),
+                        review(41L, FAVORITE_CAR_ID, "Old favorite review", old),
+                        review(42L, FAVORITE_CAR_ID, "Undated favorite review", null)
+                ));
         doAnswer(invocation -> {
             capturedReviewActivity.add(invocation.getArgument(2));
             capturedFavoriteActivity.add(invocation.getArgument(3));
@@ -148,21 +151,44 @@ public class WeeklyDigestServiceImplTest {
     }
 
     @Test
+    public void shouldBuildEmptyDigestWhenNoReviewActivityAndNoFavoriteCars() {
+        // Arrange
+        final List<List<EmailService.ReviewActivityItem>> capturedReviewActivity = new ArrayList<>();
+        final List<List<EmailService.FavoriteActivityItem>> capturedFavoriteActivity = new ArrayList<>();
+        when(userService.getModeratorsEmails()).thenReturn(List.of());
+        when(userService.getAllUsers()).thenReturn(List.of(user()));
+        when(reviewLikeService.countNewLikesPerReview(eq(USER_ID), any(LocalDateTime.class)))
+                .thenReturn(Map.of());
+        when(reviewReplyService.countNewRepliesPerReview(eq(USER_ID), any(LocalDateTime.class)))
+                .thenReturn(Map.of());
+        when(carFavoriteService.findFavoriteCarIdsByUser(USER_ID)).thenReturn(List.of());
+        doAnswer(invocation -> {
+            capturedReviewActivity.add(invocation.getArgument(2));
+            capturedFavoriteActivity.add(invocation.getArgument(3));
+            return null;
+        }).when(emailService).sendWeeklyUserDigest(eq(USER_EMAIL), eq(USERNAME), anyList(), anyList());
+
+        // Exercise
+        weeklyDigestService.sendWeeklyDigest();
+
+        // Assertions
+        assertEquals(1, capturedReviewActivity.size());
+        assertTrue(capturedReviewActivity.get(0).isEmpty());
+        assertTrue(capturedFavoriteActivity.get(0).isEmpty());
+    }
+
+    @Test
     public void shouldSkipMissingReviewsAndFavoriteCarsWithoutNewReviews() {
         // Arrange
         final List<List<EmailService.ReviewActivityItem>> capturedReviewActivity = new ArrayList<>();
         final List<List<EmailService.FavoriteActivityItem>> capturedFavoriteActivity = new ArrayList<>();
-        final LocalDateTime old = LocalDateTime.now().minusDays(10);
         when(userService.getModeratorsEmails()).thenReturn(List.of());
         when(userService.getAllUsers()).thenReturn(List.of(user()));
         when(reviewLikeService.countNewLikesPerReview(eq(USER_ID), any(LocalDateTime.class)))
                 .thenReturn(Map.of(REVIEW_ID, 1L));
         when(reviewReplyService.countNewRepliesPerReview(eq(USER_ID), any(LocalDateTime.class)))
                 .thenReturn(Map.of());
-        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(Optional.empty());
         when(carFavoriteService.findFavoriteCarIdsByUser(USER_ID)).thenReturn(List.of(FAVORITE_CAR_ID));
-        when(reviewService.getReviewsByCar(FAVORITE_CAR_ID))
-                .thenReturn(List.of(review(40L, FAVORITE_CAR_ID, "Old", old)));
         doAnswer(invocation -> {
             capturedReviewActivity.add(invocation.getArgument(2));
             capturedFavoriteActivity.add(invocation.getArgument(3));

@@ -20,6 +20,8 @@ import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ETagGenerationException;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
+import ar.edu.itba.paw.webapp.form.CarImageUploadForm;
+import ar.edu.itba.paw.webapp.form.CarSearchForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,8 +68,6 @@ public class CarController {
     private static final Logger LOGGER = LoggerFactory.getLogger(CarController.class);
 
     private static final int FEATURED_REVIEW_COUNT = 3;
-    private static final int MAX_IMAGE_COUNT = 5;
-
     private final CarService carService;
     private final CarFavoriteService carFavoriteService;
     private final BrandService brandService;
@@ -115,7 +115,8 @@ public class CarController {
     }
 
     @RequestMapping(value = "/cars", method = RequestMethod.GET)
-    public String listCars(@ModelAttribute final CarSearchCriteria criteria,
+    public String listCars(@Valid @ModelAttribute final CarSearchForm criteria,
+                           final BindingResult errors,
                            @RequestParam(value = "createCar", required = false) final String createCar,
                            @RequestParam(value = "submitted", required = false) final String submitted,
                            @AuthenticationPrincipal final AuthenticatedUser currentUser,
@@ -123,7 +124,7 @@ public class CarController {
         if ("true".equalsIgnoreCase(createCar)) {
             return "redirect:/cars/new";
         }
-        populateCarsPageModel(model, criteria, currentUser);
+        populateCarsPageModel(model, criteria, errors, currentUser);
         final String submittedToastMessageCode = ControllerUtils.submittedToastMessageCode(submitted);
         if (submittedToastMessageCode != null) {
             model.addAttribute("showSubmittedToast", true);
@@ -133,9 +134,10 @@ public class CarController {
     }
 
     @RequestMapping(value = "/cars/content", method = RequestMethod.GET)
-    public ModelAndView listCarsContent(@ModelAttribute final CarSearchCriteria criteria,
+    public ModelAndView listCarsContent(@Valid @ModelAttribute final CarSearchForm criteria,
+                                        final BindingResult errors,
                                         @AuthenticationPrincipal final AuthenticatedUser currentUser) {
-        final CarCatalogData catalogData = resolveCatalogData(criteria);
+        final CarCatalogData catalogData = resolveCatalogData(criteria, errors);
 
         final ModelAndView mav = new ModelAndView("cars-content.jsp");
         mav.addObject("cars", catalogData.cars);
@@ -168,39 +170,15 @@ public class CarController {
         }
 
         final List<MultipartFile> files = selectedImageFiles(carForm.getFiles());
-        final String imageError = validateUploadedImages(files, true);
-        if (imageError != null) {
-            errors.rejectValue("files", "image.invalid", imageError);
-        }
-        rejectInvalidSpecFields(errors, carForm);
-
-        Brand resolvedBrand = null;
-        if (!errors.hasFieldErrors("brand")) {
-            resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
-            if (resolvedBrand == null) {
-                errors.rejectValue("brand", "brand.invalid");
-            }
-        }
-
-        BodyType resolvedBodyType = null;
-        if (!errors.hasFieldErrors("bodyType")) {
-            resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
-            if (resolvedBodyType == null) {
-                errors.rejectValue("bodyType", "bodyType.invalid");
-            }
-        }
-
-        if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null
-                && carService.existsDuplicateCar(resolvedBrand.getName(), resolvedBodyType.getName(),
-                        carForm.getModel(), carForm.getYear(), -1L)) {
-            errors.reject("car.duplicate");
-        }
 
         if (errors.hasErrors()) {
             LOGGER.warn("car request submission rejected: validation errors userId={} errorCount={}",
                     currentUser.getId(), errors.getErrorCount());
             return "car-form.jsp";
         }
+
+        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElseThrow(IllegalStateException::new);
+        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElseThrow(IllegalStateException::new);
 
         final List<CarImagePayload> imagePayloads;
         try {
@@ -275,9 +253,9 @@ public class CarController {
         return new ModelAndView("redirect:" + safeRedirectPath(referer));
     }
 
-    private void populateCarsPageModel(final Model model, final CarSearchCriteria criteria,
+    private void populateCarsPageModel(final Model model, final CarSearchCriteria criteria, final BindingResult errors,
                                        final AuthenticatedUser currentUser) {
-        final CarCatalogData catalogData = resolveCatalogData(criteria);
+        final CarCatalogData catalogData = resolveCatalogData(criteria, errors);
 
         model.addAttribute("cars", catalogData.cars);
         model.addAttribute("reviewStatsByCarId", catalogData.reviewStatsByCarId);
@@ -402,57 +380,46 @@ public class CarController {
 
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.POST, consumes = "multipart/form-data")
     public ResponseEntity<?> uploadCarImage(
-            @PathVariable("carId") final long carId,
-            @RequestParam("file") final List<MultipartFile> files) {
-        return uploadCarImageResponse(carId, files);
+            @Valid @ModelAttribute("carImageUploadForm") final CarImageUploadForm form,
+            final BindingResult errors) {
+        return uploadCarImageResponse(form, errors);
     }
 
     @RequestMapping(value = "/car-image", method = RequestMethod.POST, consumes = "multipart/form-data")
     public ResponseEntity<?> uploadCarImageByQueryParam(
-            @RequestParam("carId") final long carId,
-            @RequestParam("file") final List<MultipartFile> files) {
-        return uploadCarImageResponse(carId, files);
+            @Valid @ModelAttribute("carImageUploadForm") final CarImageUploadForm form,
+            final BindingResult errors) {
+        return uploadCarImageResponse(form, errors);
     }
 
-    private ResponseEntity<?> uploadCarImageResponse(final long carId, final List<MultipartFile> files) {
-        if (carService.getCarById(carId).isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Auto no encontrado.");
+    @ModelAttribute("carImageUploadForm")
+    public CarImageUploadForm carImageUploadForm(@PathVariable final Map<String, String> pathVariables,
+                                                 @RequestParam(value = "carId", required = false) final Long queryCarId,
+                                                 @RequestParam(value = "file", required = false) final List<MultipartFile> files) {
+        final CarImageUploadForm form = new CarImageUploadForm();
+        form.setCarId(pathVariables.containsKey("carId") ? Long.valueOf(pathVariables.get("carId")) : queryCarId);
+        form.setFiles(files);
+        return form;
+    }
+
+    private ResponseEntity<?> uploadCarImageResponse(final CarImageUploadForm form, final BindingResult errors) {
+        if (errors.hasFieldErrors("carId")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errors.getFieldError("carId").getDefaultMessage());
         }
-        final List<MultipartFile> selectedFiles = selectedImageFiles(files);
-        final String imageValidationError = validateUploadedImages(selectedFiles, true);
-        if (imageValidationError != null) {
-            return ResponseEntity.badRequest().body(imageValidationError);
+        if (errors.hasErrors()) {
+            return ResponseEntity.badRequest().body(errors.getAllErrors().get(0).getDefaultMessage());
         }
+        final List<MultipartFile> selectedFiles = selectedImageFiles(form.getFiles());
 
         try {
-            carService.saveCarImages(carId, toImagePayloads(selectedFiles));
-            LOGGER.info("uploaded {} image(s) for car id={}", selectedFiles.size(), carId);
+            carService.saveCarImages(form.getCarId(), toImagePayloads(selectedFiles));
+            LOGGER.info("uploaded {} image(s) for car id={}", selectedFiles.size(), form.getCarId());
         } catch (final IOException e) {
-            LOGGER.error("failed to read uploaded image for car id={}", carId, e);
-            throw new UploadedImageReadException("updating car " + carId, e);
+            LOGGER.error("failed to read uploaded image for car id={}", form.getCarId(), e);
+            throw new UploadedImageReadException("updating car " + form.getCarId(), e);
         }
 
         return ResponseEntity.noContent().build();
-    }
-
-    private String validateUploadedImages(final List<MultipartFile> files, final boolean required) {
-        if (files.isEmpty()) {
-            return required ? "La imagen es obligatoria." : null;
-        }
-        if (files.size() > MAX_IMAGE_COUNT) {
-            return "Podés cargar hasta " + MAX_IMAGE_COUNT + " imágenes.";
-        }
-        for (final MultipartFile file : files) {
-            final String imageError = validateUploadedImage(file, true);
-            if (imageError != null) {
-                return imageError;
-            }
-        }
-        return null;
-    }
-
-    private String validateUploadedImage(final MultipartFile file, final boolean required) {
-        return ControllerUtils.validateUploadedImage(file, required);
     }
 
     private String resolveImageContentType(final MultipartFile file) {
@@ -476,9 +443,9 @@ public class CarController {
         return payloads;
     }
 
-    private CarCatalogData resolveCatalogData(final CarSearchCriteria criteria) {
+    private CarCatalogData resolveCatalogData(final CarSearchCriteria criteria, final BindingResult errors) {
         ignoreConsumptionFilterForElectricOnly(criteria);
-        if (!criteria.isValid()) {
+        if (errors.hasErrors()) {
             return new CarCatalogData(Page.empty(1, 0), Collections.emptyMap());
         }
 
@@ -510,19 +477,6 @@ public class CarController {
         return reviewService.getReviewStatsByCarIds(cars.stream().map(Car::getId).collect(Collectors.toList()))
                 .stream()
                 .collect(Collectors.toMap(ReviewStats::getCarId, Function.identity()));
-    }
-
-    private void rejectInvalidSpecFields(final BindingResult errors, final CarForm carForm) {
-        if (!errors.hasFieldErrors("fuelType")
-                && !CarSearchCriteria.ALLOWED_FUEL_TYPES.contains(
-                        ControllerUtils.normalizeSpecValue(carForm.getFuelType()))) {
-            errors.rejectValue("fuelType", "fuelType.invalid");
-        }
-        if (!errors.hasFieldErrors("transmission")
-                && !CarSearchCriteria.ALLOWED_TRANSMISSIONS.contains(
-                        ControllerUtils.normalizeSpecValue(carForm.getTransmission()))) {
-            errors.rejectValue("transmission", "transmission.invalid");
-        }
     }
 
     private static String buildImageEtag(final CarImage carImage) {

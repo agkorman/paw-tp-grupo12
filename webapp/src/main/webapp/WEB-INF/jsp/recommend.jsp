@@ -23,7 +23,7 @@
     <main class="recommend-page wizard-page">
         <c:url var="recommendResultsUrl" value="/cars/recommend/results"/>
         <spring:message code="recommend.question.index" var="recommendQuestionIndexTpl" arguments="__PAW_0__,__PAW_1__"/>
-        <form:form method="get" action="${recommendResultsUrl}" modelAttribute="recommendationForm" cssClass="wizard-form" id="recommend-wizard">
+        <form:form method="get" action="${recommendResultsUrl}" modelAttribute="recommendationForm" cssClass="wizard-form" id="recommend-wizard" novalidate="novalidate">
             <div class="wizard-progress" aria-hidden="true" data-recommend-question-index-template="${fn:escapeXml(recommendQuestionIndexTpl)}">
                 <div class="wizard-progress-bar"></div>
             </div>

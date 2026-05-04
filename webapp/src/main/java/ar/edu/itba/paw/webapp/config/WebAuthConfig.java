@@ -65,8 +65,6 @@ public class WebAuthConfig {
                             .permitAll()
                         .requestMatchers(antMatcher("/admin/**"))
                             .hasRole("ADMIN")
-                        .requestMatchers(antMatcher("/moderation/**"))
-                            .hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(
                                 antMatcher(HttpMethod.POST, "/car-image"),
                                 antMatcher(HttpMethod.POST, "/cars/*/image"))
@@ -74,7 +72,13 @@ public class WebAuthConfig {
                         .requestMatchers(antMatcher(HttpMethod.POST, "/reviews/*/hide"))
                             .hasRole("ADMIN")
                         .requestMatchers(
+                                antMatcher(HttpMethod.GET, "/cars/new"),
+                                antMatcher(HttpMethod.GET, "/reviews/new"),
+                                antMatcher(HttpMethod.GET, "/reviews/*/edit"),
+                                antMatcher(HttpMethod.GET, "/profile"),
                                 antMatcher(HttpMethod.POST, "/cars"),
+                                antMatcher(HttpMethod.POST, "/reviews/*"),
+                                antMatcher(HttpMethod.POST, "/reviews/*/delete"),
                                 antMatcher(HttpMethod.POST, "/reviews"),
                                 antMatcher(HttpMethod.POST, "/reviews/*/like"),
                                 antMatcher(HttpMethod.POST, "/reviews/*/replies"),

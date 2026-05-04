@@ -35,20 +35,6 @@
         }
     }
 
-    function validateReason() {
-        var value = reasonField.value.trim();
-        if (!value) {
-            return form.dataset.reasonRequiredMessage;
-        }
-        if (value.length < 10) {
-            return form.dataset.reasonMinMessage;
-        }
-        if (value.length > 600) {
-            return form.dataset.reasonMaxMessage;
-        }
-        return null;
-    }
-
     function openModal(button) {
         activeReviewId = button.getAttribute('data-review-id');
         form.action = button.getAttribute('data-review-hide-action');
@@ -115,12 +101,6 @@
     form.addEventListener('submit', function (event) {
         event.preventDefault();
         clearError();
-
-        var validationError = validateReason();
-        if (validationError) {
-            showError(validationError);
-            return;
-        }
 
         var submitButton = form.querySelector('[type="submit"]');
         if (submitButton) {

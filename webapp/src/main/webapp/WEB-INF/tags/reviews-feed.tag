@@ -148,11 +148,12 @@
                                     <form method="post" action="${replyCreateUrl}" class="review-reply-form"
                                           data-enhanced-review-reply="true"
                                           data-target="#reviewsFeed"
-                                          data-auth-resume-intent="reply-${review.id}">
+                                          data-auth-resume-intent="reply-${review.id}"
+                                          novalidate="novalidate">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                         <label for="replyBody-${review.id}"><spring:message code="review.feed.reply"/></label>
                                         <div class="review-reply-form-row">
-                                            <textarea id="replyBody-${review.id}" name="body" rows="2" maxlength="1000" required
+                                            <textarea id="replyBody-${review.id}" name="body" rows="2"
                                                       placeholder="${replyPlaceholder}"></textarea>
                                             <button type="submit" class="btn-secondary"><spring:message code="review.feed.reply"/></button>
                                         </div>

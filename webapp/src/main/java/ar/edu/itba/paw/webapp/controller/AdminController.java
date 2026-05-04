@@ -9,7 +9,6 @@ import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
@@ -26,12 +25,15 @@ import ar.edu.itba.paw.webapp.form.CarForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -52,7 +54,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -70,7 +71,6 @@ public class AdminController {
     private static final String TAB_BRANDS = "brands";
     private static final String TAB_BODY_TYPES = "body-types";
     private static final String TAB_MODERATORS = "moderators";
-    private static final int MAX_IMAGE_COUNT = 5;
     private static final long LEGACY_IMAGE_ID = 0L;
 
     private final CarRequestService carRequestService;
@@ -98,6 +98,11 @@ public class AdminController {
         this.bodyTypeRequestService = bodyTypeRequestService;
         this.adminRequestService = adminRequestService;
         this.userService = userService;
+    }
+
+    @InitBinder
+    public void initBinder(final WebDataBinder binder) {
+        binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
     }
 
     @RequestMapping(method = RequestMethod.GET)
@@ -221,41 +226,17 @@ public class AdminController {
             return new ModelAndView("redirect:/admin");
         }
 
-        rejectInvalidSpecFields(errors, carForm);
         final List<MultipartFile> files = selectedImageFiles(carForm.getFiles());
-        final List<Long> retainedImageIds = resolveRetainedRequestImageIds(pendingRequest, carForm, errors);
-        final String imageError = validateUploadedImages(files, true, retainedImageIds.size());
-        if (imageError != null) {
-            errors.rejectValue("files", "image.invalid", imageError);
-        }
-
-        Brand resolvedBrand = null;
-        if (!errors.hasFieldErrors("brand")) {
-            resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
-            if (resolvedBrand == null) {
-                errors.rejectValue("brand", "brand.invalid");
-            }
-        }
-
-        BodyType resolvedBodyType = null;
-        if (!errors.hasFieldErrors("bodyType")) {
-            resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
-            if (resolvedBodyType == null) {
-                errors.rejectValue("bodyType", "bodyType.invalid");
-            }
-        }
-
-        if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null
-                && carService.existsDuplicateCar(resolvedBrand.getName(), resolvedBodyType.getName(),
-                        carForm.getModel(), carForm.getYear(), -1L)) {
-            errors.reject("car.duplicate");
-        }
+        final List<Long> retainedImageIds = resolveRetainedRequestImageIds(pendingRequest, carForm);
 
         if (errors.hasErrors()) {
             LOGGER.warn("car request approval rejected: validation errors requestId={} errorCount={}",
                     requestId, errors.getErrorCount());
             return carRequestFormPage(pendingRequest, carForm, errors);
         }
+
+        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElseThrow(IllegalStateException::new);
+        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElseThrow(IllegalStateException::new);
 
         final List<CarImagePayload> imagePayloads;
         try {
@@ -298,41 +279,17 @@ public class AdminController {
             return redirectBackToCatalog(referer);
         }
 
-        rejectInvalidSpecFields(errors, carForm);
         final List<MultipartFile> files = selectedImageFiles(carForm.getFiles());
-        final List<Long> retainedImageIds = resolveRetainedCarImageIds(existingCar, carForm, errors);
-        final String imageError = validateUploadedImages(files, true, retainedImageIds.size());
-        if (imageError != null) {
-            errors.rejectValue("files", "image.invalid", imageError);
-        }
-
-        Brand resolvedBrand = null;
-        if (!errors.hasFieldErrors("brand")) {
-            resolvedBrand = brandService.findByName(carForm.getBrand()).orElse(null);
-            if (resolvedBrand == null) {
-                errors.rejectValue("brand", "brand.invalid");
-            }
-        }
-
-        BodyType resolvedBodyType = null;
-        if (!errors.hasFieldErrors("bodyType")) {
-            resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
-            if (resolvedBodyType == null) {
-                errors.rejectValue("bodyType", "bodyType.invalid");
-            }
-        }
-
-        if (!errors.hasErrors() && resolvedBrand != null && resolvedBodyType != null
-                && carService.existsDuplicateCar(resolvedBrand.getName(), resolvedBodyType.getName(),
-                        carForm.getModel(), carForm.getYear(), carId)) {
-            errors.reject("car.duplicate");
-        }
+        final List<Long> retainedImageIds = resolveRetainedCarImageIds(existingCar, carForm);
 
         if (errors.hasErrors()) {
             LOGGER.warn("car update rejected: validation errors carId={} errorCount={}",
                     carId, errors.getErrorCount());
             return carEditFormPage(existingCar, carForm, errors);
         }
+
+        final Brand resolvedBrand = brandService.findByName(carForm.getBrand()).orElseThrow(IllegalStateException::new);
+        final BodyType resolvedBodyType = bodyTypeService.findByName(carForm.getBodyType()).orElseThrow(IllegalStateException::new);
 
         final List<CarImagePayload> imagePayloads;
         try {
@@ -552,6 +509,8 @@ public class AdminController {
     private ModelAndView carRequestFormPage(final CarRequest request, final CarForm carForm,
                                             final BindingResult errors) {
         final ModelAndView mav = new ModelAndView("car-form.jsp");
+        carForm.setFormMode("review-request");
+        carForm.setRequestId(request.getId());
         addCarFormBinding(mav, carForm, errors);
         mav.addObject("carFormMode", "review-request");
         mav.addObject("formKicker", "Solicitud pendiente");
@@ -572,6 +531,8 @@ public class AdminController {
 
     private ModelAndView carEditFormPage(final Car car, final CarForm carForm, final BindingResult errors) {
         final ModelAndView mav = new ModelAndView("car-form.jsp");
+        carForm.setFormMode("edit-car");
+        carForm.setCarId(car.getId());
         addCarFormBinding(mav, carForm, errors);
         mav.addObject("carFormMode", "edit-car");
         mav.addObject("formKicker", "Catálogo");
@@ -597,6 +558,8 @@ public class AdminController {
 
     private CarForm toForm(final CarRequest request) {
         final CarForm form = new CarForm();
+        form.setFormMode("review-request");
+        form.setRequestId(request.getId());
         brandService.findById(request.getBrandId()).map(Brand::getName).ifPresent(form::setBrand);
         bodyTypeService.findById(request.getBodyTypeId()).map(BodyType::getName).ifPresent(form::setBodyType);
         form.setModel(request.getModel());
@@ -616,6 +579,8 @@ public class AdminController {
 
     private CarForm toForm(final Car car) {
         final CarForm form = new CarForm();
+        form.setFormMode("edit-car");
+        form.setCarId(car.getId());
         form.setBrand(car.getBrandName());
         form.setBodyType(car.getBodyType());
         form.setModel(car.getModel());
@@ -799,28 +764,6 @@ public class AdminController {
         return null;
     }
 
-    private String validateUploadedImage(final MultipartFile file, final boolean required) {
-        return ControllerUtils.validateUploadedImage(file, required);
-    }
-
-    private String validateUploadedImages(final List<MultipartFile> files, final boolean required,
-                                          final int existingImageCount) {
-        final int totalImageCount = existingImageCount + files.size();
-        if (totalImageCount == 0) {
-            return required ? "La imagen es obligatoria." : null;
-        }
-        if (totalImageCount > MAX_IMAGE_COUNT) {
-            return "Podés cargar hasta " + MAX_IMAGE_COUNT + " imágenes.";
-        }
-        for (final MultipartFile file : files) {
-            final String imageError = validateUploadedImage(file, true);
-            if (imageError != null) {
-                return imageError;
-            }
-        }
-        return null;
-    }
-
     private String resolveImageContentType(final MultipartFile file) {
         return ControllerUtils.normalizeContentType(file == null ? null : file.getContentType());
     }
@@ -834,23 +777,18 @@ public class AdminController {
                 .collect(Collectors.toList());
     }
 
-    private List<Long> resolveRetainedRequestImageIds(final CarRequest request, final CarForm carForm,
-                                                      final BindingResult errors) {
-        return resolveRetainedImageIds(carForm, buildRequestImageIds(request), errors);
+    private List<Long> resolveRetainedRequestImageIds(final CarRequest request, final CarForm carForm) {
+        return resolveRetainedImageIds(carForm, buildRequestImageIds(request));
     }
 
-    private List<Long> resolveRetainedCarImageIds(final Car car, final CarForm carForm, final BindingResult errors) {
-        return resolveRetainedImageIds(carForm, buildCarImageIds(car), errors);
+    private List<Long> resolveRetainedCarImageIds(final Car car, final CarForm carForm) {
+        return resolveRetainedImageIds(carForm, buildCarImageIds(car));
     }
 
-    private List<Long> resolveRetainedImageIds(final CarForm carForm, final List<Long> availableImageIds,
-                                               final BindingResult errors) {
+    private List<Long> resolveRetainedImageIds(final CarForm carForm, final List<Long> availableImageIds) {
         final List<Long> submittedImageIds = carForm.getRetainedImageIds();
         final List<Long> retainedImageIds = retainedImageIds(submittedImageIds, availableImageIds);
         carForm.setRetainedImageIds(retainedImageIds);
-        if (hasUnknownRetainedImageIds(submittedImageIds, availableImageIds)) {
-            errors.rejectValue("files", "image.invalid", "Imagen precargada inválida.");
-        }
         return retainedImageIds;
     }
 
@@ -866,16 +804,6 @@ public class AdminController {
             }
         }
         return new ArrayList<>(retained);
-    }
-
-    private boolean hasUnknownRetainedImageIds(final List<Long> submittedImageIds, final List<Long> availableImageIds) {
-        if (submittedImageIds == null || submittedImageIds.isEmpty()) {
-            return false;
-        }
-        final Set<Long> available = new LinkedHashSet<>(availableImageIds);
-        return submittedImageIds.stream()
-                .filter(Objects::nonNull)
-                .anyMatch(imageId -> !available.contains(imageId));
     }
 
     private List<CarImagePayload> requestImagePayloads(final CarRequest request, final List<Long> retainedImageIds) {
@@ -921,21 +849,6 @@ public class AdminController {
         }
         return payloads;
     }
-
-
-    private void rejectInvalidSpecFields(final BindingResult errors, final CarForm carForm) {
-        if (carForm.getFuelType() != null
-                && !CarSearchCriteria.ALLOWED_FUEL_TYPES.contains(
-                        ControllerUtils.normalizeSpecValue(carForm.getFuelType()))) {
-            errors.rejectValue("fuelType", "fuelType.invalid");
-        }
-        if (carForm.getTransmission() != null
-                && !CarSearchCriteria.ALLOWED_TRANSMISSIONS.contains(
-                        ControllerUtils.normalizeSpecValue(carForm.getTransmission()))) {
-            errors.rejectValue("transmission", "transmission.invalid");
-        }
-    }
-
     private ModelAndView redirectBackToCatalog(final String referer) {
         return redirectBackToCatalog(referer, true);
     }

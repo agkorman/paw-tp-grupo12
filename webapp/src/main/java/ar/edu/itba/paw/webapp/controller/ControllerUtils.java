@@ -1,25 +1,8 @@
 package ar.edu.itba.paw.webapp.controller;
 
-import ar.edu.itba.paw.webapp.validation.ImageSignatureValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
 import java.util.Locale;
-import java.util.Set;
 
 final class ControllerUtils {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ControllerUtils.class);
-
-    static final long MAX_IMAGE_SIZE_BYTES = 10L * 1024 * 1024;
-    static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
-            MediaType.IMAGE_JPEG_VALUE,
-            MediaType.IMAGE_PNG_VALUE,
-            "image/webp"
-    );
 
     private ControllerUtils() {}
 
@@ -50,28 +33,6 @@ final class ControllerUtils {
         }
         final String normalized = value.trim().toLowerCase(Locale.ROOT);
         return normalized.isEmpty() ? null : normalized;
-    }
-
-    static String validateUploadedImage(final MultipartFile file, final boolean required) {
-        if (file == null || file.isEmpty()) {
-            return required ? "La imagen es obligatoria." : null;
-        }
-        if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-            return "La imagen no debe superar los 10 MB.";
-        }
-        final String contentType = normalizeContentType(file.getContentType());
-        if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
-            return "Tipo de imagen no soportado. Usá JPEG, PNG o WEBP.";
-        }
-        try {
-            if (!ImageSignatureValidator.hasMatchingImageSignature(file, contentType)) {
-                return "El archivo no coincide con una imagen JPEG, PNG o WEBP válida.";
-            }
-        } catch (final IOException e) {
-            LOGGER.warn("failed to read uploaded image bytes for signature check", e);
-            return "No pudimos leer la imagen. Intentá con otro archivo.";
-        }
-        return null;
     }
 
     static boolean isAjaxRequest(final String requestedWith) {

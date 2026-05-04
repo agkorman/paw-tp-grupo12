@@ -27,7 +27,7 @@
             </div>
 
             <form id="registerForm" class="auth-form" method="post" action="<c:url value='/register'/>"
-                  data-auth-form="register" data-submit-lock="true" novalidate="novalidate">
+                  data-submit-lock="true" novalidate="novalidate">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
                 <div class="auth-field">
@@ -36,10 +36,8 @@
                             id="registerUsername"
                             name="username"
                             type="text"
-                            maxlength="50"
                             value="<c:out value='${username}'/>"
-                            autocomplete="username"
-                            required>
+                            autocomplete="username">
                 </div>
 
                 <div class="auth-field">
@@ -48,10 +46,8 @@
                             id="registerEmail"
                             name="email"
                             type="email"
-                            maxlength="100"
                             value="<c:out value='${email}'/>"
-                            autocomplete="email"
-                            required>
+                            autocomplete="email">
                 </div>
 
                 <div class="auth-field">
@@ -60,10 +56,7 @@
                             id="registerPassword"
                             name="password"
                             type="password"
-                            minlength="8"
-                            maxlength="72"
-                            autocomplete="new-password"
-                            required>
+                            autocomplete="new-password">
                 </div>
 
                 <div class="auth-field">
@@ -72,10 +65,7 @@
                             id="registerConfirmPassword"
                             name="confirmPassword"
                             type="password"
-                            minlength="8"
-                            maxlength="72"
-                            autocomplete="new-password"
-                            required>
+                            autocomplete="new-password">
                 </div>
 
                 <button type="submit" class="btn-primary auth-submit" data-loading-label="${registerSubmittingLabel}">
@@ -91,7 +81,6 @@
     </main>
 
     <pa:toast messageCode="${registrationErrorCode}" type="error"/>
-    <script src="<c:url value='/js/auth-form.js'/>"></script>
     <script src="<c:url value='/js/form-submit-lock.js'/>"></script>
     <script src="<c:url value='/js/toast.js'/>"></script>
     <pa:footer/>

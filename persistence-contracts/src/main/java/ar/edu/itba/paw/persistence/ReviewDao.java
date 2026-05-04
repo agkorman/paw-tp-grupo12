@@ -21,6 +21,7 @@ public interface ReviewDao {
     Map<Long, Integer> findDefaultPagesByReviewIds(Collection<Long> reviewIds);
     Optional<Review> findById(long id);
     List<Review> findByIds(Collection<Long> ids);
+    List<Review> findByCarIds(Collection<Long> carIds);
     List<Review> findByCarId(long carId);
     Page<Review> findByCarId(long carId, int page);
     Optional<Review> findLatestByCarId(long carId);

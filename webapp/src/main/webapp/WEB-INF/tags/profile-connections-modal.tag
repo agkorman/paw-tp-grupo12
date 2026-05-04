@@ -28,7 +28,7 @@
 
         <div class="profile-connections-search">
             <pa:icon name="search" size="18"/>
-            <input type="search" maxlength="80" placeholder="${searchPlaceholder}" aria-label="${searchAria}" data-connections-search>
+            <input type="search" placeholder="${searchPlaceholder}" aria-label="${searchAria}" data-connections-search>
         </div>
 
         <div class="profile-connections-list" data-connections-list="following">

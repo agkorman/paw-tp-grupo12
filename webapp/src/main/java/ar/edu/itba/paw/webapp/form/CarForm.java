@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.form;
 
+import ar.edu.itba.paw.webapp.validation.ValidCarForm;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.DecimalMax;
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+@ValidCarForm
 public class CarForm {
 
     @NotBlank(message = "{validation.car.brand.required}")
@@ -41,6 +43,12 @@ public class CarForm {
     private List<MultipartFile> files = new ArrayList<>();
 
     private List<Long> retainedImageIds = new ArrayList<>();
+
+    private String formMode = "create";
+
+    private Long carId;
+
+    private Long requestId;
 
     @NotBlank(message = "{validation.car.fuelType.required}")
     private String fuelType;
@@ -145,6 +153,30 @@ public class CarForm {
 
     public void setRetainedImageIds(final List<Long> retainedImageIds) {
         this.retainedImageIds = retainedImageIds == null ? new ArrayList<>() : retainedImageIds;
+    }
+
+    public String getFormMode() {
+        return formMode;
+    }
+
+    public void setFormMode(final String formMode) {
+        this.formMode = formMode;
+    }
+
+    public Long getCarId() {
+        return carId;
+    }
+
+    public void setCarId(final Long carId) {
+        this.carId = carId;
+    }
+
+    public Long getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(final Long requestId) {
+        this.requestId = requestId;
     }
 
     public String getFuelType() {

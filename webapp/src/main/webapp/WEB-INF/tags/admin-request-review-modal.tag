@@ -31,15 +31,15 @@
         <div class="admin-request-review-fields">
             <div class="review-modal-field review-modal-field-wide">
                 <label for="adminRequestReviewMotivation"><spring:message code="admin.moderatorRequest.motivation"/></label>
-                <textarea id="adminRequestReviewMotivation" rows="4" maxlength="2000" readonly></textarea>
+                <textarea id="adminRequestReviewMotivation" rows="4" readonly></textarea>
             </div>
             <div class="review-modal-field review-modal-field-wide">
                 <label for="adminRequestReviewBio"><spring:message code="admin.moderatorRequest.bio"/></label>
-                <textarea id="adminRequestReviewBio" rows="4" maxlength="2000" readonly></textarea>
+                <textarea id="adminRequestReviewBio" rows="4" readonly></textarea>
             </div>
             <div class="review-modal-field review-modal-field-wide">
                 <label for="adminRequestReviewJustification"><spring:message code="admin.moderatorRequest.justification"/></label>
-                <textarea id="adminRequestReviewJustification" rows="4" maxlength="2000" readonly></textarea>
+                <textarea id="adminRequestReviewJustification" rows="4" readonly></textarea>
             </div>
         </div>
 

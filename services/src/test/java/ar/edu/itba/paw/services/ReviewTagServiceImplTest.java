@@ -164,6 +164,24 @@ public class ReviewTagServiceImplTest {
     }
 
     @Test
+    public void shouldAddNewBucketForUnknownSentiment() {
+        // Arrange
+        final ReviewTag neutral = tag((short) 3, "neutral-tag", "neutral", "performance-dim");
+        when(reviewTagDao.findAll()).thenReturn(List.of(neutral));
+
+        // Exercise
+        final Map<String, List<ReviewTag>> grouped = reviewTagService.getAllGroupedBySentiment();
+
+        // Assertions
+        assertEquals(3, grouped.size());
+        assertTrue(grouped.containsKey("neutral"));
+        assertEquals(1, grouped.get("neutral").size());
+        assertEquals("neutral-tag", grouped.get("neutral").get(0).getCode());
+        assertTrue(grouped.get(ReviewTag.SENTIMENT_POSITIVE).isEmpty());
+        assertTrue(grouped.get(ReviewTag.SENTIMENT_NEGATIVE).isEmpty());
+    }
+
+    @Test
     public void shouldReturnAllTagsFromDao() {
         // Arrange
         final List<ReviewTag> tags = List.of(tag((short) 1, "c", ReviewTag.SENTIMENT_POSITIVE, "d"));

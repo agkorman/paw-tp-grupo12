@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
@@ -204,4 +206,68 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
         assertEquals(1, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", kept.getId()));
     }
 
+    @Test
+    public void shouldReturnEmptyWhenFindByIdHasNoMatch() {
+        // Arrange
+        final long missingId = 9999L;
+
+        // Exercise
+        final Optional<Review> result = reviewDao.findById(missingId);
+
+        // Assertions
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenUpdatingMissingReview() {
+        // Arrange
+        final long missingId = 9999L;
+
+        // Exercise
+        final Optional<Review> result = reviewDao.update(missingId, 1L, new BigDecimal("3.0"),
+                "Ghost Title", "Ghost Body", "owner", 2026, 1000, true);
+
+        // Assertions
+        assertFalse(result.isPresent());
+        assertEquals(0, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", missingId));
+    }
+
+    @Test
+    public void shouldReturnFalseWhenDeletingMissingReview() {
+        // Arrange
+        final long missingId = 9999L;
+
+        // Exercise
+        final boolean result = reviewDao.delete(missingId);
+
+        // Assertions
+        assertFalse(result);
+        assertEquals(0, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", missingId));
+    }
+
+    @Test
+    public void shouldReturnZeroReviewCountWhenCarHasNoReviews() {
+        // Arrange
+        final Car car = createCar("stats-no-reviews");
+
+        // Exercise
+        final Optional<ReviewStats> result = reviewDao.findStatsByCarId(car.getId());
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals(0L, result.get().getReviewCount());
+        assertNull(result.get().getAverageRating());
+    }
+
+    @Test
+    public void shouldReturnEmptyStatsWhenCarIdDoesNotExist() {
+        // Arrange
+        final long missingCarId = 9999L;
+
+        // Exercise
+        final Optional<ReviewStats> result = reviewDao.findStatsByCarId(missingCarId);
+
+        // Assertions
+        assertFalse(result.isPresent());
+    }
 }

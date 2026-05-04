@@ -28,17 +28,17 @@
         <div class="admin-catalog-request-review-grid">
             <div class="review-modal-field">
                 <label for="adminCatalogRequestName"><spring:message code="admin.catalogRequest.name"/></label>
-                <input id="adminCatalogRequestName" type="text" maxlength="80" readonly>
+                <input id="adminCatalogRequestName" type="text" readonly>
             </div>
 
             <div class="review-modal-field">
                 <label for="adminCatalogRequestSubmitter"><spring:message code="common.label.sentBy"/></label>
-                <input id="adminCatalogRequestSubmitter" type="text" maxlength="100" readonly>
+                <input id="adminCatalogRequestSubmitter" type="text" readonly>
             </div>
 
             <div class="review-modal-field review-modal-field-wide">
                 <label for="adminCatalogRequestComments"><spring:message code="admin.catalogRequest.comments"/></label>
-                <textarea id="adminCatalogRequestComments" rows="4" maxlength="500" readonly
+                <textarea id="adminCatalogRequestComments" rows="4" readonly
                           placeholder="${commentsEmptyPlaceholder}"></textarea>
             </div>
         </div>

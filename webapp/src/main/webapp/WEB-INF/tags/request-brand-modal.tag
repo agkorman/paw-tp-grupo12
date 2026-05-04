@@ -25,19 +25,18 @@
             <spring:message code="request.brand.description"/>
         </p>
 
-        <form id="requestBrandForm" class="catalog-request-form" method="post" action="${requestBrandUrl}">
+        <form id="requestBrandForm" class="catalog-request-form" method="post" action="${requestBrandUrl}" novalidate="novalidate">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
             <div class="review-modal-field review-modal-field-wide">
                 <label for="requestBrandName"><spring:message code="request.brand.name"/></label>
                 <input id="requestBrandName" name="name" type="text"
-                       maxlength="80" required
                        placeholder="${brandNamePlaceholder}">
             </div>
 
             <div class="review-modal-field review-modal-field-wide">
                 <label for="requestBrandComments"><spring:message code="request.brand.comments"/></label>
-                <textarea id="requestBrandComments" name="comments" rows="3" maxlength="500"
+                <textarea id="requestBrandComments" name="comments" rows="3"
                           placeholder="${brandCommentsPlaceholder}"></textarea>
             </div>
 

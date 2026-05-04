@@ -117,28 +117,24 @@
 
                     <div class="review-modal-field review-modal-field-wide">
                         <label for="modalTitle"><spring:message code="review.form.titleField"/></label>
-                        <form:input id="modalTitle" path="title" type="text" maxlength="200"
-                                    required="required"
-                                    placeholder="${reviewTitlePlaceholder}"/>
+                        <form:input id="modalTitle" path="title" type="text" placeholder="${reviewTitlePlaceholder}"/>
                         <form:errors path="title" cssClass="form-error" element="span"/>
                     </div>
                     <div class="review-modal-field review-modal-field-wide">
                         <label for="modalBody"><spring:message code="review.form.body"/></label>
-                        <form:textarea id="modalBody" path="body" rows="4" maxlength="2000"
-                                       required="required"
-                                       placeholder="${reviewBodyPlaceholder}"/>
+                        <form:textarea id="modalBody" path="body" rows="4" placeholder="${reviewBodyPlaceholder}"/>
                         <form:errors path="body" cssClass="form-error" element="span"/>
                     </div>
                     <div class="review-modal-field">
                         <label for="modalModelYear"><spring:message code="review.form.modelYear"/></label>
                         <form:input id="modalModelYear" path="modelYear" type="text" inputmode="numeric"
-                                    maxlength="4" required="required" placeholder="${reviewYearPlaceholder}"/>
+                                    placeholder="${reviewYearPlaceholder}"/>
                         <form:errors path="modelYear" cssClass="form-error" element="span"/>
                     </div>
                     <div class="review-modal-field">
                         <label for="modalMileageKm"><spring:message code="review.form.mileage"/></label>
                         <form:input id="modalMileageKm" path="mileageKm" type="text" inputmode="numeric"
-                                    maxlength="7" required="required" placeholder="${reviewMileagePlaceholder}"/>
+                                    placeholder="${reviewMileagePlaceholder}"/>
                         <form:errors path="mileageKm" cssClass="form-error" element="span"/>
                     </div>
 

@@ -68,6 +68,21 @@ public class CarImageJdbcDao implements CarImageDao {
     }
 
     @Override
+    public List<CarImage> findAllByCarIdWithData(final long carId) {
+        try {
+            return jdbcTemplate.query(
+                    "SELECT image_id, car_id, display_order, content_type, image_data, updated_at "
+                            + "FROM car_images WHERE car_id = ? ORDER BY display_order ASC, image_id ASC",
+                    ROW_MAPPER,
+                    carId
+            );
+        } catch (final DataAccessException e) {
+            LOGGER.error("failed to fetch images with data for car id={}", carId, e);
+            throw new PersistenceOperationException("fetch images with data for car " + carId, e);
+        }
+    }
+
+    @Override
     public Optional<CarImage> findByCarIdAndImageId(final long carId, final long imageId) {
         try {
             return jdbcTemplate.query(

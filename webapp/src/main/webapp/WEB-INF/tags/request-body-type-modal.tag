@@ -25,19 +25,18 @@
             <spring:message code="request.bodyType.description"/>
         </p>
 
-        <form id="requestBodyTypeForm" class="catalog-request-form" method="post" action="${requestBodyTypeUrl}">
+        <form id="requestBodyTypeForm" class="catalog-request-form" method="post" action="${requestBodyTypeUrl}" novalidate="novalidate">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
             <div class="review-modal-field review-modal-field-wide">
                 <label for="requestBodyTypeName"><spring:message code="request.bodyType.name"/></label>
                 <input id="requestBodyTypeName" name="name" type="text"
-                       maxlength="80" required
                        placeholder="${bodyTypeNamePlaceholder}">
             </div>
 
             <div class="review-modal-field review-modal-field-wide">
                 <label for="requestBodyTypeComments"><spring:message code="request.bodyType.comments"/></label>
-                <textarea id="requestBodyTypeComments" name="comments" rows="3" maxlength="500"
+                <textarea id="requestBodyTypeComments" name="comments" rows="3"
                           placeholder="${bodyTypeCommentsPlaceholder}"></textarea>
             </div>
 
