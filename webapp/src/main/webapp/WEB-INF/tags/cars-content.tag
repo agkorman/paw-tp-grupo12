@@ -90,7 +90,7 @@
         </div>
 
         <c:if test="${not empty totalPages and totalPages > 1}">
-            <c:url var="carsBaseUrl" value="/cars"/>
+            <c:set var="carsBaseUrl" value="/cars"/>
             <c:url var="carsFragmentUrl" value="/cars/content"/>
             <jsp:useBean id="paginationParams" class="java.util.LinkedHashMap" scope="page"/>
             <c:if test="${not empty criteria}">
