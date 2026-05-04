@@ -19,7 +19,7 @@
     <c:url var="profileUrl" value="/profile"/>
     <c:url var="reviewUpdateUrl" value="/reviews/${reviewId}"/>
     <c:set var="reviewFormAction" value="${editMode ? reviewUpdateUrl : reviewCreateUrl}"/>
-    <c:set var="reviewFormCancelUrl" value="${editMode ? profileUrl : reviewCancelUrl}"/>
+    <c:set var="reviewFormCancelUrl" value="${editMode ? (not empty editRedirect ? editRedirect : profileUrl) : reviewCancelUrl}"/>
     <spring:message var="reviewTitlePlaceholder" code="review.form.placeholder.title"/>
     <spring:message var="reviewBodyPlaceholder" code="review.form.placeholder.body"/>
     <spring:message var="reviewMileagePlaceholder" code="review.form.placeholder.mileage"/>
@@ -76,6 +76,9 @@
 
                 <input id="modalReviewId" name="reviewId" type="hidden" value="">
                 <form:hidden id="modalCarId" path="carId"/>
+                <c:if test="${not empty editRedirect}">
+                    <input type="hidden" name="redirect" value="${fn:escapeXml(editRedirect)}"/>
+                </c:if>
 
                 <p class="modal-subtitle" data-modal-subtitle>
                     <c:choose>

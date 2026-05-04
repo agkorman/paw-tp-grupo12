@@ -14,6 +14,7 @@ import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import ar.edu.itba.paw.webapp.validation.ReviewFormValidator;
@@ -176,6 +177,7 @@ public class CarReviewController {
     )
     public ModelAndView editReview(
         @PathVariable("reviewId") final long reviewId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         final Review review = reviewService.getReviewAndCheckAccess(
@@ -195,6 +197,7 @@ public class CarReviewController {
         mav.addObject("reviewForm", toReviewForm(review));
         mav.addObject("editMode", true);
         mav.addObject("reviewId", reviewId);
+        LoginRedirectUtils.safeRedirect(redirect).ifPresent(r -> mav.addObject("editRedirect", r));
         return mav;
     }
 
@@ -510,6 +513,7 @@ public class CarReviewController {
         @Valid @ModelAttribute("reviewForm") final ReviewForm reviewForm,
         final BindingResult errors,
         final Model model,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         final Review existingReview = reviewService.getReviewAndCheckAccess(
@@ -525,10 +529,13 @@ public class CarReviewController {
             );
         reviewForm.setCarId(existingReview.getCarId());
 
+        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect).orElse("/profile");
+
         if (errors.hasErrors()) {
             model.addAttribute("selectedCar", car);
             model.addAttribute("editMode", true);
             model.addAttribute("reviewId", reviewId);
+            model.addAttribute("editRedirect", safeRedirect);
             return "review-form.jsp";
         }
 
@@ -560,9 +567,10 @@ public class CarReviewController {
             model.addAttribute("selectedCar", car);
             model.addAttribute("editMode", true);
             model.addAttribute("reviewId", reviewId);
+            model.addAttribute("editRedirect", safeRedirect);
             return "review-form.jsp";
         }
-        return "redirect:/profile";
+        return "redirect:" + safeRedirect;
     }
 
     @RequestMapping(
@@ -571,6 +579,7 @@ public class CarReviewController {
     )
     public Object deleteReview(
         @PathVariable("reviewId") final long reviewId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @RequestHeader(
             value = "X-Requested-With",
             required = false
@@ -592,7 +601,8 @@ public class CarReviewController {
         if (ajax) {
             return new ResponseEntity<String>("ok", HttpStatus.OK);
         }
-        return new ModelAndView("redirect:/profile");
+        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect).orElse("/profile");
+        return new ModelAndView("redirect:" + safeRedirect);
     }
 
     @RequestMapping(

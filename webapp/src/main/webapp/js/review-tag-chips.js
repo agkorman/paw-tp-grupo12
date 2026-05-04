@@ -87,15 +87,16 @@
                 }
             });
 
+            var atMax = checkedCount() >= maxSelected;
             var positiveDims = selectedDimensions(positiveWrap);
             var negativeDims = selectedDimensions(negativeWrap);
             setDisabled(positiveWrap, function (cb) {
                 var dim = cb.getAttribute('data-dimension') || '';
-                return dim && negativeDims.has(dim);
+                return atMax || (dim && negativeDims.has(dim));
             });
             setDisabled(negativeWrap, function (cb) {
                 var dim = cb.getAttribute('data-dimension') || '';
-                return dim && positiveDims.has(dim);
+                return atMax || (dim && positiveDims.has(dim));
             });
         }
 

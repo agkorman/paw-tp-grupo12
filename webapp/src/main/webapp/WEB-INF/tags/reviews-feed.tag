@@ -71,7 +71,9 @@
                     <c:set var="review" value="${thread.review}"/>
                     <c:url var="reviewLikeUrl" value="/reviews/${review.id}/like"/>
                     <c:url var="replyCreateUrl" value="/reviews/${review.id}/replies"/>
-                    <c:url var="reviewEditPageUrl" value="/reviews/${review.id}/edit"/>
+                    <c:url var="reviewEditPageUrl" value="/reviews/${review.id}/edit">
+                        <c:param name="redirect" value="/reviews?carId=${carId}"/>
+                    </c:url>
                     <c:url var="reviewDeleteUrl" value="/reviews/${review.id}/delete"/>
                     <c:url var="reviewHideUrl" value="/reviews/${review.id}/hide"/>
                     <article class="review-item" id="review-${review.id}">
@@ -92,6 +94,7 @@
                                                       data-delete-success="${fn:escapeXml(reviewDeleteSuccessMsg)}"
                                                       data-delete-error="${fn:escapeXml(reviewDeleteErrorMsg)}">
                                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                                    <input type="hidden" name="redirect" value="/reviews?carId=${carId}">
                                                     <button type="submit" class="action-menu-danger">
                                                         <spring:message code="common.action.delete"/>
                                                     </button>
@@ -111,6 +114,25 @@
                                             </button>
                                         </c:otherwise>
                                     </c:choose>
+                                </sec:authorize>
+                                <sec:authorize access="!hasRole('ADMIN') and isAuthenticated()">
+                                    <c:if test="${not empty currentUserId and review.userId == currentUserId}">
+                                        <pa:action-menu label="${reviewActionMenuLabel}" cssClass="review-item-menu">
+                                            <a href="${reviewEditPageUrl}">
+                                                <spring:message code="common.action.edit"/>
+                                            </a>
+                                            <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
+                                                  data-review-delete-form
+                                                  data-confirm-modal="deleteReviewConfirmModal"
+                                                  data-delete-success="${fn:escapeXml(reviewDeleteSuccessMsg)}"
+                                                  data-delete-error="${fn:escapeXml(reviewDeleteErrorMsg)}">
+                                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                                <button type="submit" class="action-menu-danger">
+                                                    <spring:message code="common.action.delete"/>
+                                                </button>
+                                            </form>
+                                        </pa:action-menu>
+                                    </c:if>
                                 </sec:authorize>
                             </div>
                         </div>
