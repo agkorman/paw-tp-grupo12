@@ -274,8 +274,8 @@
     }
 
     function validateNumerics() {
-        var minYear = 1950;
-        var maxYear = 2026;
+        var minYear = parseInt(modal.dataset.minYear, 10) || 1886;
+        var maxYear = parseInt(modal.dataset.maxYear, 10) || new Date().getFullYear();
         var ok = true;
         clearInlineError(modelYearInput);
         clearInlineError(mileageInput);

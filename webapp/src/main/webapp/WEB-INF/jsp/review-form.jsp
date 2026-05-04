@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
@@ -29,6 +30,9 @@
     <c:url var="reviewUpdateUrl" value="/reviews/${reviewId}"/>
     <c:set var="reviewFormAction" value="${editMode ? reviewUpdateUrl : reviewCreateUrl}"/>
     <c:set var="reviewFormCancelUrl" value="${editMode ? profileUrl : reviewCancelUrl}"/>
+    <jsp:useBean id="reviewFormCurrentDate" class="java.util.Date" scope="request"/>
+    <fmt:formatDate var="reviewFormCurrentYear" value="${reviewFormCurrentDate}" pattern="yyyy"/>
+    <c:set var="reviewFormMinYear" value="1886"/>
     <spring:message var="reviewTitlePlaceholder" code="review.form.placeholder.title"/>
     <spring:message var="reviewBodyPlaceholder" code="review.form.placeholder.body"/>
     <spring:message var="reviewMileagePlaceholder" code="review.form.placeholder.mileage"/>
@@ -39,7 +43,7 @@
     <spring:message var="jsMsgRequiredMileage" code="js.review.required.mileage"/>
     <spring:message var="jsMsgRequiredRating" code="js.review.required.rating"/>
     <spring:message var="jsMsgModelYearNumeric" code="js.review.modelYear.numeric"/>
-    <spring:message var="jsMsgModelYearRange" code="js.review.modelYear.range" arguments="2026"/>
+    <spring:message var="jsMsgModelYearRange" code="js.review.modelYear.range" arguments="${reviewFormCurrentYear}"/>
     <spring:message var="jsMsgMileageNumeric" code="js.review.mileage.numeric"/>
     <spring:message var="jsMsgMileageRange" code="js.review.mileage.range"/>
     <spring:message var="jsMsgRatingNone" code="js.review.rating.none"/>
@@ -51,6 +55,8 @@
 
     <main class="form-page">
         <section id="createReviewFormPage" class="form-page-panel" data-default-car-id="${selectedCar.id}" aria-labelledby="createReviewTitle"
+                 data-min-year="${reviewFormMinYear}"
+                 data-max-year="${reviewFormCurrentYear}"
                  data-msg-required-generic="${fn:escapeXml(jsMsgRequiredGeneric)}"
                  data-msg-required-title="${fn:escapeXml(jsMsgRequiredTitle)}"
                  data-msg-required-body="${fn:escapeXml(jsMsgRequiredBody)}"
