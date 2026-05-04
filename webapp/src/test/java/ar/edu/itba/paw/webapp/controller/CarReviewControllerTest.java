@@ -293,7 +293,8 @@ class CarReviewControllerTest {
                                     .param("modelYear", "2020")
                                     .param("mileageKm", "15000"));
             // Assertions
-            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/reviews?carId=1"));
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/reviews?carId=1&reviewCreated=1"));
         } finally {
             clearSecurityContext();
         }
