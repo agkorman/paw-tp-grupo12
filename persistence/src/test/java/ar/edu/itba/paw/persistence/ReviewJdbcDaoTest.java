@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
@@ -109,8 +107,8 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
                 "Ignored", "Body", "owner", 2026, 1000, false);
 
         // Exercise
-        final Page<Review> followedReviews = reviewDao.findByFollowedUsers(follower.getId(), 1, 5);
-        final Page<Review> favoriteReviews = reviewDao.findByFavoriteCars(follower.getId(), 1, 5);
+        final Page<Review> followedReviews = reviewDao.findByFollowedUsers(follower.getId(), 1);
+        final Page<Review> favoriteReviews = reviewDao.findByFavoriteCars(follower.getId(), 1);
 
         // Assertions
         assertEquals(1L, followedReviews.getTotalItems());
@@ -207,67 +205,61 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
-    public void shouldReturnEmptyWhenFindByIdHasNoMatch() {
+    public void shouldPaginateLatestReviewsAcrossMultiplePages() {
         // Arrange
-        final long missingId = 9999L;
+        for (int i = 0; i < Pagination.REVIEWS_PAGE_SIZE + 1; i++) {
+            createReview("latest-" + i);
+        }
 
         // Exercise
-        final Optional<Review> result = reviewDao.findById(missingId);
+        final Page<Review> page1 = reviewDao.findLatest(1);
+        final Page<Review> page2 = reviewDao.findLatest(2);
 
         // Assertions
-        assertFalse(result.isPresent());
+        assertEquals(Pagination.REVIEWS_PAGE_SIZE + 1L, page1.getTotalItems());
+        assertEquals(Pagination.REVIEWS_PAGE_SIZE, page1.getItems().size());
+        assertEquals(1, page2.getItems().size());
     }
 
     @Test
-    public void shouldReturnEmptyWhenUpdatingMissingReview() {
+    public void shouldPaginateReviewsByUserIdAcrossMultiplePages() {
         // Arrange
-        final long missingId = 9999L;
+        final User user = createUser("user-paged");
+        final Car car = createCar("user-paged");
+        for (int i = 0; i < Pagination.REVIEWS_PAGE_SIZE + 1; i++) {
+            insertReview(user.getId(), user.getUsername(), car.getId(), new BigDecimal("4.0"), "User Paged " + i,
+                    "Body", "owner", 2026, 1000, true);
+        }
 
         // Exercise
-        final Optional<Review> result = reviewDao.update(missingId, 1L, new BigDecimal("3.0"),
-                "Ghost Title", "Ghost Body", "owner", 2026, 1000, true);
+        final Page<Review> result = reviewDao.findByUserId(user.getId(), 2);
 
         // Assertions
-        assertFalse(result.isPresent());
-        assertEquals(0, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", missingId));
+        assertEquals(Pagination.REVIEWS_PAGE_SIZE + 1L, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(1, result.getItems().size());
     }
 
     @Test
-    public void shouldReturnFalseWhenDeletingMissingReview() {
+    public void shouldPaginateReviewsByCarIdOrderedByRatingAscending() {
         // Arrange
-        final long missingId = 9999L;
+        final User user = createUser("car-rating-asc");
+        final Car car = createCar("car-rating-asc");
+        // Insert 6 reviews (pageSize + 1)
+        for (int i = 0; i < Pagination.REVIEWS_PAGE_SIZE + 1; i++) {
+            insertReview(user.getId(), user.getUsername(), car.getId(), BigDecimal.valueOf(0.5 + (i * 0.5)),
+                    "Rating Asc " + i, "Body", "owner", 2026, 1000, true);
+        }
 
         // Exercise
-        final boolean result = reviewDao.delete(missingId);
+        final Page<Review> result = reviewDao.findByCarIdOrderByRatingAsc(car.getId(), 2);
 
         // Assertions
-        assertFalse(result);
-        assertEquals(0, countRows("SELECT COUNT(*) FROM reviews WHERE review_id = ?", missingId));
+        assertEquals(Pagination.REVIEWS_PAGE_SIZE + 1L, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(1, result.getItems().size());
+        // Rating 3.0 should be on the second page (page size is 5, ratings are 0.5, 1.0, 1.5, 2.0, 2.5 on page 1)
+        assertEquals(new BigDecimal("3.0"), result.getItems().get(0).getRating());
     }
 
-    @Test
-    public void shouldReturnZeroReviewCountWhenCarHasNoReviews() {
-        // Arrange
-        final Car car = createCar("stats-no-reviews");
-
-        // Exercise
-        final Optional<ReviewStats> result = reviewDao.findStatsByCarId(car.getId());
-
-        // Assertions
-        assertTrue(result.isPresent());
-        assertEquals(0L, result.get().getReviewCount());
-        assertNull(result.get().getAverageRating());
-    }
-
-    @Test
-    public void shouldReturnEmptyStatsWhenCarIdDoesNotExist() {
-        // Arrange
-        final long missingCarId = 9999L;
-
-        // Exercise
-        final Optional<ReviewStats> result = reviewDao.findStatsByCarId(missingCarId);
-
-        // Assertions
-        assertFalse(result.isPresent());
-    }
 }

@@ -12,6 +12,7 @@ import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.ReviewTagService;
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.exception.ReviewOwnershipException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
@@ -388,8 +389,8 @@ class CarReviewControllerTest {
     void deleteReview_notOwner_throwsForbidden() throws Exception {
         // Arrange
         arrangeStandardReviewCollaboratorsAndI18n();
-        final Review existing = reviewOwnedBy(1L, 42L);
-        when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(existing));
+        when(reviewService.getReviewAndCheckAccess(eq(1L), eq(2L), eq(false)))
+                .thenThrow(new ReviewOwnershipException(1L));
         bindPrincipal(testUser(2L));
 
         try {

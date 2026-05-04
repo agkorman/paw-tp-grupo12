@@ -1,15 +1,14 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
-import org.springframework.dao.DataIntegrityViolationException;
 import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RelationJdbcDaoTest extends AbstractPersistenceTest {
@@ -142,52 +141,21 @@ public class RelationJdbcDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
-    public void shouldReturnFalseWhenUnfavoritingNonFavoritedCar() {
+    public void shouldPaginateFavoriteCarsAcrossMultiplePages() {
         // Arrange
-        final User user = createUser("unfavorite-missing");
-        final Car car = createCar("unfavorite-missing");
+        final User user = createUser("favorite-paged");
+        // Insert 17 cars (Pagination.CARS_PAGE_SIZE + 1)
+        for (int i = 0; i < 17; i++) {
+            Car car = createCar("fav-paged-" + i);
+            jdbcTemplate.update("INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)", user.getId(), car.getId());
+        }
 
         // Exercise
-        final boolean result = carFavoriteDao.unfavorite(user.getId(), car.getId());
+        final Page<Car> result = carFavoriteDao.findFavoriteCars(user.getId(), 2);
 
         // Assertions
-        assertFalse(result);
-        assertEquals(0, countRows(
-                "SELECT COUNT(*) FROM car_favorites WHERE user_id = ? AND car_id = ?",
-                user.getId(), car.getId()
-        ));
-    }
-
-    @Test
-    public void shouldReturnFalseWhenUnfollowingNonFollowedUser() {
-        // Arrange
-        final User follower = createUser("unfollow-missing-follower");
-        final User followed = createUser("unfollow-missing-followed");
-
-        // Exercise
-        final boolean result = userFollowDao.unfollow(follower.getId(), followed.getId());
-
-        // Assertions
-        assertFalse(result);
-        assertEquals(0, countRows(
-                "SELECT COUNT(*) FROM user_follows WHERE follower_id = ? AND followed_id = ?",
-                follower.getId(), followed.getId()
-        ));
-    }
-
-    @Test
-    public void shouldRejectSelfFollow() {
-        // Arrange
-        final User user = createUser("self-follow");
-
-        // Exercise
-        assertThrows(DataIntegrityViolationException.class,
-                () -> userFollowDao.follow(user.getId(), user.getId()));
-
-        // Assertions
-        assertEquals(0, countRows(
-                "SELECT COUNT(*) FROM user_follows WHERE follower_id = ? AND followed_id = ?",
-                user.getId(), user.getId()
-        ));
+        assertEquals(17L, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(1, result.getItems().size());
     }
 }

@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.AdminRequestDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,12 @@ public class AdminRequestServiceImplTest {
     private UserService userService;
     @Mock
     private EmailService emailService;
+    @Mock
+    private CarRequestService carRequestService;
+    @Mock
+    private BrandRequestService brandRequestService;
+    @Mock
+    private BodyTypeRequestService bodyTypeRequestService;
 
     @InjectMocks
     private AdminRequestServiceImpl adminRequestService;
@@ -274,5 +281,99 @@ public class AdminRequestServiceImplTest {
         // Assertions
         assertTrue(result.isPresent());
         assertEquals(REQUEST_ID, result.get().getId());
+    }
+
+    @Test
+    public void shouldAggregateTotalPendingItemsFromAllRequestTypes() {
+        // Arrange
+        when(carRequestService.countCarRequestsByStatus(CarRequestService.STATUS_PENDING))
+            .thenReturn(3L);
+        when(brandRequestService.countBrandRequestsByStatus(BrandRequestService.STATUS_PENDING))
+            .thenReturn(5L);
+        when(bodyTypeRequestService.countBodyTypeRequestsByStatus(BodyTypeRequestService.STATUS_PENDING))
+            .thenReturn(2L);
+        when(adminRequestDao.countByStatus(AdminRequestService.STATUS_PENDING))
+            .thenReturn(4L);
+
+        // Exercise
+        final long result = adminRequestService.getTotalPendingItems();
+
+        // Assertions
+        assertEquals(14L, result);
+    }
+
+    @Test
+    public void shouldResolveSubmitterEmailFromProvidedEmail() {
+        // Arrange
+        final String email = "submitter@example.com";
+        final Long userId = 123L;
+
+        // Exercise
+        final String result = adminRequestService.resolveSubmitterEmail(email, userId);
+
+        // Assertions
+        assertEquals("submitter@example.com", result);
+    }
+
+    @Test
+    public void shouldResolveSubmitterEmailFromUserIdWhenEmailIsBlank() {
+        // Arrange
+        final Long userId = 123L;
+        final User user = new User(userId, "username", "email@example.com", "password", "user", LocalDateTime.now());
+        when(userService.getUserById(userId)).thenReturn(java.util.Optional.of(user));
+
+        // Exercise
+        final String result = adminRequestService.resolveSubmitterEmail("  ", userId);
+
+        // Assertions
+        assertEquals("email@example.com", result);
+    }
+
+    @Test
+    public void shouldReturnNullWhenCannotResolveSubmitterEmail() {
+        // Arrange
+        when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.empty());
+
+        // Exercise
+        final String result = adminRequestService.resolveSubmitterEmail(null, USER_ID);
+
+        // Assertions
+        assertEquals(null, result);
+    }
+
+    @Test
+    public void shouldGetSubmitterLabelFromResolvedEmail() {
+        // Arrange
+        final String email = "submitter@example.com";
+        final Long userId = 123L;
+
+        // Exercise
+        final String result = adminRequestService.getSubmitterLabel(email, userId);
+
+        // Assertions
+        assertEquals("submitter@example.com", result);
+    }
+
+    @Test
+    public void shouldGetSubmitterLabelAsUserIdWhenEmailCannotBeResolved() {
+        // Arrange
+        when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.empty());
+
+        // Exercise
+        final String result = adminRequestService.getSubmitterLabel(null, USER_ID);
+
+        // Assertions
+        assertEquals("Usuario #42", result);
+    }
+
+    @Test
+    public void shouldGetSubmitterLabelAsUnidentifiedWhenNothingCanBeResolved() {
+        // Arrange
+
+        // Exercise
+        final String result = adminRequestService.getSubmitterLabel(null, null);
+
+        // Assertions
+        assertEquals("Usuario sin identificar", result);
     }
 }

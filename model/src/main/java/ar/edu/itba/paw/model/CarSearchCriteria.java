@@ -27,6 +27,18 @@ public class CarSearchCriteria {
     public static final Set<String> ALLOWED_TRANSMISSIONS = Set.of(TRANSMISSION_MANUAL, TRANSMISSION_AUTOMATIC);
     public static final Set<String> ALLOWED_SORT_BY = Set.of(SORT_NAME_ASC, SORT_HP_DESC, SORT_HP_ASC, SORT_SPEED_DESC,
             SORT_CONSUMPTION_ASC, SORT_PRICE_ASC, SORT_PRICE_DESC);
+    private static final Set<Integer> ALLOWED_AIRBAG_MIN_VALUES = Set.of(2, 4, 6, 8, 10);
+    private static final int HORSEPOWER_MIN_BOUND = 50;
+    private static final int HORSEPOWER_MAX_BOUND = 800;
+    private static final int MAX_SPEED_MIN_BOUND = 0;
+    private static final int MAX_SPEED_MAX_BOUND = 500;
+    private static final int YEAR_MIN_BOUND = 1950;
+    private static final int YEAR_MAX_BOUND = 2026;
+    private static final BigDecimal FUEL_CONSUMPTION_MIN_BOUND = BigDecimal.ZERO;
+    private static final BigDecimal FUEL_CONSUMPTION_MAX_BOUND = BigDecimal.valueOf(30);
+    private static final BigDecimal PRICE_MIN_BOUND = BigDecimal.ZERO;
+    private static final BigDecimal PRICE_MAX_BOUND = BigDecimal.valueOf(5_000_000);
+
     private String q;
     private String brand;
     private String bodyType;
@@ -58,6 +70,60 @@ public class CarSearchCriteria {
                 || maxSpeedMin != null
                 || priceMin != null
                 || priceMax != null;
+    }
+
+    public boolean isValid() {
+        if (!ALLOWED_FUEL_TYPES.containsAll(fuelTypes)) {
+            return false;
+        }
+        if (transmission != null && !ALLOWED_TRANSMISSIONS.contains(transmission)) {
+            return false;
+        }
+        if (horsepowerMin != null && !isWithinBounds(horsepowerMin, HORSEPOWER_MIN_BOUND, HORSEPOWER_MAX_BOUND)) {
+            return false;
+        }
+        if (horsepowerMax != null && !isWithinBounds(horsepowerMax, HORSEPOWER_MIN_BOUND, HORSEPOWER_MAX_BOUND)) {
+            return false;
+        }
+        if (horsepowerMin != null && horsepowerMax != null && horsepowerMin > horsepowerMax) {
+            return false;
+        }
+        if (yearMin != null && !isWithinBounds(yearMin, YEAR_MIN_BOUND, YEAR_MAX_BOUND)) {
+            return false;
+        }
+        if (yearMax != null && !isWithinBounds(yearMax, YEAR_MIN_BOUND, YEAR_MAX_BOUND)) {
+            return false;
+        }
+        if (yearMin != null && yearMax != null && yearMin > yearMax) {
+            return false;
+        }
+        if (airbagMin != null && !ALLOWED_AIRBAG_MIN_VALUES.contains(airbagMin)) {
+            return false;
+        }
+        if (fuelConsumptionMax != null && !isWithinBounds(fuelConsumptionMax, FUEL_CONSUMPTION_MIN_BOUND, FUEL_CONSUMPTION_MAX_BOUND)) {
+            return false;
+        }
+        if (maxSpeedMin != null && !isWithinBounds(maxSpeedMin, MAX_SPEED_MIN_BOUND, MAX_SPEED_MAX_BOUND)) {
+            return false;
+        }
+        if (priceMin != null && !isWithinBounds(priceMin, PRICE_MIN_BOUND, PRICE_MAX_BOUND)) {
+            return false;
+        }
+        if (priceMax != null && !isWithinBounds(priceMax, PRICE_MIN_BOUND, PRICE_MAX_BOUND)) {
+            return false;
+        }
+        if (priceMin != null && priceMax != null && priceMin.compareTo(priceMax) > 0) {
+            return false;
+        }
+        return sortBy == null || ALLOWED_SORT_BY.contains(sortBy);
+    }
+
+    private boolean isWithinBounds(final int value, final int min, final int max) {
+        return value >= min && value <= max;
+    }
+
+    private boolean isWithinBounds(final BigDecimal value, final BigDecimal min, final BigDecimal max) {
+        return value.compareTo(min) >= 0 && value.compareTo(max) <= 0;
     }
 
     public String getQ() {

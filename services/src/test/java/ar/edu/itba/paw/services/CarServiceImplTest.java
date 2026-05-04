@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,6 +49,8 @@ public class CarServiceImplTest {
     private BrandDao brandDao;
     @Mock
     private BodyTypeDao bodyTypeDao;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private CarServiceImpl carService;
@@ -184,6 +187,8 @@ public class CarServiceImplTest {
                 "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00"));
         when(carRequestService.createPendingRequest(anyLong(), any(), anyLong(), anyLong(), any(), any(), any(),
                 any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(createdRequest);
+        when(brandDao.findById(BRAND_ID)).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findById(BODY_TYPE_ID)).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
 
         // Exercise
         final CarRequest result = carService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, 1L, "u@x.com",
@@ -193,6 +198,7 @@ public class CarServiceImplTest {
         // Assertions
         assertEquals(99L, result.getId());
         assertEquals("Corolla", result.getModel());
+        verify(emailService).sendNewCarRequestNotification(createdRequest, "Toyota", "sedan");
     }
 
     @Test
@@ -332,5 +338,22 @@ public class CarServiceImplTest {
 
         // Assertions
         assertEquals("Image metadata and payload must be provided together.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldNormalizeElectricOnlySearchByRemovingFuelConsumptionFilter() {
+        // Arrange
+        final ar.edu.itba.paw.model.CarSearchCriteria criteria = new ar.edu.itba.paw.model.CarSearchCriteria();
+        criteria.setFuelTypes(List.of("electric"));
+        criteria.setFuelConsumptionMax(new BigDecimal("15.0"));
+        final ar.edu.itba.paw.model.Page<Car> expectedPage = new ar.edu.itba.paw.model.Page<>(List.of(), 1, 10, 0);
+        when(carDao.findByCriteria(any())).thenReturn(expectedPage);
+
+        // Exercise
+        carService.searchCars(criteria);
+
+        // Assertions
+        assertTrue(criteria.isElectricOnly());
+        assertTrue(criteria.getFuelConsumptionMax() == null);
     }
 }

@@ -18,6 +18,7 @@ import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewTagService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport;
+import ar.edu.itba.paw.webapp.util.ImageValidationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -88,6 +89,9 @@ class AdminControllerTest {
 
     @Mock
     private MessageSource messageSource;
+
+    @Mock
+    private ImageValidationService imageValidationService;
 
     @InjectMocks
     private AdminController controller;
@@ -309,7 +313,7 @@ class AdminControllerTest {
         final ResultActions resultActions =
                 mockMvc.perform(post("/admin/requests/41/reject"));
         // Assertions
-        resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/admin"));
+        resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/admin?carRejected=1"));
     }
 
     @Test
@@ -349,7 +353,7 @@ class AdminControllerTest {
         // Assertions
         resultActions
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?page=6"));
+                .andExpect(redirectedUrl("/admin?carAccepted=1"));
     }
 
     @Test

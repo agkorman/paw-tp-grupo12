@@ -59,8 +59,8 @@ class ActivityControllerTest {
     }
 
     private void arrangeLatestTabEmptyFeed() {
-        when(reviewService.getLatestReviews(anyInt(), eq(ACTIVITY_PAGE_SIZE))).thenAnswer(invocation ->
-                Page.empty(invocation.getArgument(0, Integer.class), ACTIVITY_PAGE_SIZE));
+        when(reviewService.getActivityFeedReviews(eq(ReviewService.FEED_LATEST), eq(null), anyInt())).thenAnswer(invocation ->
+                Page.empty(invocation.getArgument(2, Integer.class), ACTIVITY_PAGE_SIZE));
         when(reviewService.countAllReviews()).thenReturn(0L);
         when(carService.getCarsByIds(anyList())).thenReturn(Collections.emptyList());
         when(reviewService.getDefaultPagesForReviewIds(anyList())).thenReturn(Collections.emptyMap());
@@ -101,8 +101,8 @@ class ActivityControllerTest {
         // Arrange
         ControllerTestMvcSupport.bindPrincipal(testUser(1L));
         try {
-            when(reviewService.getReviewsByFollowedUsers(eq(1L), eq(2), eq(ACTIVITY_PAGE_SIZE))).thenAnswer(invocation ->
-                    Page.empty(invocation.getArgument(1, Integer.class), ACTIVITY_PAGE_SIZE));
+            when(reviewService.getActivityFeedReviews(eq(ReviewService.FEED_FOLLOWING), eq(1L), eq(2))).thenAnswer(invocation ->
+                    Page.empty(invocation.getArgument(2, Integer.class), ACTIVITY_PAGE_SIZE));
             when(reviewService.countAllReviews()).thenReturn(10L);
             when(reviewService.countReviewsByFollowedUsers(eq(1L))).thenReturn(5L);
             when(reviewService.countReviewsByFavoriteCars(eq(1L))).thenReturn(3L);
@@ -130,8 +130,8 @@ class ActivityControllerTest {
         // Arrange
         ControllerTestMvcSupport.bindPrincipal(testUser(2L));
         try {
-            when(reviewService.getReviewsByFavoriteCars(eq(2L), eq(1), eq(ACTIVITY_PAGE_SIZE))).thenAnswer(invocation ->
-                    Page.empty(invocation.getArgument(1, Integer.class), ACTIVITY_PAGE_SIZE));
+            when(reviewService.getActivityFeedReviews(eq(ReviewService.FEED_FAVORITES), eq(2L), eq(1))).thenAnswer(invocation ->
+                    Page.empty(invocation.getArgument(2, Integer.class), ACTIVITY_PAGE_SIZE));
             when(reviewService.countAllReviews()).thenReturn(0L);
             when(reviewService.countReviewsByFollowedUsers(eq(2L))).thenReturn(0L);
             when(reviewService.countReviewsByFavoriteCars(eq(2L))).thenReturn(8L);
@@ -174,7 +174,7 @@ class ActivityControllerTest {
                         LocalDateTime.now());
 
         arrangeLatestTabEmptyFeed();
-        when(reviewService.getLatestReviews(eq(1), eq(ACTIVITY_PAGE_SIZE))).thenReturn(
+        when(reviewService.getActivityFeedReviews(eq(ReviewService.FEED_LATEST), eq(null), eq(1))).thenReturn(
                 new Page<>(Collections.singletonList(review), 1, ACTIVITY_PAGE_SIZE, 1L));
 
         final MockMvc mockMvc = activityMockMvc();

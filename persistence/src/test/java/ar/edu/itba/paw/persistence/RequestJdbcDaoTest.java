@@ -529,4 +529,25 @@ public class RequestJdbcDaoTest extends AbstractPersistenceTest {
                 byte[].class, requestId
         ));
     }
+
+    @Test
+    public void shouldPaginateBodyTypeRequestsByStatusAcrossMultiplePages() {
+        // Arrange
+        final User user = createUser("body-req-paged");
+        for (int i = 0; i < Pagination.REQUESTS_PAGE_SIZE + 1; i++) {
+            jdbcTemplate.update(
+                    "INSERT INTO body_type_requests (submitted_by_user_id, submitter_email, name, comments, status) "
+                            + "VALUES (?, ?, ?, ?, ?)",
+                    user.getId(), user.getEmail(), "Body Type " + i, "Comment", "pending"
+            );
+        }
+
+        // Exercise
+        final var result = bodyTypeRequestDao.findByStatus("pending", 2);
+
+        // Assertions
+        assertEquals(Pagination.REQUESTS_PAGE_SIZE + 1L, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(1, result.getItems().size());
+    }
 }

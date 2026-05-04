@@ -17,6 +17,7 @@ import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport;
+import ar.edu.itba.paw.webapp.util.ImageValidationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -92,6 +93,9 @@ class CarControllerTest {
 
     @Mock
     private MessageSource messageSource;
+
+    @Mock
+    private ImageValidationService imageValidationService;
 
     @InjectMocks
     private CarController controller;

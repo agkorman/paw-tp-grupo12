@@ -3,6 +3,7 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.BodyTypeRequestService;
 import ar.edu.itba.paw.services.BrandRequestService;
+import ar.edu.itba.paw.services.exception.PendingAdminRequestExistsException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestMvcSupport;
 import org.junit.jupiter.api.Test;
@@ -136,7 +137,13 @@ class CatalogRequestControllerTest {
     void requestAdmin_whenPendingAlreadyExists_redirectsBack() throws Exception {
         // Arrange
         ControllerTestMvcSupport.bindPrincipal(testUser(18L));
-        when(adminRequestService.hasPendingRequest(eq(18L))).thenReturn(true);
+        when(adminRequestService.createPendingRequest(
+                eq(18L),
+                eq("18@test.com"),
+                eq("I want to help."),
+                eq("Experienced moderator."),
+                eq("Fair and consistent.")))
+                .thenThrow(new PendingAdminRequestExistsException(18L));
 
         try {
             final MockMvc mockMvc = catalogMockMvc();
@@ -160,7 +167,6 @@ class CatalogRequestControllerTest {
     void requestAdmin_createsPendingAndRedirectsWithSubmittedModeratorTab() throws Exception {
         // Arrange
         ControllerTestMvcSupport.bindPrincipal(testUser(19L));
-        when(adminRequestService.hasPendingRequest(eq(19L))).thenReturn(false);
 
         try {
             final MockMvc mockMvc = catalogMockMvc();

@@ -10,6 +10,7 @@ import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.exception.SelfFollowException;
 import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestMvcSupport;
@@ -273,6 +274,7 @@ class ProfileControllerTest {
         // Arrange
         ControllerTestMvcSupport.bindPrincipal(testUser(22L, "SelfFollow"));
         arrangeExistingProfile(22L);
+        when(userFollowService.toggleFollow(eq(22L), eq(22L))).thenThrow(new SelfFollowException(22L));
 
         try {
             final MockMvc mockMvc = profileMockMvc();
@@ -326,6 +328,7 @@ class ProfileControllerTest {
         when(userFollowService.getFollowers(eq(24L))).thenReturn(Collections.emptyList());
         when(userFollowService.countFollowing(eq(24L))).thenReturn(1L);
         when(userFollowService.countFollowers(eq(24L))).thenReturn(4L);
+        when(userFollowService.toggleFollow(eq(23L), eq(24L))).thenReturn(true);
         when(userFollowService.isFollowing(eq(23L), eq(24L))).thenReturn(false);
         when(carService.getCarsByIds(any())).thenReturn(Collections.emptyList());
         when(reviewService.getReviewStatsByCarIds(any())).thenReturn(Collections.emptyList());
