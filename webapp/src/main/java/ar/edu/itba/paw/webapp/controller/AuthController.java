@@ -117,7 +117,9 @@ public class AuthController {
             LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), "auth.register.error.email.exists");
             return registerFormWithError("auth.register.error.email.exists", normalizedUsername, normalizedEmail);
         } catch (final InvalidServiceInputException e) {
-            LOGGER.warn("registration rejected by service validation email={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), e);
+            LOGGER.warn("registration rejected by service validation email={} type={}",
+                    LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS),
+                    e.getClass().getSimpleName());
             return registerFormWithError("auth.register.error.unavailable", normalizedUsername, normalizedEmail);
         } catch (final DataIntegrityViolationException e) {
             LOGGER.warn("registration rejected: integrity violation email={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS));
@@ -144,7 +146,9 @@ public class AuthController {
             SECURITY_CONTEXT_REPOSITORY.saveContext(context, request, response);
             return true;
         } catch (final AuthenticationException e) {
-            LOGGER.warn("auto-login failed after registration email={}", LogSanitizer.forLog(email, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), e);
+            LOGGER.warn("auto-login failed after registration email={} type={}",
+                    LogSanitizer.forLog(email, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS),
+                    e.getClass().getSimpleName());
             return false;
         }
     }
