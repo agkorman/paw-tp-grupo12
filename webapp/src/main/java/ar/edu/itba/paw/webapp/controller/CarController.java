@@ -455,7 +455,7 @@ public class CarController {
     private CarCatalogData resolveCatalogData(final CarSearchCriteria criteria, final BindingResult errors) {
         ignoreConsumptionFilterForElectricOnly(criteria);
         if (errors.hasErrors()) {
-            return new CarCatalogData(Page.empty(1, 0), Collections.emptyMap());
+            return new CarCatalogData(Page.empty(1, 1), Collections.emptyMap());
         }
 
         final Page<Car> carPage = carService.searchCars(criteria);
