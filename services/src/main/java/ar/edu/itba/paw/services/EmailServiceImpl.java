@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -28,7 +27,6 @@ public class EmailServiceImpl implements EmailService {
     private static final String APP_NAME = "La Posta Autos";
     private static final String DEFAULT_LOCALE_TAG = "es";
     private static final int DESCRIPTION_PREVIEW_LENGTH = 220;
-    private static final String CAR_IMAGE_CID = "car-image";
     private static final String COLOR_SURFACE = "#131313";
     private static final String COLOR_SURFACE_LOW = "#1a1a1a";
     private static final String COLOR_SURFACE_HIGH = "#252525";
@@ -66,7 +64,6 @@ public class EmailServiceImpl implements EmailService {
             return;
         }
 
-        final boolean hasInlineImage = hasInlineRequestImage(request);
         final Map<Locale, List<String>> moderatorsByLocale = moderators.stream()
                 .collect(Collectors.groupingBy(this::resolveRecipientLocale));
         for (final Map.Entry<Locale, List<String>> entry : moderatorsByLocale.entrySet()) {
@@ -74,18 +71,9 @@ public class EmailServiceImpl implements EmailService {
             sendEmail(
                     buildRequestSubject(brandName, request.getModel(), locale),
                     buildRequestPlainTextBody(request, brandName, bodyTypeName, locale),
-                    buildRequestHtmlBody(request, brandName, bodyTypeName, hasInlineImage, locale),
+                    buildRequestHtmlBody(request, brandName, bodyTypeName, locale),
                     "Failed to send car request notification for request " + request.getId(),
-                    helper -> {
-                        helper.setTo(entry.getValue().toArray(new String[0]));
-                        if (hasInlineImage) {
-                            helper.addInline(
-                                    CAR_IMAGE_CID,
-                                    new ByteArrayResource(request.getImageData()),
-                                    request.getImageContentType()
-                            );
-                        }
-                    }
+                    helper -> helper.setTo(entry.getValue().toArray(new String[0]))
             );
         }
     }
@@ -287,21 +275,19 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String buildRequestHtmlBody(final CarRequest request, final String brandName,
-                                        final String bodyTypeName, final boolean hasInlineImage,
-                                        final Locale locale) {
+                                        final String bodyTypeName, final Locale locale) {
         final String brand = safeValue(brandName);
         final String model = safeValue(request.getModel());
         final String year = request.getYear() == null ? "" : " " + request.getYear();
         final String carName = escapeHtml(brand + " " + model + year);
         final String bodyType = escapeHtml(safeValue(bodyTypeName));
         final String description = escapeHtml(previewDescription(request.getDescription(), locale)).replace("\n", "<br>");
-        final String imageStatus = hasInlineImage
+        final String imageStatus = hasRequestImage(request)
                 ? msg("email.request.image.with", locale)
                 : msg("email.request.image.without", locale);
         final String dashboardUrl = escapeHtml(appBaseUrl + "/admin");
 
         final String bodyHtml = buildRequestSummaryCard(carName, bodyType, imageStatus, locale)
-                + buildRequestImageBlock(hasInlineImage, carName, locale)
                 + buildRequestDescriptionBlock(description, locale)
                 + buildCenteredAction(dashboardUrl, msg("email.action.dashboard", locale));
 
@@ -348,26 +334,6 @@ public class EmailServiceImpl implements EmailService {
                 bodyType,
                 buildPill(msg("email.status.pending", locale), "rgba(255,87,25,0.14)", "rgba(255,181,158,0.16)", COLOR_PRIMARY),
                 buildPill(imageStatus, COLOR_SURFACE_HIGHEST, COLOR_OUTLINE, COLOR_ON_SURFACE)
-        );
-    }
-
-    private String buildRequestImageBlock(final boolean hasInlineImage, final String carName, final Locale locale) {
-        if (!hasInlineImage) {
-            return "";
-        }
-        return """
-                <div style="margin-bottom:24px;">
-                    %s
-                    <div style="background:%s;border:1px solid %s;border-radius:18px;padding:10px;">
-                        <img src="cid:%s" alt="%s" style="display:block;width:100%%;max-width:596px;height:auto;border-radius:12px;">
-                    </div>
-                </div>
-                """.formatted(
-                buildSectionLabel(msg("email.request.imageSubmitted", locale)),
-                COLOR_SURFACE_HIGH,
-                COLOR_OUTLINE,
-                CAR_IMAGE_CID,
-                carName
         );
     }
 
@@ -938,7 +904,7 @@ public class EmailServiceImpl implements EmailService {
 
     // ── Shared helpers ────────────────────────────────────────────────────────
 
-    private boolean hasInlineRequestImage(final CarRequest request) {
+    private boolean hasRequestImage(final CarRequest request) {
         return request.getImageData() != null
                 && request.getImageData().length > 0
                 && request.getImageContentType() != null
