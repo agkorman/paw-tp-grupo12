@@ -32,6 +32,9 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
         assertEquals(role, jdbcTemplate.queryForObject(
                 "SELECT role FROM users WHERE user_id = ?", String.class, result.getId()
         ));
+        assertEquals("es", jdbcTemplate.queryForObject(
+                "SELECT preferred_locale FROM users WHERE user_id = ?", String.class, result.getId()
+        ));
     }
 
     @Test
@@ -75,6 +78,22 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
         assertTrue(result);
         assertEquals("new-name", userDao.findById(created.getId()).orElseThrow().getUsername());
         assertEquals("rename@example.com", userDao.findById(created.getId()).orElseThrow().getEmail());
+    }
+
+    @Test
+    public void shouldUpdatePersistedPreferredLocaleWhenUserExists() {
+        // Arrange
+        final User created = insertUser("language-user", "language@example.com", "password", "user");
+
+        // Exercise
+        final boolean result = userDao.updatePreferredLocale(created.getId(), "en");
+
+        // Assertions
+        assertTrue(result);
+        assertEquals("en", userDao.findById(created.getId()).orElseThrow().getPreferredLocale());
+        assertEquals("language@example.com", jdbcTemplate.queryForObject(
+                "SELECT email FROM users WHERE user_id = ?", String.class, created.getId()
+        ));
     }
 
     @Test

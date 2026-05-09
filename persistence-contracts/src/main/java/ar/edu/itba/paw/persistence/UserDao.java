@@ -13,6 +13,7 @@ public interface UserDao {
     User create(String username, String email, String password, String role);
     boolean updateUsername(long userId, String username);
     boolean updateRole(long userId, String role);
+    boolean updatePreferredLocale(long userId, String preferredLocale);
     List<String> findEmailsByRoles(Collection<String> roles);
     List<User> findAll();
 }

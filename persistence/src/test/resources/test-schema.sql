@@ -14,7 +14,9 @@ CREATE TABLE users (
     email      VARCHAR(100) NOT NULL UNIQUE,
     password   VARCHAR(255) NOT NULL,
     role       VARCHAR(20)  NOT NULL DEFAULT 'user',
-    created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    preferred_locale VARCHAR(10) NOT NULL DEFAULT 'es',
+    created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_users_preferred_locale CHECK (preferred_locale IN ('es', 'en'))
 );
 
 CREATE TABLE user_follows (

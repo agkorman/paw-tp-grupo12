@@ -284,6 +284,35 @@ public class UserServiceImplTest {
     }
 
     @Test
+    public void shouldUpdatePreferredLocaleWithSupportedLanguage() {
+        // Arrange
+        final User updated = new User(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user", "en",
+                LocalDateTime.now());
+        when(userDao.updatePreferredLocale(USER_ID, "en")).thenReturn(true);
+        when(userDao.findById(USER_ID)).thenReturn(Optional.of(updated));
+
+        // Exercise
+        final User result = userService.updatePreferredLocale(USER_ID, "  en-US ");
+
+        // Assertions
+        assertEquals(USER_ID, result.getId());
+        assertEquals("en", result.getPreferredLocale());
+    }
+
+    @Test
+    public void shouldRejectUnsupportedPreferredLocale() {
+        // Arrange
+        final String unsupportedLocale = "pt-BR";
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> userService.updatePreferredLocale(USER_ID, unsupportedLocale));
+
+        // Assertions
+        assertEquals("Unsupported preferred locale.", ex.getMessage());
+    }
+
+    @Test
     public void shouldRejectUpdateRoleWhenRoleIsBlank() {
         // Arrange
         final String blankRole = "   ";

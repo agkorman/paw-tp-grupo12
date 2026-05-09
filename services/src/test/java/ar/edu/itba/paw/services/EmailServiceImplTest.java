@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessagePreparator;
@@ -34,7 +35,7 @@ public class EmailServiceImplTest {
     public void shouldSendApprovedNotificationWithRecipientSubjectAndCarLink() throws Exception {
         // Arrange
         final RecordingMailSender mailSender = new RecordingMailSender();
-        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, APP_BASE_URL);
+        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
 
         // Exercise
         emailService.sendCarApprovedNotification("owner@example.com", "Toyota", "Corolla", 42L);
@@ -53,7 +54,7 @@ public class EmailServiceImplTest {
     public void shouldSkipApprovedNotificationWhenRecipientIsBlank() {
         // Arrange
         final RecordingMailSender mailSender = new RecordingMailSender();
-        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, APP_BASE_URL);
+        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
 
         // Exercise
         emailService.sendCarApprovedNotification("   ", "Toyota", "Corolla", 42L);
@@ -66,7 +67,7 @@ public class EmailServiceImplTest {
     public void shouldSkipModeratorDigestWhenRecipientsAreEmpty() {
         // Arrange
         final RecordingMailSender mailSender = new RecordingMailSender();
-        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, APP_BASE_URL);
+        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
 
         // Exercise
         emailService.sendWeeklyModeratorDigest(List.of(), 3);
@@ -88,6 +89,14 @@ public class EmailServiceImplTest {
             return builder.toString();
         }
         return "";
+    }
+
+    private static ResourceBundleMessageSource messageSource() {
+        final ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("messages");
+        messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setFallbackToSystemLocale(false);
+        return messageSource;
     }
 
     private static final class RecordingMailSender implements JavaMailSender {

@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.config;
 
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.auth.PawUserDetailsService;
 import ar.edu.itba.paw.webapp.util.LogSanitizer;
@@ -22,7 +23,9 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
+import org.springframework.web.servlet.LocaleResolver;
 
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
@@ -38,7 +41,8 @@ public class WebAuthConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http,
-                                                   final UserDetailsService userDetailsService) throws Exception {
+                                                   final UserDetailsService userDetailsService,
+                                                   final LocaleResolver localeResolver) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(antMatcher("/css/**"), antMatcher("/js/**"), antMatcher("/favicon.ico"))
@@ -85,6 +89,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/reviews/replies/*/like"),
                                 antMatcher(HttpMethod.POST, "/logout"),
                                 antMatcher(HttpMethod.POST, "/profile"),
+                                antMatcher(HttpMethod.POST, "/profile/language"),
                                 antMatcher(HttpMethod.POST, "/cars/*/favorite"),
                                 antMatcher(HttpMethod.POST, "/profiles/*/follow"),
                                 antMatcher(HttpMethod.POST, "/brand-requests"),
@@ -98,7 +103,7 @@ public class WebAuthConfig {
                         .usernameParameter("email")
                         .passwordParameter("password")
                         .defaultSuccessUrl("/", false)
-                        .successHandler(loginSuccessHandler())
+                        .successHandler(loginSuccessHandler(localeResolver))
                         .failureHandler(loginFailureHandler())
                         .permitAll())
                 .logout(logout -> logout
@@ -142,7 +147,7 @@ public class WebAuthConfig {
         return configuredKey.trim();
     }
 
-    private AuthenticationSuccessHandler loginSuccessHandler() {
+    private AuthenticationSuccessHandler loginSuccessHandler(final LocaleResolver localeResolver) {
         final SavedRequestAwareAuthenticationSuccessHandler savedRequestHandler =
                 new SavedRequestAwareAuthenticationSuccessHandler();
         final HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
@@ -153,6 +158,13 @@ public class WebAuthConfig {
                     authentication == null
                             ? "<unknown>"
                             : LogSanitizer.forLog(authentication.getName(), LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS));
+            if (authentication != null && authentication.getPrincipal() instanceof AuthenticatedUser authenticatedUser) {
+                localeResolver.setLocale(
+                        request,
+                        response,
+                        Locale.forLanguageTag(authenticatedUser.getPreferredLocale())
+                );
+            }
             final Optional<String> redirect = LoginRedirectUtils.safeRedirect(
                     request.getParameter(LoginRedirectUtils.REDIRECT_PARAM)
             );

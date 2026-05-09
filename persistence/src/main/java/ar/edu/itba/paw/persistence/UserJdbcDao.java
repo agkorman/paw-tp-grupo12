@@ -35,6 +35,7 @@ public class UserJdbcDao implements UserDao {
             rs.getString("email"),
             rs.getString("password"),
             rs.getString("role"),
+            rs.getString("preferred_locale"),
             rs.getTimestamp("created_at").toLocalDateTime()
     );
 
@@ -49,7 +50,7 @@ public class UserJdbcDao implements UserDao {
     @Override
     public Optional<User> findById(long id) {
         return jdbcTemplate.query(
-                "SELECT user_id, username, email, password, role, created_at FROM users WHERE user_id = ?",
+                "SELECT user_id, username, email, password, role, preferred_locale, created_at FROM users WHERE user_id = ?",
                 ROW_MAPPER, id
         ).stream().findFirst();
     }
@@ -57,7 +58,7 @@ public class UserJdbcDao implements UserDao {
     @Override
     public Optional<User> findByEmail(String email) {
         return jdbcTemplate.query(
-                "SELECT user_id, username, email, password, role, created_at FROM users WHERE LOWER(email) = LOWER(?)",
+                "SELECT user_id, username, email, password, role, preferred_locale, created_at FROM users WHERE LOWER(email) = LOWER(?)",
                 ROW_MAPPER, email
         ).stream().findFirst();
     }
@@ -65,7 +66,7 @@ public class UserJdbcDao implements UserDao {
     @Override
     public Optional<User> findByUsername(String username) {
         return jdbcTemplate.query(
-                "SELECT user_id, username, email, password, role, created_at FROM users WHERE LOWER(username) = LOWER(?)",
+                "SELECT user_id, username, email, password, role, preferred_locale, created_at FROM users WHERE LOWER(username) = LOWER(?)",
                 ROW_MAPPER, username
         ).stream().findFirst();
     }
@@ -77,6 +78,7 @@ public class UserJdbcDao implements UserDao {
         params.put("email", email);
         params.put("password", password);
         params.put("role", role);
+        params.put("preferred_locale", "es");
         params.put("created_at", Timestamp.valueOf(LocalDateTime.now()));
 
         long id = jdbcInsert.executeAndReturnKey(params).longValue();
@@ -109,9 +111,24 @@ public class UserJdbcDao implements UserDao {
     }
 
     @Override
+    public boolean updatePreferredLocale(final long userId, final String preferredLocale) {
+        final boolean updated = jdbcTemplate.update(
+                "UPDATE users SET preferred_locale = ? WHERE user_id = ?",
+                preferredLocale,
+                userId
+        ) > 0;
+        if (updated) {
+            LOGGER.info("updated user preferred locale id={} locale={}", userId, preferredLocale);
+        } else {
+            LOGGER.warn("user preferred locale update affected 0 rows id={}", userId);
+        }
+        return updated;
+    }
+
+    @Override
     public List<User> findAll() {
         return jdbcTemplate.query(
-                "SELECT user_id, username, email, password, role, created_at FROM users ORDER BY user_id",
+                "SELECT user_id, username, email, password, role, preferred_locale, created_at FROM users ORDER BY user_id",
                 ROW_MAPPER
         );
     }

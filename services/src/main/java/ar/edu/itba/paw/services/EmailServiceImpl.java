@@ -1,10 +1,12 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -15,12 +17,16 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailServiceImpl.class);
     private static final String APP_NAME = "La Posta Autos";
+    private static final String DEFAULT_LOCALE_TAG = "es";
     private static final int DESCRIPTION_PREVIEW_LENGTH = 220;
     private static final String CAR_IMAGE_CID = "car-image";
     private static final String COLOR_SURFACE = "#131313";
@@ -38,13 +44,16 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final UserService userService;
+    private final MessageSource messageSource;
     private final String appBaseUrl;
 
     @Autowired
     public EmailServiceImpl(final JavaMailSender mailSender, final UserService userService,
+                            final MessageSource messageSource,
                             @Qualifier("appBaseUrl") final String appBaseUrl) {
         this.mailSender = mailSender;
         this.userService = userService;
+        this.messageSource = messageSource;
         this.appBaseUrl = appBaseUrl;
     }
 
@@ -58,22 +67,27 @@ public class EmailServiceImpl implements EmailService {
         }
 
         final boolean hasInlineImage = hasInlineRequestImage(request);
-        sendEmail(
-                buildRequestSubject(brandName, request.getModel()),
-                buildRequestPlainTextBody(request, brandName, bodyTypeName),
-                buildRequestHtmlBody(request, brandName, bodyTypeName, hasInlineImage),
-                "Failed to send car request notification for request " + request.getId(),
-                helper -> {
-                    helper.setTo(moderators.toArray(new String[0]));
-                    if (hasInlineImage) {
-                        helper.addInline(
-                                CAR_IMAGE_CID,
-                                new ByteArrayResource(request.getImageData()),
-                                request.getImageContentType()
-                        );
+        final Map<Locale, List<String>> moderatorsByLocale = moderators.stream()
+                .collect(Collectors.groupingBy(this::resolveRecipientLocale));
+        for (final Map.Entry<Locale, List<String>> entry : moderatorsByLocale.entrySet()) {
+            final Locale locale = entry.getKey();
+            sendEmail(
+                    buildRequestSubject(brandName, request.getModel(), locale),
+                    buildRequestPlainTextBody(request, brandName, bodyTypeName, locale),
+                    buildRequestHtmlBody(request, brandName, bodyTypeName, hasInlineImage, locale),
+                    "Failed to send car request notification for request " + request.getId(),
+                    helper -> {
+                        helper.setTo(entry.getValue().toArray(new String[0]));
+                        if (hasInlineImage) {
+                            helper.addInline(
+                                    CAR_IMAGE_CID,
+                                    new ByteArrayResource(request.getImageData()),
+                                    request.getImageContentType()
+                            );
+                        }
                     }
-                }
-        );
+            );
+        }
     }
 
     @Override
@@ -85,10 +99,11 @@ public class EmailServiceImpl implements EmailService {
         }
 
         final String carUrl = appBaseUrl + "/reviews?carId=" + carId;
+        final Locale locale = resolveRecipientLocale(recipientEmail);
         sendEmail(
-                buildApprovedSubject(brandName, model),
-                buildApprovedPlainTextBody(brandName, model, carUrl),
-                buildApprovedHtmlBody(brandName, model, carUrl),
+                buildApprovedSubject(brandName, model, locale),
+                buildApprovedPlainTextBody(brandName, model, carUrl, locale),
+                buildApprovedHtmlBody(brandName, model, carUrl, locale),
                 "Failed to send car approved notification to " + recipientEmail,
                 helper -> helper.setTo(recipientEmail)
         );
@@ -102,10 +117,11 @@ public class EmailServiceImpl implements EmailService {
             return;
         }
 
+        final Locale locale = resolveRecipientLocale(recipientEmail);
         sendEmail(
-                buildRejectedSubject(brandName, model),
-                buildRejectedPlainTextBody(brandName, model),
-                buildRejectedHtmlBody(brandName, model),
+                buildRejectedSubject(brandName, model, locale),
+                buildRejectedPlainTextBody(brandName, model, locale),
+                buildRejectedHtmlBody(brandName, model, locale),
                 "Failed to send car rejected notification to " + recipientEmail,
                 helper -> helper.setTo(recipientEmail)
         );
@@ -128,14 +144,37 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async("mailTaskExecutor")
     public void sendAdminRequestApprovedNotification(final String recipientEmail) {
-        sendRequestDecisionNotification(recipientEmail, "moderador", "Permisos de moderador", true,
-                appBaseUrl + "/admin", "Panel de administración");
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+        final Locale locale = resolveRecipientLocale(recipientEmail);
+        sendRequestDecisionNotification(
+                recipientEmail,
+                msg("email.requestDecision.type.moderator", locale),
+                msg("email.requestDecision.moderatorPermissions", locale),
+                true,
+                appBaseUrl + "/admin",
+                msg("email.action.adminPanel", locale),
+                locale
+        );
     }
 
     @Override
     @Async("mailTaskExecutor")
     public void sendAdminRequestRejectedNotification(final String recipientEmail) {
-        sendRequestDecisionNotification(recipientEmail, "moderador", "Permisos de moderador", false);
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+        final Locale locale = resolveRecipientLocale(recipientEmail);
+        sendRequestDecisionNotification(
+                recipientEmail,
+                msg("email.requestDecision.type.moderator", locale),
+                msg("email.requestDecision.moderatorPermissions", locale),
+                false,
+                appBaseUrl + "/cars",
+                msg("common.action.viewCatalog", locale),
+                locale
+        );
     }
 
     @Override
@@ -146,18 +185,19 @@ public class EmailServiceImpl implements EmailService {
             return;
         }
 
-        final String subject = "[" + APP_NAME + "] Tu reseña fue ocultada";
-        final String heading = "Tu reseña fue ocultada";
-        final String intro = "Un moderador ocultó una reseña que publicaste en " + APP_NAME + ".";
-        final String reviewLabel = "Reseña";
-        final String carLabel = "Auto";
-        final String reasonLabel = "Motivo del moderador";
+        final Locale locale = resolveRecipientLocale(recipientEmail);
+        final String subject = msg("review.hide.email.subject", locale);
+        final String heading = msg("review.hide.email.heading", locale);
+        final String intro = msg("review.hide.email.intro", locale);
+        final String reviewLabel = msg("review.hide.email.review", locale);
+        final String carLabel = msg("review.hide.email.car", locale);
+        final String reasonLabel = msg("review.hide.email.reason", locale);
         sendEmail(
                 sanitizeHeaderValue(subject),
                 buildReviewHiddenPlainText(heading, intro, reviewLabel, carLabel, reasonLabel,
                         reviewTitle, carName, moderatorReason),
                 buildReviewHiddenHtml(heading, intro, reviewLabel, carLabel, reasonLabel,
-                        reviewTitle, carName, moderatorReason),
+                        reviewTitle, carName, moderatorReason, locale),
                 "Failed to send hidden review notification to " + recipientEmail,
                 helper -> helper.setTo(recipientEmail)
         );
@@ -170,13 +210,18 @@ public class EmailServiceImpl implements EmailService {
             return;
         }
 
-        sendEmail(
-                buildModeratorDigestSubject(pendingRequestCount),
-                buildModeratorDigestPlainText(pendingRequestCount),
-                buildModeratorDigestHtml(pendingRequestCount),
-                "Failed to send weekly moderator digest",
-                helper -> helper.setTo(moderatorEmails.toArray(new String[0]))
-        );
+        final Map<Locale, List<String>> moderatorsByLocale = moderatorEmails.stream()
+                .collect(Collectors.groupingBy(this::resolveRecipientLocale));
+        for (final Map.Entry<Locale, List<String>> entry : moderatorsByLocale.entrySet()) {
+            final Locale locale = entry.getKey();
+            sendEmail(
+                    buildModeratorDigestSubject(pendingRequestCount, locale),
+                    buildModeratorDigestPlainText(pendingRequestCount, locale),
+                    buildModeratorDigestHtml(pendingRequestCount, locale),
+                    "Failed to send weekly moderator digest",
+                    helper -> helper.setTo(entry.getValue().toArray(new String[0]))
+            );
+        }
     }
 
     @Override
@@ -188,10 +233,11 @@ public class EmailServiceImpl implements EmailService {
             return;
         }
 
+        final Locale locale = resolveRecipientLocale(recipientEmail);
         sendEmail(
-                "[" + APP_NAME + "] Tu resumen semanal, " + sanitizeHeaderValue(safeValue(username)),
-                buildUserDigestPlainText(username, reviewActivity, favoriteActivity),
-                buildUserDigestHtml(username, reviewActivity, favoriteActivity),
+                msg("email.userDigest.subject", locale, APP_NAME, sanitizeHeaderValue(safeValue(username))),
+                buildUserDigestPlainText(username, reviewActivity, favoriteActivity, locale),
+                buildUserDigestHtml(username, reviewActivity, favoriteActivity, locale),
                 "Failed to send weekly user digest to " + recipientEmail,
                 helper -> helper.setTo(recipientEmail)
         );
@@ -217,65 +263,59 @@ public class EmailServiceImpl implements EmailService {
 
     // ── New request notification helpers ──────────────────────────────────────
 
-    private String buildRequestSubject(final String brandName, final String model) {
-        return "[" + APP_NAME + "] Nuevo auto para revisar: "
-                + sanitizeHeaderValue(brandName) + " " + sanitizeHeaderValue(model);
+    private String buildRequestSubject(final String brandName, final String model, final Locale locale) {
+        return msg("email.request.subject", locale, APP_NAME,
+                sanitizeHeaderValue(brandName), sanitizeHeaderValue(model));
     }
 
     private String buildRequestPlainTextBody(final CarRequest request, final String brandName,
-                                             final String bodyTypeName) {
-        return """
-                Hola equipo,
-
-                Se registró un nuevo auto en %s y quedó listo para revisión.
-
-                Marca: %s
-                Modelo: %s
-                Año modelo: %s
-                Carrocería: %s
-                Imagen cargada: %s
-
-                Descripción:
-                %s
-
-                Revisalo en el dashboard: %s
-                """.formatted(
+                                             final String bodyTypeName, final Locale locale) {
+        return msg(
+                "email.request.plain",
+                locale,
                 APP_NAME,
                 safeValue(brandName),
                 safeValue(request.getModel()),
-                request.getYear() == null ? "N/A" : request.getYear().toString(),
+                request.getYear() == null ? msg("common.empty.na", locale) : request.getYear().toString(),
                 safeValue(bodyTypeName),
-                request.getImageData() != null && request.getImageData().length > 0 ? "Sí" : "No",
-                previewDescription(request.getDescription()),
+                request.getImageData() != null && request.getImageData().length > 0
+                        ? msg("common.boolean.yes", locale)
+                        : msg("common.boolean.no", locale),
+                previewDescription(request.getDescription(), locale),
                 appBaseUrl + "/admin"
         );
     }
 
     private String buildRequestHtmlBody(final CarRequest request, final String brandName,
-                                        final String bodyTypeName, final boolean hasInlineImage) {
+                                        final String bodyTypeName, final boolean hasInlineImage,
+                                        final Locale locale) {
         final String brand = safeValue(brandName);
         final String model = safeValue(request.getModel());
         final String year = request.getYear() == null ? "" : " " + request.getYear();
         final String carName = escapeHtml(brand + " " + model + year);
         final String bodyType = escapeHtml(safeValue(bodyTypeName));
-        final String description = escapeHtml(previewDescription(request.getDescription())).replace("\n", "<br>");
-        final String imageStatus = hasInlineImage ? "Con imagen" : "Sin imagen";
+        final String description = escapeHtml(previewDescription(request.getDescription(), locale)).replace("\n", "<br>");
+        final String imageStatus = hasInlineImage
+                ? msg("email.request.image.with", locale)
+                : msg("email.request.image.without", locale);
         final String dashboardUrl = escapeHtml(appBaseUrl + "/admin");
 
-        final String bodyHtml = buildRequestSummaryCard(carName, bodyType, imageStatus)
-                + buildRequestImageBlock(hasInlineImage, carName)
-                + buildRequestDescriptionBlock(description)
-                + buildCenteredAction(dashboardUrl, "Ir al dashboard");
+        final String bodyHtml = buildRequestSummaryCard(carName, bodyType, imageStatus, locale)
+                + buildRequestImageBlock(hasInlineImage, carName, locale)
+                + buildRequestDescriptionBlock(description, locale)
+                + buildCenteredAction(dashboardUrl, msg("email.action.dashboard", locale));
 
         return buildEmailShell(
-                escapeHtml("Nueva alta en el catálogo: " + brand + " " + model),
-                "Nueva alta en el catálogo",
-                "Se registró un nuevo auto en La Posta Autos. El equipo ya puede revisarlo desde el catálogo.",
-                bodyHtml
+                escapeHtml(msg("email.request.preheader", locale, brand, model)),
+                msg("email.request.title", locale),
+                msg("email.request.intro", locale, APP_NAME),
+                bodyHtml,
+                locale
         );
     }
 
-    private String buildRequestSummaryCard(final String carName, final String bodyType, final String imageStatus) {
+    private String buildRequestSummaryCard(final String carName, final String bodyType, final String imageStatus,
+                                           final Locale locale) {
         return """
                 <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:24px;">
                     %s
@@ -299,19 +339,19 @@ public class EmailServiceImpl implements EmailService {
                 """.formatted(
                 COLOR_SURFACE_HIGH,
                 COLOR_OUTLINE,
-                buildSectionLabel("Resumen del vehículo"),
+                buildSectionLabel(msg("email.request.summary", locale)),
                 COLOR_ON_SURFACE,
                 DISPLAY_FONT,
                 carName,
                 COLOR_ON_SURFACE_VARIANT,
                 BODY_FONT,
                 bodyType,
-                buildPill("Pendiente", "rgba(255,87,25,0.14)", "rgba(255,181,158,0.16)", COLOR_PRIMARY),
+                buildPill(msg("email.status.pending", locale), "rgba(255,87,25,0.14)", "rgba(255,181,158,0.16)", COLOR_PRIMARY),
                 buildPill(imageStatus, COLOR_SURFACE_HIGHEST, COLOR_OUTLINE, COLOR_ON_SURFACE)
         );
     }
 
-    private String buildRequestImageBlock(final boolean hasInlineImage, final String carName) {
+    private String buildRequestImageBlock(final boolean hasInlineImage, final String carName, final Locale locale) {
         if (!hasInlineImage) {
             return "";
         }
@@ -323,7 +363,7 @@ public class EmailServiceImpl implements EmailService {
                     </div>
                 </div>
                 """.formatted(
-                buildSectionLabel("Imagen enviada"),
+                buildSectionLabel(msg("email.request.imageSubmitted", locale)),
                 COLOR_SURFACE_HIGH,
                 COLOR_OUTLINE,
                 CAR_IMAGE_CID,
@@ -331,14 +371,14 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
-    private String buildRequestDescriptionBlock(final String description) {
+    private String buildRequestDescriptionBlock(final String description, final Locale locale) {
         return """
                 %s
                 <div style="background:%s;border:1px solid %s;border-radius:18px;padding:20px 22px;font-size:15px;line-height:1.7;color:%s;font-family:%s;margin-bottom:28px;">
                     %s
                 </div>
                 """.formatted(
-                buildSectionLabel("Descripción enviada"),
+                buildSectionLabel(msg("email.request.descriptionSubmitted", locale)),
                 COLOR_SURFACE_HIGH,
                 COLOR_OUTLINE,
                 COLOR_ON_SURFACE,
@@ -349,53 +389,39 @@ public class EmailServiceImpl implements EmailService {
 
     // ── Weekly moderator digest ───────────────────────────────────────────────
 
-    private String buildModeratorDigestSubject(final int pendingCount) {
-        return "[" + APP_NAME + "] Resumen semanal — "
-                + (pendingCount == 0
-                ? "sin pedidos pendientes"
-                : pendingCount + " pedido" + (pendingCount == 1 ? "" : "s")
-                + " pendiente" + (pendingCount == 1 ? "" : "s"));
+    private String buildModeratorDigestSubject(final int pendingCount, final Locale locale) {
+        return pendingCount == 0
+                ? msg("email.moderatorDigest.subject.empty", locale, APP_NAME)
+                : msg("email.moderatorDigest.subject.pending", locale, APP_NAME, pendingCount);
     }
 
-    private String buildModeratorDigestPlainText(final int pendingCount) {
+    private String buildModeratorDigestPlainText(final int pendingCount, final Locale locale) {
         if (pendingCount == 0) {
-            return """
-                    Resumen semanal — %s
-
-                    Todo al día: no hay pedidos de autos pendientes de revisión esta semana.
-
-                    Dashboard: %s
-                    """.formatted(APP_NAME, appBaseUrl + "/admin");
+            return msg("email.moderatorDigest.plain.empty", locale, APP_NAME, appBaseUrl + "/admin");
         }
-        return """
-                Resumen semanal — %s
-
-                Esta semana hay %d pedido%s de autos esperando tu revisión.
-
-                Revisalos en el dashboard: %s
-                """.formatted(APP_NAME, pendingCount, pendingCount == 1 ? "" : "s", appBaseUrl + "/admin");
+        return msg("email.moderatorDigest.plain.pending", locale, APP_NAME, pendingCount, appBaseUrl + "/admin");
     }
 
-    private String buildModeratorDigestHtml(final int pendingCount) {
+    private String buildModeratorDigestHtml(final int pendingCount, final Locale locale) {
         final boolean hasPending = pendingCount > 0;
         final String preheader = hasPending
-                ? escapeHtml(pendingCount + " pedido" + (pendingCount == 1 ? "" : "s")
-                + " de autos esperan tu revisión")
-                : escapeHtml("Todo al día — sin pedidos pendientes esta semana");
+                ? escapeHtml(msg("email.moderatorDigest.preheader.pending", locale, pendingCount))
+                : escapeHtml(msg("email.moderatorDigest.preheader.empty", locale));
         final String dashboardUrl = escapeHtml(appBaseUrl + "/admin");
 
-        final String bodyHtml = buildModeratorDigestStatusCard(pendingCount)
-                + buildCenteredAction(dashboardUrl, "Ir al dashboard");
+        final String bodyHtml = buildModeratorDigestStatusCard(pendingCount, locale)
+                + buildCenteredAction(dashboardUrl, msg("email.action.dashboard", locale));
 
         return buildEmailShell(
                 preheader,
-                "Resumen semanal",
-                "Pedidos de autos pendientes de revisión en el catálogo.",
-                bodyHtml
+                msg("email.moderatorDigest.title", locale),
+                msg("email.moderatorDigest.intro", locale),
+                bodyHtml,
+                locale
         );
     }
 
-    private String buildModeratorDigestStatusCard(final int pendingCount) {
+    private String buildModeratorDigestStatusCard(final int pendingCount, final Locale locale) {
         if (pendingCount > 0) {
             return """
                     <div style="background:%s;border:1px solid %s;border-radius:18px;padding:28px 24px;margin-bottom:28px;text-align:center;">
@@ -403,7 +429,7 @@ public class EmailServiceImpl implements EmailService {
                             %d
                         </div>
                         <div style="margin-top:8px;font-size:16px;line-height:1.5;color:%s;font-family:%s;">
-                            pedido%s pendiente%s de revisión
+                            %s
                         </div>
                     </div>
                     """.formatted(
@@ -414,8 +440,7 @@ public class EmailServiceImpl implements EmailService {
                     pendingCount,
                     COLOR_ON_SURFACE_VARIANT,
                     BODY_FONT,
-                    pendingCount == 1 ? "" : "s",
-                    pendingCount == 1 ? "" : "s"
+                    escapeHtml(msg("email.moderatorDigest.status.pending", locale, pendingCount))
             );
         }
 
@@ -423,14 +448,15 @@ public class EmailServiceImpl implements EmailService {
                 <div style="background:%s;border:1px solid %s;border-radius:18px;padding:28px 24px;margin-bottom:28px;text-align:center;">
                     <div style="font-size:40px;line-height:1;margin-bottom:12px;">✓</div>
                     <div style="font-size:16px;line-height:1.5;color:%s;font-family:%s;">
-                        Todo al día — sin pedidos pendientes esta semana.
+                        %s
                     </div>
                 </div>
                 """.formatted(
                 COLOR_SURFACE_HIGH,
                 COLOR_OUTLINE,
                 COLOR_ON_SURFACE_VARIANT,
-                BODY_FONT
+                BODY_FONT,
+                escapeHtml(msg("email.moderatorDigest.status.empty", locale))
         );
     }
 
@@ -438,61 +464,59 @@ public class EmailServiceImpl implements EmailService {
 
     private String buildUserDigestPlainText(final String username,
                                             final List<EmailService.ReviewActivityItem> reviewActivity,
-                                            final List<EmailService.FavoriteActivityItem> favoriteActivity) {
+                                            final List<EmailService.FavoriteActivityItem> favoriteActivity,
+                                            final Locale locale) {
         final StringBuilder sb = new StringBuilder();
-        sb.append("Hola, ").append(safeValue(username)).append("!\n\n");
-        sb.append("Tu resumen semanal en ").append(APP_NAME).append(".\n\n");
+        sb.append(msg("email.userDigest.plain.greeting", locale, safeValue(username))).append("\n\n");
+        sb.append(msg("email.userDigest.plain.summary", locale, APP_NAME)).append("\n\n");
 
-        sb.append("── Actividad en tus reseñas ──\n");
+        sb.append(msg("email.userDigest.reviewSection", locale)).append("\n");
         if (reviewActivity.isEmpty()) {
-            sb.append("Sin actividad nueva esta semana.\n");
+            sb.append(msg("email.userDigest.review.empty", locale)).append("\n");
         } else {
             for (final EmailService.ReviewActivityItem item : reviewActivity) {
                 sb.append("• ").append(safeValue(item.reviewTitle))
                         .append(" (").append(safeValue(item.carName)).append(")");
                 if (item.newLikes > 0) {
-                    sb.append(" — ").append(item.newLikes).append(" me gusta nuevo")
-                            .append(item.newLikes == 1 ? "" : "s");
+                    sb.append(" — ").append(msg("email.userDigest.likes", locale, item.newLikes));
                 }
                 if (item.newReplies > 0) {
-                    sb.append(" — ").append(item.newReplies).append(" respuesta")
-                            .append(item.newReplies == 1 ? "" : "s")
-                            .append(" nueva").append(item.newReplies == 1 ? "" : "s");
+                    sb.append(" — ").append(msg("email.userDigest.replies", locale, item.newReplies));
                 }
                 sb.append("\n");
             }
         }
 
-        sb.append("\n── Novedades en tus favoritos ──\n");
+        sb.append("\n").append(msg("email.userDigest.favoriteSection", locale)).append("\n");
         if (favoriteActivity.isEmpty()) {
-            sb.append("Sin novedades esta semana.\n");
+            sb.append(msg("email.userDigest.favorite.empty", locale)).append("\n");
         } else {
             for (final EmailService.FavoriteActivityItem item : favoriteActivity) {
                 sb.append("• ").append(safeValue(item.carName))
-                        .append(" — ").append(item.newReviewCount)
-                        .append(" reseña").append(item.newReviewCount == 1 ? "" : "s")
-                        .append(" nueva").append(item.newReviewCount == 1 ? "" : "s")
+                        .append(" — ").append(msg("email.userDigest.newReviews", locale, item.newReviewCount))
                         .append("\n");
             }
         }
 
-        sb.append("\nVer catálogo: ").append(appBaseUrl).append("/cars\n");
+        sb.append("\n").append(msg("email.userDigest.catalogLink", locale, appBaseUrl + "/cars")).append("\n");
         return sb.toString();
     }
 
     private String buildUserDigestHtml(final String username,
                                        final List<EmailService.ReviewActivityItem> reviewActivity,
-                                       final List<EmailService.FavoriteActivityItem> favoriteActivity) {
-        final String displayName = escapeHtml(safeValue(username));
-        final String bodyHtml = buildUserDigestReviewSection(reviewActivity)
-                + buildUserDigestFavoriteSection(favoriteActivity)
-                + buildCenteredAction(escapeHtml(appBaseUrl + "/cars"), "Ver catálogo");
+                                       final List<EmailService.FavoriteActivityItem> favoriteActivity,
+                                       final Locale locale) {
+        final String displayName = safeValue(username);
+        final String bodyHtml = buildUserDigestReviewSection(reviewActivity, locale)
+                + buildUserDigestFavoriteSection(favoriteActivity, locale)
+                + buildCenteredAction(escapeHtml(appBaseUrl + "/cars"), msg("common.action.viewCatalog", locale));
 
         return buildEmailShell(
-                escapeHtml("Tu actividad semanal en " + APP_NAME),
-                "Hola, " + displayName + "!",
-                "Esto es lo que pasó esta semana en tu cuenta.",
-                bodyHtml
+                escapeHtml(msg("email.userDigest.preheader", locale, APP_NAME)),
+                msg("email.userDigest.heading", locale, displayName),
+                msg("email.userDigest.intro", locale),
+                bodyHtml,
+                locale
         );
     }
 
@@ -527,7 +551,8 @@ public class EmailServiceImpl implements EmailService {
     private String buildReviewHiddenHtml(final String heading, final String intro,
                                          final String reviewLabel, final String carLabel,
                                          final String reasonLabel, final String reviewTitle,
-                                         final String carName, final String moderatorReason) {
+                                         final String carName, final String moderatorReason,
+                                         final Locale locale) {
         final String bodyHtml = buildModeratedReviewSummary(reviewLabel, carLabel, reviewTitle, carName)
                 + buildModerationReason(reasonLabel, moderatorReason);
 
@@ -535,7 +560,8 @@ public class EmailServiceImpl implements EmailService {
                 escapeHtml(safeValue(intro)),
                 safeValue(heading),
                 safeValue(intro),
-                bodyHtml
+                bodyHtml,
+                locale
         );
     }
 
@@ -582,24 +608,23 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
-    private String buildUserDigestReviewSection(final List<EmailService.ReviewActivityItem> items) {
-        final String sectionLabel = "Actividad en tus reseñas";
+    private String buildUserDigestReviewSection(final List<EmailService.ReviewActivityItem> items,
+                                                final Locale locale) {
+        final String sectionLabel = msg("email.userDigest.reviewSection", locale);
         if (items.isEmpty()) {
-            return buildDigestEmptySection(sectionLabel, "Sin actividad nueva esta semana.");
+            return buildDigestEmptySection(sectionLabel, msg("email.userDigest.review.empty", locale));
         }
         final StringBuilder rows = new StringBuilder();
         for (final EmailService.ReviewActivityItem item : items) {
             final StringBuilder detail = new StringBuilder();
             if (item.newLikes > 0) {
-                detail.append(item.newLikes).append(" me gusta nuevo").append(item.newLikes == 1 ? "" : "s");
+                detail.append(escapeHtml(msg("email.userDigest.likes", locale, item.newLikes)));
             }
             if (item.newReplies > 0) {
                 if (detail.length() > 0) {
                     detail.append(" &amp; ");
                 }
-                detail.append(item.newReplies).append(" respuesta")
-                        .append(item.newReplies == 1 ? "" : "s")
-                        .append(" nueva").append(item.newReplies == 1 ? "" : "s");
+                detail.append(escapeHtml(msg("email.userDigest.replies", locale, item.newReplies)));
             }
             rows.append(buildDigestRow(
                     escapeHtml(safeValue(item.reviewTitle)),
@@ -610,15 +635,15 @@ public class EmailServiceImpl implements EmailService {
         return buildDigestSection(sectionLabel, rows.toString());
     }
 
-    private String buildUserDigestFavoriteSection(final List<EmailService.FavoriteActivityItem> items) {
-        final String sectionLabel = "Novedades en tus favoritos";
+    private String buildUserDigestFavoriteSection(final List<EmailService.FavoriteActivityItem> items,
+                                                  final Locale locale) {
+        final String sectionLabel = msg("email.userDigest.favoriteSection", locale);
         if (items.isEmpty()) {
-            return buildDigestEmptySection(sectionLabel, "Sin novedades esta semana.");
+            return buildDigestEmptySection(sectionLabel, msg("email.userDigest.favorite.empty", locale));
         }
         final StringBuilder rows = new StringBuilder();
         for (final EmailService.FavoriteActivityItem item : items) {
-            final String detail = item.newReviewCount + " reseña" + (item.newReviewCount == 1 ? "" : "s")
-                    + " nueva" + (item.newReviewCount == 1 ? "" : "s");
+            final String detail = escapeHtml(msg("email.userDigest.newReviews", locale, item.newReviewCount));
             rows.append(buildDigestRow(escapeHtml(safeValue(item.carName)), null, detail));
         }
         return buildDigestSection(sectionLabel, rows.toString());
@@ -683,19 +708,16 @@ public class EmailServiceImpl implements EmailService {
 
     // ── Approved notification helpers ─────────────────────────────────────────
 
-    private String buildApprovedSubject(final String brandName, final String model) {
-        return "[" + APP_NAME + "] Tu auto fue aprobado: "
-                + sanitizeHeaderValue(brandName) + " " + sanitizeHeaderValue(model);
+    private String buildApprovedSubject(final String brandName, final String model, final Locale locale) {
+        return msg("email.carApproved.subject", locale, APP_NAME,
+                sanitizeHeaderValue(brandName), sanitizeHeaderValue(model));
     }
 
-    private String buildApprovedPlainTextBody(final String brandName, final String model, final String carUrl) {
-        return """
-                ¡Buenas noticias!
-
-                Tu auto %s %s fue aprobado y ya está visible en el catálogo de %s.
-
-                Podés verlo en: %s
-                """.formatted(
+    private String buildApprovedPlainTextBody(final String brandName, final String model, final String carUrl,
+                                              final Locale locale) {
+        return msg(
+                "email.carApproved.plain",
+                locale,
                 safeValue(brandName),
                 safeValue(model),
                 APP_NAME,
@@ -703,20 +725,22 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
-    private String buildApprovedHtmlBody(final String brandName, final String model, final String carUrl) {
+    private String buildApprovedHtmlBody(final String brandName, final String model, final String carUrl,
+                                         final Locale locale) {
         final String carName = escapeHtml(safeValue(brandName) + " " + safeValue(model));
-        final String bodyHtml = buildApprovedSummaryCard(carName)
-                + buildCenteredAction(escapeHtml(carUrl), "Ver auto");
+        final String bodyHtml = buildApprovedSummaryCard(carName, locale)
+                + buildCenteredAction(escapeHtml(carUrl), msg("email.action.viewCar", locale));
 
         return buildEmailShell(
-                escapeHtml("Tu auto " + safeValue(brandName) + " " + safeValue(model) + " ya está en el catálogo"),
-                "¡Tu auto fue aprobado!",
-                "Ya está disponible para que todos lo vean en el catálogo.",
-                bodyHtml
+                escapeHtml(msg("email.carApproved.preheader", locale, safeValue(brandName), safeValue(model))),
+                msg("email.carApproved.title", locale),
+                msg("email.carApproved.intro", locale),
+                bodyHtml,
+                locale
         );
     }
 
-    private String buildApprovedSummaryCard(final String carName) {
+    private String buildApprovedSummaryCard(final String carName, final Locale locale) {
         return """
                 <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:28px;">
                     %s
@@ -730,29 +754,25 @@ public class EmailServiceImpl implements EmailService {
                 """.formatted(
                 COLOR_SURFACE_HIGH,
                 COLOR_OUTLINE,
-                buildSectionLabel("Vehículo aprobado"),
+                buildSectionLabel(msg("email.carApproved.summary", locale)),
                 COLOR_ON_SURFACE,
                 DISPLAY_FONT,
                 carName,
-                buildPill("Aprobado", "rgba(100,200,100,0.14)", "rgba(100,200,100,0.3)", "#88c888")
+                buildPill(msg("email.status.approved", locale), "rgba(100,200,100,0.14)", "rgba(100,200,100,0.3)", "#88c888")
         );
     }
 
     // ── Rejected notification helpers ────────────────────────────────────────
 
-    private String buildRejectedSubject(final String brandName, final String model) {
-        return "[" + APP_NAME + "] Tu auto no fue aprobado: "
-                + sanitizeHeaderValue(brandName) + " " + sanitizeHeaderValue(model);
+    private String buildRejectedSubject(final String brandName, final String model, final Locale locale) {
+        return msg("email.carRejected.subject", locale, APP_NAME,
+                sanitizeHeaderValue(brandName), sanitizeHeaderValue(model));
     }
 
-    private String buildRejectedPlainTextBody(final String brandName, final String model) {
-        return """
-                Gracias por enviar tu auto.
-
-                Tu solicitud para publicar %s %s fue revisada, pero no fue aprobada para el catálogo de %s.
-
-                Podés revisar el catálogo en: %s
-                """.formatted(
+    private String buildRejectedPlainTextBody(final String brandName, final String model, final Locale locale) {
+        return msg(
+                "email.carRejected.plain",
+                locale,
                 safeValue(brandName),
                 safeValue(model),
                 APP_NAME,
@@ -760,21 +780,21 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
-    private String buildRejectedHtmlBody(final String brandName, final String model) {
+    private String buildRejectedHtmlBody(final String brandName, final String model, final Locale locale) {
         final String carName = escapeHtml(safeValue(brandName) + " " + safeValue(model));
-        final String bodyHtml = buildRejectedSummaryCard(carName)
-                + buildCenteredAction(escapeHtml(appBaseUrl + "/cars"), "Ver catálogo");
+        final String bodyHtml = buildRejectedSummaryCard(carName, locale)
+                + buildCenteredAction(escapeHtml(appBaseUrl + "/cars"), msg("common.action.viewCatalog", locale));
 
         return buildEmailShell(
-                escapeHtml("Tu solicitud para publicar " + safeValue(brandName) + " " + safeValue(model)
-                        + " no fue aprobada"),
-                "Tu auto no fue aprobado",
-                "El equipo revisó la solicitud y no la incorporó al catálogo.",
-                bodyHtml
+                escapeHtml(msg("email.carRejected.preheader", locale, safeValue(brandName), safeValue(model))),
+                msg("email.carRejected.title", locale),
+                msg("email.carRejected.intro", locale),
+                bodyHtml,
+                locale
         );
     }
 
-    private String buildRejectedSummaryCard(final String carName) {
+    private String buildRejectedSummaryCard(final String carName, final Locale locale) {
         return """
                 <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:28px;">
                     %s
@@ -788,11 +808,11 @@ public class EmailServiceImpl implements EmailService {
                 """.formatted(
                 COLOR_SURFACE_HIGH,
                 COLOR_OUTLINE,
-                buildSectionLabel("Vehículo revisado"),
+                buildSectionLabel(msg("email.carRejected.summary", locale)),
                 COLOR_ON_SURFACE,
                 DISPLAY_FONT,
                 carName,
-                buildPill("Rechazado", "rgba(220,90,90,0.14)", "rgba(220,90,90,0.32)", "#f09494")
+                buildPill(msg("email.status.rejected", locale), "rgba(220,90,90,0.14)", "rgba(220,90,90,0.32)", "#f09494")
         );
     }
 
@@ -800,76 +820,93 @@ public class EmailServiceImpl implements EmailService {
 
     private void sendRequestDecisionNotification(final String recipientEmail, final String requestType,
                                                  final String requestedName, final boolean approved) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+        final Locale locale = resolveRecipientLocale(recipientEmail);
         final String actionUrl = approved ? appBaseUrl + "/cars/new" : appBaseUrl + "/cars";
-        final String actionLabel = approved ? "Solicitar auto" : "Ver catálogo";
-        sendRequestDecisionNotification(recipientEmail, requestType, requestedName, approved, actionUrl, actionLabel);
+        final String actionLabel = approved
+                ? msg("email.action.requestCar", locale)
+                : msg("common.action.viewCatalog", locale);
+        sendRequestDecisionNotification(
+                recipientEmail,
+                localizedRequestType(requestType, locale),
+                requestedName,
+                approved,
+                actionUrl,
+                actionLabel,
+                locale
+        );
     }
 
     private void sendRequestDecisionNotification(final String recipientEmail, final String requestType,
                                                  final String requestedName, final boolean approved,
-                                                 final String actionUrl, final String actionLabel) {
+                                                 final String actionUrl, final String actionLabel,
+                                                 final Locale locale) {
         if (recipientEmail == null || recipientEmail.isBlank()) {
             return;
         }
 
         sendEmail(
-                buildRequestDecisionSubject(requestType, requestedName, approved),
-                buildRequestDecisionPlainTextBody(requestType, requestedName, approved, actionUrl),
-                buildRequestDecisionHtmlBody(requestType, requestedName, approved, actionUrl, actionLabel),
+                buildRequestDecisionSubject(requestType, requestedName, approved, locale),
+                buildRequestDecisionPlainTextBody(requestType, requestedName, approved, actionUrl, locale),
+                buildRequestDecisionHtmlBody(requestType, requestedName, approved, actionUrl, actionLabel, locale),
                 "Failed to send request decision notification to " + recipientEmail,
                 helper -> helper.setTo(recipientEmail)
         );
     }
 
     private String buildRequestDecisionSubject(final String requestType, final String requestedName,
-                                               final boolean approved) {
-        return "[" + APP_NAME + "] Tu solicitud de " + sanitizeHeaderValue(requestType)
-                + " fue " + (approved ? "aprobada" : "rechazada")
-                + ": " + sanitizeHeaderValue(requestedName);
+                                               final boolean approved, final Locale locale) {
+        return msg(
+                approved ? "email.requestDecision.subject.approved" : "email.requestDecision.subject.rejected",
+                locale,
+                APP_NAME,
+                sanitizeHeaderValue(requestType),
+                sanitizeHeaderValue(requestedName)
+        );
     }
 
     private String buildRequestDecisionPlainTextBody(final String requestType, final String requestedName,
-                                                     final boolean approved, final String actionUrl) {
-        return """
-                Tu solicitud de %s fue %s.
-
-                Solicitud: %s
-
-                %s
-
-                Link: %s
-                """.formatted(
+                                                     final boolean approved, final String actionUrl,
+                                                     final Locale locale) {
+        return msg(
+                approved ? "email.requestDecision.plain.approved" : "email.requestDecision.plain.rejected",
+                locale,
                 safeValue(requestType),
-                approved ? "aprobada" : "rechazada",
                 safeValue(requestedName),
-                approved
-                        ? "El cambio ya fue aplicado en " + APP_NAME + "."
-                        : "Gracias por enviarla. Por ahora no fue incorporada.",
+                APP_NAME,
                 safeValue(actionUrl)
         );
     }
 
     private String buildRequestDecisionHtmlBody(final String requestType, final String requestedName,
                                                 final boolean approved, final String actionUrl,
-                                                final String actionLabel) {
-        final String title = approved ? "Solicitud aprobada" : "Solicitud rechazada";
+                                                final String actionLabel, final Locale locale) {
+        final String title = approved
+                ? msg("email.requestDecision.title.approved", locale)
+                : msg("email.requestDecision.title.rejected", locale);
         final String intro = approved
-                ? "El equipo revisó la solicitud y ya aplicó el cambio."
-                : "El equipo revisó la solicitud y decidió no incorporarla por ahora.";
-        final String bodyHtml = buildRequestDecisionSummaryCard(requestType, requestedName, approved)
+                ? msg("email.requestDecision.intro.approved", locale)
+                : msg("email.requestDecision.intro.rejected", locale);
+        final String bodyHtml = buildRequestDecisionSummaryCard(requestType, requestedName, approved, locale)
                 + buildCenteredAction(escapeHtml(actionUrl), actionLabel);
 
         return buildEmailShell(
-                escapeHtml("Tu solicitud de " + safeValue(requestType) + " fue "
-                        + (approved ? "aprobada" : "rechazada")),
+                escapeHtml(msg(
+                        approved ? "email.requestDecision.preheader.approved" : "email.requestDecision.preheader.rejected",
+                        locale,
+                        safeValue(requestType)
+                )),
                 title,
                 intro,
-                bodyHtml
+                bodyHtml,
+                locale
         );
     }
 
     private String buildRequestDecisionSummaryCard(final String requestType, final String requestedName,
-                                                   final boolean approved) {
+                                                   final boolean approved, final Locale locale) {
         return """
                 <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:28px;">
                     %s
@@ -877,7 +914,7 @@ public class EmailServiceImpl implements EmailService {
                         %s
                     </div>
                     <div style="margin-top:8px;font-size:15px;line-height:1.6;color:%s;font-family:%s;">
-                        Solicitud de %s
+                        %s
                     </div>
                     <div style="margin-top:12px;">
                         %s
@@ -886,16 +923,16 @@ public class EmailServiceImpl implements EmailService {
                 """.formatted(
                 COLOR_SURFACE_HIGH,
                 COLOR_OUTLINE,
-                buildSectionLabel("Resultado de revisión"),
+                buildSectionLabel(msg("email.requestDecision.summary", locale)),
                 COLOR_ON_SURFACE,
                 DISPLAY_FONT,
                 escapeHtml(safeValue(requestedName)),
                 COLOR_ON_SURFACE_VARIANT,
                 BODY_FONT,
-                escapeHtml(safeValue(requestType)),
+                escapeHtml(msg("email.requestDecision.requestOf", locale, safeValue(requestType))),
                 approved
-                        ? buildPill("Aprobada", "rgba(100,200,100,0.14)", "rgba(100,200,100,0.3)", "#88c888")
-                        : buildPill("Rechazada", "rgba(220,90,90,0.14)", "rgba(220,90,90,0.32)", "#f09494")
+                        ? buildPill(msg("email.status.approved.feminine", locale), "rgba(100,200,100,0.14)", "rgba(100,200,100,0.3)", "#88c888")
+                        : buildPill(msg("email.status.rejected.feminine", locale), "rgba(220,90,90,0.14)", "rgba(220,90,90,0.32)", "#f09494")
         );
     }
 
@@ -909,10 +946,11 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String buildEmailShell(final String preheader, final String title,
-                                   final String intro, final String bodyHtml) {
+                                   final String intro, final String bodyHtml,
+                                   final Locale locale) {
         return """
                 <!DOCTYPE html>
-                <html lang="es">
+                <html lang="%s">
                 <body style="margin:0;padding:24px;background:%s;color:%s;font-family:%s;">
                     <div style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;color:transparent;">
                         %s
@@ -930,6 +968,7 @@ public class EmailServiceImpl implements EmailService {
                 </body>
                 </html>
                 """.formatted(
+                locale.toLanguageTag(),
                 COLOR_SURFACE_LOW,
                 COLOR_ON_SURFACE,
                 BODY_FONT,
@@ -1021,9 +1060,9 @@ public class EmailServiceImpl implements EmailService {
                 .trim();
     }
 
-    private String previewDescription(final String description) {
+    private String previewDescription(final String description, final Locale locale) {
         if (description == null || description.isBlank()) {
-            return "Sin descripción provista.";
+            return msg("email.request.description.empty", locale);
         }
         final String trimmed = description.trim();
         if (trimmed.length() <= DESCRIPTION_PREVIEW_LENGTH) {
@@ -1034,6 +1073,52 @@ public class EmailServiceImpl implements EmailService {
 
     private String safeValue(final String value) {
         return value == null || value.isBlank() ? "-" : value;
+    }
+
+    private Locale resolveRecipientLocale(final String recipientEmail) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return defaultLocale();
+        }
+        final java.util.Optional<User> recipient = userService.findByEmail(recipientEmail);
+        if (recipient == null) {
+            return defaultLocale();
+        }
+        return recipient
+                .map(User::getPreferredLocale)
+                .map(this::toSupportedLocale)
+                .orElseGet(this::defaultLocale);
+    }
+
+    private Locale toSupportedLocale(final String localeTag) {
+        final Locale locale = Locale.forLanguageTag(localeTag == null ? "" : localeTag);
+        final String language = locale.getLanguage();
+        if ("en".equals(language) || "es".equals(language)) {
+            return Locale.forLanguageTag(language);
+        }
+        return defaultLocale();
+    }
+
+    private Locale defaultLocale() {
+        return Locale.forLanguageTag(DEFAULT_LOCALE_TAG);
+    }
+
+    private String localizedRequestType(final String requestType, final Locale locale) {
+        final String normalized = requestType == null ? "" : requestType.trim().toLowerCase(Locale.ROOT);
+        if ("marca".equals(normalized) || "brand".equals(normalized)) {
+            return msg("email.requestDecision.type.brand", locale);
+        }
+        if ("tipo de carrocería".equals(normalized) || "tipo de carroceria".equals(normalized)
+                || "body type".equals(normalized)) {
+            return msg("email.requestDecision.type.bodyType", locale);
+        }
+        if ("moderador".equals(normalized) || "moderator".equals(normalized)) {
+            return msg("email.requestDecision.type.moderator", locale);
+        }
+        return safeValue(requestType);
+    }
+
+    private String msg(final String code, final Locale locale, final Object... args) {
+        return messageSource.getMessage(code, args, locale == null ? defaultLocale() : locale);
     }
 
     private String escapeHtml(final String value) {

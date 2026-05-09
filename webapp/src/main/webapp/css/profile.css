@@ -123,6 +123,48 @@
     gap: 0.55rem;
 }
 
+.profile-language-form {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0 0 0.25rem;
+}
+
+.profile-language-form label {
+    color: var(--secondary);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.profile-language-control {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1fr) auto;
+    gap: 0.5rem;
+}
+
+.profile-language-control select {
+    min-height: 2.5rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-sm);
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+    font: inherit;
+}
+
+.profile-language-button {
+    min-height: 2.5rem;
+    padding: 0.625rem 0.9rem;
+    white-space: nowrap;
+}
+
+.profile-language-error {
+    margin: 0;
+    color: var(--error, #ffb4ab);
+    font-size: 0.8125rem;
+}
+
 .profile-action-form {
     align-self: end;
     margin: 0;
