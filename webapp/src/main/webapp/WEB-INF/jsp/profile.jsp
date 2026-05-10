@@ -38,6 +38,9 @@
                             <c:url var="openFollowingModalUrl" value="${profileBasePath}">
                                 <c:param name="modal" value="following"/>
                                 <c:param name="followingPage" value="1"/>
+                                <c:if test="${not empty activeTab}">
+                                    <c:param name="tab" value="${activeTab}"/>
+                                </c:if>
                             </c:url>
                             <a class="profile-stat-button"
                                href="${openFollowingModalUrl}#profileConnectionsModal">
@@ -51,6 +54,9 @@
                             <c:url var="openFollowersModalUrl" value="${profileBasePath}">
                                 <c:param name="modal" value="followers"/>
                                 <c:param name="followersPage" value="1"/>
+                                <c:if test="${not empty activeTab}">
+                                    <c:param name="tab" value="${activeTab}"/>
+                                </c:if>
                             </c:url>
                             <a class="profile-stat-button"
                                href="${openFollowersModalUrl}#profileConnectionsModal"
@@ -299,7 +305,8 @@
                                   followerUsers="${followerUsers}"
                                   activeKind="${connectionsModal}"
                                   pagination="${connectionsPagination}"
-                                  profileBasePath="${profileBasePath}"/>
+                                  profileBasePath="${profileBasePath}"
+                                  activeTab="${activeTab}"/>
     <pa:confirmation-modal id="logoutConfirmModal"
                            titleCode="profile.logout.confirm.title"
                            bodyCode="profile.logout.confirm.body"

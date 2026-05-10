@@ -4,6 +4,7 @@
 <%@ attribute name="activeKind" required="false" type="java.lang.String" %>
 <%@ attribute name="pagination" required="false" type="ar.edu.itba.paw.webapp.controller.ProfileController.ConnectionsPagination" %>
 <%@ attribute name="profileBasePath" required="true" type="java.lang.String" %>
+<%@ attribute name="activeTab" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -27,10 +28,16 @@
 <c:url var="followingTabUrl" value="${profileBasePath}">
     <c:param name="modal" value="following"/>
     <c:param name="followingPage" value="1"/>
+    <c:if test="${not empty activeTab}">
+        <c:param name="tab" value="${activeTab}"/>
+    </c:if>
 </c:url>
 <c:url var="followersTabUrl" value="${profileBasePath}">
     <c:param name="modal" value="followers"/>
     <c:param name="followersPage" value="1"/>
+    <c:if test="${not empty activeTab}">
+        <c:param name="tab" value="${activeTab}"/>
+    </c:if>
 </c:url>
 
 <div id="profileConnectionsModal" class="profile-modal" hidden ${modalOpen ? 'data-open-on-load="true"' : ''}>
@@ -143,6 +150,9 @@
                     <c:url var="prevPageUrl" value="${profileBasePath}">
                         <c:param name="modal" value="${pagination.kind}"/>
                         <c:param name="${pageParamName}" value="${pagination.currentPage - 1}"/>
+                        <c:if test="${not empty activeTab}">
+                            <c:param name="tab" value="${activeTab}"/>
+                        </c:if>
                     </c:url>
                     <a class="profile-connections-pagination-link" href="${prevPageUrl}#profileConnectionsModal">
                         <c:out value="${prevLabel}"/>
@@ -153,6 +163,9 @@
                     <c:url var="numberedPageUrl" value="${profileBasePath}">
                         <c:param name="modal" value="${pagination.kind}"/>
                         <c:param name="${pageParamName}" value="${i}"/>
+                        <c:if test="${not empty activeTab}">
+                            <c:param name="tab" value="${activeTab}"/>
+                        </c:if>
                     </c:url>
                     <a class="profile-connections-pagination-link ${i eq pagination.currentPage ? 'is-current' : ''}"
                        href="${numberedPageUrl}#profileConnectionsModal"
@@ -165,6 +178,9 @@
                     <c:url var="nextPageUrl" value="${profileBasePath}">
                         <c:param name="modal" value="${pagination.kind}"/>
                         <c:param name="${pageParamName}" value="${pagination.currentPage + 1}"/>
+                        <c:if test="${not empty activeTab}">
+                            <c:param name="tab" value="${activeTab}"/>
+                        </c:if>
                     </c:url>
                     <a class="profile-connections-pagination-link" href="${nextPageUrl}#profileConnectionsModal">
                         <c:out value="${nextLabel}"/>
