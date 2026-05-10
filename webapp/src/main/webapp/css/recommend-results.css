@@ -225,10 +225,6 @@
         box-shadow: none;
     }
 
-    .recommend-results-page .recommend-result::after {
-        display: none;
-    }
-
     .recommend-results-page .recommendation-reason {
         padding-top: 0;
         justify-items: start;
