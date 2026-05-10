@@ -111,8 +111,6 @@ class ProfileControllerTest {
         when(reviewLikeService.getLikedReviewIdsByUser(eq(profileUserId), anyInt()))
                 .thenAnswer(invocation -> Page.empty(invocation.getArgument(1), Pagination.REVIEWS_PAGE_SIZE));
 
-        when(userFollowService.getFollowing(eq(profileUserId))).thenReturn(Collections.emptyList());
-        when(userFollowService.getFollowers(eq(profileUserId))).thenReturn(Collections.emptyList());
         when(userFollowService.countFollowing(eq(profileUserId))).thenReturn(0L);
         when(userFollowService.countFollowers(eq(profileUserId))).thenReturn(0L);
         when(userFollowService.isFollowing(anyLong(), eq(profileUserId))).thenReturn(false);
@@ -324,8 +322,6 @@ class ProfileControllerTest {
                 .thenAnswer(invocation -> Page.empty(invocation.getArgument(1), Pagination.CARS_PAGE_SIZE));
         when(reviewLikeService.getLikedReviewIdsByUser(eq(24L), anyInt()))
                 .thenAnswer(invocation -> Page.empty(invocation.getArgument(1), Pagination.REVIEWS_PAGE_SIZE));
-        when(userFollowService.getFollowing(eq(24L))).thenReturn(Collections.emptyList());
-        when(userFollowService.getFollowers(eq(24L))).thenReturn(Collections.emptyList());
         when(userFollowService.countFollowing(eq(24L))).thenReturn(1L);
         when(userFollowService.countFollowers(eq(24L))).thenReturn(4L);
         when(userFollowService.toggleFollow(eq(23L), eq(24L))).thenReturn(true);

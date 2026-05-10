@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
@@ -63,6 +64,10 @@ public class ProfileController {
     private static final String TAB_FAVORITES = "favorites";
     private static final String TAB_LIKED = "liked";
 
+    private static final int CONNECTIONS_PAGE_SIZE = Pagination.CONNECTIONS_PAGE_SIZE;
+    private static final String CONNECTIONS_KIND_FOLLOWERS = "followers";
+    private static final String CONNECTIONS_KIND_FOLLOWING = "following";
+
     private final ReviewService reviewService;
     private final ReviewLikeService reviewLikeService;
     private final CarService carService;
@@ -106,16 +111,20 @@ public class ProfileController {
         @RequestParam(
             value = "submitted",
             required = false
-        ) final String submitted
+        ) final String submitted,
+        @RequestParam(value = "modal", required = false) final String connectionsModal,
+        @RequestParam(value = "followersPage", defaultValue = "1") final int followersPage,
+        @RequestParam(value = "followingPage", defaultValue = "1") final int followingPage
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
-        return profile(currentUser.getId(), currentUser, tab, page, submitted);
+        return profile(currentUser.getId(), currentUser, tab, page, submitted,
+                connectionsModal, followersPage, followingPage);
     }
 
     ModelAndView ownProfile(final AuthenticatedUser currentUser) {
-        return ownProfile(currentUser, null, 1, null);
+        return ownProfile(currentUser, null, 1, null, null, 1, 1);
     }
 
     @RequestMapping(value = "/profiles/{userId}", method = RequestMethod.GET)
@@ -127,16 +136,20 @@ public class ProfileController {
         @RequestParam(
             value = "submitted",
             required = false
-        ) final String submitted
+        ) final String submitted,
+        @RequestParam(value = "modal", required = false) final String connectionsModal,
+        @RequestParam(value = "followersPage", defaultValue = "1") final int followersPage,
+        @RequestParam(value = "followingPage", defaultValue = "1") final int followingPage
     ) {
-        return profile(userId, currentUser, tab, page, submitted);
+        return profile(userId, currentUser, tab, page, submitted,
+                connectionsModal, followersPage, followingPage);
     }
 
     ModelAndView publicProfile(
         final long userId,
         final AuthenticatedUser currentUser
     ) {
-        return publicProfile(userId, currentUser, null, 1, null);
+        return publicProfile(userId, currentUser, null, 1, null, null, 1, 1);
     }
 
     @RequestMapping(value = "/profile", method = RequestMethod.POST)
@@ -289,7 +302,10 @@ public class ProfileController {
         final AuthenticatedUser currentUser,
         final String tab,
         final int page,
-        final String submitted
+        final String submitted,
+        final String connectionsModal,
+        final int followersPage,
+        final int followingPage
     ) {
         final User profileUser = userService
             .getUserById(profileUserId)
@@ -395,20 +411,35 @@ public class ProfileController {
             favoriteCarPage.getTotalPages()
         );
         mav.addObject("reviewStatsByCarId", reviewStatsByCarId);
-        mav.addObject(
-            "followingUsers",
-            toConnections(
-                userFollowService.getFollowing(profileUser.getId()),
-                currentUserId
-            )
-        );
-        mav.addObject(
-            "followerUsers",
-            toConnections(
-                userFollowService.getFollowers(profileUser.getId()),
-                currentUserId
-            )
-        );
+
+        final String activeConnectionsKind = normalizeConnectionsKind(connectionsModal);
+
+        List<ProfileConnection> followingUsers = List.of();
+        List<ProfileConnection> followerUsers = List.of();
+        ConnectionsPagination connectionsPagination = null;
+
+        if (CONNECTIONS_KIND_FOLLOWING.equals(activeConnectionsKind)) {
+            final Page<User> followingPageResult = userFollowService.getFollowing(profileUser.getId(), followingPage);
+            followingUsers = toConnections(followingPageResult.getItems(), currentUserId);
+            connectionsPagination = new ConnectionsPagination(
+                    CONNECTIONS_KIND_FOLLOWING,
+                    followingPageResult.getPageNumber(),
+                    followingPageResult.getTotalPages()
+            );
+        } else if (CONNECTIONS_KIND_FOLLOWERS.equals(activeConnectionsKind)) {
+            final Page<User> followersPageResult = userFollowService.getFollowers(profileUser.getId(), followersPage);
+            followerUsers = toConnections(followersPageResult.getItems(), currentUserId);
+            connectionsPagination = new ConnectionsPagination(
+                    CONNECTIONS_KIND_FOLLOWERS,
+                    followersPageResult.getPageNumber(),
+                    followersPageResult.getTotalPages()
+            );
+        }
+
+        mav.addObject("followingUsers", followingUsers);
+        mav.addObject("followerUsers", followerUsers);
+        mav.addObject("connectionsModal", activeConnectionsKind);
+        mav.addObject("connectionsPagination", connectionsPagination);
         mav.addObject("ownProfile", ownProfile);
         mav.addObject("followingProfile", followingProfile);
         mav.addObject("reviewForm", new ReviewForm());
@@ -647,6 +678,17 @@ public class ProfileController {
             .toUpperCase(Locale.ROOT);
     }
 
+    private String normalizeConnectionsKind(final String raw) {
+        if (raw == null) {
+            return null;
+        }
+        final String value = raw.trim().toLowerCase(java.util.Locale.ROOT);
+        if (CONNECTIONS_KIND_FOLLOWERS.equals(value) || CONNECTIONS_KIND_FOLLOWING.equals(value)) {
+            return value;
+        }
+        return null;
+    }
+
     private String normalizeProfileTab(final String tab) {
         if (tab == null || tab.isBlank()) {
             return TAB_REVIEWS;
@@ -814,6 +856,39 @@ public class ProfileController {
 
         public boolean getFollowable() {
             return followable;
+        }
+    }
+
+    public static final class ConnectionsPagination {
+
+        private final String kind;
+        private final int currentPage;
+        private final int totalPages;
+
+        private ConnectionsPagination(final String kind, final int currentPage, final int totalPages) {
+            this.kind = kind;
+            this.currentPage = currentPage;
+            this.totalPages = totalPages;
+        }
+
+        public String getKind() {
+            return kind;
+        }
+
+        public int getCurrentPage() {
+            return currentPage;
+        }
+
+        public int getTotalPages() {
+            return totalPages;
+        }
+
+        public boolean getHasPrevious() {
+            return currentPage > 1;
+        }
+
+        public boolean getHasNext() {
+            return currentPage < totalPages;
         }
     }
 }

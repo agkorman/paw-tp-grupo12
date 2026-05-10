@@ -7,7 +7,6 @@ import ar.edu.itba.paw.persistence.UserFollowDao;
 import ar.edu.itba.paw.services.exception.SelfFollowException;
 import ar.edu.itba.paw.services.exception.UserNotFoundException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,18 +94,6 @@ public class UserFollowServiceImpl implements UserFollowService {
     @Transactional(readOnly = true)
     public long countFollowing(final long userId) {
         return userFollowDao.countFollowing(userId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<User> getFollowers(final long userId) {
-        return userFollowDao.findFollowers(userId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<User> getFollowing(final long userId) {
-        return userFollowDao.findFollowing(userId);
     }
 
     @Override

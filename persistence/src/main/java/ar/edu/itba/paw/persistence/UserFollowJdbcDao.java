@@ -122,28 +122,6 @@ public class UserFollowJdbcDao implements UserFollowDao {
     }
 
     @Override
-    public List<User> findFollowers(final long userId) {
-        return jdbcTemplate.query(
-            USER_SELECT +
-                "JOIN user_follows f ON f.follower_id = u.user_id " +
-                "WHERE f.followed_id = ? ORDER BY f.created_at DESC, u.username ASC",
-            USER_ROW_MAPPER,
-            userId
-        );
-    }
-
-    @Override
-    public List<User> findFollowing(final long userId) {
-        return jdbcTemplate.query(
-            USER_SELECT +
-                "JOIN user_follows f ON f.followed_id = u.user_id " +
-                "WHERE f.follower_id = ? ORDER BY f.created_at DESC, u.username ASC",
-            USER_ROW_MAPPER,
-            userId
-        );
-    }
-
-    @Override
     public Page<User> findFollowers(final long userId, final int page) {
         final int pageSize = Pagination.CONNECTIONS_PAGE_SIZE;
         final long total = countFollowers(userId);
