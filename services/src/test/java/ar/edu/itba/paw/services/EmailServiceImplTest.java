@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessagePreparator;
@@ -21,6 +23,7 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class EmailServiceImplTest {
@@ -34,7 +37,7 @@ public class EmailServiceImplTest {
     public void shouldSendApprovedNotificationWithRecipientSubjectAndCarLink() throws Exception {
         // Arrange
         final RecordingMailSender mailSender = new RecordingMailSender();
-        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, APP_BASE_URL);
+        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
 
         // Exercise
         emailService.sendCarApprovedNotification("owner@example.com", "Toyota", "Corolla", 42L);
@@ -53,7 +56,7 @@ public class EmailServiceImplTest {
     public void shouldSkipApprovedNotificationWhenRecipientIsBlank() {
         // Arrange
         final RecordingMailSender mailSender = new RecordingMailSender();
-        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, APP_BASE_URL);
+        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
 
         // Exercise
         emailService.sendCarApprovedNotification("   ", "Toyota", "Corolla", 42L);
@@ -66,13 +69,34 @@ public class EmailServiceImplTest {
     public void shouldSkipModeratorDigestWhenRecipientsAreEmpty() {
         // Arrange
         final RecordingMailSender mailSender = new RecordingMailSender();
-        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, APP_BASE_URL);
+        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
 
         // Exercise
         emailService.sendWeeklyModeratorDigest(List.of(), 3);
 
         // Assertions
         assertTrue(mailSender.sentMessages.isEmpty());
+    }
+
+    @Test
+    public void shouldSendApprovedNotificationWithDefaultLocaleWhenRecipientLookupFails() throws Exception {
+        // Arrange
+        final String recipientEmail = "owner@example.com";
+        final RecordingMailSender mailSender = new RecordingMailSender();
+        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
+        when(userService.findByEmail(recipientEmail))
+                .thenThrow(new DataAccessResourceFailureException("database unavailable"));
+
+        // Exercise
+        emailService.sendCarApprovedNotification(recipientEmail, "Toyota", "Corolla", 42L);
+
+        // Assertions
+        assertEquals(1, mailSender.sentMessages.size());
+        final MimeMessage message = mailSender.sentMessages.get(0);
+        final Address[] recipients = message.getRecipients(Message.RecipientType.TO);
+        assertEquals(1, recipients.length);
+        assertEquals(recipientEmail, recipients[0].toString());
+        assertEquals("[La Posta Autos] Tu auto fue aprobado: Toyota Corolla", message.getSubject());
     }
 
     private static String extractText(final Part part) throws Exception {
@@ -88,6 +112,14 @@ public class EmailServiceImplTest {
             return builder.toString();
         }
         return "";
+    }
+
+    private static ResourceBundleMessageSource messageSource() {
+        final ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("messages");
+        messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setFallbackToSystemLocale(false);
+        return messageSource;
     }
 
     private static final class RecordingMailSender implements JavaMailSender {

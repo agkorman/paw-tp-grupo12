@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
@@ -19,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Transactional(readOnly = true)
@@ -26,6 +28,8 @@ public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String DEFAULT_ROLE = "user";
+    private static final String DEFAULT_LOCALE = "es";
+    private static final Set<String> SUPPORTED_LOCALES = Set.of("es", "en");
     private static final List<String> MODERATOR_EMAIL_ROLES = Arrays.asList("moderator", "admin");
 
     private final UserDao userDao;
@@ -100,6 +104,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    public User updatePreferredLocale(final long userId, final String preferredLocale) {
+        final String normalizedLocale = normalizePreferredLocale(preferredLocale);
+        if (!userDao.updatePreferredLocale(userId, normalizedLocale)) {
+            throw new UserNotFoundException(userId);
+        }
+        return userDao.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    @Override
+    @Transactional
     public User updateUsername(final long userId, final String username) {
         final String normalizedUsername = StringUtils.normalize(username);
         if (normalizedUsername == null) {
@@ -126,8 +140,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<String> getModeratorsEmails() {
-        return userDao.findEmailsByRoles(MODERATOR_EMAIL_ROLES);
+    public List<EmailRecipient> getModeratorEmailRecipients() {
+        return userDao.findEmailRecipientsByRoles(MODERATOR_EMAIL_ROLES);
     }
 
     @Override
@@ -138,5 +152,17 @@ public class UserServiceImpl implements UserService {
     private String normalizeEmail(final String value) {
         final String normalized = StringUtils.normalize(value);
         return normalized == null ? null : normalized.toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizePreferredLocale(final String value) {
+        final String normalized = StringUtils.normalize(value);
+        if (normalized == null) {
+            return DEFAULT_LOCALE;
+        }
+        final String language = Locale.forLanguageTag(normalized).getLanguage().toLowerCase(Locale.ROOT);
+        if (!SUPPORTED_LOCALES.contains(language)) {
+            throw new InvalidServiceInputException("Unsupported preferred locale.");
+        }
+        return language;
     }
 }

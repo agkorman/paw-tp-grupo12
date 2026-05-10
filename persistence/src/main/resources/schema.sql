@@ -8,11 +8,22 @@ CREATE TABLE IF NOT EXISTS users (
     email      VARCHAR(100) NOT NULL UNIQUE,
     password   VARCHAR(255) NOT NULL,
     role       VARCHAR(20)  NOT NULL DEFAULT 'user',
+    preferred_locale VARCHAR(10) NOT NULL DEFAULT 'es',
     created_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 ALTER TABLE users
     ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS preferred_locale VARCHAR(10) NOT NULL DEFAULT 'es';
+
+ALTER TABLE users
+    DROP CONSTRAINT IF EXISTS chk_users_preferred_locale;
+
+ALTER TABLE users
+    ADD CONSTRAINT chk_users_preferred_locale
+        CHECK (preferred_locale IN ('es', 'en'));
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_username_normalized_unique_idx
     ON users (LOWER(BTRIM(username)));
