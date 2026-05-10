@@ -23,7 +23,7 @@
             </ul>
         </c:if>
         <c:if test="${not empty negatives}">
-            <ul class="recommendation-rail-list recommendation-rail-list--negative">
+            <ul class="recommendation-rail-list">
                 <c:forEach var="highlight" items="${negatives}">
                     <c:if test="${highlight.visible}">
                         <c:set var="recTagEmojiKey" value="review.tag.emoji.${highlight.tag.code}"/>
