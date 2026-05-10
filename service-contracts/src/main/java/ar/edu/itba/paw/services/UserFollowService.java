@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import java.util.Collection;
 import java.util.List;
@@ -15,4 +16,6 @@ public interface UserFollowService {
     long countFollowing(long userId);
     List<User> getFollowers(long userId);
     List<User> getFollowing(long userId);
+    Page<User> getFollowers(long userId, int page);
+    Page<User> getFollowing(long userId, int page);
 }
