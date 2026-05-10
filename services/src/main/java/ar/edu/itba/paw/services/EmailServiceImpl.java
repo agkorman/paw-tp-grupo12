@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,13 +60,12 @@ public class EmailServiceImpl implements EmailService {
     @Async("mailTaskExecutor")
     public void sendNewCarRequestNotification(final CarRequest request, final String brandName,
                                               final String bodyTypeName) {
-        final List<String> moderators = userService.getModeratorsEmails();
+        final List<EmailRecipient> moderators = getModeratorEmailRecipientsSafely();
         if (moderators.isEmpty()) {
             return;
         }
 
-        final Map<Locale, List<String>> moderatorsByLocale = moderators.stream()
-                .collect(Collectors.groupingBy(this::resolveRecipientLocale));
+        final Map<Locale, List<String>> moderatorsByLocale = groupRecipientEmailsByLocale(moderators);
         for (final Map.Entry<Locale, List<String>> entry : moderatorsByLocale.entrySet()) {
             final Locale locale = entry.getKey();
             sendEmail(
@@ -193,13 +193,13 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async("mailTaskExecutor")
-    public void sendWeeklyModeratorDigest(final List<String> moderatorEmails, final int pendingRequestCount) {
-        if (moderatorEmails == null || moderatorEmails.isEmpty()) {
+    public void sendWeeklyModeratorDigest(final List<EmailRecipient> moderatorRecipients,
+                                          final int pendingRequestCount) {
+        if (moderatorRecipients == null || moderatorRecipients.isEmpty()) {
             return;
         }
 
-        final Map<Locale, List<String>> moderatorsByLocale = moderatorEmails.stream()
-                .collect(Collectors.groupingBy(this::resolveRecipientLocale));
+        final Map<Locale, List<String>> moderatorsByLocale = groupRecipientEmailsByLocale(moderatorRecipients);
         for (final Map.Entry<Locale, List<String>> entry : moderatorsByLocale.entrySet()) {
             final Locale locale = entry.getKey();
             sendEmail(
@@ -1045,14 +1045,35 @@ public class EmailServiceImpl implements EmailService {
         if (recipientEmail == null || recipientEmail.isBlank()) {
             return defaultLocale();
         }
-        final java.util.Optional<User> recipient = userService.findByEmail(recipientEmail);
-        if (recipient == null) {
+        try {
+            return userService.findByEmail(recipientEmail)
+                    .map(User::getPreferredLocale)
+                    .map(this::toSupportedLocale)
+                    .orElseGet(this::defaultLocale);
+        } catch (final RuntimeException e) {
+            LOGGER.warn("failed to resolve recipient locale for email={}", recipientEmail, e);
             return defaultLocale();
         }
-        return recipient
-                .map(User::getPreferredLocale)
-                .map(this::toSupportedLocale)
-                .orElseGet(this::defaultLocale);
+    }
+
+    private Map<Locale, List<String>> groupRecipientEmailsByLocale(final List<EmailRecipient> recipients) {
+        return recipients.stream()
+                .filter(recipient -> recipient != null
+                        && recipient.getEmail() != null
+                        && !recipient.getEmail().isBlank())
+                .collect(Collectors.groupingBy(
+                        recipient -> toSupportedLocale(recipient.getPreferredLocale()),
+                        Collectors.mapping(EmailRecipient::getEmail, Collectors.toList())
+                ));
+    }
+
+    private List<EmailRecipient> getModeratorEmailRecipientsSafely() {
+        try {
+            return userService.getModeratorEmailRecipients();
+        } catch (final RuntimeException e) {
+            LOGGER.warn("failed to load moderator email recipients", e);
+            return List.of();
+        }
     }
 
     private Locale toSupportedLocale(final String localeTag) {

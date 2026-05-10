@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.User;
 
 import java.util.Collection;
@@ -14,6 +15,6 @@ public interface UserDao {
     boolean updateUsername(long userId, String username);
     boolean updateRole(long userId, String role);
     boolean updatePreferredLocale(long userId, String preferredLocale);
-    List<String> findEmailsByRoles(Collection<String> roles);
+    List<EmailRecipient> findEmailRecipientsByRoles(Collection<String> roles);
     List<User> findAll();
 }

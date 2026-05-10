@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
@@ -139,8 +140,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<String> getModeratorsEmails() {
-        return userDao.findEmailsByRoles(MODERATOR_EMAIL_ROLES);
+    public List<EmailRecipient> getModeratorEmailRecipients() {
+        return userDao.findEmailRecipientsByRoles(MODERATOR_EMAIL_ROLES);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,11 @@ public class UserJdbcDao implements UserDao {
             rs.getString("preferred_locale"),
             rs.getTimestamp("created_at").toLocalDateTime()
     );
+    private static final RowMapper<EmailRecipient> EMAIL_RECIPIENT_ROW_MAPPER = (rs, rowNum) ->
+            new EmailRecipient(
+                    rs.getString("email"),
+                    rs.getString("preferred_locale")
+            );
 
     @Autowired
     public UserJdbcDao(final DataSource dataSource) {
@@ -134,16 +140,8 @@ public class UserJdbcDao implements UserDao {
     }
 
     @Override
-    public List<String> findEmailsByRoles(final Collection<String> roles) {
-        if (roles == null || roles.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        final List<String> normalizedRoles = roles.stream()
-                .filter(role -> role != null && !role.trim().isEmpty())
-                .map(role -> role.trim().toLowerCase(Locale.ROOT))
-                .distinct()
-                .collect(Collectors.toList());
+    public List<EmailRecipient> findEmailRecipientsByRoles(final Collection<String> roles) {
+        final List<String> normalizedRoles = normalizeRoles(roles);
         if (normalizedRoles.isEmpty()) {
             return Collections.emptyList();
         }
@@ -152,10 +150,21 @@ public class UserJdbcDao implements UserDao {
                 .map(ignored -> "?")
                 .collect(Collectors.joining(", "));
 
-        return jdbcTemplate.queryForList(
-                "SELECT email FROM users WHERE LOWER(role) IN (" + placeholders + ") ORDER BY email",
-                String.class,
+        return jdbcTemplate.query(
+                "SELECT email, preferred_locale FROM users WHERE LOWER(role) IN (" + placeholders + ") ORDER BY email",
+                EMAIL_RECIPIENT_ROW_MAPPER,
                 normalizedRoles.toArray()
         );
+    }
+
+    private List<String> normalizeRoles(final Collection<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return roles.stream()
+                .filter(role -> role != null && !role.trim().isEmpty())
+                .map(role -> role.trim().toLowerCase(Locale.ROOT))
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

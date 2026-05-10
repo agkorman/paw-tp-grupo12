@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
@@ -69,12 +70,18 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
     }
 
     private void sendModeratorDigest() {
-        final List<String> moderatorEmails = userService.getModeratorsEmails();
-        if (moderatorEmails.isEmpty()) {
+        final List<EmailRecipient> moderatorRecipients;
+        try {
+            moderatorRecipients = userService.getModeratorEmailRecipients();
+        } catch (final RuntimeException e) {
+            LOGGER.warn("failed to load moderator email recipients for weekly digest", e);
+            return;
+        }
+        if (moderatorRecipients.isEmpty()) {
             return;
         }
         final int pendingCount = carRequestService.getCarRequestsByStatus(CarRequestService.STATUS_PENDING).size();
-        emailService.sendWeeklyModeratorDigest(moderatorEmails, pendingCount);
+        emailService.sendWeeklyModeratorDigest(moderatorRecipients, pendingCount);
     }
 
     private void sendUserDigest(final User user, final LocalDateTime since) {

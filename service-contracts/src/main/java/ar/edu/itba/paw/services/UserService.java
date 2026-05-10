@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.User;
 
 import java.util.List;
@@ -13,6 +14,6 @@ public interface UserService {
     User updateUsername(long userId, String username);
     User updatePreferredLocale(long userId, String preferredLocale);
     boolean updateRole(long userId, String role);
-    List<String> getModeratorsEmails();
+    List<EmailRecipient> getModeratorEmailRecipients();
     List<User> getAllUsers();
 }
