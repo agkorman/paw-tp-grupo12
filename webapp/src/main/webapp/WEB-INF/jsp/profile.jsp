@@ -37,28 +37,28 @@
                     </div>
                     <div>
                         <dt>
-                            <button
-                                    type="button"
-                                    class="profile-stat-button"
-                                    data-open-connections-modal
-                                    data-connections-kind="following"
-                                    data-connections-title="${followingConnectionsTitle}">
+                            <c:url var="openFollowingModalUrl" value="${profileBasePath}">
+                                <c:param name="modal" value="following"/>
+                                <c:param name="followingPage" value="1"/>
+                            </c:url>
+                            <a class="profile-stat-button"
+                               href="${openFollowingModalUrl}#profileConnectionsModal">
                                 <c:out value="${profile.followingCount}"/>
-                            </button>
+                            </a>
                         </dt>
                         <dd><spring:message code="profile.following"/></dd>
                     </div>
                     <div>
                         <dt>
-                            <button
-                                    type="button"
-                                    class="profile-stat-button"
-                                    data-open-connections-modal
-                                    data-connections-kind="followers"
-                                    data-connections-title="${followersConnectionsTitle}"
-                                    data-profile-follower-count>
+                            <c:url var="openFollowersModalUrl" value="${profileBasePath}">
+                                <c:param name="modal" value="followers"/>
+                                <c:param name="followersPage" value="1"/>
+                            </c:url>
+                            <a class="profile-stat-button"
+                               href="${openFollowersModalUrl}#profileConnectionsModal"
+                               data-profile-follower-count>
                                 <c:out value="${profile.followerCount}"/>
-                            </button>
+                            </a>
                         </dt>
                         <dd><spring:message code="profile.followers"/></dd>
                     </div>
@@ -297,7 +297,11 @@
                            confirmCode="common.action.delete"
                            confirmCssClass="btn-primary"/>
     <pa:edit-profile-modal profile="${profile}"/>
-    <pa:profile-connections-modal followingUsers="${followingUsers}" followerUsers="${followerUsers}"/>
+    <pa:profile-connections-modal followingUsers="${followingUsers}"
+                                  followerUsers="${followerUsers}"
+                                  activeKind="${connectionsModal}"
+                                  pagination="${connectionsPagination}"
+                                  profileBasePath="${profileBasePath}"/>
     <pa:confirmation-modal id="logoutConfirmModal"
                            titleCode="profile.logout.confirm.title"
                            bodyCode="profile.logout.confirm.body"
