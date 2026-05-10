@@ -25,7 +25,7 @@ public class UserFollowJdbcDao implements UserFollowDao {
     );
 
     private static final String USER_SELECT =
-        "SELECT u.user_id, u.username, u.email, u.password, u.role, u.created_at FROM users u ";
+        "SELECT u.user_id, u.username, u.email, u.password, u.role, u.preferred_locale, u.created_at FROM users u ";
 
     private static final RowMapper<User> USER_ROW_MAPPER = (rs, rowNum) ->
         new User(
@@ -34,6 +34,7 @@ public class UserFollowJdbcDao implements UserFollowDao {
             rs.getString("email"),
             rs.getString("password"),
             rs.getString("role"),
+            rs.getString("preferred_locale"),
             rs.getTimestamp("created_at").toLocalDateTime()
         );
 

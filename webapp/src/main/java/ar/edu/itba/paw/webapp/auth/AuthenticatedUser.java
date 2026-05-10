@@ -11,14 +11,22 @@ public class AuthenticatedUser implements UserDetails {
     private final String username;
     private final String email;
     private final String password;
+    private final String preferredLocale;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public AuthenticatedUser(final long id, final String username, final String email, final String password,
+                             final Collection<? extends GrantedAuthority> authorities) {
+        this(id, username, email, password, "es", authorities);
+    }
+
+    public AuthenticatedUser(final long id, final String username, final String email, final String password,
+                             final String preferredLocale,
                              final Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
+        this.preferredLocale = preferredLocale;
         this.authorities = authorities;
     }
 
@@ -32,6 +40,10 @@ public class AuthenticatedUser implements UserDetails {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getPreferredLocale() {
+        return preferredLocale;
     }
 
     @Override

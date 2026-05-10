@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,6 +32,9 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
         ));
         assertEquals(role, jdbcTemplate.queryForObject(
                 "SELECT role FROM users WHERE user_id = ?", String.class, result.getId()
+        ));
+        assertEquals("es", jdbcTemplate.queryForObject(
+                "SELECT preferred_locale FROM users WHERE user_id = ?", String.class, result.getId()
         ));
     }
 
@@ -78,6 +82,22 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldUpdatePersistedPreferredLocaleWhenUserExists() {
+        // Arrange
+        final User created = insertUser("language-user", "language@example.com", "password", "user");
+
+        // Exercise
+        final boolean result = userDao.updatePreferredLocale(created.getId(), "en");
+
+        // Assertions
+        assertTrue(result);
+        assertEquals("en", userDao.findById(created.getId()).orElseThrow().getPreferredLocale());
+        assertEquals("language@example.com", jdbcTemplate.queryForObject(
+                "SELECT email FROM users WHERE user_id = ?", String.class, created.getId()
+        ));
+    }
+
+    @Test
     public void shouldRejectUsernameUpdateWhenNormalizedUsernameAlreadyExists() {
         // Arrange
         userDao.create("Nica", "nica@example.com", "password", "user");
@@ -92,17 +112,19 @@ public class UserJdbcDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
-    public void shouldFindEmailsByNormalizedRolesOnly() {
+    public void shouldFindEmailRecipientsByNormalizedRolesOnly() {
         // Arrange
         insertUser("regular", "regular@example.com", "password", "user");
-        insertUser("admin", "admin@example.com", "password", "admin");
+        final User admin = insertUser("admin", "admin@example.com", "password", "admin");
+        jdbcTemplate.update("UPDATE users SET preferred_locale = ? WHERE user_id = ?", "en", admin.getId());
 
         // Exercise
-        final List<String> result = userDao.findEmailsByRoles(List.of(" ADMIN ", "missing"));
+        final List<EmailRecipient> result = userDao.findEmailRecipientsByRoles(List.of(" ADMIN ", "missing"));
 
         // Assertions
         assertEquals(1, result.size());
-        assertEquals("admin@example.com", result.get(0));
+        assertEquals("admin@example.com", result.get(0).getEmail());
+        assertEquals("en", result.get(0).getPreferredLocale());
     }
 
     @Test
