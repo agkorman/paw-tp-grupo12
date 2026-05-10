@@ -94,45 +94,6 @@
         }
     }
 
-    function switchConnectionsList(kind, title) {
-        var modal = document.getElementById('profileConnectionsModal');
-        var titleNode = modal ? modal.querySelector('[data-connections-title]') : null;
-        var lists = modal ? modal.querySelectorAll('[data-connections-list]') : [];
-        var search = modal ? modal.querySelector('[data-connections-search]') : null;
-
-        if (titleNode) {
-            titleNode.textContent = title;
-        }
-        for (var i = 0; i < lists.length; i += 1) {
-            lists[i].hidden = lists[i].getAttribute('data-connections-list') !== kind;
-        }
-        if (search) {
-            search.value = '';
-            filterConnections('');
-        }
-        openModal(modal);
-    }
-
-    function filterConnections(query) {
-        var modal = document.getElementById('profileConnectionsModal');
-        var visibleList = modal ? modal.querySelector('[data-connections-list]:not([hidden])') : null;
-        var rows = visibleList ? visibleList.querySelectorAll('[data-connection-row]') : [];
-        var normalizedQuery = query.toLowerCase();
-        var empty = visibleList ? visibleList.querySelector('[data-connections-empty]') : null;
-        var visibleCount = 0;
-
-        for (var i = 0; i < rows.length; i += 1) {
-            var haystack = (rows[i].getAttribute('data-search-text') || '').toLowerCase();
-            rows[i].hidden = normalizedQuery !== '' && haystack.indexOf(normalizedQuery) < 0;
-            if (!rows[i].hidden) {
-                visibleCount += 1;
-            }
-        }
-        if (empty) {
-            empty.hidden = normalizedQuery === '' || visibleCount > 0;
-        }
-    }
-
     function closeActionMenus() {
         if (window.PawActionMenus) {
             window.PawActionMenus.close();
@@ -384,15 +345,6 @@
             return;
         }
 
-        var connectionsButton = closestByAttribute(event.target, 'data-open-connections-modal');
-        if (connectionsButton) {
-            switchConnectionsList(
-                connectionsButton.getAttribute('data-connections-kind') || 'following',
-                connectionsButton.getAttribute('data-connections-title') || ''
-            );
-            return;
-        }
-
         var closeButton = closestByAttribute(event.target, 'data-close-profile-modal');
         if (closeButton) {
             closeOpenModal();
@@ -513,13 +465,6 @@
         event.preventDefault();
         window.location.href = linkedCard.getAttribute('data-profile-card-link');
     });
-
-    var search = document.querySelector('[data-connections-search]');
-    if (search) {
-        search.addEventListener('input', function () {
-            filterConnections(search.value);
-        });
-    }
 
     setupProfileTabs();
     setupCollapsibleSections();

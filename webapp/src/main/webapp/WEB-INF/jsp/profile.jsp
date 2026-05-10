@@ -13,8 +13,6 @@
     <spring:message var="profileContentAria" code="profile.content.aria"/>
     <spring:message var="profileTabsAria" code="profile.tabs.aria"/>
     <spring:message var="followUserAction" code="profile.authRequired.followAction"/>
-    <spring:message var="followingConnectionsTitle" code="profile.following"/>
-    <spring:message var="followersConnectionsTitle" code="profile.followers"/>
     <spring:message var="followLabel" code="common.label.follow"/>
     <spring:message var="followingLabel" code="common.label.following"/>
 
