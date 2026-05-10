@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
 import java.util.Collection;
 import java.util.HashSet;
@@ -13,9 +15,6 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-
-import javax.sql.DataSource;
-import java.util.List;
 
 @Repository
 public class UserFollowJdbcDao implements UserFollowDao {
@@ -142,6 +141,50 @@ public class UserFollowJdbcDao implements UserFollowDao {
             USER_ROW_MAPPER,
             userId
         );
+    }
+
+    @Override
+    public Page<User> findFollowers(final long userId, final int page) {
+        final int pageSize = Pagination.CONNECTIONS_PAGE_SIZE;
+        final long total = countFollowers(userId);
+        if (total == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final int effectivePage = Pagination.clampPage(page, total, pageSize);
+        final long offset = Pagination.offsetFor(effectivePage, pageSize);
+        final List<User> items = jdbcTemplate.query(
+                USER_SELECT
+                        + "JOIN user_follows f ON f.follower_id = u.user_id "
+                        + "WHERE f.followed_id = ? ORDER BY f.created_at DESC, u.username ASC "
+                        + "LIMIT ? OFFSET ?",
+                USER_ROW_MAPPER,
+                userId,
+                pageSize,
+                offset
+        );
+        return new Page<>(items, effectivePage, pageSize, total);
+    }
+
+    @Override
+    public Page<User> findFollowing(final long userId, final int page) {
+        final int pageSize = Pagination.CONNECTIONS_PAGE_SIZE;
+        final long total = countFollowing(userId);
+        if (total == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final int effectivePage = Pagination.clampPage(page, total, pageSize);
+        final long offset = Pagination.offsetFor(effectivePage, pageSize);
+        final List<User> items = jdbcTemplate.query(
+                USER_SELECT
+                        + "JOIN user_follows f ON f.followed_id = u.user_id "
+                        + "WHERE f.follower_id = ? ORDER BY f.created_at DESC, u.username ASC "
+                        + "LIMIT ? OFFSET ?",
+                USER_ROW_MAPPER,
+                userId,
+                pageSize,
+                offset
+        );
+        return new Page<>(items, effectivePage, pageSize, total);
     }
 
     @Override
