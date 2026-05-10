@@ -8,32 +8,30 @@
 <c:if test="${not empty positives or not empty negatives}">
     <div class="recommendation-reason">
         <c:if test="${not empty positives}">
-            <ul class="recommendation-highlight-list">
+            <ul class="recommendation-rail-list">
                 <c:forEach var="highlight" items="${positives}">
                     <c:if test="${highlight.visible}">
-                        <li class="review-tag-chip review-tag-chip--display recommendation-highlight ${highlight.tierClass}">
-                            <span class="recommendation-highlight-emoji recommendation-highlight-emoji--tier" aria-hidden="true"><c:out value="${highlight.tierEmoji}"/></span>
-                            <c:set var="recTagEmojiKey" value="review.tag.emoji.${highlight.tag.code}"/>
-                            <spring:message code="review.tag.emoji.fallback" var="recTagEmojiFallback" text="🏷️"/>
-                            <spring:message code="${recTagEmojiKey}" var="recTagEmojiDisplay" text="${recTagEmojiFallback}"/>
-                            <span class="recommendation-highlight-emoji recommendation-highlight-emoji--topic" aria-hidden="true"><c:out value="${recTagEmojiDisplay}"/></span>
-                            <span class="recommendation-highlight-tag"><pa:review-tag-label tag="${highlight.tag}"/></span>
+                        <c:set var="recTagEmojiKey" value="review.tag.emoji.${highlight.tag.code}"/>
+                        <spring:message code="review.tag.emoji.fallback" var="recTagEmojiFallback" text="🏷️"/>
+                        <spring:message code="${recTagEmojiKey}" var="recTagEmojiDisplay" text="${recTagEmojiFallback}"/>
+                        <li class="review-tag-chip review-tag-chip--display review-tag-chip--positive recommendation-rail-item">
+                            <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${recTagEmojiDisplay}"/></span>
+                            <span class="review-tag-chip-label"><pa:review-tag-label tag="${highlight.tag}"/></span>
                         </li>
                     </c:if>
                 </c:forEach>
             </ul>
         </c:if>
         <c:if test="${not empty negatives}">
-            <ul class="recommendation-highlight-list recommendation-highlight-list--warning">
+            <ul class="recommendation-rail-list recommendation-rail-list--negative">
                 <c:forEach var="highlight" items="${negatives}">
                     <c:if test="${highlight.visible}">
-                        <li class="review-tag-chip review-tag-chip--display recommendation-highlight ${highlight.tierClass}">
-                            <span class="recommendation-highlight-emoji recommendation-highlight-emoji--tier" aria-hidden="true"><c:out value="${highlight.tierEmoji}"/></span>
-                            <c:set var="recTagEmojiKey" value="review.tag.emoji.${highlight.tag.code}"/>
-                            <spring:message code="review.tag.emoji.fallback" var="recTagEmojiFallback" text="🏷️"/>
-                            <spring:message code="${recTagEmojiKey}" var="recTagEmojiDisplay" text="${recTagEmojiFallback}"/>
-                            <span class="recommendation-highlight-emoji recommendation-highlight-emoji--topic" aria-hidden="true"><c:out value="${recTagEmojiDisplay}"/></span>
-                            <span class="recommendation-highlight-tag"><pa:review-tag-label tag="${highlight.tag}"/></span>
+                        <c:set var="recTagEmojiKey" value="review.tag.emoji.${highlight.tag.code}"/>
+                        <spring:message code="review.tag.emoji.fallback" var="recTagEmojiFallback" text="🏷️"/>
+                        <spring:message code="${recTagEmojiKey}" var="recTagEmojiDisplay" text="${recTagEmojiFallback}"/>
+                        <li class="review-tag-chip review-tag-chip--display review-tag-chip--negative recommendation-rail-item">
+                            <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${recTagEmojiDisplay}"/></span>
+                            <span class="review-tag-chip-label"><pa:review-tag-label tag="${highlight.tag}"/></span>
                         </li>
                     </c:if>
                 </c:forEach>
