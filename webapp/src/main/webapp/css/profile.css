@@ -93,10 +93,11 @@
     cursor: pointer;
     font: inherit;
     padding: 0 0.35rem;
+    text-decoration: none;
 }
 
-.profile-stat-button[data-open-connections-modal]:hover,
-.profile-stat-button[data-open-connections-modal]:focus-visible {
+.profile-stat-button:hover,
+.profile-stat-button:focus-visible {
     background: var(--surface-container-high);
     border-color: var(--outline-variant);
     color: var(--on-surface);
