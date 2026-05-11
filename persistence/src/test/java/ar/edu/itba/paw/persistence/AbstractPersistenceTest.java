@@ -95,7 +95,7 @@ abstract class AbstractPersistenceTest {
                 username, email, password, role
         );
         final long id = jdbcTemplate.queryForObject("SELECT user_id FROM users WHERE email = ?", Long.class, email);
-        return new User(id, username, email, password, role, null);
+        return new User(id, username, email, password, role, "es", null);
     }
 
     protected Brand insertBrand(final String name) {

@@ -27,6 +27,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +53,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -75,6 +78,7 @@ public class ProfileController {
     private final UserService userService;
     private final UserFollowService userFollowService;
     private final AdminRequestService adminRequestService;
+    private final LocaleResolver localeResolver;
 
     @Autowired
     public ProfileController(
@@ -84,7 +88,8 @@ public class ProfileController {
         final CarFavoriteService carFavoriteService,
         final UserService userService,
         final UserFollowService userFollowService,
-        final AdminRequestService adminRequestService
+        final AdminRequestService adminRequestService,
+        final LocaleResolver localeResolver
     ) {
         this.reviewService = reviewService;
         this.reviewLikeService = reviewLikeService;
@@ -93,6 +98,7 @@ public class ProfileController {
         this.userService = userService;
         this.userFollowService = userFollowService;
         this.adminRequestService = adminRequestService;
+        this.localeResolver = localeResolver;
     }
 
     @InitBinder
@@ -208,6 +214,42 @@ public class ProfileController {
         }
     }
 
+    @RequestMapping(value = "/profile/language", method = RequestMethod.POST)
+    public ModelAndView updateOwnProfileLanguage(
+        @RequestParam("lang") final String language,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final HttpServletRequest request,
+        final HttpServletResponse response,
+        final RedirectAttributes redirectAttributes
+    ) {
+        if (currentUser == null) {
+            return new ModelAndView("redirect:/login");
+        }
+
+        try {
+            final User updatedUser = userService.updatePreferredLocale(
+                currentUser.getId(),
+                language
+            );
+            refreshAuthenticatedUser(currentUser, updatedUser);
+            localeResolver.setLocale(
+                request,
+                response,
+                Locale.forLanguageTag(updatedUser.getPreferredLocale())
+            );
+            redirectAttributes.addFlashAttribute(
+                "profileLanguageSuccessCode",
+                "profile.language.toast.success"
+            );
+        } catch (final InvalidServiceInputException | DataAccessException e) {
+            redirectAttributes.addFlashAttribute(
+                "profileLanguageErrorCode",
+                "profile.language.error"
+            );
+        }
+        return new ModelAndView("redirect:/profile");
+    }
+
     @RequestMapping(
         value = "/profiles/{userId}/follow",
         method = RequestMethod.POST
@@ -286,6 +328,7 @@ public class ProfileController {
             updatedUser.getUsername(),
             currentUser.getEmail(),
             currentUser.getPassword(),
+            updatedUser.getPreferredLocale(),
             currentUser.getAuthorities()
         );
         SecurityContextHolder.getContext().setAuthentication(
@@ -589,6 +632,7 @@ public class ProfileController {
             user.getId(),
             displayName(user),
             user.getEmail(),
+            user.getPreferredLocale(),
             initials(user),
             reviewCount,
             userFollowService.countFollowing(user.getId()),
@@ -710,6 +754,7 @@ public class ProfileController {
         private final long id;
         private final String name;
         private final String email;
+        private final String preferredLocale;
         private final String initials;
         private final long reviewCount;
         private final long followingCount;
@@ -719,6 +764,7 @@ public class ProfileController {
             final long id,
             final String name,
             final String email,
+            final String preferredLocale,
             final String initials,
             final long reviewCount,
             final long followingCount,
@@ -727,6 +773,7 @@ public class ProfileController {
             this.id = id;
             this.name = name;
             this.email = email;
+            this.preferredLocale = preferredLocale;
             this.initials = initials;
             this.reviewCount = reviewCount;
             this.followingCount = followingCount;
@@ -743,6 +790,10 @@ public class ProfileController {
 
         public String getEmail() {
             return email;
+        }
+
+        public String getPreferredLocale() {
+            return preferredLocale;
         }
 
         public String getInitials() {

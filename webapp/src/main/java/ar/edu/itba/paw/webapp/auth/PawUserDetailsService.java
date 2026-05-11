@@ -39,6 +39,7 @@ public class PawUserDetailsService implements UserDetailsService {
                 user.getUsername(),
                 user.getEmail(),
                 user.getPassword(),
+                user.getPreferredLocale(),
                 Collections.singletonList(new SimpleGrantedAuthority(toAuthority(user.getRole())))
         );
     }

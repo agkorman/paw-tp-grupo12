@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
@@ -74,9 +75,10 @@ public class WeeklyDigestServiceImplTest {
     @Test
     public void shouldSendModeratorDigestWithPendingRequestCount() {
         // Arrange
-        final List<List<String>> capturedRecipients = new ArrayList<>();
+        final List<List<EmailRecipient>> capturedRecipients = new ArrayList<>();
         final List<Integer> capturedPendingCounts = new ArrayList<>();
-        when(userService.getModeratorsEmails()).thenReturn(List.of("mod@example.com"));
+        final List<EmailRecipient> moderatorRecipients = List.of(new EmailRecipient("mod@example.com", "es"));
+        when(userService.getModeratorEmailRecipients()).thenReturn(moderatorRecipients);
         when(carRequestService.getCarRequestsByStatus(CarRequestService.STATUS_PENDING))
                 .thenReturn(List.of(new CarRequest(), new CarRequest()));
         when(userService.getAllUsers()).thenReturn(List.of());
@@ -84,13 +86,13 @@ public class WeeklyDigestServiceImplTest {
             capturedRecipients.add(invocation.getArgument(0));
             capturedPendingCounts.add(invocation.getArgument(1));
             return null;
-        }).when(emailService).sendWeeklyModeratorDigest(List.of("mod@example.com"), 2);
+        }).when(emailService).sendWeeklyModeratorDigest(moderatorRecipients, 2);
 
         // Exercise
         weeklyDigestService.sendWeeklyDigest();
 
         // Assertions
-        assertEquals(List.of(List.of("mod@example.com")), capturedRecipients);
+        assertEquals(List.of(moderatorRecipients), capturedRecipients);
         assertEquals(List.of(2), capturedPendingCounts);
     }
 
@@ -101,7 +103,7 @@ public class WeeklyDigestServiceImplTest {
         final List<List<EmailService.FavoriteActivityItem>> capturedFavoriteActivity = new ArrayList<>();
         final LocalDateTime recent = LocalDateTime.now().minusDays(1);
         final LocalDateTime old = LocalDateTime.now().minusDays(10);
-        when(userService.getModeratorsEmails()).thenReturn(List.of());
+        when(userService.getModeratorEmailRecipients()).thenReturn(List.of());
         when(userService.getAllUsers()).thenReturn(List.of(user()));
         when(reviewLikeService.countNewLikesPerReview(eq(USER_ID), any(LocalDateTime.class)))
                 .thenReturn(Map.of(REVIEW_ID, 3L));
@@ -155,7 +157,7 @@ public class WeeklyDigestServiceImplTest {
         // Arrange
         final List<List<EmailService.ReviewActivityItem>> capturedReviewActivity = new ArrayList<>();
         final List<List<EmailService.FavoriteActivityItem>> capturedFavoriteActivity = new ArrayList<>();
-        when(userService.getModeratorsEmails()).thenReturn(List.of());
+        when(userService.getModeratorEmailRecipients()).thenReturn(List.of());
         when(userService.getAllUsers()).thenReturn(List.of(user()));
         when(reviewLikeService.countNewLikesPerReview(eq(USER_ID), any(LocalDateTime.class)))
                 .thenReturn(Map.of());
@@ -182,7 +184,7 @@ public class WeeklyDigestServiceImplTest {
         // Arrange
         final List<List<EmailService.ReviewActivityItem>> capturedReviewActivity = new ArrayList<>();
         final List<List<EmailService.FavoriteActivityItem>> capturedFavoriteActivity = new ArrayList<>();
-        when(userService.getModeratorsEmails()).thenReturn(List.of());
+        when(userService.getModeratorEmailRecipients()).thenReturn(List.of());
         when(userService.getAllUsers()).thenReturn(List.of(user()));
         when(reviewLikeService.countNewLikesPerReview(eq(USER_ID), any(LocalDateTime.class)))
                 .thenReturn(Map.of(REVIEW_ID, 1L));

@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.EmailRecipient;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ public interface EmailService {
     void sendAdminRequestRejectedNotification(String recipientEmail);
     void sendReviewHiddenNotification(String recipientEmail, String reviewTitle, String carName,
                                       String moderatorReason);
-    void sendWeeklyModeratorDigest(List<String> moderatorEmails, int pendingRequestCount);
+    void sendWeeklyModeratorDigest(List<EmailRecipient> moderatorRecipients, int pendingRequestCount);
     void sendWeeklyUserDigest(String recipientEmail, String username,
                               List<ReviewActivityItem> reviewActivity,
                               List<FavoriteActivityItem> favoriteActivity);

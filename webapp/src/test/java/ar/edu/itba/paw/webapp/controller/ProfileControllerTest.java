@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.servlet.LocaleResolver;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -75,6 +76,9 @@ class ProfileControllerTest {
 
     @Mock
     private MessageSource messageSource;
+
+    @Mock
+    private LocaleResolver localeResolver;
 
     @InjectMocks
     private ProfileController controller;

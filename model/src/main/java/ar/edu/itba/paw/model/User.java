@@ -10,16 +10,23 @@ public class User implements Serializable {
     private String email;
     private String password;
     private String role;
+    private String preferredLocale;
     private LocalDateTime createdAt;
 
     public User() {}
 
     public User(long id, String username, String email, String password, String role, LocalDateTime createdAt) {
+        this(id, username, email, password, role, "es", createdAt);
+    }
+
+    public User(long id, String username, String email, String password, String role, String preferredLocale,
+                LocalDateTime createdAt) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
         this.role = role;
+        this.preferredLocale = preferredLocale;
         this.createdAt = createdAt;
     }
 
@@ -37,6 +44,9 @@ public class User implements Serializable {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public String getPreferredLocale() { return preferredLocale; }
+    public void setPreferredLocale(String preferredLocale) { this.preferredLocale = preferredLocale; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

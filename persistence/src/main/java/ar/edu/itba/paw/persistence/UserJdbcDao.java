@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +36,14 @@ public class UserJdbcDao implements UserDao {
             rs.getString("email"),
             rs.getString("password"),
             rs.getString("role"),
+            rs.getString("preferred_locale"),
             rs.getTimestamp("created_at").toLocalDateTime()
     );
+    private static final RowMapper<EmailRecipient> EMAIL_RECIPIENT_ROW_MAPPER = (rs, rowNum) ->
+            new EmailRecipient(
+                    rs.getString("email"),
+                    rs.getString("preferred_locale")
+            );
 
     @Autowired
     public UserJdbcDao(final DataSource dataSource) {
@@ -49,7 +56,7 @@ public class UserJdbcDao implements UserDao {
     @Override
     public Optional<User> findById(long id) {
         return jdbcTemplate.query(
-                "SELECT user_id, username, email, password, role, created_at FROM users WHERE user_id = ?",
+                "SELECT user_id, username, email, password, role, preferred_locale, created_at FROM users WHERE user_id = ?",
                 ROW_MAPPER, id
         ).stream().findFirst();
     }
@@ -57,7 +64,7 @@ public class UserJdbcDao implements UserDao {
     @Override
     public Optional<User> findByEmail(String email) {
         return jdbcTemplate.query(
-                "SELECT user_id, username, email, password, role, created_at FROM users WHERE LOWER(email) = LOWER(?)",
+                "SELECT user_id, username, email, password, role, preferred_locale, created_at FROM users WHERE LOWER(email) = LOWER(?)",
                 ROW_MAPPER, email
         ).stream().findFirst();
     }
@@ -65,7 +72,7 @@ public class UserJdbcDao implements UserDao {
     @Override
     public Optional<User> findByUsername(String username) {
         return jdbcTemplate.query(
-                "SELECT user_id, username, email, password, role, created_at FROM users WHERE LOWER(username) = LOWER(?)",
+                "SELECT user_id, username, email, password, role, preferred_locale, created_at FROM users WHERE LOWER(username) = LOWER(?)",
                 ROW_MAPPER, username
         ).stream().findFirst();
     }
@@ -77,6 +84,7 @@ public class UserJdbcDao implements UserDao {
         params.put("email", email);
         params.put("password", password);
         params.put("role", role);
+        params.put("preferred_locale", "es");
         params.put("created_at", Timestamp.valueOf(LocalDateTime.now()));
 
         long id = jdbcInsert.executeAndReturnKey(params).longValue();
@@ -109,24 +117,31 @@ public class UserJdbcDao implements UserDao {
     }
 
     @Override
+    public boolean updatePreferredLocale(final long userId, final String preferredLocale) {
+        final boolean updated = jdbcTemplate.update(
+                "UPDATE users SET preferred_locale = ? WHERE user_id = ?",
+                preferredLocale,
+                userId
+        ) > 0;
+        if (updated) {
+            LOGGER.info("updated user preferred locale id={} locale={}", userId, preferredLocale);
+        } else {
+            LOGGER.warn("user preferred locale update affected 0 rows id={}", userId);
+        }
+        return updated;
+    }
+
+    @Override
     public List<User> findAll() {
         return jdbcTemplate.query(
-                "SELECT user_id, username, email, password, role, created_at FROM users ORDER BY user_id",
+                "SELECT user_id, username, email, password, role, preferred_locale, created_at FROM users ORDER BY user_id",
                 ROW_MAPPER
         );
     }
 
     @Override
-    public List<String> findEmailsByRoles(final Collection<String> roles) {
-        if (roles == null || roles.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        final List<String> normalizedRoles = roles.stream()
-                .filter(role -> role != null && !role.trim().isEmpty())
-                .map(role -> role.trim().toLowerCase(Locale.ROOT))
-                .distinct()
-                .collect(Collectors.toList());
+    public List<EmailRecipient> findEmailRecipientsByRoles(final Collection<String> roles) {
+        final List<String> normalizedRoles = normalizeRoles(roles);
         if (normalizedRoles.isEmpty()) {
             return Collections.emptyList();
         }
@@ -135,10 +150,21 @@ public class UserJdbcDao implements UserDao {
                 .map(ignored -> "?")
                 .collect(Collectors.joining(", "));
 
-        return jdbcTemplate.queryForList(
-                "SELECT email FROM users WHERE LOWER(role) IN (" + placeholders + ") ORDER BY email",
-                String.class,
+        return jdbcTemplate.query(
+                "SELECT email, preferred_locale FROM users WHERE LOWER(role) IN (" + placeholders + ") ORDER BY email",
+                EMAIL_RECIPIENT_ROW_MAPPER,
                 normalizedRoles.toArray()
         );
+    }
+
+    private List<String> normalizeRoles(final Collection<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return roles.stream()
+                .filter(role -> role != null && !role.trim().isEmpty())
+                .map(role -> role.trim().toLowerCase(Locale.ROOT))
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

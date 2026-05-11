@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
@@ -284,6 +285,35 @@ public class UserServiceImplTest {
     }
 
     @Test
+    public void shouldUpdatePreferredLocaleWithSupportedLanguage() {
+        // Arrange
+        final User updated = new User(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user", "en",
+                LocalDateTime.now());
+        when(userDao.updatePreferredLocale(USER_ID, "en")).thenReturn(true);
+        when(userDao.findById(USER_ID)).thenReturn(Optional.of(updated));
+
+        // Exercise
+        final User result = userService.updatePreferredLocale(USER_ID, "  en-US ");
+
+        // Assertions
+        assertEquals(USER_ID, result.getId());
+        assertEquals("en", result.getPreferredLocale());
+    }
+
+    @Test
+    public void shouldRejectUnsupportedPreferredLocale() {
+        // Arrange
+        final String unsupportedLocale = "pt-BR";
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> userService.updatePreferredLocale(USER_ID, unsupportedLocale));
+
+        // Assertions
+        assertEquals("Unsupported preferred locale.", ex.getMessage());
+    }
+
+    @Test
     public void shouldRejectUpdateRoleWhenRoleIsBlank() {
         // Arrange
         final String blankRole = "   ";
@@ -297,16 +327,19 @@ public class UserServiceImplTest {
     }
 
     @Test
-    public void shouldReturnModeratorEmailsFromDao() {
+    public void shouldReturnModeratorEmailRecipientsFromDao() {
         // Arrange
-        final List<String> emails = List.of("a@x.com", "b@x.com");
-        when(userDao.findEmailsByRoles(List.of("moderator", "admin"))).thenReturn(emails);
+        final List<EmailRecipient> recipients = List.of(
+                new EmailRecipient("a@x.com", "es"),
+                new EmailRecipient("b@x.com", "en")
+        );
+        when(userDao.findEmailRecipientsByRoles(List.of("moderator", "admin"))).thenReturn(recipients);
 
         // Exercise
-        final List<String> result = userService.getModeratorsEmails();
+        final List<EmailRecipient> result = userService.getModeratorEmailRecipients();
 
         // Assertions
-        assertEquals(emails, result);
+        assertEquals(recipients, result);
     }
 
     @Test

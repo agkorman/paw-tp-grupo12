@@ -72,6 +72,28 @@
             <c:choose>
                 <c:when test="${ownProfile}">
                     <div class="profile-owner-actions">
+                        <c:url var="profileLanguageUrl" value="/profile/language"/>
+                        <spring:message var="profileLanguageLabel" code="profile.language.label"/>
+                        <form class="profile-language-form" method="post" action="${profileLanguageUrl}" novalidate="novalidate">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                            <label for="profileLanguage"><c:out value="${profileLanguageLabel}"/></label>
+                            <div class="profile-language-control">
+                                <select id="profileLanguage" name="lang" aria-label="${fn:escapeXml(profileLanguageLabel)}">
+                                    <option value="es" ${profile.preferredLocale eq 'es' ? 'selected' : ''}>
+                                        <spring:message code="profile.language.es"/>
+                                    </option>
+                                    <option value="en" ${profile.preferredLocale eq 'en' ? 'selected' : ''}>
+                                        <spring:message code="profile.language.en"/>
+                                    </option>
+                                </select>
+                                <button type="submit" class="btn-secondary profile-language-button">
+                                    <spring:message code="profile.language.save"/>
+                                </button>
+                            </div>
+                            <c:if test="${not empty profileLanguageErrorCode}">
+                                <p class="profile-language-error"><spring:message code="${profileLanguageErrorCode}"/></p>
+                            </c:if>
+                        </form>
                         <button type="button" class="btn-primary profile-action-button" data-open-edit-profile-modal><spring:message code="profile.settings"/></button>
                         <c:url var="logoutUrl" value="/logout"/>
                         <form class="profile-logout-form" method="post" action="${logoutUrl}" data-confirm-modal="logoutConfirmModal">
@@ -316,7 +338,8 @@
     <c:if test="${ownProfile}">
         <pa:moderator-application-modal/>
     </c:if>
-    <pa:toast messageCode="${submittedToastMessageCode}"/>
+    <c:set var="profileToastCode" value="${not empty profileLanguageSuccessCode ? profileLanguageSuccessCode : submittedToastMessageCode}"/>
+    <pa:toast messageCode="${profileToastCode}"/>
     <pa:script src="/js/reactions.js"/>
     <pa:script src="/js/enhanced-filters.js"/>
     <pa:script src="/js/action-menu.js"/>
