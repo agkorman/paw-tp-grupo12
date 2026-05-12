@@ -35,13 +35,12 @@
                 </aside>
             </div>
             <c:if test="${totalPages > 1}">
-                <c:url var="activityBaseUrl" value="/activity"/>
                 <jsp:useBean id="activityPaginationParams" class="java.util.LinkedHashMap"/>
                 <c:set target="${activityPaginationParams}" property="tab" value="${tab}"/>
                 <spring:message var="activityPaginationAria" code="activity.pagination.aria"/>
                 <pa:pagination currentPage="${currentPage}"
                                totalPages="${totalPages}"
-                               baseUrl="${activityBaseUrl}"
+                               baseUrl="/activity"
                                extraParams="${activityPaginationParams}"
                                fragment="${fn:escapeXml(panelId)}"
                                ariaLabel="${activityPaginationAria}"/>
