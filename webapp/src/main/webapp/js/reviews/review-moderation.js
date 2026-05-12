@@ -4,6 +4,7 @@
     var modal = document.querySelector('[data-hide-review-modal]');
     var form = document.getElementById('hideReviewForm');
     var reasonField = document.getElementById('hideReviewReason');
+    var redirectField = form ? form.querySelector('[data-hide-review-redirect]') : null;
     var errorNode = modal ? modal.querySelector('[data-hide-review-error]') : null;
 
     if (!modal || !form || !reasonField) {
@@ -50,6 +51,9 @@
 
     function openModal(button) {
         form.action = button.getAttribute('data-review-hide-action');
+        if (redirectField) {
+            redirectField.value = button.getAttribute('data-review-hide-redirect') || '';
+        }
         reasonField.value = '';
         clearError();
         setModalOpen(true);

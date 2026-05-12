@@ -262,16 +262,19 @@ public class CarReviewController {
         return "redirect:/reviews/car/" + car.getId() + "?reviewCreated=1";
     }
 
-    private ModelAndView carReviewPage(
+    private ModelAndView carReviewPageWithReplyError(
         final long carId,
         final String sort,
-        final String error,
+        final Integer page,
+        final long replyErrorReviewId,
+        final String replyErrorBody,
+        final String replyError,
         final AuthenticatedUser currentUser
     ) {
         final ReviewPageData pageData = resolveReviewPageData(
             carId,
             sort,
-            null,
+            page,
             currentUserId(currentUser)
         );
         if (pageData == null) {
@@ -283,10 +286,9 @@ public class CarReviewController {
         final ReviewForm reviewForm = new ReviewForm();
         reviewForm.setCarId(carId);
         mav.addObject("reviewForm", reviewForm);
-        if (error != null) {
-            mav.addObject("error", error);
-            mav.addObject("replyError", error);
-        }
+        mav.addObject("replyError", replyError);
+        mav.addObject("replyErrorReviewId", replyErrorReviewId);
+        mav.addObject("replyErrorBody", replyErrorBody);
         return mav;
     }
 
@@ -571,33 +573,40 @@ public class CarReviewController {
     public ModelAndView hideReview(
         @PathVariable("reviewId") final long reviewId,
         @RequestParam(value = "reason", required = false) final String reason,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
-        final String normalizedReason = ControllerUtils.normalize(reason);
-        if (validateReviewHideReason(normalizedReason) != null) {
-            return new ModelAndView("redirect:/cars");
-        }
-
         final Review review = reviewService
             .getReviewById(reviewId)
             .orElseThrow(() ->
                 new ResourceNotFoundException("Review", reviewId)
             );
         final long carId = review.getCarId();
+        final String defaultRedirect =
+            "/reviews/car/" + carId + "#review-" + reviewId;
+        final String safeRedirect = LoginRedirectUtils
+            .safeRedirect(redirect)
+            .orElse(defaultRedirect);
+        final String feedRedirect = "redirect:" + safeRedirect;
+
+        final String normalizedReason = ControllerUtils.normalize(reason);
+        if (validateReviewHideReason(normalizedReason) != null) {
+            return new ModelAndView(feedRedirect);
+        }
 
         if (!reviewService.hideReview(reviewId, normalizedReason)) {
             LOGGER.warn("hide review failed reviewId={}", reviewId);
-            return new ModelAndView("redirect:/reviews/car/" + carId);
+            return new ModelAndView(feedRedirect);
         }
         LOGGER.info(
             "admin id={} hid review id={}",
             currentUser.getId(),
             reviewId
         );
-        return new ModelAndView("redirect:/reviews/car/" + carId);
+        return new ModelAndView(feedRedirect);
     }
 
     @RequestMapping(
@@ -607,6 +616,8 @@ public class CarReviewController {
     public ModelAndView createReply(
         @PathVariable("reviewId") final long reviewId,
         @RequestParam(value = "body", required = false) final String body,
+        @RequestParam(value = "page", required = false) final Integer page,
+        @RequestParam(value = "sort", required = false) final String sort,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
@@ -622,9 +633,12 @@ public class CarReviewController {
 
         final String validationError = validateReplyInput(body);
         if (validationError != null) {
-            return carReviewPage(
+            return carReviewPageWithReplyError(
                 review.getCarId(),
-                null,
+                sort,
+                page,
+                reviewId,
+                body,
                 validationError,
                 currentUser
             );
@@ -636,12 +650,18 @@ public class CarReviewController {
             currentUser.getId(),
             reviewId
         );
-        return new ModelAndView(
-            "redirect:/reviews/car/" +
-                review.getCarId() +
-                "#review-" +
-                reviewId
-        );
+        final StringBuilder target = new StringBuilder("redirect:/reviews/car/")
+            .append(review.getCarId());
+        boolean hasQuery = false;
+        if (page != null && page > 1) {
+            target.append("?page=").append(page);
+            hasQuery = true;
+        }
+        if (sort != null && !sort.isBlank()) {
+            target.append(hasQuery ? "&" : "?").append("sort=").append(sort);
+        }
+        target.append("#review-").append(reviewId);
+        return new ModelAndView(target.toString());
     }
 
     @RequestMapping(

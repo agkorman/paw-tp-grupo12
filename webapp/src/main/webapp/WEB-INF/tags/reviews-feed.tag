@@ -43,9 +43,6 @@
             </form>
         </div>
     </div>
-    <c:if test="${not empty replyError}">
-        <div class="alert alert-error" role="alert"><c:out value="${replyError}"/></div>
-    </c:if>
     <c:choose>
         <c:when test="${empty reviewThreads}">
             <div class="empty-state">
@@ -58,8 +55,18 @@
                     <c:set var="review" value="${thread.review}"/>
                     <c:url var="reviewLikeUrl" value="/reviews/${review.id}/like"/>
                     <c:url var="replyCreateUrl" value="/reviews/${review.id}/replies"/>
+                    <c:url var="reviewsContextUrl" value="/reviews/car/${carId}">
+                        <c:if test="${not empty currentPage and currentPage > 1}">
+                            <c:param name="page" value="${currentPage}"/>
+                        </c:if>
+                        <c:if test="${not empty currentSort}">
+                            <c:param name="sort" value="${currentSort}"/>
+                        </c:if>
+                    </c:url>
+                    <c:set var="reviewItemRedirect" value="${reviewsContextUrl}#review-${review.id}"/>
+                    <c:set var="reviewFeedRedirect" value="${reviewsContextUrl}#reviewsFeed"/>
                     <c:url var="reviewEditPageUrl" value="/reviews/${review.id}/edit">
-                        <c:param name="redirect" value="/reviews/car/${carId}#review-${review.id}"/>
+                        <c:param name="redirect" value="${reviewItemRedirect}"/>
                     </c:url>
                     <c:url var="reviewDeleteUrl" value="/reviews/${review.id}/delete"/>
                     <c:url var="reviewHideUrl" value="/reviews/${review.id}/hide"/>
@@ -78,7 +85,7 @@
                                                 <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
                                                       data-confirm-modal="deleteReviewConfirmModal">
                                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                                    <input type="hidden" name="redirect" value="/reviews/car/${carId}#reviewsFeed">
+                                                    <input type="hidden" name="redirect" value="${fn:escapeXml(reviewFeedRedirect)}">
                                                     <button type="submit" class="action-menu-danger">
                                                         <spring:message code="common.action.delete"/>
                                                     </button>
@@ -93,6 +100,7 @@
                                                     data-open-hide-review-modal
                                                     data-review-id="${fn:escapeXml(review.id)}"
                                                     data-review-hide-action="${fn:escapeXml(reviewHideUrl)}"
+                                                    data-review-hide-redirect="${fn:escapeXml(reviewItemRedirect)}"
                                                     data-review-title="${fn:escapeXml(review.title)}">
                                                 <pa:icon name="visibility-off" size="18"/>
                                             </button>
@@ -108,7 +116,7 @@
                                             <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
                                                   data-confirm-modal="deleteReviewConfirmModal">
                                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                                <input type="hidden" name="redirect" value="/reviews/car/${carId}#reviewsFeed">
+                                                <input type="hidden" name="redirect" value="${fn:escapeXml(reviewFeedRedirect)}">
                                                 <button type="submit" class="action-menu-danger">
                                                     <spring:message code="common.action.delete"/>
                                                 </button>
@@ -158,16 +166,29 @@
                             </c:if>
                             <c:choose>
                                 <c:when test="${authenticated}">
+                                    <c:set var="replyHasError" value="${not empty replyErrorReviewId and replyErrorReviewId eq review.id}"/>
+                                    <spring:message var="replyRequiredMessage" code="review.reply.body.required"/>
+                                    <spring:message var="replyMaxMessage" code="review.reply.body.max" arguments="1000"/>
                                     <form method="post" action="${replyCreateUrl}" class="review-reply-form"
                                           data-auth-resume-intent="reply-${review.id}"
+                                          data-reply-required-message="${fn:escapeXml(replyRequiredMessage)}"
+                                          data-reply-max-message="${fn:escapeXml(replyMaxMessage)}"
                                           novalidate="novalidate">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                        <c:if test="${not empty currentPage and currentPage > 1}">
+                                            <input type="hidden" name="page" value="${currentPage}">
+                                        </c:if>
+                                        <c:if test="${not empty currentSort}">
+                                            <input type="hidden" name="sort" value="${fn:escapeXml(currentSort)}">
+                                        </c:if>
                                         <label for="replyBody-${review.id}"><spring:message code="review.feed.reply"/></label>
                                         <div class="review-reply-form-row">
                                             <textarea id="replyBody-${review.id}" name="body" rows="2" maxlength="1000" required
-                                                      placeholder="${replyPlaceholder}"></textarea>
+                                                      placeholder="${replyPlaceholder}"
+                                                      class="${replyHasError ? 'is-invalid' : ''}"><c:if test="${replyHasError}"><c:out value="${replyErrorBody}"/></c:if></textarea>
                                             <button type="submit" class="btn-secondary"><spring:message code="review.feed.reply"/></button>
                                         </div>
+                                        <span class="client-form-error" data-reply-error <c:if test="${not replyHasError}">hidden</c:if>><c:if test="${replyHasError}"><c:out value="${replyError}"/></c:if></span>
                                     </form>
                                 </c:when>
                                 <c:otherwise>

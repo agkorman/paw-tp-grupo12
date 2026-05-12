@@ -31,6 +31,7 @@
               data-reason-min-message="${fn:escapeXml(reasonMinMessage)}"
               data-reason-max-message="${fn:escapeXml(reasonMaxMessage)}">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+            <input type="hidden" name="redirect" value="" data-hide-review-redirect>
             <p class="modal-subtitle"><spring:message code="review.hide.body"/></p>
             <div class="modal-field modal-field-wide">
                 <label for="hideReviewReason"><spring:message code="review.hide.reason.label"/></label>
