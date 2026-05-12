@@ -38,9 +38,14 @@
             criteria="${criteria}"/>
     <pa:auth-required-modal/>
 
-    <c:if test="${showSubmittedToast}">
-        <pa:toast messageCode="${submittedToastMessageCode}"/>
-    </c:if>
+    <c:choose>
+        <c:when test="${showSubmittedToast}">
+            <pa:toast messageCode="${submittedToastMessageCode}"/>
+        </c:when>
+        <c:otherwise>
+            <pa:toast/>
+        </c:otherwise>
+    </c:choose>
 
     <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:script src="/js/cars/cars-filters-panel.js"/>

@@ -492,7 +492,6 @@
                     var pos = valueToPos(v);
                     var maxLow = parseFloat(highThumb.value) - inputStep(lowThumb);
                     lowThumb.value = snapToSliderStep(lowThumb, Math.min(Math.max(pos, min), maxLow));
-                    syncLowInputFromThumb();
                     updateFill();
                 }
                 clearValidationErrors();
@@ -514,7 +513,6 @@
                     var pos = valueToPos(v);
                     var minHigh = parseFloat(lowThumb.value) + inputStep(highThumb);
                     highThumb.value = snapToSliderStep(highThumb, Math.max(Math.min(pos, max), minHigh));
-                    syncHighInputFromThumb();
                     updateFill();
                 }
                 clearValidationErrors();
@@ -815,9 +813,17 @@
         toolbarForm.submit();
     }
 
+    function showInvalidToast() {
+        var toastMsg = panel.getAttribute('data-msg-invalid-toast');
+        if (toastMsg && window.PawToast && typeof window.PawToast.show === 'function') {
+            window.PawToast.show(toastMsg, 'error');
+        }
+    }
+
     function submitWithPanelFilters() {
         var panelParams = collectPanelParams();
         if (!validatePanelParams(panelParams, true)) {
+            showInvalidToast();
             return;
         }
         injectPanelParamsIntoForm(panelParams);
@@ -911,6 +917,19 @@
             submitToolbarForm();
         });
     }
+
+    // Toolbar submissions (body type, brand, sort, search) must preserve
+    // advanced filters that were applied previously through the panel.
+    toolbarForm.addEventListener('submit', function (event) {
+        var panelParams = collectPanelParams();
+        if (!validatePanelParams(panelParams, false)) {
+            event.preventDefault();
+            showInvalidToast();
+            return;
+        }
+        injectPanelParamsIntoForm(panelParams);
+        syncFiltersToggleState(panelParams);
+    });
 
     syncFiltersToggleState(collectPanelParams());
     updateConsumptionFilterVisibility();

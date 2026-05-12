@@ -18,6 +18,7 @@
 <spring:message var="horsepowerOrderInvalidMsg" code="js.cars.filters.horsepower.order"/>
 <spring:message var="consumptionRangeInvalidMsg" code="js.cars.filters.consumption.range"/>
 <spring:message var="speedRangeInvalidMsg" code="js.cars.filters.speed.range"/>
+<spring:message var="invalidToastMsg" code="js.cars.filters.invalid.toast"/>
 <c:set var="electricOnlyFilter" value="${criteria.electricOnly}"/>
 <div id="carsFiltersOverlay" class="cars-filters-overlay" data-close-filters-panel></div>
 
@@ -37,7 +38,8 @@
        data-msg-horsepower-range="${fn:escapeXml(horsepowerRangeInvalidMsg)}"
        data-msg-horsepower-order="${fn:escapeXml(horsepowerOrderInvalidMsg)}"
        data-msg-consumption-range="${fn:escapeXml(consumptionRangeInvalidMsg)}"
-       data-msg-speed-range="${fn:escapeXml(speedRangeInvalidMsg)}">
+       data-msg-speed-range="${fn:escapeXml(speedRangeInvalidMsg)}"
+       data-msg-invalid-toast="${fn:escapeXml(invalidToastMsg)}">
 
     <div class="cars-filters-panel-inner">
 
