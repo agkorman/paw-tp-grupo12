@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Repository
 public class UserJdbcDao implements UserDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserJdbcDao.class);

@@ -14,7 +14,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
+public class ReviewDaoTest extends AbstractPersistenceTest {
 
     @Test
     public void shouldCreateReviewAndAttachReviewerUsernameWhenFindingById() {
