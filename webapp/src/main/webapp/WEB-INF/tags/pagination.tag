@@ -21,6 +21,8 @@
     <c:if test="${windowEnd > totalPages}"><c:set var="windowEnd" value="${totalPages}"/></c:if>
 
     <spring:message var="defaultPaginationLabel" code="common.pagination.aria"/>
+    <spring:message var="previousActionLabel" code="common.action.previous"/>
+    <spring:message var="nextActionLabel" code="common.action.next"/>
     <nav class="pagination" aria-label="${empty ariaLabel ? defaultPaginationLabel : ariaLabel}">
         <ul class="pagination-list">
             <c:set var="prevPage" value="${safeCurrentPage - 1}"/>
@@ -41,7 +43,7 @@
                             <c:param name="${resolvedPageParam}" value="${prevPage}"/>
                         </c:url>
                         <a class="pagination-link" href="${prevHref}${empty fragment ? '' : '#'.concat(fragment)}" rel="prev"
-                           aria-label="Anterior">«</a>
+                           aria-label="${fn:escapeXml(previousActionLabel)}">«</a>
                     </c:otherwise>
                 </c:choose>
             </li>
@@ -125,7 +127,7 @@
                             <c:param name="${resolvedPageParam}" value="${nextPage}"/>
                         </c:url>
                         <a class="pagination-link" href="${nextHref}${empty fragment ? '' : '#'.concat(fragment)}" rel="next"
-                           aria-label="Siguiente">»</a>
+                           aria-label="${fn:escapeXml(nextActionLabel)}">»</a>
                     </c:otherwise>
                 </c:choose>
             </li>
