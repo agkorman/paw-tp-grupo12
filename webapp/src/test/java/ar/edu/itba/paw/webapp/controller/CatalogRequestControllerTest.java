@@ -101,10 +101,10 @@ class CatalogRequestControllerTest {
                     mockMvc.perform(
                             post("/brand-requests")
                                     .with(ControllerTestMvcSupport.authenticationPrincipalRequestPostProcessor())
-                                    .header("Referer", "http://localhost/reviews")
+                                    .header("Referer", "http://localhost/reviews/car/42")
                                     .param("name", ""));
             // Assertions
-            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/reviews"));
+            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/reviews/car/42"));
         } finally {
             ControllerTestMvcSupport.clearSecurityContext();
         }

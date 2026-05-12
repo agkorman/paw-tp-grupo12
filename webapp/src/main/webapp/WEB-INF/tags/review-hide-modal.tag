@@ -8,15 +8,10 @@
 <spring:message var="reasonMinMessage" code="review.hide.reason.min" arguments="10"/>
 <spring:message var="reasonMaxMessage" code="review.hide.reason.max" arguments="600"/>
 <spring:message var="reasonPlaceholder" code="review.hide.reason.placeholder"/>
-<spring:message var="successMessage" code="review.hide.toast.success"/>
-<spring:message var="errorMessage" code="review.hide.toast.error"/>
-
 <div id="hideReviewModal"
      class="modal review-hide-modal"
      hidden
-     data-hide-review-modal
-     data-success-message="${fn:escapeXml(successMessage)}"
-     data-error-message="${fn:escapeXml(errorMessage)}">
+     data-hide-review-modal>
     <div class="modal-overlay" data-close-hide-review-modal></div>
     <section class="modal-dialog review-hide-dialog" role="dialog" aria-modal="true" aria-labelledby="hideReviewTitle">
         <header class="modal-header">

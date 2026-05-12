@@ -6,9 +6,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
-<c:url var="profileReviewUrl" value="/reviews">
-    <c:param name="carId" value="${reviewCard.review.carId}"/>
-</c:url>
+<c:url var="profileReviewUrl" value="/reviews/car/${reviewCard.review.carId}"/>
 <c:set var="profileReviewHref" value="${profileReviewUrl}#review-${reviewCard.review.id}"/>
 <c:url var="reviewEditPageUrl" value="/reviews/${reviewCard.review.id}/edit"/>
 <c:url var="reviewDeleteUrl" value="/reviews/${reviewCard.review.id}/delete"/>
@@ -53,13 +51,8 @@
                             <a href="${reviewEditPageUrl}">
                                 <spring:message code="common.action.edit"/>
                             </a>
-                            <spring:message var="deleteSuccessMsg" code="review.delete.toast.success"/>
-                            <spring:message var="deleteErrorMsg" code="review.delete.toast.error"/>
                             <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
-                                  data-review-delete-form
-                                  data-confirm-modal="deleteReviewConfirmModal"
-                                  data-delete-success="${fn:escapeXml(deleteSuccessMsg)}"
-                                  data-delete-error="${fn:escapeXml(deleteErrorMsg)}">
+                                  data-confirm-modal="deleteReviewConfirmModal">
                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <button type="submit" class="action-menu-danger">
                                     <spring:message code="common.action.delete"/>

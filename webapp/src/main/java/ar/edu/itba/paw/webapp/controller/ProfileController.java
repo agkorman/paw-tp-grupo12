@@ -36,8 +36,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,7 +46,6 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -254,22 +251,11 @@ public class ProfileController {
         value = "/profiles/{userId}/follow",
         method = RequestMethod.POST
     )
-    public Object toggleFollow(
+    public ModelAndView toggleFollow(
         @PathVariable("userId") final long userId,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String requestedWith,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
-        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
         if (currentUser == null) {
-            if (ajax) {
-                return new ResponseEntity<String>(
-                    "/login",
-                    HttpStatus.UNAUTHORIZED
-                );
-            }
             return new ModelAndView("redirect:/login");
         }
         if (userService.getUserById(userId).isEmpty()) {
@@ -277,19 +263,9 @@ public class ProfileController {
         }
 
         try {
-            final boolean following = userFollowService.toggleFollow(currentUser.getId(), userId);
-            if (ajax) {
-                final long followerCount = userFollowService.countFollowers(userId);
-                return new ResponseEntity<String>(
-                    following + "|" + followerCount,
-                    HttpStatus.OK
-                );
-            }
+            userFollowService.toggleFollow(currentUser.getId(), userId);
             return new ModelAndView("redirect:/profiles/" + userId);
         } catch (final Exception e) {
-            if (ajax) {
-                return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
-            }
             return new ModelAndView("redirect:/profile");
         }
     }

@@ -322,20 +322,6 @@ class CarControllerTest {
     }
 
     @Test
-    void updateFavorite_anonymous_ajaxRequest_returns401() throws Exception {
-        // Arrange
-        final MockMvc mockMvc = carMockMvc();
-        // Exercise
-        final ResultActions resultActions =
-                mockMvc.perform(
-                        post("/cars/1/favorite")
-                                .param("favorite", "true")
-                                .header("X-Requested-With", "XMLHttpRequest"));
-        // Assertions
-        resultActions.andExpect(status().isUnauthorized()).andExpect(content().string("/login"));
-    }
-
-    @Test
     void updateFavorite_anonymous_browserRequest_redirectsToLogin() throws Exception {
         // Arrange
         final MockMvc mockMvc = carMockMvc();
@@ -346,7 +332,7 @@ class CarControllerTest {
     }
 
     @Test
-    void updateFavorite_carNotFound_ajaxRequest_returns404() throws Exception {
+    void updateFavorite_carNotFound_redirectsToCars() throws Exception {
         // Arrange
         when(carService.getCarById(eq(1L))).thenReturn(Optional.empty());
         bindPrincipal(testUser());
@@ -355,22 +341,19 @@ class CarControllerTest {
             final MockMvc mockMvc = carMockMvc();
             // Exercise
             final ResultActions resultActions =
-                    mockMvc.perform(
-                            post("/cars/1/favorite")
-                                    .param("favorite", "true")
-                                    .header("X-Requested-With", "XMLHttpRequest"));
+                    mockMvc.perform(post("/cars/1/favorite").param("favorite", "true"));
             // Assertions
-            resultActions.andExpect(status().isNotFound());
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/cars"));
         } finally {
             clearSecurityContext();
         }
     }
 
     @Test
-    void updateFavorite_valid_ajaxRequest_returnsTrue() throws Exception {
+    void updateFavorite_valid_redirectsToReferer() throws Exception {
         // Arrange
         when(carService.getCarById(eq(1L))).thenReturn(Optional.of(aCar(1L)));
-        when(carFavoriteService.isFavorited(anyLong(), anyLong())).thenReturn(true);
         bindPrincipal(testUser());
 
         try {
@@ -380,9 +363,10 @@ class CarControllerTest {
                     mockMvc.perform(
                             post("/cars/1/favorite")
                                     .param("favorite", "true")
-                                    .header("X-Requested-With", "XMLHttpRequest"));
+                                    .header("Referer", "http://localhost/cars"));
             // Assertions
-            resultActions.andExpect(status().isOk()).andExpect(content().string("true"));
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/cars"));
         } finally {
             clearSecurityContext();
         }

@@ -1,6 +1,5 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="criteria" required="true" type="ar.edu.itba.paw.model.CarSearchCriteria" %>
-<%@ attribute name="vehicleCount" required="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -49,10 +48,6 @@
             </button>
         </div>
 
-        <%-- Hidden inputs to carry through existing basic filters --%>
-        <input type="hidden" id="panelHiddenQ"        name="q"        value="">
-        <input type="hidden" id="panelHiddenBrand"    name="brand"    value="">
-        <input type="hidden" id="panelHiddenBodyType" name="bodyType" value="">
         <p id="filtersPanelValidationMessage"
            class="filters-panel-validation-message"
            role="alert"
@@ -258,7 +253,7 @@
         <div class="cars-filters-footer">
             <button type="button" id="filtersClearBtn" class="filters-clear-btn"><spring:message code="cars.filter.clear"/></button>
             <button type="button" id="filtersApplyBtn" class="btn-primary filters-apply-btn">
-                <spring:message code="cars.filter.view"/> <span id="filtersVehicleCount"><c:out value="${vehicleCount}"/></span> <spring:message code="cars.filter.vehicles"/>
+                <spring:message code="cars.filter.apply"/>
             </button>
         </div>
 

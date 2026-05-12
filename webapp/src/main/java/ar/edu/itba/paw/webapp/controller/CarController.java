@@ -184,28 +184,6 @@ public class CarController {
         return "cars.jsp";
     }
 
-    @RequestMapping(value = "/cars/content", method = RequestMethod.GET)
-    public ModelAndView listCarsContent(
-        @ModelAttribute final CarSearchCriteria criteria,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
-    ) {
-        final CarCatalogData catalogData = resolveCatalogData(criteria);
-
-        final ModelAndView mav = new ModelAndView("cars-content.jsp");
-        mav.addObject("cars", catalogData.cars);
-        mav.addObject("reviewStatsByCarId", catalogData.reviewStatsByCarId);
-        mav.addObject(
-            "favoritedCarIds",
-            favoritedCarIdsById(catalogData.cars, currentUser)
-        );
-        mav.addObject("criteria", criteria);
-        mav.addObject("currentPage", catalogData.page.getPageNumber());
-        mav.addObject("totalPages", catalogData.page.getTotalPages());
-        mav.addObject("totalItems", catalogData.page.getTotalItems());
-        addShowSpecFlags(mav, criteria);
-        return mav;
-    }
-
     @RequestMapping(value = "/cars/new", method = RequestMethod.GET)
     public ModelAndView newCarRequest(
         @RequestParam(
@@ -358,13 +336,9 @@ public class CarController {
         value = "/cars/{carId}/favorite",
         method = RequestMethod.POST
     )
-    public Object updateFavorite(
+    public ModelAndView updateFavorite(
         @PathVariable("carId") final long carId,
         @RequestParam("favorite") final boolean favorite,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String requestedWith,
         @RequestHeader(
             value = "Referer",
             required = false
@@ -372,41 +346,19 @@ public class CarController {
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
-            if (ControllerUtils.isAjaxRequest(requestedWith)) {
-                return new ResponseEntity<String>(
-                    "/login",
-                    HttpStatus.UNAUTHORIZED
-                );
-            }
             return new ModelAndView("redirect:/login");
         }
         if (carService.getCarById(carId).isEmpty()) {
-            if (ControllerUtils.isAjaxRequest(requestedWith)) {
-                return new ResponseEntity<String>(
-                    message("error.car.notFound"),
-                    HttpStatus.NOT_FOUND
-                );
-            }
             return new ModelAndView("redirect:/cars");
         }
 
         carFavoriteService.setFavorite(currentUser.getId(), carId, favorite);
-        final boolean favorited = carFavoriteService.isFavorited(
-            currentUser.getId(),
-            carId
-        );
         LOGGER.info(
             "user id={} set favorite carId={} favorited={}",
             currentUser.getId(),
             carId,
-            favorited
+            favorite
         );
-        if (ControllerUtils.isAjaxRequest(requestedWith)) {
-            return new ResponseEntity<String>(
-                Boolean.toString(favorited),
-                HttpStatus.OK
-            );
-        }
         return new ModelAndView("redirect:" + safeRedirectPath(referer));
     }
 
@@ -518,7 +470,7 @@ public class CarController {
             if (
                 "/".equals(path) ||
                 "/cars".equals(path) ||
-                "/reviews".equals(path) ||
+                path.matches("/reviews/car/\\d+") ||
                 "/profile".equals(path) ||
                 path.matches("/profiles/\\d+")
             ) {

@@ -190,30 +190,6 @@ public class ReviewLikeServiceImplTest {
     }
 
     @Test
-    public void shouldReturnZeroLikesWhenDaoThrows() {
-        // Arrange
-        when(reviewLikeDao.countReviewLikes(REVIEW_ID)).thenThrow(new DataAccessResourceFailureException("db"));
-
-        // Exercise
-        final long result = reviewLikeService.countReviewLikes(REVIEW_ID);
-
-        // Assertions
-        assertEquals(0L, result);
-    }
-
-    @Test
-    public void shouldReturnDelegatedReviewLikeCount() {
-        // Arrange
-        when(reviewLikeDao.countReviewLikes(REVIEW_ID)).thenReturn(13L);
-
-        // Exercise
-        final long result = reviewLikeService.countReviewLikes(REVIEW_ID);
-
-        // Assertions
-        assertEquals(13L, result);
-    }
-
-    @Test
     public void shouldReturnEmptyMapWhenReviewIdsCollectionIsNull() {
         // Arrange
         final Collection<Long> reviewIds = null;
@@ -329,18 +305,6 @@ public class ReviewLikeServiceImplTest {
 
         // Exercise
         final long result = reviewLikeService.countLikedReviewsByUser(USER_ID);
-
-        // Assertions
-        assertEquals(0L, result);
-    }
-
-    @Test
-    public void shouldReturnZeroWhenDaoThrowsForCountReplyLikes() {
-        // Arrange
-        when(reviewLikeDao.countReplyLikes(REPLY_ID)).thenThrow(new DataAccessResourceFailureException("db"));
-
-        // Exercise
-        final long result = reviewLikeService.countReplyLikes(REPLY_ID);
 
         // Assertions
         assertEquals(0L, result);

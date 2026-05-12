@@ -252,44 +252,6 @@
     gap: var(--spacing-6);
 }
 
-.profile-show-more {
-    margin-top: 0.25rem;
-}
-
-.profile-collapsible-item {
-    min-width: 0;
-}
-
-.profile-collapsible-actions {
-    display: flex;
-    justify-content: center;
-}
-
-.collapsible-toggle {
-    appearance: none;
-    -webkit-appearance: none;
-    min-height: 2.5rem;
-    padding: 0.625rem 1.25rem;
-    border: 1px solid rgba(229, 226, 225, 0.22);
-    border-radius: var(--radius-md);
-    background: var(--surface-container-high);
-    color: var(--on-surface);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    transition: background 0.2s, border-color 0.2s, color 0.2s;
-}
-
-.collapsible-toggle:hover,
-.collapsible-toggle:focus-visible {
-    background: var(--surface-container-highest);
-    border-color: var(--primary);
-    color: var(--primary);
-}
-
 .profile-empty-state {
     padding: var(--spacing-8);
     background: var(--surface-container-low);

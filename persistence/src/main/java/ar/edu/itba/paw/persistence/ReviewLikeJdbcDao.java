@@ -73,11 +73,6 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
     }
 
     @Override
-    public long countReviewLikes(final long reviewId) {
-        return count("review_likes", "review_id", reviewId);
-    }
-
-    @Override
     public Map<Long, Long> countReviewLikesByReviewIds(final Collection<Long> reviewIds) {
         return countByIds("review_likes", "review_id", "reviewIds", reviewIds);
     }
@@ -160,11 +155,6 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
     @Override
     public boolean isReplyLikedByUser(final long replyId, final long userId) {
         return exists("review_reply_likes", "reply_id", replyId, userId);
-    }
-
-    @Override
-    public long countReplyLikes(final long replyId) {
-        return count("review_reply_likes", "reply_id", replyId);
     }
 
     @Override

@@ -380,14 +380,14 @@
     </c:if>
     <pa:toast messageCode="${submittedToastMessageCode}"/>
 
-    <pa:script src="/js/car-form.js"/>
+    <pa:script src="/js/cars/car-form.js"/>
     <c:if test="${catalogRequestLinksEnabled}">
-        <pa:script src="/js/modal-utils.js"/>
-        <pa:script src="/js/catalog-request-modal.js"/>
-        <pa:script src="/js/catalog-request-validation.js"/>
+        <pa:script src="/js/shared/modal-utils.js"/>
+        <pa:script src="/js/catalog/catalog-request-modal.js"/>
+        <pa:script src="/js/catalog/catalog-request-validation.js"/>
     </c:if>
-    <pa:script src="/js/form-submit-lock.js"/>
-    <pa:script src="/js/toast.js"/>
+    <pa:script src="/js/shared/form-submit-lock.js"/>
+    <pa:script src="/js/shared/toast.js"/>
     <pa:footer/>
 </body>
 </html>

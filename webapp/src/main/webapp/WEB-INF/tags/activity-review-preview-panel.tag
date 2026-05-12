@@ -7,8 +7,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
-<c:url var="activityReviewUrl" value="/reviews">
-    <c:param name="carId" value="${reviewCard.review.carId}"/>
+<c:url var="activityReviewUrl" value="/reviews/car/${reviewCard.review.carId}">
     <c:if test="${reviewCard.reviewPage gt 1}">
         <c:param name="page" value="${reviewCard.reviewPage}"/>
     </c:if>

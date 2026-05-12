@@ -5,7 +5,6 @@
     var toggleBtn    = document.getElementById('filtersToggleBtn');
     var applyBtn     = document.getElementById('filtersApplyBtn');
     var clearBtn     = document.getElementById('filtersClearBtn');
-    var countDisplay = document.getElementById('filtersVehicleCount');
     var toolbarForm  = document.getElementById('car-filter-form');
     var panelValidationMessage = document.getElementById('filtersPanelValidationMessage');
     var hpError = document.getElementById('panelHpError');
@@ -14,7 +13,6 @@
     var consumptionSection = document.getElementById('panelConsumptionSection');
     var consumptionSlider = document.getElementById('panelConsumptionSlider');
     var fuelConsumptionSubsection = document.getElementById('panelFuelConsumptionSubsection');
-    var previewSubmitTimer = null;
     var INVALID_PARAM = '__invalid__';
 
     if (!panel || !toolbarForm) {
@@ -24,7 +22,6 @@
     /* ── OPEN / CLOSE ── */
 
     function openPanel() {
-        syncHiddenFieldsFromToolbar();
         clearValidationErrors();
         panel.removeAttribute('hidden');
         panel.classList.add('is-open');
@@ -34,7 +31,6 @@
     }
 
     function closePanel() {
-        window.clearTimeout(previewSubmitTimer);
         panel.classList.remove('is-open');
         if (overlay) { overlay.classList.remove('is-visible'); }
         if (toggleBtn) {
@@ -64,20 +60,6 @@
         if (openTrigger && openTrigger !== toggleBtn)  { openPanel();  }
     });
 
-    /* ── SYNC TOOLBAR → PANEL HIDDEN FIELDS ── */
-
-    function syncHiddenFieldsFromToolbar() {
-        var searchInput = document.getElementById('cars-toolbar-search');
-        var brandSelect = document.getElementById('filter-brand');
-        var bodySelect  = document.getElementById('filter-body');
-        var hiddenQ        = document.getElementById('panelHiddenQ');
-        var hiddenBrand    = document.getElementById('panelHiddenBrand');
-        var hiddenBodyType = document.getElementById('panelHiddenBodyType');
-        if (hiddenQ && searchInput)       { hiddenQ.value        = searchInput.value; }
-        if (hiddenBrand && brandSelect)   { hiddenBrand.value    = brandSelect.value; }
-        if (hiddenBodyType && bodySelect) { hiddenBodyType.value = bodySelect.value; }
-    }
-
     /* ── UNIFIED FILTER GROUP HANDLER (chips + segmented controls) ── */
 
     panel.addEventListener('click', function (event) {
@@ -106,7 +88,6 @@
         }
         updateConsumptionFilterVisibility();
         clearValidationErrors();
-        schedulePreviewSubmit();
     });
 
     /* ── SINGLE-RANGE SLIDERS with "Hasta / Desde" display ── */
@@ -613,7 +594,6 @@
     /* ── INJECT / REMOVE PANEL PARAMS IN TOOLBAR FORM ── */
 
     var PANEL_PARAM_KEYS = [
-        'q', 'brand', 'bodyType',
         'yearMin', 'yearMax', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
         'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
@@ -825,38 +805,25 @@
         return true;
     }
 
-    /* ── LIVE PREVIEW / APPLY ── */
+    /* ── APPLY ── */
 
-    function submitWithPanelFilters(closeAfterSubmit) {
-        syncHiddenFieldsFromToolbar();
+    function submitToolbarForm() {
+        if (typeof toolbarForm.requestSubmit === 'function') {
+            toolbarForm.requestSubmit();
+            return;
+        }
+        toolbarForm.submit();
+    }
+
+    function submitWithPanelFilters() {
         var panelParams = collectPanelParams();
-        if (!validatePanelParams(panelParams, closeAfterSubmit)) {
+        if (!validatePanelParams(panelParams, true)) {
             return;
         }
         injectPanelParamsIntoForm(panelParams);
         syncFiltersToggleState(panelParams);
-        if (!closeAfterSubmit) {
-            toolbarForm.dataset.skipNextScroll = 'true';
-            toolbarForm.dataset.suppressFallbackSubmit = 'true';
-            toolbarForm.dataset.quietLoading = 'true';
-        }
-        toolbarForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-        if (closeAfterSubmit) {
-            closePanel();
-        }
-    }
-
-    function schedulePreviewSubmit() {
-        if (!panel.classList.contains('is-open')) {
-            return;
-        }
-        window.clearTimeout(previewSubmitTimer);
-        previewSubmitTimer = window.setTimeout(function () {
-            if (!panel.classList.contains('is-open')) {
-                return;
-            }
-            submitWithPanelFilters(false);
-        }, 350);
+        closePanel();
+        submitToolbarForm();
     }
 
     panel.addEventListener('input', function (event) {
@@ -865,7 +832,6 @@
             return;
         }
         clearValidationErrors();
-        schedulePreviewSubmit();
     });
 
     panel.addEventListener('change', function (event) {
@@ -873,13 +839,12 @@
         if (!target || !target.matches('.range-number-input')) {
             return;
         }
-        schedulePreviewSubmit();
+        clearValidationErrors();
     });
 
     if (applyBtn) {
         applyBtn.addEventListener('click', function () {
-            window.clearTimeout(previewSubmitTimer);
-            submitWithPanelFilters(true);
+            submitWithPanelFilters();
         });
     }
 
@@ -942,19 +907,9 @@
             resetPanel();
             removePanelParamsFromForm();
             syncFiltersToggleState({});
-            toolbarForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
             closePanel();
+            submitToolbarForm();
         });
-    }
-
-    /* ── SYNC VEHICLE COUNT FROM TOOLBAR ── */
-
-    var toolbarCount = document.querySelector('.cars-toolbar-count');
-    if (toolbarCount && countDisplay) {
-        new MutationObserver(function () {
-            var match = (toolbarCount.textContent || '').match(/(\d+)/);
-            if (match) { countDisplay.textContent = match[1]; }
-        }).observe(toolbarCount, { childList: true, subtree: true, characterData: true });
     }
 
     syncFiltersToggleState(collectPanelParams());

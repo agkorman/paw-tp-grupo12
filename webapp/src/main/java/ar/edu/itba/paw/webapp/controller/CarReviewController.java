@@ -33,8 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -44,7 +42,6 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -115,9 +112,9 @@ public class CarReviewController {
         binder.addValidators(reviewFormValidator);
     }
 
-    @RequestMapping(value = "/reviews", method = RequestMethod.GET)
+    @RequestMapping(value = "/reviews/car/{carId}", method = RequestMethod.GET)
     public String reviewForm(
-        @RequestParam(value = "carId", required = false) final Long carId,
+        @PathVariable("carId") final Long carId,
         @RequestParam(value = "sort", required = false) final String sort,
         @RequestParam(value = "page", required = false) final Integer page,
         @RequestParam(
@@ -128,9 +125,6 @@ public class CarReviewController {
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
         final Model model
     ) {
-        if (carId == null) {
-            return "redirect:/cars";
-        }
         if ("true".equalsIgnoreCase(reviewFormParam)) {
             return "redirect:/reviews/new?carId=" + carId;
         }
@@ -201,37 +195,6 @@ public class CarReviewController {
         return mav;
     }
 
-    @RequestMapping(value = "/reviews/feed", method = RequestMethod.GET)
-    public ModelAndView reviewFeed(
-        @RequestParam("carId") final long carId,
-        @RequestParam(value = "sort", required = false) final String sort,
-        @RequestParam(value = "page", required = false) final Integer page,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
-    ) {
-        final ReviewPageData pageData = resolveReviewPageData(
-            carId,
-            sort,
-            page,
-            currentUserId(currentUser)
-        );
-        if (pageData == null) {
-            throw new ResourceNotFoundException(
-                "El auto referenciado no existe."
-            );
-        }
-
-        final ModelAndView mav = new ModelAndView("reviews-feed-fragment.jsp");
-        mav.addObject("selectedCar", pageData.selectedCar);
-        mav.addObject("reviews", pageData.reviews);
-        mav.addObject("reviewThreads", pageData.reviewThreads);
-        mav.addObject("currentSort", pageData.currentSort);
-        mav.addObject("currentPage", pageData.currentPage);
-        mav.addObject("totalPages", pageData.totalPages);
-        mav.addObject("totalItems", pageData.totalItems);
-        mav.addObject("currentUserId", currentUserId(currentUser));
-        return mav;
-    }
-
     @RequestMapping(value = "/reviews", method = RequestMethod.POST)
     public String createReview(
         @Valid @ModelAttribute("reviewForm") final ReviewForm reviewForm,
@@ -296,7 +259,7 @@ public class CarReviewController {
             return "review-form.jsp";
         }
 
-        return "redirect:/reviews?carId=" + car.getId() + "&reviewCreated=1";
+        return "redirect:/reviews/car/" + car.getId() + "?reviewCreated=1";
     }
 
     private ModelAndView carReviewPage(
@@ -529,7 +492,9 @@ public class CarReviewController {
             );
         reviewForm.setCarId(existingReview.getCarId());
 
-        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect).orElse("/profile");
+        final String defaultRedirect =
+            "/reviews/car/" + existingReview.getCarId() + "#review-" + reviewId;
+        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect).orElse(defaultRedirect);
 
         if (errors.hasErrors()) {
             model.addAttribute("selectedCar", car);
@@ -577,17 +542,12 @@ public class CarReviewController {
         value = "/reviews/{reviewId}/delete",
         method = RequestMethod.POST
     )
-    public Object deleteReview(
+    public ModelAndView deleteReview(
         @PathVariable("reviewId") final long reviewId,
         @RequestParam(value = "redirect", required = false) final String redirect,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String requestedWith,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
-        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
-        reviewService.getReviewAndCheckAccess(
+        final Review existingReview = reviewService.getReviewAndCheckAccess(
             reviewId,
             currentUser.getId(),
             isAdmin(currentUser)
@@ -598,10 +558,9 @@ public class CarReviewController {
             currentUser.getId(),
             reviewId
         );
-        if (ajax) {
-            return new ResponseEntity<String>("ok", HttpStatus.OK);
-        }
-        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect).orElse("/profile");
+        final String defaultRedirect =
+            "/reviews/car/" + existingReview.getCarId() + "#reviewsFeed";
+        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect).orElse(defaultRedirect);
         return new ModelAndView("redirect:" + safeRedirect);
     }
 
@@ -609,37 +568,17 @@ public class CarReviewController {
         value = "/reviews/{reviewId}/hide",
         method = RequestMethod.POST
     )
-    public Object hideReview(
+    public ModelAndView hideReview(
         @PathVariable("reviewId") final long reviewId,
         @RequestParam(value = "reason", required = false) final String reason,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String requestedWith,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
-        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
         if (currentUser == null) {
-            if (ajax) {
-                return new ResponseEntity<String>(
-                    "/login",
-                    HttpStatus.UNAUTHORIZED
-                );
-            }
             return new ModelAndView("redirect:/login");
         }
         final String normalizedReason = ControllerUtils.normalize(reason);
-        final String validationError = validateReviewHideReason(
-            normalizedReason
-        );
-        if (validationError != null) {
-            if (ajax) {
-                return new ResponseEntity<String>(
-                    validationError,
-                    HttpStatus.BAD_REQUEST
-                );
-            }
-            return new ModelAndView("redirect:/reviews");
+        if (validateReviewHideReason(normalizedReason) != null) {
+            return new ModelAndView("redirect:/cars");
         }
 
         final Review review = reviewService
@@ -651,18 +590,14 @@ public class CarReviewController {
 
         if (!reviewService.hideReview(reviewId, normalizedReason)) {
             LOGGER.warn("hide review failed reviewId={}", reviewId);
-            return reviewHideError(ajax, carId);
+            return new ModelAndView("redirect:/reviews/car/" + carId);
         }
         LOGGER.info(
             "admin id={} hid review id={}",
             currentUser.getId(),
             reviewId
         );
-
-        if (ajax) {
-            return new ResponseEntity<String>("ok", HttpStatus.OK);
-        }
-        return new ModelAndView("redirect:/reviews?carId=" + carId);
+        return new ModelAndView("redirect:/reviews/car/" + carId);
     }
 
     @RequestMapping(
@@ -702,7 +637,7 @@ public class CarReviewController {
             reviewId
         );
         return new ModelAndView(
-            "redirect:/reviews?carId=" +
+            "redirect:/reviews/car/" +
                 review.getCarId() +
                 "#review-" +
                 reviewId
@@ -713,31 +648,17 @@ public class CarReviewController {
         value = "/reviews/{reviewId}/like",
         method = RequestMethod.POST
     )
-    public Object toggleReviewLike(
+    public ModelAndView toggleReviewLike(
         @PathVariable("reviewId") final long reviewId,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String requestedWith,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
-        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
         if (currentUser == null) {
-            if (ajax) {
-                return new ResponseEntity<String>(
-                    "/login",
-                    HttpStatus.UNAUTHORIZED
-                );
-            }
             return new ModelAndView("redirect:/login");
         }
 
         final Review review = reviewService
             .getReviewById(reviewId)
-            .orElse(null);
-        if (review == null) {
-            throw new ResourceNotFoundException("Review", reviewId);
-        }
+            .orElseThrow(() -> new ResourceNotFoundException("Review", reviewId));
 
         final boolean liked = reviewLikeService.toggleReviewLike(
             reviewId,
@@ -749,15 +670,8 @@ public class CarReviewController {
             reviewId,
             liked
         );
-        if (ajax) {
-            final long count = reviewLikeService.countReviewLikes(reviewId);
-            return new ResponseEntity<String>(
-                liked + "|" + count,
-                HttpStatus.OK
-            );
-        }
         return new ModelAndView(
-            "redirect:/reviews?carId=" +
+            "redirect:/reviews/car/" +
                 review.getCarId() +
                 "#review-" +
                 reviewId
@@ -768,31 +682,17 @@ public class CarReviewController {
         value = "/reviews/replies/{replyId}/like",
         method = RequestMethod.POST
     )
-    public Object toggleReplyLike(
+    public ModelAndView toggleReplyLike(
         @PathVariable("replyId") final long replyId,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String requestedWith,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
-        final boolean ajax = ControllerUtils.isAjaxRequest(requestedWith);
         if (currentUser == null) {
-            if (ajax) {
-                return new ResponseEntity<String>(
-                    "/login",
-                    HttpStatus.UNAUTHORIZED
-                );
-            }
             return new ModelAndView("redirect:/login");
         }
 
         final ReviewReply reply = reviewReplyService
             .getReplyById(replyId)
-            .orElse(null);
-        if (reply == null) {
-            throw new ResourceNotFoundException("Review reply", replyId);
-        }
+            .orElseThrow(() -> new ResourceNotFoundException("Review reply", replyId));
         final Review review = reviewService
             .getReviewById(reply.getReviewId())
             .orElseThrow(() ->
@@ -809,29 +709,12 @@ public class CarReviewController {
             replyId,
             liked
         );
-        if (ajax) {
-            final long count = reviewLikeService.countReplyLikes(replyId);
-            return new ResponseEntity<String>(
-                liked + "|" + count,
-                HttpStatus.OK
-            );
-        }
         return new ModelAndView(
-            "redirect:/reviews?carId=" +
+            "redirect:/reviews/car/" +
                 review.getCarId() +
                 "#review-" +
                 review.getId()
         );
-    }
-
-    private Object reviewHideError(final boolean ajax, final long carId) {
-        if (ajax) {
-            return new ResponseEntity<String>(
-                message("review.hide.toast.error"),
-                HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
-        return new ModelAndView("redirect:/reviews?carId=" + carId);
     }
 
     private String validateReviewHideReason(final String reason) {

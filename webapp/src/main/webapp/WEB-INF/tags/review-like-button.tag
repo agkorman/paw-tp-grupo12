@@ -41,17 +41,11 @@
                 <form method="post"
                       action="${fn:escapeXml(action)}"
                       class="review-like-form"
-                      data-enhanced-review-like="true"
                       data-auth-resume-intent="like-${fn:escapeXml(reviewId)}">
                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <button
                             type="submit"
                             class="review-like-toggle ${liked ? 'is-active' : ''}"
-                            data-review-like-toggle
-                            data-review-id="${fn:escapeXml(reviewId)}"
-                            data-liked="${liked}"
-                            data-like-add-label="${fn:escapeXml(likeAddLabel)}"
-                            data-like-remove-label="${fn:escapeXml(likeRemoveLabel)}"
                             aria-pressed="${liked}"
                             aria-label="${liked ? likeRemoveLabel : likeAddLabel}">
                         <pa:icon name="heart" size="17"/>
@@ -66,11 +60,6 @@
         <button
                 type="button"
                 class="review-like-toggle ${liked ? 'is-active' : ''}"
-                data-review-like-toggle
-                data-review-id="${fn:escapeXml(reviewId)}"
-                data-liked="${liked}"
-                data-like-add-label="${fn:escapeXml(likeAddLabel)}"
-                data-like-remove-label="${fn:escapeXml(likeRemoveLabel)}"
                 aria-pressed="${liked}"
                 aria-label="${liked ? likeRemoveLabel : likeAddLabel}"
                 data-auth-resume-intent="like-${fn:escapeXml(reviewId)}"

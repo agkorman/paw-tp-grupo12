@@ -13,8 +13,6 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
-
-<c:url var="reviewsFeedUrl" value="/reviews/feed"/>
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 <spring:message var="reviewRepliesLabel" code="review.feed.replies.aria"/>
 <spring:message var="replyPlaceholder" code="review.feed.reply.placeholder"/>
@@ -22,10 +20,6 @@
 <spring:message var="likeLabel" code="review.like.label"/>
 <spring:message var="reviewActionMenuLabel" code="review.actionMenu.open"/>
 <spring:message var="reviewHideLabel" code="review.hide.action.aria"/>
-<spring:message var="reviewDeleteSuccessMsg" code="review.delete.toast.success"/>
-<spring:message var="reviewDeleteErrorMsg" code="review.delete.toast.error"/>
-<spring:message var="replyEmptyMsg" code="review.feed.reply.empty"/>
-<spring:message var="replyErrorMsg" code="review.feed.reply.error"/>
 <spring:message var="reviewAuthorFallback" code="review.author.fallback"/>
 
 <section id="reviewsFeed" class="reviews-feed">
@@ -38,21 +32,14 @@
             </c:choose>
         </span></h2>
         <div class="feed-header-actions">
-            <form method="get" action="<c:url value='/reviews'/>" class="review-sort-form"
-                  data-enhanced-filter="true"
-                  data-fragment-url="${reviewsFeedUrl}"
-                  data-target="#reviewsFeed"
-                  data-auto-submit="true">
-                <input type="hidden" name="carId" value="${carId}">
+            <form method="get" action="<c:url value='/reviews/car/${carId}'/>#reviewsFeed" class="review-sort-form">
                 <label class="review-sort-label" for="reviewSortSelect"><spring:message code="review.feed.sort"/></label>
                 <select id="reviewSortSelect" name="sort" class="review-sort-select">
                     <option value="" ${empty currentSort ? 'selected' : ''}><spring:message code="review.feed.sort.recent"/></option>
                     <option value="rating_desc" ${currentSort eq 'rating_desc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingDesc"/></option>
                     <option value="rating_asc" ${currentSort eq 'rating_asc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingAsc"/></option>
                 </select>
-                <noscript>
-                    <button type="submit" class="btn-secondary review-sort-submit"><spring:message code="common.action.apply"/></button>
-                </noscript>
+                <button type="submit" class="btn-secondary review-sort-submit"><spring:message code="common.action.apply"/></button>
             </form>
         </div>
     </div>
@@ -72,7 +59,7 @@
                     <c:url var="reviewLikeUrl" value="/reviews/${review.id}/like"/>
                     <c:url var="replyCreateUrl" value="/reviews/${review.id}/replies"/>
                     <c:url var="reviewEditPageUrl" value="/reviews/${review.id}/edit">
-                        <c:param name="redirect" value="/reviews?carId=${carId}"/>
+                        <c:param name="redirect" value="/reviews/car/${carId}#review-${review.id}"/>
                     </c:url>
                     <c:url var="reviewDeleteUrl" value="/reviews/${review.id}/delete"/>
                     <c:url var="reviewHideUrl" value="/reviews/${review.id}/hide"/>
@@ -89,12 +76,9 @@
                                                     <spring:message code="common.action.edit"/>
                                                 </a>
                                                 <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
-                                                      data-review-delete-form
-                                                      data-confirm-modal="deleteReviewConfirmModal"
-                                                      data-delete-success="${fn:escapeXml(reviewDeleteSuccessMsg)}"
-                                                      data-delete-error="${fn:escapeXml(reviewDeleteErrorMsg)}">
+                                                      data-confirm-modal="deleteReviewConfirmModal">
                                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                                    <input type="hidden" name="redirect" value="/reviews?carId=${carId}">
+                                                    <input type="hidden" name="redirect" value="/reviews/car/${carId}#reviewsFeed">
                                                     <button type="submit" class="action-menu-danger">
                                                         <spring:message code="common.action.delete"/>
                                                     </button>
@@ -122,11 +106,9 @@
                                                 <spring:message code="common.action.edit"/>
                                             </a>
                                             <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
-                                                  data-review-delete-form
-                                                  data-confirm-modal="deleteReviewConfirmModal"
-                                                  data-delete-success="${fn:escapeXml(reviewDeleteSuccessMsg)}"
-                                                  data-delete-error="${fn:escapeXml(reviewDeleteErrorMsg)}">
+                                                  data-confirm-modal="deleteReviewConfirmModal">
                                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                                <input type="hidden" name="redirect" value="/reviews/car/${carId}#reviewsFeed">
                                                 <button type="submit" class="action-menu-danger">
                                                     <spring:message code="common.action.delete"/>
                                                 </button>
@@ -177,11 +159,7 @@
                             <c:choose>
                                 <c:when test="${authenticated}">
                                     <form method="post" action="${replyCreateUrl}" class="review-reply-form"
-                                          data-enhanced-review-reply="true"
-                                          data-target="#reviewsFeed"
                                           data-auth-resume-intent="reply-${review.id}"
-                                          data-msg-empty="${fn:escapeXml(replyEmptyMsg)}"
-                                          data-msg-error="${fn:escapeXml(replyErrorMsg)}"
                                           novalidate="novalidate">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                         <label for="replyBody-${review.id}"><spring:message code="review.feed.reply"/></label>
@@ -194,7 +172,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <c:url var="replyLoginUrl" value="/login">
-                                        <c:param name="redirect" value="/reviews?carId=${carId}#review-${review.id}"/>
+                                        <c:param name="redirect" value="/reviews/car/${carId}#review-${review.id}"/>
                                         <c:param name="intent" value="reply-${review.id}"/>
                                     </c:url>
                                     <p class="review-reply-login">
@@ -210,24 +188,19 @@
                     </article>
                 </c:forEach>
             </div>
-            <c:if test="${not empty totalPages and not empty currentPage and currentPage < totalPages}">
-                <c:url var="reviewsBaseUrl" value="/reviews"/>
-                <c:url var="showMoreUrl" value="${reviewsBaseUrl}">
-                    <c:param name="carId" value="${carId}"/>
-                    <c:if test="${not empty currentSort}">
-                        <c:param name="sort" value="${currentSort}"/>
-                    </c:if>
-                    <c:param name="page" value="${currentPage + 1}"/>
-                </c:url>
-                <div class="reviews-feed-more">
-                    <a class="btn-secondary reviews-show-more"
-                       href="${showMoreUrl}"
-                       data-review-show-more="true"
-                       data-fragment-url="${reviewsFeedUrl}"
-                       data-target="#reviewsFeed">
-                        <spring:message code="common.action.showMoreReviews"/>
-                    </a>
-                </div>
+            <c:if test="${not empty totalPages and not empty currentPage and totalPages > 1}">
+                <c:url var="reviewsBaseUrl" value="/reviews/car/${carId}"/>
+                <jsp:useBean id="reviewsPaginationParams" class="java.util.LinkedHashMap"/>
+                <c:if test="${not empty currentSort}">
+                    <c:set target="${reviewsPaginationParams}" property="sort" value="${currentSort}"/>
+                </c:if>
+                <spring:message var="reviewsPaginationAria" code="review.feed.pagination.aria"/>
+                <pa:pagination currentPage="${currentPage}"
+                               totalPages="${totalPages}"
+                               baseUrl="${reviewsBaseUrl}"
+                               extraParams="${reviewsPaginationParams}"
+                               fragment="reviewsFeed"
+                               ariaLabel="${reviewsPaginationAria}"/>
             </c:if>
         </c:otherwise>
     </c:choose>

@@ -103,9 +103,7 @@
                 </c:url>
             </c:if>
             <c:if test="${not empty heroReview}">
-                <c:url var="heroReviewUrl" value="/reviews">
-                    <c:param name="carId" value="${heroCar.id}"/>
-                </c:url>
+                <c:url var="heroReviewUrl" value="/reviews/car/${heroCar.id}"/>
                 <c:set var="heroReviewHref" value="${heroReviewUrl}#review-${heroReview.id}"/>
             </c:if>
 
@@ -175,9 +173,7 @@
                 <c:otherwise>
                     <div class="featured-grid">
                         <c:forEach var="car" items="${featuredCars}">
-                            <c:url var="reviewUrl" value="/reviews">
-                                <c:param name="carId" value="${car.id}"/>
-                            </c:url>
+                            <c:url var="reviewUrl" value="/reviews/car/${car.id}"/>
                             <pa:car-card
                                 model="${car.brandName} ${car.model}"
                                 year="${car.year}"
@@ -194,9 +190,8 @@
         </section>
     </main>
     <pa:auth-required-modal/>
-    <pa:script src="/js/modal-utils.js"/>
-    <pa:script src="/js/reactions.js"/>
-    <pa:script src="/js/auth-required-modal.js"/>
+    <pa:script src="/js/shared/modal-utils.js"/>
+    <pa:script src="/js/auth/auth-required-modal.js"/>
     <pa:footer/>
 </body>
 </html>

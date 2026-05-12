@@ -445,7 +445,7 @@ class AdminControllerTest {
                                 }));
 
         // Assertions
-        resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/reviews?carId=42"));
+        resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/reviews/car/42"));
     }
 
     @Test
@@ -503,9 +503,9 @@ class AdminControllerTest {
         mockMvc.perform(
                         post("/admin/body-types/8")
                                 .param("name", "Crossover")
-                                .header("Referer", "http://localhost/reviews"))
+                                .header("Referer", "http://localhost/reviews/car/8"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/reviews"));
+                .andExpect(redirectedUrl("/reviews/car/8"));
 
         mockMvc.perform(post("/admin/body-types/8/delete")).andExpect(status().is3xxRedirection());
     }

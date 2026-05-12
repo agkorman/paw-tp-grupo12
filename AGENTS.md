@@ -71,6 +71,14 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Every JSP starts with `<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>`.
 - Forms with client-side constraints (`required`, `minlength`, `pattern`, etc.) must opt out of native browser validation UI with `novalidate` and render app-owned inline errors using localized bundle messages. Never rely on default browser messages such as "Please fill out this field."
 
+## JavaScript
+
+- JavaScript is for UX enhancement only: client-side validation, modal/menu behavior, tabs, carousels, previews, maps, accessibility state, and double-submit prevention.
+- JavaScript must not own business flow, persistence flow, authorization decisions, or source-of-truth rendering. State-changing actions must use normal form/link requests handled by Spring MVC, followed by JSP rendering.
+- Do not implement AJAX/fetch/XHR for create, update, delete, like, favorite, follow, moderation, approval, or other mutating domain actions. Do not remove, insert, or replace domain cards/items after mutating actions; let the server redirect and render the updated JSP.
+- Avoid DOM-injection patterns such as inserting server/client HTML with `innerHTML`, `insertAdjacentHTML`, or fragment replacement for mutating workflows. Use DOM writes only for local UX state such as validation messages, modal labels, selected controls, counters that are purely presentational, or map/widget setup.
+- Do not add AJAX/fragment flows without explicitly deciding that they are non-mutating progressive enhancement and documenting the fallback.
+
 ## Internationalization (i18n)
 
 - All user-visible UI text belongs in the message bundles: `webapp/src/main/resources/messages.properties` and `webapp/src/main/resources/messages_en.properties`. Do not add hardcoded Spanish/English copy directly in JSPs, tag files, controllers, form validation annotations, or JavaScript when it is meant for users.
@@ -144,6 +152,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - Some endpoints serve both browser and AJAX clients from the same URL. They detect AJAX via the `X-Requested-With: XMLHttpRequest` request header and return a plain-text or JSON body instead of a redirect.
 - When adding a new endpoint that must support both, check the header explicitly: `"XMLHttpRequest".equals(request.getHeader("X-Requested-With"))`. Return `ResponseEntity` for AJAX, redirect for browser.
+- Do not add new dual-response endpoints for mutating UI actions. Prefer plain POST/redirect/JSP rendering unless there is a specific non-mutating progressive-enhancement need.
 
 ## Post-Redirect-Get (PRG)
 

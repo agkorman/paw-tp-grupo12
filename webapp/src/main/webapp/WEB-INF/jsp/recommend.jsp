@@ -105,7 +105,7 @@
         </form:form>
     </main>
 
-    <pa:script src="/js/recommend-wizard.js"/>
+    <pa:script src="/js/recommendations/recommend-wizard.js"/>
     <pa:footer/>
 </body>
 </html>
