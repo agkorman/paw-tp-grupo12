@@ -74,7 +74,7 @@ final class ControllerUtils {
         return null;
     }
 
-static String submittedToastMessageCode(final String submitted) {
+    static String submittedToastMessageCode(final String submitted) {
         if (submitted == null || submitted.isBlank()) {
             return null;
         }
