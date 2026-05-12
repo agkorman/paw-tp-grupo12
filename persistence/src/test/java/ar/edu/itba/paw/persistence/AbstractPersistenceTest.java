@@ -9,6 +9,9 @@ import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -69,6 +72,16 @@ abstract class AbstractPersistenceTest {
 
     @Autowired
     protected JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private JpaTestFlusher jpaTestFlusher;
+
+    @PersistenceContext
+    protected EntityManager em;
+
+    protected void flushAndClear() {
+        jpaTestFlusher.flushAndClear();
+    }
 
     protected User createUser(final String suffix) {
         return insertUser("user-" + suffix, "user-" + suffix + "@example.com", "secret", "user");

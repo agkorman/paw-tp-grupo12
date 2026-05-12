@@ -23,6 +23,7 @@ public class UserDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final User result = userDao.create(username, email, "password", role);
+        flushAndClear();
 
         // Assertions
         assertEquals(username, result.getUsername());
@@ -59,6 +60,7 @@ public class UserDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final boolean result = userDao.updateRole(created.getId(), "admin");
+        flushAndClear();
 
         // Assertions
         assertTrue(result);
@@ -88,6 +90,7 @@ public class UserDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final boolean result = userDao.updatePreferredLocale(created.getId(), "en");
+        flushAndClear();
 
         // Assertions
         assertTrue(result);
@@ -104,8 +107,10 @@ public class UserDaoTest extends AbstractPersistenceTest {
         final User created = userDao.create("other", "other@example.com", "password", "user");
 
         // Exercise
-        assertThrows(DataIntegrityViolationException.class,
-                () -> userDao.updateUsername(created.getId(), "nica"));
+        assertThrows(DataIntegrityViolationException.class, () -> {
+            userDao.updateUsername(created.getId(), "nica");
+            flushAndClear();
+        });
 
         // Assertions
         assertEquals("other", userDao.findById(created.getId()).orElseThrow().getUsername());

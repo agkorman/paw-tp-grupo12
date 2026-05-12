@@ -57,7 +57,6 @@ public class UserJpaDao implements UserDao {
         user.setPreferredLocale("es");
         user.setCreatedAt(LocalDateTime.now());
         em.persist(user);
-        em.flush();
         LOGGER.info("created user id={} email={} role={}", user.getId(), email, role);
         return user;
     }
