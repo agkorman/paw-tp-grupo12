@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class RequestJdbcDaoTest extends AbstractPersistenceTest {
+public class RequestDaoTest extends AbstractPersistenceTest {
 
     @Test
     public void shouldCreateAdminRequestAndFindPendingRequestByUser() {
