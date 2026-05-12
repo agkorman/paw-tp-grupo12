@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.validation;
 
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
+import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarRequestService;
@@ -103,9 +104,7 @@ public class ValidCarFormValidator implements ConstraintValidator<ValidCarForm, 
         }
         if (MODE_EDIT_CAR.equals(formContext.mode) && formContext.id != null) {
             return carService.getCarById(formContext.id)
-                    .map(car -> carService.getCarImagesByCarId(car.getId()).stream()
-                            .map(image -> image.getImageId())
-                            .collect(Collectors.toList()))
+                    .map(this::carImageIds)
                     .orElseGet(Collections::emptyList);
         }
         return Collections.emptyList();
@@ -125,9 +124,23 @@ public class ValidCarFormValidator implements ConstraintValidator<ValidCarForm, 
     }
 
     private List<Long> requestImageIds(final CarRequest request) {
-        return carRequestService.getCarRequestImages(request.getId()).stream()
+        final List<Long> imageIds = carRequestService.getCarRequestImages(request.getId()).stream()
                 .map(image -> image.getImageId())
                 .collect(Collectors.toList());
+        if (!imageIds.isEmpty() || request.getImageData() == null) {
+            return imageIds;
+        }
+        return Collections.singletonList(CarService.LEGACY_IMAGE_ID);
+    }
+
+    private List<Long> carImageIds(final Car car) {
+        final List<Long> imageIds = carService.getCarImagesByCarId(car.getId()).stream()
+                .map(image -> image.getImageId())
+                .collect(Collectors.toList());
+        if (!imageIds.isEmpty() || !car.getHasImage()) {
+            return imageIds;
+        }
+        return Collections.singletonList(CarService.LEGACY_IMAGE_ID);
     }
 
     private List<Long> retainedImageIds(final CarForm form, final List<Long> availableImageIds) {

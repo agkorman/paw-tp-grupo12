@@ -4,17 +4,17 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="recommend.results.title" styles="/css/cars.css|/css/review-tags.css"/>
+<pa:page-head titleCode="recommend.results.title" styles="/css/cars.css|/css/review-tags.css|/css/recommend-results.css"/>
 <body>
     <pa:nav activePage="recommend"/>
 
-    <spring:message var="reviewsActionText" code="cars.card.review.view"/>
-
     <main class="recommend-page recommend-results-page">
         <section class="recommend-header">
-            <p class="recommend-kicker"><spring:message code="recommend.results.kicker"/></p>
-            <h1><spring:message code="recommend.results.heading"/></h1>
-            <p><spring:message code="recommend.results.description"/></p>
+            <div class="recommend-header-copy">
+                <p class="recommend-kicker"><spring:message code="recommend.results.kicker"/></p>
+                <h1><spring:message code="recommend.results.heading"/></h1>
+                <p><spring:message code="recommend.results.description"/></p>
+            </div>
         </section>
 
         <c:choose>
@@ -27,6 +27,7 @@
                             <pa:recommendation-reason positives="${recommendation.positiveHighlights}" negatives="${recommendation.negativeHighlights}"/>
                             <pa:car-card
                                     model="${car.brandName} ${car.model}"
+                                    year="${car.year}"
                                     bodyType="${car.bodyType}"
                                     carId="${car.id}"
                                     hasImage="${car.hasImage}"

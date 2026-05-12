@@ -855,6 +855,7 @@ public class AdminController {
         final CarForm carForm,
         final BindingResult errors
     ) {
+        prepareCarFormContext(carForm, "review-request", null, request.getId());
         final ModelAndView mav = new ModelAndView("car-form.jsp");
         addCarFormBinding(mav, carForm, errors);
         mav.addObject("carFormMode", "review-request");
@@ -894,6 +895,7 @@ public class AdminController {
         final CarForm carForm,
         final BindingResult errors
     ) {
+        prepareCarFormContext(carForm, "edit-car", car.getId(), null);
         final ModelAndView mav = new ModelAndView("car-form.jsp");
         addCarFormBinding(mav, carForm, errors);
         mav.addObject("carFormMode", "edit-car");
@@ -926,6 +928,17 @@ public class AdminController {
         if (errors != null) {
             mav.addObject(BindingResult.MODEL_KEY_PREFIX + "carForm", errors);
         }
+    }
+
+    private void prepareCarFormContext(
+        final CarForm carForm,
+        final String formMode,
+        final Long carId,
+        final Long requestId
+    ) {
+        carForm.setFormMode(formMode);
+        carForm.setCarId(carId);
+        carForm.setRequestId(requestId);
     }
 
     private CarForm toForm(final CarRequest request) {
