@@ -259,19 +259,6 @@ class ProfileControllerTest {
     }
 
     @Test
-    void toggleFollow_anonymous_ajaxReturns401() throws Exception {
-        // Arrange
-        arrangeExistingProfile(21L);
-        final MockMvc mockMvc = profileMockMvc();
-        // Exercise
-        final ResultActions resultActions =
-                mockMvc.perform(
-                        post("/profiles/21/follow").header("X-Requested-With", "XMLHttpRequest"));
-        // Assertions
-        resultActions.andExpect(status().isUnauthorized()).andExpect(content().string("/login"));
-    }
-
-    @Test
     void toggleFollow_selfAttempt_redirectsToOwnProfile() throws Exception {
         // Arrange
         ControllerTestMvcSupport.bindPrincipal(testUser(22L, "SelfFollow"));
@@ -291,7 +278,7 @@ class ProfileControllerTest {
     }
 
     @Test
-    void toggleFollow_unknownUser_ajaxReturns404Forwarded() throws Exception {
+    void toggleFollow_unknownUser_throwsResourceNotFound() throws Exception {
         // Arrange
         ControllerTestMvcSupport.bindPrincipal(testUser(44L, "Follower"));
         arrangeMessageBundle();
@@ -300,8 +287,7 @@ class ProfileControllerTest {
             final MockMvc mockMvc = profileMockMvc();
             // Exercise
             final ResultActions resultActions =
-                    mockMvc.perform(
-                            post("/profiles/777/follow").header("X-Requested-With", "XMLHttpRequest"));
+                    mockMvc.perform(post("/profiles/777/follow"));
             // Assertions
             resultActions.andExpect(status().isNotFound()).andExpect(forwardedUrl("/error/404"));
         } finally {
@@ -310,39 +296,22 @@ class ProfileControllerTest {
     }
 
     @Test
-    void toggleFollow_valid_ajaxUpdatesFollowStateAndCount() throws Exception {
+    void toggleFollow_valid_redirectsToTargetProfile() throws Exception {
         // Arrange
         ControllerTestMvcSupport.bindPrincipal(testUser(23L, "FollowActor"));
         arrangeMessageBundle();
         when(userService.getUserById(eq(24L)))
                 .thenReturn(
                         Optional.of(new User(24L, "Target", "24@test.com", "pw", "user", LocalDateTime.now())));
-        when(reviewService.countReviewsByUser(eq(24L))).thenReturn(1L);
-        when(reviewLikeService.countLikedReviewsByUser(eq(24L))).thenReturn(0L);
-        when(reviewService.getReviewsByUser(eq(24L), anyInt()))
-                .thenAnswer(invocation -> Page.empty(invocation.getArgument(1), Pagination.REVIEWS_PAGE_SIZE));
-        when(carFavoriteService.countFavoriteCars(eq(24L))).thenReturn(0L);
-        when(carFavoriteService.getFavoriteCars(eq(24L), anyInt()))
-                .thenAnswer(invocation -> Page.empty(invocation.getArgument(1), Pagination.CARS_PAGE_SIZE));
-        when(reviewLikeService.getLikedReviewIdsByUser(eq(24L), anyInt()))
-                .thenAnswer(invocation -> Page.empty(invocation.getArgument(1), Pagination.REVIEWS_PAGE_SIZE));
-        when(userFollowService.countFollowing(eq(24L))).thenReturn(1L);
-        when(userFollowService.countFollowers(eq(24L))).thenReturn(4L);
         when(userFollowService.toggleFollow(eq(23L), eq(24L))).thenReturn(true);
-        when(userFollowService.isFollowing(eq(23L), eq(24L))).thenReturn(false);
-        when(carService.getCarsByIds(any())).thenReturn(Collections.emptyList());
-        when(reviewService.getReviewStatsByCarIds(any())).thenReturn(Collections.emptyList());
-        when(reviewService.getReviewsByIds(any())).thenReturn(Collections.emptyList());
-        when(adminRequestService.hasPendingRequest(eq(24L))).thenReturn(false);
 
         try {
             final MockMvc mockMvc = profileMockMvc();
             // Exercise
-            final ResultActions resultActions =
-                    mockMvc.perform(
-                            post("/profiles/24/follow").header("X-Requested-With", "XMLHttpRequest"));
+            final ResultActions resultActions = mockMvc.perform(post("/profiles/24/follow"));
             // Assertions
-            resultActions.andExpect(status().isOk()).andExpect(content().string("true|4"));
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/profiles/24"));
         } finally {
             ControllerTestMvcSupport.clearSecurityContext();
         }

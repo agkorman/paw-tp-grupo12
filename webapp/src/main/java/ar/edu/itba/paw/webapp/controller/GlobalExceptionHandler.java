@@ -91,14 +91,11 @@ public class GlobalExceptionHandler {
             SelfFollowException.class,
             PendingAdminRequestExistsException.class
     })
-    public Object handleInvalidServiceInput(final RuntimeException e,
-                                            final HttpServletRequest request) {
+    public ModelAndView handleInvalidServiceInput(final RuntimeException e,
+                                                  final HttpServletRequest request) {
         LOGGER.warn("invalid service input uri={} type={}",
                 LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 e.getClass().getSimpleName());
-        if (ControllerUtils.isAjaxRequest(request.getHeader("X-Requested-With"))) {
-            return ResponseEntity.badRequest().body(message("error.badRequest.ajax"));
-        }
         return forwardToErrorPage(HttpStatus.BAD_REQUEST, "/error/400");
     }
 
@@ -108,12 +105,9 @@ public class GlobalExceptionHandler {
             ETagGenerationException.class,
             UploadedImageReadException.class
     })
-    public Object handleServiceOperationFailure(final RuntimeException e,
-                                                final HttpServletRequest request) {
+    public ModelAndView handleServiceOperationFailure(final RuntimeException e,
+                                                      final HttpServletRequest request) {
         LOGGER.error("operation failed uri={}", LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
-        if (ControllerUtils.isAjaxRequest(request.getHeader("X-Requested-With"))) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(message("error.server.ajax"));
-        }
         return forwardToErrorPage(HttpStatus.INTERNAL_SERVER_ERROR, "/error/500");
     }
 

@@ -6,17 +6,10 @@
 
 <c:url var="adminBaseUrl" value="/admin"/>
 <spring:message var="closeModalLabel" code="common.action.close"/>
-<spring:message var="acceptSuccessMsg" code="admin.request.accept.toast.success"/>
-<spring:message var="rejectSuccessMsg" code="admin.request.reject.toast.success"/>
-<spring:message var="requestErrorMsg" code="admin.request.toast.error"/>
-
 <div id="adminRequestReviewModal"
      class="modal admin-request-review-modal"
      hidden
-     data-admin-base-url="${adminBaseUrl}"
-     data-accept-success-msg="${fn:escapeXml(acceptSuccessMsg)}"
-     data-reject-success-msg="${fn:escapeXml(rejectSuccessMsg)}"
-     data-error-msg="${fn:escapeXml(requestErrorMsg)}">
+     data-admin-base-url="${adminBaseUrl}">
     <div class="modal-overlay" data-close-admin-request-review-modal></div>
     <section class="modal-dialog admin-request-review-dialog"
              role="dialog" aria-modal="true" aria-labelledby="adminRequestReviewTitle">

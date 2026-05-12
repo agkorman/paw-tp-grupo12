@@ -12,9 +12,6 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
-
-<c:url var="activityBaseUrl" value="/activity"/>
-
 <section id="${fn:escapeXml(panelId)}" class="activity-tab-panel">
     <c:choose>
         <c:when test="${empty reviews}">
@@ -29,25 +26,6 @@
                         <pa:activity-review-card reviewCard="${activityReview}"
                                                  idPrefix="${idPrefix}-${currentPage}-${status.index}"/>
                     </c:forEach>
-                    <c:if test="${currentPage < totalPages}">
-                        <c:url var="activityShowMoreUrl" value="/activity">
-                            <c:param name="tab" value="${tab}"/>
-                            <c:param name="page" value="${currentPage + 1}"/>
-                        </c:url>
-                        <div class="reviews-feed-more profile-show-more">
-                            <a class="btn-secondary reviews-show-more"
-                               href="${activityShowMoreUrl}"
-                               data-review-show-more="true"
-                               data-fragment-url="${activityBaseUrl}"
-                               data-target="#${fn:escapeXml(panelId)}"
-                               data-list-selector=".activity-feed"
-                               data-item-selector=".activity-feed > .activity-review-card"
-                               data-preview-list-selector=".activity-preview-column"
-                               data-preview-item-selector=".activity-preview-column > .activity-review-preview-panel">
-                                <spring:message code="common.action.showMoreReviews"/>
-                            </a>
-                        </div>
-                    </c:if>
                 </div>
                 <aside class="activity-preview-column" aria-label="${fn:escapeXml(previewAria)}">
                     <c:forEach var="activityReview" items="${reviews}" varStatus="status">
@@ -56,6 +34,17 @@
                     </c:forEach>
                 </aside>
             </div>
+            <c:if test="${totalPages > 1}">
+                <jsp:useBean id="activityPaginationParams" class="java.util.LinkedHashMap"/>
+                <c:set target="${activityPaginationParams}" property="tab" value="${tab}"/>
+                <spring:message var="activityPaginationAria" code="activity.pagination.aria"/>
+                <pa:pagination currentPage="${currentPage}"
+                               totalPages="${totalPages}"
+                               baseUrl="/activity"
+                               extraParams="${activityPaginationParams}"
+                               fragment="${fn:escapeXml(panelId)}"
+                               ariaLabel="${activityPaginationAria}"/>
+            </c:if>
         </c:otherwise>
     </c:choose>
 </section>

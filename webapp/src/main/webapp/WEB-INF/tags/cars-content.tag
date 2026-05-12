@@ -31,9 +31,7 @@
     <section class="catalog-section">
         <div class="cars-grid">
             <c:forEach var="car" items="${cars}">
-                <c:url var="reviewUrl" value="/reviews">
-                    <c:param name="carId" value="${car.id}"/>
-                </c:url>
+                <c:url var="reviewUrl" value="/reviews/car/${car.id}"/>
                 <pa:car-card
                     model="${car.brandName} ${car.model}"
                     year="${car.year}"
@@ -91,7 +89,6 @@
 
         <c:if test="${not empty totalPages and totalPages > 1}">
             <c:set var="carsBaseUrl" value="/cars"/>
-            <c:url var="carsFragmentUrl" value="/cars/content"/>
             <jsp:useBean id="paginationParams" class="java.util.LinkedHashMap" scope="page"/>
             <c:if test="${not empty criteria}">
                 <c:if test="${not empty criteria.q}"><c:set target="${paginationParams}" property="q" value="${criteria.q}"/></c:if>
@@ -114,8 +111,6 @@
                            totalPages="${totalPages}"
                            baseUrl="${carsBaseUrl}"
                            extraParams="${paginationParams}"
-                           fragmentUrl="${carsFragmentUrl}"
-                           target="#carsCatalogContent"
                            ariaLabel="${carsPaginationAria}"/>
         </c:if>
     </section>

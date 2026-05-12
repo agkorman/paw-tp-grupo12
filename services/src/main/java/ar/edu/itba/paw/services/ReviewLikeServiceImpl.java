@@ -79,17 +79,6 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
 
     @Override
     @Transactional(readOnly = true)
-    public long countReviewLikes(final long reviewId) {
-        try {
-            return reviewLikeDao.countReviewLikes(reviewId);
-        } catch (final DataAccessException e) {
-            LOGGER.warn("count review likes failed reviewId={}", reviewId, e);
-            return 0;
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Map<Long, Long> countReviewLikesByReviewIds(final Collection<Long> reviewIds) {
         if (reviewIds == null || reviewIds.isEmpty()) {
             return Collections.emptyMap();
@@ -146,17 +135,6 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         } catch (final DataAccessException e) {
             LOGGER.warn("count liked reviews by user failed userId={}", userId, e);
             return 0L;
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public long countReplyLikes(final long replyId) {
-        try {
-            return reviewLikeDao.countReplyLikes(replyId);
-        } catch (final DataAccessException e) {
-            LOGGER.warn("count reply likes failed replyId={}", replyId, e);
-            return 0;
         }
     }
 

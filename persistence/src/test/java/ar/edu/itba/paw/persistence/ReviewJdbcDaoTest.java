@@ -258,8 +258,10 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
         assertEquals(Pagination.REVIEWS_PAGE_SIZE + 1L, result.getTotalItems());
         assertEquals(2, result.getPageNumber());
         assertEquals(1, result.getItems().size());
-        // Rating 3.0 should be on the second page (page size is 5, ratings are 0.5, 1.0, 1.5, 2.0, 2.5 on page 1)
-        assertEquals(new BigDecimal("3.0"), result.getItems().get(0).getRating());
+        // Page 1 holds the first REVIEWS_PAGE_SIZE ascending ratings; page 2's first item has the next rating.
+        final BigDecimal expectedRating = BigDecimal.valueOf(0.5 + Pagination.REVIEWS_PAGE_SIZE * 0.5)
+                .setScale(1);
+        assertEquals(expectedRating, result.getItems().get(0).getRating());
     }
 
 }

@@ -8,15 +8,10 @@
 <spring:message var="reasonMinMessage" code="review.hide.reason.min" arguments="10"/>
 <spring:message var="reasonMaxMessage" code="review.hide.reason.max" arguments="600"/>
 <spring:message var="reasonPlaceholder" code="review.hide.reason.placeholder"/>
-<spring:message var="successMessage" code="review.hide.toast.success"/>
-<spring:message var="errorMessage" code="review.hide.toast.error"/>
-
 <div id="hideReviewModal"
      class="modal review-hide-modal"
      hidden
-     data-hide-review-modal
-     data-success-message="${fn:escapeXml(successMessage)}"
-     data-error-message="${fn:escapeXml(errorMessage)}">
+     data-hide-review-modal>
     <div class="modal-overlay" data-close-hide-review-modal></div>
     <section class="modal-dialog review-hide-dialog" role="dialog" aria-modal="true" aria-labelledby="hideReviewTitle">
         <header class="modal-header">
@@ -36,6 +31,7 @@
               data-reason-min-message="${fn:escapeXml(reasonMinMessage)}"
               data-reason-max-message="${fn:escapeXml(reasonMaxMessage)}">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+            <input type="hidden" name="redirect" value="" data-hide-review-redirect>
             <p class="modal-subtitle"><spring:message code="review.hide.body"/></p>
             <div class="modal-field modal-field-wide">
                 <label for="hideReviewReason"><spring:message code="review.hide.reason.label"/></label>

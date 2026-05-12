@@ -55,9 +55,7 @@
                 <nav class="car-year-switcher" aria-label="${fn:escapeXml(availableYearsLabel)}">
                     <div class="car-year-switcher-track">
                         <c:forEach var="yearVariant" items="${yearVariants}">
-                            <c:url var="yearVariantUrl" value="/reviews">
-                                <c:param name="carId" value="${yearVariant.carId}"/>
-                            </c:url>
+                            <c:url var="yearVariantUrl" value="/reviews/car/${yearVariant.carId}"/>
                             <a class="car-year-pill${yearVariant.selected ? ' is-active' : ''}"
                                href="${yearVariantUrl}"
                                <c:if test="${yearVariant.selected}">aria-current="page"</c:if>>
@@ -149,23 +147,20 @@
         <pa:car-delete-modal/>
     </sec:authorize>
 
-    <pa:script src="/js/reactions.js"/>
-    <pa:script src="/js/review-replies.js"/>
-    <pa:script src="/js/action-menu.js"/>
-    <pa:script src="/js/enhanced-filters.js"/>
-    <pa:script src="/js/car-image-carousel.js"/>
-    <pa:script src="/js/review-anchor-highlight.js"/>
-    <pa:script src="/js/review-tag-chips.js" defer="true"/>
-    <pa:script src="/js/modal-utils.js"/>
-    <pa:script src="/js/auth-required-modal.js"/>
-    <pa:script src="/js/toast.js"/>
+    <pa:script src="/js/shared/action-menu.js"/>
+    <pa:script src="/js/cars/car-image-carousel.js"/>
+    <pa:script src="/js/reviews/review-anchor-highlight.js"/>
+    <pa:script src="/js/reviews/reply-validation.js"/>
+    <pa:script src="/js/reviews/review-tag-chips.js" defer="true"/>
+    <pa:script src="/js/shared/modal-utils.js"/>
+    <pa:script src="/js/auth/auth-required-modal.js"/>
+    <pa:script src="/js/shared/toast.js"/>
     <sec:authorize access="hasRole('ADMIN')">
-        <pa:script src="/js/car-admin.js"/>
-        <pa:script src="/js/review-moderation.js"/>
-        <pa:script src="/js/confirmation-modal.js"/>
-        <pa:script src="/js/review-delete.js"/>
+        <pa:script src="/js/cars/car-admin.js"/>
+        <pa:script src="/js/reviews/review-moderation.js"/>
+        <pa:script src="/js/shared/confirmation-modal.js"/>
     </sec:authorize>
-    <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>

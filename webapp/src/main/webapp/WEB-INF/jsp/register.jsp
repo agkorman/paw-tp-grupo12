@@ -102,9 +102,9 @@
     </main>
 
     <pa:toast messageCode="${registrationErrorCode}" type="error"/>
-    <pa:script src="/js/auth-form.js"/>
-    <pa:script src="/js/form-submit-lock.js"/>
-    <pa:script src="/js/toast.js"/>
+    <pa:script src="/js/auth/auth-form.js"/>
+    <pa:script src="/js/shared/form-submit-lock.js"/>
+    <pa:script src="/js/shared/toast.js"/>
     <pa:footer/>
 </body>
 </html>

@@ -74,10 +74,6 @@ final class ControllerUtils {
         return null;
     }
 
-    static boolean isAjaxRequest(final String requestedWith) {
-        return "XMLHttpRequest".equalsIgnoreCase(requestedWith);
-    }
-
     static String submittedToastMessageCode(final String submitted) {
         if (submitted == null || submitted.isBlank()) {
             return null;

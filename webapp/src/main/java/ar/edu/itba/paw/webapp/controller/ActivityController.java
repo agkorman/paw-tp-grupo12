@@ -30,7 +30,7 @@ public class ActivityController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
-    private static final int ACTIVITY_PAGE_SIZE = 10;
+    private static final int ACTIVITY_PAGE_SIZE = 6;
 
     private final ReviewService reviewService;
     private final CarService carService;

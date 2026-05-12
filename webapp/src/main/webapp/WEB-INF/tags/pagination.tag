@@ -4,9 +4,8 @@
 <%@ attribute name="baseUrl" required="true" type="java.lang.String" %>
 <%@ attribute name="extraParams" required="false" type="java.util.Map" %>
 <%@ attribute name="pageParam" required="false" type="java.lang.String" %>
-<%@ attribute name="fragmentUrl" required="false" type="java.lang.String" %>
-<%@ attribute name="target" required="false" type="java.lang.String" %>
 <%@ attribute name="ariaLabel" required="false" type="java.lang.String" %>
+<%@ attribute name="fragment" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
@@ -22,6 +21,8 @@
     <c:if test="${windowEnd > totalPages}"><c:set var="windowEnd" value="${totalPages}"/></c:if>
 
     <spring:message var="defaultPaginationLabel" code="common.pagination.aria"/>
+    <spring:message var="previousActionLabel" code="common.action.previous"/>
+    <spring:message var="nextActionLabel" code="common.action.next"/>
     <nav class="pagination" aria-label="${empty ariaLabel ? defaultPaginationLabel : ariaLabel}">
         <ul class="pagination-list">
             <c:set var="prevPage" value="${safeCurrentPage - 1}"/>
@@ -41,11 +42,8 @@
                             </c:if>
                             <c:param name="${resolvedPageParam}" value="${prevPage}"/>
                         </c:url>
-                        <a class="pagination-link" href="${prevHref}" rel="prev"
-                           <c:if test="${not empty fragmentUrl}">data-fragment-url="${fragmentUrl}"</c:if>
-                           <c:if test="${not empty target}">data-target="${target}"</c:if>
-                           data-pagination-link="true"
-                           aria-label="Anterior">«</a>
+                        <a class="pagination-link" href="${prevHref}${empty fragment ? '' : '#'.concat(fragment)}" rel="prev"
+                           aria-label="${fn:escapeXml(previousActionLabel)}">«</a>
                     </c:otherwise>
                 </c:choose>
             </li>
@@ -62,10 +60,7 @@
                         </c:if>
                         <c:param name="${resolvedPageParam}" value="1"/>
                     </c:url>
-                    <a class="pagination-link" href="${firstHref}"
-                       <c:if test="${not empty fragmentUrl}">data-fragment-url="${fragmentUrl}"</c:if>
-                       <c:if test="${not empty target}">data-target="${target}"</c:if>
-                       data-pagination-link="true">1</a>
+                    <a class="pagination-link" href="${firstHref}${empty fragment ? '' : '#'.concat(fragment)}">1</a>
                 </li>
                 <c:if test="${windowStart > 2}">
                     <li class="pagination-item pagination-ellipsis" aria-hidden="true"><span>…</span></li>
@@ -89,10 +84,7 @@
                                 </c:if>
                                 <c:param name="${resolvedPageParam}" value="${p}"/>
                             </c:url>
-                            <a class="pagination-link" href="${pHref}"
-                               <c:if test="${not empty fragmentUrl}">data-fragment-url="${fragmentUrl}"</c:if>
-                               <c:if test="${not empty target}">data-target="${target}"</c:if>
-                               data-pagination-link="true">${p}</a>
+                            <a class="pagination-link" href="${pHref}${empty fragment ? '' : '#'.concat(fragment)}">${p}</a>
                         </c:otherwise>
                     </c:choose>
                 </li>
@@ -113,10 +105,7 @@
                         </c:if>
                         <c:param name="${resolvedPageParam}" value="${totalPages}"/>
                     </c:url>
-                    <a class="pagination-link" href="${lastHref}"
-                       <c:if test="${not empty fragmentUrl}">data-fragment-url="${fragmentUrl}"</c:if>
-                       <c:if test="${not empty target}">data-target="${target}"</c:if>
-                       data-pagination-link="true">${totalPages}</a>
+                    <a class="pagination-link" href="${lastHref}${empty fragment ? '' : '#'.concat(fragment)}">${totalPages}</a>
                 </li>
             </c:if>
 
@@ -137,11 +126,8 @@
                             </c:if>
                             <c:param name="${resolvedPageParam}" value="${nextPage}"/>
                         </c:url>
-                        <a class="pagination-link" href="${nextHref}" rel="next"
-                           <c:if test="${not empty fragmentUrl}">data-fragment-url="${fragmentUrl}"</c:if>
-                           <c:if test="${not empty target}">data-target="${target}"</c:if>
-                           data-pagination-link="true"
-                           aria-label="Siguiente">»</a>
+                        <a class="pagination-link" href="${nextHref}${empty fragment ? '' : '#'.concat(fragment)}" rel="next"
+                           aria-label="${fn:escapeXml(nextActionLabel)}">»</a>
                     </c:otherwise>
                 </c:choose>
             </li>

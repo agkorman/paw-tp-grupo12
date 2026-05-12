@@ -190,71 +190,9 @@
     opacity: 0.55;
 }
 
-.latest-review-section {
-    display: grid;
-    gap: 1rem;
-    background: var(--surface-container-low);
-    border: 1px solid var(--outline-variant);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-6);
-}
-
-.latest-review-section h2 {
-    font-family: var(--font-display);
-    font-size: 1.25rem;
-    margin: 0;
-}
-
-.last-review-item {
-    background: var(--surface-container-high);
-    border-radius: var(--radius-md);
-    padding: 0.875rem;
-    display: grid;
-    gap: 0.5rem;
-    min-width: 0;
-}
-
-.last-review-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
-    min-width: 0;
-}
-
-.last-review-top strong {
-    min-width: 0;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-}
-
-.last-review-body {
-    margin: 0;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-}
-
-.last-review-meta {
-    margin-top: 0;
-    font-size: 0.75rem;
-}
-
-.last-review-empty {
-    padding: 0.875rem 0;
-    color: var(--secondary);
-    font-size: 0.875rem;
-}
-
 .reviews-feed {
     display: grid;
     gap: 1rem;
-}
-
-.reviews-feed.is-loading {
-    opacity: 0.65;
-    transition: opacity 0.18s ease;
 }
 
 .feed-header {
@@ -307,53 +245,15 @@
     color: var(--on-surface);
 }
 
+.review-sort-submit {
+    min-height: 2.25rem;
+    padding: 0 0.85rem;
+    font-size: 0.875rem;
+}
+
 .review-list {
     display: grid;
     gap: 0.75rem;
-}
-
-@keyframes infinite-scroll-spin {
-    to { transform: rotate(360deg); }
-}
-
-.reviews-feed-more {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    padding: 0.75rem 0 0.25rem;
-}
-
-.reviews-show-more {
-    min-width: 12rem;
-    justify-content: center;
-}
-
-.reviews-feed-more.is-loading .reviews-show-more {
-    color: transparent;
-}
-
-.reviews-feed-more.is-loading {
-    opacity: 0.65;
-    pointer-events: none;
-}
-
-.reviews-feed-more.is-loading::after {
-    content: '';
-    display: block;
-    position: absolute;
-    width: 1.75rem;
-    height: 1.75rem;
-    border: 2px solid var(--surface-container-highest);
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: infinite-scroll-spin 0.75s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .reviews-feed-more.is-loading::after {
-        animation: none;
-    }
 }
 
 .review-item {

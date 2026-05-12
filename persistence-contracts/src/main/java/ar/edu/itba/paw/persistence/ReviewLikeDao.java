@@ -12,7 +12,6 @@ public interface ReviewLikeDao {
     boolean likeReview(long reviewId, long userId);
     boolean unlikeReview(long reviewId, long userId);
     boolean isReviewLikedByUser(long reviewId, long userId);
-    long countReviewLikes(long reviewId);
     Map<Long, Long> countReviewLikesByReviewIds(Collection<Long> reviewIds);
     Map<Long, Long> countNewLikesPerReview(long userId, LocalDateTime since);
     Set<Long> findLikedReviewIds(Collection<Long> reviewIds, long userId);
@@ -23,7 +22,6 @@ public interface ReviewLikeDao {
     boolean likeReply(long replyId, long userId);
     boolean unlikeReply(long replyId, long userId);
     boolean isReplyLikedByUser(long replyId, long userId);
-    long countReplyLikes(long replyId);
     Map<Long, Long> countReplyLikesByReplyIds(Collection<Long> replyIds);
     Set<Long> findLikedReplyIds(Collection<Long> replyIds, long userId);
     List<Long> findLikedReplyIdsByUserId(long userId);

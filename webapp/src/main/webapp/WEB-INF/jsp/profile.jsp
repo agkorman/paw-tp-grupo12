@@ -13,8 +13,6 @@
     <spring:message var="profileContentAria" code="profile.content.aria"/>
     <spring:message var="profileTabsAria" code="profile.tabs.aria"/>
     <spring:message var="followUserAction" code="profile.authRequired.followAction"/>
-    <spring:message var="followLabel" code="common.label.follow"/>
-    <spring:message var="followingLabel" code="common.label.following"/>
 
     <main class="profile-page" data-profile-user-id="${profile.id}">
         <section class="profile-hero" aria-labelledby="profileName">
@@ -114,18 +112,12 @@
                             <form class="profile-action-form profile-follow-form"
                                   method="post"
                                   action="${profileFollowUrl}"
-                                  data-enhanced-follow="true"
-                                  data-follow-user-id="${profile.id}"
                                   data-auth-resume-intent="follow-profile-${profile.id}">
                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <button
                                         type="submit"
                                         class="btn-primary profile-action-button profile-follow-button ${followingProfile ? 'is-following' : ''}"
-                                        aria-pressed="${followingProfile}"
-                                        data-follow-toggle
-                                        data-follow-user-id="${profile.id}"
-                                        data-follow-label="${fn:escapeXml(followLabel)}"
-                                        data-following-label="${fn:escapeXml(followingLabel)}">
+                                        aria-pressed="${followingProfile}">
                                     <c:choose>
                                         <c:when test="${followingProfile}"><spring:message code="common.label.following"/></c:when>
                                         <c:otherwise><spring:message code="common.label.follow"/></c:otherwise>
@@ -153,7 +145,6 @@
         </section>
 
         <section class="profile-tabs" aria-label="${profileContentAria}">
-            <c:url var="profileBaseUrl" value="${profileBasePath}"/>
             <c:url var="profileReviewsTabUrl" value="${profileBasePath}">
                 <c:param name="tab" value="reviews"/>
             </c:url>
@@ -199,9 +190,7 @@
                             <c:otherwise>
                                 <div class="profile-favorites-grid">
                                     <c:forEach var="favoriteCar" items="${favoriteCars}">
-                                        <c:url var="favoriteReviewUrl" value="/reviews">
-                                            <c:param name="carId" value="${favoriteCar.id}"/>
-                                        </c:url>
+                                        <c:url var="favoriteReviewUrl" value="/reviews/car/${favoriteCar.id}"/>
                                         <pa:car-card
                                                 model="${favoriteCar.brandName} ${favoriteCar.model}"
                                                 bodyType="${favoriteCar.bodyType}"
@@ -212,22 +201,16 @@
                                                 reviewCount="${reviewStatsByCarId[favoriteCar.id].reviewCount}"/>
                                     </c:forEach>
                                 </div>
-                                <c:if test="${favoriteCarsCurrentPage < favoriteCarsTotalPages}">
-                                    <c:url var="favoriteCarsShowMoreUrl" value="${profileBasePath}">
-                                        <c:param name="tab" value="favorites"/>
-                                        <c:param name="page" value="${favoriteCarsCurrentPage + 1}"/>
-                                    </c:url>
-                                    <div class="reviews-feed-more profile-show-more">
-                                        <a class="btn-secondary reviews-show-more"
-                                           href="${favoriteCarsShowMoreUrl}"
-                                           data-review-show-more="true"
-                                           data-fragment-url="${profileBaseUrl}"
-                                           data-target="#profileFavoritesPanel"
-                                           data-list-selector=".profile-favorites-grid"
-                                           data-item-selector=".profile-favorites-grid > .car-card-shell">
-                                            <spring:message code="common.action.showMoreCars"/>
-                                        </a>
-                                    </div>
+                                <c:if test="${favoriteCarsTotalPages > 1}">
+                                    <jsp:useBean id="favoriteCarsPaginationParams" class="java.util.LinkedHashMap"/>
+                                    <c:set target="${favoriteCarsPaginationParams}" property="tab" value="favorites"/>
+                                    <spring:message var="favoriteCarsPaginationAria" code="profile.favorites.pagination.aria"/>
+                                    <pa:pagination currentPage="${favoriteCarsCurrentPage}"
+                                                   totalPages="${favoriteCarsTotalPages}"
+                                                   baseUrl="${profileBasePath}"
+                                                   extraParams="${favoriteCarsPaginationParams}"
+                                                   fragment="profileFavoritesPanel"
+                                                   ariaLabel="${favoriteCarsPaginationAria}"/>
                                 </c:if>
                             </c:otherwise>
                         </c:choose>
@@ -245,29 +228,31 @@
                                 </div>
                             </c:when>
                             <c:otherwise>
+                                <c:url var="likedDeleteRedirect" value="${profileBasePath}">
+                                    <c:param name="tab" value="liked"/>
+                                    <c:if test="${not empty likedReviewsCurrentPage and likedReviewsCurrentPage > 1}">
+                                        <c:param name="page" value="${likedReviewsCurrentPage}"/>
+                                    </c:if>
+                                </c:url>
+                                <c:set var="likedDeleteRedirect" value="${likedDeleteRedirect}#profileLikedPanel"/>
                                 <div class="profile-review-list">
                                     <c:forEach var="likedReview" items="${likedReviews}">
                                         <pa:profile-review-card
                                                 reviewCard="${likedReview}"
-                                                editable="${likedReview.ownedByCurrentUser}"/>
+                                                editable="${likedReview.ownedByCurrentUser}"
+                                                deleteRedirect="${likedDeleteRedirect}"/>
                                     </c:forEach>
                                 </div>
-                                <c:if test="${likedReviewsCurrentPage < likedReviewsTotalPages}">
-                                    <c:url var="likedReviewsShowMoreUrl" value="${profileBasePath}">
-                                        <c:param name="tab" value="liked"/>
-                                        <c:param name="page" value="${likedReviewsCurrentPage + 1}"/>
-                                    </c:url>
-                                    <div class="reviews-feed-more profile-show-more">
-                                        <a class="btn-secondary reviews-show-more"
-                                           href="${likedReviewsShowMoreUrl}"
-                                           data-review-show-more="true"
-                                           data-fragment-url="${profileBaseUrl}"
-                                           data-target="#profileLikedPanel"
-                                           data-list-selector=".profile-review-list"
-                                           data-item-selector=".profile-review-list > .profile-review-card">
-                                            <spring:message code="common.action.showMoreReviews"/>
-                                        </a>
-                                    </div>
+                                <c:if test="${likedReviewsTotalPages > 1}">
+                                    <jsp:useBean id="likedReviewsPaginationParams" class="java.util.LinkedHashMap"/>
+                                    <c:set target="${likedReviewsPaginationParams}" property="tab" value="liked"/>
+                                    <spring:message var="likedReviewsPaginationAria" code="profile.liked.pagination.aria"/>
+                                    <pa:pagination currentPage="${likedReviewsCurrentPage}"
+                                                   totalPages="${likedReviewsTotalPages}"
+                                                   baseUrl="${profileBasePath}"
+                                                   extraParams="${likedReviewsPaginationParams}"
+                                                   fragment="profileLikedPanel"
+                                                   ariaLabel="${likedReviewsPaginationAria}"/>
                                 </c:if>
                             </c:otherwise>
                         </c:choose>
@@ -285,29 +270,31 @@
                                 </div>
                             </c:when>
                             <c:otherwise>
+                                <c:url var="profileReviewsDeleteRedirect" value="${profileBasePath}">
+                                    <c:param name="tab" value="reviews"/>
+                                    <c:if test="${not empty profileReviewsCurrentPage and profileReviewsCurrentPage > 1}">
+                                        <c:param name="page" value="${profileReviewsCurrentPage}"/>
+                                    </c:if>
+                                </c:url>
+                                <c:set var="profileReviewsDeleteRedirect" value="${profileReviewsDeleteRedirect}#profileReviewsPanel"/>
                                 <div class="profile-review-list">
                                     <c:forEach var="profileReview" items="${profileReviews}">
                                         <pa:profile-review-card
                                                 reviewCard="${profileReview}"
-                                                editable="${profileReview.ownedByCurrentUser}"/>
+                                                editable="${profileReview.ownedByCurrentUser}"
+                                                deleteRedirect="${profileReviewsDeleteRedirect}"/>
                                     </c:forEach>
                                 </div>
-                                <c:if test="${profileReviewsCurrentPage < profileReviewsTotalPages}">
-                                    <c:url var="profileReviewsShowMoreUrl" value="${profileBasePath}">
-                                        <c:param name="tab" value="reviews"/>
-                                        <c:param name="page" value="${profileReviewsCurrentPage + 1}"/>
-                                    </c:url>
-                                    <div class="reviews-feed-more profile-show-more">
-                                        <a class="btn-secondary reviews-show-more"
-                                           href="${profileReviewsShowMoreUrl}"
-                                           data-review-show-more="true"
-                                           data-fragment-url="${profileBaseUrl}"
-                                           data-target="#profileReviewsPanel"
-                                           data-list-selector=".profile-review-list"
-                                           data-item-selector=".profile-review-list > .profile-review-card">
-                                            <spring:message code="common.action.showMoreReviews"/>
-                                        </a>
-                                    </div>
+                                <c:if test="${profileReviewsTotalPages > 1}">
+                                    <jsp:useBean id="profileReviewsPaginationParams" class="java.util.LinkedHashMap"/>
+                                    <c:set target="${profileReviewsPaginationParams}" property="tab" value="reviews"/>
+                                    <spring:message var="profileReviewsPaginationAria" code="profile.reviews.pagination.aria"/>
+                                    <pa:pagination currentPage="${profileReviewsCurrentPage}"
+                                                   totalPages="${profileReviewsTotalPages}"
+                                                   baseUrl="${profileBasePath}"
+                                                   extraParams="${profileReviewsPaginationParams}"
+                                                   fragment="profileReviewsPanel"
+                                                   ariaLabel="${profileReviewsPaginationAria}"/>
                                 </c:if>
                             </c:otherwise>
                         </c:choose>
@@ -340,19 +327,16 @@
     </c:if>
     <c:set var="profileToastCode" value="${not empty profileLanguageSuccessCode ? profileLanguageSuccessCode : submittedToastMessageCode}"/>
     <pa:toast messageCode="${profileToastCode}"/>
-    <pa:script src="/js/reactions.js"/>
-    <pa:script src="/js/enhanced-filters.js"/>
-    <pa:script src="/js/action-menu.js"/>
-    <pa:script src="/js/modal-utils.js"/>
-    <pa:script src="/js/auth-required-modal.js"/>
-    <pa:script src="/js/confirmation-modal.js"/>
-    <pa:script src="/js/form-submit-lock.js"/>
-    <pa:script src="/js/profile.js"/>
+    <pa:script src="/js/shared/action-menu.js"/>
+    <pa:script src="/js/shared/modal-utils.js"/>
+    <pa:script src="/js/auth/auth-required-modal.js"/>
+    <pa:script src="/js/shared/confirmation-modal.js"/>
+    <pa:script src="/js/shared/form-submit-lock.js"/>
+    <pa:script src="/js/profile/profile.js"/>
     <c:if test="${ownProfile}">
-        <pa:script src="/js/moderator-application-modal.js"/>
+        <pa:script src="/js/profile/moderator-application-modal.js"/>
     </c:if>
-    <pa:script src="/js/toast.js"/>
-    <pa:script src="/js/review-delete.js"/>
+    <pa:script src="/js/shared/toast.js"/>
     <pa:footer/>
 </body>
 </html>

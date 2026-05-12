@@ -3,12 +3,6 @@
         return (' ' + node.className + ' ').indexOf(' ' + className + ' ') >= 0;
     }
 
-    function supportsFetchFormData() {
-        return typeof window.fetch === 'function'
-            && typeof window.FormData === 'function'
-            && typeof window.Promise === 'function';
-    }
-
     function setClass(node, className, enabled) {
         if (enabled && !hasClass(node, className)) {
             node.className += ' ' + className;
@@ -65,8 +59,7 @@
 
     function isInteractiveCardTarget(target) {
         return closestByTagName(target, ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'FORM', 'LABEL'])
-                || closestByAttribute(target, 'data-profile-review-menu')
-                || closestByAttribute(target, 'data-review-like-toggle');
+                || closestByAttribute(target, 'data-profile-review-menu');
     }
 
     function openModal(modal) {
@@ -98,110 +91,6 @@
         if (window.PawActionMenus) {
             window.PawActionMenus.close();
         }
-    }
-
-    function updateFollowButton(button, following) {
-        var followLabel = button.getAttribute('data-follow-label') || '';
-        var followingLabel = button.getAttribute('data-following-label') || followLabel;
-
-        button.setAttribute('aria-pressed', String(following));
-        setClass(button, 'is-following', following);
-        button.textContent = following ? followingLabel : followLabel;
-    }
-
-    function updateFollowButtons(userId, following) {
-        var buttons = document.querySelectorAll('[data-follow-toggle][data-follow-user-id="' + userId + '"]');
-
-        for (var i = 0; i < buttons.length; i += 1) {
-            updateFollowButton(buttons[i], following);
-        }
-    }
-
-    function updateProfileFollowerCount(userId, followerCount) {
-        var profileRoot = document.querySelector('[data-profile-user-id]');
-        var countNode = document.querySelector('[data-profile-follower-count]');
-
-        if (!profileRoot || !countNode || profileRoot.getAttribute('data-profile-user-id') !== userId) {
-            return;
-        }
-        countNode.textContent = String(Math.max(0, followerCount));
-    }
-
-    function parseFollowResponse(body) {
-        var parts = (body || '').trim().split('|');
-        var followerCount;
-
-        if (parts.length !== 2) {
-            return null;
-        }
-        followerCount = parseInt(parts[1], 10);
-        if (isNaN(followerCount)) {
-            return null;
-        }
-        return {
-            following: parts[0] === 'true',
-            followerCount: followerCount
-        };
-    }
-
-    function submitFollowForm(form) {
-        var button = form.querySelector('[data-follow-toggle]');
-        var userId = form.getAttribute('data-follow-user-id');
-
-        if (!button || !userId || button.disabled || form.getAttribute('data-loading') === 'true') {
-            return;
-        }
-        if (!supportsFetchFormData()) {
-            form.submit();
-            return;
-        }
-
-        form.setAttribute('data-loading', 'true');
-        button.disabled = true;
-        button.setAttribute('aria-busy', 'true');
-
-        window.fetch(form.getAttribute('action'), {
-            method: 'POST',
-            body: new window.FormData(form),
-            credentials: 'same-origin',
-            headers: {
-                'Accept': 'text/plain',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        }).then(function (response) {
-            if (response.redirected) {
-                window.location.href = response.url;
-                return '';
-            }
-            if (response.status === 401) {
-                window.location.href = '/login';
-                return '';
-            }
-            if (!response.ok) {
-                throw new Error('follow-request-failed');
-            }
-            return response.text();
-        }).then(function (body) {
-            var nextState;
-
-            if (!body) {
-                return;
-            }
-            nextState = parseFollowResponse(body);
-            if (!nextState) {
-                throw new Error('invalid-follow-response');
-            }
-            updateFollowButtons(userId, nextState.following);
-            updateProfileFollowerCount(userId, nextState.followerCount);
-        }).catch(function () {
-            form.submit();
-        }).finally(function () {
-            form.removeAttribute('data-loading');
-            if (document.contains(button)) {
-                button.disabled = false;
-                button.removeAttribute('aria-busy');
-            }
-        });
     }
 
     // Remember the selected tab across page reloads.
@@ -295,47 +184,11 @@
         activateProfileTab(tabsRoot, initialPanelId || tabs[0].getAttribute('data-profile-tab-target'), false);
     }
 
-    function setupCollapsibleSections() {
-        var sections = document.querySelectorAll('[data-collapsible-section]');
-
-        for (var i = 0; i < sections.length; i += 1) {
-            var extras = sections[i].querySelectorAll('[data-collapsible-extra]');
-            var toggle = sections[i].querySelector('[data-collapsible-toggle]');
-
-            if (!toggle || extras.length === 0) {
-                continue;
-            }
-
-            for (var j = 0; j < extras.length; j += 1) {
-                extras[j].hidden = true;
-            }
-            toggle.hidden = false;
-            toggle.setAttribute('aria-expanded', 'false');
-            toggle.setAttribute('data-expanded', 'false');
-            toggle.textContent = toggle.getAttribute('data-show-label') || '';
-        }
-    }
-
     function setupAutoOpenModals() {
         var modals = document.querySelectorAll('.profile-modal[data-open-on-load="true"]');
         for (var i = 0; i < modals.length; i += 1) {
             openModal(modals[i]);
         }
-    }
-
-    function setCollapsibleSectionExpanded(toggle, expanded) {
-        var section = closestByAttribute(toggle, 'data-collapsible-section');
-        var extras = section ? section.querySelectorAll('[data-collapsible-extra]') : [];
-        var label = expanded
-            ? toggle.getAttribute('data-hide-label') || ''
-            : toggle.getAttribute('data-show-label') || '';
-
-        for (var i = 0; i < extras.length; i += 1) {
-            extras[i].hidden = !expanded;
-        }
-        toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        toggle.setAttribute('data-expanded', expanded ? 'true' : 'false');
-        toggle.textContent = label;
     }
 
     document.addEventListener('click', function (event) {
@@ -382,27 +235,6 @@
             return;
         }
 
-        var sectionToggle = closestByAttribute(event.target, 'data-collapsible-toggle');
-        if (sectionToggle) {
-            event.preventDefault();
-            setCollapsibleSectionExpanded(
-                sectionToggle,
-                sectionToggle.getAttribute('data-expanded') !== 'true'
-            );
-        }
-    });
-
-    document.addEventListener('submit', function (event) {
-        var form = event.target;
-
-        if (!hasAttribute(form, 'data-enhanced-follow')) {
-            return;
-        }
-        if (!supportsFetchFormData()) {
-            return;
-        }
-        event.preventDefault();
-        submitFollowForm(form);
     });
 
     document.addEventListener('keydown', function (event) {
@@ -467,6 +299,5 @@
     });
 
     setupProfileTabs();
-    setupCollapsibleSections();
     setupAutoOpenModals();
 }());

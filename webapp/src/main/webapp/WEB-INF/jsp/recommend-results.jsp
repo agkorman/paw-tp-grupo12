@@ -30,7 +30,7 @@
                                     bodyType="${car.bodyType}"
                                     carId="${car.id}"
                                     hasImage="${car.hasImage}"
-                                    href="/reviews?carId=${car.id}"
+                                    href="<c:url value='/reviews/car/${car.id}'/>"
                                     averageRating="${stats.averageRating}"
                                     reviewCount="${recommendation.reviewCount}"
                                     horsepower="${car.horsepower}"
@@ -58,7 +58,6 @@
         </c:choose>
     </main>
 
-    <pa:script src="/js/reactions.js"/>
     <pa:footer/>
 </body>
 </html>

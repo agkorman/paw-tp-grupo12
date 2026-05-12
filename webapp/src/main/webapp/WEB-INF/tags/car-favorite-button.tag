@@ -17,19 +17,12 @@
 
 <c:url var="favoriteAction" value="/cars/${carId}/favorite"/>
 
-<form class="favorite-form" method="post" action="${favoriteAction}" data-favorite-form>
+<form class="favorite-form" method="post" action="${favoriteAction}">
     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-    <input type="hidden" name="favorite" value="${favorited ? 'false' : 'true'}" data-favorite-next-value>
+    <input type="hidden" name="favorite" value="${favorited ? 'false' : 'true'}">
     <button
             type="submit"
             class="favorite-toggle ${favorited ? 'is-active' : ''}"
-            data-favorite-toggle
-            data-car-id="${fn:escapeXml(carId)}"
-            data-favorited="${favorited}"
-            data-favorite-add-label="${fn:escapeXml(addFavoriteLabel)}"
-            data-favorite-remove-label="${fn:escapeXml(removeFavoriteLabel)}"
-            data-favorite-active-label="${fn:escapeXml(favoriteLabel)}"
-            data-favorite-inactive-label="${fn:escapeXml(shortAddFavoriteLabel)}"
             aria-pressed="${favorited}"
             aria-label="${fn:escapeXml(favorited ? removeFavoriteLabel : addFavoriteLabel)}"
             <c:if test="${disabled}">disabled</c:if>>

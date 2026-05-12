@@ -19,8 +19,7 @@
             hasAdvancedFilters="${hasAdvancedFilters}"/>
 
     <pa:cars-filters-panel
-            criteria="${criteria}"
-            vehicleCount="${resultCount}"/>
+            criteria="${criteria}"/>
 
     <pa:cars-content
             cars="${cars}"
@@ -39,17 +38,21 @@
             criteria="${criteria}"/>
     <pa:auth-required-modal/>
 
-    <c:if test="${showSubmittedToast}">
-        <pa:toast messageCode="${submittedToastMessageCode}"/>
-    </c:if>
+    <c:choose>
+        <c:when test="${showSubmittedToast}">
+            <pa:toast messageCode="${submittedToastMessageCode}"/>
+        </c:when>
+        <c:otherwise>
+            <pa:toast/>
+        </c:otherwise>
+    </c:choose>
 
-    <pa:script src="/js/reactions.js"/>
-    <pa:script src="/js/enhanced-filters.js"/>
-    <pa:script src="/js/cars-filters-panel.js"/>
-    <pa:script src="/js/modal-utils.js"/>
-    <pa:script src="/js/auth-required-modal.js"/>
-    <pa:script src="/js/form-submit-lock.js"/>
-    <pa:script src="/js/toast.js"/>
+    <pa:script src="/js/cars/cars-toolbar.js"/>
+    <pa:script src="/js/cars/cars-filters-panel.js"/>
+    <pa:script src="/js/shared/modal-utils.js"/>
+    <pa:script src="/js/auth/auth-required-modal.js"/>
+    <pa:script src="/js/shared/form-submit-lock.js"/>
+    <pa:script src="/js/shared/toast.js"/>
 
     <pa:footer/>
 </body>

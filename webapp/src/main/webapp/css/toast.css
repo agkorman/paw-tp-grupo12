@@ -68,7 +68,7 @@
     position: fixed;
     right: 1.25rem;
     bottom: 1.25rem;
-    z-index: 80;
+    z-index: 1000;
     max-width: min(26rem, calc(100vw - 2.5rem));
     display: grid;
     grid-template-columns: auto 1fr auto;

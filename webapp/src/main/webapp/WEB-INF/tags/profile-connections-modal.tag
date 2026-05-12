@@ -17,8 +17,6 @@
 <spring:message var="followersTabLabel" code="profile.followers"/>
 <spring:message var="modalTitle" code="profile.connections.title"/>
 <spring:message var="closeModalLabel" code="common.action.close"/>
-<spring:message var="followLabel" code="common.label.follow"/>
-<spring:message var="followingLabel" code="common.label.following"/>
 <spring:message var="followingEmpty" code="profile.connections.following.empty"/>
 <spring:message var="followersEmpty" code="profile.connections.followers.empty"/>
 <spring:message var="prevLabel" code="profile.connections.pagination.previous"/>
@@ -102,17 +100,11 @@
                                         <form class="profile-connection-follow-form"
                                               method="post"
                                               action="${connectionFollowUrl}"
-                                              data-enhanced-follow="true"
-                                              data-follow-user-id="${user.id}"
                                               data-auth-resume-intent="follow-profile-${user.id}">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <button type="submit"
                                                     class="profile-connection-button ${user.following ? 'is-following' : ''}"
-                                                    aria-pressed="${user.following}"
-                                                    data-follow-toggle
-                                                    data-follow-user-id="${user.id}"
-                                                    data-follow-label="${fn:escapeXml(followLabel)}"
-                                                    data-following-label="${fn:escapeXml(followingLabel)}">
+                                                    aria-pressed="${user.following}">
                                                 <c:choose>
                                                     <c:when test="${user.following}"><spring:message code="common.label.following"/></c:when>
                                                     <c:otherwise><spring:message code="common.label.follow"/></c:otherwise>
