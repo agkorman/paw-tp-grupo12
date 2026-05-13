@@ -197,6 +197,7 @@ public class ReviewDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final boolean result = reviewDao.delete(deleted.getId());
+        flushAndClear();
 
         // Assertions
         assertTrue(result);

@@ -1,6 +1,7 @@
-package ar.edu.itba.paw.persistence;
+package ar.edu.itba.paw.persistence.jdbc;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.persistence.CarFavoriteDao;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import org.slf4j.Logger;
@@ -19,7 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Repository
+
 public class CarFavoriteJdbcDao implements CarFavoriteDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CarFavoriteJdbcDao.class);

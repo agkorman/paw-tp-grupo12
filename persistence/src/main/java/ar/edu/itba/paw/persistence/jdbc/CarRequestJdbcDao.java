@@ -1,6 +1,7 @@
-package ar.edu.itba.paw.persistence;
+package ar.edu.itba.paw.persistence.jdbc;
 
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
@@ -23,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Repository
+
 public class CarRequestJdbcDao implements CarRequestDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CarRequestJdbcDao.class);

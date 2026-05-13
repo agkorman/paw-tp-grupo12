@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Repository
 public class UserFollowJpaDao implements UserFollowDao {
@@ -82,43 +83,42 @@ public class UserFollowJpaDao implements UserFollowDao {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<User> findFollowers(final long userId) {
-        return (List<User>) em.createNativeQuery(
+        final List<?> results = em.createNativeQuery(
                         "SELECT u.user_id, u.username, u.email, u.password, u.role, u.preferred_locale, u.created_at "
                         + "FROM users u JOIN user_follows f ON f.follower_id = u.user_id "
                         + "WHERE f.followed_id = :userId ORDER BY f.created_at DESC, u.username ASC",
                         User.class)
                 .setParameter("userId", userId)
                 .getResultList();
+        return results.stream().map(r -> (User) r).collect(Collectors.toList());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<User> findFollowing(final long userId) {
-        return (List<User>) em.createNativeQuery(
+        final List<?> results = em.createNativeQuery(
                         "SELECT u.user_id, u.username, u.email, u.password, u.role, u.preferred_locale, u.created_at "
                         + "FROM users u JOIN user_follows f ON f.followed_id = u.user_id "
                         + "WHERE f.follower_id = :userId ORDER BY f.created_at DESC, u.username ASC",
                         User.class)
                 .setParameter("userId", userId)
                 .getResultList();
+        return results.stream().map(r -> (User) r).collect(Collectors.toList());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Set<Long> getFollowedIds(final long followerId, final Collection<Long> targetIds) {
         if (targetIds == null || targetIds.isEmpty()) {
             return Set.of();
         }
-        final List<Number> ids = em.createNativeQuery(
+        final List<?> ids = em.createNativeQuery(
                         "SELECT followed_id FROM user_follows WHERE follower_id = :followerId AND followed_id IN (:targetIds)")
                 .setParameter("followerId", followerId)
                 .setParameter("targetIds", targetIds)
                 .getResultList();
         final Set<Long> result = new HashSet<>();
-        for (final Number id : ids) {
-            result.add(id.longValue());
+        for (final Object id : ids) {
+            result.add(((Number) id).longValue());
         }
         return result;
     }

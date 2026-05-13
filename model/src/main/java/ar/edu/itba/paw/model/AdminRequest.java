@@ -2,16 +2,41 @@ package ar.edu.itba.paw.model;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
+@Entity
+@Table(name = "admin_requests")
 public class AdminRequest implements Serializable {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "admin_request_id")
     private long id;
+
+    @Column(name = "submitted_by_user_id")
     private long submittedByUserId;
+
+    @Column(name = "submitter_email")
     private String submitterEmail;
+
+    @Column(name = "motivation")
     private String motivation;
+
+    @Column(name = "bio")
     private String bio;
+
+    @Column(name = "justification")
     private String justification;
+
+    @Column(name = "status")
     private String status;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
     public AdminRequest() {}

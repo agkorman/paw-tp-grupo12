@@ -67,13 +67,13 @@ public class ReviewReply implements Serializable {
     public Review getReview() { return review; }
     public void setReview(final Review review) { this.review = review; }
 
-    public long getReviewId() { return reviewId; }
+    public long getReviewId() { return review != null ? review.getId() : reviewId; }
     public void setReviewId(final long reviewId) { this.reviewId = reviewId; }
 
     public User getUser() { return user; }
     public void setUser(final User user) { this.user = user; }
 
-    public long getUserId() { return userId; }
+    public long getUserId() { return user != null ? user.getId() : userId; }
     public void setUserId(final long userId) { this.userId = userId; }
 
     public String getAuthorUsername() {

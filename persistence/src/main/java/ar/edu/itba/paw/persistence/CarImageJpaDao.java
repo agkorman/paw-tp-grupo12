@@ -34,15 +34,15 @@ public class CarImageJpaDao implements CarImageDao {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<CarImage> findAllByCarId(final long carId) {
-        final List<Object[]> rows = em.createNativeQuery(
+        final List<?> rawRows = em.createNativeQuery(
                         "SELECT image_id, car_id, display_order, content_type, updated_at "
                         + "FROM car_images WHERE car_id = :carId ORDER BY display_order ASC, image_id ASC")
                 .setParameter("carId", carId)
                 .getResultList();
         final List<CarImage> result = new ArrayList<>();
-        for (final Object[] row : rows) {
+        for (final Object element : rawRows) {
+            final Object[] row = (Object[]) element;
             result.add(new CarImage(
                     ((Number) row[0]).longValue(),
                     ((Number) row[1]).longValue(),

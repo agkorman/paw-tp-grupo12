@@ -7,9 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -22,7 +25,11 @@ public class Review implements Serializable {
     @Column(name = "review_id")
     private long id;
 
-    @Column(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Column(name = "user_id", insertable = false, updatable = false)
     private Long userId;
 
     @Column(name = "reviewer_email")
@@ -95,13 +102,21 @@ public class Review implements Serializable {
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 
-    public Long getUserId() { return userId; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public Long getUserId() {
+        if (userId != null) return userId;
+        return user != null ? user.getId() : null;
+    }
     public void setUserId(Long userId) { this.userId = userId; }
 
     public String getReviewerEmail() { return reviewerEmail; }
     public void setReviewerEmail(String reviewerEmail) { this.reviewerEmail = reviewerEmail; }
 
-    public String getReviewerUsername() { return reviewerUsername; }
+    public String getReviewerUsername() {
+        return user != null ? user.getUsername() : reviewerUsername;
+    }
     public void setReviewerUsername(String reviewerUsername) { this.reviewerUsername = reviewerUsername; }
 
     public long getCarId() { return carId; }

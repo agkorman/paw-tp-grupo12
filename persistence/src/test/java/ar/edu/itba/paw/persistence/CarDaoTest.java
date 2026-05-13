@@ -169,6 +169,7 @@ public class CarDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final boolean result = carDao.delete(created.getId());
+        flushAndClear();
 
         // Assertions
         assertTrue(result);

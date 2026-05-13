@@ -5,9 +5,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -20,7 +23,11 @@ public class Car implements Serializable {
     @Column(name = "car_id")
     private long id;
 
-    @Column(name = "brand_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
+
+    @Column(name = "brand_id", insertable = false, updatable = false)
     private long brandId;
 
     @Transient
@@ -29,7 +36,11 @@ public class Car implements Serializable {
     @Column(name = "model")
     private String model;
 
-    @Column(name = "body_type_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "body_type_id")
+    private BodyType bodyTypeEntity;
+
+    @Column(name = "body_type_id", insertable = false, updatable = false)
     private long bodyTypeId;
 
     @Column(name = "year")
@@ -41,7 +52,7 @@ public class Car implements Serializable {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Transient
@@ -122,8 +133,16 @@ public class Car implements Serializable {
         this.id = id;
     }
 
+    public Brand getBrand() {
+        return brand;
+    }
+
+    public void setBrand(final Brand brand) {
+        this.brand = brand;
+    }
+
     public long getBrandId() {
-        return brandId;
+        return brand != null ? brand.getId() : brandId;
     }
 
     public void setBrandId(final long brandId) {
@@ -131,7 +150,7 @@ public class Car implements Serializable {
     }
 
     public String getBrandName() {
-        return brandName;
+        return brand != null ? brand.getName() : brandName;
     }
 
     public void setBrandName(final String brandName) {
@@ -146,8 +165,16 @@ public class Car implements Serializable {
         this.model = model;
     }
 
+    public BodyType getBodyTypeEntity() {
+        return bodyTypeEntity;
+    }
+
+    public void setBodyTypeEntity(final BodyType bodyTypeEntity) {
+        this.bodyTypeEntity = bodyTypeEntity;
+    }
+
     public long getBodyTypeId() {
-        return bodyTypeId;
+        return bodyTypeEntity != null ? bodyTypeEntity.getId() : bodyTypeId;
     }
 
     public void setBodyTypeId(final long bodyTypeId) {
@@ -163,7 +190,7 @@ public class Car implements Serializable {
     }
 
     public String getBodyType() {
-        return bodyType;
+        return bodyTypeEntity != null ? bodyTypeEntity.getName() : bodyType;
     }
 
     public void setBodyType(final String bodyType) {

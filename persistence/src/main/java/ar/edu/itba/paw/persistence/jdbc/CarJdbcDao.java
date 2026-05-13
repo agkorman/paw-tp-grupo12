@@ -1,6 +1,7 @@
-package ar.edu.itba.paw.persistence;
+package ar.edu.itba.paw.persistence.jdbc;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
@@ -23,7 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-@Repository
+
 public class CarJdbcDao implements CarDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CarJdbcDao.class);

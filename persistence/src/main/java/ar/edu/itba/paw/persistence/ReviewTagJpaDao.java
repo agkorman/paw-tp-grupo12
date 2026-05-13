@@ -75,12 +75,11 @@ public class ReviewTagJpaDao implements ReviewTagDao {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Map<Long, List<ReviewTag>> findByReviewIds(final Collection<Long> reviewIds) {
         if (reviewIds == null || reviewIds.isEmpty()) {
             return Map.of();
         }
-        final List<Object[]> rows = em.createNativeQuery(
+        final List<?> rawRows = em.createNativeQuery(
                         "SELECT rta.review_id, rt.tag_id, rt.code, rt.label_es, rt.sentiment, rt.dimension, rt.created_at "
                         + "FROM review_tag_assignments rta "
                         + "JOIN review_tags rt ON rt.tag_id = rta.tag_id "
@@ -89,7 +88,8 @@ public class ReviewTagJpaDao implements ReviewTagDao {
                 .setParameter("ids", reviewIds)
                 .getResultList();
         final Map<Long, List<ReviewTag>> result = new HashMap<>();
-        for (final Object[] row : rows) {
+        for (final Object element : rawRows) {
+            final Object[] row = (Object[]) element;
             final long reviewId = ((Number) row[0]).longValue();
             final ReviewTag tag = new ReviewTag(
                     ((Number) row[1]).shortValue(),
@@ -105,12 +105,11 @@ public class ReviewTagJpaDao implements ReviewTagDao {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Map<Long, Map<Short, Integer>> getTagCountsForCars(final Collection<Long> carIds) {
         if (carIds == null || carIds.isEmpty()) {
             return Map.of();
         }
-        final List<Object[]> rows = em.createNativeQuery(
+        final List<?> rawRows = em.createNativeQuery(
                         "SELECT r.car_id, rta.tag_id, COUNT(*) AS mentions "
                         + "FROM review_tag_assignments rta "
                         + "JOIN reviews r ON r.review_id = rta.review_id "
@@ -119,7 +118,8 @@ public class ReviewTagJpaDao implements ReviewTagDao {
                 .setParameter("carIds", carIds)
                 .getResultList();
         final Map<Long, Map<Short, Integer>> result = new HashMap<>();
-        for (final Object[] row : rows) {
+        for (final Object element : rawRows) {
+            final Object[] row = (Object[]) element;
             final long carId = ((Number) row[0]).longValue();
             final short tagId = ((Number) row[1]).shortValue();
             final int mentions = ((Number) row[2]).intValue();

@@ -1,6 +1,8 @@
-package ar.edu.itba.paw.persistence;
+package ar.edu.itba.paw.persistence.jdbc;
 
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.persistence.ReviewDao;
+import ar.edu.itba.paw.persistence.ReviewTagDao;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
@@ -25,7 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Repository
+
 public class ReviewJdbcDao implements ReviewDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReviewJdbcDao.class);

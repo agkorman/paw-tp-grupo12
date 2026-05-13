@@ -3,27 +3,74 @@ package ar.edu.itba.paw.model;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
+@Entity
+@Table(name = "car_requests")
 public class CarRequest implements Serializable {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "car_request_id")
     private long id;
+
+    @Column(name = "submitted_by_user_id")
     private Long submittedByUserId;
+
+    @Column(name = "submitter_email")
     private String submitterEmail;
+
+    @Column(name = "brand_id")
     private long brandId;
+
+    @Column(name = "body_type_id")
     private long bodyTypeId;
+
+    @Column(name = "year")
     private Integer year;
+
+    @Column(name = "model")
     private String model;
+
+    @Column(name = "description")
     private String description;
+
+    @Column(name = "image_content_type")
     private String imageContentType;
+
+    @Column(name = "image_data")
     private byte[] imageData;
+
+    @Column(name = "status")
     private String status;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "fuel_type")
     private String fuelType;
+
+    @Column(name = "horsepower")
     private Integer horsepower;
+
+    @Column(name = "airbag_count")
     private Integer airbagCount;
+
+    @Column(name = "transmission")
     private String transmission;
+
+    @Column(name = "fuel_consumption")
     private BigDecimal fuelConsumption;
+
+    @Column(name = "max_speed_kmh")
     private Integer maxSpeedKmh;
+
+    @Column(name = "price_usd")
     private BigDecimal priceUsd;
 
     public CarRequest() {}
