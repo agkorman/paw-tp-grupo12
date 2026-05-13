@@ -43,4 +43,15 @@ class LoginRedirectUtilsTest {
         // Assertions
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void safeRedirect_contextStripCreatesProtocolRelative_rejectsRedirect() {
+        // Arrange
+        final String redirect = "/paw-2026a-12//evil.com";
+        final String contextPath = "/paw-2026a-12";
+        // Exercise
+        final Optional<String> result = LoginRedirectUtils.safeRedirect(redirect, contextPath);
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
 }

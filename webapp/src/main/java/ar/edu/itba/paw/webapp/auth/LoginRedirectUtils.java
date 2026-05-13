@@ -49,7 +49,9 @@ public final class LoginRedirectUtils {
     }
 
     public static Optional<String> safeRedirect(final String value, final String contextPath) {
-        return safeRedirect(value).map(target -> stripContextPath(target, contextPath));
+        return safeRedirect(value)
+                .map(target -> stripContextPath(target, contextPath))
+                .flatMap(LoginRedirectUtils::safeRedirect);
     }
 
     public static Optional<String> safeIntent(final String value) {
