@@ -7,6 +7,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
@@ -146,6 +147,9 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
+    // ("hibernate.hbm2ddl.auto", "validate") es por esto que tiene que ir el 
+    // DependsOn. si lo cambiamos por update y dejamos silent modifications, vuela
+    @DependsOn("dataSourceInitializer") 
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(final DataSource dataSource) {
         final LocalContainerEntityManagerFactoryBean factoryBean = new LocalContainerEntityManagerFactoryBean();
         factoryBean.setPackagesToScan("ar.edu.itba.paw.model");

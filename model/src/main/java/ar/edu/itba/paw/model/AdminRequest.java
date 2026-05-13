@@ -4,9 +4,12 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
@@ -18,8 +21,9 @@ public class AdminRequest implements Serializable {
     @Column(name = "admin_request_id")
     private long id;
 
-    @Column(name = "submitted_by_user_id")
-    private long submittedByUserId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "submitted_by_user_id")
+    private User submittedByUser;
 
     @Column(name = "submitter_email")
     private String submitterEmail;
@@ -45,7 +49,7 @@ public class AdminRequest implements Serializable {
                         final String motivation, final String bio, final String justification,
                         final String status, final LocalDateTime createdAt) {
         this.id = id;
-        this.submittedByUserId = submittedByUserId;
+        this.submittedByUser = userReference(submittedByUserId);
         this.submitterEmail = submitterEmail;
         this.motivation = motivation;
         this.bio = bio;
@@ -63,11 +67,19 @@ public class AdminRequest implements Serializable {
     }
 
     public long getSubmittedByUserId() {
-        return submittedByUserId;
+        return submittedByUser != null ? submittedByUser.getId() : 0;
     }
 
     public void setSubmittedByUserId(final long submittedByUserId) {
-        this.submittedByUserId = submittedByUserId;
+        this.submittedByUser = userReference(submittedByUserId);
+    }
+
+    public User getSubmittedByUser() {
+        return submittedByUser;
+    }
+
+    public void setSubmittedByUser(final User submittedByUser) {
+        this.submittedByUser = submittedByUser;
     }
 
     public String getSubmitterEmail() {
@@ -116,5 +128,11 @@ public class AdminRequest implements Serializable {
 
     public void setCreatedAt(final LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    private static User userReference(final long id) {
+        final User user = new User();
+        user.setId(id);
+        return user;
     }
 }

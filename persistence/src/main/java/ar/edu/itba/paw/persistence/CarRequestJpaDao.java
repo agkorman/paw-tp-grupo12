@@ -1,10 +1,13 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.BodyType;
+import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.CarImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.exception.PersistenceOperationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +16,6 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -52,25 +53,12 @@ public class CarRequestJpaDao implements CarRequestDao {
         }
 
         final int effectivePage = Pagination.clampPage(normalizedPage, totalItems, pageSize);
-        final long offset = Pagination.offsetFor(effectivePage, pageSize);
-
-        final List<?> ids = em.createNativeQuery(
-                "SELECT car_request_id FROM car_requests WHERE status = ? " +
-                "ORDER BY created_at DESC, car_request_id DESC LIMIT ? OFFSET ?")
-                .setParameter(1, status)
-                .setParameter(2, pageSize)
-                .setParameter(3, offset)
-                .getResultList();
-
-        if (ids.isEmpty()) {
-            return Page.empty(effectivePage, pageSize);
-        }
-
-        final List<Long> longIds = ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
         final List<CarRequest> items = em.createQuery(
-                "SELECT r FROM CarRequest r WHERE r.id IN :ids ORDER BY r.createdAt DESC, r.id DESC",
+                "SELECT r FROM CarRequest r WHERE r.status = :status ORDER BY r.createdAt DESC, r.id DESC",
                 CarRequest.class)
-                .setParameter("ids", longIds)
+                .setParameter("status", status)
+                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
+                .setMaxResults(pageSize)
                 .getResultList();
 
         return new Page<>(items, effectivePage, pageSize, totalItems);
@@ -92,10 +80,10 @@ public class CarRequestJpaDao implements CarRequestDao {
                              final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
                              final BigDecimal priceUsd) {
         final CarRequest request = new CarRequest();
-        request.setSubmittedByUserId(submittedByUserId);
+        request.setSubmittedByUser(em.getReference(User.class, submittedByUserId));
         request.setSubmitterEmail(submitterEmail);
-        request.setBrandId(brandId);
-        request.setBodyTypeId(bodyTypeId);
+        request.setBrand(em.getReference(Brand.class, brandId));
+        request.setBodyType(em.getReference(BodyType.class, bodyTypeId));
         request.setYear(year);
         request.setModel(model);
         request.setDescription(description);
@@ -117,11 +105,11 @@ public class CarRequestJpaDao implements CarRequestDao {
     @Override
     public List<CarRequestImage> findImagesByRequestId(final long requestId) {
         try {
-            final List<?> rawRows = em.createNativeQuery(
-                    "SELECT image_id, car_request_id, display_order, content_type, updated_at " +
-                    "FROM car_request_images WHERE car_request_id = ? " +
-                    "ORDER BY display_order ASC, image_id ASC")
-                    .setParameter(1, requestId)
+            final List<?> rawRows = em.createQuery(
+                    "SELECT i.imageId, i.request.id, i.displayOrder, i.contentType, i.updatedAt " +
+                    "FROM CarRequestImage i WHERE i.request.id = :requestId " +
+                    "ORDER BY i.displayOrder ASC, i.imageId ASC")
+                    .setParameter("requestId", requestId)
                     .getResultList();
 
             return rawRows.stream().map(element -> {
@@ -132,8 +120,7 @@ public class CarRequestJpaDao implements CarRequestDao {
                 img.setDisplayOrder(((Number) r[2]).intValue());
                 img.setContentType((String) r[3]);
                 img.setImageData(null);
-                img.setUpdatedAt(r[4] instanceof Timestamp ? ((Timestamp) r[4]).toLocalDateTime()
-                        : r[4] instanceof LocalDateTime ? (LocalDateTime) r[4] : null);
+                img.setUpdatedAt((java.time.LocalDateTime) r[4]);
                 return img;
             }).collect(Collectors.toList());
         } catch (final Exception e) {
@@ -146,7 +133,7 @@ public class CarRequestJpaDao implements CarRequestDao {
     public Optional<CarRequestImage> findImageByRequestIdAndImageId(final long requestId, final long imageId) {
         try {
             final List<CarRequestImage> results = em.createQuery(
-                    "SELECT i FROM CarRequestImage i WHERE i.requestId = :reqId AND i.imageId = :imgId",
+                    "SELECT i FROM CarRequestImage i WHERE i.request.id = :reqId AND i.imageId = :imgId",
                     CarRequestImage.class)
                     .setParameter("reqId", requestId)
                     .setParameter("imgId", imageId)
@@ -161,8 +148,8 @@ public class CarRequestJpaDao implements CarRequestDao {
     @Override
     public void replaceImages(final long requestId, final List<CarImagePayload> images) {
         try {
-            em.createNativeQuery("DELETE FROM car_request_images WHERE car_request_id = ?")
-                    .setParameter(1, requestId)
+            em.createQuery("DELETE FROM CarRequestImage i WHERE i.request.id = :requestId")
+                    .setParameter("requestId", requestId)
                     .executeUpdate();
 
             final CarRequest requestRef = em.getReference(CarRequest.class, requestId);
@@ -200,12 +187,12 @@ public class CarRequestJpaDao implements CarRequestDao {
 
     @Override
     public int bindRequestsToUserByEmail(final long userId, final String email) {
-        final int bound = em.createNativeQuery(
-                "UPDATE car_requests SET submitted_by_user_id = ? " +
-                "WHERE submitted_by_user_id IS NULL " +
-                "AND submitter_email IS NOT NULL AND LOWER(BTRIM(submitter_email)) = LOWER(?)")
-                .setParameter(1, userId)
-                .setParameter(2, email)
+        final int bound = em.createQuery(
+                "UPDATE CarRequest r SET r.submittedByUser = :user " +
+                "WHERE r.submittedByUser IS NULL " +
+                "AND r.submitterEmail IS NOT NULL AND LOWER(TRIM(r.submitterEmail)) = LOWER(:email)")
+                .setParameter("user", em.getReference(User.class, userId))
+                .setParameter("email", email)
                 .executeUpdate();
         if (bound > 0) {
             LOGGER.info("bound {} pending car requests to user id={} email={}", bound, userId, email);

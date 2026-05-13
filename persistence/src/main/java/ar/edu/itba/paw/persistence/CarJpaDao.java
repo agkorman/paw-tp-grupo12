@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -52,15 +51,11 @@ public class CarJpaDao implements CarDao {
             return;
         }
         final List<Long> carIds = cars.stream().map(Car::getId).collect(Collectors.toList());
-        final String placeholders = carIds.stream().map(id -> "?").collect(Collectors.joining(","));
-        final javax.persistence.Query query = em.createNativeQuery(
-                "SELECT DISTINCT car_id FROM car_images WHERE car_id IN (" + placeholders + ")");
-        for (int i = 0; i < carIds.size(); i++) {
-            query.setParameter(i + 1, carIds.get(i));
-        }
-        final List<?> rawIds = query.getResultList();
-        final Set<Long> withImages = rawIds.stream()
-                .map(r -> ((Number) r).longValue()).collect(Collectors.toCollection(HashSet::new));
+        final Set<Long> withImages = em.createQuery(
+                "SELECT DISTINCT i.car.id FROM CarImage i WHERE i.car.id IN :carIds", Long.class)
+                .setParameter("carIds", carIds)
+                .getResultStream()
+                .collect(Collectors.toSet());
         cars.forEach(c -> c.setHasImage(withImages.contains(c.getId())));
     }
 
@@ -121,7 +116,7 @@ public class CarJpaDao implements CarDao {
     public List<Car> findByBrandIdAndBodyTypeId(final long brandId, final long bodyTypeId) {
         final List<Car> cars = em.createQuery(
                 "SELECT c FROM Car c JOIN FETCH c.brand JOIN FETCH c.bodyTypeEntity " +
-                "WHERE c.brandId = :brandId AND c.bodyTypeId = :bodyTypeId ORDER BY c.model",
+                "WHERE c.brand.id = :brandId AND c.bodyTypeEntity.id = :bodyTypeId ORDER BY c.model",
                 Car.class)
                 .setParameter("brandId", brandId)
                 .setParameter("bodyTypeId", bodyTypeId)
@@ -244,7 +239,7 @@ public class CarJpaDao implements CarDao {
     @Override
     public long countByBrandId(final long brandId) {
         return em.createQuery(
-                "SELECT COUNT(c) FROM Car c WHERE c.brandId = :brandId", Long.class)
+                "SELECT COUNT(c) FROM Car c WHERE c.brand.id = :brandId", Long.class)
                 .setParameter("brandId", brandId)
                 .getSingleResult();
     }
@@ -252,21 +247,18 @@ public class CarJpaDao implements CarDao {
     @Override
     public long countByBodyTypeId(final long bodyTypeId) {
         return em.createQuery(
-                "SELECT COUNT(c) FROM Car c WHERE c.bodyTypeId = :bodyTypeId", Long.class)
+                "SELECT COUNT(c) FROM Car c WHERE c.bodyTypeEntity.id = :bodyTypeId", Long.class)
                 .setParameter("bodyTypeId", bodyTypeId)
                 .getSingleResult();
     }
 
     @Override
     public List<Car> findTopRated(final int limit) {
-        final List<?> ids = em.createNativeQuery(
-                "SELECT c.car_id FROM cars c " +
-                "JOIN brands b ON c.brand_id = b.brand_id " +
-                "JOIN body_types bt ON c.body_type_id = bt.body_type_id " +
-                REVIEW_STATS_JOIN +
-                "WHERE rs.review_count IS NOT NULL AND rs.review_count > 0 " +
-                "ORDER BY rs.average_rating DESC, rs.review_count DESC LIMIT ?")
-                .setParameter(1, limit)
+        final List<Long> ids = em.createQuery(
+                "SELECT r.car.id FROM Review r GROUP BY r.car.id " +
+                "ORDER BY AVG(r.rating) DESC, COUNT(r.id) DESC",
+                Long.class)
+                .setMaxResults(limit)
                 .getResultList();
         return loadAndDecorate(ids);
     }
@@ -279,20 +271,17 @@ public class CarJpaDao implements CarDao {
 
         final List<?> ids;
         if (excluded.isEmpty()) {
-            ids = em.createNativeQuery(
-                    "SELECT car_id FROM cars ORDER BY created_at DESC NULLS LAST, car_id LIMIT ?")
-                    .setParameter(1, limit)
+            ids = em.createQuery(
+                    "SELECT c.id FROM Car c ORDER BY c.createdAt DESC, c.id ASC", Long.class)
+                    .setMaxResults(limit)
                     .getResultList();
         } else {
-            final String placeholders = excluded.stream().map(id -> "?").collect(Collectors.joining(","));
-            final javax.persistence.Query query = em.createNativeQuery(
-                    "SELECT car_id FROM cars WHERE car_id NOT IN (" + placeholders + ") " +
-                    "ORDER BY created_at DESC NULLS LAST, car_id LIMIT ?");
-            for (int i = 0; i < excluded.size(); i++) {
-                query.setParameter(i + 1, excluded.get(i));
-            }
-            query.setParameter(excluded.size() + 1, limit);
-            ids = query.getResultList();
+            ids = em.createQuery(
+                    "SELECT c.id FROM Car c WHERE c.id NOT IN :excluded " +
+                    "ORDER BY c.createdAt DESC, c.id ASC", Long.class)
+                    .setParameter("excluded", excluded)
+                    .setMaxResults(limit)
+                    .getResultList();
         }
         return loadAndDecorate(ids);
     }

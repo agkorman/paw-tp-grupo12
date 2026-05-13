@@ -25,9 +25,6 @@ public class CarImage implements Serializable {
     @JoinColumn(name = "car_id")
     private Car car;
 
-    @Column(name = "car_id", insertable = false, updatable = false)
-    private long carId;
-
     @Column(name = "display_order")
     private int displayOrder;
 
@@ -51,7 +48,7 @@ public class CarImage implements Serializable {
                     final String contentType, final byte[] imageData,
                     final LocalDateTime updatedAt) {
         this.imageId = imageId;
-        this.carId = carId;
+        this.car = carReference(carId);
         this.displayOrder = displayOrder;
         this.contentType = contentType;
         this.imageData = imageData;
@@ -75,11 +72,11 @@ public class CarImage implements Serializable {
     }
 
     public long getCarId() {
-        return carId;
+        return car != null ? car.getId() : 0;
     }
 
     public void setCarId(final long carId) {
-        this.carId = carId;
+        this.car = carReference(carId);
     }
 
     public int getDisplayOrder() {
@@ -112,5 +109,11 @@ public class CarImage implements Serializable {
 
     public void setUpdatedAt(final LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    private static Car carReference(final long id) {
+        final Car car = new Car();
+        car.setId(id);
+        return car;
     }
 }

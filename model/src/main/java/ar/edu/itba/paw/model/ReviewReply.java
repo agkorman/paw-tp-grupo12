@@ -26,15 +26,9 @@ public class ReviewReply implements Serializable {
     @JoinColumn(name = "review_id")
     private Review review;
 
-    @Column(name = "review_id", insertable = false, updatable = false)
-    private long reviewId;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     private User user;
-
-    @Column(name = "user_id", insertable = false, updatable = false)
-    private long userId;
 
     @Transient
     private String authorUsername;
@@ -53,9 +47,8 @@ public class ReviewReply implements Serializable {
     public ReviewReply(final long id, final long reviewId, final long userId, final String authorUsername,
                        final String body, final LocalDateTime createdAt, final LocalDateTime updatedAt) {
         this.id = id;
-        this.reviewId = reviewId;
-        this.userId = userId;
-        this.authorUsername = authorUsername;
+        this.review = reviewReference(reviewId);
+        this.user = userReference(userId, authorUsername);
         this.body = body;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -67,14 +60,14 @@ public class ReviewReply implements Serializable {
     public Review getReview() { return review; }
     public void setReview(final Review review) { this.review = review; }
 
-    public long getReviewId() { return review != null ? review.getId() : reviewId; }
-    public void setReviewId(final long reviewId) { this.reviewId = reviewId; }
+    public long getReviewId() { return review != null ? review.getId() : 0; }
+    public void setReviewId(final long reviewId) { this.review = reviewReference(reviewId); }
 
     public User getUser() { return user; }
     public void setUser(final User user) { this.user = user; }
 
-    public long getUserId() { return user != null ? user.getId() : userId; }
-    public void setUserId(final long userId) { this.userId = userId; }
+    public long getUserId() { return user != null ? user.getId() : 0; }
+    public void setUserId(final long userId) { this.user = userReference(userId, null); }
 
     public String getAuthorUsername() {
         return user != null ? user.getUsername() : authorUsername;
@@ -89,4 +82,17 @@ public class ReviewReply implements Serializable {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(final LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    private static Review reviewReference(final long id) {
+        final Review review = new Review();
+        review.setId(id);
+        return review;
+    }
+
+    private static User userReference(final long id, final String username) {
+        final User user = new User();
+        user.setId(id);
+        user.setUsername(username);
+        return user;
+    }
 }

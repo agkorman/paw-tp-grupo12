@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashMap;
@@ -50,7 +49,7 @@ public class ReviewReplyJpaDao implements ReviewReplyDao {
     @Override
     public List<ReviewReply> findByReviewId(final long reviewId) {
         return em.createQuery(
-                        "SELECT rr FROM ReviewReply rr JOIN FETCH rr.user WHERE rr.reviewId = :reviewId "
+                        "SELECT rr FROM ReviewReply rr JOIN FETCH rr.user WHERE rr.review.id = :reviewId "
                         + "ORDER BY rr.createdAt ASC, rr.id ASC",
                         ReviewReply.class)
                 .setParameter("reviewId", reviewId)
@@ -63,8 +62,8 @@ public class ReviewReplyJpaDao implements ReviewReplyDao {
             return List.of();
         }
         return em.createQuery(
-                        "SELECT rr FROM ReviewReply rr JOIN FETCH rr.user WHERE rr.reviewId IN :reviewIds "
-                        + "ORDER BY rr.reviewId ASC, rr.createdAt ASC, rr.id ASC",
+                        "SELECT rr FROM ReviewReply rr JOIN FETCH rr.user WHERE rr.review.id IN :reviewIds "
+                        + "ORDER BY rr.review.id ASC, rr.createdAt ASC, rr.id ASC",
                         ReviewReply.class)
                 .setParameter("reviewIds", reviewIds)
                 .getResultList();
@@ -83,14 +82,13 @@ public class ReviewReplyJpaDao implements ReviewReplyDao {
 
     @Override
     public Map<Long, Long> countNewRepliesPerReview(final long userId, final LocalDateTime since) {
-        final List<?> rawRows = em.createNativeQuery(
-                        "SELECT r.review_id, COUNT(*) AS reply_count "
-                        + "FROM reviews r "
-                        + "JOIN review_replies rr ON rr.review_id = r.review_id "
-                        + "WHERE r.user_id = :userId AND rr.created_at >= :since "
-                        + "GROUP BY r.review_id")
+        final List<?> rawRows = em.createQuery(
+                        "SELECT rr.review.id, COUNT(rr.id) "
+                        + "FROM ReviewReply rr "
+                        + "WHERE rr.review.user.id = :userId AND rr.createdAt >= :since "
+                        + "GROUP BY rr.review.id")
                 .setParameter("userId", userId)
-                .setParameter("since", Timestamp.valueOf(since))
+                .setParameter("since", since)
                 .getResultList();
         final Map<Long, Long> counts = new HashMap<>();
         for (final Object element : rawRows) {

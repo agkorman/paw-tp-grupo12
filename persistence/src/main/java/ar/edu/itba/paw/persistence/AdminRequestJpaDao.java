@@ -3,6 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -11,7 +12,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class AdminRequestJpaDao implements AdminRequestDao {
@@ -46,25 +46,12 @@ public class AdminRequestJpaDao implements AdminRequestDao {
         }
 
         final int effectivePage = Pagination.clampPage(normalizedPage, totalItems, pageSize);
-        final long offset = Pagination.offsetFor(effectivePage, pageSize);
-
-        final List<?> ids = em.createNativeQuery(
-                "SELECT admin_request_id FROM admin_requests WHERE status = ? " +
-                "ORDER BY created_at DESC, admin_request_id DESC LIMIT ? OFFSET ?")
-                .setParameter(1, status)
-                .setParameter(2, pageSize)
-                .setParameter(3, offset)
-                .getResultList();
-
-        if (ids.isEmpty()) {
-            return Page.empty(effectivePage, pageSize);
-        }
-
-        final List<Long> longIds = ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
         final List<AdminRequest> items = em.createQuery(
-                "SELECT a FROM AdminRequest a WHERE a.id IN :ids ORDER BY a.createdAt DESC, a.id DESC",
+                "SELECT a FROM AdminRequest a WHERE a.status = :status ORDER BY a.createdAt DESC, a.id DESC",
                 AdminRequest.class)
-                .setParameter("ids", longIds)
+                .setParameter("status", status)
+                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
+                .setMaxResults(pageSize)
                 .getResultList();
 
         return new Page<>(items, effectivePage, pageSize, totalItems);
@@ -81,7 +68,7 @@ public class AdminRequestJpaDao implements AdminRequestDao {
     @Override
     public boolean existsPendingByUser(final long userId) {
         return em.createQuery(
-                "SELECT COUNT(a) FROM AdminRequest a WHERE a.submittedByUserId = :userId AND a.status = :status", Long.class)
+                "SELECT COUNT(a) FROM AdminRequest a WHERE a.submittedByUser.id = :userId AND a.status = :status", Long.class)
                 .setParameter("userId", userId)
                 .setParameter("status", "pending")
                 .getSingleResult() > 0L;
@@ -92,7 +79,7 @@ public class AdminRequestJpaDao implements AdminRequestDao {
                                final String motivation, final String bio, final String justification,
                                final String status) {
         final AdminRequest request = new AdminRequest();
-        request.setSubmittedByUserId(submittedByUserId);
+        request.setSubmittedByUser(em.getReference(User.class, submittedByUserId));
         request.setSubmitterEmail(submitterEmail);
         request.setMotivation(motivation);
         request.setBio(bio);

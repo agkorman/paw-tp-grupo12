@@ -2,6 +2,7 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.ReviewTag;
@@ -114,10 +115,20 @@ public class ReviewJpaDao implements ReviewDao {
 
     @Override
     public Page<Review> findLatest(final int page) {
-        return findPaginatedByNativeIds(
-                "SELECT COUNT(*) FROM reviews",
-                "SELECT review_id FROM reviews ORDER BY " + DEFAULT_ORDER_NATIVE,
-                List.of(), page, Pagination.REVIEWS_PAGE_SIZE, DEFAULT_ORDER);
+        final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
+        final long totalItems = countAll();
+        if (totalItems == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
+        final List<Review> reviews = em.createQuery(
+                "SELECT r FROM Review r LEFT JOIN FETCH r.user ORDER BY " + DEFAULT_ORDER,
+                Review.class)
+                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
+                .setMaxResults(pageSize)
+                .getResultList();
+        attachTags(reviews);
+        return new Page<>(reviews, effectivePage, pageSize, totalItems);
     }
 
     @Override
@@ -229,7 +240,7 @@ public class ReviewJpaDao implements ReviewDao {
             return List.of();
         }
         final List<Review> reviews = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.carId IN :carIds ORDER BY " + DEFAULT_ORDER,
+                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.car.id IN :carIds ORDER BY " + DEFAULT_ORDER,
                 Review.class)
                 .setParameter("carIds", carIds)
                 .getResultList();
@@ -250,7 +261,7 @@ public class ReviewJpaDao implements ReviewDao {
     @Override
     public Optional<Review> findLatestByCarId(final long carId) {
         final List<Review> results = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.carId = :carId ORDER BY r.createdAt DESC",
+                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.car.id = :carId ORDER BY r.createdAt DESC",
                 Review.class)
                 .setParameter("carId", carId)
                 .setMaxResults(1)
@@ -263,7 +274,7 @@ public class ReviewJpaDao implements ReviewDao {
     @Override
     public Optional<Review> findTopRatedLatestByCarId(final long carId) {
         final List<Review> results = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.carId = :carId ORDER BY r.rating DESC, r.createdAt DESC, r.id DESC",
+                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.car.id = :carId ORDER BY r.rating DESC, r.createdAt DESC, r.id DESC",
                 Review.class)
                 .setParameter("carId", carId)
                 .setMaxResults(1)
@@ -296,7 +307,7 @@ public class ReviewJpaDao implements ReviewDao {
     @Override
     public long countByCarId(final long carId) {
         return em.createQuery(
-                "SELECT COUNT(r) FROM Review r WHERE r.carId = :carId", Long.class)
+                "SELECT COUNT(r) FROM Review r WHERE r.car.id = :carId", Long.class)
                 .setParameter("carId", carId)
                 .getSingleResult();
     }
@@ -304,7 +315,7 @@ public class ReviewJpaDao implements ReviewDao {
     @Override
     public List<Review> findByUserId(final long userId) {
         final List<Review> reviews = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.userId = :userId ORDER BY r.createdAt DESC",
+                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.user.id = :userId ORDER BY r.createdAt DESC",
                 Review.class)
                 .setParameter("userId", userId)
                 .getResultList();
@@ -314,16 +325,27 @@ public class ReviewJpaDao implements ReviewDao {
 
     @Override
     public Page<Review> findByUserId(final long userId, final int page) {
-        return findPaginatedByNativeIds(
-                "SELECT COUNT(*) FROM reviews WHERE user_id = ?",
-                "SELECT review_id FROM reviews WHERE user_id = ? ORDER BY " + DEFAULT_ORDER_NATIVE,
-                List.of(userId), page, Pagination.REVIEWS_PAGE_SIZE, DEFAULT_ORDER);
+        final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
+        final long totalItems = countByUserId(userId);
+        if (totalItems == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
+        final List<Review> reviews = em.createQuery(
+                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.user.id = :userId ORDER BY " + DEFAULT_ORDER,
+                Review.class)
+                .setParameter("userId", userId)
+                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
+                .setMaxResults(pageSize)
+                .getResultList();
+        attachTags(reviews);
+        return new Page<>(reviews, effectivePage, pageSize, totalItems);
     }
 
     @Override
     public long countByUserId(final long userId) {
         return em.createQuery(
-                "SELECT COUNT(r) FROM Review r WHERE r.userId = :userId", Long.class)
+                "SELECT COUNT(r) FROM Review r WHERE r.user.id = :userId", Long.class)
                 .setParameter("userId", userId)
                 .getSingleResult();
     }
@@ -376,7 +398,7 @@ public class ReviewJpaDao implements ReviewDao {
         if (userId > 0) {
             review.setUser(em.getReference(User.class, userId));
         }
-        review.setCarId(carId);
+        review.setCar(em.getReference(Car.class, carId));
         review.setRating(rating);
         review.setTitle(title);
         review.setBody(body);
@@ -391,12 +413,12 @@ public class ReviewJpaDao implements ReviewDao {
 
     @Override
     public int bindReviewsToUserByEmail(final long userId, final String email) {
-        final int bound = em.createNativeQuery(
-                "UPDATE reviews SET user_id = ? " +
-                "WHERE user_id IS NULL AND reviewer_email IS NOT NULL " +
-                "AND LOWER(BTRIM(reviewer_email)) = LOWER(?)")
-                .setParameter(1, userId)
-                .setParameter(2, email)
+        final int bound = em.createQuery(
+                "UPDATE Review r SET r.user = :user " +
+                "WHERE r.user IS NULL AND r.reviewerEmail IS NOT NULL " +
+                "AND LOWER(TRIM(r.reviewerEmail)) = LOWER(:email)")
+                .setParameter("user", em.getReference(User.class, userId))
+                .setParameter("email", email)
                 .executeUpdate();
         if (bound > 0) {
             LOGGER.info("bound {} reviews to user id={} email={}", bound, userId, email);
@@ -408,25 +430,21 @@ public class ReviewJpaDao implements ReviewDao {
     public Optional<Review> update(final long id, final long carId, final BigDecimal rating, final String title,
                                    final String body, final String ownershipStatus, final Integer modelYear,
                                    final Integer mileageKm, final Boolean wouldRecommend) {
-        final int rows = em.createNativeQuery(
-                "UPDATE reviews SET car_id = ?, rating = ?, title = ?, body = ?, " +
-                "ownership_status = ?, model_year = ?, mileage_km = ?, would_recommend = ?, " +
-                "updated_at = CURRENT_TIMESTAMP WHERE review_id = ?")
-                .setParameter(1, carId)
-                .setParameter(2, rating)
-                .setParameter(3, title)
-                .setParameter(4, body)
-                .setParameter(5, ownershipStatus)
-                .setParameter(6, modelYear)
-                .setParameter(7, mileageKm)
-                .setParameter(8, wouldRecommend)
-                .setParameter(9, id)
-                .executeUpdate();
-        if (rows == 0) {
+        final Review review = em.find(Review.class, id);
+        if (review == null) {
             LOGGER.warn("review update affected 0 rows id={}", id);
             return Optional.empty();
         }
+        review.setCar(em.getReference(Car.class, carId));
+        review.setRating(rating);
+        review.setTitle(title);
+        review.setBody(body);
+        review.setOwnershipStatus(ownershipStatus);
+        review.setModelYear(modelYear);
+        review.setMileageKm(mileageKm);
+        review.setWouldRecommend(wouldRecommend);
         LOGGER.info("updated review id={} rating={}", id, rating);
+        em.flush();
         em.clear();
         return findById(id);
     }
@@ -445,7 +463,7 @@ public class ReviewJpaDao implements ReviewDao {
 
     private List<Review> findByCarIdOrdered(final long carId, final String jpqlOrder) {
         final List<Review> reviews = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.carId = :carId ORDER BY " + jpqlOrder,
+                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.car.id = :carId ORDER BY " + jpqlOrder,
                 Review.class)
                 .setParameter("carId", carId)
                 .getResultList();
@@ -455,9 +473,20 @@ public class ReviewJpaDao implements ReviewDao {
 
     private Page<Review> findByCarIdPaginated(final long carId, final String nativeOrder,
                                                final String jpqlOrder, final int page) {
-        return findPaginatedByNativeIds(
-                "SELECT COUNT(*) FROM reviews WHERE car_id = ?",
-                "SELECT review_id FROM reviews WHERE car_id = ? ORDER BY " + nativeOrder,
-                List.of(carId), page, Pagination.REVIEWS_PAGE_SIZE, jpqlOrder);
+        final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
+        final long totalItems = countByCarId(carId);
+        if (totalItems == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
+        final List<Review> reviews = em.createQuery(
+                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.car.id = :carId ORDER BY " + jpqlOrder,
+                Review.class)
+                .setParameter("carId", carId)
+                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
+                .setMaxResults(pageSize)
+                .getResultList();
+        attachTags(reviews);
+        return new Page<>(reviews, effectivePage, pageSize, totalItems);
     }
 }

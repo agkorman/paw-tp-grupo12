@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +24,7 @@ public class CarImageJpaDao implements CarImageDao {
     @Override
     public Optional<CarImage> findByCarId(final long carId) {
         return em.createQuery(
-                        "SELECT i FROM CarImage i WHERE i.carId = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
+                        "SELECT i FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
                         CarImage.class)
                 .setParameter("carId", carId)
                 .setMaxResults(1)
@@ -35,9 +34,9 @@ public class CarImageJpaDao implements CarImageDao {
 
     @Override
     public List<CarImage> findAllByCarId(final long carId) {
-        final List<?> rawRows = em.createNativeQuery(
-                        "SELECT image_id, car_id, display_order, content_type, updated_at "
-                        + "FROM car_images WHERE car_id = :carId ORDER BY display_order ASC, image_id ASC")
+        final List<?> rawRows = em.createQuery(
+                        "SELECT i.imageId, i.car.id, i.displayOrder, i.contentType, i.updatedAt "
+                        + "FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC")
                 .setParameter("carId", carId)
                 .getResultList();
         final List<CarImage> result = new ArrayList<>();
@@ -49,7 +48,7 @@ public class CarImageJpaDao implements CarImageDao {
                     ((Number) row[2]).intValue(),
                     (String) row[3],
                     null,
-                    ((Timestamp) row[4]).toLocalDateTime()
+                    (java.time.LocalDateTime) row[4]
             ));
         }
         return result;
@@ -58,7 +57,7 @@ public class CarImageJpaDao implements CarImageDao {
     @Override
     public List<CarImage> findAllByCarIdWithData(final long carId) {
         return em.createQuery(
-                        "SELECT i FROM CarImage i WHERE i.carId = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
+                        "SELECT i FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
                         CarImage.class)
                 .setParameter("carId", carId)
                 .getResultList();
@@ -67,7 +66,7 @@ public class CarImageJpaDao implements CarImageDao {
     @Override
     public Optional<CarImage> findByCarIdAndImageId(final long carId, final long imageId) {
         return em.createQuery(
-                        "SELECT i FROM CarImage i WHERE i.carId = :carId AND i.imageId = :imageId",
+                        "SELECT i FROM CarImage i WHERE i.car.id = :carId AND i.imageId = :imageId",
                         CarImage.class)
                 .setParameter("carId", carId)
                 .setParameter("imageId", imageId)
@@ -82,7 +81,7 @@ public class CarImageJpaDao implements CarImageDao {
 
     @Override
     public void replaceAll(final long carId, final List<CarImagePayload> images) {
-        em.createNativeQuery("DELETE FROM car_images WHERE car_id = :carId")
+        em.createQuery("DELETE FROM CarImage i WHERE i.car.id = :carId")
                 .setParameter("carId", carId)
                 .executeUpdate();
         final Car carRef = em.getReference(Car.class, carId);

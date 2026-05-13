@@ -5,9 +5,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
@@ -19,17 +22,20 @@ public class CarRequest implements Serializable {
     @Column(name = "car_request_id")
     private long id;
 
-    @Column(name = "submitted_by_user_id")
-    private Long submittedByUserId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "submitted_by_user_id")
+    private User submittedByUser;
 
     @Column(name = "submitter_email")
     private String submitterEmail;
 
-    @Column(name = "brand_id")
-    private long brandId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
 
-    @Column(name = "body_type_id")
-    private long bodyTypeId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "body_type_id")
+    private BodyType bodyType;
 
     @Column(name = "year")
     private Integer year;
@@ -101,10 +107,10 @@ public class CarRequest implements Serializable {
                       final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
                       final Integer maxSpeedKmh, final BigDecimal priceUsd) {
         this.id = id;
-        this.submittedByUserId = submittedByUserId;
+        this.submittedByUser = userReference(submittedByUserId);
         this.submitterEmail = submitterEmail;
-        this.brandId = brandId;
-        this.bodyTypeId = bodyTypeId;
+        this.brand = brandReference(brandId);
+        this.bodyType = bodyTypeReference(bodyTypeId);
         this.year = year;
         this.model = model;
         this.description = description;
@@ -130,11 +136,19 @@ public class CarRequest implements Serializable {
     }
 
     public Long getSubmittedByUserId() {
-        return submittedByUserId;
+        return submittedByUser != null ? submittedByUser.getId() : null;
     }
 
     public void setSubmittedByUserId(final Long submittedByUserId) {
-        this.submittedByUserId = submittedByUserId;
+        this.submittedByUser = userReference(submittedByUserId);
+    }
+
+    public User getSubmittedByUser() {
+        return submittedByUser;
+    }
+
+    public void setSubmittedByUser(final User submittedByUser) {
+        this.submittedByUser = submittedByUser;
     }
 
     public String getSubmitterEmail() {
@@ -146,19 +160,35 @@ public class CarRequest implements Serializable {
     }
 
     public long getBrandId() {
-        return brandId;
+        return brand != null ? brand.getId() : 0;
     }
 
     public void setBrandId(final long brandId) {
-        this.brandId = brandId;
+        this.brand = brandReference(brandId);
+    }
+
+    public Brand getBrand() {
+        return brand;
+    }
+
+    public void setBrand(final Brand brand) {
+        this.brand = brand;
     }
 
     public long getBodyTypeId() {
-        return bodyTypeId;
+        return bodyType != null ? bodyType.getId() : 0;
     }
 
     public void setBodyTypeId(final long bodyTypeId) {
-        this.bodyTypeId = bodyTypeId;
+        this.bodyType = bodyTypeReference(bodyTypeId);
+    }
+
+    public BodyType getBodyType() {
+        return bodyType;
+    }
+
+    public void setBodyType(final BodyType bodyType) {
+        this.bodyType = bodyType;
     }
 
     public Integer getYear() {
@@ -271,5 +301,26 @@ public class CarRequest implements Serializable {
 
     public void setPriceUsd(final BigDecimal priceUsd) {
         this.priceUsd = priceUsd;
+    }
+
+    private static User userReference(final Long id) {
+        if (id == null) {
+            return null;
+        }
+        final User user = new User();
+        user.setId(id);
+        return user;
+    }
+
+    private static Brand brandReference(final long id) {
+        final Brand brand = new Brand();
+        brand.setId(id);
+        return brand;
+    }
+
+    private static BodyType bodyTypeReference(final long id) {
+        final BodyType bodyType = new BodyType();
+        bodyType.setId(id);
+        return bodyType;
     }
 }

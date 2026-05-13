@@ -3,6 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.BodyTypeRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -11,7 +12,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class BodyTypeRequestJpaDao implements BodyTypeRequestDao {
@@ -46,25 +46,12 @@ public class BodyTypeRequestJpaDao implements BodyTypeRequestDao {
         }
 
         final int effectivePage = Pagination.clampPage(normalizedPage, totalItems, pageSize);
-        final long offset = Pagination.offsetFor(effectivePage, pageSize);
-
-        final List<?> ids = em.createNativeQuery(
-                "SELECT body_type_request_id FROM body_type_requests WHERE status = ? " +
-                "ORDER BY created_at DESC, body_type_request_id DESC LIMIT ? OFFSET ?")
-                .setParameter(1, status)
-                .setParameter(2, pageSize)
-                .setParameter(3, offset)
-                .getResultList();
-
-        if (ids.isEmpty()) {
-            return Page.empty(effectivePage, pageSize);
-        }
-
-        final List<Long> longIds = ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
         final List<BodyTypeRequest> items = em.createQuery(
-                "SELECT b FROM BodyTypeRequest b WHERE b.id IN :ids ORDER BY b.createdAt DESC, b.id DESC",
+                "SELECT b FROM BodyTypeRequest b WHERE b.status = :status ORDER BY b.createdAt DESC, b.id DESC",
                 BodyTypeRequest.class)
-                .setParameter("ids", longIds)
+                .setParameter("status", status)
+                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
+                .setMaxResults(pageSize)
                 .getResultList();
 
         return new Page<>(items, effectivePage, pageSize, totalItems);
@@ -82,7 +69,9 @@ public class BodyTypeRequestJpaDao implements BodyTypeRequestDao {
     public BodyTypeRequest create(final Long submittedByUserId, final String submitterEmail,
                                   final String name, final String comments, final String status) {
         final BodyTypeRequest request = new BodyTypeRequest();
-        request.setSubmittedByUserId(submittedByUserId);
+        if (submittedByUserId != null) {
+            request.setSubmittedByUser(em.getReference(User.class, submittedByUserId));
+        }
         request.setSubmitterEmail(submitterEmail);
         request.setName(name);
         request.setComments(comments);

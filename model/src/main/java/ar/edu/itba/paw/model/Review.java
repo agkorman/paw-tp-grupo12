@@ -13,6 +13,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -29,17 +30,15 @@ public class Review implements Serializable {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "user_id", insertable = false, updatable = false)
-    private Long userId;
-
     @Column(name = "reviewer_email")
     private String reviewerEmail;
 
     @Transient
     private String reviewerUsername;
 
-    @Column(name = "car_id")
-    private long carId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "car_id")
+    private Car car;
 
     @Column(name = "rating")
     private BigDecimal rating;
@@ -65,7 +64,7 @@ public class Review implements Serializable {
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @Column(name = "updated_at", insertable = false)
     private LocalDateTime updatedAt;
 
     @Transient
@@ -84,10 +83,9 @@ public class Review implements Serializable {
                   String title, String body, String ownershipStatus, Integer modelYear, Integer mileageKm,
                   Boolean wouldRecommend, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
-        this.userId = userId;
+        this.user = userReference(userId, reviewerUsername);
         this.reviewerEmail = reviewerEmail;
-        this.reviewerUsername = reviewerUsername;
-        this.carId = carId;
+        this.car = carReference(carId);
         this.rating = rating;
         this.title = title;
         this.body = body;
@@ -106,10 +104,9 @@ public class Review implements Serializable {
     public void setUser(User user) { this.user = user; }
 
     public Long getUserId() {
-        if (userId != null) return userId;
         return user != null ? user.getId() : null;
     }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public void setUserId(Long userId) { this.user = userReference(userId, null); }
 
     public String getReviewerEmail() { return reviewerEmail; }
     public void setReviewerEmail(String reviewerEmail) { this.reviewerEmail = reviewerEmail; }
@@ -119,8 +116,11 @@ public class Review implements Serializable {
     }
     public void setReviewerUsername(String reviewerUsername) { this.reviewerUsername = reviewerUsername; }
 
-    public long getCarId() { return carId; }
-    public void setCarId(long carId) { this.carId = carId; }
+    public long getCarId() { return car != null ? car.getId() : 0; }
+    public void setCarId(long carId) { this.car = carReference(carId); }
+
+    public Car getCar() { return car; }
+    public void setCar(Car car) { this.car = car; }
 
     public BigDecimal getRating() { return rating; }
     public void setRating(BigDecimal rating) { this.rating = rating; }
@@ -151,4 +151,25 @@ public class Review implements Serializable {
 
     public List<ReviewTag> getTags() { return tags; }
     public void setTags(List<ReviewTag> tags) { this.tags = tags == null ? new ArrayList<>() : tags; }
+
+    @PreUpdate
+    private void touchUpdatedAt() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    private static User userReference(final Long id, final String username) {
+        if (id == null) {
+            return null;
+        }
+        final User user = new User();
+        user.setId(id);
+        user.setUsername(username);
+        return user;
+    }
+
+    private static Car carReference(final long id) {
+        final Car car = new Car();
+        car.setId(id);
+        return car;
+    }
 }

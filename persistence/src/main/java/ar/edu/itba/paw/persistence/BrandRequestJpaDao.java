@@ -3,6 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -11,7 +12,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class BrandRequestJpaDao implements BrandRequestDao {
@@ -46,25 +46,12 @@ public class BrandRequestJpaDao implements BrandRequestDao {
         }
 
         final int effectivePage = Pagination.clampPage(normalizedPage, totalItems, pageSize);
-        final long offset = Pagination.offsetFor(effectivePage, pageSize);
-
-        final List<?> ids = em.createNativeQuery(
-                "SELECT brand_request_id FROM brand_requests WHERE status = ? " +
-                "ORDER BY created_at DESC, brand_request_id DESC LIMIT ? OFFSET ?")
-                .setParameter(1, status)
-                .setParameter(2, pageSize)
-                .setParameter(3, offset)
-                .getResultList();
-
-        if (ids.isEmpty()) {
-            return Page.empty(effectivePage, pageSize);
-        }
-
-        final List<Long> longIds = ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
         final List<BrandRequest> items = em.createQuery(
-                "SELECT b FROM BrandRequest b WHERE b.id IN :ids ORDER BY b.createdAt DESC, b.id DESC",
+                "SELECT b FROM BrandRequest b WHERE b.status = :status ORDER BY b.createdAt DESC, b.id DESC",
                 BrandRequest.class)
-                .setParameter("ids", longIds)
+                .setParameter("status", status)
+                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
+                .setMaxResults(pageSize)
                 .getResultList();
 
         return new Page<>(items, effectivePage, pageSize, totalItems);
@@ -82,7 +69,9 @@ public class BrandRequestJpaDao implements BrandRequestDao {
     public BrandRequest create(final Long submittedByUserId, final String submitterEmail,
                                final String name, final String comments, final String status) {
         final BrandRequest request = new BrandRequest();
-        request.setSubmittedByUserId(submittedByUserId);
+        if (submittedByUserId != null) {
+            request.setSubmittedByUser(em.getReference(User.class, submittedByUserId));
+        }
         request.setSubmitterEmail(submitterEmail);
         request.setName(name);
         request.setComments(comments);

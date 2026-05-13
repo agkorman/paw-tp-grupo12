@@ -160,15 +160,11 @@ public class CarFavoriteJpaDao implements CarFavoriteDao {
             return;
         }
         final List<Long> carIds = cars.stream().map(Car::getId).collect(Collectors.toList());
-        final String placeholders = carIds.stream().map(id -> "?").collect(Collectors.joining(","));
-        final javax.persistence.Query query = em.createNativeQuery(
-                "SELECT DISTINCT car_id FROM car_images WHERE car_id IN (" + placeholders + ")");
-        for (int i = 0; i < carIds.size(); i++) {
-            query.setParameter(i + 1, carIds.get(i));
-        }
-        final List<?> rawIds = query.getResultList();
-        final Set<Long> withImages = rawIds.stream()
-                .map(r -> ((Number) r).longValue()).collect(Collectors.toCollection(HashSet::new));
+        final Set<Long> withImages = em.createQuery(
+                "SELECT DISTINCT i.car.id FROM CarImage i WHERE i.car.id IN :carIds", Long.class)
+                .setParameter("carIds", carIds)
+                .getResultStream()
+                .collect(Collectors.toSet());
         cars.forEach(c -> c.setHasImage(withImages.contains(c.getId())));
     }
 

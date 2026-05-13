@@ -27,9 +27,6 @@ public class Car implements Serializable {
     @JoinColumn(name = "brand_id")
     private Brand brand;
 
-    @Column(name = "brand_id", insertable = false, updatable = false)
-    private long brandId;
-
     @Transient
     private String brandName;
 
@@ -39,9 +36,6 @@ public class Car implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "body_type_id")
     private BodyType bodyTypeEntity;
-
-    @Column(name = "body_type_id", insertable = false, updatable = false)
-    private long bodyTypeId;
 
     @Column(name = "year")
     private Integer year;
@@ -107,12 +101,10 @@ public class Car implements Serializable {
                final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
                final Integer maxSpeedKmh, final BigDecimal priceUsd) {
         this.id = id;
-        this.brandId = brandId;
-        this.brandName = brandName;
+        this.brand = brandReference(brandId, brandName);
         this.model = model;
-        this.bodyTypeId = bodyTypeId;
+        this.bodyTypeEntity = bodyTypeReference(bodyTypeId, bodyType);
         this.year = year;
-        this.bodyType = bodyType;
         this.description = description;
         this.createdAt = createdAt;
         this.hasImage = hasImage;
@@ -142,11 +134,11 @@ public class Car implements Serializable {
     }
 
     public long getBrandId() {
-        return brand != null ? brand.getId() : brandId;
+        return brand != null ? brand.getId() : 0;
     }
 
     public void setBrandId(final long brandId) {
-        this.brandId = brandId;
+        this.brand = brandReference(brandId, null);
     }
 
     public String getBrandName() {
@@ -174,11 +166,11 @@ public class Car implements Serializable {
     }
 
     public long getBodyTypeId() {
-        return bodyTypeEntity != null ? bodyTypeEntity.getId() : bodyTypeId;
+        return bodyTypeEntity != null ? bodyTypeEntity.getId() : 0;
     }
 
     public void setBodyTypeId(final long bodyTypeId) {
-        this.bodyTypeId = bodyTypeId;
+        this.bodyTypeEntity = bodyTypeReference(bodyTypeId, null);
     }
 
     public Integer getYear() {
@@ -275,5 +267,19 @@ public class Car implements Serializable {
 
     public void setPriceUsd(final BigDecimal priceUsd) {
         this.priceUsd = priceUsd;
+    }
+
+    private static Brand brandReference(final long id, final String name) {
+        final Brand brand = new Brand();
+        brand.setId(id);
+        brand.setName(name);
+        return brand;
+    }
+
+    private static BodyType bodyTypeReference(final long id, final String name) {
+        final BodyType bodyType = new BodyType();
+        bodyType.setId(id);
+        bodyType.setName(name);
+        return bodyType;
     }
 }

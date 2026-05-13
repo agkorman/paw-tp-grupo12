@@ -25,9 +25,6 @@ public class CarRequestImage implements Serializable {
     @JoinColumn(name = "car_request_id")
     private CarRequest request;
 
-    @Column(name = "car_request_id", insertable = false, updatable = false)
-    private long requestId;
-
     @Column(name = "display_order")
     private int displayOrder;
 
@@ -46,7 +43,7 @@ public class CarRequestImage implements Serializable {
                            final String contentType, final byte[] imageData,
                            final LocalDateTime updatedAt) {
         this.imageId = imageId;
-        this.requestId = requestId;
+        this.request = requestReference(requestId);
         this.displayOrder = displayOrder;
         this.contentType = contentType;
         this.imageData = imageData;
@@ -70,11 +67,11 @@ public class CarRequestImage implements Serializable {
     }
 
     public long getRequestId() {
-        return requestId;
+        return request != null ? request.getId() : 0;
     }
 
     public void setRequestId(final long requestId) {
-        this.requestId = requestId;
+        this.request = requestReference(requestId);
     }
 
     public int getDisplayOrder() {
@@ -107,5 +104,11 @@ public class CarRequestImage implements Serializable {
 
     public void setUpdatedAt(final LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    private static CarRequest requestReference(final long id) {
+        final CarRequest request = new CarRequest();
+        request.setId(id);
+        return request;
     }
 }
