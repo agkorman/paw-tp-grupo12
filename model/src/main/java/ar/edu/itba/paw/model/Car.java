@@ -3,25 +3,69 @@ package ar.edu.itba.paw.model;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
+@Entity
+@Table(name = "cars")
 public class Car implements Serializable {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "car_id")
     private long id;
+
+    @Column(name = "brand_id")
     private long brandId;
+
+    @Transient
     private String brandName;
+
+    @Column(name = "model")
     private String model;
+
+    @Column(name = "body_type_id")
     private long bodyTypeId;
+
+    @Column(name = "year")
     private Integer year;
+
+    @Transient
     private String bodyType;
+
+    @Column(name = "description")
     private String description;
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Transient
     private boolean hasImage;
+
+    @Column(name = "fuel_type")
     private String fuelType;
+
+    @Column(name = "horsepower")
     private Integer horsepower;
+
+    @Column(name = "airbag_count")
     private Integer airbagCount;
+
+    @Column(name = "transmission")
     private String transmission;
+
+    @Column(name = "fuel_consumption")
     private BigDecimal fuelConsumption;
+
+    @Column(name = "max_speed_kmh")
     private Integer maxSpeedKmh;
+
+    @Column(name = "price_usd")
     private BigDecimal priceUsd;
 
     public Car() {}

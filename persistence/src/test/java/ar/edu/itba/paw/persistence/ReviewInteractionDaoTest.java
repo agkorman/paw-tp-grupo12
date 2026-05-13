@@ -44,6 +44,7 @@ public class ReviewInteractionDaoTest extends AbstractPersistenceTest {
         final boolean result = reviewReplyDao.delete(reply.getId());
 
         // Assertions
+        flushAndClear();
         assertTrue(result);
         assertEquals(0, countRows("SELECT COUNT(*) FROM review_replies WHERE reply_id = ?", reply.getId()));
         assertEquals(0, countRows("SELECT COUNT(*) FROM review_replies WHERE review_id = ?", review.getId()));

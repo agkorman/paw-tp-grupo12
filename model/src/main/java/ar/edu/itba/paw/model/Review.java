@@ -5,23 +5,63 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
+@Entity
+@Table(name = "reviews")
 public class Review implements Serializable {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "review_id")
     private long id;
+
+    @Column(name = "user_id")
     private Long userId;
+
+    @Column(name = "reviewer_email")
     private String reviewerEmail;
+
+    @Transient
     private String reviewerUsername;
+
+    @Column(name = "car_id")
     private long carId;
+
+    @Column(name = "rating")
     private BigDecimal rating;
+
+    @Column(name = "title")
     private String title;
+
+    @Column(name = "body")
     private String body;
+
+    @Column(name = "ownership_status")
     private String ownershipStatus;
+
+    @Column(name = "model_year")
     private Integer modelYear;
+
+    @Column(name = "mileage_km")
     private Integer mileageKm;
+
+    @Column(name = "would_recommend")
     private Boolean wouldRecommend;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
+
+    @Transient
     private List<ReviewTag> tags = new ArrayList<>();
 
     public Review() {}

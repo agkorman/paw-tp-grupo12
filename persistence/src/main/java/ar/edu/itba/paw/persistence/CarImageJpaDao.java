@@ -1,0 +1,100 @@
+package ar.edu.itba.paw.persistence;
+
+import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.CarImagePayload;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public class CarImageJpaDao implements CarImageDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CarImageJpaDao.class);
+
+    @PersistenceContext
+    private EntityManager em;
+
+    @Override
+    public Optional<CarImage> findByCarId(final long carId) {
+        return em.createQuery(
+                        "SELECT i FROM CarImage i WHERE i.carId = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
+                        CarImage.class)
+                .setParameter("carId", carId)
+                .setMaxResults(1)
+                .getResultList()
+                .stream().findFirst();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<CarImage> findAllByCarId(final long carId) {
+        final List<Object[]> rows = em.createNativeQuery(
+                        "SELECT image_id, car_id, display_order, content_type, updated_at "
+                        + "FROM car_images WHERE car_id = :carId ORDER BY display_order ASC, image_id ASC")
+                .setParameter("carId", carId)
+                .getResultList();
+        final List<CarImage> result = new ArrayList<>();
+        for (final Object[] row : rows) {
+            result.add(new CarImage(
+                    ((Number) row[0]).longValue(),
+                    ((Number) row[1]).longValue(),
+                    ((Number) row[2]).intValue(),
+                    (String) row[3],
+                    null,
+                    ((Timestamp) row[4]).toLocalDateTime()
+            ));
+        }
+        return result;
+    }
+
+    @Override
+    public List<CarImage> findAllByCarIdWithData(final long carId) {
+        return em.createQuery(
+                        "SELECT i FROM CarImage i WHERE i.carId = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
+                        CarImage.class)
+                .setParameter("carId", carId)
+                .getResultList();
+    }
+
+    @Override
+    public Optional<CarImage> findByCarIdAndImageId(final long carId, final long imageId) {
+        return em.createQuery(
+                        "SELECT i FROM CarImage i WHERE i.carId = :carId AND i.imageId = :imageId",
+                        CarImage.class)
+                .setParameter("carId", carId)
+                .setParameter("imageId", imageId)
+                .getResultList()
+                .stream().findFirst();
+    }
+
+    @Override
+    public void saveOrReplace(final long carId, final String contentType, final byte[] imageData) {
+        replaceAll(carId, List.of(new CarImagePayload(contentType, imageData)));
+    }
+
+    @Override
+    public void replaceAll(final long carId, final List<CarImagePayload> images) {
+        em.createNativeQuery("DELETE FROM car_images WHERE car_id = :carId")
+                .setParameter("carId", carId)
+                .executeUpdate();
+        final Car carRef = em.getReference(Car.class, carId);
+        for (int i = 0; i < images.size(); i++) {
+            final CarImagePayload payload = images.get(i);
+            final CarImage img = new CarImage();
+            img.setCar(carRef);
+            img.setDisplayOrder(i);
+            img.setContentType(payload.getContentType());
+            img.setImageData(payload.getImageData());
+            em.persist(img);
+        }
+        LOGGER.info("replaced image gallery for car id={} imageCount={}", carId, images.size());
+    }
+}

@@ -1,28 +1,23 @@
-package ar.edu.itba.paw.persistence;
+package ar.edu.itba.paw.persistence.jdbc;
 
 import ar.edu.itba.paw.model.User;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import javax.sql.DataSource;
+import ar.edu.itba.paw.persistence.UserFollowDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-@Repository
 public class UserFollowJdbcDao implements UserFollowDao {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(
-        UserFollowJdbcDao.class
-    );
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserFollowJdbcDao.class);
 
     private static final String USER_SELECT =
         "SELECT u.user_id, u.username, u.email, u.password, u.role, u.preferred_locale, u.created_at FROM users u ";
@@ -53,22 +48,13 @@ public class UserFollowJdbcDao implements UserFollowDao {
                     "INSERT INTO user_follows (follower_id, followed_id) VALUES (?, ?)",
                     followerId,
                     followedId
-                ) >
-                0;
+                ) > 0;
             if (inserted) {
-                LOGGER.info(
-                    "user id={} followed user id={}",
-                    followerId,
-                    followedId
-                );
+                LOGGER.info("user id={} followed user id={}", followerId, followedId);
             }
             return inserted;
         } catch (final DuplicateKeyException ignored) {
-            LOGGER.debug(
-                "user id={} already follows user id={}",
-                followerId,
-                followedId
-            );
+            LOGGER.debug("user id={} already follows user id={}", followerId, followedId);
             return false;
         }
     }
@@ -80,14 +66,9 @@ public class UserFollowJdbcDao implements UserFollowDao {
                 "DELETE FROM user_follows WHERE follower_id = ? AND followed_id = ?",
                 followerId,
                 followedId
-            ) >
-            0;
+            ) > 0;
         if (removed) {
-            LOGGER.info(
-                "user id={} unfollowed user id={}",
-                followerId,
-                followedId
-            );
+            LOGGER.info("user id={} unfollowed user id={}", followerId, followedId);
         }
         return removed;
     }
