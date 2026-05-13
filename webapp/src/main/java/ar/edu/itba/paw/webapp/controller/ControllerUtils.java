@@ -4,6 +4,8 @@ import ar.edu.itba.paw.webapp.validation.ImageSignatureValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -34,6 +36,38 @@ final class ControllerUtils {
     static String normalizeEmail(final String value) {
         final String normalized = normalize(value);
         return normalized == null ? null : normalized.toLowerCase(Locale.ROOT);
+    }
+
+    static String stripCurrentContextPath(final String path) {
+        return stripContextPath(path, currentContextPath());
+    }
+
+    static String stripContextPath(final String path, final String contextPath) {
+        if (path == null || contextPath == null || contextPath.isBlank() || "/".equals(contextPath)) {
+            return path;
+        }
+        final String normalizedContextPath = contextPath.trim();
+        if (!normalizedContextPath.startsWith("/")) {
+            return path;
+        }
+        if (path.equals(normalizedContextPath)) {
+            return "/";
+        }
+        if (path.startsWith(normalizedContextPath + "/")) {
+            return path.substring(normalizedContextPath.length());
+        }
+        return path;
+    }
+
+    private static String currentContextPath() {
+        final org.springframework.web.context.request.RequestAttributes requestAttributes =
+                RequestContextHolder.getRequestAttributes();
+        if (!(requestAttributes instanceof ServletRequestAttributes)) {
+            return "";
+        }
+        return ((ServletRequestAttributes) requestAttributes)
+                .getRequest()
+                .getContextPath();
     }
 
     static String normalizeContentType(final String contentType) {

@@ -55,16 +55,17 @@
                     <c:set var="review" value="${thread.review}"/>
                     <c:url var="reviewLikeUrl" value="/reviews/${review.id}/like"/>
                     <c:url var="replyCreateUrl" value="/reviews/${review.id}/replies"/>
-                    <c:url var="reviewsContextUrl" value="/reviews/car/${carId}">
-                        <c:if test="${not empty currentPage and currentPage > 1}">
-                            <c:param name="page" value="${currentPage}"/>
-                        </c:if>
-                        <c:if test="${not empty currentSort}">
-                            <c:param name="sort" value="${currentSort}"/>
-                        </c:if>
-                    </c:url>
-                    <c:set var="reviewItemRedirect" value="${reviewsContextUrl}#review-${review.id}"/>
-                    <c:set var="reviewFeedRedirect" value="${reviewsContextUrl}#reviewsFeed"/>
+                    <c:set var="reviewsContextRedirect" value="/reviews/car/${carId}"/>
+                    <c:set var="reviewsContextHasQuery" value="${false}"/>
+                    <c:if test="${not empty currentPage and currentPage > 1}">
+                        <c:set var="reviewsContextRedirect" value="${reviewsContextRedirect}?page=${currentPage}"/>
+                        <c:set var="reviewsContextHasQuery" value="${true}"/>
+                    </c:if>
+                    <c:if test="${not empty currentSort}">
+                        <c:set var="reviewsContextRedirect" value="${reviewsContextRedirect}${reviewsContextHasQuery ? '&' : '?'}sort=${currentSort}"/>
+                    </c:if>
+                    <c:set var="reviewItemRedirect" value="${reviewsContextRedirect}#review-${review.id}"/>
+                    <c:set var="reviewFeedRedirect" value="${reviewsContextRedirect}#reviewsFeed"/>
                     <c:url var="reviewEditPageUrl" value="/reviews/${review.id}/edit">
                         <c:param name="redirect" value="${reviewItemRedirect}"/>
                     </c:url>
@@ -134,6 +135,7 @@
                             <pa:review-like-button
                                     reviewId="${review.id}"
                                     action="${reviewLikeUrl}"
+                                    redirect="${reviewItemRedirect}"
                                     liked="${thread.liked}"
                                     likeCount="${thread.likeCount}"
                                     disabled="${not authenticated}"/>
@@ -210,7 +212,7 @@
                 </c:forEach>
             </div>
             <c:if test="${not empty totalPages and not empty currentPage and totalPages > 1}">
-                <c:url var="reviewsBaseUrl" value="/reviews/car/${carId}"/>
+                <c:set var="reviewsBaseUrl" value="/reviews/car/${carId}"/>
                 <jsp:useBean id="reviewsPaginationParams" class="java.util.LinkedHashMap"/>
                 <c:if test="${not empty currentSort}">
                     <c:set target="${reviewsPaginationParams}" property="sort" value="${currentSort}"/>

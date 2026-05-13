@@ -5,6 +5,7 @@
 <%@ attribute name="disabled" required="false" %>
 <%@ attribute name="action" required="false" %>
 <%@ attribute name="label" required="false" %>
+<%@ attribute name="redirect" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -18,6 +19,13 @@
 <c:set var="likeLabel" value="${empty label ? defaultLikeLabel : label}"/>
 <c:set var="likeDisabled" value="${empty disabled ? false : disabled}"/>
 <c:set var="likeCurrentPath" value="${pageContext.request.requestURI}"/>
+<c:set var="likeContextPath" value="${pageContext.request.contextPath}"/>
+<c:if test="${not empty likeContextPath and fn:startsWith(likeCurrentPath, likeContextPath)}">
+    <c:set var="likeCurrentPath" value="${fn:substring(likeCurrentPath, fn:length(likeContextPath), fn:length(likeCurrentPath))}"/>
+</c:if>
+<c:if test="${empty likeCurrentPath}">
+    <c:set var="likeCurrentPath" value="/"/>
+</c:if>
 <c:set var="likeQueryStr" value="${pageContext.request.queryString}"/>
 <c:url var="likeLoginUrl" value="/login">
     <c:param name="redirect" value="${empty likeQueryStr ? likeCurrentPath : likeCurrentPath.concat('?').concat(likeQueryStr)}"/>
@@ -43,6 +51,9 @@
                       class="review-like-form"
                       data-auth-resume-intent="like-${fn:escapeXml(reviewId)}">
                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                    <c:if test="${not empty redirect}">
+                        <input type="hidden" name="redirect" value="${fn:escapeXml(redirect)}">
+                    </c:if>
                     <button
                             type="submit"
                             class="review-like-toggle ${liked ? 'is-active' : ''}"

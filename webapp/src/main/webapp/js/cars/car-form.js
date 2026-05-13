@@ -60,6 +60,49 @@
         maxTotalImages = 5;
     }
 
+    var isNumericField = function (field) {
+        return field && field.hasAttribute('data-number-field');
+    };
+
+    var numericKind = function (field) {
+        return field.getAttribute('data-number-field') === 'decimal' ? 'decimal' : 'integer';
+    };
+
+    var normalizedNumericText = function (field) {
+        var value = (field.value || '').trim();
+        return numericKind(field) === 'decimal' ? value.replace(',', '.') : value;
+    };
+
+    var isCompleteNumericText = function (field, value) {
+        return numericKind(field) === 'decimal' ? /^\d+(?:[.,]\d+)?$/.test(value) : /^\d+$/.test(value);
+    };
+
+    var isPartialNumericText = function (field, value) {
+        return numericKind(field) === 'decimal' ? /^\d*(?:[.,]\d*)?$/.test(value) : /^\d*$/.test(value);
+    };
+
+    var numericInvalidMessage = function (field) {
+        return field.getAttribute('data-msg-number-invalid') || messages.msgNumberInvalid;
+    };
+
+    var numericRangeMessage = function (field) {
+        return field.getAttribute('data-msg-number-range') || '';
+    };
+
+    var numericBounds = function (field) {
+        return {
+            min: field.getAttribute('min') === null || field.getAttribute('min') === '' ? null : Number(field.getAttribute('min')),
+            max: field.getAttribute('max') === null || field.getAttribute('max') === '' ? null : Number(field.getAttribute('max'))
+        };
+    };
+
+    var wouldKeepNumericInputValid = function (field, insertedText) {
+        var start = typeof field.selectionStart === 'number' ? field.selectionStart : field.value.length;
+        var end = typeof field.selectionEnd === 'number' ? field.selectionEnd : field.value.length;
+        var nextValue = field.value.slice(0, start) + insertedText + field.value.slice(end);
+        return isPartialNumericText(field, nextValue.trim());
+    };
+
     var selectedFiles = function (field) {
         if (!field || !field.files) {
             return [];
@@ -206,20 +249,28 @@
             return false;
         }
 
-        if (field.type === 'number' && field.value) {
-            var parsed = Number(field.value);
+        if (isNumericField(field) && field.value) {
+            var numericText = normalizedNumericText(field);
+            if (!isCompleteNumericText(field, field.value.trim())) {
+                setInlineError(field, numericInvalidMessage(field));
+                return false;
+            }
+
+            var parsed = Number(numericText);
             if (!Number.isFinite(parsed)) {
-                setInlineError(field, messages.msgNumberInvalid);
+                setInlineError(field, numericInvalidMessage(field));
                 return false;
             }
-            if (field.min !== '' && parsed < Number(field.min)) {
-                setInlineError(field, formatMessage(messages.msgNumberMin, field.min));
+            var bounds = numericBounds(field);
+            if (bounds.min !== null && parsed < bounds.min) {
+                setInlineError(field, numericRangeMessage(field) || formatMessage(messages.msgNumberMin, field.min));
                 return false;
             }
-            if (field.max !== '' && parsed > Number(field.max)) {
-                setInlineError(field, formatMessage(messages.msgNumberMax, field.max));
+            if (bounds.max !== null && parsed > bounds.max) {
+                setInlineError(field, numericRangeMessage(field) || formatMessage(messages.msgNumberMax, field.max));
                 return false;
             }
+            field.value = numericText;
         }
 
         if (field.type === 'file') {
@@ -532,6 +583,27 @@
             return;
         }
         var eventName = field.tagName === 'SELECT' || field.type === 'file' || field.type === 'radio' ? 'change' : 'input';
+        if (isNumericField(field)) {
+            field.addEventListener('beforeinput', function (event) {
+                if (!event.data || event.inputType === 'deleteContentBackward' || event.inputType === 'deleteContentForward') {
+                    return;
+                }
+                if (!wouldKeepNumericInputValid(field, event.data)) {
+                    event.preventDefault();
+                }
+            });
+            field.addEventListener('paste', function (event) {
+                var pasted = event.clipboardData ? event.clipboardData.getData('text') : '';
+                if (pasted && !wouldKeepNumericInputValid(field, pasted)) {
+                    event.preventDefault();
+                }
+            });
+            field.addEventListener('blur', function () {
+                if (field.value.trim() !== '') {
+                    validateField(field);
+                }
+            });
+        }
         field.addEventListener(eventName, function () {
             validateField(field);
         });

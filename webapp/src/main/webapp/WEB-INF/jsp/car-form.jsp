@@ -62,6 +62,18 @@
 <spring:message var="jsRequiredConsumption" code="js.car.required.consumption"/>
 <spring:message var="jsRequiredMaxSpeed" code="js.car.required.maxSpeed"/>
 <spring:message var="jsRequiredImage" code="js.car.required.image"/>
+<spring:message var="jsYearNumeric" code="js.car.validation.year.numeric"/>
+<spring:message var="jsYearRange" code="js.car.validation.year.range"/>
+<spring:message var="jsHorsepowerNumeric" code="js.car.validation.horsepower.numeric"/>
+<spring:message var="jsHorsepowerRange" code="js.car.validation.horsepower.range"/>
+<spring:message var="jsAirbagsNumeric" code="js.car.validation.airbags.numeric"/>
+<spring:message var="jsAirbagsRange" code="js.car.validation.airbags.range"/>
+<spring:message var="jsConsumptionNumeric" code="js.car.validation.consumption.numeric"/>
+<spring:message var="jsConsumptionRange" code="js.car.validation.consumption.range"/>
+<spring:message var="jsMaxSpeedNumeric" code="js.car.validation.maxSpeed.numeric"/>
+<spring:message var="jsMaxSpeedRange" code="js.car.validation.maxSpeed.range"/>
+<spring:message var="jsPriceNumeric" code="js.car.validation.price.numeric"/>
+<spring:message var="jsPriceRange" code="js.car.validation.price.range"/>
 <spring:message var="jsRadioRequired" code="js.car.validation.radio"/>
 <spring:message var="jsEmailInvalid" code="js.car.validation.email"/>
 <spring:message var="jsNumberInvalid" code="js.car.validation.number"/>
@@ -188,7 +200,11 @@
 
                         <div class="modal-field">
                             <label for="modalCarYear"><spring:message code="cars.form.year"/></label>
-                            <form:input id="modalCarYear" path="year" type="number"
+                            <form:input id="modalCarYear" path="year" type="text"
+                                        inputmode="numeric" autocomplete="off"
+                                        data-number-field="integer"
+                                        data-msg-number-invalid="${fn:escapeXml(jsYearNumeric)}"
+                                        data-msg-number-range="${fn:escapeXml(jsYearRange)}"
                                         min="1886" max="2100"
                                         placeholder="${carYearPlaceholder}"/>
                             <form:errors path="year" cssClass="form-error" element="span"/>
@@ -210,7 +226,11 @@
                             <div class="car-modal-spec-grid">
                                 <div class="modal-field">
                                     <label for="modalCarHorsepower"><spring:message code="cars.form.horsepower"/></label>
-                                    <form:input id="modalCarHorsepower" path="horsepower" type="number"
+                                    <form:input id="modalCarHorsepower" path="horsepower" type="text"
+                                                inputmode="numeric" autocomplete="off"
+                                                data-number-field="integer"
+                                                data-msg-number-invalid="${fn:escapeXml(jsHorsepowerNumeric)}"
+                                                data-msg-number-range="${fn:escapeXml(jsHorsepowerRange)}"
                                                 min="1" max="2000" required="required"
                                                 placeholder="${carHorsepowerPlaceholder}"/>
                                     <form:errors path="horsepower" cssClass="form-error" element="span"/>
@@ -218,7 +238,11 @@
 
                                 <div class="modal-field">
                                     <label for="modalCarAirbagCount"><spring:message code="cars.form.airbags"/></label>
-                                    <form:input id="modalCarAirbagCount" path="airbagCount" type="number"
+                                    <form:input id="modalCarAirbagCount" path="airbagCount" type="text"
+                                                inputmode="numeric" autocomplete="off"
+                                                data-number-field="integer"
+                                                data-msg-number-invalid="${fn:escapeXml(jsAirbagsNumeric)}"
+                                                data-msg-number-range="${fn:escapeXml(jsAirbagsRange)}"
                                                 min="0" max="30" required="required"
                                                 placeholder="${carAirbagsPlaceholder}"/>
                                     <form:errors path="airbagCount" cssClass="form-error" element="span"/>
@@ -226,7 +250,11 @@
 
                                 <div class="modal-field">
                                     <label for="modalCarFuelConsumption"><spring:message code="cars.form.fuelConsumption"/></label>
-                                    <form:input id="modalCarFuelConsumption" path="fuelConsumption" type="number"
+                                    <form:input id="modalCarFuelConsumption" path="fuelConsumption" type="text"
+                                                inputmode="decimal" autocomplete="off"
+                                                data-number-field="decimal"
+                                                data-msg-number-invalid="${fn:escapeXml(jsConsumptionNumeric)}"
+                                                data-msg-number-range="${fn:escapeXml(jsConsumptionRange)}"
                                                 step="0.1" min="0" max="99.9" required="required"
                                                 placeholder="${carConsumptionPlaceholder}"/>
                                     <form:errors path="fuelConsumption" cssClass="form-error" element="span"/>
@@ -234,7 +262,11 @@
 
                                 <div class="modal-field">
                                     <label for="modalCarMaxSpeed"><spring:message code="cars.form.maxSpeed"/></label>
-                                    <form:input id="modalCarMaxSpeed" path="maxSpeedKmh" type="number"
+                                    <form:input id="modalCarMaxSpeed" path="maxSpeedKmh" type="text"
+                                                inputmode="numeric" autocomplete="off"
+                                                data-number-field="integer"
+                                                data-msg-number-invalid="${fn:escapeXml(jsMaxSpeedNumeric)}"
+                                                data-msg-number-range="${fn:escapeXml(jsMaxSpeedRange)}"
                                                 min="1" max="600" required="required"
                                                 placeholder="${carSpeedPlaceholder}"/>
                                     <form:errors path="maxSpeedKmh" cssClass="form-error" element="span"/>
@@ -242,7 +274,11 @@
 
                                 <div class="modal-field">
                                     <label for="modalCarPrice"><spring:message code="cars.form.price"/></label>
-                                    <form:input id="modalCarPrice" path="priceUsd" type="number"
+                                    <form:input id="modalCarPrice" path="priceUsd" type="text"
+                                                inputmode="numeric" autocomplete="off"
+                                                data-number-field="integer"
+                                                data-msg-number-invalid="${fn:escapeXml(jsPriceNumeric)}"
+                                                data-msg-number-range="${fn:escapeXml(jsPriceRange)}"
                                                 step="1" min="1" max="5000000"
                                                 placeholder="${carPricePlaceholder}"/>
                                     <form:errors path="priceUsd" cssClass="form-error" element="span"/>

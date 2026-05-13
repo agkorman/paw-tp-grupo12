@@ -87,6 +87,100 @@
         }
     }
 
+    function setupProfileEditValidation() {
+        var form = document.querySelector('[data-profile-edit-form]');
+        var username = document.getElementById('profileNameInput');
+        var usernamePattern = /^[A-Za-z0-9._-]+$/;
+
+        if (!form || !username) {
+            return;
+        }
+
+        function errorId() {
+            return username.id + 'ClientError';
+        }
+
+        function findError() {
+            return form.querySelector('[data-client-error-for="' + username.id + '"]');
+        }
+
+        function setDescribedBy() {
+            var ids = (username.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+            if (ids.indexOf(errorId()) === -1) {
+                ids.push(errorId());
+                username.setAttribute('aria-describedby', ids.join(' '));
+            }
+        }
+
+        function removeDescribedBy() {
+            var ids = (username.getAttribute('aria-describedby') || '').split(/\s+/).filter(function (id) {
+                return id && id !== errorId();
+            });
+            if (ids.length) {
+                username.setAttribute('aria-describedby', ids.join(' '));
+            } else {
+                username.removeAttribute('aria-describedby');
+            }
+        }
+
+        function showError(message) {
+            var container = closestByClass(username, 'profile-edit-field') || username.parentNode;
+            var error = findError();
+            if (!error) {
+                error = document.createElement('span');
+                error.id = errorId();
+                error.className = 'form-error client-form-error';
+                error.setAttribute('data-client-error-for', username.id);
+                error.setAttribute('role', 'alert');
+                container.appendChild(error);
+            }
+            error.textContent = message || '';
+            error.hidden = false;
+            username.classList.add('is-invalid');
+            username.setAttribute('aria-invalid', 'true');
+            setDescribedBy();
+        }
+
+        function clearError() {
+            var error = findError();
+            if (error) {
+                error.textContent = '';
+                error.hidden = true;
+            }
+            username.classList.remove('is-invalid');
+            username.removeAttribute('aria-invalid');
+            removeDescribedBy();
+        }
+
+        function validateUsername() {
+            var value = username.value ? username.value.trim() : '';
+            clearError();
+            if (value === '') {
+                showError(form.getAttribute('data-msg-required-username') || '');
+                return false;
+            }
+            if (value.length > 50) {
+                showError(form.getAttribute('data-msg-username-max') || '');
+                return false;
+            }
+            if (!usernamePattern.test(value)) {
+                showError(form.getAttribute('data-msg-username-pattern') || '');
+                return false;
+            }
+            username.value = value;
+            return true;
+        }
+
+        form.noValidate = true;
+        username.addEventListener('input', validateUsername);
+        form.addEventListener('submit', function (event) {
+            if (!validateUsername()) {
+                event.preventDefault();
+                username.focus();
+            }
+        });
+    }
+
     function closeActionMenus() {
         if (window.PawActionMenus) {
             window.PawActionMenus.close();
@@ -300,4 +394,5 @@
 
     setupProfileTabs();
     setupAutoOpenModals();
+    setupProfileEditValidation();
 }());

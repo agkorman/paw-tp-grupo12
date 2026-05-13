@@ -6,6 +6,9 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <spring:message var="closeModalLabel" code="common.action.close"/>
 <spring:message var="emailLabel" code="common.form.email"/>
+<spring:message var="usernameRequiredMessage" code="profile.edit.error.username.required"/>
+<spring:message var="usernameMaxMessage" code="profile.edit.error.username.max"/>
+<spring:message var="usernamePatternMessage" code="profile.edit.error.username.pattern"/>
 <c:url var="profileUpdateUrl" value="/profile"/>
 <c:set var="resolvedProfileName" value="${empty profileEditUsername ? profile.name : profileEditUsername}"/>
 
@@ -19,12 +22,17 @@
             </button>
         </header>
 
-        <form class="profile-edit-form" method="post" action="${profileUpdateUrl}" novalidate="novalidate">
+        <form class="profile-edit-form" method="post" action="${profileUpdateUrl}" novalidate="novalidate"
+              data-profile-edit-form
+              data-msg-required-username="${fn:escapeXml(usernameRequiredMessage)}"
+              data-msg-username-max="${fn:escapeXml(usernameMaxMessage)}"
+              data-msg-username-pattern="${fn:escapeXml(usernamePatternMessage)}">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <div class="profile-edit-fields">
                 <label class="profile-edit-field" for="profileNameInput">
                     <span><spring:message code="profile.edit.username"/></span>
                     <input id="profileNameInput" name="displayName" type="text" maxlength="50"
+                           required
                            value="${fn:escapeXml(resolvedProfileName)}"
                            class="${not empty profileEditErrorCode ? 'is-invalid' : ''}">
                     <c:if test="${not empty profileEditErrorCode}">

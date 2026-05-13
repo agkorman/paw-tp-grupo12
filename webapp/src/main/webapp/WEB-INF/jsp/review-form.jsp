@@ -141,7 +141,8 @@
                     </div>
                     <div class="modal-field">
                         <label for="modalMileageKm"><spring:message code="review.form.mileage"/></label>
-                        <form:input id="modalMileageKm" path="mileageKm" type="number"
+                        <form:input id="modalMileageKm" path="mileageKm" type="text"
+                                    inputmode="numeric" autocomplete="off"
                                     min="0" max="2000000" required="required" placeholder="${reviewMileagePlaceholder}"/>
                         <form:errors path="mileageKm" cssClass="form-error" element="span"/>
                     </div>

@@ -6,7 +6,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="review.page.title" styles="/css/reviews.css|/css/car-image-carousel.css|/css/review-tags.css"/>
+<pa:page-head titleCode="review.page.title" styles="/css/reviews.css|/css/car-image-carousel.css|/css/review-tags.css|/css/profile-modal.css"/>
 <body>
     <pa:nav activePage="reviews"/>
 
@@ -137,13 +137,15 @@
             <pa:toast/>
         </c:otherwise>
     </c:choose>
-    <sec:authorize access="hasRole('ADMIN')">
-        <pa:review-hide-modal/>
+    <sec:authorize access="isAuthenticated()">
         <pa:confirmation-modal id="deleteReviewConfirmModal"
                                titleCode="review.delete.title"
                                bodyCode="review.delete.body"
                                confirmCode="common.action.delete"
                                confirmCssClass="btn-primary"/>
+    </sec:authorize>
+    <sec:authorize access="hasRole('ADMIN')">
+        <pa:review-hide-modal/>
         <pa:car-delete-modal/>
     </sec:authorize>
 
@@ -155,10 +157,12 @@
     <pa:script src="/js/shared/modal-utils.js"/>
     <pa:script src="/js/auth/auth-required-modal.js"/>
     <pa:script src="/js/shared/toast.js"/>
+    <sec:authorize access="isAuthenticated()">
+        <pa:script src="/js/shared/confirmation-modal.js"/>
+    </sec:authorize>
     <sec:authorize access="hasRole('ADMIN')">
         <pa:script src="/js/cars/car-admin.js"/>
         <pa:script src="/js/reviews/review-moderation.js"/>
-        <pa:script src="/js/shared/confirmation-modal.js"/>
     </sec:authorize>
     <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:footer/>

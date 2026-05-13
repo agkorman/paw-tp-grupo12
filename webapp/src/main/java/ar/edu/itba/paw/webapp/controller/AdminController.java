@@ -1366,7 +1366,7 @@ public class AdminController {
         }
         try {
             final URI uri = URI.create(referer);
-            if (!"/admin".equals(uri.getRawPath())) {
+            if (!"/admin".equals(ControllerUtils.stripCurrentContextPath(uri.getRawPath()))) {
                 return new ModelAndView(fallback);
             }
             final String query = uri.getRawQuery();
@@ -1396,7 +1396,7 @@ public class AdminController {
         }
         try {
             final URI uri = URI.create(referer);
-            final String path = uri.getRawPath();
+            final String path = ControllerUtils.stripCurrentContextPath(uri.getRawPath());
             if (path == null || path.isBlank()) {
                 return new ModelAndView(fallback);
             }

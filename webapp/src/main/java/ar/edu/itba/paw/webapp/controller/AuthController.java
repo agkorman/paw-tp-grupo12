@@ -56,8 +56,9 @@ public class AuthController {
                               @RequestParam(value = "registered", required = false) final String registered,
                               @RequestParam(value = LoginRedirectUtils.REDIRECT_PARAM, required = false) final String redirect,
                               @RequestParam(value = LoginRedirectUtils.INTENT_PARAM, required = false) final String intent,
-                              final Authentication authentication) {
-        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect).orElse(null);
+                              final Authentication authentication,
+                              final HttpServletRequest request) {
+        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath()).orElse(null);
         final String safeIntent = LoginRedirectUtils.safeIntent(intent).orElse(null);
         if (isLoggedIn(authentication)) {
             return new ModelAndView("redirect:" + LoginRedirectUtils.appendIntent(

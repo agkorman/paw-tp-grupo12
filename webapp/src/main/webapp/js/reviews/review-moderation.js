@@ -21,6 +21,7 @@
 
     function clearError() {
         reasonField.classList.remove('is-invalid');
+        reasonField.removeAttribute('aria-invalid');
         if (errorNode) {
             errorNode.textContent = '';
             errorNode.hidden = true;
@@ -29,6 +30,7 @@
 
     function showError(message) {
         reasonField.classList.add('is-invalid');
+        reasonField.setAttribute('aria-invalid', 'true');
         if (errorNode) {
             errorNode.textContent = message || '';
             errorNode.hidden = false;

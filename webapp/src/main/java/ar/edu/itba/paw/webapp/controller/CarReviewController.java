@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,6 +173,7 @@ public class CarReviewController {
     public ModelAndView editReview(
         @PathVariable("reviewId") final long reviewId,
         @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         final Review review = reviewService.getReviewAndCheckAccess(
@@ -191,7 +193,7 @@ public class CarReviewController {
         mav.addObject("reviewForm", toReviewForm(review));
         mav.addObject("editMode", true);
         mav.addObject("reviewId", reviewId);
-        LoginRedirectUtils.safeRedirect(redirect).ifPresent(r -> mav.addObject("editRedirect", r));
+        LoginRedirectUtils.safeRedirect(redirect, request.getContextPath()).ifPresent(r -> mav.addObject("editRedirect", r));
         return mav;
     }
 
@@ -479,6 +481,7 @@ public class CarReviewController {
         final BindingResult errors,
         final Model model,
         @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         final Review existingReview = reviewService.getReviewAndCheckAccess(
@@ -496,7 +499,7 @@ public class CarReviewController {
 
         final String defaultRedirect =
             "/reviews/car/" + existingReview.getCarId() + "#review-" + reviewId;
-        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect).orElse(defaultRedirect);
+        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath()).orElse(defaultRedirect);
 
         if (errors.hasErrors()) {
             model.addAttribute("selectedCar", car);
@@ -547,6 +550,7 @@ public class CarReviewController {
     public ModelAndView deleteReview(
         @PathVariable("reviewId") final long reviewId,
         @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         final Review existingReview = reviewService.getReviewAndCheckAccess(
@@ -562,7 +566,7 @@ public class CarReviewController {
         );
         final String defaultRedirect =
             "/reviews/car/" + existingReview.getCarId() + "#reviewsFeed";
-        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect).orElse(defaultRedirect);
+        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath()).orElse(defaultRedirect);
         return new ModelAndView("redirect:" + safeRedirect);
     }
 
@@ -574,6 +578,7 @@ public class CarReviewController {
         @PathVariable("reviewId") final long reviewId,
         @RequestParam(value = "reason", required = false) final String reason,
         @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
@@ -588,7 +593,7 @@ public class CarReviewController {
         final String defaultRedirect =
             "/reviews/car/" + carId + "#review-" + reviewId;
         final String safeRedirect = LoginRedirectUtils
-            .safeRedirect(redirect)
+            .safeRedirect(redirect, request.getContextPath())
             .orElse(defaultRedirect);
         final String feedRedirect = "redirect:" + safeRedirect;
 
@@ -670,6 +675,8 @@ public class CarReviewController {
     )
     public ModelAndView toggleReviewLike(
         @PathVariable("reviewId") final long reviewId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
@@ -690,12 +697,11 @@ public class CarReviewController {
             reviewId,
             liked
         );
-        return new ModelAndView(
-            "redirect:/reviews/car/" +
-                review.getCarId() +
-                "#review-" +
-                reviewId
-        );
+        final String defaultRedirect = "/reviews/car/" + review.getCarId() + "#review-" + reviewId;
+        final String safeRedirect = LoginRedirectUtils
+            .safeRedirect(redirect, request.getContextPath())
+            .orElse(defaultRedirect);
+        return new ModelAndView("redirect:" + safeRedirect);
     }
 
     @RequestMapping(
