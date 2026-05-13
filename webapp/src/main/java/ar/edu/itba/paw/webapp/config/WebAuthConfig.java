@@ -164,7 +164,8 @@ public class WebAuthConfig {
                 );
             }
             final Optional<String> redirect = LoginRedirectUtils.safeRedirect(
-                    request.getParameter(LoginRedirectUtils.REDIRECT_PARAM)
+                    request.getParameter(LoginRedirectUtils.REDIRECT_PARAM),
+                    request.getContextPath()
             );
             if (redirect.isEmpty()) {
                 final SavedRequest savedRequest = requestCache.getRequest(request, response);
@@ -192,8 +193,9 @@ public class WebAuthConfig {
                     exception == null ? "<unknown>" : exception.getClass().getSimpleName());
             String target = "/login?error";
             final String redirect = request.getParameter(LoginRedirectUtils.REDIRECT_PARAM);
-            if (LoginRedirectUtils.safeRedirect(redirect).isPresent()) {
-                target = LoginRedirectUtils.appendQueryParam(target, LoginRedirectUtils.REDIRECT_PARAM, redirect);
+            final Optional<String> safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath());
+            if (safeRedirect.isPresent()) {
+                target = LoginRedirectUtils.appendQueryParam(target, LoginRedirectUtils.REDIRECT_PARAM, safeRedirect.get());
             }
             final String intent = request.getParameter(LoginRedirectUtils.INTENT_PARAM);
             if (LoginRedirectUtils.safeIntent(intent).isPresent()) {

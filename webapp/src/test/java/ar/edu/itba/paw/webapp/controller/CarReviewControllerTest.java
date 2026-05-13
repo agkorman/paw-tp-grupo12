@@ -319,6 +319,76 @@ class CarReviewControllerTest {
     }
 
     @Test
+    void toggleReviewLike_validWithoutRedirect_redirectsToCarReview() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        final Review review = reviewOwnedBy(1L, 42L);
+        when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(review));
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(post("/reviews/1/like"));
+            // Assertions
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/reviews/car/42#review-1"));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
+    void toggleReviewLike_validWithProfileRedirect_staysOnProfile() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        final Review review = reviewOwnedBy(1L, 42L);
+        when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(review));
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(
+                    post("/reviews/1/like")
+                            .param("redirect", "/profile?tab=liked&page=2#profileLikedPanel"));
+            // Assertions
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/profile?tab=liked&page=2#profileLikedPanel"));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
+    void updateReview_validWithProfileRedirect_staysOnProfile() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        final Review existing = reviewOwnedBy(1L, 42L);
+        when(reviewService.getReviewAndCheckAccess(eq(1L), eq(1L), eq(false))).thenReturn(existing);
+        when(carService.getCarById(eq(42L))).thenReturn(Optional.of(aCar(42L)));
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(
+                    post("/reviews/1")
+                            .param("carId", "42")
+                            .param("rating", "4.5")
+                            .param("title", "Updated title")
+                            .param("body", "Updated body with enough detail.")
+                            .param("mileageKm", "15000")
+                            .param("redirect", "/profile?tab=reviews#profileReviewsPanel"));
+            // Assertions
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/profile?tab=reviews#profileReviewsPanel"));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
     void deleteReview_owner_redirectsToCarReviewFeedAnchor() throws Exception {
         // Arrange
         arrangeStandardReviewCollaboratorsAndI18n();
@@ -334,6 +404,29 @@ class CarReviewControllerTest {
             // Assertions
             resultActions.andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/reviews/car/42#reviewsFeed"));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
+    void deleteReview_contextPrefixedRedirect_redirectsWithSingleContextPath() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        final Review existing = reviewOwnedBy(1L, 42L);
+        when(reviewService.getReviewAndCheckAccess(eq(1L), eq(1L), eq(false))).thenReturn(existing);
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(
+                    post("/paw-2026a-12/reviews/1/delete")
+                            .contextPath("/paw-2026a-12")
+                            .param("redirect", "/paw-2026a-12/reviews/car/42?page=2#reviewsFeed"));
+            // Assertions
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/paw-2026a-12/reviews/car/42?page=2#reviewsFeed"));
         } finally {
             clearSecurityContext();
         }

@@ -14,6 +14,7 @@
     const questionIndexTemplate = progressShell
         ? (progressShell.getAttribute('data-recommend-question-index-template') || '')
         : '';
+    const requiredAnswerMessage = form.getAttribute('data-msg-required-answer') || '';
     const QUESTION_INDEX_CUR = '__PAW_0__';
     const QUESTION_INDEX_TOTAL = '__PAW_1__';
 
@@ -103,6 +104,9 @@
     }
 
     function goNext() {
+        if (!validateCurrentQuestion(true)) {
+            return;
+        }
         if (currentIndex < steps.length - 1) {
             showStep(currentIndex + 1);
         }
@@ -112,6 +116,86 @@
         if (currentIndex > 0) {
             showStep(currentIndex - 1);
         }
+    }
+
+    function questionRadios(step) {
+        return Array.from(step.querySelectorAll('input[type="radio"]'));
+    }
+
+    function questionError(step) {
+        let error = step.querySelector('[data-recommend-client-error]');
+        const body = step.querySelector('.wizard-step-body') || step;
+        if (!error) {
+            error = document.createElement('p');
+            error.className = 'recommend-field-error client-form-error';
+            error.setAttribute('data-recommend-client-error', 'true');
+            error.setAttribute('role', 'alert');
+            error.hidden = true;
+            body.appendChild(error);
+        }
+        if (!error.id) {
+            error.id = (step.getAttribute('data-question-id') || 'recommend-question') + 'ClientError';
+        }
+        return error;
+    }
+
+    function setRadioDescribedBy(radio, errorId) {
+        const ids = (radio.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+        if (ids.indexOf(errorId) === -1) {
+            ids.push(errorId);
+            radio.setAttribute('aria-describedby', ids.join(' '));
+        }
+    }
+
+    function removeRadioDescribedBy(radio, errorId) {
+        const ids = (radio.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id && id !== errorId);
+        if (ids.length) {
+            radio.setAttribute('aria-describedby', ids.join(' '));
+        } else {
+            radio.removeAttribute('aria-describedby');
+        }
+    }
+
+    function clearQuestionError(step) {
+        const error = step.querySelector('[data-recommend-client-error]');
+        const errorId = error ? error.id : '';
+        questionRadios(step).forEach(radio => {
+            radio.removeAttribute('aria-invalid');
+            if (errorId) {
+                removeRadioDescribedBy(radio, errorId);
+            }
+        });
+        if (error) {
+            error.textContent = '';
+            error.hidden = true;
+        }
+    }
+
+    function validateQuestionStep(step, shouldFocus) {
+        if (!step || step.dataset.stepType !== 'question') {
+            return true;
+        }
+        const radios = questionRadios(step);
+        if (radios.length === 0 || radios.some(radio => radio.checked)) {
+            clearQuestionError(step);
+            return true;
+        }
+
+        const error = questionError(step);
+        error.textContent = requiredAnswerMessage;
+        error.hidden = false;
+        radios.forEach(radio => {
+            radio.setAttribute('aria-invalid', 'true');
+            setRadioDescribedBy(radio, error.id);
+        });
+        if (shouldFocus && radios[0] && typeof radios[0].focus === 'function') {
+            radios[0].focus({ preventScroll: true });
+        }
+        return false;
+    }
+
+    function validateCurrentQuestion(shouldFocus) {
+        return validateQuestionStep(steps[currentIndex], shouldFocus);
     }
 
     form.addEventListener('click', event => {
@@ -140,6 +224,7 @@
         if (advanceTimer) {
             clearTimeout(advanceTimer);
         }
+        clearQuestionError(step);
         advanceTimer = window.setTimeout(() => {
             advanceTimer = null;
             goNext();
@@ -163,6 +248,21 @@
         }
         event.preventDefault();
         goNext();
+    });
+
+    form.addEventListener('submit', event => {
+        const allQuestionsValid = steps
+            .filter(step => step.dataset.stepType === 'question')
+            .reduce((valid, step) => validateQuestionStep(step, false) && valid, true);
+        if (!allQuestionsValid) {
+            event.preventDefault();
+            const firstInvalid = steps.find(step => step.dataset.stepType === 'question'
+                && questionRadios(step).some(radio => radio.getAttribute('aria-invalid') === 'true'));
+            if (firstInvalid) {
+                showStep(steps.indexOf(firstInvalid));
+                validateQuestionStep(firstInvalid, true);
+            }
+        }
     });
 
     showStep(0);

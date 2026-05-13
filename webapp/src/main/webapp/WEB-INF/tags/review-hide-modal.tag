@@ -38,8 +38,12 @@
                 <textarea id="hideReviewReason"
                           name="reason"
                           rows="5"
+                          minlength="10"
+                          maxlength="600"
+                          required
+                          aria-describedby="hideReviewReasonError"
                           placeholder="${fn:escapeXml(reasonPlaceholder)}"></textarea>
-                <span class="client-form-error" data-hide-review-error hidden></span>
+                <span id="hideReviewReasonError" class="client-form-error" data-hide-review-error hidden></span>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn-secondary" data-close-hide-review-modal>

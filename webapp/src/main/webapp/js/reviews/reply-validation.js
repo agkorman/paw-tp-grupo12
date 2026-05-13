@@ -16,6 +16,7 @@
         var errorNode = findErrorNode(form);
         if (textarea) {
             textarea.classList.remove('is-invalid');
+            textarea.removeAttribute('aria-invalid');
         }
         if (errorNode) {
             errorNode.textContent = '';
@@ -28,6 +29,7 @@
         var errorNode = findErrorNode(form);
         if (textarea) {
             textarea.classList.add('is-invalid');
+            textarea.setAttribute('aria-invalid', 'true');
         }
         if (errorNode) {
             errorNode.textContent = message || '';

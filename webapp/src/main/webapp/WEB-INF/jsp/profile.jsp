@@ -228,19 +228,17 @@
                                 </div>
                             </c:when>
                             <c:otherwise>
-                                <c:url var="likedDeleteRedirect" value="${profileBasePath}">
-                                    <c:param name="tab" value="liked"/>
-                                    <c:if test="${not empty likedReviewsCurrentPage and likedReviewsCurrentPage > 1}">
-                                        <c:param name="page" value="${likedReviewsCurrentPage}"/>
-                                    </c:if>
-                                </c:url>
-                                <c:set var="likedDeleteRedirect" value="${likedDeleteRedirect}#profileLikedPanel"/>
+                                <c:set var="likedActionRedirect" value="${profileBasePath}?tab=liked"/>
+                                <c:if test="${not empty likedReviewsCurrentPage and likedReviewsCurrentPage > 1}">
+                                    <c:set var="likedActionRedirect" value="${likedActionRedirect}&page=${likedReviewsCurrentPage}"/>
+                                </c:if>
+                                <c:set var="likedActionRedirect" value="${likedActionRedirect}#profileLikedPanel"/>
                                 <div class="profile-review-list">
                                     <c:forEach var="likedReview" items="${likedReviews}">
                                         <pa:profile-review-card
                                                 reviewCard="${likedReview}"
                                                 editable="${likedReview.ownedByCurrentUser}"
-                                                deleteRedirect="${likedDeleteRedirect}"/>
+                                                actionRedirect="${likedActionRedirect}"/>
                                     </c:forEach>
                                 </div>
                                 <c:if test="${likedReviewsTotalPages > 1}">
@@ -270,19 +268,17 @@
                                 </div>
                             </c:when>
                             <c:otherwise>
-                                <c:url var="profileReviewsDeleteRedirect" value="${profileBasePath}">
-                                    <c:param name="tab" value="reviews"/>
-                                    <c:if test="${not empty profileReviewsCurrentPage and profileReviewsCurrentPage > 1}">
-                                        <c:param name="page" value="${profileReviewsCurrentPage}"/>
-                                    </c:if>
-                                </c:url>
-                                <c:set var="profileReviewsDeleteRedirect" value="${profileReviewsDeleteRedirect}#profileReviewsPanel"/>
+                                <c:set var="profileReviewsActionRedirect" value="${profileBasePath}?tab=reviews"/>
+                                <c:if test="${not empty profileReviewsCurrentPage and profileReviewsCurrentPage > 1}">
+                                    <c:set var="profileReviewsActionRedirect" value="${profileReviewsActionRedirect}&page=${profileReviewsCurrentPage}"/>
+                                </c:if>
+                                <c:set var="profileReviewsActionRedirect" value="${profileReviewsActionRedirect}#profileReviewsPanel"/>
                                 <div class="profile-review-list">
                                     <c:forEach var="profileReview" items="${profileReviews}">
                                         <pa:profile-review-card
                                                 reviewCard="${profileReview}"
                                                 editable="${profileReview.ownedByCurrentUser}"
-                                                deleteRedirect="${profileReviewsDeleteRedirect}"/>
+                                                actionRedirect="${profileReviewsActionRedirect}"/>
                                     </c:forEach>
                                 </div>
                                 <c:if test="${profileReviewsTotalPages > 1}">

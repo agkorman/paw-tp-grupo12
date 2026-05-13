@@ -90,7 +90,7 @@
         clearValidationErrors();
     });
 
-    /* ── SINGLE-RANGE SLIDERS with "Hasta / Desde" display ── */
+    /* ── SINGLE-RANGE SLIDERS (localized prefix + value + unit) ── */
 
     function updateSingleRangeFill(slider, mode) {
         var min = parseFloat(slider.min || 0);
@@ -133,8 +133,13 @@
         return updateDisplay;
     }
 
-    var updateConsumptionDisplay = initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', 'Hasta', 'L/100km', 'from-start');
-    var updateSpeedDisplay       = initSingleRange('panelMaxSpeedSlider',    'panelMaxSpeedDisplay',    'Desde', 'km/h', 'to-end');
+    var speedDisplayPrefix = panel.getAttribute('data-msg-speed-display-prefix') || '';
+    var consumptionDisplayPrefix = panel.getAttribute('data-msg-consumption-display-prefix') || '';
+    var speedDisplayUnit = panel.getAttribute('data-msg-speed-display-unit') || '';
+    var consumptionDisplayUnit = panel.getAttribute('data-msg-consumption-display-unit') || '';
+
+    var updateConsumptionDisplay = initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', consumptionDisplayPrefix, consumptionDisplayUnit, 'from-start');
+    var updateSpeedDisplay       = initSingleRange('panelMaxSpeedSlider',    'panelMaxSpeedDisplay',    speedDisplayPrefix, speedDisplayUnit, 'to-end');
 
     function isElectricOnlyFilter() {
         var fuelTypeInput = document.getElementById('panelFuelType');

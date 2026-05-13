@@ -48,6 +48,12 @@ public final class LoginRedirectUtils {
         return Optional.of(trimmed);
     }
 
+    public static Optional<String> safeRedirect(final String value, final String contextPath) {
+        return safeRedirect(value)
+                .map(target -> stripContextPath(target, contextPath))
+                .flatMap(LoginRedirectUtils::safeRedirect);
+    }
+
     public static Optional<String> safeIntent(final String value) {
         if (value == null) {
             return Optional.empty();
@@ -83,6 +89,27 @@ public final class LoginRedirectUtils {
 
     private static String encode(final String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private static String stripContextPath(final String target, final String contextPath) {
+        if (contextPath == null || contextPath.isBlank() || "/".equals(contextPath)) {
+            return target;
+        }
+        final String normalizedContextPath = contextPath.trim();
+        if (!normalizedContextPath.startsWith("/")) {
+            return target;
+        }
+        if (target.equals(normalizedContextPath)) {
+            return "/";
+        }
+        if (target.startsWith(normalizedContextPath + "/")) {
+            return target.substring(normalizedContextPath.length());
+        }
+        if (target.startsWith(normalizedContextPath + "?")
+                || target.startsWith(normalizedContextPath + "#")) {
+            return "/" + target.substring(normalizedContextPath.length());
+        }
+        return target;
     }
 
     private static String rejectionReason(final String value) {

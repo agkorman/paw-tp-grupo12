@@ -1,7 +1,7 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="reviewCard" required="true" type="ar.edu.itba.paw.webapp.controller.ProfileController.ProfileReviewCard" %>
 <%@ attribute name="editable" required="true" type="java.lang.Boolean" %>
-<%@ attribute name="deleteRedirect" required="false" type="java.lang.String" %>
+<%@ attribute name="actionRedirect" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
@@ -9,7 +9,11 @@
 
 <c:url var="profileReviewUrl" value="/reviews/car/${reviewCard.review.carId}"/>
 <c:set var="profileReviewHref" value="${profileReviewUrl}#review-${reviewCard.review.id}"/>
-<c:url var="reviewEditPageUrl" value="/reviews/${reviewCard.review.id}/edit"/>
+<c:url var="reviewEditPageUrl" value="/reviews/${reviewCard.review.id}/edit">
+    <c:if test="${not empty actionRedirect}">
+        <c:param name="redirect" value="${actionRedirect}"/>
+    </c:if>
+</c:url>
 <c:url var="reviewDeleteUrl" value="/reviews/${reviewCard.review.id}/delete"/>
 <c:url var="reviewLikeUrl" value="/reviews/${reviewCard.review.id}/like"/>
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -43,6 +47,7 @@
                 <pa:review-like-button
                         reviewId="${reviewCard.review.id}"
                         action="${reviewLikeUrl}"
+                        redirect="${actionRedirect}"
                         liked="${reviewCard.liked}"
                         likeCount="${reviewCard.likeCount}"
                         disabled="${not authenticated}"/>
@@ -55,8 +60,8 @@
                             <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
                                   data-confirm-modal="deleteReviewConfirmModal">
                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                <c:if test="${not empty deleteRedirect}">
-                                    <input type="hidden" name="redirect" value="${fn:escapeXml(deleteRedirect)}">
+                                <c:if test="${not empty actionRedirect}">
+                                    <input type="hidden" name="redirect" value="${fn:escapeXml(actionRedirect)}">
                                 </c:if>
                                 <button type="submit" class="action-menu-danger">
                                     <spring:message code="common.action.delete"/>

@@ -104,13 +104,24 @@
         return field && field.value ? field.value.trim() : '';
     }
 
+    function formatMessage(template, value) {
+        return (template || '').replace('{0}', value);
+    }
+
     function validateField(field) {
+        var maxLength;
+
         if (!field || field.disabled) {
             return true;
         }
         clearInlineError(field);
         if (field.required && normalizedValue(field) === '') {
             setInlineError(field, requiredMessage(field));
+            return false;
+        }
+        maxLength = field.getAttribute('maxlength');
+        if (maxLength && field.value.length > Number(maxLength)) {
+            setInlineError(field, formatMessage(form.getAttribute('data-msg-length-max') || '', maxLength));
             return false;
         }
         return true;

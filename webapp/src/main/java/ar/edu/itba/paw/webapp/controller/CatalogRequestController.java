@@ -124,7 +124,7 @@ public class CatalogRequestController {
         }
         try {
             final URI uri = URI.create(referer);
-            final String path = uri.getRawPath();
+            final String path = ControllerUtils.stripCurrentContextPath(uri.getRawPath());
             if (path == null || path.isBlank() || path.startsWith("//")) {
                 return new ModelAndView(withSubmittedRedirect(fallback, submitted));
             }

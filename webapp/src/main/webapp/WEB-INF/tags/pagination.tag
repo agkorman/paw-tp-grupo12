@@ -12,6 +12,18 @@
 
 <c:if test="${totalPages > 1}">
     <c:set var="resolvedPageParam" value="${empty pageParam ? 'page' : pageParam}"/>
+    <c:set var="resolvedBaseUrl" value="${baseUrl}"/>
+    <c:set var="paginationContextPath" value="${pageContext.request.contextPath}"/>
+    <c:if test="${not empty paginationContextPath}">
+        <c:choose>
+            <c:when test="${resolvedBaseUrl eq paginationContextPath}">
+                <c:set var="resolvedBaseUrl" value="/"/>
+            </c:when>
+            <c:when test="${fn:startsWith(resolvedBaseUrl, paginationContextPath.concat('/'))}">
+                <c:set var="resolvedBaseUrl" value="${fn:substring(resolvedBaseUrl, fn:length(paginationContextPath), fn:length(resolvedBaseUrl))}"/>
+            </c:when>
+        </c:choose>
+    </c:if>
     <c:set var="safeCurrentPage" value="${currentPage < 1 ? 1 : currentPage}"/>
     <c:if test="${safeCurrentPage > totalPages}"><c:set var="safeCurrentPage" value="${totalPages}"/></c:if>
     <c:set var="windowSize" value="2"/>
@@ -32,7 +44,7 @@
                         <span class="pagination-link is-disabled" aria-disabled="true">«</span>
                     </c:when>
                     <c:otherwise>
-                        <c:url var="prevHref" value="${baseUrl}">
+                        <c:url var="prevHref" value="${resolvedBaseUrl}">
                             <c:if test="${not empty extraParams}">
                                 <c:forEach var="entry" items="${extraParams}">
                                     <c:if test="${not empty entry.value}">
@@ -50,7 +62,7 @@
 
             <c:if test="${windowStart > 1}">
                 <li class="pagination-item">
-                    <c:url var="firstHref" value="${baseUrl}">
+                    <c:url var="firstHref" value="${resolvedBaseUrl}">
                         <c:if test="${not empty extraParams}">
                             <c:forEach var="entry" items="${extraParams}">
                                 <c:if test="${not empty entry.value}">
@@ -74,7 +86,7 @@
                             <span class="pagination-link is-current" aria-current="page">${p}</span>
                         </c:when>
                         <c:otherwise>
-                            <c:url var="pHref" value="${baseUrl}">
+                            <c:url var="pHref" value="${resolvedBaseUrl}">
                                 <c:if test="${not empty extraParams}">
                                     <c:forEach var="entry" items="${extraParams}">
                                         <c:if test="${not empty entry.value}">
@@ -95,7 +107,7 @@
                     <li class="pagination-item pagination-ellipsis" aria-hidden="true"><span>…</span></li>
                 </c:if>
                 <li class="pagination-item">
-                    <c:url var="lastHref" value="${baseUrl}">
+                    <c:url var="lastHref" value="${resolvedBaseUrl}">
                         <c:if test="${not empty extraParams}">
                             <c:forEach var="entry" items="${extraParams}">
                                 <c:if test="${not empty entry.value}">
@@ -116,7 +128,7 @@
                         <span class="pagination-link is-disabled" aria-disabled="true">»</span>
                     </c:when>
                     <c:otherwise>
-                        <c:url var="nextHref" value="${baseUrl}">
+                        <c:url var="nextHref" value="${resolvedBaseUrl}">
                             <c:if test="${not empty extraParams}">
                                 <c:forEach var="entry" items="${extraParams}">
                                     <c:if test="${not empty entry.value}">
