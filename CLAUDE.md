@@ -1,4 +1,8 @@
-# Agent Context
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+---
 
 Rules and non-obvious constraints for this codebase. These are things you cannot derive just by reading the code.
 
@@ -11,6 +15,10 @@ mvn clean install        # build all modules
 mvn -pl webapp jetty:run # start dev server at http://localhost:8080/webapp
 mvn test                 # run all tests
 mvn -pl services test    # run only service tests (faster)
+mvn -pl persistence test # run only persistence tests
+mvn -pl persistence test -Dtest=UserDaoTest                              # run a single test class
+mvn -pl persistence test -Dtest=UserDaoTest#shouldCreateUserAndPersistFields # run a single test method
+mvn -pl model install && mvn -pl persistence test  # required when JPA entity annotations change
 ```
 
 Required env vars: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` (PostgreSQL 16). Mail: `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`.
@@ -51,8 +59,10 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - Services use constructor injection (`@Autowired` on constructor, `final` fields).
 - Return `Optional<T>` for single results; return empty collections (never `null`) for list results.
-- DAOs define SQL fragments and `RowMapper` instances as `private static final` constants.
-- Use `SimpleJdbcInsert` for INSERT; use `NamedParameterJdbcTemplate` for queries with many parameters.
+- The persistence layer is being migrated from JDBC to JPA/Hibernate. New DAOs use JPA (`@PersistenceContext EntityManager em`). Legacy JDBC implementations are preserved in `persistence/src/main/java/ar/edu/itba/paw/persistence/jdbc/` with their `@Repository` removed.
+- JPA DAOs: use JPQL for entity queries; use `em.createNativeQuery()` only for operations involving unmapped join tables (e.g. `review_tag_assignments` before the owning entity is migrated). Use `GenerationType.IDENTITY` for all `@Id` fields. Prefer `fetch = LAZY` for all `@ManyToOne` and `@OneToMany`. Only annotate the owning side (the entity holding the FK column); the inverse side does not need `@OneToMany` unless that navigation is required.
+- `@Column(name = "...")` is the only required attribute — do not add `length`, `nullable`, or `unique` since `hbm2ddl.auto=none` means they have no runtime effect.
+- JDBC DAOs (still in use): define SQL fragments and `RowMapper` instances as `private static final` constants. Use `SimpleJdbcInsert` for INSERT; use `NamedParameterJdbcTemplate` for queries with many parameters.
 
 ## Views
 
@@ -190,13 +200,14 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Persistence tests live under `persistence/src/test/java/ar/edu/itba/paw/persistence/`.
 - Stack: JUnit 5 + Spring Test + HSQLDB in memory. The `persistence` module declares these as test dependencies; versions stay pinned in the root `pom.xml` `<dependencyManagement>`.
 - Persistence tests use real Spring-managed DAOs with `@Autowired`, a real test `DataSource`, and `TestConfiguration`. Do not mock DAOs or use Mockito in this layer.
-- `TestConfiguration` uses HSQLDB with `jdbc:hsqldb:mem:paw;sql.syntax_pgs=true`, defines a `DataSourceTransactionManager`, and component-scans only `ar.edu.itba.paw.persistence`.
+- `TestConfiguration` uses HSQLDB with `jdbc:hsqldb:mem:paw;sql.syntax_pgs=true`, defines a `JpaTransactionManager` (backed by a `LocalContainerEntityManagerFactoryBean` scanning `ar.edu.itba.paw.model`), and component-scans only `ar.edu.itba.paw.persistence`.
 - The HSQLDB schema is `persistence/src/test/resources/test-schema.sql`. Keep it minimal and faithful to the DAO behavior under test: table/column names, relevant FKs, uniqueness, checks, nullability, and relationships. Do not try to port the full PostgreSQL production schema.
 - Do not add global seed data. Each test prepares its own state explicitly in `// Arrange`; tests must not depend on execution order or data created by another test.
 - The shared persistence test base uses Spring Test with `@Transactional` and `@Rollback` so every test method runs in its own transaction and rolls back automatically. Keep rollback explicit in the base class.
 - Test layout follows Arrange / Exercise / Assertions, separated by comment markers. `// Arrange` must never be empty; even null, blank, or empty-collection cases should assign the input to a local variable first. The Exercise section must be a single-line invocation of the DAO method under test.
 - Mutating DAO tests must assert both the returned value and the real persisted side effect in the database. Validate DB state with the `JdbcTemplate` available in `AbstractPersistenceTest`, using explicit SQL queries for inserted, updated, deleted, created relation, removed relation, and untouched-row checks. Do not rely only on the returned object, affected row count, Optional/list presence, DAO read-back methods, or `JdbcTestUtils`.
-- Run with `mvn -pl persistence test`.
+- **JPA flush behaviour in tests:** Hibernate defers UPDATE and DELETE SQL until flush. When asserting DB state via `jdbcTemplate` after a JPA write, call `flushAndClear()` first — it is available in `AbstractPersistenceTest` and calls `em.flush()` then `em.clear()`. Exception: `create()` using `GenerationType.IDENTITY` executes its INSERT immediately (Hibernate needs the generated id), so no flush is needed there. For constraint-violation tests that involve deferred writes, wrap both the DAO call and `flushAndClear()` inside the `assertThrows` lambda.
+- Run with `mvn -pl persistence test`. If you changed JPA entity annotations in the `model` module, run `mvn -pl model install` first — `mvn -pl persistence test` alone uses the cached JAR and won't pick up annotation changes.
 
 ## Testing (Service Layer)
 

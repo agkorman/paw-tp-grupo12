@@ -82,6 +82,7 @@ public class CatalogDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final Optional<Brand> result = brandDao.update(created.getId(), "New Brand");
+        flushAndClear();
 
         // Assertions
         assertTrue(result.isPresent());
@@ -98,6 +99,7 @@ public class CatalogDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final Optional<BodyType> result = bodyTypeDao.update(created.getId(), "New Body");
+        flushAndClear();
 
         // Assertions
         assertTrue(result.isPresent());
@@ -114,6 +116,7 @@ public class CatalogDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final boolean result = brandDao.delete(created.getId());
+        flushAndClear();
 
         // Assertions
         assertTrue(result);
@@ -127,6 +130,7 @@ public class CatalogDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final boolean result = bodyTypeDao.delete(created.getId());
+        flushAndClear();
 
         // Assertions
         assertTrue(result);
@@ -245,7 +249,10 @@ public class CatalogDaoTest extends AbstractPersistenceTest {
                 new java.math.BigDecimal("8.0"), 220, new java.math.BigDecimal("30000.00"));
 
         // Exercise
-        assertThrows(DataIntegrityViolationException.class, () -> brandDao.delete(brand.getId()));
+        assertThrows(DataIntegrityViolationException.class, () -> {
+            brandDao.delete(brand.getId());
+            flushAndClear();
+        });
 
         // Assertions
         assertEquals(1, countRows("SELECT COUNT(*) FROM brands WHERE brand_id = ?", brand.getId()));
@@ -261,7 +268,10 @@ public class CatalogDaoTest extends AbstractPersistenceTest {
                 new java.math.BigDecimal("8.0"), 220, new java.math.BigDecimal("30000.00"));
 
         // Exercise
-        assertThrows(DataIntegrityViolationException.class, () -> bodyTypeDao.delete(bodyType.getId()));
+        assertThrows(DataIntegrityViolationException.class, () -> {
+            bodyTypeDao.delete(bodyType.getId());
+            flushAndClear();
+        });
 
         // Assertions
         assertEquals(1, countRows("SELECT COUNT(*) FROM body_types WHERE body_type_id = ?", bodyType.getId()));
