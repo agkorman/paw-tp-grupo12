@@ -23,6 +23,7 @@
                     <c:forEach var="recommendation" items="${recommendations}">
                         <c:set var="car" value="${recommendation.car}"/>
                         <c:set var="stats" value="${reviewStatsByCarId[car.id]}"/>
+                        <c:url var="recommendationReviewUrl" value="/reviews/car/${car.id}"/>
                         <article class="recommend-result">
                             <pa:recommendation-reason positives="${recommendation.positiveHighlights}" negatives="${recommendation.negativeHighlights}"/>
                             <pa:car-card
@@ -31,7 +32,7 @@
                                     bodyType="${car.bodyType}"
                                     carId="${car.id}"
                                     hasImage="${car.hasImage}"
-                                    href="<c:url value='/reviews/car/${car.id}'/>"
+                                    href="${recommendationReviewUrl}"
                                     averageRating="${stats.averageRating}"
                                     reviewCount="${recommendation.reviewCount}"
                                     horsepower="${car.horsepower}"
