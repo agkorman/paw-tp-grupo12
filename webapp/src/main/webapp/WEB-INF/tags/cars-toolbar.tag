@@ -10,7 +10,6 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
-<c:url var="carsContentUrl" value="/cars/content"/>
 <spring:message var="toolbarSearchPlaceholder" code="cars.toolbar.search.placeholder"/>
 <spring:message var="toolbarSearchLabel" code="cars.toolbar.search.label"/>
 <spring:message var="brandAria" code="cars.toolbar.brand.aria"/>
@@ -19,10 +18,6 @@
 <spring:message var="sortAria" code="cars.toolbar.sort.aria"/>
 
 <form class="cars-toolbar" method="get" action="<c:url value='/cars'/>" id="car-filter-form"
-      data-enhanced-filter="true"
-      data-fragment-url="${carsContentUrl}"
-      data-target="#carsCatalogContent"
-      data-auto-submit="true"
       novalidate="novalidate">
     <div class="cars-toolbar-shell">
         <label class="cars-toolbar-search" for="cars-toolbar-search">
@@ -142,5 +137,8 @@
                 <option value="price_desc" <c:if test="${sortBy eq 'price_desc'}">selected</c:if>><spring:message code="cars.toolbar.sort.priceDesc"/></option>
             </select>
         </div>
+        <button type="submit" class="btn-secondary cars-toolbar-apply">
+            <spring:message code="common.action.apply"/>
+        </button>
     </div>
 </form>

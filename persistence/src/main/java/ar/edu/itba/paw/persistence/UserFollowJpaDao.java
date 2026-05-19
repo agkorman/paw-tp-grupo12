@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,27 +85,47 @@ public class UserFollowJpaDao implements UserFollowDao {
     }
 
     @Override
-    public List<User> findFollowers(final long userId) {
+    public Page<User> findFollowers(final long userId, final int page) {
+        final int pageSize = Pagination.CONNECTIONS_PAGE_SIZE;
+        final long total = countFollowers(userId);
+        if (total == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final int effectivePage = Pagination.clampPage(page, total, pageSize);
+        final long offset = Pagination.offsetFor(effectivePage, pageSize);
         final List<?> results = em.createNativeQuery(
                         "SELECT u.user_id, u.username, u.email, u.password, u.role, u.preferred_locale, u.created_at "
                         + "FROM users u JOIN user_follows f ON f.follower_id = u.user_id "
                         + "WHERE f.followed_id = :userId ORDER BY f.created_at DESC, u.username ASC",
                         User.class)
                 .setParameter("userId", userId)
+                .setFirstResult((int) offset)
+                .setMaxResults(pageSize)
                 .getResultList();
-        return results.stream().map(r -> (User) r).collect(Collectors.toList());
+        final List<User> items = results.stream().map(r -> (User) r).collect(Collectors.toList());
+        return new Page<>(items, effectivePage, pageSize, total);
     }
 
     @Override
-    public List<User> findFollowing(final long userId) {
+    public Page<User> findFollowing(final long userId, final int page) {
+        final int pageSize = Pagination.CONNECTIONS_PAGE_SIZE;
+        final long total = countFollowing(userId);
+        if (total == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final int effectivePage = Pagination.clampPage(page, total, pageSize);
+        final long offset = Pagination.offsetFor(effectivePage, pageSize);
         final List<?> results = em.createNativeQuery(
                         "SELECT u.user_id, u.username, u.email, u.password, u.role, u.preferred_locale, u.created_at "
                         + "FROM users u JOIN user_follows f ON f.followed_id = u.user_id "
                         + "WHERE f.follower_id = :userId ORDER BY f.created_at DESC, u.username ASC",
                         User.class)
                 .setParameter("userId", userId)
+                .setFirstResult((int) offset)
+                .setMaxResults(pageSize)
                 .getResultList();
-        return results.stream().map(r -> (User) r).collect(Collectors.toList());
+        final List<User> items = results.stream().map(r -> (User) r).collect(Collectors.toList());
+        return new Page<>(items, effectivePage, pageSize, total);
     }
 
     @Override

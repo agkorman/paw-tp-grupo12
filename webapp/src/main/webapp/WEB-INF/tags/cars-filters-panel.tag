@@ -1,6 +1,5 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="criteria" required="true" type="ar.edu.itba.paw.model.CarSearchCriteria" %>
-<%@ attribute name="vehicleCount" required="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -19,6 +18,11 @@
 <spring:message var="horsepowerOrderInvalidMsg" code="js.cars.filters.horsepower.order"/>
 <spring:message var="consumptionRangeInvalidMsg" code="js.cars.filters.consumption.range"/>
 <spring:message var="speedRangeInvalidMsg" code="js.cars.filters.speed.range"/>
+<spring:message var="invalidToastMsg" code="js.cars.filters.invalid.toast"/>
+<spring:message var="speedSliderPrefix" code="js.cars.filters.speed.display.prefix"/>
+<spring:message var="consumptionSliderPrefix" code="js.cars.filters.consumption.display.prefix"/>
+<spring:message var="speedSliderUnit" code="domain.unit.kmh"/>
+<spring:message var="consumptionSliderUnit" code="domain.unit.consumption"/>
 <c:set var="electricOnlyFilter" value="${criteria.electricOnly}"/>
 <div id="carsFiltersOverlay" class="cars-filters-overlay" data-close-filters-panel></div>
 
@@ -38,7 +42,12 @@
        data-msg-horsepower-range="${fn:escapeXml(horsepowerRangeInvalidMsg)}"
        data-msg-horsepower-order="${fn:escapeXml(horsepowerOrderInvalidMsg)}"
        data-msg-consumption-range="${fn:escapeXml(consumptionRangeInvalidMsg)}"
-       data-msg-speed-range="${fn:escapeXml(speedRangeInvalidMsg)}">
+       data-msg-speed-range="${fn:escapeXml(speedRangeInvalidMsg)}"
+       data-msg-invalid-toast="${fn:escapeXml(invalidToastMsg)}"
+       data-msg-speed-display-prefix="${fn:escapeXml(speedSliderPrefix)}"
+       data-msg-consumption-display-prefix="${fn:escapeXml(consumptionSliderPrefix)}"
+       data-msg-speed-display-unit="${fn:escapeXml(speedSliderUnit)}"
+       data-msg-consumption-display-unit="${fn:escapeXml(consumptionSliderUnit)}">
 
     <div class="cars-filters-panel-inner">
 
@@ -49,10 +58,6 @@
             </button>
         </div>
 
-        <%-- Hidden inputs to carry through existing basic filters --%>
-        <input type="hidden" id="panelHiddenQ"        name="q"        value="">
-        <input type="hidden" id="panelHiddenBrand"    name="brand"    value="">
-        <input type="hidden" id="panelHiddenBodyType" name="bodyType" value="">
         <p id="filtersPanelValidationMessage"
            class="filters-panel-validation-message"
            role="alert"
@@ -105,8 +110,8 @@
                 <input type="range" class="dual-range-thumb dual-range-high" min="0" max="1000" step="10"
                        value="1000">
                 <div class="dual-range-labels">
-                    <span>$10k</span>
-                    <span>$250k+</span>
+                    <span><spring:message code="cars.filter.price.sliderLow"/></span>
+                    <span><spring:message code="cars.filter.price.sliderHigh"/></span>
                 </div>
             </div>
             <div class="dual-range-inputs">
@@ -178,8 +183,8 @@
                     <input type="range" class="dual-range-thumb dual-range-high" min="50" max="800" step="25"
                            value="<c:out value='${not empty criteria.horsepowerMax ? criteria.horsepowerMax : 800}'/>">
                     <div class="dual-range-labels">
-                        <span>50 HP</span>
-                        <span>800+ HP</span>
+                        <span><spring:message code="cars.filter.horsepower.sliderLow"/></span>
+                        <span><spring:message code="cars.filter.horsepower.sliderHigh"/></span>
                     </div>
                 </div>
                 <div class="dual-range-inputs">
@@ -209,11 +214,11 @@
                        value="<c:out value='${not empty criteria.maxSpeedMin ? criteria.maxSpeedMin : 0}'/>">
                 <div class="single-range-labels">
                     <div class="single-range-label-col">
-                        <span>0 km/h</span>
+                        <span><spring:message code="cars.filter.speed.min"/></span>
                         <span class="single-range-sublabel"><spring:message code="cars.filter.speed.slow"/></span>
                     </div>
                     <div class="single-range-label-col single-range-label-col--end">
-                        <span>500 km/h</span>
+                        <span><spring:message code="cars.filter.speed.max"/></span>
                         <span class="single-range-sublabel"><spring:message code="cars.filter.speed.fast"/></span>
                     </div>
                 </div>
@@ -230,11 +235,11 @@
                        value="<c:out value='${not empty criteria.fuelConsumptionMax ? criteria.fuelConsumptionMax : 30}'/>">
                 <div class="single-range-labels">
                     <div class="single-range-label-col">
-                        <span>0 L/100km</span>
+                        <span><spring:message code="cars.filter.consumption.min"/></span>
                         <span class="single-range-sublabel"><spring:message code="cars.filter.consumption.low"/></span>
                     </div>
                     <div class="single-range-label-col single-range-label-col--end">
-                        <span>30 L/100km</span>
+                        <span><spring:message code="cars.filter.consumption.max"/></span>
                         <span class="single-range-sublabel"><spring:message code="cars.filter.consumption.high"/></span>
                     </div>
                 </div>
@@ -258,7 +263,7 @@
         <div class="cars-filters-footer">
             <button type="button" id="filtersClearBtn" class="filters-clear-btn"><spring:message code="cars.filter.clear"/></button>
             <button type="button" id="filtersApplyBtn" class="btn-primary filters-apply-btn">
-                <spring:message code="cars.filter.view"/> <span id="filtersVehicleCount"><c:out value="${vehicleCount}"/></span> <spring:message code="cars.filter.vehicles"/>
+                <spring:message code="cars.filter.apply"/>
             </button>
         </div>
 

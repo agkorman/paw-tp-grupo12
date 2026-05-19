@@ -94,8 +94,7 @@
         </c:choose>
     </main>
 
-    <pa:script src="/js/enhanced-filters.js"/>
-    <pa:script src="/js/activity.js"/>
+    <pa:script src="/js/activity/activity.js"/>
     <pa:footer/>
 </body>
 </html>

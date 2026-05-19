@@ -660,7 +660,7 @@
     --cars-toolbar-control-height: 3.5rem;
 
     display: grid;
-    grid-template-columns: minmax(0, 2.2fr) minmax(12rem, 1.15fr) minmax(12rem, 1.15fr) auto minmax(12rem, 1.15fr);
+    grid-template-columns: minmax(0, 2.2fr) minmax(12rem, 1.15fr) minmax(12rem, 1.15fr) auto minmax(12rem, 1.15fr) auto;
     align-items: center;
     gap: 0.875rem;
     padding: 0.85rem;
@@ -914,6 +914,13 @@ a.car-request-card {
     white-space: nowrap;
 }
 
+.cars-toolbar-apply {
+    height: var(--cars-toolbar-control-height);
+    min-height: var(--cars-toolbar-control-height);
+    padding: 0 1.15rem;
+    white-space: nowrap;
+}
+
 .cars-toolbar-filters-btn:hover {
     border-color: rgba(229, 226, 225, 0.22);
     color: var(--on-surface);
@@ -979,6 +986,7 @@ a.car-request-card {
     flex-direction: column;
     height: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
     background: var(--surface-container-high, #2a2a2a);
     border: 1px solid rgba(229, 226, 225, 0.12);
     border-right: none;
@@ -1029,6 +1037,7 @@ a.car-request-card {
 .filters-panel-section {
     padding: 1.25rem 1.5rem;
     border-bottom: 1px solid rgba(229, 226, 225, 0.07);
+    min-width: 0;
 }
 
 .filters-panel-section-title {
@@ -1042,8 +1051,11 @@ a.car-request-card {
 }
 
 .filters-panel-subsection {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
+    min-width: 0;
+    min-inline-size: 0;
 }
 
 .filters-panel-subsection + .filters-panel-subsection {
@@ -1152,6 +1164,11 @@ a.car-request-card {
     position: relative;
     height: 4rem;
     margin-bottom: 0.55rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-inline-size: 0;
+    box-sizing: border-box;
 }
 
 .dual-range-track {
@@ -1189,10 +1206,16 @@ a.car-request-card {
 .dual-range-thumb {
     position: absolute;
     left: 0.8rem;
-    width: calc(100% - 1.6rem);
+    right: 0.8rem;
+    width: auto;
+    min-width: 0;
+    min-inline-size: 0;
     height: 100%;
+    margin: 0;
+    padding: 0;
     background: transparent;
     border: none;
+    box-sizing: border-box;
     outline: none;
     pointer-events: none;
     -webkit-appearance: none;
@@ -1235,11 +1258,19 @@ a.car-request-card {
     display: flex;
     align-items: center;
     gap: 0.65rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-inline-size: 0;
+    box-sizing: border-box;
 }
 
 .range-number-input {
-    flex: 1;
+    flex: 1 1 0;
+    width: 0;
+    max-width: 100%;
     min-width: 0;
+    min-inline-size: 0;
     min-height: 3rem;
     padding: 0.75rem 1rem;
     background: rgba(37, 37, 37, 0.88);
@@ -1334,7 +1365,7 @@ a.car-request-card {
     margin-bottom: 0;
 }
 
-/* ── RANGE VALUE DISPLAY (Hasta X / Desde X) ── */
+/* ── RANGE VALUE DISPLAY (slider readout: prefix + value + unit) ── */
 .filter-range-value-display {
     font-family: var(--font-display);
     font-size: 1.5rem;
@@ -1419,7 +1450,7 @@ a.car-request-card {
 /* ── RESPONSIVE ── */
 @media (max-width: 1200px) {
     .cars-toolbar-shell {
-        grid-template-columns: minmax(0, 1.8fr) minmax(11rem, 1fr) minmax(11rem, 1fr) auto;
+        grid-template-columns: minmax(0, 1.8fr) minmax(11rem, 1fr) minmax(11rem, 1fr) auto minmax(11rem, 1fr) auto;
     }
 
     .cars-grid {
@@ -1461,6 +1492,25 @@ a.car-request-card {
         border-radius: 0;
     }
 
+    .cars-filters-header,
+    .filters-panel-section,
+    .cars-filters-footer {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .dual-range-track,
+    .dual-range-labels {
+        left: 0.7rem;
+        right: 0.7rem;
+    }
+
+    .dual-range-thumb {
+        left: 0.7rem;
+        right: 0.7rem;
+        width: auto;
+    }
+
     .cars-grid {
         grid-template-columns: 1fr;
     }
@@ -1485,7 +1535,8 @@ a.car-request-card {
 
     .cars-toolbar-search,
     .cars-toolbar-field,
-    .cars-toolbar-filters-btn {
+    .cars-toolbar-filters-btn,
+    .cars-toolbar-apply {
         height: var(--cars-toolbar-control-height);
         min-height: var(--cars-toolbar-control-height);
         padding: 0 0.9rem;

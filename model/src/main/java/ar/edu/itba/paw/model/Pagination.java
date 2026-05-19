@@ -4,7 +4,8 @@ public final class Pagination {
 
     public static final int CARS_PAGE_SIZE = 16;
     public static final int REQUESTS_PAGE_SIZE = 12;
-    public static final int REVIEWS_PAGE_SIZE = 5;
+    public static final int REVIEWS_PAGE_SIZE = 6;
+    public static final int CONNECTIONS_PAGE_SIZE = 8;
     public static final int DEFAULT_PAGE = 1;
 
     private Pagination() {}

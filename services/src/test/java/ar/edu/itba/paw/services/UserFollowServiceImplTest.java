@@ -10,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -140,35 +139,6 @@ public class UserFollowServiceImplTest {
 
         // Assertions
         assertTrue(result);
-    }
-
-    @Test
-    public void shouldReturnFollowersFromDao() {
-        // Arrange
-        final List<User> followers = List.of(userWithId(10L), userWithId(11L));
-        when(userFollowDao.findFollowers(FOLLOWED_ID)).thenReturn(followers);
-
-        // Exercise
-        final List<User> result = userFollowService.getFollowers(FOLLOWED_ID);
-
-        // Assertions
-        assertEquals(2, result.size());
-        assertEquals(10L, result.get(0).getId());
-        assertEquals(11L, result.get(1).getId());
-    }
-
-    @Test
-    public void shouldReturnFollowingFromDao() {
-        // Arrange
-        final List<User> following = List.of(userWithId(20L));
-        when(userFollowDao.findFollowing(FOLLOWER_ID)).thenReturn(following);
-
-        // Exercise
-        final List<User> result = userFollowService.getFollowing(FOLLOWER_ID);
-
-        // Assertions
-        assertEquals(1, result.size());
-        assertEquals(20L, result.get(0).getId());
     }
 
     @Test

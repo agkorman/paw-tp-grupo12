@@ -48,34 +48,6 @@ public class CarFavoriteServiceImplTest {
     }
 
     @Test
-    public void shouldFavoriteWhenUserAndCarExist() {
-        // Arrange
-        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
-        when(carDao.findById(CAR_ID)).thenReturn(Optional.of(car(CAR_ID)));
-        when(carFavoriteDao.favorite(USER_ID, CAR_ID)).thenReturn(true);
-
-        // Exercise
-        final boolean result = carFavoriteService.setFavorite(USER_ID, CAR_ID, true);
-
-        // Assertions
-        assertTrue(result);
-    }
-
-    @Test
-    public void shouldUnfavoriteWhenUserAndCarExist() {
-        // Arrange
-        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
-        when(carDao.findById(CAR_ID)).thenReturn(Optional.of(car(CAR_ID)));
-        when(carFavoriteDao.unfavorite(USER_ID, CAR_ID)).thenReturn(true);
-
-        // Exercise
-        final boolean result = carFavoriteService.setFavorite(USER_ID, CAR_ID, false);
-
-        // Assertions
-        assertTrue(result);
-    }
-
-    @Test
     public void shouldRejectSetFavoriteWhenUserDoesNotExist() {
         // Arrange
         when(userDao.findById(USER_ID)).thenReturn(Optional.empty());

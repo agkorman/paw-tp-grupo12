@@ -52,12 +52,10 @@ public class WebAuthConfig {
                         .requestMatchers(
                                 antMatcher(HttpMethod.GET, "/"),
                                 antMatcher(HttpMethod.GET, "/cars"),
-                                antMatcher(HttpMethod.GET, "/cars/content"),
                                 antMatcher(HttpMethod.GET, "/cars/recommend"),
                                 antMatcher(HttpMethod.GET, "/cars/recommend/results"),
                                 antMatcher(HttpMethod.GET, "/activity"),
-                                antMatcher(HttpMethod.GET, "/reviews"),
-                                antMatcher(HttpMethod.GET, "/reviews/feed"),
+                                antMatcher(HttpMethod.GET, "/reviews/car/*"),
                                 antMatcher(HttpMethod.GET, "/car-image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/images/*"),
@@ -166,7 +164,8 @@ public class WebAuthConfig {
                 );
             }
             final Optional<String> redirect = LoginRedirectUtils.safeRedirect(
-                    request.getParameter(LoginRedirectUtils.REDIRECT_PARAM)
+                    request.getParameter(LoginRedirectUtils.REDIRECT_PARAM),
+                    request.getContextPath()
             );
             if (redirect.isEmpty()) {
                 final SavedRequest savedRequest = requestCache.getRequest(request, response);
@@ -194,8 +193,9 @@ public class WebAuthConfig {
                     exception == null ? "<unknown>" : exception.getClass().getSimpleName());
             String target = "/login?error";
             final String redirect = request.getParameter(LoginRedirectUtils.REDIRECT_PARAM);
-            if (LoginRedirectUtils.safeRedirect(redirect).isPresent()) {
-                target = LoginRedirectUtils.appendQueryParam(target, LoginRedirectUtils.REDIRECT_PARAM, redirect);
+            final Optional<String> safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath());
+            if (safeRedirect.isPresent()) {
+                target = LoginRedirectUtils.appendQueryParam(target, LoginRedirectUtils.REDIRECT_PARAM, safeRedirect.get());
             }
             final String intent = request.getParameter(LoginRedirectUtils.INTENT_PARAM);
             if (LoginRedirectUtils.safeIntent(intent).isPresent()) {

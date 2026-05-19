@@ -531,7 +531,7 @@ public class AdminController {
             carService.saveCarImages(carId, imagePayloads);
             LOGGER.info("admin updated car id={}", carId);
         }
-        return new ModelAndView("redirect:/reviews?carId=" + carId);
+        return new ModelAndView("redirect:/reviews/car/" + carId);
     }
 
     @RequestMapping(value = "/cars/{carId}/delete", method = RequestMethod.POST)
@@ -560,17 +560,10 @@ public class AdminController {
         value = "/brand-requests/{requestId}/accept",
         method = RequestMethod.POST
     )
-    public Object acceptBrandRequest(
+    public ModelAndView acceptBrandRequest(
         @PathVariable("requestId") final long requestId,
         @RequestParam(value = "name", required = false) final String name,
-        @RequestHeader(
-            value = "Referer",
-            required = false
-        ) final String referer,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String xhr
+        @RequestHeader(value = "Referer", required = false) final String referer
     ) {
         LOGGER.info(
             "admin accept brand request id={} overrideName={}",
@@ -578,9 +571,6 @@ public class AdminController {
             LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS)
         );
         brandRequestService.approvePendingRequest(requestId, name);
-        if ("XMLHttpRequest".equals(xhr)) {
-            return ResponseEntity.ok("ok");
-        }
         return redirectBackToAdmin(referer);
     }
 
@@ -588,22 +578,12 @@ public class AdminController {
         value = "/brand-requests/{requestId}/reject",
         method = RequestMethod.POST
     )
-    public Object rejectBrandRequest(
+    public ModelAndView rejectBrandRequest(
         @PathVariable("requestId") final long requestId,
-        @RequestHeader(
-            value = "Referer",
-            required = false
-        ) final String referer,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String xhr
+        @RequestHeader(value = "Referer", required = false) final String referer
     ) {
         LOGGER.info("admin reject brand request id={}", requestId);
         brandRequestService.rejectPendingRequest(requestId);
-        if ("XMLHttpRequest".equals(xhr)) {
-            return ResponseEntity.ok("ok");
-        }
         return redirectBackToAdmin(referer);
     }
 
@@ -639,17 +619,10 @@ public class AdminController {
         value = "/body-type-requests/{requestId}/accept",
         method = RequestMethod.POST
     )
-    public Object acceptBodyTypeRequest(
+    public ModelAndView acceptBodyTypeRequest(
         @PathVariable("requestId") final long requestId,
         @RequestParam(value = "name", required = false) final String name,
-        @RequestHeader(
-            value = "Referer",
-            required = false
-        ) final String referer,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String xhr
+        @RequestHeader(value = "Referer", required = false) final String referer
     ) {
         LOGGER.info(
             "admin accept body type request id={} overrideName={}",
@@ -657,9 +630,6 @@ public class AdminController {
             LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS)
         );
         bodyTypeRequestService.approvePendingRequest(requestId, name);
-        if ("XMLHttpRequest".equals(xhr)) {
-            return ResponseEntity.ok("ok");
-        }
         return redirectBackToAdmin(referer);
     }
 
@@ -667,22 +637,12 @@ public class AdminController {
         value = "/body-type-requests/{requestId}/reject",
         method = RequestMethod.POST
     )
-    public Object rejectBodyTypeRequest(
+    public ModelAndView rejectBodyTypeRequest(
         @PathVariable("requestId") final long requestId,
-        @RequestHeader(
-            value = "Referer",
-            required = false
-        ) final String referer,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String xhr
+        @RequestHeader(value = "Referer", required = false) final String referer
     ) {
         LOGGER.info("admin reject body type request id={}", requestId);
         bodyTypeRequestService.rejectPendingRequest(requestId);
-        if ("XMLHttpRequest".equals(xhr)) {
-            return ResponseEntity.ok("ok");
-        }
         return redirectBackToAdmin(referer);
     }
 
@@ -721,22 +681,12 @@ public class AdminController {
         value = "/admin-requests/{requestId}/accept",
         method = RequestMethod.POST
     )
-    public Object acceptAdminRequest(
+    public ModelAndView acceptAdminRequest(
         @PathVariable("requestId") final long requestId,
-        @RequestHeader(
-            value = "Referer",
-            required = false
-        ) final String referer,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String xhr
+        @RequestHeader(value = "Referer", required = false) final String referer
     ) {
         LOGGER.info("admin accept admin-role request id={}", requestId);
         adminRequestService.approvePendingRequest(requestId);
-        if ("XMLHttpRequest".equals(xhr)) {
-            return ResponseEntity.ok("ok");
-        }
         return redirectBackToAdmin(referer);
     }
 
@@ -744,22 +694,12 @@ public class AdminController {
         value = "/admin-requests/{requestId}/reject",
         method = RequestMethod.POST
     )
-    public Object rejectAdminRequest(
+    public ModelAndView rejectAdminRequest(
         @PathVariable("requestId") final long requestId,
-        @RequestHeader(
-            value = "Referer",
-            required = false
-        ) final String referer,
-        @RequestHeader(
-            value = "X-Requested-With",
-            required = false
-        ) final String xhr
+        @RequestHeader(value = "Referer", required = false) final String referer
     ) {
         LOGGER.info("admin reject admin-role request id={}", requestId);
         adminRequestService.rejectPendingRequest(requestId);
-        if ("XMLHttpRequest".equals(xhr)) {
-            return ResponseEntity.ok("ok");
-        }
         return redirectBackToAdmin(referer);
     }
 
@@ -915,6 +855,7 @@ public class AdminController {
         final CarForm carForm,
         final BindingResult errors
     ) {
+        prepareCarFormContext(carForm, "review-request", null, request.getId());
         final ModelAndView mav = new ModelAndView("car-form.jsp");
         addCarFormBinding(mav, carForm, errors);
         mav.addObject("carFormMode", "review-request");
@@ -954,6 +895,7 @@ public class AdminController {
         final CarForm carForm,
         final BindingResult errors
     ) {
+        prepareCarFormContext(carForm, "edit-car", car.getId(), null);
         final ModelAndView mav = new ModelAndView("car-form.jsp");
         addCarFormBinding(mav, carForm, errors);
         mav.addObject("carFormMode", "edit-car");
@@ -964,7 +906,7 @@ public class AdminController {
             "Modificá los datos del auto publicado y ajustá su galería de imágenes."
         );
         mav.addObject("formAction", "/admin/cars/" + car.getId());
-        mav.addObject("cancelUrl", "/reviews?carId=" + car.getId());
+        mav.addObject("cancelUrl", "/reviews/car/" + car.getId());
         mav.addObject("submitLabel", "Guardar cambios");
         mav.addObject("showCatalogRequestLinks", false);
         final List<Long> retainedImageIds = retainedImageIds(
@@ -986,6 +928,17 @@ public class AdminController {
         if (errors != null) {
             mav.addObject(BindingResult.MODEL_KEY_PREFIX + "carForm", errors);
         }
+    }
+
+    private void prepareCarFormContext(
+        final CarForm carForm,
+        final String formMode,
+        final Long carId,
+        final Long requestId
+    ) {
+        carForm.setFormMode(formMode);
+        carForm.setCarId(carId);
+        carForm.setRequestId(requestId);
     }
 
     private CarForm toForm(final CarRequest request) {
@@ -1413,7 +1366,7 @@ public class AdminController {
         }
         try {
             final URI uri = URI.create(referer);
-            if (!"/admin".equals(uri.getRawPath())) {
+            if (!"/admin".equals(ControllerUtils.stripCurrentContextPath(uri.getRawPath()))) {
                 return new ModelAndView(fallback);
             }
             final String query = uri.getRawQuery();
@@ -1443,14 +1396,14 @@ public class AdminController {
         }
         try {
             final URI uri = URI.create(referer);
-            final String path = uri.getRawPath();
+            final String path = ControllerUtils.stripCurrentContextPath(uri.getRawPath());
             if (path == null || path.isBlank()) {
                 return new ModelAndView(fallback);
             }
             if (
                 "/".equals(path) ||
                 "/cars".equals(path) ||
-                (allowReviewsPage && "/reviews".equals(path))
+                (allowReviewsPage && path.matches("/reviews/car/\\d+"))
             ) {
                 final String query = uri.getRawQuery();
                 return new ModelAndView(

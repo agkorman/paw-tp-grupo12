@@ -11,7 +11,6 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.Timestamp;
@@ -71,11 +70,6 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
     @Override
     public boolean isReviewLikedByUser(final long reviewId, final long userId) {
         return exists("review_likes", "review_id", reviewId, userId);
-    }
-
-    @Override
-    public long countReviewLikes(final long reviewId) {
-        return count("review_likes", "review_id", reviewId);
     }
 
     @Override
@@ -161,11 +155,6 @@ public class ReviewLikeJdbcDao implements ReviewLikeDao {
     @Override
     public boolean isReplyLikedByUser(final long replyId, final long userId) {
         return exists("review_reply_likes", "reply_id", replyId, userId);
-    }
-
-    @Override
-    public long countReplyLikes(final long replyId) {
-        return count("review_reply_likes", "reply_id", replyId);
     }
 
     @Override

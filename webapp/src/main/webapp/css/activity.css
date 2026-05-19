@@ -222,10 +222,6 @@ body.activity-preview-scroll-lock {
     overflow: hidden;
 }
 
-.activity-feed > .reviews-feed-more {
-    grid-column: 1 / -1;
-}
-
 .activity-empty-state {
     padding: var(--spacing-8);
     background: var(--surface-container-low);

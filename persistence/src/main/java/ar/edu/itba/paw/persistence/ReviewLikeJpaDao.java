@@ -69,15 +69,6 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
     }
 
     @Override
-    public long countReviewLikes(final long reviewId) {
-        final Number count = (Number) em.createNativeQuery(
-                "SELECT COUNT(*) FROM review_likes WHERE review_id = ?")
-                .setParameter(1, reviewId)
-                .getSingleResult();
-        return count == null ? 0L : count.longValue();
-    }
-
-    @Override
     public Map<Long, Long> countReviewLikesByReviewIds(final Collection<Long> reviewIds) {
         return countLikesByIds("review_likes", "review_id", reviewIds);
     }
@@ -185,15 +176,6 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
                 .setParameter(2, userId)
                 .getSingleResult();
         return count != null && count.longValue() > 0;
-    }
-
-    @Override
-    public long countReplyLikes(final long replyId) {
-        final Number count = (Number) em.createNativeQuery(
-                "SELECT COUNT(*) FROM review_reply_likes WHERE reply_id = ?")
-                .setParameter(1, replyId)
-                .getSingleResult();
-        return count == null ? 0L : count.longValue();
     }
 
     @Override

@@ -88,6 +88,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         LOGGER.debug("computing recommendations from {} candidates limit={}", candidates.size(), effectiveLimit);
 
         return candidates.stream()
+                .filter(car -> hasAssociatedTags(tagCounts.get(car.getId())))
                 .map(car -> score(car, reviewCounts.getOrDefault(car.getId(), 0), tagCounts.get(car.getId()),
                         tagIdWeights, tagsById))
                 .filter(recommendation -> recommendation.getReviewCount() > 0)
@@ -195,6 +196,10 @@ public class RecommendationServiceImpl implements RecommendationService {
                 .limit(limit)
                 .map(WeightedHighlight::getHighlight)
                 .collect(Collectors.toList());
+    }
+
+    private boolean hasAssociatedTags(final Map<Short, Integer> carTagCounts) {
+        return carTagCounts != null && !carTagCounts.isEmpty();
     }
 
     private BigDecimal frequency(final int mentionCount, final int reviewCount) {

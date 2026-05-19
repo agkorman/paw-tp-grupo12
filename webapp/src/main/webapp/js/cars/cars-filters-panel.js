@@ -5,7 +5,6 @@
     var toggleBtn    = document.getElementById('filtersToggleBtn');
     var applyBtn     = document.getElementById('filtersApplyBtn');
     var clearBtn     = document.getElementById('filtersClearBtn');
-    var countDisplay = document.getElementById('filtersVehicleCount');
     var toolbarForm  = document.getElementById('car-filter-form');
     var panelValidationMessage = document.getElementById('filtersPanelValidationMessage');
     var hpError = document.getElementById('panelHpError');
@@ -14,7 +13,6 @@
     var consumptionSection = document.getElementById('panelConsumptionSection');
     var consumptionSlider = document.getElementById('panelConsumptionSlider');
     var fuelConsumptionSubsection = document.getElementById('panelFuelConsumptionSubsection');
-    var previewSubmitTimer = null;
     var INVALID_PARAM = '__invalid__';
 
     if (!panel || !toolbarForm) {
@@ -24,7 +22,6 @@
     /* ── OPEN / CLOSE ── */
 
     function openPanel() {
-        syncHiddenFieldsFromToolbar();
         clearValidationErrors();
         panel.removeAttribute('hidden');
         panel.classList.add('is-open');
@@ -34,7 +31,6 @@
     }
 
     function closePanel() {
-        window.clearTimeout(previewSubmitTimer);
         panel.classList.remove('is-open');
         if (overlay) { overlay.classList.remove('is-visible'); }
         if (toggleBtn) {
@@ -64,20 +60,6 @@
         if (openTrigger && openTrigger !== toggleBtn)  { openPanel();  }
     });
 
-    /* ── SYNC TOOLBAR → PANEL HIDDEN FIELDS ── */
-
-    function syncHiddenFieldsFromToolbar() {
-        var searchInput = document.getElementById('cars-toolbar-search');
-        var brandSelect = document.getElementById('filter-brand');
-        var bodySelect  = document.getElementById('filter-body');
-        var hiddenQ        = document.getElementById('panelHiddenQ');
-        var hiddenBrand    = document.getElementById('panelHiddenBrand');
-        var hiddenBodyType = document.getElementById('panelHiddenBodyType');
-        if (hiddenQ && searchInput)       { hiddenQ.value        = searchInput.value; }
-        if (hiddenBrand && brandSelect)   { hiddenBrand.value    = brandSelect.value; }
-        if (hiddenBodyType && bodySelect) { hiddenBodyType.value = bodySelect.value; }
-    }
-
     /* ── UNIFIED FILTER GROUP HANDLER (chips + segmented controls) ── */
 
     panel.addEventListener('click', function (event) {
@@ -106,10 +88,9 @@
         }
         updateConsumptionFilterVisibility();
         clearValidationErrors();
-        schedulePreviewSubmit();
     });
 
-    /* ── SINGLE-RANGE SLIDERS with "Hasta / Desde" display ── */
+    /* ── SINGLE-RANGE SLIDERS (localized prefix + value + unit) ── */
 
     function updateSingleRangeFill(slider, mode) {
         var min = parseFloat(slider.min || 0);
@@ -152,8 +133,13 @@
         return updateDisplay;
     }
 
-    var updateConsumptionDisplay = initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', 'Hasta', 'L/100km', 'from-start');
-    var updateSpeedDisplay       = initSingleRange('panelMaxSpeedSlider',    'panelMaxSpeedDisplay',    'Desde', 'km/h', 'to-end');
+    var speedDisplayPrefix = panel.getAttribute('data-msg-speed-display-prefix') || '';
+    var consumptionDisplayPrefix = panel.getAttribute('data-msg-consumption-display-prefix') || '';
+    var speedDisplayUnit = panel.getAttribute('data-msg-speed-display-unit') || '';
+    var consumptionDisplayUnit = panel.getAttribute('data-msg-consumption-display-unit') || '';
+
+    var updateConsumptionDisplay = initSingleRange('panelConsumptionSlider', 'panelConsumptionDisplay', consumptionDisplayPrefix, consumptionDisplayUnit, 'from-start');
+    var updateSpeedDisplay       = initSingleRange('panelMaxSpeedSlider',    'panelMaxSpeedDisplay',    speedDisplayPrefix, speedDisplayUnit, 'to-end');
 
     function isElectricOnlyFilter() {
         var fuelTypeInput = document.getElementById('panelFuelType');
@@ -511,7 +497,6 @@
                     var pos = valueToPos(v);
                     var maxLow = parseFloat(highThumb.value) - inputStep(lowThumb);
                     lowThumb.value = snapToSliderStep(lowThumb, Math.min(Math.max(pos, min), maxLow));
-                    syncLowInputFromThumb();
                     updateFill();
                 }
                 clearValidationErrors();
@@ -533,7 +518,6 @@
                     var pos = valueToPos(v);
                     var minHigh = parseFloat(lowThumb.value) + inputStep(highThumb);
                     highThumb.value = snapToSliderStep(highThumb, Math.max(Math.min(pos, max), minHigh));
-                    syncHighInputFromThumb();
                     updateFill();
                 }
                 clearValidationErrors();
@@ -613,7 +597,6 @@
     /* ── INJECT / REMOVE PANEL PARAMS IN TOOLBAR FORM ── */
 
     var PANEL_PARAM_KEYS = [
-        'q', 'brand', 'bodyType',
         'yearMin', 'yearMax', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
         'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
@@ -825,38 +808,33 @@
         return true;
     }
 
-    /* ── LIVE PREVIEW / APPLY ── */
+    /* ── APPLY ── */
 
-    function submitWithPanelFilters(closeAfterSubmit) {
-        syncHiddenFieldsFromToolbar();
+    function submitToolbarForm() {
+        if (typeof toolbarForm.requestSubmit === 'function') {
+            toolbarForm.requestSubmit();
+            return;
+        }
+        toolbarForm.submit();
+    }
+
+    function showInvalidToast() {
+        var toastMsg = panel.getAttribute('data-msg-invalid-toast');
+        if (toastMsg && window.PawToast && typeof window.PawToast.show === 'function') {
+            window.PawToast.show(toastMsg, 'error');
+        }
+    }
+
+    function submitWithPanelFilters() {
         var panelParams = collectPanelParams();
-        if (!validatePanelParams(panelParams, closeAfterSubmit)) {
+        if (!validatePanelParams(panelParams, true)) {
+            showInvalidToast();
             return;
         }
         injectPanelParamsIntoForm(panelParams);
         syncFiltersToggleState(panelParams);
-        if (!closeAfterSubmit) {
-            toolbarForm.dataset.skipNextScroll = 'true';
-            toolbarForm.dataset.suppressFallbackSubmit = 'true';
-            toolbarForm.dataset.quietLoading = 'true';
-        }
-        toolbarForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-        if (closeAfterSubmit) {
-            closePanel();
-        }
-    }
-
-    function schedulePreviewSubmit() {
-        if (!panel.classList.contains('is-open')) {
-            return;
-        }
-        window.clearTimeout(previewSubmitTimer);
-        previewSubmitTimer = window.setTimeout(function () {
-            if (!panel.classList.contains('is-open')) {
-                return;
-            }
-            submitWithPanelFilters(false);
-        }, 350);
+        closePanel();
+        submitToolbarForm();
     }
 
     panel.addEventListener('input', function (event) {
@@ -865,7 +843,6 @@
             return;
         }
         clearValidationErrors();
-        schedulePreviewSubmit();
     });
 
     panel.addEventListener('change', function (event) {
@@ -873,13 +850,12 @@
         if (!target || !target.matches('.range-number-input')) {
             return;
         }
-        schedulePreviewSubmit();
+        clearValidationErrors();
     });
 
     if (applyBtn) {
         applyBtn.addEventListener('click', function () {
-            window.clearTimeout(previewSubmitTimer);
-            submitWithPanelFilters(true);
+            submitWithPanelFilters();
         });
     }
 
@@ -942,20 +918,23 @@
             resetPanel();
             removePanelParamsFromForm();
             syncFiltersToggleState({});
-            toolbarForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
             closePanel();
+            submitToolbarForm();
         });
     }
 
-    /* ── SYNC VEHICLE COUNT FROM TOOLBAR ── */
-
-    var toolbarCount = document.querySelector('.cars-toolbar-count');
-    if (toolbarCount && countDisplay) {
-        new MutationObserver(function () {
-            var match = (toolbarCount.textContent || '').match(/(\d+)/);
-            if (match) { countDisplay.textContent = match[1]; }
-        }).observe(toolbarCount, { childList: true, subtree: true, characterData: true });
-    }
+    // Toolbar submissions (body type, brand, sort, search) must preserve
+    // advanced filters that were applied previously through the panel.
+    toolbarForm.addEventListener('submit', function (event) {
+        var panelParams = collectPanelParams();
+        if (!validatePanelParams(panelParams, false)) {
+            event.preventDefault();
+            showInvalidToast();
+            return;
+        }
+        injectPanelParamsIntoForm(panelParams);
+        syncFiltersToggleState(panelParams);
+    });
 
     syncFiltersToggleState(collectPanelParams());
     updateConsumptionFilterVisibility();

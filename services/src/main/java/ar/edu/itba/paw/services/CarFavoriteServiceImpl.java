@@ -43,13 +43,14 @@ public class CarFavoriteServiceImpl implements CarFavoriteService {
 
     @Override
     @Transactional
-    public boolean setFavorite(final long userId, final long carId, final boolean favorite) {
+    public void setFavorite(final long userId, final long carId, final boolean favorite) {
         validateFavorite(userId, carId);
-        final boolean result = favorite
-                ? carFavoriteDao.favorite(userId, carId)
-                : carFavoriteDao.unfavorite(userId, carId);
+        if (favorite) {
+            carFavoriteDao.favorite(userId, carId);
+        } else {
+            carFavoriteDao.unfavorite(userId, carId);
+        }
         LOGGER.info("user id={} set favorite carId={} favorited={}", userId, carId, favorite);
-        return result;
     }
 
     @Override

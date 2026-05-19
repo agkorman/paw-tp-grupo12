@@ -12,9 +12,7 @@
 <pa:page-head title="${reviewFormPageTitle}" styles="/css/reviews.css|/css/rating-controls.css|/css/review-tags.css|/css/form-pages.css"/>
 <body>
     <pa:nav activePage="reviews"/>
-    <c:url var="reviewCancelUrl" value="/reviews">
-        <c:param name="carId" value="${selectedCar.id}"/>
-    </c:url>
+    <c:url var="reviewCancelUrl" value="/reviews/car/${selectedCar.id}"/>
     <c:url var="reviewCreateUrl" value="/reviews"/>
     <c:url var="profileUrl" value="/profile"/>
     <c:url var="reviewUpdateUrl" value="/reviews/${reviewId}"/>
@@ -143,8 +141,9 @@
                     </div>
                     <div class="modal-field">
                         <label for="modalMileageKm"><spring:message code="review.form.mileage"/></label>
-                        <form:input id="modalMileageKm" path="mileageKm" type="number"
-                                    min="0" max="2000000" required="required" placeholder="${reviewMileagePlaceholder}"/>
+                        <form:input id="modalMileageKm" path="mileageKm" type="text"
+                                    inputmode="numeric" autocomplete="off"
+                                    required="required" placeholder="${reviewMileagePlaceholder}"/>
                         <form:errors path="mileageKm" cssClass="form-error" element="span"/>
                     </div>
 
@@ -190,9 +189,9 @@
         </section>
     </main>
 
-    <pa:script src="/js/review-form.js"/>
-    <pa:script src="/js/review-tag-chips.js" defer="true"/>
-    <pa:script src="/js/form-submit-lock.js"/>
+    <pa:script src="/js/reviews/review-form.js"/>
+    <pa:script src="/js/reviews/review-tag-chips.js" defer="true"/>
+    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>

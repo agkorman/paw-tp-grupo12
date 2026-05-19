@@ -119,6 +119,17 @@
         return /^\d+$/.test(value);
     }
 
+    function isPartialInt(value) {
+        return /^\d*$/.test(value);
+    }
+
+    function wouldKeepIntegerInputValid(input, insertedText) {
+        var start = typeof input.selectionStart === 'number' ? input.selectionStart : input.value.length;
+        var end = typeof input.selectionEnd === 'number' ? input.selectionEnd : input.value.length;
+        var nextValue = input.value.slice(0, start) + insertedText + input.value.slice(end);
+        return isPartialInt(nextValue.trim());
+    }
+
     function fieldContainer(input) {
         var node = input;
         while (node && node !== modal) {
@@ -338,6 +349,20 @@
     form.noValidate = true;
 
     if (mileageInput) {
+        mileageInput.addEventListener('beforeinput', function (event) {
+            if (!event.data || event.inputType === 'deleteContentBackward' || event.inputType === 'deleteContentForward') {
+                return;
+            }
+            if (!wouldKeepIntegerInputValid(mileageInput, event.data)) {
+                event.preventDefault();
+            }
+        });
+        mileageInput.addEventListener('paste', function (event) {
+            var pasted = event.clipboardData ? event.clipboardData.getData('text') : '';
+            if (pasted && !wouldKeepIntegerInputValid(mileageInput, pasted)) {
+                event.preventDefault();
+            }
+        });
         mileageInput.addEventListener('input', function () {
             validateNumerics();
             if (mileageInput.value.trim() === '') {

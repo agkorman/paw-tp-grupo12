@@ -6,7 +6,7 @@ import javax.validation.constraints.Size;
 public class ReviewReplyForm {
 
     @NotBlank(message = "{review.reply.body.required}")
-    @Size(max = 1000, message = "{review.reply.body.max}")
+    @Size(max = 1000, message = "{validation.review.reply.body.max}")
     private String body;
 
     public String getBody() {

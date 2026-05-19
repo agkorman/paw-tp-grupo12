@@ -163,6 +163,27 @@ public class RecommendationServiceImplTest {
     }
 
     @Test
+    public void shouldFilterOutCarsWithoutAssociatedTags() {
+        // Arrange
+        final RecommendationCriteria criteria = new RecommendationCriteria(Map.of("comfort", "very"), null, null);
+        final Car carA = car(1L);
+        final Car carB = car(2L);
+        when(reviewTagService.getAll()).thenReturn(allTags());
+        mockSinglePageOfCars(List.of(carA, carB));
+        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10), stats(2L, 10)));
+        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
+                2L, Map.of(COMFORT_TAG_ID, 4)
+        ));
+
+        // Exercise
+        final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals(2L, result.get(0).getCar().getId());
+    }
+
+    @Test
     public void shouldRankCarWithHigherPositiveTagFrequencyFirst() {
         // Arrange — both cars have 10 reviews; A has 8 mentions of comfortable, B has 2.
         final RecommendationCriteria criteria = new RecommendationCriteria(Map.of("comfort", "very"), null, null);

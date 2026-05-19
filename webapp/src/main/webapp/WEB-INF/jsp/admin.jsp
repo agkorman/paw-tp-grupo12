@@ -57,7 +57,7 @@
                         activeValue="${activeTab}"
                         ariaLabel="${requestTypesLabel}"/>
 
-            <c:url var="adminBaseUrl" value="/admin"/>
+            <c:set var="adminBaseUrl" value="/admin"/>
             <jsp:useBean id="adminPaginationParams" class="java.util.LinkedHashMap" scope="page"/>
             <c:set target="${adminPaginationParams}" property="tab" value="${activeTab}"/>
             <spring:message var="brandKicker"    code="admin.brandRequests.kicker"/>
@@ -210,11 +210,11 @@
             <pa:toast/>
         </c:otherwise>
     </c:choose>
-    <pa:script src="/js/modal-utils.js"/>
-    <pa:script src="/js/admin-catalog-request-modal.js"/>
-    <pa:script src="/js/moderator-application-review-modal.js"/>
-    <pa:script src="/js/form-submit-lock.js"/>
-    <pa:script src="/js/toast.js"/>
+    <pa:script src="/js/shared/modal-utils.js"/>
+    <pa:script src="/js/admin/admin-catalog-request-modal.js"/>
+    <pa:script src="/js/admin/moderator-application-review-modal.js"/>
+    <pa:script src="/js/shared/form-submit-lock.js"/>
+    <pa:script src="/js/shared/toast.js"/>
     <pa:footer/>
 </body>
 </html>

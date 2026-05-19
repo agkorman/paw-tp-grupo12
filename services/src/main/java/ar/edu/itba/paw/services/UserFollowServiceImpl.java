@@ -1,20 +1,18 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.persistence.UserFollowDao;
 import ar.edu.itba.paw.services.exception.SelfFollowException;
 import ar.edu.itba.paw.services.exception.UserNotFoundException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class UserFollowServiceImpl implements UserFollowService {
@@ -100,14 +98,14 @@ public class UserFollowServiceImpl implements UserFollowService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<User> getFollowers(final long userId) {
-        return userFollowDao.findFollowers(userId);
+    public Page<User> getFollowers(final long userId, final int page) {
+        return userFollowDao.findFollowers(userId, page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<User> getFollowing(final long userId) {
-        return userFollowDao.findFollowing(userId);
+    public Page<User> getFollowing(final long userId, final int page) {
+        return userFollowDao.findFollowing(userId, page);
     }
 
     private void validateFollow(final long followerId, final long followedId) {
