@@ -61,7 +61,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Return `Optional<T>` for single results; return empty collections (never `null`) for list results.
 - The persistence layer uses JPA/Hibernate DAOs backed by `@PersistenceContext EntityManager`.
 - JPA DAOs: use JPQL for entity queries; use `em.createNativeQuery()` only for operations involving unmapped join tables (e.g. `review_tag_assignments` before the owning entity is migrated). Use `GenerationType.IDENTITY` for all `@Id` fields. Prefer `fetch = LAZY` for all `@ManyToOne` and `@OneToMany`. Only annotate the owning side (the entity holding the FK column); the inverse side does not need `@OneToMany` unless that navigation is required.
-- `@Column(name = "...")` is the only required attribute — do not add `length`, `nullable`, or `unique` since `hbm2ddl.auto=none` means they have no runtime effect.
+- `@Column(name = "...")` is the only required attribute — do not add `length`, `nullable`, or `unique`; with `hbm2ddl.auto=validate` these attributes do not affect schema validation (Hibernate only checks column existence and type compatibility) and have no runtime enforcement effect.
 - Model entities keep JPA no-arg constructors. Do not add raw-id constructors or setters that synthesize association stubs; set relationships through entity references/objects inside JPA DAOs.
 
 ## Views

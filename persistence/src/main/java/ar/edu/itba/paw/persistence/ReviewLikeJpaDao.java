@@ -28,19 +28,15 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
 
     @Override
     public boolean likeReview(final long reviewId, final long userId) {
-        final Number existing = (Number) em.createNativeQuery(
-                "SELECT COUNT(*) FROM review_likes WHERE review_id = ? AND user_id = ?")
-                .setParameter(1, reviewId)
-                .setParameter(2, userId)
-                .getSingleResult();
-        if (existing != null && existing.longValue() > 0) {
-            LOGGER.debug("user id={} already liked review id={}", userId, reviewId);
-            return false;
-        }
-        em.createNativeQuery("INSERT INTO review_likes (review_id, user_id) VALUES (?, ?)")
+        final int rows = em.createNativeQuery(
+                "INSERT INTO review_likes (review_id, user_id) VALUES (?, ?) ON CONFLICT DO NOTHING")
                 .setParameter(1, reviewId)
                 .setParameter(2, userId)
                 .executeUpdate();
+        if (rows == 0) {
+            LOGGER.debug("user id={} already liked review id={}", userId, reviewId);
+            return false;
+        }
         LOGGER.info("user id={} liked review id={}", userId, reviewId);
         return true;
     }
@@ -138,19 +134,15 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
 
     @Override
     public boolean likeReply(final long replyId, final long userId) {
-        final Number existing = (Number) em.createNativeQuery(
-                "SELECT COUNT(*) FROM review_reply_likes WHERE reply_id = ? AND user_id = ?")
-                .setParameter(1, replyId)
-                .setParameter(2, userId)
-                .getSingleResult();
-        if (existing != null && existing.longValue() > 0) {
-            LOGGER.debug("user id={} already liked reply id={}", userId, replyId);
-            return false;
-        }
-        em.createNativeQuery("INSERT INTO review_reply_likes (reply_id, user_id) VALUES (?, ?)")
+        final int rows = em.createNativeQuery(
+                "INSERT INTO review_reply_likes (reply_id, user_id) VALUES (?, ?) ON CONFLICT DO NOTHING")
                 .setParameter(1, replyId)
                 .setParameter(2, userId)
                 .executeUpdate();
+        if (rows == 0) {
+            LOGGER.debug("user id={} already liked reply id={}", userId, replyId);
+            return false;
+        }
         LOGGER.info("user id={} liked reply id={}", userId, replyId);
         return true;
     }

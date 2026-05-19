@@ -147,9 +147,8 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    // ("hibernate.hbm2ddl.auto", "validate") es por esto que tiene que ir el 
-    // DependsOn. si lo cambiamos por update y dejamos silent modifications, vuela
-    @DependsOn("dataSourceInitializer") 
+    // dataSourceInitializer must run schema.sql before Hibernate validate checks column existence
+    @DependsOn("dataSourceInitializer")
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(final DataSource dataSource) {
         final LocalContainerEntityManagerFactoryBean factoryBean = new LocalContainerEntityManagerFactoryBean();
         factoryBean.setPackagesToScan("ar.edu.itba.paw.model");
@@ -160,7 +159,7 @@ public class WebConfig implements WebMvcConfigurer {
         properties.setProperty("hibernate.hbm2ddl.auto", "validate");
         properties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL92Dialect");
         properties.setProperty("hibernate.show_sql", "false");
-        properties.setProperty("format_sql", "false");
+        properties.setProperty("hibernate.format_sql", "false");
         factoryBean.setJpaProperties(properties);
         return factoryBean;
     }

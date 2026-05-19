@@ -25,19 +25,15 @@ public class UserFollowJpaDao implements UserFollowDao {
 
     @Override
     public boolean follow(final long followerId, final long followedId) {
-        final Number count = (Number) em.createNativeQuery(
-                        "SELECT COUNT(*) FROM user_follows WHERE follower_id = :followerId AND followed_id = :followedId")
-                .setParameter("followerId", followerId)
-                .setParameter("followedId", followedId)
-                .getSingleResult();
-        if (count.intValue() > 0) {
-            LOGGER.debug("user id={} already follows user id={}", followerId, followedId);
-            return false;
-        }
-        em.createNativeQuery("INSERT INTO user_follows (follower_id, followed_id) VALUES (:followerId, :followedId)")
+        final int rows = em.createNativeQuery(
+                        "INSERT INTO user_follows (follower_id, followed_id) VALUES (:followerId, :followedId) ON CONFLICT DO NOTHING")
                 .setParameter("followerId", followerId)
                 .setParameter("followedId", followedId)
                 .executeUpdate();
+        if (rows == 0) {
+            LOGGER.debug("user id={} already follows user id={}", followerId, followedId);
+            return false;
+        }
         LOGGER.info("user id={} followed user id={}", followerId, followedId);
         return true;
     }

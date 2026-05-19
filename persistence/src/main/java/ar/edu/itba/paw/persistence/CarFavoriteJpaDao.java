@@ -29,19 +29,15 @@ public class CarFavoriteJpaDao implements CarFavoriteDao {
 
     @Override
     public boolean favorite(final long userId, final long carId) {
-        final Number existing = (Number) em.createNativeQuery(
-                "SELECT COUNT(*) FROM car_favorites WHERE user_id = ? AND car_id = ?")
-                .setParameter(1, userId)
-                .setParameter(2, carId)
-                .getSingleResult();
-        if (existing != null && existing.longValue() > 0) {
-            LOGGER.debug("user id={} already favorited car id={}", userId, carId);
-            return false;
-        }
-        em.createNativeQuery("INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)")
+        final int rows = em.createNativeQuery(
+                "INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?) ON CONFLICT DO NOTHING")
                 .setParameter(1, userId)
                 .setParameter(2, carId)
                 .executeUpdate();
+        if (rows == 0) {
+            LOGGER.debug("user id={} already favorited car id={}", userId, carId);
+            return false;
+        }
         LOGGER.info("user id={} favorited car id={}", userId, carId);
         return true;
     }
