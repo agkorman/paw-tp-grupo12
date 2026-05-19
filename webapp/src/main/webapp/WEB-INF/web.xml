@@ -51,7 +51,7 @@
 
  <filter-mapping>
   <filter-name>openEntityManagerInViewFilter</filter-name>
-  <url-pattern>/*</url-pattern>
+  <servlet-name>dispatcher</servlet-name>
  </filter-mapping>
 
  <filter>

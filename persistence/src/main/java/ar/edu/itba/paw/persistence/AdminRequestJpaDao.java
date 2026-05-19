@@ -12,6 +12,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public class AdminRequestJpaDao implements AdminRequestDao {
@@ -46,12 +47,23 @@ public class AdminRequestJpaDao implements AdminRequestDao {
         }
 
         final int effectivePage = Pagination.clampPage(normalizedPage, totalItems, pageSize);
+        final List<?> ids = em.createNativeQuery(
+                "SELECT admin_request_id FROM admin_requests WHERE status = ? " +
+                "ORDER BY created_at DESC, admin_request_id DESC LIMIT ? OFFSET ?")
+                .setParameter(1, status)
+                .setParameter(2, pageSize)
+                .setParameter(3, Pagination.offsetFor(effectivePage, pageSize))
+                .getResultList();
+
+        if (ids.isEmpty()) {
+            return Page.empty(effectivePage, pageSize);
+        }
+
+        final List<Long> longIds = ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
         final List<AdminRequest> items = em.createQuery(
-                "SELECT a FROM AdminRequest a WHERE a.status = :status ORDER BY a.createdAt DESC, a.id DESC",
+                "SELECT a FROM AdminRequest a WHERE a.id IN :ids ORDER BY a.createdAt DESC, a.id DESC",
                 AdminRequest.class)
-                .setParameter("status", status)
-                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
-                .setMaxResults(pageSize)
+                .setParameter("ids", longIds)
                 .getResultList();
 
         return new Page<>(items, effectivePage, pageSize, totalItems);

@@ -12,6 +12,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public class BrandRequestJpaDao implements BrandRequestDao {
@@ -46,12 +47,23 @@ public class BrandRequestJpaDao implements BrandRequestDao {
         }
 
         final int effectivePage = Pagination.clampPage(normalizedPage, totalItems, pageSize);
+        final List<?> ids = em.createNativeQuery(
+                "SELECT brand_request_id FROM brand_requests WHERE status = ? " +
+                "ORDER BY created_at DESC, brand_request_id DESC LIMIT ? OFFSET ?")
+                .setParameter(1, status)
+                .setParameter(2, pageSize)
+                .setParameter(3, Pagination.offsetFor(effectivePage, pageSize))
+                .getResultList();
+
+        if (ids.isEmpty()) {
+            return Page.empty(effectivePage, pageSize);
+        }
+
+        final List<Long> longIds = ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
         final List<BrandRequest> items = em.createQuery(
-                "SELECT b FROM BrandRequest b WHERE b.status = :status ORDER BY b.createdAt DESC, b.id DESC",
+                "SELECT b FROM BrandRequest b WHERE b.id IN :ids ORDER BY b.createdAt DESC, b.id DESC",
                 BrandRequest.class)
-                .setParameter("status", status)
-                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
-                .setMaxResults(pageSize)
+                .setParameter("ids", longIds)
                 .getResultList();
 
         return new Page<>(items, effectivePage, pageSize, totalItems);

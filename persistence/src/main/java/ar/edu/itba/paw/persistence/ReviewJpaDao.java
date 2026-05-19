@@ -36,6 +36,7 @@ public class ReviewJpaDao implements ReviewDao {
     private static final String DEFAULT_ORDER_NATIVE = "created_at DESC, review_id DESC";
     private static final String RATING_ASC_ORDER_NATIVE = "rating ASC, created_at DESC, review_id DESC";
     private static final String RATING_DESC_ORDER_NATIVE = "rating DESC, created_at DESC, review_id DESC";
+    private static final String DEFAULT_ORDER_NATIVE_REVIEW_ALIAS = "r.created_at DESC, r.review_id DESC";
 
     @PersistenceContext
     private EntityManager em;
@@ -115,20 +116,10 @@ public class ReviewJpaDao implements ReviewDao {
 
     @Override
     public Page<Review> findLatest(final int page) {
-        final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
-        final long totalItems = countAll();
-        if (totalItems == 0L) {
-            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
-        }
-        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
-        final List<Review> reviews = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user ORDER BY " + DEFAULT_ORDER,
-                Review.class)
-                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
-                .setMaxResults(pageSize)
-                .getResultList();
-        attachTags(reviews);
-        return new Page<>(reviews, effectivePage, pageSize, totalItems);
+        return findPaginatedByNativeIds(
+                "SELECT COUNT(*) FROM reviews",
+                "SELECT review_id FROM reviews ORDER BY " + DEFAULT_ORDER_NATIVE,
+                List.of(), page, Pagination.REVIEWS_PAGE_SIZE, DEFAULT_ORDER);
     }
 
     @Override
@@ -140,7 +131,7 @@ public class ReviewJpaDao implements ReviewDao {
     public Page<Review> findByFollowedUsers(final long followerId, final int page) {
         return findPaginatedByNativeIds(
                 "SELECT COUNT(*) FROM reviews r JOIN user_follows uf ON uf.followed_id = r.user_id WHERE uf.follower_id = ?",
-                "SELECT r.review_id FROM reviews r JOIN user_follows uf ON uf.followed_id = r.user_id WHERE uf.follower_id = ? ORDER BY " + DEFAULT_ORDER_NATIVE,
+                "SELECT r.review_id FROM reviews r JOIN user_follows uf ON uf.followed_id = r.user_id WHERE uf.follower_id = ? ORDER BY " + DEFAULT_ORDER_NATIVE_REVIEW_ALIAS,
                 List.of(followerId), page, Pagination.REVIEWS_PAGE_SIZE, DEFAULT_ORDER);
     }
 
@@ -157,7 +148,7 @@ public class ReviewJpaDao implements ReviewDao {
     public Page<Review> findByFavoriteCars(final long userId, final int page) {
         return findPaginatedByNativeIds(
                 "SELECT COUNT(*) FROM reviews r JOIN car_favorites cf ON cf.car_id = r.car_id WHERE cf.user_id = ?",
-                "SELECT r.review_id FROM reviews r JOIN car_favorites cf ON cf.car_id = r.car_id WHERE cf.user_id = ? ORDER BY " + DEFAULT_ORDER_NATIVE,
+                "SELECT r.review_id FROM reviews r JOIN car_favorites cf ON cf.car_id = r.car_id WHERE cf.user_id = ? ORDER BY " + DEFAULT_ORDER_NATIVE_REVIEW_ALIAS,
                 List.of(userId), page, Pagination.REVIEWS_PAGE_SIZE, DEFAULT_ORDER);
     }
 
@@ -325,21 +316,10 @@ public class ReviewJpaDao implements ReviewDao {
 
     @Override
     public Page<Review> findByUserId(final long userId, final int page) {
-        final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
-        final long totalItems = countByUserId(userId);
-        if (totalItems == 0L) {
-            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
-        }
-        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
-        final List<Review> reviews = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.user.id = :userId ORDER BY " + DEFAULT_ORDER,
-                Review.class)
-                .setParameter("userId", userId)
-                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
-                .setMaxResults(pageSize)
-                .getResultList();
-        attachTags(reviews);
-        return new Page<>(reviews, effectivePage, pageSize, totalItems);
+        return findPaginatedByNativeIds(
+                "SELECT COUNT(*) FROM reviews WHERE user_id = ?",
+                "SELECT review_id FROM reviews WHERE user_id = ? ORDER BY " + DEFAULT_ORDER_NATIVE,
+                List.of(userId), page, Pagination.REVIEWS_PAGE_SIZE, DEFAULT_ORDER);
     }
 
     @Override
@@ -471,20 +451,9 @@ public class ReviewJpaDao implements ReviewDao {
 
     private Page<Review> findByCarIdPaginated(final long carId, final String nativeOrder,
                                                final String jpqlOrder, final int page) {
-        final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
-        final long totalItems = countByCarId(carId);
-        if (totalItems == 0L) {
-            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
-        }
-        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
-        final List<Review> reviews = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.car.id = :carId ORDER BY " + jpqlOrder,
-                Review.class)
-                .setParameter("carId", carId)
-                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
-                .setMaxResults(pageSize)
-                .getResultList();
-        attachTags(reviews);
-        return new Page<>(reviews, effectivePage, pageSize, totalItems);
+        return findPaginatedByNativeIds(
+                "SELECT COUNT(*) FROM reviews WHERE car_id = ?",
+                "SELECT review_id FROM reviews WHERE car_id = ? ORDER BY " + nativeOrder,
+                List.of(carId), page, Pagination.REVIEWS_PAGE_SIZE, jpqlOrder);
     }
 }

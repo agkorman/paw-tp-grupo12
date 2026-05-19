@@ -12,6 +12,8 @@ import javax.persistence.PersistenceContext;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -91,15 +93,18 @@ public class UserFollowJpaDao implements UserFollowDao {
         }
         final int effectivePage = Pagination.clampPage(page, total, pageSize);
         final long offset = Pagination.offsetFor(effectivePage, pageSize);
-        final List<?> results = em.createNativeQuery(
-                        "SELECT u.* FROM users u JOIN user_follows f ON f.follower_id = u.user_id "
-                        + "WHERE f.followed_id = :userId ORDER BY f.created_at DESC, u.username ASC",
-                        User.class)
-                .setParameter("userId", userId)
-                .setFirstResult((int) offset)
-                .setMaxResults(pageSize)
+        final List<?> ids = em.createNativeQuery(
+                "SELECT u.user_id FROM users u JOIN user_follows f ON f.follower_id = u.user_id " +
+                "WHERE f.followed_id = ? ORDER BY f.created_at DESC, u.username ASC LIMIT ? OFFSET ?")
+                .setParameter(1, userId)
+                .setParameter(2, pageSize)
+                .setParameter(3, offset)
                 .getResultList();
-        final List<User> items = results.stream().map(r -> (User) r).collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return Page.empty(effectivePage, pageSize);
+        }
+        final List<Long> longIds = ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
+        final List<User> items = sortUsersByIds(loadUsersByIds(longIds), longIds);
         return new Page<>(items, effectivePage, pageSize, total);
     }
 
@@ -112,16 +117,32 @@ public class UserFollowJpaDao implements UserFollowDao {
         }
         final int effectivePage = Pagination.clampPage(page, total, pageSize);
         final long offset = Pagination.offsetFor(effectivePage, pageSize);
-        final List<?> results = em.createNativeQuery(
-                        "SELECT u.* FROM users u JOIN user_follows f ON f.followed_id = u.user_id "
-                        + "WHERE f.follower_id = :userId ORDER BY f.created_at DESC, u.username ASC",
-                        User.class)
-                .setParameter("userId", userId)
-                .setFirstResult((int) offset)
-                .setMaxResults(pageSize)
+        final List<?> ids = em.createNativeQuery(
+                "SELECT u.user_id FROM users u JOIN user_follows f ON f.followed_id = u.user_id " +
+                "WHERE f.follower_id = ? ORDER BY f.created_at DESC, u.username ASC LIMIT ? OFFSET ?")
+                .setParameter(1, userId)
+                .setParameter(2, pageSize)
+                .setParameter(3, offset)
                 .getResultList();
-        final List<User> items = results.stream().map(r -> (User) r).collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return Page.empty(effectivePage, pageSize);
+        }
+        final List<Long> longIds = ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
+        final List<User> items = sortUsersByIds(loadUsersByIds(longIds), longIds);
         return new Page<>(items, effectivePage, pageSize, total);
+    }
+
+    private List<User> loadUsersByIds(final List<Long> ids) {
+        return em.createQuery(
+                "SELECT u FROM User u WHERE u.id IN :ids",
+                User.class)
+                .setParameter("ids", ids)
+                .getResultList();
+    }
+
+    private List<User> sortUsersByIds(final List<User> users, final List<Long> orderedIds) {
+        final Map<Long, User> byId = users.stream().collect(Collectors.toMap(User::getId, u -> u));
+        return orderedIds.stream().map(byId::get).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     @Override

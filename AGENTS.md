@@ -57,7 +57,8 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - Services use constructor injection (`@Autowired` on constructor, `final` fields).
 - Return `Optional<T>` for single results; return empty collections (never `null`) for list results.
-- DAOs are JPA/Hibernate repositories backed by `@PersistenceContext EntityManager`. Use JPQL for entity queries and native SQL only where the mapped model does not cover the table shape.
+- DAOs are JPA/Hibernate repositories backed by `@PersistenceContext EntityManager`. Use JPQL for entity queries and native SQL only where the mapped model does not cover the table shape or for the ID-fetch step of paginated queries (see below).
+- Paginated DAO queries must use the 1+1 query pattern: (1) a native SQL `SELECT id ... LIMIT ? OFFSET ?` to get the page of IDs, then (2) a JPQL `WHERE entity.id IN :ids` to load the full entities. Never use `setFirstResult`/`setMaxResults` on an entity-returning JPQL query — Hibernate may silently paginate in memory. `CarJpaDao.findBySearchCriteria` is the canonical example.
 - Model entities keep JPA no-arg constructors. Do not add raw-id constructors or setters that synthesize association stubs; set relationships through entity references/objects inside JPA DAOs.
 
 ## Views
@@ -190,7 +191,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 ## Filters & Pagination
 
 - Search/filter parameters are bound through `CarSearchCriteria` as a `@ModelAttribute`, not as individual `@RequestParam` fields. New filter parameters belong in `CarSearchCriteria`, not as extra controller arguments.
-- The app currently has no pagination. Do not add pagination infrastructure until explicitly asked.
+- All paginated queries must use the 1+1 pattern described in the Services & DAOs section. Do not use `setFirstResult`/`setMaxResults` on entity-returning JPQL queries.
 
 ## Views & Tags
 

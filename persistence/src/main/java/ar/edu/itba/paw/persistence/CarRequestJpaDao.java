@@ -53,12 +53,23 @@ public class CarRequestJpaDao implements CarRequestDao {
         }
 
         final int effectivePage = Pagination.clampPage(normalizedPage, totalItems, pageSize);
+        final List<?> ids = em.createNativeQuery(
+                "SELECT car_request_id FROM car_requests WHERE status = ? " +
+                "ORDER BY created_at DESC, car_request_id DESC LIMIT ? OFFSET ?")
+                .setParameter(1, status)
+                .setParameter(2, pageSize)
+                .setParameter(3, Pagination.offsetFor(effectivePage, pageSize))
+                .getResultList();
+
+        if (ids.isEmpty()) {
+            return Page.empty(effectivePage, pageSize);
+        }
+
+        final List<Long> longIds = ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
         final List<CarRequest> items = em.createQuery(
-                "SELECT r FROM CarRequest r WHERE r.status = :status ORDER BY r.createdAt DESC, r.id DESC",
+                "SELECT r FROM CarRequest r WHERE r.id IN :ids ORDER BY r.createdAt DESC, r.id DESC",
                 CarRequest.class)
-                .setParameter("status", status)
-                .setFirstResult((int) Pagination.offsetFor(effectivePage, pageSize))
-                .setMaxResults(pageSize)
+                .setParameter("ids", longIds)
                 .getResultList();
 
         return new Page<>(items, effectivePage, pageSize, totalItems);
