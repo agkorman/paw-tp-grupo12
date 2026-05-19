@@ -33,7 +33,7 @@ public class UserFollowServiceImplTest {
     private UserFollowServiceImpl userFollowService;
 
     private User userWithId(final long id) {
-        return new User(id, "u" + id, id + "@x.com", "p", "user", LocalDateTime.now());
+        return TestModels.user(id, "u" + id, id + "@x.com", "p", "user", LocalDateTime.now());
     }
 
     @Test

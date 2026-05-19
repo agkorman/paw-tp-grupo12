@@ -69,31 +69,6 @@ public class Review implements Serializable {
 
     public Review() {}
 
-    public Review(long id, Long userId, String reviewerEmail, long carId, BigDecimal rating, String title, String body,
-                  String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
-                  LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this(id, userId, reviewerEmail, null, carId, rating, title, body, ownershipStatus, modelYear, mileageKm,
-                wouldRecommend, createdAt, updatedAt);
-    }
-
-    public Review(long id, Long userId, String reviewerEmail, String reviewerUsername, long carId, BigDecimal rating,
-                  String title, String body, String ownershipStatus, Integer modelYear, Integer mileageKm,
-                  Boolean wouldRecommend, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
-        this.user = userReference(userId, reviewerUsername);
-        this.reviewerEmail = reviewerEmail;
-        this.car = carReference(carId);
-        this.rating = rating;
-        this.title = title;
-        this.body = body;
-        this.ownershipStatus = ownershipStatus;
-        this.modelYear = modelYear;
-        this.mileageKm = mileageKm;
-        this.wouldRecommend = wouldRecommend;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 
@@ -103,22 +78,14 @@ public class Review implements Serializable {
     public Long getUserId() {
         return user != null ? user.getId() : null;
     }
-    public void setUserId(Long userId) { this.user = userReference(userId, null); }
-
     public String getReviewerEmail() { return reviewerEmail; }
     public void setReviewerEmail(String reviewerEmail) { this.reviewerEmail = reviewerEmail; }
 
     public String getReviewerUsername() {
         return user != null ? user.getUsername() : null;
     }
-    public void setReviewerUsername(String reviewerUsername) {
-        if (user != null) {
-            user.setUsername(reviewerUsername);
-        }
-    }
 
     public long getCarId() { return car != null ? car.getId() : 0; }
-    public void setCarId(long carId) { this.car = carReference(carId); }
 
     public Car getCar() { return car; }
     public void setCar(Car car) { this.car = car; }
@@ -158,19 +125,4 @@ public class Review implements Serializable {
         updatedAt = LocalDateTime.now();
     }
 
-    private static User userReference(final Long id, final String username) {
-        if (id == null) {
-            return null;
-        }
-        final User user = new User();
-        user.setId(id);
-        user.setUsername(username);
-        return user;
-    }
-
-    private static Car carReference(final long id) {
-        final Car car = new Car();
-        car.setId(id);
-        return car;
-    }
 }

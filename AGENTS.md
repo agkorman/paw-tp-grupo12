@@ -57,8 +57,8 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - Services use constructor injection (`@Autowired` on constructor, `final` fields).
 - Return `Optional<T>` for single results; return empty collections (never `null`) for list results.
-- DAOs define SQL fragments and `RowMapper` instances as `private static final` constants.
-- Use `SimpleJdbcInsert` for INSERT; use `NamedParameterJdbcTemplate` for queries with many parameters.
+- DAOs are JPA/Hibernate repositories backed by `@PersistenceContext EntityManager`. Use JPQL for entity queries and native SQL only where the mapped model does not cover the table shape.
+- Model entities keep JPA no-arg constructors. Do not add raw-id constructors or setters that synthesize association stubs; set relationships through entity references/objects inside JPA DAOs.
 
 ## Views
 
@@ -207,7 +207,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Persistence tests live under `persistence/src/test/java/ar/edu/itba/paw/persistence/`.
 - Stack: JUnit 5 + Spring Test + HSQLDB in memory. The `persistence` module declares these as test dependencies; versions stay pinned in the root `pom.xml` `<dependencyManagement>`.
 - Persistence tests use real Spring-managed DAOs with `@Autowired`, a real test `DataSource`, and `TestConfiguration`. Do not mock DAOs or use Mockito in this layer.
-- `TestConfiguration` uses HSQLDB with `jdbc:hsqldb:mem:paw;sql.syntax_pgs=true`, defines a `DataSourceTransactionManager`, and component-scans only `ar.edu.itba.paw.persistence`.
+- `TestConfiguration` uses HSQLDB with `jdbc:hsqldb:mem:paw;sql.syntax_pgs=true`, defines a `JpaTransactionManager` backed by the test `EntityManagerFactory`, and component-scans only `ar.edu.itba.paw.persistence`.
 - The HSQLDB schema is `persistence/src/test/resources/test-schema.sql`. Keep it minimal and faithful to the DAO behavior under test: table/column names, relevant FKs, uniqueness, checks, nullability, and relationships. Do not try to port the full PostgreSQL production schema.
 - Do not add global seed data. Each test prepares its own state explicitly in `// Arrange`; tests must not depend on execution order or data created by another test.
 - The shared persistence test base uses Spring Test with `@Transactional` and `@Rollback` so every test method runs in its own transaction and rolls back automatically. Keep rollback explicit in the base class.

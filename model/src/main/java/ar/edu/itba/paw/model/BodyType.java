@@ -26,12 +26,6 @@ public class BodyType implements Serializable {
 
     public BodyType() {}
 
-    public BodyType(final long id, final String name, final LocalDateTime createdAt) {
-        this.id = id;
-        this.name = name;
-        this.createdAt = createdAt;
-    }
-
     public long getId() {
         return id;
     }

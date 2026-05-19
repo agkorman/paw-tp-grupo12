@@ -59,16 +59,16 @@ public class WeeklyDigestServiceImplTest {
     private WeeklyDigestServiceImpl weeklyDigestService;
 
     private static User user() {
-        return new User(USER_ID, USERNAME, USER_EMAIL, "p", "user", LocalDateTime.now());
+        return TestModels.user(USER_ID, USERNAME, USER_EMAIL, "p", "user", LocalDateTime.now());
     }
 
     private static Car car(final long id, final String brand, final String model) {
-        return new Car(id, 1L, brand, model, 2L, "sedan", "desc", LocalDateTime.now());
+        return TestModels.car(id, 1L, brand, model, 2L, "sedan", "desc", LocalDateTime.now());
     }
 
     private static Review review(final long id, final long carId, final String title,
                                  final LocalDateTime createdAt) {
-        return new Review(id, USER_ID, USER_EMAIL, carId, new BigDecimal("4.0"), title, "body",
+        return TestModels.review(id, USER_ID, USER_EMAIL, carId, new BigDecimal("4.0"), title, "body",
                 "owner", 2026, 1000, true, createdAt, createdAt);
     }
 

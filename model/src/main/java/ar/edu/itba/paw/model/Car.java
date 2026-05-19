@@ -69,48 +69,6 @@ public class Car implements Serializable {
 
     public Car() {}
 
-    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
-               final String bodyType, final String description, final LocalDateTime createdAt) {
-        this(id, brandId, brandName, model, bodyTypeId, bodyType, description, createdAt, false);
-    }
-
-    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
-               final String bodyType, final String description,
-               final LocalDateTime createdAt, final boolean hasImage) {
-        this(id, brandId, brandName, model, bodyTypeId, null, bodyType, description, createdAt, hasImage,
-                null, null, null, null, null, null, null);
-    }
-
-    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
-               final String bodyType, final String description, final LocalDateTime createdAt, final boolean hasImage,
-               final String fuelType, final Integer horsepower, final Integer airbagCount, final String transmission,
-               final BigDecimal fuelConsumption, final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-        this(id, brandId, brandName, model, bodyTypeId, null, bodyType, description, createdAt, hasImage,
-                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
-    }
-
-    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
-               final Integer year, final String bodyType, final String description, final LocalDateTime createdAt,
-               final boolean hasImage, final String fuelType, final Integer horsepower,
-               final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
-               final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-        this.id = id;
-        this.brand = brandReference(brandId, brandName);
-        this.model = model;
-        this.bodyTypeEntity = bodyTypeReference(bodyTypeId, bodyType);
-        this.year = year;
-        this.description = description;
-        this.createdAt = createdAt;
-        this.hasImage = hasImage;
-        this.fuelType = fuelType;
-        this.horsepower = horsepower;
-        this.airbagCount = airbagCount;
-        this.transmission = transmission;
-        this.fuelConsumption = fuelConsumption;
-        this.maxSpeedKmh = maxSpeedKmh;
-        this.priceUsd = priceUsd;
-    }
-
     public long getId() {
         return id;
     }
@@ -131,19 +89,8 @@ public class Car implements Serializable {
         return brand != null ? brand.getId() : 0;
     }
 
-    public void setBrandId(final long brandId) {
-        this.brand = brandReference(brandId, null);
-    }
-
     public String getBrandName() {
         return brand != null ? brand.getName() : null;
-    }
-
-    public void setBrandName(final String brandName) {
-        if (brand == null) {
-            brand = new Brand();
-        }
-        brand.setName(brandName);
     }
 
     public String getModel() {
@@ -166,10 +113,6 @@ public class Car implements Serializable {
         return bodyTypeEntity != null ? bodyTypeEntity.getId() : 0;
     }
 
-    public void setBodyTypeId(final long bodyTypeId) {
-        this.bodyTypeEntity = bodyTypeReference(bodyTypeId, null);
-    }
-
     public Integer getYear() {
         return year;
     }
@@ -180,13 +123,6 @@ public class Car implements Serializable {
 
     public String getBodyType() {
         return bodyTypeEntity != null ? bodyTypeEntity.getName() : null;
-    }
-
-    public void setBodyType(final String bodyType) {
-        if (bodyTypeEntity == null) {
-            bodyTypeEntity = new BodyType();
-        }
-        bodyTypeEntity.setName(bodyType);
     }
 
     public String getDescription() {
@@ -269,17 +205,4 @@ public class Car implements Serializable {
         this.priceUsd = priceUsd;
     }
 
-    private static Brand brandReference(final long id, final String name) {
-        final Brand brand = new Brand();
-        brand.setId(id);
-        brand.setName(name);
-        return brand;
-    }
-
-    private static BodyType bodyTypeReference(final long id, final String name) {
-        final BodyType bodyType = new BodyType();
-        bodyType.setId(id);
-        bodyType.setName(name);
-        return bodyType;
-    }
 }

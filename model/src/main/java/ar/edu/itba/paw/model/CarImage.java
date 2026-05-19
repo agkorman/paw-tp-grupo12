@@ -39,22 +39,6 @@ public class CarImage implements Serializable {
 
     public CarImage() {}
 
-    public CarImage(final long carId, final String contentType, final byte[] imageData,
-                    final LocalDateTime updatedAt) {
-        this(0, carId, 0, contentType, imageData, updatedAt);
-    }
-
-    public CarImage(final long imageId, final long carId, final int displayOrder,
-                    final String contentType, final byte[] imageData,
-                    final LocalDateTime updatedAt) {
-        this.imageId = imageId;
-        this.car = carReference(carId);
-        this.displayOrder = displayOrder;
-        this.contentType = contentType;
-        this.imageData = imageData;
-        this.updatedAt = updatedAt;
-    }
-
     public long getImageId() {
         return imageId;
     }
@@ -73,10 +57,6 @@ public class CarImage implements Serializable {
 
     public long getCarId() {
         return car != null ? car.getId() : 0;
-    }
-
-    public void setCarId(final long carId) {
-        this.car = carReference(carId);
     }
 
     public int getDisplayOrder() {
@@ -111,9 +91,4 @@ public class CarImage implements Serializable {
         this.updatedAt = updatedAt;
     }
 
-    private static Car carReference(final long id) {
-        final Car car = new Car();
-        car.setId(id);
-        return car;
-    }
 }

@@ -40,16 +40,6 @@ public class ReviewReply implements Serializable {
 
     public ReviewReply() {}
 
-    public ReviewReply(final long id, final long reviewId, final long userId, final String authorUsername,
-                       final String body, final LocalDateTime createdAt, final LocalDateTime updatedAt) {
-        this.id = id;
-        this.review = reviewReference(reviewId);
-        this.user = userReference(userId, authorUsername);
-        this.body = body;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
     public long getId() { return id; }
     public void setId(final long id) { this.id = id; }
 
@@ -57,21 +47,14 @@ public class ReviewReply implements Serializable {
     public void setReview(final Review review) { this.review = review; }
 
     public long getReviewId() { return review != null ? review.getId() : 0; }
-    public void setReviewId(final long reviewId) { this.review = reviewReference(reviewId); }
 
     public User getUser() { return user; }
     public void setUser(final User user) { this.user = user; }
 
     public long getUserId() { return user != null ? user.getId() : 0; }
-    public void setUserId(final long userId) { this.user = userReference(userId, null); }
 
     public String getAuthorUsername() {
         return user != null ? user.getUsername() : null;
-    }
-    public void setAuthorUsername(final String authorUsername) {
-        if (user != null) {
-            user.setUsername(authorUsername);
-        }
     }
 
     public String getBody() { return body; }
@@ -83,16 +66,4 @@ public class ReviewReply implements Serializable {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(final LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    private static Review reviewReference(final long id) {
-        final Review review = new Review();
-        review.setId(id);
-        return review;
-    }
-
-    private static User userReference(final long id, final String username) {
-        final User user = new User();
-        user.setId(id);
-        user.setUsername(username);
-        return user;
-    }
 }

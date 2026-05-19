@@ -38,21 +38,6 @@ public class User implements Serializable {
 
     public User() {}
 
-    public User(long id, String username, String email, String password, String role, LocalDateTime createdAt) {
-        this(id, username, email, password, role, "es", createdAt);
-    }
-
-    public User(long id, String username, String email, String password, String role, String preferredLocale,
-                LocalDateTime createdAt) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.role = role;
-        this.preferredLocale = preferredLocale;
-        this.createdAt = createdAt;
-    }
-
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 

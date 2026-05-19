@@ -116,7 +116,9 @@ public class CarRequestJpaDao implements CarRequestDao {
                 final Object[] r = (Object[]) element;
                 final CarRequestImage img = new CarRequestImage();
                 img.setImageId(((Number) r[0]).longValue());
-                img.setRequestId(((Number) r[1]).longValue());
+                final CarRequest request = new CarRequest();
+                request.setId(((Number) r[1]).longValue());
+                img.setRequest(request);
                 img.setDisplayOrder(((Number) r[2]).intValue());
                 img.setContentType((String) r[3]);
                 img.setImageData(null);

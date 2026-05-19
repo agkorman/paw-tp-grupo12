@@ -50,7 +50,7 @@ public class UserServiceImplTest {
     @Test
     public void shouldReturnUserWhenDaoFindsExistingId() {
         // Arrange
-        final User stored = new User(USER_ID, "Joaco", NORMALIZED_EMAIL, ENCODED_PASSWORD, "user", LocalDateTime.now());
+        final User stored = TestModels.user(USER_ID, "Joaco", NORMALIZED_EMAIL, ENCODED_PASSWORD, "user", LocalDateTime.now());
         when(userDao.findById(USER_ID)).thenReturn(Optional.of(stored));
 
         // Exercise
@@ -89,7 +89,7 @@ public class UserServiceImplTest {
     @Test
     public void shouldNormalizeEmailBeforeQueryingDao() {
         // Arrange
-        final User stored = new User(USER_ID, "Joaco", NORMALIZED_EMAIL, ENCODED_PASSWORD, "user", LocalDateTime.now());
+        final User stored = TestModels.user(USER_ID, "Joaco", NORMALIZED_EMAIL, ENCODED_PASSWORD, "user", LocalDateTime.now());
         when(userDao.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.of(stored));
 
         // Exercise
@@ -115,7 +115,7 @@ public class UserServiceImplTest {
     @Test
     public void shouldCreateUserWithNormalizedFieldsAndEncodedPassword() {
         // Arrange
-        final User created = new User(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user",
+        final User created = TestModels.user(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user",
                 LocalDateTime.now());
         when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
         when(userDao.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.empty());
@@ -188,7 +188,7 @@ public class UserServiceImplTest {
     @Test
     public void shouldRejectCreateUserWhenUsernameAlreadyExists() {
         // Arrange
-        final User existing = new User(99L, NORMALIZED_USERNAME, "other@example.com", "x", "user", LocalDateTime.now());
+        final User existing = TestModels.user(99L, NORMALIZED_USERNAME, "other@example.com", "x", "user", LocalDateTime.now());
         when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.of(existing));
 
         // Exercise
@@ -202,7 +202,7 @@ public class UserServiceImplTest {
     @Test
     public void shouldRejectCreateUserWhenEmailAlreadyExists() {
         // Arrange
-        final User existing = new User(99L, "other", NORMALIZED_EMAIL, "x", "user", LocalDateTime.now());
+        final User existing = TestModels.user(99L, "other", NORMALIZED_EMAIL, "x", "user", LocalDateTime.now());
         when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
         when(userDao.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.of(existing));
 
@@ -217,7 +217,7 @@ public class UserServiceImplTest {
     @Test
     public void shouldUpdateUsernameWithNormalizedValue() {
         // Arrange
-        final User updated = new User(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user",
+        final User updated = TestModels.user(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user",
                 LocalDateTime.now());
         when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
         when(userDao.updateUsername(USER_ID, NORMALIZED_USERNAME)).thenReturn(true);
@@ -247,7 +247,7 @@ public class UserServiceImplTest {
     @Test
     public void shouldRejectUpdateUsernameWhenUsedByAnotherUser() {
         // Arrange
-        final User existing = new User(99L, NORMALIZED_USERNAME, "other@example.com", "x", "user", LocalDateTime.now());
+        final User existing = TestModels.user(99L, NORMALIZED_USERNAME, "other@example.com", "x", "user", LocalDateTime.now());
         when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.of(existing));
 
         // Exercise
@@ -287,7 +287,7 @@ public class UserServiceImplTest {
     @Test
     public void shouldUpdatePreferredLocaleWithSupportedLanguage() {
         // Arrange
-        final User updated = new User(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user", "en",
+        final User updated = TestModels.user(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user", "en",
                 LocalDateTime.now());
         when(userDao.updatePreferredLocale(USER_ID, "en")).thenReturn(true);
         when(userDao.findById(USER_ID)).thenReturn(Optional.of(updated));
@@ -346,8 +346,8 @@ public class UserServiceImplTest {
     public void shouldReturnAllUsersFromDao() {
         // Arrange
         final List<User> users = List.of(
-                new User(1L, "a", "a@x.com", "p", "user", LocalDateTime.now()),
-                new User(2L, "b", "b@x.com", "p", "user", LocalDateTime.now())
+                TestModels.user(1L, "a", "a@x.com", "p", "user", LocalDateTime.now()),
+                TestModels.user(2L, "b", "b@x.com", "p", "user", LocalDateTime.now())
         );
         when(userDao.findAll()).thenReturn(users);
 

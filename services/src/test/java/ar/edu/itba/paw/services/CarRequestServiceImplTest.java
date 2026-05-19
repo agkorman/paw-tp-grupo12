@@ -50,7 +50,7 @@ public class CarRequestServiceImplTest {
     private CarRequestServiceImpl carRequestService;
 
     private static CarRequest pendingRequest() {
-        return new CarRequest(REQUEST_ID, USER_ID, EMAIL, BRAND_ID, BODY_TYPE_ID, 2024, "Corolla",
+        return TestModels.carRequest(REQUEST_ID, USER_ID, EMAIL, BRAND_ID, BODY_TYPE_ID, 2024, "Corolla",
                 "A nice car description.", CONTENT_TYPE, IMAGE_BYTES, CarRequestService.STATUS_PENDING,
                 LocalDateTime.now(), "GASOLINE", 130, 6, "MANUAL",
                 new BigDecimal("6.5"), 190, new BigDecimal("25000.00"));
@@ -196,7 +196,7 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldNotApproveWhenRequestIsNotPending() {
         // Arrange
-        final CarRequest approved = new CarRequest(REQUEST_ID, USER_ID, EMAIL, BRAND_ID, BODY_TYPE_ID, 2024, "Corolla",
+        final CarRequest approved = TestModels.carRequest(REQUEST_ID, USER_ID, EMAIL, BRAND_ID, BODY_TYPE_ID, 2024, "Corolla",
                 "desc", CONTENT_TYPE, IMAGE_BYTES, CarRequestService.STATUS_APPROVED, LocalDateTime.now(),
                 null, null, null, null, null, null, null);
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(approved));
@@ -238,7 +238,7 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldApproveAndCreateCarWhenRequestIsPending() {
         // Arrange
-        final Car createdCar = new Car(99L, BRAND_ID, "Toyota", "Corolla", BODY_TYPE_ID, 2024, "sedan",
+        final Car createdCar = TestModels.car(99L, BRAND_ID, "Toyota", "Corolla", BODY_TYPE_ID, 2024, "sedan",
                 "desc", LocalDateTime.now(), false, "GASOLINE", 130, 6, "MANUAL",
                 new BigDecimal("6.5"), 190, new BigDecimal("25000.00"));
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
@@ -261,11 +261,11 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldApproveUsingRequestGalleryWhenNoReplacementImagesAreProvided() {
         // Arrange
-        final Car createdCar = new Car(99L, BRAND_ID, "Toyota", "Corolla", BODY_TYPE_ID, 2024, "sedan",
+        final Car createdCar = TestModels.car(99L, BRAND_ID, "Toyota", "Corolla", BODY_TYPE_ID, 2024, "sedan",
                 "desc", LocalDateTime.now(), false, "GASOLINE", 130, 6, "MANUAL",
                 new BigDecimal("6.5"), 190, new BigDecimal("25000.00"));
-        final CarRequestImage metadata = new CarRequestImage(55L, REQUEST_ID, 0, CONTENT_TYPE, null, LocalDateTime.now());
-        final CarRequestImage payload = new CarRequestImage(55L, REQUEST_ID, 0, CONTENT_TYPE, IMAGE_BYTES, LocalDateTime.now());
+        final CarRequestImage metadata = TestModels.carRequestImage(55L, REQUEST_ID, 0, CONTENT_TYPE, null, LocalDateTime.now());
+        final CarRequestImage payload = TestModels.carRequestImage(55L, REQUEST_ID, 0, CONTENT_TYPE, IMAGE_BYTES, LocalDateTime.now());
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
         when(carRequestDao.updateStatus(REQUEST_ID, CarRequestService.STATUS_PENDING,
                 CarRequestService.STATUS_APPROVED)).thenReturn(true);
@@ -285,7 +285,7 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldApproveUsingRequestCoverWhenImagesAreNullAndGalleryIsEmpty() {
         // Arrange
-        final Car createdCar = new Car(99L, BRAND_ID, "Toyota", "Corolla", BODY_TYPE_ID, 2024, "sedan",
+        final Car createdCar = TestModels.car(99L, BRAND_ID, "Toyota", "Corolla", BODY_TYPE_ID, 2024, "sedan",
                 "desc", LocalDateTime.now(), false, "GASOLINE", 130, 6, "MANUAL",
                 new BigDecimal("6.5"), 190, new BigDecimal("25000.00"));
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
@@ -351,7 +351,7 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldNotRejectWhenRequestIsNotPending() {
         // Arrange
-        final CarRequest approved = new CarRequest(REQUEST_ID, USER_ID, EMAIL, BRAND_ID, BODY_TYPE_ID, 2024, "Corolla",
+        final CarRequest approved = TestModels.carRequest(REQUEST_ID, USER_ID, EMAIL, BRAND_ID, BODY_TYPE_ID, 2024, "Corolla",
                 "desc", CONTENT_TYPE, IMAGE_BYTES, CarRequestService.STATUS_APPROVED, LocalDateTime.now(),
                 null, null, null, null, null, null, null);
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(approved));

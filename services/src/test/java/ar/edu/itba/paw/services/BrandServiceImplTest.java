@@ -32,13 +32,13 @@ public class BrandServiceImplTest {
     private BrandServiceImpl brandService;
 
     private static Brand brand() {
-        return new Brand(BRAND_ID, "Toyota", LocalDateTime.now());
+        return TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now());
     }
 
     @Test
     public void shouldCreateBrandWithTrimmedName() {
         // Arrange
-        final Brand created = new Brand(BRAND_ID, "Toyota", LocalDateTime.now());
+        final Brand created = TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now());
         when(brandDao.create("Toyota")).thenReturn(created);
 
         // Exercise

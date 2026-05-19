@@ -42,18 +42,6 @@ public class BrandRequest implements Serializable {
 
     public BrandRequest() {}
 
-    public BrandRequest(final long id, final Long submittedByUserId, final String submitterEmail,
-                        final String name, final String comments, final String status,
-                        final LocalDateTime createdAt) {
-        this.id = id;
-        this.submittedByUser = userReference(submittedByUserId);
-        this.submitterEmail = submitterEmail;
-        this.name = name;
-        this.comments = comments;
-        this.status = status;
-        this.createdAt = createdAt;
-    }
-
     public long getId() {
         return id;
     }
@@ -64,10 +52,6 @@ public class BrandRequest implements Serializable {
 
     public Long getSubmittedByUserId() {
         return submittedByUser != null ? submittedByUser.getId() : null;
-    }
-
-    public void setSubmittedByUserId(final Long submittedByUserId) {
-        this.submittedByUser = userReference(submittedByUserId);
     }
 
     public User getSubmittedByUser() {
@@ -118,12 +102,4 @@ public class BrandRequest implements Serializable {
         this.createdAt = createdAt;
     }
 
-    private static User userReference(final Long id) {
-        if (id == null) {
-            return null;
-        }
-        final User user = new User();
-        user.setId(id);
-        return user;
-    }
 }

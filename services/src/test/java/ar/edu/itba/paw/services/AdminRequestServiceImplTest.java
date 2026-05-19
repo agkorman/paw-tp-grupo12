@@ -47,14 +47,14 @@ public class AdminRequestServiceImplTest {
     private AdminRequestServiceImpl adminRequestService;
 
     private static AdminRequest pendingRequest() {
-        return new AdminRequest(REQUEST_ID, USER_ID, EMAIL, "motivation", "bio", "justification",
+        return TestModels.adminRequest(REQUEST_ID, USER_ID, EMAIL, "motivation", "bio", "justification",
                 AdminRequestService.STATUS_PENDING, LocalDateTime.now());
     }
 
     @Test
     public void shouldCreatePendingRequestWithNormalizedFields() {
         // Arrange
-        final AdminRequest created = new AdminRequest(REQUEST_ID, USER_ID, EMAIL, "motivation text",
+        final AdminRequest created = TestModels.adminRequest(REQUEST_ID, USER_ID, EMAIL, "motivation text",
                 "bio text", "justification text", AdminRequestService.STATUS_PENDING, LocalDateTime.now());
         when(adminRequestDao.existsPendingByUser(USER_ID)).thenReturn(false);
         when(adminRequestDao.create(USER_ID, EMAIL, "motivation text", "bio text", "justification text",
@@ -153,7 +153,7 @@ public class AdminRequestServiceImplTest {
     @Test
     public void shouldNotApproveWhenRequestIsNotPending() {
         // Arrange
-        final AdminRequest approved = new AdminRequest(REQUEST_ID, USER_ID, EMAIL, "m", "b", "j",
+        final AdminRequest approved = TestModels.adminRequest(REQUEST_ID, USER_ID, EMAIL, "m", "b", "j",
                 AdminRequestService.STATUS_APPROVED, LocalDateTime.now());
         when(adminRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(approved));
 
@@ -319,7 +319,7 @@ public class AdminRequestServiceImplTest {
     public void shouldResolveSubmitterEmailFromUserIdWhenEmailIsBlank() {
         // Arrange
         final Long userId = 123L;
-        final User user = new User(userId, "username", "email@example.com", "password", "user", LocalDateTime.now());
+        final User user = TestModels.user(userId, "username", "email@example.com", "password", "user", LocalDateTime.now());
         when(userService.getUserById(userId)).thenReturn(java.util.Optional.of(user));
 
         // Exercise

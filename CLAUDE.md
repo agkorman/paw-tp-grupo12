@@ -59,10 +59,10 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - Services use constructor injection (`@Autowired` on constructor, `final` fields).
 - Return `Optional<T>` for single results; return empty collections (never `null`) for list results.
-- The persistence layer is being migrated from JDBC to JPA/Hibernate. New DAOs use JPA (`@PersistenceContext EntityManager em`). Legacy JDBC implementations are preserved in `persistence/src/main/java/ar/edu/itba/paw/persistence/jdbc/` with their `@Repository` removed.
+- The persistence layer uses JPA/Hibernate DAOs backed by `@PersistenceContext EntityManager`.
 - JPA DAOs: use JPQL for entity queries; use `em.createNativeQuery()` only for operations involving unmapped join tables (e.g. `review_tag_assignments` before the owning entity is migrated). Use `GenerationType.IDENTITY` for all `@Id` fields. Prefer `fetch = LAZY` for all `@ManyToOne` and `@OneToMany`. Only annotate the owning side (the entity holding the FK column); the inverse side does not need `@OneToMany` unless that navigation is required.
 - `@Column(name = "...")` is the only required attribute — do not add `length`, `nullable`, or `unique` since `hbm2ddl.auto=none` means they have no runtime effect.
-- JDBC DAOs (still in use): define SQL fragments and `RowMapper` instances as `private static final` constants. Use `SimpleJdbcInsert` for INSERT; use `NamedParameterJdbcTemplate` for queries with many parameters.
+- Model entities keep JPA no-arg constructors. Do not add raw-id constructors or setters that synthesize association stubs; set relationships through entity references/objects inside JPA DAOs.
 
 ## Views
 

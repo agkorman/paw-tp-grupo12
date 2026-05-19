@@ -56,7 +56,7 @@ public class CarServiceImplTest {
     private CarServiceImpl carService;
 
     private static Car car() {
-        return new Car(CAR_ID, BRAND_ID, "Toyota", "Corolla", BODY_TYPE_ID, 2024, "sedan",
+        return TestModels.car(CAR_ID, BRAND_ID, "Toyota", "Corolla", BODY_TYPE_ID, 2024, "sedan",
                 "desc", LocalDateTime.now(), false, "GASOLINE", 100, 6, "MANUAL",
                 new BigDecimal("6.0"), 180, new BigDecimal("20000.00"));
     }
@@ -182,13 +182,13 @@ public class CarServiceImplTest {
     public void shouldDelegateRequestCarCreationToCarRequestService() {
         // Arrange
         final List<CarImagePayload> images = List.of(new CarImagePayload("image/png", IMAGE_BYTES));
-        final CarRequest createdRequest = new CarRequest(99L, 1L, "u@x.com", BRAND_ID, BODY_TYPE_ID, 2024, "Corolla",
+        final CarRequest createdRequest = TestModels.carRequest(99L, 1L, "u@x.com", BRAND_ID, BODY_TYPE_ID, 2024, "Corolla",
                 "desc", "image/png", IMAGE_BYTES, CarRequestService.STATUS_PENDING, LocalDateTime.now(),
                 "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00"));
         when(carRequestService.createPendingRequest(anyLong(), any(), anyLong(), anyLong(), any(), any(), any(),
                 any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(createdRequest);
-        when(brandDao.findById(BRAND_ID)).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
-        when(bodyTypeDao.findById(BODY_TYPE_ID)).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
+        when(brandDao.findById(BRAND_ID)).thenReturn(Optional.of(TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findById(BODY_TYPE_ID)).thenReturn(Optional.of(TestModels.bodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
 
         // Exercise
         final CarRequest result = carService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, 1L, "u@x.com",
@@ -216,7 +216,7 @@ public class CarServiceImplTest {
     @Test
     public void shouldReturnEmptyListForBrandBodyTypeWhenBodyTypeUnknown() {
         // Arrange
-        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(new Brand(1L, "Toyota", LocalDateTime.now())));
+        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(TestModels.brand(1L, "Toyota", LocalDateTime.now())));
         when(bodyTypeDao.findByName("Unknown")).thenReturn(Optional.empty());
 
         // Exercise
@@ -229,8 +229,8 @@ public class CarServiceImplTest {
     @Test
     public void shouldDelegateBrandBodyTypeLookupToCarDaoWhenBothExist() {
         // Arrange
-        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(new Brand(1L, "Toyota", LocalDateTime.now())));
-        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(new BodyType(2L, "sedan", LocalDateTime.now())));
+        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(TestModels.brand(1L, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(TestModels.bodyType(2L, "sedan", LocalDateTime.now())));
         when(carDao.findByBrandIdAndBodyTypeId(1L, 2L)).thenReturn(List.of(car()));
 
         // Exercise
@@ -258,7 +258,7 @@ public class CarServiceImplTest {
     public void shouldFillWithRecentlyAddedCarsWhenTopRatedBelowLimit() {
         // Arrange
         final int limit = 3;
-        final Car recent = new Car(6L, BRAND_ID, "Honda", "Civic", BODY_TYPE_ID, 2023, "sedan",
+        final Car recent = TestModels.car(6L, BRAND_ID, "Honda", "Civic", BODY_TYPE_ID, 2023, "sedan",
                 "desc", LocalDateTime.now(), false, "GASOLINE", 90, 4, "MANUAL",
                 new BigDecimal("5.0"), 160, new BigDecimal("15000.00"));
         when(carDao.findTopRated(limit)).thenReturn(List.of(car()));
@@ -288,8 +288,8 @@ public class CarServiceImplTest {
     @Test
     public void shouldDetectDuplicateCarInCatalog() {
         // Arrange
-        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
-        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
+        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(TestModels.bodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
         when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
 
         // Exercise
@@ -302,8 +302,8 @@ public class CarServiceImplTest {
     @Test
     public void shouldNotFlagIgnoredCarAsDuplicate() {
         // Arrange
-        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
-        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
+        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(TestModels.bodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
         when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
 
         // Exercise
@@ -316,8 +316,8 @@ public class CarServiceImplTest {
     @Test
     public void shouldNotFlagCarWithDifferentYear() {
         // Arrange
-        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(new Brand(BRAND_ID, "Toyota", LocalDateTime.now())));
-        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(new BodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
+        when(brandDao.findByName("Toyota")).thenReturn(Optional.of(TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now())));
+        when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(TestModels.bodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
         when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
 
         // Exercise

@@ -26,12 +26,6 @@ public class Brand implements Serializable {
 
     public Brand() {}
 
-    public Brand(long id, String name, LocalDateTime createdAt) {
-        this.id = id;
-        this.name = name;
-        this.createdAt = createdAt;
-    }
-
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 

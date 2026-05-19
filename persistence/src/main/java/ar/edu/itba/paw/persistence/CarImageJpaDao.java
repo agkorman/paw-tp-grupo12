@@ -42,14 +42,16 @@ public class CarImageJpaDao implements CarImageDao {
         final List<CarImage> result = new ArrayList<>();
         for (final Object element : rawRows) {
             final Object[] row = (Object[]) element;
-            result.add(new CarImage(
-                    ((Number) row[0]).longValue(),
-                    ((Number) row[1]).longValue(),
-                    ((Number) row[2]).intValue(),
-                    (String) row[3],
-                    null,
-                    (java.time.LocalDateTime) row[4]
-            ));
+            final CarImage image = new CarImage();
+            final Car car = new Car();
+            image.setImageId(((Number) row[0]).longValue());
+            car.setId(((Number) row[1]).longValue());
+            image.setCar(car);
+            image.setDisplayOrder(((Number) row[2]).intValue());
+            image.setContentType((String) row[3]);
+            image.setImageData(null);
+            image.setUpdatedAt((java.time.LocalDateTime) row[4]);
+            result.add(image);
         }
         return result;
     }

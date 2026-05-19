@@ -81,52 +81,6 @@ public class CarRequest implements Serializable {
 
     public CarRequest() {}
 
-    public CarRequest(final long id, final Long submittedByUserId, final String submitterEmail, final long brandId,
-                      final long bodyTypeId, final String model, final String description,
-                      final String imageContentType, final byte[] imageData, final String status,
-                      final LocalDateTime createdAt) {
-        this(id, submittedByUserId, submitterEmail, brandId, bodyTypeId, null, model, description,
-                imageContentType, imageData, status, createdAt, null, null, null, null, null, null, null);
-    }
-
-    public CarRequest(final long id, final Long submittedByUserId, final String submitterEmail, final long brandId,
-                      final long bodyTypeId, final String model, final String description,
-                      final String imageContentType, final byte[] imageData, final String status,
-                      final LocalDateTime createdAt, final String fuelType, final Integer horsepower,
-                      final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
-                      final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-        this(id, submittedByUserId, submitterEmail, brandId, bodyTypeId, null, model, description,
-                imageContentType, imageData, status, createdAt, fuelType, horsepower, airbagCount, transmission,
-                fuelConsumption, maxSpeedKmh, priceUsd);
-    }
-
-    public CarRequest(final long id, final Long submittedByUserId, final String submitterEmail, final long brandId,
-                      final long bodyTypeId, final Integer year, final String model, final String description,
-                      final String imageContentType, final byte[] imageData, final String status,
-                      final LocalDateTime createdAt, final String fuelType, final Integer horsepower,
-                      final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
-                      final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-        this.id = id;
-        this.submittedByUser = userReference(submittedByUserId);
-        this.submitterEmail = submitterEmail;
-        this.brand = brandReference(brandId);
-        this.bodyType = bodyTypeReference(bodyTypeId);
-        this.year = year;
-        this.model = model;
-        this.description = description;
-        this.imageContentType = imageContentType;
-        this.imageData = imageData;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.fuelType = fuelType;
-        this.horsepower = horsepower;
-        this.airbagCount = airbagCount;
-        this.transmission = transmission;
-        this.fuelConsumption = fuelConsumption;
-        this.maxSpeedKmh = maxSpeedKmh;
-        this.priceUsd = priceUsd;
-    }
-
     public long getId() {
         return id;
     }
@@ -137,10 +91,6 @@ public class CarRequest implements Serializable {
 
     public Long getSubmittedByUserId() {
         return submittedByUser != null ? submittedByUser.getId() : null;
-    }
-
-    public void setSubmittedByUserId(final Long submittedByUserId) {
-        this.submittedByUser = userReference(submittedByUserId);
     }
 
     public User getSubmittedByUser() {
@@ -163,10 +113,6 @@ public class CarRequest implements Serializable {
         return brand != null ? brand.getId() : 0;
     }
 
-    public void setBrandId(final long brandId) {
-        this.brand = brandReference(brandId);
-    }
-
     public Brand getBrand() {
         return brand;
     }
@@ -177,10 +123,6 @@ public class CarRequest implements Serializable {
 
     public long getBodyTypeId() {
         return bodyType != null ? bodyType.getId() : 0;
-    }
-
-    public void setBodyTypeId(final long bodyTypeId) {
-        this.bodyType = bodyTypeReference(bodyTypeId);
     }
 
     public BodyType getBodyType() {
@@ -303,24 +245,4 @@ public class CarRequest implements Serializable {
         this.priceUsd = priceUsd;
     }
 
-    private static User userReference(final Long id) {
-        if (id == null) {
-            return null;
-        }
-        final User user = new User();
-        user.setId(id);
-        return user;
-    }
-
-    private static Brand brandReference(final long id) {
-        final Brand brand = new Brand();
-        brand.setId(id);
-        return brand;
-    }
-
-    private static BodyType bodyTypeReference(final long id) {
-        final BodyType bodyType = new BodyType();
-        bodyType.setId(id);
-        return bodyType;
-    }
 }

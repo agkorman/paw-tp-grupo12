@@ -45,19 +45,6 @@ public class AdminRequest implements Serializable {
 
     public AdminRequest() {}
 
-    public AdminRequest(final long id, final long submittedByUserId, final String submitterEmail,
-                        final String motivation, final String bio, final String justification,
-                        final String status, final LocalDateTime createdAt) {
-        this.id = id;
-        this.submittedByUser = userReference(submittedByUserId);
-        this.submitterEmail = submitterEmail;
-        this.motivation = motivation;
-        this.bio = bio;
-        this.justification = justification;
-        this.status = status;
-        this.createdAt = createdAt;
-    }
-
     public long getId() {
         return id;
     }
@@ -68,10 +55,6 @@ public class AdminRequest implements Serializable {
 
     public long getSubmittedByUserId() {
         return submittedByUser != null ? submittedByUser.getId() : 0;
-    }
-
-    public void setSubmittedByUserId(final long submittedByUserId) {
-        this.submittedByUser = userReference(submittedByUserId);
     }
 
     public User getSubmittedByUser() {
@@ -130,9 +113,4 @@ public class AdminRequest implements Serializable {
         this.createdAt = createdAt;
     }
 
-    private static User userReference(final long id) {
-        final User user = new User();
-        user.setId(id);
-        return user;
-    }
 }

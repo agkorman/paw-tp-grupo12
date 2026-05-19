@@ -157,7 +157,7 @@ class ActivityControllerTest {
     void activity_rendersReviewCards_whenReviewsPresent() throws Exception {
         // Arrange
         final Review review =
-                new Review(
+                TestModels.review(
                         9L,
                         3L,
                         "writer@test.com",

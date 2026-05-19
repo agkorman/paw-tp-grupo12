@@ -44,16 +44,16 @@ public class ReviewReplyServiceImplTest {
     private ReviewReplyServiceImpl reviewReplyService;
 
     private static Review review() {
-        return new Review(REVIEW_ID, USER_ID, "u@example.com", 1L, new BigDecimal("4.0"),
+        return TestModels.review(REVIEW_ID, USER_ID, "u@example.com", 1L, new BigDecimal("4.0"),
                 "Title", "Body", "owner", 2026, 1000, true, LocalDateTime.now(), LocalDateTime.now());
     }
 
     private static User user() {
-        return new User(USER_ID, "user", "u@example.com", "p", "user", LocalDateTime.now());
+        return TestModels.user(USER_ID, "user", "u@example.com", "p", "user", LocalDateTime.now());
     }
 
     private static ReviewReply reply(final long userId) {
-        return new ReviewReply(REPLY_ID, REVIEW_ID, userId, "user", "Reply body",
+        return TestModels.reviewReply(REPLY_ID, REVIEW_ID, userId, "user", "Reply body",
                 LocalDateTime.now(), LocalDateTime.now());
     }
 

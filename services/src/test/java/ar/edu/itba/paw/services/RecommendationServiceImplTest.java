@@ -48,7 +48,7 @@ public class RecommendationServiceImplTest {
     private static final short SMALL_TRUNK_TAG_ID = 4;
 
     private static Car car(final long id) {
-        return new Car(id, 1L, "Brand-" + id, "Model-" + id, 2L, 2024, "sedan",
+        return TestModels.car(id, 1L, "Brand-" + id, "Model-" + id, 2L, 2024, "sedan",
                 "desc", LocalDateTime.now(), false, "GASOLINE", 100, 6, "MANUAL",
                 new BigDecimal("6.0"), 180, new BigDecimal("20000.00"));
     }

@@ -40,7 +40,7 @@ public class BrandRequestServiceImplTest {
     private BrandRequestServiceImpl brandRequestService;
 
     private static BrandRequest pendingRequest(final String name) {
-        return new BrandRequest(REQUEST_ID, USER_ID, EMAIL, name, "comment",
+        return TestModels.brandRequest(REQUEST_ID, USER_ID, EMAIL, name, "comment",
                 BrandRequestService.STATUS_PENDING, LocalDateTime.now());
     }
 
@@ -94,7 +94,7 @@ public class BrandRequestServiceImplTest {
         // Arrange
         final BrandRequest request = pendingRequest("Existing Brand");
         when(brandRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(request));
-        when(brandDao.findByName("Existing Brand")).thenReturn(Optional.of(new Brand(1L, "Existing Brand", LocalDateTime.now())));
+        when(brandDao.findByName("Existing Brand")).thenReturn(Optional.of(TestModels.brand(1L, "Existing Brand", LocalDateTime.now())));
 
         // Exercise
         final boolean result = brandRequestService.approvePendingRequest(REQUEST_ID);
@@ -120,9 +120,9 @@ public class BrandRequestServiceImplTest {
     @Test
     public void shouldResolveSubmitterEmailFromUserWhenRequestEmailIsBlank() {
         // Arrange
-        final BrandRequest request = new BrandRequest(REQUEST_ID, USER_ID, " ", "New Brand", "comment",
+        final BrandRequest request = TestModels.brandRequest(REQUEST_ID, USER_ID, " ", "New Brand", "comment",
                 BrandRequestService.STATUS_PENDING, LocalDateTime.now());
-        final User user = new User(USER_ID, "user", "fallback@example.com", "p", "user", LocalDateTime.now());
+        final User user = TestModels.user(USER_ID, "user", "fallback@example.com", "p", "user", LocalDateTime.now());
         when(brandRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(request));
         when(brandDao.findByName("New Brand")).thenReturn(Optional.empty());
         when(brandRequestDao.updateStatus(REQUEST_ID, BrandRequestService.STATUS_PENDING,

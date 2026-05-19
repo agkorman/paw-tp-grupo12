@@ -101,7 +101,7 @@ class ProfileControllerTest {
         arrangeMessageBundle();
 
         final User profileUser =
-                new User(profileUserId, "ProfileUser", profileUserId + "@test.com", "pw", "user", LocalDateTime.now());
+                TestModels.user(profileUserId, "ProfileUser", profileUserId + "@test.com", "pw", "user", LocalDateTime.now());
         when(userService.getUserById(eq(profileUserId))).thenReturn(Optional.of(profileUser));
         when(reviewService.countReviewsByUser(eq(profileUserId))).thenReturn(0L);
         when(carFavoriteService.countFavoriteCars(eq(profileUserId))).thenReturn(1L);
@@ -212,7 +212,7 @@ class ProfileControllerTest {
         arrangeExistingProfile(12L);
 
         final User refreshed =
-                new User(12L, "GoodNameRenamed", "12@test.com", "pw", "user", LocalDateTime.now());
+                TestModels.user(12L, "GoodNameRenamed", "12@test.com", "pw", "user", LocalDateTime.now());
         when(userService.updateUsername(eq(12L), eq("RenamedGood"))).thenReturn(refreshed);
 
         try {
@@ -302,7 +302,7 @@ class ProfileControllerTest {
         arrangeMessageBundle();
         when(userService.getUserById(eq(24L)))
                 .thenReturn(
-                        Optional.of(new User(24L, "Target", "24@test.com", "pw", "user", LocalDateTime.now())));
+                        Optional.of(TestModels.user(24L, "Target", "24@test.com", "pw", "user", LocalDateTime.now())));
         when(userFollowService.toggleFollow(eq(23L), eq(24L))).thenReturn(true);
 
         try {
