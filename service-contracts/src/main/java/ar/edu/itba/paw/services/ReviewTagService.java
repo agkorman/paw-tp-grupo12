@@ -18,6 +18,12 @@ public interface ReviewTagService {
     Map<String, List<ReviewTag>> getAllGroupedBySentiment();
 
     /**
+     * Returns all tags indexed by their {@link ReviewTag#getCode() code}, suitable for
+     * UI lookups (e.g. resolving the active tag filter on the cars listing).
+     */
+    Map<String, ReviewTag> getAllByCode();
+
+    /**
      * Throws {@link ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException}
      * if any id is unknown, the count exceeds {@link #MAX_TAGS_PER_REVIEW}, or two ids
      * resolve to the same dimension. Returns the resolved tag list on success.

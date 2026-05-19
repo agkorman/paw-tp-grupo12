@@ -39,9 +39,12 @@ public class CarSearchCriteria {
     private static final BigDecimal PRICE_MIN_BOUND = BigDecimal.ZERO;
     private static final BigDecimal PRICE_MAX_BOUND = BigDecimal.valueOf(5_000_000);
 
+    private static final java.util.regex.Pattern TAG_CODE_PATTERN = java.util.regex.Pattern.compile("[a-z0-9_]{1,64}");
+
     private String q;
     private String brand;
     private String bodyType;
+    private List<String> tagCodes = new ArrayList<>();
     private Integer yearMin;
     private Integer yearMax;
     private List<String> fuelTypes = new ArrayList<>();
@@ -60,6 +63,7 @@ public class CarSearchCriteria {
 
     public boolean hasAdvancedFilters() {
         return !fuelTypes.isEmpty()
+                || !tagCodes.isEmpty()
                 || horsepowerMin != null
                 || horsepowerMax != null
                 || yearMin != null
@@ -148,6 +152,46 @@ public class CarSearchCriteria {
 
     public void setBodyType(final String bodyType) {
         this.bodyType = bodyType == null || bodyType.trim().isEmpty() ? null : bodyType.trim();
+    }
+
+    public String getTagCode() {
+        return tagCodes.isEmpty() ? null : String.join(",", tagCodes);
+    }
+
+    public void setTagCode(final String tagCode) {
+        this.tagCodes = normalizeTagCodes(tagCode == null ? null : new String[]{tagCode});
+    }
+
+    public void setTagCode(final String[] tagCodeValues) {
+        this.tagCodes = normalizeTagCodes(tagCodeValues);
+    }
+
+    public List<String> getTagCodes() {
+        return Collections.unmodifiableList(tagCodes);
+    }
+
+    public void setTagCodes(final List<String> tagCodeValues) {
+        this.tagCodes = normalizeTagCodes(tagCodeValues == null ? null : tagCodeValues.toArray(new String[0]));
+    }
+
+    private List<String> normalizeTagCodes(final String[] values) {
+        final List<String> normalized = new ArrayList<>();
+        if (values == null) {
+            return normalized;
+        }
+        for (final String value : values) {
+            if (value == null) {
+                continue;
+            }
+            for (final String part : value.split(",")) {
+                final String trimmed = part.trim().toLowerCase(Locale.ROOT);
+                if (!trimmed.isEmpty() && TAG_CODE_PATTERN.matcher(trimmed).matches()
+                        && !normalized.contains(trimmed)) {
+                    normalized.add(trimmed);
+                }
+            }
+        }
+        return normalized;
     }
 
     public Integer getYearMin() {

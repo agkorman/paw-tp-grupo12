@@ -66,6 +66,84 @@
         transform 160ms ease;
 }
 
+.review-tag-chip-link {
+    display: inline-flex;
+    align-items: center;
+    gap: inherit;
+    color: inherit;
+    text-decoration: none;
+}
+
+.review-tag-chip-link:hover,
+.review-tag-chip-link:focus {
+    text-decoration: none;
+    color: inherit;
+}
+
+.active-tag-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem var(--spacing-12) 0;
+    margin: 0;
+    flex-wrap: wrap;
+}
+
+.filters-panel-section--tags .filters-tag-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.filters-panel-section--tags .filters-tag-group-label {
+    margin: 0.25rem 0 0;
+    color: var(--on-surface-variant);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+}
+
+.filters-panel-section--tags .filters-tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.filters-panel-section--tags .review-tag-chip.filter-toggle-option {
+    padding: 0.38rem 0.82rem 0.38rem 0.45rem;
+    font-size: 0.85rem;
+}
+
+.active-tag-filter-label {
+    color: var(--on-surface-variant);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+}
+
+.active-tag-filter-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.25rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: var(--radius-full);
+    color: inherit;
+    text-decoration: none;
+    font-size: 1rem;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 160ms ease, background 160ms ease;
+}
+
+.active-tag-filter-clear:hover,
+.active-tag-filter-clear:focus {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.08);
+    text-decoration: none;
+}
+
 .review-tag-chip-emoji {
     display: inline-flex;
     align-items: center;

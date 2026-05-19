@@ -213,6 +213,21 @@ public class CarJdbcDao implements CarDao {
             params.addValue("bodyType", criteria.getBodyType());
             hasWhere = true;
         }
+        final List<String> tagCodes = criteria.getTagCodes();
+        for (int i = 0; i < tagCodes.size(); i++) {
+            final String paramName = "tagCode" + i;
+            sql.append(hasWhere ? "AND " : "WHERE ")
+                    .append("EXISTS (SELECT 1 FROM review_tag_assignments rta")
+                    .append(i)
+                    .append(" JOIN reviews r").append(i)
+                    .append(" ON r").append(i).append(".review_id = rta").append(i).append(".review_id ")
+                    .append("JOIN review_tags rt").append(i)
+                    .append(" ON rt").append(i).append(".tag_id = rta").append(i).append(".tag_id ")
+                    .append("WHERE r").append(i).append(".car_id = c.car_id AND rt").append(i).append(".code = :")
+                    .append(paramName).append(") ");
+            params.addValue(paramName, tagCodes.get(i));
+            hasWhere = true;
+        }
         if (!criteria.getFuelTypes().isEmpty()) {
             sql.append(hasWhere ? "AND " : "WHERE ").append("c.fuel_type IN (:fuelTypes) ");
             params.addValue("fuelTypes", criteria.getFuelTypes());

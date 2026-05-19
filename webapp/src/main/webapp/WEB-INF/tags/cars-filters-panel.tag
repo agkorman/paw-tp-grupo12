@@ -63,6 +63,51 @@
            role="alert"
            hidden></p>
 
+        <c:if test="${not empty reviewTagsBySentiment}">
+            <section class="filters-panel-section filters-panel-section--tags">
+                <h3 class="filters-panel-section-title"><spring:message code="cars.filter.tags.title"/></h3>
+                <div class="filters-tag-group" data-filter-target="panelTagCode" data-filter-multiple="true" data-filter-exclusive-by="dimension">
+                    <c:if test="${not empty reviewTagsBySentiment['positive']}">
+                        <p class="filters-tag-group-label"><spring:message code="cars.filter.tags.positive"/></p>
+                        <div class="filters-tag-row">
+                            <c:forEach var="filterTag" items="${reviewTagsBySentiment['positive']}">
+                                <c:set var="filterTagEmojiKey" value="review.tag.emoji.${filterTag.code}"/>
+                                <spring:message code="review.tag.emoji.fallback" var="filterTagEmojiFallback" text="🏷️"/>
+                                <spring:message code="${filterTagEmojiKey}" var="filterTagEmoji" text="${filterTagEmojiFallback}"/>
+                                <c:set var="filterTagSelected" value="${criteria.tagCodes.contains(filterTag.code)}"/>
+                                <button type="button"
+                                        class="review-tag-chip review-tag-chip--positive filter-toggle-option${filterTagSelected ? ' is-selected' : ''}"
+                                        data-value="${filterTag.code}"
+                                        data-dimension="${fn:escapeXml(filterTag.dimension)}">
+                                    <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${filterTagEmoji}"/></span>
+                                    <span class="review-tag-chip-label"><pa:review-tag-label tag="${filterTag}"/></span>
+                                </button>
+                            </c:forEach>
+                        </div>
+                    </c:if>
+                    <c:if test="${not empty reviewTagsBySentiment['negative']}">
+                        <p class="filters-tag-group-label"><spring:message code="cars.filter.tags.negative"/></p>
+                        <div class="filters-tag-row">
+                            <c:forEach var="filterTag" items="${reviewTagsBySentiment['negative']}">
+                                <c:set var="filterTagEmojiKey" value="review.tag.emoji.${filterTag.code}"/>
+                                <spring:message code="review.tag.emoji.fallback" var="filterTagEmojiFallback" text="🏷️"/>
+                                <spring:message code="${filterTagEmojiKey}" var="filterTagEmoji" text="${filterTagEmojiFallback}"/>
+                                <c:set var="filterTagSelected" value="${criteria.tagCodes.contains(filterTag.code)}"/>
+                                <button type="button"
+                                        class="review-tag-chip review-tag-chip--negative filter-toggle-option${filterTagSelected ? ' is-selected' : ''}"
+                                        data-value="${filterTag.code}"
+                                        data-dimension="${fn:escapeXml(filterTag.dimension)}">
+                                    <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${filterTagEmoji}"/></span>
+                                    <span class="review-tag-chip-label"><pa:review-tag-label tag="${filterTag}"/></span>
+                                </button>
+                            </c:forEach>
+                        </div>
+                    </c:if>
+                </div>
+                <input type="hidden" id="panelTagCode" name="tagCode" value="<c:out value='${criteria.tagCode}'/>">
+            </section>
+        </c:if>
+
         <section class="filters-panel-section">
             <h3 class="filters-panel-section-title"><spring:message code="cars.form.fuelType"/></h3>
             <div class="fuel-type-picker" data-filter-target="panelFuelType" data-filter-multiple="true">

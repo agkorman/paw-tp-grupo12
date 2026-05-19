@@ -38,6 +38,16 @@ public class ReviewTagServiceImpl implements ReviewTagService {
 
     @Override
     @Transactional(readOnly = true)
+    public Map<String, ReviewTag> getAllByCode() {
+        final Map<String, ReviewTag> byCode = new LinkedHashMap<>();
+        for (final ReviewTag tag : reviewTagDao.findAll()) {
+            byCode.putIfAbsent(tag.getCode(), tag);
+        }
+        return byCode;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Map<String, List<ReviewTag>> getAllGroupedBySentiment() {
         final Map<String, List<ReviewTag>> grouped = new LinkedHashMap<>();
         grouped.put(ReviewTag.SENTIMENT_POSITIVE, new java.util.ArrayList<>());

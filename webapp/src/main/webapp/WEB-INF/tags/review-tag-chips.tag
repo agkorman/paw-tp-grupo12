@@ -64,14 +64,20 @@
     </c:when>
     <c:otherwise>
         <c:if test="${not empty tags}">
+            <spring:message code="review.tags.filterCarsByTag" var="filterCarsByTagAria"/>
             <ul class="review-tag-chips review-tag-chips--display">
                 <c:forEach var="tag" items="${tags}">
                     <c:set var="tagEmojiKey" value="review.tag.emoji.${tag.code}"/>
                     <spring:message code="review.tag.emoji.fallback" var="tagEmojiFallback" text="🏷️"/>
                     <spring:message code="${tagEmojiKey}" var="tagEmojiDisplay" text="${tagEmojiFallback}"/>
+                    <c:url var="tagFilterUrl" value="/cars">
+                        <c:param name="tagCode" value="${tag.code}"/>
+                    </c:url>
                     <li class="review-tag-chip review-tag-chip--display review-tag-chip--${tag.sentiment}">
-                        <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${tagEmojiDisplay}"/></span>
-                        <span class="review-tag-chip-label"><pa:review-tag-label tag="${tag}"/></span>
+                        <a class="review-tag-chip-link" href="${tagFilterUrl}" aria-label="${fn:escapeXml(filterCarsByTagAria)}">
+                            <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${tagEmojiDisplay}"/></span>
+                            <span class="review-tag-chip-label"><pa:review-tag-label tag="${tag}"/></span>
+                        </a>
                     </li>
                 </c:forEach>
             </ul>

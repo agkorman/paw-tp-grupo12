@@ -60,6 +60,42 @@
         if (openTrigger && openTrigger !== toggleBtn)  { openPanel();  }
     });
 
+    /* ── EXCLUSIVE-BY HELPER (e.g. disable opposite-sentiment tag sharing same dimension) ── */
+
+    function refreshExclusiveState(group, options) {
+        var exclusiveBy = group.getAttribute('data-filter-exclusive-by');
+        if (!exclusiveBy) {
+            return;
+        }
+        var keyAttr = 'data-' + exclusiveBy;
+        var lockedKeys = {};
+        Array.prototype.forEach.call(options, function (opt) {
+            if (opt.classList.contains('is-selected')) {
+                var key = opt.getAttribute(keyAttr);
+                if (key) { lockedKeys[key] = true; }
+            }
+        });
+        Array.prototype.forEach.call(options, function (opt) {
+            if (opt.classList.contains('is-selected')) {
+                opt.classList.remove('is-disabled');
+                opt.removeAttribute('aria-disabled');
+                return;
+            }
+            var key = opt.getAttribute(keyAttr);
+            if (key && lockedKeys[key]) {
+                opt.classList.add('is-disabled');
+                opt.setAttribute('aria-disabled', 'true');
+            } else {
+                opt.classList.remove('is-disabled');
+                opt.removeAttribute('aria-disabled');
+            }
+        });
+    }
+
+    Array.prototype.forEach.call(panel.querySelectorAll('[data-filter-exclusive-by]'), function (group) {
+        refreshExclusiveState(group, group.querySelectorAll('.filter-toggle-option, .filter-segment-option'));
+    });
+
     /* ── UNIFIED FILTER GROUP HANDLER (chips + segmented controls) ── */
 
     panel.addEventListener('click', function (event) {
@@ -75,7 +111,11 @@
         var isMultiple = group.getAttribute('data-filter-multiple') === 'true';
 
         if (isMultiple) {
+            if (btn.classList.contains('is-disabled')) {
+                return;
+            }
             btn.classList.toggle('is-selected');
+            refreshExclusiveState(group, options);
             if (hidden) {
                 hidden.value = Array.prototype.map.call(options, function (opt) {
                     return opt.classList.contains('is-selected') ? opt.getAttribute('data-value') : '';
@@ -599,12 +639,14 @@
     var PANEL_PARAM_KEYS = [
         'yearMin', 'yearMax', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
-        'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
+        'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin',
+        'tagCode'
     ];
     var ADVANCED_PANEL_PARAM_KEYS = [
         'yearMin', 'yearMax', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
-        'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
+        'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin',
+        'tagCode'
     ];
 
     function syncFiltersToggleState(panelParams) {
@@ -870,12 +912,14 @@
         Array.prototype.forEach.call(options, function (opt) {
             opt.classList.toggle('is-selected', opt.getAttribute('data-value') === '');
         });
+        refreshExclusiveState(container, options);
     }
 
     function resetPanel() {
         resetFilterGroup('panelFuelType');
         resetFilterGroup('panelAirbagMin');
         resetFilterGroup('panelTransmission');
+        resetFilterGroup('panelTagCode');
         clearValidationErrors();
 
         var priceMin = document.getElementById('panelPriceMin');
