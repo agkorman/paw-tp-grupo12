@@ -71,7 +71,9 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/car-image"),
                                 antMatcher(HttpMethod.POST, "/cars/*/image"))
                             .hasRole("ADMIN")
-                        .requestMatchers(antMatcher(HttpMethod.POST, "/reviews/*/hide"))
+                        .requestMatchers(
+                                antMatcher(HttpMethod.POST, "/reviews/*/hide"),
+                                antMatcher(HttpMethod.POST, "/reviews/replies/*/hide"))
                             .hasRole("ADMIN")
                         .requestMatchers(
                                 antMatcher(HttpMethod.GET, "/cars/new"),
@@ -85,6 +87,8 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/reviews/*/like"),
                                 antMatcher(HttpMethod.POST, "/reviews/*/replies"),
                                 antMatcher(HttpMethod.POST, "/reviews/replies/*/like"),
+                                antMatcher(HttpMethod.POST, "/reviews/replies/*/delete"),
+                                antMatcher(HttpMethod.POST, "/reviews/replies/*/update"),
                                 antMatcher(HttpMethod.POST, "/logout"),
                                 antMatcher(HttpMethod.POST, "/profile"),
                                 antMatcher(HttpMethod.POST, "/profile/language"),

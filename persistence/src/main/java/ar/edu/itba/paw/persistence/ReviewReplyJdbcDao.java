@@ -130,6 +130,19 @@ public class ReviewReplyJdbcDao implements ReviewReplyDao {
     }
 
     @Override
+    public boolean update(final long id, final String body) {
+        final boolean updated = jdbcTemplate.update(
+                "UPDATE review_replies SET body = ?, updated_at = CURRENT_TIMESTAMP WHERE reply_id = ?",
+                body, id) > 0;
+        if (updated) {
+            LOGGER.info("updated reply id={}", id);
+        } else {
+            LOGGER.warn("reply update affected 0 rows id={}", id);
+        }
+        return updated;
+    }
+
+    @Override
     public boolean delete(final long id) {
         final boolean deleted = jdbcTemplate.update("DELETE FROM review_replies WHERE reply_id = ?", id) > 0;
         if (deleted) {

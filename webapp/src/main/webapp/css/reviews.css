@@ -560,6 +560,41 @@
     border-color: rgba(255, 181, 158, 0.58);
 }
 
+.review-reply-edit-form {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.review-reply-edit-form textarea {
+    width: 100%;
+    min-height: 4rem;
+    resize: vertical;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-md);
+    background: var(--surface-container);
+    color: var(--on-surface);
+    padding: 0.625rem 0.75rem;
+    font: inherit;
+}
+
+.review-reply-edit-form textarea:focus {
+    outline: none;
+    border-color: rgba(255, 181, 158, 0.58);
+}
+
+.review-reply-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.review-reply-edit-actions .btn-secondary,
+.review-reply-edit-actions .btn-primary {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+}
+
 .review-reply-inline-error {
     margin: 0;
     color: var(--error-dim);
