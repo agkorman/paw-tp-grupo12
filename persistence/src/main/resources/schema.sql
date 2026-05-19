@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     ownership_status VARCHAR(20),
     model_year       INT,
     mileage_km       INT,
-    would_reend  BOOLEAN,
+    would_recommend  BOOLEAN,
     created_at       TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -650,8 +650,12 @@ ON CONFLICT (code) DO NOTHING;
 -- Column type migrations: widen INT/SMALLINT → BIGINT so that
 -- Hibernate schema validation passes (Java `long` maps to int8).
 -- All steps are idempotent: DROP IF EXISTS + ADD, and widening
--- an already-BIGINT column is a no-op in PostgreSQL.
+-- an already-BIGINT column is a no-op in PostgreSQL. Keep this
+-- block transactional so FK drops are rolled back if any later
+-- statement fails.
 -- ============================================================
+
+BEGIN;
 
 -- ---- users.user_id (SERIAL=int4 → BIGINT) -------------------
 ALTER TABLE user_follows         DROP CONSTRAINT IF EXISTS user_follows_follower_id_fkey;
@@ -723,3 +727,5 @@ ALTER TABLE review_replies     ALTER COLUMN reply_id TYPE BIGINT;
 ALTER TABLE review_reply_likes ALTER COLUMN reply_id TYPE BIGINT;
 
 ALTER TABLE review_reply_likes ADD CONSTRAINT review_reply_likes_reply_id_fkey FOREIGN KEY (reply_id) REFERENCES review_replies(reply_id) ON DELETE CASCADE;
+
+COMMIT;
