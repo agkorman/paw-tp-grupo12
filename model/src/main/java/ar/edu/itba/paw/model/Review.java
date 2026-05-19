@@ -33,9 +33,6 @@ public class Review implements Serializable {
     @Column(name = "reviewer_email")
     private String reviewerEmail;
 
-    @Transient
-    private String reviewerUsername;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "car_id")
     private Car car;
@@ -112,9 +109,13 @@ public class Review implements Serializable {
     public void setReviewerEmail(String reviewerEmail) { this.reviewerEmail = reviewerEmail; }
 
     public String getReviewerUsername() {
-        return user != null ? user.getUsername() : reviewerUsername;
+        return user != null ? user.getUsername() : null;
     }
-    public void setReviewerUsername(String reviewerUsername) { this.reviewerUsername = reviewerUsername; }
+    public void setReviewerUsername(String reviewerUsername) {
+        if (user != null) {
+            user.setUsername(reviewerUsername);
+        }
+    }
 
     public long getCarId() { return car != null ? car.getId() : 0; }
     public void setCarId(long carId) { this.car = carReference(carId); }

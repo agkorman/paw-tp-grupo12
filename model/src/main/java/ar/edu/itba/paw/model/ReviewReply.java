@@ -11,7 +11,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 @Entity
 @Table(name = "review_replies")
@@ -29,9 +28,6 @@ public class ReviewReply implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     private User user;
-
-    @Transient
-    private String authorUsername;
 
     @Column(name = "body")
     private String body;
@@ -70,9 +66,13 @@ public class ReviewReply implements Serializable {
     public void setUserId(final long userId) { this.user = userReference(userId, null); }
 
     public String getAuthorUsername() {
-        return user != null ? user.getUsername() : authorUsername;
+        return user != null ? user.getUsername() : null;
     }
-    public void setAuthorUsername(final String authorUsername) { this.authorUsername = authorUsername; }
+    public void setAuthorUsername(final String authorUsername) {
+        if (user != null) {
+            user.setUsername(authorUsername);
+        }
+    }
 
     public String getBody() { return body; }
     public void setBody(final String body) { this.body = body; }

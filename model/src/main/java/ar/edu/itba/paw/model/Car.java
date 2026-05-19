@@ -27,9 +27,6 @@ public class Car implements Serializable {
     @JoinColumn(name = "brand_id")
     private Brand brand;
 
-    @Transient
-    private String brandName;
-
     @Column(name = "model")
     private String model;
 
@@ -39,9 +36,6 @@ public class Car implements Serializable {
 
     @Column(name = "year")
     private Integer year;
-
-    @Transient
-    private String bodyType;
 
     @Column(name = "description")
     private String description;
@@ -142,11 +136,14 @@ public class Car implements Serializable {
     }
 
     public String getBrandName() {
-        return brand != null ? brand.getName() : brandName;
+        return brand != null ? brand.getName() : null;
     }
 
     public void setBrandName(final String brandName) {
-        this.brandName = brandName;
+        if (brand == null) {
+            brand = new Brand();
+        }
+        brand.setName(brandName);
     }
 
     public String getModel() {
@@ -182,11 +179,14 @@ public class Car implements Serializable {
     }
 
     public String getBodyType() {
-        return bodyTypeEntity != null ? bodyTypeEntity.getName() : bodyType;
+        return bodyTypeEntity != null ? bodyTypeEntity.getName() : null;
     }
 
     public void setBodyType(final String bodyType) {
-        this.bodyType = bodyType;
+        if (bodyTypeEntity == null) {
+            bodyTypeEntity = new BodyType();
+        }
+        bodyTypeEntity.setName(bodyType);
     }
 
     public String getDescription() {
