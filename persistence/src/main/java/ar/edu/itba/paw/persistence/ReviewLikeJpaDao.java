@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,9 +28,11 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
     @Override
     public boolean likeReview(final long reviewId, final long userId) {
         final int rows = em.createNativeQuery(
-                "INSERT INTO review_likes (review_id, user_id) VALUES (?, ?) ON CONFLICT DO NOTHING")
-                .setParameter(1, reviewId)
-                .setParameter(2, userId)
+                "INSERT INTO review_likes (review_id, user_id) " +
+                "SELECT :reviewId, :userId FROM (SELECT 1) AS d " +
+                "WHERE NOT EXISTS (SELECT 1 FROM review_likes WHERE review_id = :reviewId AND user_id = :userId)")
+                .setParameter("reviewId", reviewId)
+                .setParameter("userId", userId)
                 .executeUpdate();
         if (rows == 0) {
             LOGGER.debug("user id={} already liked review id={}", userId, reviewId);
@@ -76,7 +77,7 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
                 "FROM reviews r JOIN review_likes rl ON rl.review_id = r.review_id " +
                 "WHERE r.user_id = ? AND rl.created_at >= ? GROUP BY r.review_id")
                 .setParameter(1, userId)
-                .setParameter(2, Timestamp.valueOf(since))
+                .setParameter(2, since)
                 .getResultList();
         final Map<Long, Long> counts = new HashMap<>();
         for (final Object element : rawRows) {
@@ -135,9 +136,11 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
     @Override
     public boolean likeReply(final long replyId, final long userId) {
         final int rows = em.createNativeQuery(
-                "INSERT INTO review_reply_likes (reply_id, user_id) VALUES (?, ?) ON CONFLICT DO NOTHING")
-                .setParameter(1, replyId)
-                .setParameter(2, userId)
+                "INSERT INTO review_reply_likes (reply_id, user_id) " +
+                "SELECT :replyId, :userId FROM (SELECT 1) AS d " +
+                "WHERE NOT EXISTS (SELECT 1 FROM review_reply_likes WHERE reply_id = :replyId AND user_id = :userId)")
+                .setParameter("replyId", replyId)
+                .setParameter("userId", userId)
                 .executeUpdate();
         if (rows == 0) {
             LOGGER.debug("user id={} already liked reply id={}", userId, replyId);
@@ -193,14 +196,10 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
         if (ids == null || ids.isEmpty()) {
             return Map.of();
         }
-        final String placeholders = ids.stream().map(id -> "?").collect(Collectors.joining(","));
         final javax.persistence.Query query = em.createNativeQuery(
                 "SELECT " + idCol + " AS liked_id, COUNT(*) AS like_count FROM " + table +
-                " WHERE " + idCol + " IN (" + placeholders + ") GROUP BY " + idCol);
-        int i = 1;
-        for (final Long id : ids) {
-            query.setParameter(i++, id);
-        }
+                " WHERE " + idCol + " IN (:ids) GROUP BY " + idCol);
+        query.setParameter("ids", ids);
         final List<?> rawRows = query.getResultList();
         final Map<Long, Long> counts = new HashMap<>();
         for (final Object element : rawRows) {
@@ -215,15 +214,11 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
         if (ids == null || ids.isEmpty()) {
             return Set.of();
         }
-        final String placeholders = ids.stream().map(id -> "?").collect(Collectors.joining(","));
         final javax.persistence.Query query = em.createNativeQuery(
                 "SELECT " + idCol + " FROM " + table +
-                " WHERE user_id = ? AND " + idCol + " IN (" + placeholders + ")");
-        query.setParameter(1, userId);
-        int i = 2;
-        for (final Long id : ids) {
-            query.setParameter(i++, id);
-        }
+                " WHERE user_id = :userId AND " + idCol + " IN (:ids)");
+        query.setParameter("userId", userId);
+        query.setParameter("ids", ids);
         final List<?> result = query.getResultList();
         return result.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toCollection(HashSet::new));
     }

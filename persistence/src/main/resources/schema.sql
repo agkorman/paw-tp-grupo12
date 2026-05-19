@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     ownership_status VARCHAR(20),
     model_year       INT,
     mileage_km       INT,
-    would_recommend  BOOLEAN,
+    would_reend  BOOLEAN,
     created_at       TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -723,12 +723,3 @@ ALTER TABLE review_replies     ALTER COLUMN reply_id TYPE BIGINT;
 ALTER TABLE review_reply_likes ALTER COLUMN reply_id TYPE BIGINT;
 
 ALTER TABLE review_reply_likes ADD CONSTRAINT review_reply_likes_reply_id_fkey FOREIGN KEY (reply_id) REFERENCES review_replies(reply_id) ON DELETE CASCADE;
-
--- ---- review_tags.tag_id stays SMALLINT (ReviewTag.id is short/int2) ----------
--- Shrink back to SMALLINT in case a previous migration widened it.
-ALTER TABLE review_tag_assignments DROP CONSTRAINT IF EXISTS review_tag_assignments_tag_id_fkey;
-
-ALTER TABLE review_tags            ALTER COLUMN tag_id TYPE SMALLINT USING tag_id::SMALLINT;
-ALTER TABLE review_tag_assignments ALTER COLUMN tag_id TYPE SMALLINT USING tag_id::SMALLINT;
-
-ALTER TABLE review_tag_assignments ADD CONSTRAINT review_tag_assignments_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES review_tags(tag_id) ON DELETE CASCADE;

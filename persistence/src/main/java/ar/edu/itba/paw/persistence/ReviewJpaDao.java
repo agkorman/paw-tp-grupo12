@@ -444,9 +444,7 @@ public class ReviewJpaDao implements ReviewDao {
         review.setMileageKm(mileageKm);
         review.setWouldRecommend(wouldRecommend);
         LOGGER.info("updated review id={} rating={}", id, rating);
-        em.flush();
-        em.clear();
-        return findById(id);
+        return Optional.of(review);
     }
 
     @Override

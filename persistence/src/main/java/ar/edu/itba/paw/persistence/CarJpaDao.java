@@ -219,9 +219,7 @@ public class CarJpaDao implements CarDao {
         car.setMaxSpeedKmh(maxSpeedKmh);
         car.setPriceUsd(priceUsd);
         LOGGER.info("updated car id={} brandId={} model={}", id, brandId, model);
-        em.flush();
-        em.clear();
-        return findById(id);
+        return Optional.of(car);
     }
 
     @Override

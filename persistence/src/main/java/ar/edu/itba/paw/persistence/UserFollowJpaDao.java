@@ -26,7 +26,9 @@ public class UserFollowJpaDao implements UserFollowDao {
     @Override
     public boolean follow(final long followerId, final long followedId) {
         final int rows = em.createNativeQuery(
-                        "INSERT INTO user_follows (follower_id, followed_id) VALUES (:followerId, :followedId) ON CONFLICT DO NOTHING")
+                        "INSERT INTO user_follows (follower_id, followed_id) " +
+                        "SELECT :followerId, :followedId FROM (SELECT 1) AS d " +
+                        "WHERE NOT EXISTS (SELECT 1 FROM user_follows WHERE follower_id = :followerId AND followed_id = :followedId)")
                 .setParameter("followerId", followerId)
                 .setParameter("followedId", followedId)
                 .executeUpdate();
@@ -90,8 +92,7 @@ public class UserFollowJpaDao implements UserFollowDao {
         final int effectivePage = Pagination.clampPage(page, total, pageSize);
         final long offset = Pagination.offsetFor(effectivePage, pageSize);
         final List<?> results = em.createNativeQuery(
-                        "SELECT u.user_id, u.username, u.email, u.password, u.role, u.preferred_locale, u.created_at "
-                        + "FROM users u JOIN user_follows f ON f.follower_id = u.user_id "
+                        "SELECT u.* FROM users u JOIN user_follows f ON f.follower_id = u.user_id "
                         + "WHERE f.followed_id = :userId ORDER BY f.created_at DESC, u.username ASC",
                         User.class)
                 .setParameter("userId", userId)
@@ -112,8 +113,7 @@ public class UserFollowJpaDao implements UserFollowDao {
         final int effectivePage = Pagination.clampPage(page, total, pageSize);
         final long offset = Pagination.offsetFor(effectivePage, pageSize);
         final List<?> results = em.createNativeQuery(
-                        "SELECT u.user_id, u.username, u.email, u.password, u.role, u.preferred_locale, u.created_at "
-                        + "FROM users u JOIN user_follows f ON f.followed_id = u.user_id "
+                        "SELECT u.* FROM users u JOIN user_follows f ON f.followed_id = u.user_id "
                         + "WHERE f.follower_id = :userId ORDER BY f.created_at DESC, u.username ASC",
                         User.class)
                 .setParameter("userId", userId)

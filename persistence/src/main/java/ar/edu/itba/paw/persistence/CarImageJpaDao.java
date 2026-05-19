@@ -39,14 +39,13 @@ public class CarImageJpaDao implements CarImageDao {
                         + "FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC")
                 .setParameter("carId", carId)
                 .getResultList();
+        final Car carRef = em.getReference(Car.class, carId);
         final List<CarImage> result = new ArrayList<>();
         for (final Object element : rawRows) {
             final Object[] row = (Object[]) element;
             final CarImage image = new CarImage();
-            final Car car = new Car();
             image.setImageId(((Number) row[0]).longValue());
-            car.setId(((Number) row[1]).longValue());
-            image.setCar(car);
+            image.setCar(carRef);
             image.setDisplayOrder(((Number) row[2]).intValue());
             image.setContentType((String) row[3]);
             image.setImageData(null);

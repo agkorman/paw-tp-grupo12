@@ -148,6 +148,7 @@ public class CarDaoTest extends AbstractPersistenceTest {
         // Assertions
         assertTrue(result.isPresent());
         assertEquals("Updated Model", result.get().getModel());
+        flushAndClear();
         assertEquals("Updated Model", jdbcTemplate.queryForObject(
                 "SELECT model FROM cars WHERE car_id = ?", String.class, created.getId()
         ));

@@ -30,9 +30,11 @@ public class CarFavoriteJpaDao implements CarFavoriteDao {
     @Override
     public boolean favorite(final long userId, final long carId) {
         final int rows = em.createNativeQuery(
-                "INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?) ON CONFLICT DO NOTHING")
-                .setParameter(1, userId)
-                .setParameter(2, carId)
+                "INSERT INTO car_favorites (user_id, car_id) " +
+                "SELECT :userId, :carId FROM (SELECT 1) AS d " +
+                "WHERE NOT EXISTS (SELECT 1 FROM car_favorites WHERE user_id = :userId AND car_id = :carId)")
+                .setParameter("userId", userId)
+                .setParameter("carId", carId)
                 .executeUpdate();
         if (rows == 0) {
             LOGGER.debug("user id={} already favorited car id={}", userId, carId);
@@ -131,14 +133,10 @@ public class CarFavoriteJpaDao implements CarFavoriteDao {
         if (normalizedCarIds.isEmpty()) {
             return Collections.emptySet();
         }
-        final String placeholders = normalizedCarIds.stream().map(id -> "?").collect(Collectors.joining(","));
         final javax.persistence.Query query = em.createNativeQuery(
-                "SELECT car_id FROM car_favorites WHERE user_id = ? AND car_id IN (" + placeholders + ")");
-        query.setParameter(1, userId);
-        int i = 2;
-        for (final Long id : normalizedCarIds) {
-            query.setParameter(i++, id);
-        }
+                "SELECT car_id FROM car_favorites WHERE user_id = :userId AND car_id IN (:ids)");
+        query.setParameter("userId", userId);
+        query.setParameter("ids", normalizedCarIds);
         final List<?> result = query.getResultList();
         return result.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toCollection(HashSet::new));
     }

@@ -148,6 +148,7 @@ public class ReviewDaoTest extends AbstractPersistenceTest {
         // Assertions
         assertTrue(result.isPresent());
         assertEquals("Updated title", result.get().getTitle());
+        flushAndClear();
         assertEquals("Updated title", jdbcTemplate.queryForObject(
                 "SELECT title FROM reviews WHERE review_id = ?", String.class, review.getId()
         ));

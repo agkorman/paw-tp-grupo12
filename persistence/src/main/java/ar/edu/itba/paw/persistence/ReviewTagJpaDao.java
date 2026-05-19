@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Repository
 public class ReviewTagJpaDao implements ReviewTagDao {
@@ -59,19 +59,25 @@ public class ReviewTagJpaDao implements ReviewTagDao {
             LOGGER.info("cleared tag assignments for review id={}", reviewId);
             return;
         }
-        final Set<Short> uniqueIds = new LinkedHashSet<>(tagIds);
-        int count = 0;
-        for (final Short tagId : uniqueIds) {
-            if (tagId != null) {
-                em.createNativeQuery(
-                                "INSERT INTO review_tag_assignments (review_id, tag_id) VALUES (:reviewId, :tagId)")
-                        .setParameter("reviewId", reviewId)
-                        .setParameter("tagId", tagId)
-                        .executeUpdate();
-                count++;
-            }
+        final List<Short> validIds = new LinkedHashSet<>(tagIds).stream()
+                .filter(t -> t != null).collect(Collectors.toList());
+        if (validIds.isEmpty()) {
+            LOGGER.info("cleared tag assignments for review id={}", reviewId);
+            return;
         }
-        LOGGER.info("replaced tag assignments for review id={} tagCount={}", reviewId, count);
+        final StringBuilder sql = new StringBuilder(
+                "INSERT INTO review_tag_assignments (review_id, tag_id) VALUES ");
+        for (int i = 0; i < validIds.size(); i++) {
+            if (i > 0) sql.append(", ");
+            sql.append("(?, ?)");
+        }
+        final javax.persistence.Query q = em.createNativeQuery(sql.toString());
+        for (int i = 0; i < validIds.size(); i++) {
+            q.setParameter(2 * i + 1, reviewId);
+            q.setParameter(2 * i + 2, validIds.get(i));
+        }
+        q.executeUpdate();
+        LOGGER.info("replaced tag assignments for review id={} tagCount={}", reviewId, validIds.size());
     }
 
     @Override
@@ -79,27 +85,33 @@ public class ReviewTagJpaDao implements ReviewTagDao {
         if (reviewIds == null || reviewIds.isEmpty()) {
             return Map.of();
         }
-        final List<?> rawRows = em.createNativeQuery(
-                        "SELECT rta.review_id, rt.tag_id, rt.code, rt.label_es, rt.sentiment, rt.dimension, rt.created_at "
-                        + "FROM review_tag_assignments rta "
-                        + "JOIN review_tags rt ON rt.tag_id = rta.tag_id "
-                        + "WHERE rta.review_id IN (:ids) "
-                        + "ORDER BY rta.review_id, rt.sentiment, rt.dimension, rt.label_es")
+        final List<?> assignmentRows = em.createNativeQuery(
+                        "SELECT rta.review_id, rta.tag_id FROM review_tag_assignments rta "
+                        + "WHERE rta.review_id IN (:ids)")
                 .setParameter("ids", reviewIds)
                 .getResultList();
+        if (assignmentRows.isEmpty()) {
+            return Map.of();
+        }
+        final Set<Short> tagIds = assignmentRows.stream()
+                .map(r -> ((Number) ((Object[]) r)[1]).shortValue())
+                .collect(Collectors.toSet());
+        final Map<Short, ReviewTag> tagsById = new HashMap<>();
+        for (final ReviewTag t : em.createQuery(
+                "SELECT t FROM ReviewTag t WHERE t.id IN :ids ORDER BY t.dimension, t.sentiment, t.labelEs",
+                ReviewTag.class)
+                .setParameter("ids", tagIds)
+                .getResultList()) {
+            tagsById.put(t.getId(), t);
+        }
         final Map<Long, List<ReviewTag>> result = new HashMap<>();
-        for (final Object element : rawRows) {
+        for (final Object element : assignmentRows) {
             final Object[] row = (Object[]) element;
             final long reviewId = ((Number) row[0]).longValue();
-            final ReviewTag tag = new ReviewTag(
-                    ((Number) row[1]).shortValue(),
-                    (String) row[2],
-                    (String) row[3],
-                    (String) row[4],
-                    (String) row[5],
-                    ((Timestamp) row[6]).toLocalDateTime()
-            );
-            result.computeIfAbsent(reviewId, k -> new ArrayList<>()).add(tag);
+            final ReviewTag tag = tagsById.get(((Number) row[1]).shortValue());
+            if (tag != null) {
+                result.computeIfAbsent(reviewId, k -> new ArrayList<>()).add(tag);
+            }
         }
         return result;
     }
