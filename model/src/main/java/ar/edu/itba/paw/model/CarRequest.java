@@ -3,76 +3,83 @@ package ar.edu.itba.paw.model;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
+@Entity
+@Table(name = "car_requests")
 public class CarRequest implements Serializable {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "car_request_id")
     private long id;
-    private Long submittedByUserId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "submitted_by_user_id")
+    private User submittedByUser;
+
+    @Column(name = "submitter_email")
     private String submitterEmail;
-    private long brandId;
-    private long bodyTypeId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "body_type_id")
+    private BodyType bodyType;
+
+    @Column(name = "year")
     private Integer year;
+
+    @Column(name = "model")
     private String model;
+
+    @Column(name = "description")
     private String description;
+
+    @Column(name = "image_content_type")
     private String imageContentType;
+
+    @Column(name = "image_data")
     private byte[] imageData;
+
+    @Column(name = "status")
     private String status;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "fuel_type")
     private String fuelType;
+
+    @Column(name = "horsepower")
     private Integer horsepower;
+
+    @Column(name = "airbag_count")
     private Integer airbagCount;
+
+    @Column(name = "transmission")
     private String transmission;
+
+    @Column(name = "fuel_consumption")
     private BigDecimal fuelConsumption;
+
+    @Column(name = "max_speed_kmh")
     private Integer maxSpeedKmh;
+
+    @Column(name = "price_usd")
     private BigDecimal priceUsd;
 
     public CarRequest() {}
-
-    public CarRequest(final long id, final Long submittedByUserId, final String submitterEmail, final long brandId,
-                      final long bodyTypeId, final String model, final String description,
-                      final String imageContentType, final byte[] imageData, final String status,
-                      final LocalDateTime createdAt) {
-        this(id, submittedByUserId, submitterEmail, brandId, bodyTypeId, null, model, description,
-                imageContentType, imageData, status, createdAt, null, null, null, null, null, null, null);
-    }
-
-    public CarRequest(final long id, final Long submittedByUserId, final String submitterEmail, final long brandId,
-                      final long bodyTypeId, final String model, final String description,
-                      final String imageContentType, final byte[] imageData, final String status,
-                      final LocalDateTime createdAt, final String fuelType, final Integer horsepower,
-                      final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
-                      final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-        this(id, submittedByUserId, submitterEmail, brandId, bodyTypeId, null, model, description,
-                imageContentType, imageData, status, createdAt, fuelType, horsepower, airbagCount, transmission,
-                fuelConsumption, maxSpeedKmh, priceUsd);
-    }
-
-    public CarRequest(final long id, final Long submittedByUserId, final String submitterEmail, final long brandId,
-                      final long bodyTypeId, final Integer year, final String model, final String description,
-                      final String imageContentType, final byte[] imageData, final String status,
-                      final LocalDateTime createdAt, final String fuelType, final Integer horsepower,
-                      final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
-                      final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-        this.id = id;
-        this.submittedByUserId = submittedByUserId;
-        this.submitterEmail = submitterEmail;
-        this.brandId = brandId;
-        this.bodyTypeId = bodyTypeId;
-        this.year = year;
-        this.model = model;
-        this.description = description;
-        this.imageContentType = imageContentType;
-        this.imageData = imageData;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.fuelType = fuelType;
-        this.horsepower = horsepower;
-        this.airbagCount = airbagCount;
-        this.transmission = transmission;
-        this.fuelConsumption = fuelConsumption;
-        this.maxSpeedKmh = maxSpeedKmh;
-        this.priceUsd = priceUsd;
-    }
 
     public long getId() {
         return id;
@@ -83,11 +90,15 @@ public class CarRequest implements Serializable {
     }
 
     public Long getSubmittedByUserId() {
-        return submittedByUserId;
+        return submittedByUser != null ? submittedByUser.getId() : null;
     }
 
-    public void setSubmittedByUserId(final Long submittedByUserId) {
-        this.submittedByUserId = submittedByUserId;
+    public User getSubmittedByUser() {
+        return submittedByUser;
+    }
+
+    public void setSubmittedByUser(final User submittedByUser) {
+        this.submittedByUser = submittedByUser;
     }
 
     public String getSubmitterEmail() {
@@ -99,19 +110,27 @@ public class CarRequest implements Serializable {
     }
 
     public long getBrandId() {
-        return brandId;
+        return brand != null ? brand.getId() : 0;
     }
 
-    public void setBrandId(final long brandId) {
-        this.brandId = brandId;
+    public Brand getBrand() {
+        return brand;
+    }
+
+    public void setBrand(final Brand brand) {
+        this.brand = brand;
     }
 
     public long getBodyTypeId() {
-        return bodyTypeId;
+        return bodyType != null ? bodyType.getId() : 0;
     }
 
-    public void setBodyTypeId(final long bodyTypeId) {
-        this.bodyTypeId = bodyTypeId;
+    public BodyType getBodyType() {
+        return bodyType;
+    }
+
+    public void setBodyType(final BodyType bodyType) {
+        this.bodyType = bodyType;
     }
 
     public Integer getYear() {
@@ -225,4 +244,5 @@ public class CarRequest implements Serializable {
     public void setPriceUsd(final BigDecimal priceUsd) {
         this.priceUsd = priceUsd;
     }
+
 }

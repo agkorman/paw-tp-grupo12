@@ -2,30 +2,45 @@ package ar.edu.itba.paw.model;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
+@Entity
+@Table(name = "body_type_requests")
 public class BodyTypeRequest implements Serializable {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "body_type_request_id")
     private long id;
-    private Long submittedByUserId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "submitted_by_user_id")
+    private User submittedByUser;
+
+    @Column(name = "submitter_email")
     private String submitterEmail;
+
+    @Column(name = "name")
     private String name;
+
+    @Column(name = "comments")
     private String comments;
+
+    @Column(name = "status")
     private String status;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
     public BodyTypeRequest() {}
-
-    public BodyTypeRequest(final long id, final Long submittedByUserId, final String submitterEmail,
-                           final String name, final String comments, final String status,
-                           final LocalDateTime createdAt) {
-        this.id = id;
-        this.submittedByUserId = submittedByUserId;
-        this.submitterEmail = submitterEmail;
-        this.name = name;
-        this.comments = comments;
-        this.status = status;
-        this.createdAt = createdAt;
-    }
 
     public long getId() {
         return id;
@@ -36,11 +51,15 @@ public class BodyTypeRequest implements Serializable {
     }
 
     public Long getSubmittedByUserId() {
-        return submittedByUserId;
+        return submittedByUser != null ? submittedByUser.getId() : null;
     }
 
-    public void setSubmittedByUserId(final Long submittedByUserId) {
-        this.submittedByUserId = submittedByUserId;
+    public User getSubmittedByUser() {
+        return submittedByUser;
+    }
+
+    public void setSubmittedByUser(final User submittedByUser) {
+        this.submittedByUser = submittedByUser;
     }
 
     public String getSubmitterEmail() {
@@ -82,4 +101,5 @@ public class BodyTypeRequest implements Serializable {
     public void setCreatedAt(final LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
 }

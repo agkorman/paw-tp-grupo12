@@ -7,11 +7,16 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
+import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.JpaVendorAdapter;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -33,6 +38,7 @@ import org.springframework.web.multipart.support.StandardServletMultipartResolve
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
+import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -141,8 +147,31 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public DataSourceTransactionManager transactionManager(final DataSource dataSource) {
-        return new DataSourceTransactionManager(dataSource);
+    // dataSourceInitializer must run schema.sql before Hibernate validate checks column existence
+    @DependsOn("dataSourceInitializer")
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(final DataSource dataSource) {
+        final LocalContainerEntityManagerFactoryBean factoryBean = new LocalContainerEntityManagerFactoryBean();
+        factoryBean.setPackagesToScan("ar.edu.itba.paw.model");
+        factoryBean.setDataSource(dataSource);
+        final JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+        factoryBean.setJpaVendorAdapter(vendorAdapter);
+        final Properties properties = new Properties();
+        properties.setProperty("hibernate.hbm2ddl.auto", "validate");
+        properties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL92Dialect");
+        properties.setProperty("hibernate.show_sql", "false");
+        properties.setProperty("hibernate.format_sql", "false");
+        factoryBean.setJpaProperties(properties);
+        return factoryBean;
+    }
+
+    @Bean
+    public JpaTransactionManager transactionManager(final EntityManagerFactory emf) {
+        return new JpaTransactionManager(emf);
+    }
+
+    @Bean
+    public PersistenceExceptionTranslationPostProcessor exceptionTranslation() {
+        return new PersistenceExceptionTranslationPostProcessor();
     }
 
     private DbConfig resolveDbConfig() {

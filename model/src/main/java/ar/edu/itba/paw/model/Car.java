@@ -3,72 +3,71 @@ package ar.edu.itba.paw.model;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
+@Entity
+@Table(name = "cars")
 public class Car implements Serializable {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "car_id")
     private long id;
-    private long brandId;
-    private String brandName;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
+
+    @Column(name = "model")
     private String model;
-    private long bodyTypeId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "body_type_id")
+    private BodyType bodyTypeEntity;
+
+    @Column(name = "year")
     private Integer year;
-    private String bodyType;
+
+    @Column(name = "description")
     private String description;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Transient
     private boolean hasImage;
+
+    @Column(name = "fuel_type")
     private String fuelType;
+
+    @Column(name = "horsepower")
     private Integer horsepower;
+
+    @Column(name = "airbag_count")
     private Integer airbagCount;
+
+    @Column(name = "transmission")
     private String transmission;
+
+    @Column(name = "fuel_consumption")
     private BigDecimal fuelConsumption;
+
+    @Column(name = "max_speed_kmh")
     private Integer maxSpeedKmh;
+
+    @Column(name = "price_usd")
     private BigDecimal priceUsd;
 
     public Car() {}
-
-    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
-               final String bodyType, final String description, final LocalDateTime createdAt) {
-        this(id, brandId, brandName, model, bodyTypeId, bodyType, description, createdAt, false);
-    }
-
-    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
-               final String bodyType, final String description,
-               final LocalDateTime createdAt, final boolean hasImage) {
-        this(id, brandId, brandName, model, bodyTypeId, null, bodyType, description, createdAt, hasImage,
-                null, null, null, null, null, null, null);
-    }
-
-    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
-               final String bodyType, final String description, final LocalDateTime createdAt, final boolean hasImage,
-               final String fuelType, final Integer horsepower, final Integer airbagCount, final String transmission,
-               final BigDecimal fuelConsumption, final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-        this(id, brandId, brandName, model, bodyTypeId, null, bodyType, description, createdAt, hasImage,
-                fuelType, horsepower, airbagCount, transmission, fuelConsumption, maxSpeedKmh, priceUsd);
-    }
-
-    public Car(final long id, final long brandId, final String brandName, final String model, final long bodyTypeId,
-               final Integer year, final String bodyType, final String description, final LocalDateTime createdAt,
-               final boolean hasImage, final String fuelType, final Integer horsepower,
-               final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
-               final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-        this.id = id;
-        this.brandId = brandId;
-        this.brandName = brandName;
-        this.model = model;
-        this.bodyTypeId = bodyTypeId;
-        this.year = year;
-        this.bodyType = bodyType;
-        this.description = description;
-        this.createdAt = createdAt;
-        this.hasImage = hasImage;
-        this.fuelType = fuelType;
-        this.horsepower = horsepower;
-        this.airbagCount = airbagCount;
-        this.transmission = transmission;
-        this.fuelConsumption = fuelConsumption;
-        this.maxSpeedKmh = maxSpeedKmh;
-        this.priceUsd = priceUsd;
-    }
 
     public long getId() {
         return id;
@@ -78,20 +77,20 @@ public class Car implements Serializable {
         this.id = id;
     }
 
-    public long getBrandId() {
-        return brandId;
+    public Brand getBrand() {
+        return brand;
     }
 
-    public void setBrandId(final long brandId) {
-        this.brandId = brandId;
+    public void setBrand(final Brand brand) {
+        this.brand = brand;
+    }
+
+    public long getBrandId() {
+        return brand != null ? brand.getId() : 0;
     }
 
     public String getBrandName() {
-        return brandName;
-    }
-
-    public void setBrandName(final String brandName) {
-        this.brandName = brandName;
+        return brand != null ? brand.getName() : null;
     }
 
     public String getModel() {
@@ -102,12 +101,16 @@ public class Car implements Serializable {
         this.model = model;
     }
 
-    public long getBodyTypeId() {
-        return bodyTypeId;
+    public BodyType getBodyTypeEntity() {
+        return bodyTypeEntity;
     }
 
-    public void setBodyTypeId(final long bodyTypeId) {
-        this.bodyTypeId = bodyTypeId;
+    public void setBodyTypeEntity(final BodyType bodyTypeEntity) {
+        this.bodyTypeEntity = bodyTypeEntity;
+    }
+
+    public long getBodyTypeId() {
+        return bodyTypeEntity != null ? bodyTypeEntity.getId() : 0;
     }
 
     public Integer getYear() {
@@ -119,11 +122,7 @@ public class Car implements Serializable {
     }
 
     public String getBodyType() {
-        return bodyType;
-    }
-
-    public void setBodyType(final String bodyType) {
-        this.bodyType = bodyType;
+        return bodyTypeEntity != null ? bodyTypeEntity.getName() : null;
     }
 
     public String getDescription() {
@@ -205,4 +204,5 @@ public class Car implements Serializable {
     public void setPriceUsd(final BigDecimal priceUsd) {
         this.priceUsd = priceUsd;
     }
+
 }

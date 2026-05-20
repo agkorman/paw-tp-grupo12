@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class CarJdbcDaoTest extends AbstractPersistenceTest {
+public class CarDaoTest extends AbstractPersistenceTest {
 
     @Test
     public void shouldCreateAndFindCarWithJoinedBrandAndBodyType() {
@@ -148,6 +148,7 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
         // Assertions
         assertTrue(result.isPresent());
         assertEquals("Updated Model", result.get().getModel());
+        flushAndClear();
         assertEquals("Updated Model", jdbcTemplate.queryForObject(
                 "SELECT model FROM cars WHERE car_id = ?", String.class, created.getId()
         ));
@@ -169,6 +170,7 @@ public class CarJdbcDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final boolean result = carDao.delete(created.getId());
+        flushAndClear();
 
         // Assertions
         assertTrue(result);

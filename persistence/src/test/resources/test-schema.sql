@@ -1,6 +1,7 @@
 -- Minimal HSQLDB schema for persistence tests.
 -- PostgreSQL-only full text search objects, GIN indexes, triggers, functions, and seed data are intentionally omitted.
 
+SET DATABASE SQL SYNTAX PGS TRUE;
 DROP SCHEMA PUBLIC CASCADE;
 
 -- HSQLDB does not expose PostgreSQL BTRIM; DAOs use it for email normalization.

@@ -64,7 +64,7 @@ class RecommendationControllerTest {
     private void arrangeSharedModelAndQuestions() throws Exception {
         when(brandService.findAll()).thenReturn(Collections.emptyList());
         when(bodyTypeService.findAll())
-                .thenReturn(Collections.singletonList(new BodyType(1L, "Sedan", LocalDateTime.now())));
+                .thenReturn(Collections.singletonList(TestModels.bodyType(1L, "Sedan", LocalDateTime.now())));
         when(reviewTagService.getAllGroupedBySentiment()).thenReturn(Collections.emptyMap());
         when(recommendationService.getQuestions()).thenReturn(Collections.emptyList());
         when(bodyTypeService.existsByName(anyString())).thenReturn(true);

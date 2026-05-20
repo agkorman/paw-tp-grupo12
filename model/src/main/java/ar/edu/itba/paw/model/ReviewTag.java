@@ -1,18 +1,39 @@
 package ar.edu.itba.paw.model;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "review_tags")
 public class ReviewTag implements Serializable {
 
     public static final String SENTIMENT_POSITIVE = "positive";
     public static final String SENTIMENT_NEGATIVE = "negative";
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "tag_id")
     private short id;
+
+    @Column(name = "code")
     private String code;
+
+    @Column(name = "label_es")
     private String labelEs;
+
+    @Column(name = "sentiment")
     private String sentiment;
+
+    @Column(name = "dimension")
     private String dimension;
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     public ReviewTag() {}

@@ -40,11 +40,11 @@ public class CarFavoriteServiceImplTest {
     private CarFavoriteServiceImpl carFavoriteService;
 
     private static User user() {
-        return new User(USER_ID, "joaco", "joaco@example.com", "p", "user", LocalDateTime.now());
+        return TestModels.user(USER_ID, "joaco", "joaco@example.com", "p", "user", LocalDateTime.now());
     }
 
     private static Car car(final long id) {
-        return new Car(id, 1L, "Toyota", "Corolla", 2L, "sedan", "desc", LocalDateTime.now());
+        return TestModels.car(id, 1L, "Toyota", "Corolla", 2L, "sedan", "desc", LocalDateTime.now());
     }
 
     @Test

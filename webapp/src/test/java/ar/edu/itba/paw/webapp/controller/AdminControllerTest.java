@@ -161,7 +161,7 @@ class AdminControllerTest {
     }
 
     private CarRequest pendingRequest(final long id) {
-        return new CarRequest(
+        return TestModels.carRequest(
                 id,
                 5L,
                 "sub@test.com",
@@ -276,7 +276,7 @@ class AdminControllerTest {
     void editCar_found_renderForm() throws Exception {
         // Arrange
         arrangeDashboardDefaultsSimple();
-        final Car car = new Car(
+        final Car car = TestModels.car(
                 3L,
                 1L,
                 "Toyota",
@@ -380,7 +380,7 @@ class AdminControllerTest {
     void updateCar_valid_redirectsReviews() throws Exception {
         // Arrange
         arrangeDashboardDefaultsSimple();
-        final Car car = new Car(
+        final Car car = TestModels.car(
                 42L,
                 1L,
                 "Toyota",
@@ -541,7 +541,7 @@ class AdminControllerTest {
         arrangeDashboardDefaultsSimple();
         final byte[] payload = {-1, -37, -1};
         final CarRequest request =
-                new CarRequest(
+                TestModels.carRequest(
                         700L,
                         null,
                         null,
@@ -584,7 +584,7 @@ class AdminControllerTest {
         arrangeDashboardDefaultsSimple();
         final byte[] payload = {-1, -37};
         final LocalDateTime updatedAt = LocalDateTime.of(2026, 1, 15, 8, 0);
-        final CarRequestImage img = new CarRequestImage(903L, 702L, 6, MediaType.IMAGE_JPEG_VALUE, payload, updatedAt);
+        final CarRequestImage img = TestModels.carRequestImage(903L, 702L, 6, MediaType.IMAGE_JPEG_VALUE, payload, updatedAt);
         when(carRequestService.getCarRequestImageById(eq(702L), eq(903L))).thenReturn(Optional.of(img));
         final String eTag = "\"" + img.getImageId() + "-" + img.getImageData().length + "-" + img.getUpdatedAt() + "\"";
         final MockMvc mockMvc = adminMvc();

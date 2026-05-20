@@ -39,7 +39,7 @@ public class BodyTypeRequestServiceImplTest {
     private BodyTypeRequestServiceImpl bodyTypeRequestService;
 
     private static BodyTypeRequest pendingRequest(final String name) {
-        return new BodyTypeRequest(REQUEST_ID, USER_ID, EMAIL, name, "comment",
+        return TestModels.bodyTypeRequest(REQUEST_ID, USER_ID, EMAIL, name, "comment",
                 BodyTypeRequestService.STATUS_PENDING, LocalDateTime.now());
     }
 
@@ -104,7 +104,7 @@ public class BodyTypeRequestServiceImplTest {
     public void shouldNotApprovePendingRequestWhenNameAlreadyExists() {
         // Arrange
         when(bodyTypeRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest("Sedan")));
-        when(bodyTypeDao.findByName("Sedan")).thenReturn(Optional.of(new BodyType(1L, "Sedan", LocalDateTime.now())));
+        when(bodyTypeDao.findByName("Sedan")).thenReturn(Optional.of(TestModels.bodyType(1L, "Sedan", LocalDateTime.now())));
 
         // Exercise
         final boolean result = bodyTypeRequestService.approvePendingRequest(REQUEST_ID);

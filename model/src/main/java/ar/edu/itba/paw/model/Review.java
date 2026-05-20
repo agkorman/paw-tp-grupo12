@@ -5,67 +5,90 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.PreUpdate;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
+@Entity
+@Table(name = "reviews")
 public class Review implements Serializable {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "review_id")
     private long id;
-    private Long userId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Column(name = "reviewer_email")
     private String reviewerEmail;
-    private String reviewerUsername;
-    private long carId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "car_id")
+    private Car car;
+
+    @Column(name = "rating")
     private BigDecimal rating;
+
+    @Column(name = "title")
     private String title;
+
+    @Column(name = "body")
     private String body;
+
+    @Column(name = "ownership_status")
     private String ownershipStatus;
+
+    @Column(name = "model_year")
     private Integer modelYear;
+
+    @Column(name = "mileage_km")
     private Integer mileageKm;
+
+    @Column(name = "would_recommend")
     private Boolean wouldRecommend;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", insertable = false)
     private LocalDateTime updatedAt;
+
+    @Transient
     private List<ReviewTag> tags = new ArrayList<>();
 
     public Review() {}
 
-    public Review(long id, Long userId, String reviewerEmail, long carId, BigDecimal rating, String title, String body,
-                  String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
-                  LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this(id, userId, reviewerEmail, null, carId, rating, title, body, ownershipStatus, modelYear, mileageKm,
-                wouldRecommend, createdAt, updatedAt);
-    }
-
-    public Review(long id, Long userId, String reviewerEmail, String reviewerUsername, long carId, BigDecimal rating,
-                  String title, String body, String ownershipStatus, Integer modelYear, Integer mileageKm,
-                  Boolean wouldRecommend, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
-        this.userId = userId;
-        this.reviewerEmail = reviewerEmail;
-        this.reviewerUsername = reviewerUsername;
-        this.carId = carId;
-        this.rating = rating;
-        this.title = title;
-        this.body = body;
-        this.ownershipStatus = ownershipStatus;
-        this.modelYear = modelYear;
-        this.mileageKm = mileageKm;
-        this.wouldRecommend = wouldRecommend;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
+    public Long getUserId() {
+        return user != null ? user.getId() : null;
+    }
     public String getReviewerEmail() { return reviewerEmail; }
     public void setReviewerEmail(String reviewerEmail) { this.reviewerEmail = reviewerEmail; }
 
-    public String getReviewerUsername() { return reviewerUsername; }
-    public void setReviewerUsername(String reviewerUsername) { this.reviewerUsername = reviewerUsername; }
+    public String getReviewerUsername() {
+        return user != null ? user.getUsername() : null;
+    }
 
-    public long getCarId() { return carId; }
-    public void setCarId(long carId) { this.carId = carId; }
+    public long getCarId() { return car != null ? car.getId() : 0; }
+
+    public Car getCar() { return car; }
+    public void setCar(Car car) { this.car = car; }
 
     public BigDecimal getRating() { return rating; }
     public void setRating(BigDecimal rating) { this.rating = rating; }
@@ -96,4 +119,10 @@ public class Review implements Serializable {
 
     public List<ReviewTag> getTags() { return tags; }
     public void setTags(List<ReviewTag> tags) { this.tags = tags == null ? new ArrayList<>() : tags; }
+
+    @PreUpdate
+    private void touchUpdatedAt() {
+        updatedAt = LocalDateTime.now();
+    }
+
 }

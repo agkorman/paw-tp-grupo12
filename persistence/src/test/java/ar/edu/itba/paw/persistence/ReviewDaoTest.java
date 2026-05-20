@@ -14,7 +14,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
+public class ReviewDaoTest extends AbstractPersistenceTest {
 
     @Test
     public void shouldCreateReviewAndAttachReviewerUsernameWhenFindingById() {
@@ -148,6 +148,7 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
         // Assertions
         assertTrue(result.isPresent());
         assertEquals("Updated title", result.get().getTitle());
+        flushAndClear();
         assertEquals("Updated title", jdbcTemplate.queryForObject(
                 "SELECT title FROM reviews WHERE review_id = ?", String.class, review.getId()
         ));
@@ -197,6 +198,7 @@ public class ReviewJdbcDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final boolean result = reviewDao.delete(deleted.getId());
+        flushAndClear();
 
         // Assertions
         assertTrue(result);

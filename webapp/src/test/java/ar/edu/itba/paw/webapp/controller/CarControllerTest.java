@@ -428,7 +428,7 @@ class CarControllerTest {
         stubCarFormValidationPartners();
 
         final CarRequest created =
-                new CarRequest(42L, 1L, "driver@test.com", 1L, 1L, 2020, "Corolla", "desc", null,
+                TestModels.carRequest(42L, 1L, "driver@test.com", 1L, 1L, 2020, "Corolla", "desc", null,
                         null, "pending", LocalDateTime.now(), CarSearchCriteria.FUEL_TYPE_COMBUSTION, 120,
                         6, CarSearchCriteria.TRANSMISSION_AUTOMATIC, BigDecimal.valueOf(8.5), 200, null);
 
@@ -449,7 +449,7 @@ class CarControllerTest {
 
     private static Car aCar(final long id) {
         final LocalDateTime now = LocalDateTime.now();
-        return new Car(id, 1L, "Toyota", "Corolla", 1L, 2024, "Sedan",
+        return TestModels.car(id, 1L, "Toyota", "Corolla", 1L, 2024, "Sedan",
                 "desc", now, false, CarSearchCriteria.FUEL_TYPE_COMBUSTION, 120,
                 6, CarSearchCriteria.TRANSMISSION_AUTOMATIC, BigDecimal.valueOf(8),
                 200, BigDecimal.valueOf(25000));
@@ -459,7 +459,7 @@ class CarControllerTest {
         final LocalDateTime updatedAt = LocalDateTime.of(2026, 1, 2, 12, 0);
         final byte[] data =
                 new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xDA, 0x01};
-        return new CarImage(1L, carId, 0, MediaType.IMAGE_JPEG_VALUE, data, updatedAt);
+        return TestModels.carImage(1L, carId, 0, MediaType.IMAGE_JPEG_VALUE, data, updatedAt);
     }
 
     private static Brand brand(final String name, final long id) {

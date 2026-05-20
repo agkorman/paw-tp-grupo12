@@ -9,7 +9,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class UserFollowJdbcDaoTest extends AbstractPersistenceTest {
+public class UserFollowDaoTest extends AbstractPersistenceTest {
 
     @Test
     public void shouldPaginateFollowersWithEightPerPage() {

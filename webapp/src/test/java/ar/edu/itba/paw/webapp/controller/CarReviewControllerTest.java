@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
@@ -509,7 +510,7 @@ class CarReviewControllerTest {
     }
 
     private static Car aCar(final long carId) {
-        return new Car(carId, 1L, "Toyota", "Corolla", 1L, 2024, "Sedan",
+        return TestModels.car(carId, 1L, "Toyota", "Corolla", 1L, 2024, "Sedan",
                 "desc", LocalDateTime.now(), false,
                 ar.edu.itba.paw.model.CarSearchCriteria.FUEL_TYPE_COMBUSTION, 140,
                 6, ar.edu.itba.paw.model.CarSearchCriteria.TRANSMISSION_AUTOMATIC,
@@ -518,9 +519,13 @@ class CarReviewControllerTest {
 
     private static Review reviewOwnedBy(final long reviewId, final long carId) {
         final Review r = new Review();
+        final User user = new User();
+        final Car car = new Car();
         r.setId(reviewId);
-        r.setUserId(1L);
-        r.setCarId(carId);
+        user.setId(1L);
+        r.setUser(user);
+        car.setId(carId);
+        r.setCar(car);
         r.setRating(new BigDecimal("4.5"));
         r.setTitle("t");
         r.setBody("b");

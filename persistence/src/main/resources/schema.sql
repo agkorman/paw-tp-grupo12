@@ -645,3 +645,87 @@ INSERT INTO review_tags (code, label_es, sentiment, dimension) VALUES
     ('noisy_cabin',           'Mucho ruido interior',   'negative', 'cabin_noise'),
     ('poor_tech',             'Tecnología pobre',       'negative', 'tech')
 ON CONFLICT (code) DO NOTHING;
+
+-- ============================================================
+-- Column type migrations: widen INT/SMALLINT → BIGINT so that
+-- Hibernate schema validation passes (Java `long` maps to int8).
+-- All steps are idempotent: DROP IF EXISTS + ADD, and widening
+-- an already-BIGINT column is a no-op in PostgreSQL. Keep this
+-- block transactional so FK drops are rolled back if any later
+-- statement fails.
+-- ============================================================
+
+BEGIN;
+
+-- ---- users.user_id (SERIAL=int4 → BIGINT) -------------------
+ALTER TABLE user_follows         DROP CONSTRAINT IF EXISTS user_follows_follower_id_fkey;
+ALTER TABLE user_follows         DROP CONSTRAINT IF EXISTS user_follows_followed_id_fkey;
+ALTER TABLE car_favorites        DROP CONSTRAINT IF EXISTS car_favorites_user_id_fkey;
+ALTER TABLE car_requests         DROP CONSTRAINT IF EXISTS car_requests_submitted_by_user_id_fkey;
+ALTER TABLE admin_requests       DROP CONSTRAINT IF EXISTS admin_requests_submitted_by_user_id_fkey;
+ALTER TABLE reviews              DROP CONSTRAINT IF EXISTS reviews_user_id_fkey;
+ALTER TABLE review_replies       DROP CONSTRAINT IF EXISTS review_replies_user_id_fkey;
+ALTER TABLE review_likes         DROP CONSTRAINT IF EXISTS review_likes_user_id_fkey;
+ALTER TABLE review_reply_likes   DROP CONSTRAINT IF EXISTS review_reply_likes_user_id_fkey;
+ALTER TABLE brand_requests       DROP CONSTRAINT IF EXISTS brand_requests_submitted_by_user_id_fkey;
+ALTER TABLE body_type_requests   DROP CONSTRAINT IF EXISTS body_type_requests_submitted_by_user_id_fkey;
+
+ALTER TABLE users                ALTER COLUMN user_id              TYPE BIGINT;
+ALTER TABLE user_follows         ALTER COLUMN follower_id          TYPE BIGINT;
+ALTER TABLE user_follows         ALTER COLUMN followed_id          TYPE BIGINT;
+ALTER TABLE car_favorites        ALTER COLUMN user_id              TYPE BIGINT;
+ALTER TABLE car_requests         ALTER COLUMN submitted_by_user_id TYPE BIGINT;
+ALTER TABLE admin_requests       ALTER COLUMN submitted_by_user_id TYPE BIGINT;
+ALTER TABLE reviews              ALTER COLUMN user_id              TYPE BIGINT;
+ALTER TABLE review_replies       ALTER COLUMN user_id              TYPE BIGINT;
+ALTER TABLE review_likes         ALTER COLUMN user_id              TYPE BIGINT;
+ALTER TABLE review_reply_likes   ALTER COLUMN user_id              TYPE BIGINT;
+ALTER TABLE brand_requests       ALTER COLUMN submitted_by_user_id TYPE BIGINT;
+ALTER TABLE body_type_requests   ALTER COLUMN submitted_by_user_id TYPE BIGINT;
+
+ALTER TABLE user_follows       ADD CONSTRAINT user_follows_follower_id_fkey                    FOREIGN KEY (follower_id)          REFERENCES users(user_id) ON DELETE CASCADE;
+ALTER TABLE user_follows       ADD CONSTRAINT user_follows_followed_id_fkey                    FOREIGN KEY (followed_id)          REFERENCES users(user_id) ON DELETE CASCADE;
+ALTER TABLE car_favorites      ADD CONSTRAINT car_favorites_user_id_fkey                       FOREIGN KEY (user_id)              REFERENCES users(user_id) ON DELETE CASCADE;
+ALTER TABLE car_requests       ADD CONSTRAINT car_requests_submitted_by_user_id_fkey           FOREIGN KEY (submitted_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL;
+ALTER TABLE admin_requests     ADD CONSTRAINT admin_requests_submitted_by_user_id_fkey         FOREIGN KEY (submitted_by_user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+ALTER TABLE reviews            ADD CONSTRAINT reviews_user_id_fkey                             FOREIGN KEY (user_id)              REFERENCES users(user_id);
+ALTER TABLE review_replies     ADD CONSTRAINT review_replies_user_id_fkey                      FOREIGN KEY (user_id)              REFERENCES users(user_id);
+ALTER TABLE review_likes       ADD CONSTRAINT review_likes_user_id_fkey                        FOREIGN KEY (user_id)              REFERENCES users(user_id) ON DELETE CASCADE;
+ALTER TABLE review_reply_likes ADD CONSTRAINT review_reply_likes_user_id_fkey                  FOREIGN KEY (user_id)              REFERENCES users(user_id) ON DELETE CASCADE;
+ALTER TABLE brand_requests     ADD CONSTRAINT brand_requests_submitted_by_user_id_fkey         FOREIGN KEY (submitted_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL;
+ALTER TABLE body_type_requests ADD CONSTRAINT body_type_requests_submitted_by_user_id_fkey     FOREIGN KEY (submitted_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL;
+
+-- ---- body_types.body_type_id (SMALLSERIAL=int2 → BIGINT) -----
+ALTER TABLE cars         DROP CONSTRAINT IF EXISTS cars_body_type_id_fkey;
+ALTER TABLE car_requests DROP CONSTRAINT IF EXISTS car_requests_body_type_id_fkey;
+
+ALTER TABLE body_types   ALTER COLUMN body_type_id TYPE BIGINT;
+ALTER TABLE cars         ALTER COLUMN body_type_id TYPE BIGINT;
+ALTER TABLE car_requests ALTER COLUMN body_type_id TYPE BIGINT;
+
+ALTER TABLE cars         ADD CONSTRAINT cars_body_type_id_fkey         FOREIGN KEY (body_type_id) REFERENCES body_types(body_type_id) ON DELETE RESTRICT;
+ALTER TABLE car_requests ADD CONSTRAINT car_requests_body_type_id_fkey FOREIGN KEY (body_type_id) REFERENCES body_types(body_type_id) ON DELETE RESTRICT;
+
+-- ---- reviews.review_id (SERIAL=int4 → BIGINT) ----------------
+ALTER TABLE review_replies         DROP CONSTRAINT IF EXISTS review_replies_review_id_fkey;
+ALTER TABLE review_likes           DROP CONSTRAINT IF EXISTS review_likes_review_id_fkey;
+ALTER TABLE review_tag_assignments DROP CONSTRAINT IF EXISTS review_tag_assignments_review_id_fkey;
+
+ALTER TABLE reviews                ALTER COLUMN review_id TYPE BIGINT;
+ALTER TABLE review_replies         ALTER COLUMN review_id TYPE BIGINT;
+ALTER TABLE review_likes           ALTER COLUMN review_id TYPE BIGINT;
+ALTER TABLE review_tag_assignments ALTER COLUMN review_id TYPE BIGINT;
+
+ALTER TABLE review_replies         ADD CONSTRAINT review_replies_review_id_fkey         FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE;
+ALTER TABLE review_likes           ADD CONSTRAINT review_likes_review_id_fkey           FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE;
+ALTER TABLE review_tag_assignments ADD CONSTRAINT review_tag_assignments_review_id_fkey FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE;
+
+-- ---- review_replies.reply_id (SERIAL=int4 → BIGINT) ----------
+ALTER TABLE review_reply_likes DROP CONSTRAINT IF EXISTS review_reply_likes_reply_id_fkey;
+
+ALTER TABLE review_replies     ALTER COLUMN reply_id TYPE BIGINT;
+ALTER TABLE review_reply_likes ALTER COLUMN reply_id TYPE BIGINT;
+
+ALTER TABLE review_reply_likes ADD CONSTRAINT review_reply_likes_reply_id_fkey FOREIGN KEY (reply_id) REFERENCES review_replies(reply_id) ON DELETE CASCADE;
+
+COMMIT;

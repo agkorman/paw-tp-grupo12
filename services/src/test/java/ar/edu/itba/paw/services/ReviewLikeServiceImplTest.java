@@ -50,17 +50,17 @@ public class ReviewLikeServiceImplTest {
     private ReviewLikeServiceImpl reviewLikeService;
 
     private static Review review() {
-        return new Review(REVIEW_ID, USER_ID, "u@x.com", 1L, new BigDecimal("4.0"),
+        return TestModels.review(REVIEW_ID, USER_ID, "u@x.com", 1L, new BigDecimal("4.0"),
                 "title", "body", null, null, null, true, LocalDateTime.now(), LocalDateTime.now());
     }
 
     private static ReviewReply reply() {
-        return new ReviewReply(REPLY_ID, REVIEW_ID, USER_ID, "u", "body",
+        return TestModels.reviewReply(REPLY_ID, REVIEW_ID, USER_ID, "u", "body",
                 LocalDateTime.now(), LocalDateTime.now());
     }
 
     private static User user() {
-        return new User(USER_ID, "u", "u@x.com", "p", "user", LocalDateTime.now());
+        return TestModels.user(USER_ID, "u", "u@x.com", "p", "user", LocalDateTime.now());
     }
 
     @Test

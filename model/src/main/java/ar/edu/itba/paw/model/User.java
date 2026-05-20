@@ -1,34 +1,42 @@
 package ar.edu.itba.paw.model;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "users")
 public class User implements Serializable {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private long id;
+
+    @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
+
+    @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
+
+    @Column(name = "password", nullable = false, length = 255)
     private String password;
+
+    @Column(name = "role", nullable = false, length = 20)
     private String role;
+
+    @Column(name = "preferred_locale", nullable = false, length = 10)
     private String preferredLocale;
+
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     public User() {}
-
-    public User(long id, String username, String email, String password, String role, LocalDateTime createdAt) {
-        this(id, username, email, password, role, "es", createdAt);
-    }
-
-    public User(long id, String username, String email, String password, String role, String preferredLocale,
-                LocalDateTime createdAt) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.role = role;
-        this.preferredLocale = preferredLocale;
-        this.createdAt = createdAt;
-    }
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }

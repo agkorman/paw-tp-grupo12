@@ -32,7 +32,7 @@ public class BodyTypeServiceImplTest {
     private BodyTypeServiceImpl bodyTypeService;
 
     private static BodyType bodyType() {
-        return new BodyType(BODY_TYPE_ID, "Sedan", LocalDateTime.now());
+        return TestModels.bodyType(BODY_TYPE_ID, "Sedan", LocalDateTime.now());
     }
 
     @Test

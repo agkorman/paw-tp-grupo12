@@ -39,7 +39,7 @@ public class ReviewServiceImplTest {
     private ReviewServiceImpl reviewService;
 
     private static Review review(final String title) {
-        return new Review(REVIEW_ID, USER_ID, "u@example.com", CAR_ID, new BigDecimal("4.5"),
+        return TestModels.review(REVIEW_ID, USER_ID, "u@example.com", CAR_ID, new BigDecimal("4.5"),
                 title, "Body", "owner", 2026, 1000, true, LocalDateTime.now(), LocalDateTime.now());
     }
 

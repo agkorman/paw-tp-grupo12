@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
+public class ReviewInteractionDaoTest extends AbstractPersistenceTest {
 
     @Test
     public void shouldCreateReplyAndFindItByReviewId() {
@@ -44,6 +44,7 @@ public class ReviewInteractionJdbcDaoTest extends AbstractPersistenceTest {
         final boolean result = reviewReplyDao.delete(reply.getId());
 
         // Assertions
+        flushAndClear();
         assertTrue(result);
         assertEquals(0, countRows("SELECT COUNT(*) FROM review_replies WHERE reply_id = ?", reply.getId()));
         assertEquals(0, countRows("SELECT COUNT(*) FROM review_replies WHERE review_id = ?", review.getId()));

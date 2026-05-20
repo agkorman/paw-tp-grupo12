@@ -1,21 +1,30 @@
 package ar.edu.itba.paw.model;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "brands")
 public class Brand implements Serializable {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "brand_id")
     private long id;
+
+    @Column(name = "name")
     private String name;
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     public Brand() {}
-
-    public Brand(long id, String name, LocalDateTime createdAt) {
-        this.id = id;
-        this.name = name;
-        this.createdAt = createdAt;
-    }
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
