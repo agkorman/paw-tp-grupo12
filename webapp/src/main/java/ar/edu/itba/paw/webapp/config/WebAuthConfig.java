@@ -50,11 +50,18 @@ public class WebAuthConfig {
                         .requestMatchers(antMatcher("/error/**"))
                             .permitAll()
                         .requestMatchers(
+                                antMatcher(HttpMethod.GET, "/communities/new"),
+                                antMatcher(HttpMethod.GET, "/communities/*/submit"))
+                            .authenticated()
+                        .requestMatchers(
                                 antMatcher(HttpMethod.GET, "/"),
                                 antMatcher(HttpMethod.GET, "/cars"),
                                 antMatcher(HttpMethod.GET, "/cars/recommend"),
                                 antMatcher(HttpMethod.GET, "/cars/recommend/results"),
                                 antMatcher(HttpMethod.GET, "/activity"),
+                                antMatcher(HttpMethod.GET, "/communities"),
+                                antMatcher(HttpMethod.GET, "/communities/*"),
+                                antMatcher(HttpMethod.GET, "/communities/*/posts/*"),
                                 antMatcher(HttpMethod.GET, "/reviews/car/*"),
                                 antMatcher(HttpMethod.GET, "/car-image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/image"),
