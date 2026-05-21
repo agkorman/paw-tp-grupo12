@@ -128,13 +128,20 @@
                             </div>
                         </div>
                         <c:if test="${not empty review.images}">
-                            <div class="review-images-row">
-                                <c:forEach var="reviewImg" items="${review.images}">
-                                    <a href="<c:url value='/reviews/${review.id}/images/${reviewImg.imageId}'/>" target="_blank" rel="noopener">
+                            <c:set var="reviewImageUrlsCsv" value=""/>
+                            <c:forEach var="urlImg" items="${review.images}" varStatus="urlStatus">
+                                <c:url var="oneUrl" value="/reviews/${review.id}/images/${urlImg.imageId}"/>
+                                <c:set var="reviewImageUrlsCsv" value="${reviewImageUrlsCsv}${urlStatus.first ? '' : '|'}${oneUrl}"/>
+                            </c:forEach>
+                            <div class="review-images-row" data-review-image-urls="${fn:escapeXml(reviewImageUrlsCsv)}">
+                                <c:forEach var="reviewImg" items="${review.images}" varStatus="thumbStatus">
+                                    <button type="button" class="review-image-thumb-button"
+                                            data-review-image-index="${thumbStatus.index}"
+                                            aria-label="<spring:message code='review.image.alt'/>">
                                         <img src="<c:url value='/reviews/${review.id}/images/${reviewImg.imageId}'/>"
                                              alt="<spring:message code='review.image.alt'/>"
                                              class="review-image-thumb"/>
-                                    </a>
+                                    </button>
                                 </c:forEach>
                             </div>
                         </c:if>
@@ -239,3 +246,25 @@
         </c:otherwise>
     </c:choose>
 </section>
+
+<spring:message var="lightboxPrevLabel" code="cars.image.previous"/>
+<spring:message var="lightboxNextLabel" code="cars.image.next"/>
+<spring:message var="lightboxCloseLabel" code="common.action.close"/>
+<div id="reviewImageLightbox" class="review-image-lightbox" hidden aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="review-image-lightbox-backdrop" data-lightbox-close></div>
+    <div class="review-image-lightbox-stage">
+        <button type="button" class="review-image-lightbox-close" data-lightbox-close
+                aria-label="${fn:escapeXml(lightboxCloseLabel)}">×</button>
+        <button type="button" class="review-image-lightbox-nav review-image-lightbox-prev" data-lightbox-prev
+                aria-label="${fn:escapeXml(lightboxPrevLabel)}">
+            <pa:icon name="chevron-left" size="24"/>
+        </button>
+        <img class="review-image-lightbox-img" data-lightbox-img alt="">
+        <button type="button" class="review-image-lightbox-nav review-image-lightbox-next" data-lightbox-next
+                aria-label="${fn:escapeXml(lightboxNextLabel)}">
+            <pa:icon name="chevron-right" size="24"/>
+        </button>
+        <span class="review-image-lightbox-count" data-lightbox-count>1 / 1</span>
+    </div>
+</div>
+<pa:script src="/js/reviews/review-image-lightbox.js" defer="true"/>
