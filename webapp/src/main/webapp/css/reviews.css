@@ -622,8 +622,8 @@
 }
 
 .review-image-thumb {
-    width: 96px;
-    height: 96px;
+    width: 192px;
+    height: 192px;
     object-fit: cover;
     border-radius: 6px;
     border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
@@ -645,8 +645,8 @@
 }
 
 .review-form-existing-image-thumb {
-    width: 96px;
-    height: 96px;
+    width: 192px;
+    height: 192px;
     object-fit: cover;
     border-radius: 6px;
     border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
