@@ -221,6 +221,7 @@
 
     <pa:script src="/js/reviews/review-form.js"/>
     <pa:script src="/js/reviews/review-tag-chips.js" defer="true"/>
+    <pa:script src="/js/reviews/review-image-upload.js" defer="true"/>
     <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:footer/>
 </body>
