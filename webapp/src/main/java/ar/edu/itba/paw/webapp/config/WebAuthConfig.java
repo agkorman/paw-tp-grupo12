@@ -60,6 +60,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.GET, "/cars/*/image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/images/*"),
                                 antMatcher(HttpMethod.GET, "/profiles/*"),
+                                antMatcher(HttpMethod.GET, "/users/search"),
                                 antMatcher(HttpMethod.GET, "/login"),
                                 antMatcher(HttpMethod.GET, "/register"))
                             .permitAll()

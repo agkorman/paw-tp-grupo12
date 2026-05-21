@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.EmailRecipient;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
@@ -147,6 +149,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAllUsers() {
         return userDao.findAll();
+    }
+
+    @Override
+    public Page<User> searchUsers(final String query, final int page) {
+        final String normalizedQuery = StringUtils.normalize(query);
+        if (normalizedQuery == null) {
+            return Page.empty(Pagination.DEFAULT_PAGE, Pagination.USERS_PAGE_SIZE);
+        }
+        return userDao.searchByQuery(normalizedQuery, Pagination.normalizePage(page), Pagination.USERS_PAGE_SIZE);
     }
 
     private String normalizeEmail(final String value) {
