@@ -677,3 +677,15 @@
 .car-image-upload-thumb-remove:hover {
     background: var(--error, #c62828);
 }
+
+#reviewImagePreview {
+    width: 192px;
+    height: 192px;
+    min-height: 0;
+    aspect-ratio: 1 / 1;
+    grid-column: auto;
+}
+
+#reviewImagePreview img {
+    object-fit: cover;
+}
