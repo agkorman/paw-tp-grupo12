@@ -48,6 +48,9 @@
                     <p class="users-search-count">
                         <spring:message code="users.search.count" arguments="${totalItems}"/>
                     </p>
+                    <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
+                    <spring:message var="followLabel" code="common.label.follow"/>
+                    <spring:message var="followingLabel" code="common.label.following"/>
                     <ul class="users-search-list">
                         <c:forEach items="${results}" var="u">
                             <li class="users-search-item">
@@ -61,6 +64,38 @@
                                         <span class="users-search-email"><c:out value="${u.email}"/></span>
                                     </span>
                                 </a>
+                                <c:if test="${empty currentUserId or currentUserId ne u.id}">
+                                    <c:set var="isFollowing" value="${followedIds.contains(u.id)}"/>
+                                    <c:choose>
+                                        <c:when test="${authenticated}">
+                                            <form class="users-search-follow-form"
+                                                  method="post"
+                                                  action="<c:url value='/users/${u.id}/follow'/>">
+                                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                                <c:if test="${not empty query}">
+                                                    <input type="hidden" name="q" value="<c:out value='${query}'/>">
+                                                </c:if>
+                                                <input type="hidden" name="page" value="${currentPage}">
+                                                <button type="submit"
+                                                        class="users-search-follow-button ${isFollowing ? 'is-following' : ''}"
+                                                        aria-pressed="${isFollowing}">
+                                                    <c:choose>
+                                                        <c:when test="${isFollowing}"><c:out value="${followingLabel}"/></c:when>
+                                                        <c:otherwise><c:out value="${followLabel}"/></c:otherwise>
+                                                    </c:choose>
+                                                </button>
+                                            </form>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <c:url var="followLoginUrl" value="/login">
+                                                <c:param name="redirect" value="/users/search"/>
+                                            </c:url>
+                                            <a href="${followLoginUrl}" class="users-search-follow-button">
+                                                <c:out value="${followLabel}"/>
+                                            </a>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </c:if>
                             </li>
                         </c:forEach>
                     </ul>
