@@ -861,48 +861,4 @@ VALUES
     ('daily')
 ON CONFLICT ((LOWER(BTRIM(code)))) DO NOTHING;
 
-INSERT INTO communities (slug, name, description)
-VALUES
-    ('classics', 'Classics', 'Pre-1990 cars in Argentina, from garage-kept survivors to honest restoration projects.'),
-    ('daily-drivers', 'Daily Drivers', 'Useful, durable, and unglamorous in all the right ways.'),
-    ('ev-curious', 'EV Curious', 'Charging, range, daily use, and what the shift away from combustion really feels like.'),
-    ('jdm-heads', 'JDM Heads', 'Island-born icons, boost chatter, homologation specials, and the culture around them.'),
-    ('off-road', 'Off-road', 'Low range, mud, gravel, and the compromises that come with leaving pavement behind.'),
-    ('rally-bred', 'Rally-bred', 'Turbo four-cylinders, gravel lineage, and the sedans and hatches that wear it proudly.')
-ON CONFLICT ((LOWER(BTRIM(slug)))) DO UPDATE
-SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description;
-
-INSERT INTO community_topic_assignments (community_id, topic_id)
-SELECT
-    c.community_id,
-    t.topic_id
-FROM (
-    VALUES
-        ('classics', 'classics'),
-        ('classics', 'photography'),
-        ('classics', 'repairs'),
-        ('daily-drivers', 'buying'),
-        ('daily-drivers', 'daily'),
-        ('daily-drivers', 'reviews'),
-        ('ev-curious', 'buying'),
-        ('ev-curious', 'daily'),
-        ('ev-curious', 'electric'),
-        ('jdm-heads', 'brands'),
-        ('jdm-heads', 'jdm'),
-        ('jdm-heads', 'motorsport'),
-        ('off-road', 'local'),
-        ('off-road', 'offroad'),
-        ('off-road', 'repairs'),
-        ('rally-bred', 'brands'),
-        ('rally-bred', 'motorsport'),
-        ('rally-bred', 'photography')
-) AS seed(community_slug, topic_code)
-JOIN communities c
-    ON LOWER(BTRIM(c.slug)) = LOWER(BTRIM(seed.community_slug))
-JOIN community_topics t
-    ON LOWER(BTRIM(t.code)) = LOWER(BTRIM(seed.topic_code))
-ON CONFLICT (community_id, topic_id) DO NOTHING;
-
 COMMIT;
