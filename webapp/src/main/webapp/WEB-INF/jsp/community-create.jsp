@@ -1,17 +1,20 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="communities.create.title" styles="/css/communities.css"/>
+<pa:page-head titleCode="communities.create.title" styles="/css/community-create.css|/css/communities-responsive.css|/css/review-tags.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:url var="communitiesHubUrl" value="/communities"/>
-    <spring:message var="communityCreateNameValue" code="communities.create.sample.name"/>
-    <spring:message var="communityCreateDescriptionValue" code="communities.create.sample.description"/>
-    <spring:message var="communityCreatePreviewHandle" code="communities.create.preview.handle"/>
-    <spring:message var="communityAvatarMark" code="communities.hero.avatarMark"/>
+    <c:url var="communitiesCreateUrl" value="/communities"/>
+    <spring:message var="jsMsgRequiredGeneric" code="js.form.required.generic"/>
+    <spring:message var="jsMsgRequiredCommunityName" code="js.community.required.name"/>
+    <spring:message var="jsMsgRequiredCommunityDescription" code="js.community.required.description"/>
+    <spring:message var="jsMsgRequiredCommunityTopics" code="js.community.required.topics"/>
     <main class="community-create-page">
         <section class="community-create-intro">
             <p class="community-create-kicker"><spring:message code="communities.create.kicker"/></p>
@@ -19,79 +22,69 @@
             <p><spring:message code="communities.create.description"/></p>
         </section>
 
-        <form class="community-create-layout" novalidate="novalidate">
+        <form:form id="communityCreateForm"
+                   cssClass="community-create-layout community-create-form"
+                   modelAttribute="communityForm"
+                   method="post"
+                   action="${fn:escapeXml(communitiesCreateUrl)}"
+                   data-submit-lock="true"
+                   data-msg-required-generic="${fn:escapeXml(jsMsgRequiredGeneric)}"
+                   data-msg-required-community-create-name="${fn:escapeXml(jsMsgRequiredCommunityName)}"
+                   data-msg-required-community-create-description="${fn:escapeXml(jsMsgRequiredCommunityDescription)}"
+                   data-msg-topics-required="${fn:escapeXml(jsMsgRequiredCommunityTopics)}"
+                   novalidate="novalidate">
+            <form:errors cssClass="alert alert-error" element="div"/>
             <section class="community-create-panel">
                 <div class="community-create-section">
                     <div class="community-create-section-head">
                         <h2><spring:message code="communities.create.topic.title"/></h2>
                         <p><spring:message code="communities.create.topic.description"/></p>
                     </div>
-                    <div class="community-topic-grid">
-                        <span class="community-topic-chip is-selected"><spring:message code="communities.create.topic.classics"/></span>
-                        <span class="community-topic-chip"><spring:message code="communities.create.topic.brands"/></span>
-                        <span class="community-topic-chip"><spring:message code="communities.create.topic.jdm"/></span>
-                        <span class="community-topic-chip"><spring:message code="communities.create.topic.electric"/></span>
-                        <span class="community-topic-chip"><spring:message code="communities.create.topic.motorsport"/></span>
-                        <span class="community-topic-chip"><spring:message code="communities.create.topic.offroad"/></span>
-                        <span class="community-topic-chip"><spring:message code="communities.create.topic.repairs"/></span>
-                        <span class="community-topic-chip"><spring:message code="communities.create.topic.reviews"/></span>
-                        <span class="community-topic-chip"><spring:message code="communities.create.topic.buying"/></span>
-                        <span class="community-topic-chip"><spring:message code="communities.create.topic.local"/></span>
-                        <span class="community-topic-chip"><spring:message code="communities.create.topic.photography"/></span>
-                        <span class="community-topic-chip"><spring:message code="communities.create.topic.daily"/></span>
-                    </div>
+                    <pa:community-topic-chips topics="${communityTopics}" selectedTopicIds="${communityForm.selectedTopicIds}"/>
+                    <form:errors path="selectedTopicIds" cssClass="form-error" element="span"/>
                 </div>
 
-                <div class="community-create-section community-create-details-grid">
+                <div class="community-create-section">
                     <div class="community-create-fields">
                         <div class="community-create-field">
                             <label for="communityCreateName"><spring:message code="communities.create.field.name"/></label>
-                            <input id="communityCreateName"
-                                   type="text"
-                                   maxlength="21"
-                                   value="${communityCreateNameValue}"
-                                   aria-describedby="communityCreateNameHelp">
+                            <form:input id="communityCreateName"
+                                        path="name"
+                                        type="text"
+                                        maxlength="21"
+                                        required="required"
+                                        aria-describedby="communityCreateNameHelp"/>
                             <div class="community-create-field-meta">
                                 <span id="communityCreateNameHelp"><spring:message code="communities.create.field.name.help"/></span>
-                                <span>14/21</span>
                             </div>
+                            <form:errors path="name" cssClass="form-error" element="span"/>
                         </div>
 
                         <div class="community-create-field">
                             <label for="communityCreateDescription"><spring:message code="communities.create.field.description"/></label>
-                            <textarea id="communityCreateDescription"
-                                      rows="6"
-                                      maxlength="180"><c:out value="${communityCreateDescriptionValue}"/></textarea>
+                            <form:textarea id="communityCreateDescription"
+                                           path="description"
+                                           rows="6"
+                                           maxlength="180"
+                                           required="required"/>
                             <div class="community-create-field-meta">
                                 <span><spring:message code="communities.create.field.description.help"/></span>
-                                <span>88/180</span>
                             </div>
+                            <form:errors path="description" cssClass="form-error" element="span"/>
                         </div>
                     </div>
-
-                    <aside class="community-create-preview">
-                        <p class="community-create-preview-label"><spring:message code="communities.create.preview.label"/></p>
-                        <article class="community-create-preview-card">
-                            <div class="community-create-preview-banner"></div>
-                            <div class="community-create-preview-body">
-                                <div class="community-create-preview-avatar"><c:out value="${communityAvatarMark}"/></div>
-                                <div>
-                                    <h3><c:out value="${communityCreatePreviewHandle}"/></h3>
-                                    <p><spring:message code="communities.create.preview.meta"/></p>
-                                </div>
-                            </div>
-                            <p class="community-create-preview-description"><spring:message code="communities.create.preview.description"/></p>
-                        </article>
-                    </aside>
                 </div>
             </section>
 
             <div class="community-create-actions">
-                <a class="btn-secondary" href="${communitiesHubUrl}"><spring:message code="common.action.cancel"/></a>
+                <a class="btn-secondary" href="${fn:escapeXml(communitiesHubUrl)}"><spring:message code="common.action.cancel"/></a>
                 <button type="submit" class="btn-primary"><spring:message code="communities.create.submit"/></button>
             </div>
-        </form>
+        </form:form>
     </main>
+    <pa:script src="/js/communities/community-topic-chips.js" defer="true"/>
+    <pa:script src="/js/communities/community-create-form.js" defer="true"/>
+    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>

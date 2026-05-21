@@ -728,4 +728,184 @@ ALTER TABLE review_reply_likes ALTER COLUMN reply_id TYPE BIGINT;
 
 ALTER TABLE review_reply_likes ADD CONSTRAINT review_reply_likes_reply_id_fkey FOREIGN KEY (reply_id) REFERENCES review_replies(reply_id) ON DELETE CASCADE;
 
+-- ============================================================
+-- Communities
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS communities (
+    community_id        BIGSERIAL    PRIMARY KEY,
+    slug                VARCHAR(60)  NOT NULL,
+    name                VARCHAR(60)  NOT NULL,
+    description         TEXT         NOT NULL,
+    created_by_user_id  BIGINT       REFERENCES users(user_id) ON DELETE SET NULL,
+    created_at          TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS community_topics (
+    topic_id     SMALLSERIAL  PRIMARY KEY,
+    code         VARCHAR(40)  NOT NULL,
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS community_topic_assignments (
+    community_id BIGINT       NOT NULL REFERENCES communities(community_id) ON DELETE CASCADE,
+    topic_id     SMALLINT     NOT NULL REFERENCES community_topics(topic_id) ON DELETE CASCADE,
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_community_topic_assignments PRIMARY KEY (community_id, topic_id)
+);
+
+CREATE TABLE IF NOT EXISTS community_memberships (
+    community_id BIGINT       NOT NULL REFERENCES communities(community_id) ON DELETE CASCADE,
+    user_id      BIGINT       NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    role         VARCHAR(20)  NOT NULL DEFAULT 'member',
+    joined_at    TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_community_memberships PRIMARY KEY (community_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS community_posts (
+    post_id          BIGSERIAL    PRIMARY KEY,
+    community_id     BIGINT       NOT NULL REFERENCES communities(community_id) ON DELETE CASCADE,
+    author_user_id   BIGINT       NOT NULL REFERENCES users(user_id),
+    slug             VARCHAR(80)  NOT NULL,
+    title            VARCHAR(120) NOT NULL,
+    body             TEXT,
+    external_url     VARCHAR(2048),
+    linked_review_id BIGINT       REFERENCES reviews(review_id) ON DELETE SET NULL,
+    created_at       TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS community_post_comments (
+    comment_id   BIGSERIAL    PRIMARY KEY,
+    post_id      BIGINT       NOT NULL REFERENCES community_posts(post_id) ON DELETE CASCADE,
+    user_id      BIGINT       NOT NULL REFERENCES users(user_id),
+    body         TEXT         NOT NULL,
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS community_post_helpful_reactions (
+    post_id      BIGINT       NOT NULL REFERENCES community_posts(post_id) ON DELETE CASCADE,
+    user_id      BIGINT       NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_community_post_helpful_reactions PRIMARY KEY (post_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS community_post_images (
+    image_id       BIGSERIAL    PRIMARY KEY,
+    post_id        BIGINT       NOT NULL REFERENCES community_posts(post_id) ON DELETE CASCADE,
+    display_order  INT          NOT NULL DEFAULT 0,
+    content_type   VARCHAR(100) NOT NULL,
+    image_data     BYTEA        NOT NULL,
+    updated_at     TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE communities DROP CONSTRAINT IF EXISTS chk_communities_slug_not_blank;
+ALTER TABLE communities ADD CONSTRAINT chk_communities_slug_not_blank CHECK (BTRIM(slug) <> '');
+ALTER TABLE communities DROP CONSTRAINT IF EXISTS chk_communities_name_not_blank;
+ALTER TABLE communities ADD CONSTRAINT chk_communities_name_not_blank CHECK (BTRIM(name) <> '');
+ALTER TABLE communities DROP CONSTRAINT IF EXISTS chk_communities_description_not_blank;
+ALTER TABLE communities ADD CONSTRAINT chk_communities_description_not_blank CHECK (BTRIM(description) <> '');
+
+ALTER TABLE community_topics DROP CONSTRAINT IF EXISTS chk_community_topics_code_not_blank;
+ALTER TABLE community_topics ADD CONSTRAINT chk_community_topics_code_not_blank CHECK (BTRIM(code) <> '');
+
+ALTER TABLE community_memberships DROP CONSTRAINT IF EXISTS chk_community_memberships_role;
+ALTER TABLE community_memberships ADD CONSTRAINT chk_community_memberships_role
+    CHECK (role IN ('member', 'moderator'));
+
+ALTER TABLE community_posts DROP COLUMN IF EXISTS type;
+DROP TABLE IF EXISTS community_post_comment_replies;
+
+ALTER TABLE community_posts DROP CONSTRAINT IF EXISTS chk_community_posts_slug_not_blank;
+ALTER TABLE community_posts ADD CONSTRAINT chk_community_posts_slug_not_blank CHECK (BTRIM(slug) <> '');
+ALTER TABLE community_posts DROP CONSTRAINT IF EXISTS chk_community_posts_title_not_blank;
+ALTER TABLE community_posts ADD CONSTRAINT chk_community_posts_title_not_blank CHECK (BTRIM(title) <> '');
+ALTER TABLE community_posts DROP CONSTRAINT IF EXISTS chk_community_posts_body_not_blank;
+ALTER TABLE community_posts ADD CONSTRAINT chk_community_posts_body_not_blank CHECK (BTRIM(body) <> '');
+
+ALTER TABLE community_post_comments DROP CONSTRAINT IF EXISTS chk_community_post_comments_body_not_blank;
+ALTER TABLE community_post_comments ADD CONSTRAINT chk_community_post_comments_body_not_blank CHECK (BTRIM(body) <> '');
+
+ALTER TABLE community_post_images DROP CONSTRAINT IF EXISTS chk_community_post_images_display_order;
+ALTER TABLE community_post_images ADD CONSTRAINT chk_community_post_images_display_order CHECK (display_order >= 0);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_communities_slug ON communities (LOWER(BTRIM(slug)));
+CREATE UNIQUE INDEX IF NOT EXISTS uq_community_topics_code ON community_topics (LOWER(BTRIM(code)));
+CREATE UNIQUE INDEX IF NOT EXISTS uq_community_posts_slug ON community_posts (community_id, LOWER(BTRIM(slug)));
+CREATE UNIQUE INDEX IF NOT EXISTS uq_community_post_images_order ON community_post_images (post_id, display_order);
+
+CREATE INDEX IF NOT EXISTS idx_communities_creator_id ON communities (created_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_community_topic_assignments_topic_id ON community_topic_assignments (topic_id);
+CREATE INDEX IF NOT EXISTS idx_community_memberships_user_id ON community_memberships (user_id);
+CREATE INDEX IF NOT EXISTS idx_community_posts_community_created_at ON community_posts (community_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_community_posts_author_user_id ON community_posts (author_user_id);
+CREATE INDEX IF NOT EXISTS idx_community_post_helpful_reactions_user_id ON community_post_helpful_reactions (user_id);
+CREATE INDEX IF NOT EXISTS idx_community_post_comments_post_created_at ON community_post_comments (post_id, created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_community_post_comments_user_id ON community_post_comments (user_id);
+CREATE INDEX IF NOT EXISTS idx_community_post_images_post_id ON community_post_images (post_id);
+
+-- COMMUNIIES SEED
+
+INSERT INTO community_topics (code)
+VALUES
+    ('classics'),
+    ('brands'),
+    ('jdm'),
+    ('electric'),
+    ('motorsport'),
+    ('offroad'),
+    ('repairs'),
+    ('reviews'),
+    ('buying'),
+    ('local'),
+    ('photography'),
+    ('daily')
+ON CONFLICT ((LOWER(BTRIM(code)))) DO NOTHING;
+
+INSERT INTO communities (slug, name, description)
+VALUES
+    ('classics', 'Classics', 'Pre-1990 cars in Argentina, from garage-kept survivors to honest restoration projects.'),
+    ('daily-drivers', 'Daily Drivers', 'Useful, durable, and unglamorous in all the right ways.'),
+    ('ev-curious', 'EV Curious', 'Charging, range, daily use, and what the shift away from combustion really feels like.'),
+    ('jdm-heads', 'JDM Heads', 'Island-born icons, boost chatter, homologation specials, and the culture around them.'),
+    ('off-road', 'Off-road', 'Low range, mud, gravel, and the compromises that come with leaving pavement behind.'),
+    ('rally-bred', 'Rally-bred', 'Turbo four-cylinders, gravel lineage, and the sedans and hatches that wear it proudly.')
+ON CONFLICT ((LOWER(BTRIM(slug)))) DO UPDATE
+SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description;
+
+INSERT INTO community_topic_assignments (community_id, topic_id)
+SELECT
+    c.community_id,
+    t.topic_id
+FROM (
+    VALUES
+        ('classics', 'classics'),
+        ('classics', 'photography'),
+        ('classics', 'repairs'),
+        ('daily-drivers', 'buying'),
+        ('daily-drivers', 'daily'),
+        ('daily-drivers', 'reviews'),
+        ('ev-curious', 'buying'),
+        ('ev-curious', 'daily'),
+        ('ev-curious', 'electric'),
+        ('jdm-heads', 'brands'),
+        ('jdm-heads', 'jdm'),
+        ('jdm-heads', 'motorsport'),
+        ('off-road', 'local'),
+        ('off-road', 'offroad'),
+        ('off-road', 'repairs'),
+        ('rally-bred', 'brands'),
+        ('rally-bred', 'motorsport'),
+        ('rally-bred', 'photography')
+) AS seed(community_slug, topic_code)
+JOIN communities c
+    ON LOWER(BTRIM(c.slug)) = LOWER(BTRIM(seed.community_slug))
+JOIN community_topics t
+    ON LOWER(BTRIM(t.code)) = LOWER(BTRIM(seed.topic_code))
+ON CONFLICT (community_id, topic_id) DO NOTHING;
+
 COMMIT;

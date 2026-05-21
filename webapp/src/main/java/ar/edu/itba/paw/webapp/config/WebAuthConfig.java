@@ -51,7 +51,12 @@ public class WebAuthConfig {
                             .permitAll()
                         .requestMatchers(
                                 antMatcher(HttpMethod.GET, "/communities/new"),
-                                antMatcher(HttpMethod.GET, "/communities/*/submit"))
+                                antMatcher(HttpMethod.GET, "/communities/*/submit"),
+                                antMatcher(HttpMethod.POST, "/communities"),
+                                antMatcher(HttpMethod.POST, "/communities/*/join"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/helpful"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments"))
                             .authenticated()
                         .requestMatchers(
                                 antMatcher(HttpMethod.GET, "/"),

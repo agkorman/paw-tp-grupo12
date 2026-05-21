@@ -1,73 +1,66 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="communities.postForm.title" styles="/css/communities.css"/>
+<pa:page-head titleCode="communities.postForm.title" styles="/css/community-post-common.css|/css/community-post-form.css|/css/communities-responsive.css"/>
 <body>
     <pa:nav activePage="communities"/>
-    <c:url var="communityDetailUrl" value="/communities/classics"/>
-    <spring:message var="communityPostFormTypesAria" code="communities.postForm.typeTabs.aria"/>
     <spring:message var="communityPostFormToolbarAria" code="communities.postForm.toolbar.aria"/>
-    <spring:message var="communityPostFormTitleValue" code="communities.postForm.sample.title"/>
-    <spring:message var="communityPostFormBodyValue" code="communities.postForm.sample.body"/>
+    <c:url var="communityPostCreateUrl" value="/communities/${community.slug}/posts"/>
     <main class="community-post-form-page">
-        <form class="community-post-form-shell" novalidate="novalidate">
+        <form:form cssClass="community-post-form-shell"
+                   modelAttribute="communityPostForm"
+                   method="post"
+                   action="${fn:escapeXml(communityPostCreateUrl)}"
+                   novalidate="novalidate">
+            <form:errors cssClass="alert alert-error" element="div"/>
             <div class="community-post-form-header">
-                <p class="community-post-form-target"><spring:message code="communities.postForm.postingTo"/></p>
-                <a class="community-post-form-community" href="${communityDetailUrl}">
-                    <span class="community-post-form-community-avatar" aria-hidden="true"></span>
-                    <strong><spring:message code="communities.postForm.community"/></strong>
-                    <pa:icon name="chevron-down" size="12"/>
-                </a>
-            </div>
-
-            <div class="community-post-type-tabs" role="tablist" aria-label="${communityPostFormTypesAria}">
-                <button type="button" class="community-post-type-tab is-active"><spring:message code="communities.postForm.type.discussion"/></button>
-                <button type="button" class="community-post-type-tab"><spring:message code="communities.postForm.type.link"/></button>
-                <button type="button" class="community-post-type-tab"><spring:message code="communities.postForm.type.photo"/></button>
-                <button type="button" class="community-post-type-tab"><spring:message code="communities.postForm.type.review"/></button>
+                <p class="community-post-form-target">
+                    <spring:message code="communities.postForm.postingTo"/>
+                    <strong class="community-post-form-target-name"># <c:out value="${community.name}"/></strong>
+                </p>
             </div>
 
             <div class="community-post-form-card">
                 <div class="community-post-form-title-block">
                     <label for="communityPostTitle"><spring:message code="communities.postForm.field.title"/></label>
-                    <input id="communityPostTitle" type="text" maxlength="120" value="${communityPostFormTitleValue}">
-                    <span>38 / 120</span>
+                    <form:textarea id="communityPostTitle"
+                                   path="title"
+                                   rows="2"
+                                   maxlength="120"
+                                   required="required"/>
+                    <form:errors path="title" cssClass="form-error" element="span"/>
                 </div>
 
                 <div class="community-post-form-body-block">
                     <label for="communityPostBody"><spring:message code="communities.postForm.field.body"/></label>
-                    <textarea id="communityPostBody" rows="8"><c:out value="${communityPostFormBodyValue}"/></textarea>
+                    <form:textarea id="communityPostBody"
+                                   path="body"
+                                   rows="8"
+                                   maxlength="5000"
+                                   required="required"/>
+                    <form:errors path="body" cssClass="form-error" element="span"/>
                 </div>
 
-                <div class="community-post-form-toolbar" aria-label="${communityPostFormToolbarAria}">
-                    <button type="button"><spring:message code="communities.postForm.toolbar.bold"/></button>
-                    <button type="button"><spring:message code="communities.postForm.toolbar.italic"/></button>
-                    <button type="button"><spring:message code="communities.postForm.toolbar.quote"/></button>
+                <div class="community-post-form-toolbar" aria-label="${fn:escapeXml(communityPostFormToolbarAria)}">
                     <button type="button"><spring:message code="communities.postForm.toolbar.link"/></button>
                     <button type="button"><spring:message code="communities.postForm.toolbar.photo"/></button>
-                    <button type="button"><spring:message code="communities.postForm.toolbar.review"/></button>
+                    <button type="button"><spring:message code="communities.postForm.toolbar.car"/></button>
                 </div>
             </div>
 
             <div class="community-post-form-footer">
-                <div class="community-post-form-flair">
-                    <span><spring:message code="communities.postForm.flair.label"/></span>
-                    <span class="community-post-form-flair-chip"><spring:message code="communities.postForm.flair.selected"/></span>
-                    <button type="button" class="community-post-form-flair-add"><spring:message code="communities.postForm.flair.add"/></button>
-                </div>
-
                 <div class="community-post-form-actions">
-                    <p><spring:message code="communities.postForm.draftStatus"/></p>
-                    <div>
-                        <button type="button" class="btn-secondary"><spring:message code="communities.postForm.saveDraft"/></button>
+                    <div class="community-post-form-actions-group">
                         <button type="submit" class="btn-primary"><spring:message code="communities.postForm.submit"/></button>
                     </div>
                 </div>
             </div>
-        </form>
+        </form:form>
     </main>
     <pa:footer/>
 </body>

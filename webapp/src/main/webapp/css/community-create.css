@@ -1,0 +1,194 @@
+.community-create-page {
+    width: min(1240px, calc(100% - 3rem));
+    margin: 0 auto;
+    padding: var(--spacing-8) 0 var(--spacing-16);
+    display: grid;
+    gap: var(--spacing-6);
+}
+
+.community-create-intro {
+    padding: var(--spacing-7);
+    background: var(--surface-container-low);
+    border: 1px solid rgba(229, 226, 225, 0.08);
+    box-shadow: var(--shadow-float);
+}
+
+.community-create-kicker {
+    margin: 0;
+    color: var(--primary-container);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.community-create-intro h1 {
+    margin: var(--spacing-2) 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 3.3rem);
+    line-height: 1;
+}
+
+.community-create-intro p:last-child {
+    margin: var(--spacing-3) 0 0;
+    max-width: 44rem;
+    color: var(--on-surface-variant);
+    line-height: 1.65;
+}
+
+.community-create-layout {
+    display: grid;
+    gap: var(--spacing-5);
+}
+
+.community-create-form .alert-error {
+    margin: 0;
+    padding: var(--spacing-4) var(--spacing-5);
+    border: 1px solid rgba(255, 120, 120, 0.35);
+    background: rgba(200, 64, 64, 0.18);
+    color: var(--on-surface);
+    font-size: 0.9375rem;
+}
+
+.community-create-panel {
+    padding: var(--spacing-6);
+    display: grid;
+    gap: var(--spacing-6);
+    background: var(--surface-container-low);
+    border: 1px solid rgba(229, 226, 225, 0.08);
+    box-shadow: var(--shadow-float);
+}
+
+.community-create-section {
+    display: grid;
+    gap: var(--spacing-4);
+}
+
+.community-create-section-head h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+}
+
+.community-create-section-head p {
+    margin: var(--spacing-2) 0 0;
+    color: var(--on-surface-variant);
+}
+
+.community-topic-chips .review-tag-chip {
+    min-height: 3rem;
+}
+
+.community-topic-chips .review-tag-chip-text {
+    font-size: 0.95rem;
+}
+
+.community-topic-chips .form-error {
+    display: block;
+    color: var(--error);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.community-topic-chips .client-form-error[hidden] {
+    display: none;
+}
+
+.community-topic-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-3);
+}
+
+.community-topic-chip {
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(229, 226, 225, 0.16);
+    border-radius: var(--radius-full);
+    background: var(--surface-container);
+    color: var(--on-surface);
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.community-topic-chip.is-selected {
+    background: var(--surface-container-highest);
+    border-color: rgba(229, 226, 225, 0.32);
+    box-shadow: inset 0 0 0 1px rgba(255, 181, 158, 0.18);
+}
+
+.community-create-fields {
+    display: grid;
+    gap: var(--spacing-4);
+}
+
+.community-create-field {
+    display: grid;
+    gap: var(--spacing-2);
+}
+
+.community-create-field label {
+    color: var(--secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.community-create-field input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(229, 226, 225, 0.12);
+    background: var(--surface-container);
+    color: var(--on-surface);
+    font: inherit;
+}
+
+.community-create-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(229, 226, 225, 0.12);
+    background: var(--surface-container);
+    color: var(--on-surface);
+    font: inherit;
+    resize: vertical;
+}
+
+.community-create-field input:focus,
+.community-create-field textarea:focus {
+    outline: none;
+    border-color: rgba(255, 181, 158, 0.4);
+}
+
+.community-create-field-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-3);
+    color: var(--secondary);
+    font-size: 0.84rem;
+}
+
+.community-create-field .form-error {
+    color: var(--error);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.community-create-field .client-form-error[hidden] {
+    display: none;
+}
+
+.community-create-field input.is-invalid,
+.community-create-field textarea.is-invalid {
+    border-color: var(--error);
+    background: rgba(255, 180, 171, 0.08);
+}
+
+.community-create-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-3);
+}
