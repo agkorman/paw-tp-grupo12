@@ -322,69 +322,13 @@
                             <form:errors path="transmission" cssClass="form-error" element="span"/>
                         </div>
 
-                        <div class="modal-field modal-field-wide car-image-field">
-                            <span class="car-image-label"><spring:message code="cars.form.images"/></span>
-                            <div class="car-image-upload">
-                                <c:choose>
-                                    <c:when test="${adminCarFormMode}">
-                                        <span id="modalCarRetainedImageInputs" hidden>
-                                            <c:forEach var="existingImageId" items="${existingImageIds}">
-                                                <input type="hidden" name="retainedImageIds" value="${existingImageId}">
-                                            </c:forEach>
-                                        </span>
-                                        <form:input id="modalCarFile" path="files" type="file"
-                                                    cssClass="car-image-upload-input"
-                                                    accept="image/jpeg,image/png,image/webp"
-                                                    multiple="multiple"
-                                                    aria-describedby="modalCarFileHelp modalCarFileStatus"/>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <form:input id="modalCarFile" path="files" type="file"
-                                                    cssClass="car-image-upload-input"
-                                                    accept="image/jpeg,image/png,image/webp"
-                                                    multiple="multiple"
-                                                    required="required"
-                                                    aria-describedby="modalCarFileHelp modalCarFileStatus"/>
-                                    </c:otherwise>
-                                </c:choose>
-                                <label class="car-image-upload-card" for="modalCarFile">
-                                    <span class="car-image-upload-icon" aria-hidden="true">
-                                        <pa:icon name="image-upload" size="28"/>
-                                    </span>
-                                    <span id="modalCarImagePreview" class="car-image-upload-preview" hidden aria-hidden="true">
-                                        <button id="modalCarImagePrev" class="car-image-upload-preview-nav car-image-upload-preview-prev" type="button" aria-label="${previousImageLabel}">
-                                            <pa:icon name="chevron-left" size="14"/>
-                                        </button>
-                                        <img id="modalCarImagePreviewImg" alt="">
-                                        <button id="modalCarImageRemove" class="car-image-upload-preview-remove" type="button" aria-label="${removeImageLabel}" hidden>
-                                            <pa:icon name="close" size="14"/>
-                                        </button>
-                                        <button id="modalCarImageNext" class="car-image-upload-preview-nav car-image-upload-preview-next" type="button" aria-label="${nextImageLabel}">
-                                            <pa:icon name="chevron-right" size="14"/>
-                                        </button>
-                                        <span id="modalCarImageCounter" class="car-image-upload-preview-counter">1 / 1</span>
-                                    </span>
-                                    <span class="car-image-upload-copy">
-                                        <strong id="modalCarFileTitle">
-                                            <c:choose>
-                                                <c:when test="${resolvedCarFormMode eq 'review-request'}"><spring:message code="cars.form.image.reviewReadonly"/></c:when>
-                                                <c:when test="${resolvedCarFormMode eq 'edit-car'}"><spring:message code="cars.form.image.currentPlural"/></c:when>
-                                                <c:otherwise><spring:message code="cars.form.image.uploadTitle"/></c:otherwise>
-                                            </c:choose>
-                                        </strong>
-                                        <span id="modalCarFileHelp">
-                                            <c:choose>
-                                                <c:when test="${adminCarFormMode}"><spring:message code="cars.form.image.galleryHelp"/></c:when>
-                                                <c:otherwise><spring:message code="cars.form.image.help"/></c:otherwise>
-                                            </c:choose>
-                                        </span>
-                                        <span id="modalCarFileStatus" class="car-image-upload-status"><c:out value="${emptyFileStatus}"/></span>
-                                        <span id="modalCarImageThumbnails" class="car-image-upload-thumbnails" hidden></span>
-                                    </span>
-                                </label>
-                            </div>
-                            <form:errors path="files" cssClass="form-error" element="span"/>
-                        </div>
+                        <pa:image-upload
+                            namePrefix="modalCar"
+                            inputName="files"
+                            required="${not adminCarFormMode}"
+                            mode="${resolvedCarFormMode}"
+                            adminMode="${adminCarFormMode}"
+                            existingImageIds="${existingImageIds}"/>
                     </div>
                 </div>
 

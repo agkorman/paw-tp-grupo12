@@ -41,6 +41,8 @@ public interface ReviewService {
 
     List<ReviewImage> getReviewImagesByReviewId(long reviewId);
 
+    Map<Long, List<ReviewImage>> getImagesByReviewIds(Collection<Long> reviewIds);
+
     Optional<ReviewImage> getReviewImageById(long reviewId, long imageId);
 
     List<ImagePayload> collectRetainedReviewImagePayloads(long reviewId, List<Long> retainedImageIds);

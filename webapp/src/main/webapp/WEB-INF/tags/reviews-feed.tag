@@ -127,6 +127,17 @@
                                 </sec:authorize>
                             </div>
                         </div>
+                        <c:if test="${not empty review.images}">
+                            <div class="review-images-row">
+                                <c:forEach var="reviewImg" items="${review.images}">
+                                    <a href="<c:url value='/reviews/${review.id}/images/${reviewImg.imageId}'/>" target="_blank" rel="noopener">
+                                        <img src="<c:url value='/reviews/${review.id}/images/${reviewImg.imageId}'/>"
+                                             alt="<spring:message code='review.image.alt'/>"
+                                             class="review-image-thumb"/>
+                                    </a>
+                                </c:forEach>
+                            </div>
+                        </c:if>
                         <p class="review-body"><c:out value="${review.body}"/></p>
                         <pa:review-tag-chips mode="display" tags="${review.tags}"/>
                         <div class="review-meta">

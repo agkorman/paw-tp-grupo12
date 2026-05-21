@@ -9,7 +9,7 @@
 <c:set var="reviewFormPageTitle" value="${reviewFormTitleText} | ${appNameTitleText}"/>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${reviewFormPageTitle}" styles="/css/reviews.css|/css/rating-controls.css|/css/review-tags.css|/css/form-pages.css"/>
+<pa:page-head title="${reviewFormPageTitle}" styles="/css/reviews.css|/css/rating-controls.css|/css/review-tags.css|/css/car-image-upload.css|/css/form-pages.css"/>
 <body>
     <pa:nav activePage="reviews"/>
     <c:url var="reviewCancelUrl" value="/reviews/car/${selectedCar.id}"/>
@@ -51,6 +51,7 @@
 
             <form:form id="createReviewForm" cssClass="modal-form" modelAttribute="reviewForm"
                        method="post" action="${reviewFormAction}"
+                       enctype="multipart/form-data"
                        data-create-action="${reviewCreateUrl}"
                        data-submit-lock="true"
                        data-msg-required-generic="${fn:escapeXml(jsMsgRequiredGeneric)}"
@@ -178,6 +179,35 @@
                                              tagsBySentiment="${reviewTagsBySentiment}"
                                              selectedTagIds="${reviewForm.tagIds}"/>
                         <form:errors path="tagIds" cssClass="form-error" element="span"/>
+                    </div>
+
+                    <c:if test="${editMode and not empty existingReviewImageIds}">
+                        <div class="modal-field modal-field-wide">
+                            <span class="car-image-label"><spring:message code="review.form.images.existing"/></span>
+                            <div class="review-form-existing-images">
+                                <c:forTokens var="imgId" items="${existingReviewImageIds}" delims=",">
+                                    <label class="review-form-existing-image">
+                                        <input type="checkbox" name="retainedImageIds" value="${imgId}" checked>
+                                        <img src="<c:url value='/reviews/${reviewId}/images/${imgId}'/>"
+                                             alt="<spring:message code='review.image.alt'/>"
+                                             class="review-form-existing-image-thumb"/>
+                                        <span class="review-form-existing-image-keep"><spring:message code="review.form.images.keep"/></span>
+                                    </label>
+                                </c:forTokens>
+                            </div>
+                        </div>
+                    </c:if>
+
+                    <div class="modal-field modal-field-wide">
+                        <pa:image-upload
+                            namePrefix="review"
+                            inputName="files"
+                            required="false"
+                            mode="${editMode ? 'edit' : 'create'}"
+                            labelKey="review.form.images"
+                            titleCreateKey="review.form.image.uploadTitle"
+                            titleEditKey="review.form.image.addMore"
+                            helpKey="review.form.image.help"/>
                     </div>
                 </div>
 

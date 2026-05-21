@@ -176,6 +176,20 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
+    public Map<Long, List<ReviewImage>> getImagesByReviewIds(final Collection<Long> reviewIds) {
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        final List<ReviewImage> images = reviewImageDao.findAllByReviewIds(reviewIds);
+        final Map<Long, List<ReviewImage>> result = new java.util.LinkedHashMap<>();
+        for (final ReviewImage img : images) {
+            result.computeIfAbsent(img.getReviewId(), k -> new ArrayList<>()).add(img);
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<ReviewImage> getReviewImageById(final long reviewId, final long imageId) {
         return reviewImageDao.findByReviewIdAndImageId(reviewId, imageId);
     }

@@ -205,6 +205,7 @@ public class CarReviewController {
         mav.addObject("reviewForm", toReviewForm(review));
         mav.addObject("editMode", true);
         mav.addObject("reviewId", reviewId);
+        mav.addObject("existingReviewImageIds", reviewImageIdsCsv(reviewId));
         LoginRedirectUtils.safeRedirect(redirect, request.getContextPath()).ifPresent(r -> mav.addObject("editRedirect", r));
         return mav;
     }
@@ -374,6 +375,7 @@ public class CarReviewController {
             normalizedPage
         );
         final List<Review> reviews = reviewPage.getItems();
+        populateReviewImages(reviews);
         final BigDecimal averageRating = reviewService
             .getReviewStatsByCar(selectedCar.getId())
             .map(stats -> stats.getAverageRating())
@@ -482,6 +484,17 @@ public class CarReviewController {
             return reviewService.getReviewsByCarOrderByRatingDesc(carId, page);
         }
         return reviewService.getReviewsByCar(carId, page);
+    }
+
+    private void populateReviewImages(final List<Review> reviews) {
+        if (reviews == null || reviews.isEmpty()) {
+            return;
+        }
+        final List<Long> ids = reviews.stream().map(Review::getId).collect(Collectors.toList());
+        final java.util.Map<Long, List<ReviewImage>> byId = reviewService.getImagesByReviewIds(ids);
+        for (final Review r : reviews) {
+            r.setImages(byId.getOrDefault(r.getId(), Collections.emptyList()));
+        }
     }
 
     private String normalizeSort(final String sort) {
