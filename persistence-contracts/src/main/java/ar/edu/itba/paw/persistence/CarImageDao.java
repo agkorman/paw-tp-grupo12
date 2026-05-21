@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.CarImage;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,5 +18,5 @@ public interface CarImageDao {
 
     void saveOrReplace(long carId, String contentType, byte[] imageData);
 
-    void replaceAll(long carId, List<CarImagePayload> images);
+    void replaceAll(long carId, List<ImagePayload> images);
 }

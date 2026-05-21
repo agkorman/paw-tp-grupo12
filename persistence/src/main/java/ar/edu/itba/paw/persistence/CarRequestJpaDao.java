@@ -2,7 +2,7 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
@@ -158,7 +158,7 @@ public class CarRequestJpaDao implements CarRequestDao {
     }
 
     @Override
-    public void replaceImages(final long requestId, final List<CarImagePayload> images) {
+    public void replaceImages(final long requestId, final List<ImagePayload> images) {
         try {
             em.createQuery("DELETE FROM CarRequestImage i WHERE i.request.id = :requestId")
                     .setParameter("requestId", requestId)
@@ -166,7 +166,7 @@ public class CarRequestJpaDao implements CarRequestDao {
 
             final CarRequest requestRef = em.getReference(CarRequest.class, requestId);
             for (int i = 0; i < images.size(); i++) {
-                final CarImagePayload payload = images.get(i);
+                final ImagePayload payload = images.get(i);
                 final CarRequestImage img = new CarRequestImage();
                 img.setRequest(requestRef);
                 img.setDisplayOrder(i);

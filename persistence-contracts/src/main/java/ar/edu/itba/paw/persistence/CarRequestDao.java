@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
 
@@ -27,7 +27,7 @@ public interface CarRequestDao {
 
     Optional<CarRequestImage> findImageByRequestIdAndImageId(long requestId, long imageId);
 
-    void replaceImages(long requestId, List<CarImagePayload> images);
+    void replaceImages(long requestId, List<ImagePayload> images);
 
     boolean updateStatus(long id, String expectedStatus, String newStatus);
 

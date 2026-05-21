@@ -2,7 +2,7 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Optional;
@@ -56,7 +56,7 @@ public class ImageDaoTest extends AbstractPersistenceTest {
         );
 
         // Exercise
-        carImageDao.replaceAll(car.getId(), List.of(new CarImagePayload("image/jpeg", new byte[]{9})));
+        carImageDao.replaceAll(car.getId(), List.of(new ImagePayload("image/jpeg", new byte[]{9})));
 
         // Assertions
         assertEquals(1, countRows("SELECT COUNT(*) FROM car_images WHERE car_id = ?", car.getId()));

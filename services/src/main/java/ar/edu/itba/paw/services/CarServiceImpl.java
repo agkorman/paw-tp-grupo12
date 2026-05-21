@@ -4,7 +4,7 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.CarYearVariant;
@@ -131,7 +131,7 @@ public class CarServiceImpl implements CarService {
     @Transactional
     public void saveCarImages(
         final long carId,
-        final List<CarImagePayload> images
+        final List<ImagePayload> images
     ) {
         carImageDao.replaceAll(
             carId,
@@ -143,14 +143,14 @@ public class CarServiceImpl implements CarService {
     @Transactional
     public void appendCarImages(
         final long carId,
-        final List<CarImagePayload> images
+        final List<ImagePayload> images
     ) {
-        final List<CarImagePayload> normalizedImages =
+        final List<ImagePayload> normalizedImages =
             ImagePayloadUtils.normalizeImages(images);
         if (normalizedImages.isEmpty()) {
             return;
         }
-        final List<CarImagePayload> existingImages = carImageDao
+        final List<ImagePayload> existingImages = carImageDao
             .findAllByCarId(carId)
             .stream()
             .map(image ->
@@ -160,13 +160,13 @@ public class CarServiceImpl implements CarService {
             )
             .filter(image -> image != null && image.getImageData() != null)
             .map(image ->
-                new CarImagePayload(
+                new ImagePayload(
                     image.getContentType(),
                     image.getImageData()
                 )
             )
             .toList();
-        final List<CarImagePayload> combinedImages = new java.util.ArrayList<>(
+        final List<ImagePayload> combinedImages = new java.util.ArrayList<>(
             existingImages
         );
         combinedImages.addAll(normalizedImages);
@@ -183,7 +183,7 @@ public class CarServiceImpl implements CarService {
         final long submittedByUserId,
         final String submitterEmail,
         final Optional<String> description,
-        final List<CarImagePayload> images,
+        final List<ImagePayload> images,
         final String fuelType,
         final Integer horsepower,
         final Integer airbagCount,
@@ -200,13 +200,15 @@ public class CarServiceImpl implements CarService {
                     "Description is required for car creation."
                 )
             );
-        final List<CarImagePayload> normalizedImages =
+        final List<ImagePayload> normalizedImages =
             ImagePayloadUtils.normalizeImages(images);
         if (normalizedImages.isEmpty()) {
             throw new InvalidImagePayloadException(
                 "At least one image is required for car creation."
             );
         }
+
+        validateYear(year);
 
         if (existsDuplicateCarByIds(brandId, bodyTypeId, model, year, -1L)) {
             throw new DuplicateCarException();
@@ -275,6 +277,7 @@ public class CarServiceImpl implements CarService {
             "Description is required for car update."
         );
         validateImagePair(imageContentType, imageData);
+        validateYear(year);
 
         if (
             existsDuplicateCarByIds(
@@ -367,11 +370,11 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public List<CarImagePayload> collectRetainedImagePayloads(
+    public List<ImagePayload> collectRetainedImagePayloads(
         final long carId,
         final List<Long> retainedImageIds
     ) {
-        final List<CarImagePayload> payloads = new ArrayList<>();
+        final List<ImagePayload> payloads = new ArrayList<>();
         if (retainedImageIds == null) {
             return payloads;
         }
@@ -386,7 +389,7 @@ public class CarServiceImpl implements CarService {
             image
                 .filter(carImage -> carImage.getImageData() != null)
                 .map(carImage ->
-                    new CarImagePayload(
+                    new ImagePayload(
                         carImage.getContentType(),
                         carImage.getImageData()
                     )
@@ -449,6 +452,17 @@ public class CarServiceImpl implements CarService {
         if (hasImageContentType != hasImageData) {
             throw new InvalidImagePayloadException(
                 "Image metadata and payload must be provided together."
+            );
+        }
+    }
+
+    private void validateYear(final Integer year) {
+        if (year == null) {
+            return;
+        }
+        if (year < Car.MIN_YEAR || year > Car.MAX_YEAR) {
+            throw new InvalidServiceInputException(
+                "Year must be between " + Car.MIN_YEAR + " and " + Car.MAX_YEAR + "."
             );
         }
     }

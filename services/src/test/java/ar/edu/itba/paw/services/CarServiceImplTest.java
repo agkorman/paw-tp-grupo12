@@ -3,7 +3,7 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
@@ -151,7 +151,7 @@ public class CarServiceImplTest {
     @Test
     public void shouldRejectRequestCarCreationWithBlankDescription() {
         // Arrange
-        final List<CarImagePayload> images = List.of(new CarImagePayload("image/png", IMAGE_BYTES));
+        final List<ImagePayload> images = List.of(new ImagePayload("image/png", IMAGE_BYTES));
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -166,7 +166,7 @@ public class CarServiceImplTest {
     @Test
     public void shouldRejectRequestCarCreationWhenNoImagesProvided() {
         // Arrange
-        final List<CarImagePayload> images = List.of();
+        final List<ImagePayload> images = List.of();
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -181,7 +181,7 @@ public class CarServiceImplTest {
     @Test
     public void shouldDelegateRequestCarCreationToCarRequestService() {
         // Arrange
-        final List<CarImagePayload> images = List.of(new CarImagePayload("image/png", IMAGE_BYTES));
+        final List<ImagePayload> images = List.of(new ImagePayload("image/png", IMAGE_BYTES));
         final CarRequest createdRequest = TestModels.carRequest(99L, 1L, "u@x.com", BRAND_ID, BODY_TYPE_ID, 2024, "Corolla",
                 "desc", "image/png", IMAGE_BYTES, CarRequestService.STATUS_PENDING, LocalDateTime.now(),
                 "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00"));
@@ -330,7 +330,7 @@ public class CarServiceImplTest {
     @Test
     public void shouldRejectAppendCarImagesWithInvalidPayload() {
         // Arrange
-        final List<CarImagePayload> images = List.of(new CarImagePayload("image/png", new byte[0]));
+        final List<ImagePayload> images = List.of(new ImagePayload("image/png", new byte[0]));
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,

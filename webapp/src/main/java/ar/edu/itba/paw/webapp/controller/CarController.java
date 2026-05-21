@@ -4,7 +4,7 @@ import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
@@ -261,7 +261,7 @@ public class CarController {
             return "car-form.jsp";
         }
 
-        final List<CarImagePayload> imagePayloads;
+        final List<ImagePayload> imagePayloads;
         try {
             imagePayloads = toImagePayloads(files);
         } catch (final IOException e) {
@@ -672,13 +672,13 @@ public class CarController {
             .collect(Collectors.toList());
     }
 
-    private List<CarImagePayload> toImagePayloads(
+    private List<ImagePayload> toImagePayloads(
         final List<MultipartFile> files
     ) throws IOException {
-        final List<CarImagePayload> payloads = new ArrayList<>();
+        final List<ImagePayload> payloads = new ArrayList<>();
         for (final MultipartFile file : files) {
             payloads.add(
-                new CarImagePayload(
+                new ImagePayload(
                     resolveImageContentType(file),
                     file.getBytes()
                 )

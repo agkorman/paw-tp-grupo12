@@ -7,7 +7,7 @@ import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.CarSearchCriteria;
@@ -356,7 +356,7 @@ public class AdminController {
             return carRequestFormPage(pendingRequest, carForm, errors);
         }
 
-        final List<CarImagePayload> imagePayloads;
+        final List<ImagePayload> imagePayloads;
         try {
             imagePayloads = carRequestService.collectRetainedImagePayloads(
                 requestId,
@@ -484,7 +484,7 @@ public class AdminController {
             return carEditFormPage(existingCar, carForm, errors);
         }
 
-        final List<CarImagePayload> imagePayloads;
+        final List<ImagePayload> imagePayloads;
         try {
             imagePayloads = carService.collectRetainedImagePayloads(
                 carId,
@@ -1306,13 +1306,13 @@ public class AdminController {
             .anyMatch(imageId -> !available.contains(imageId));
     }
 
-    private List<CarImagePayload> toImagePayloads(
+    private List<ImagePayload> toImagePayloads(
         final List<MultipartFile> files
     ) throws IOException {
-        final List<CarImagePayload> payloads = new ArrayList<>();
+        final List<ImagePayload> payloads = new ArrayList<>();
         for (final MultipartFile file : files) {
             payloads.add(
-                new CarImagePayload(
+                new ImagePayload(
                     resolveImageContentType(file),
                     file.getBytes()
                 )

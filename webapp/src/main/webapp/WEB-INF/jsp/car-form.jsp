@@ -205,7 +205,7 @@
                                         data-number-field="integer"
                                         data-msg-number-invalid="${fn:escapeXml(jsYearNumeric)}"
                                         data-msg-number-range="${fn:escapeXml(jsYearRange)}"
-                                        min="1886" max="2100"
+                                        min="1950" max="2026"
                                         placeholder="${carYearPlaceholder}"/>
                             <form:errors path="year" cssClass="form-error" element="span"/>
                         </div>

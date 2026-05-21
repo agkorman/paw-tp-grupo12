@@ -2,7 +2,7 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -77,17 +77,17 @@ public class CarImageJpaDao implements CarImageDao {
 
     @Override
     public void saveOrReplace(final long carId, final String contentType, final byte[] imageData) {
-        replaceAll(carId, List.of(new CarImagePayload(contentType, imageData)));
+        replaceAll(carId, List.of(new ImagePayload(contentType, imageData)));
     }
 
     @Override
-    public void replaceAll(final long carId, final List<CarImagePayload> images) {
+    public void replaceAll(final long carId, final List<ImagePayload> images) {
         em.createQuery("DELETE FROM CarImage i WHERE i.car.id = :carId")
                 .setParameter("carId", carId)
                 .executeUpdate();
         final Car carRef = em.getReference(Car.class, carId);
         for (int i = 0; i < images.size(); i++) {
-            final CarImagePayload payload = images.get(i);
+            final ImagePayload payload = images.get(i);
             final CarImage img = new CarImage();
             img.setCar(carRef);
             img.setDisplayOrder(i);

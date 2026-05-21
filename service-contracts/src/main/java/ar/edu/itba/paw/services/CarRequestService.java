@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
 
@@ -24,7 +24,7 @@ public interface CarRequestService {
 
     CarRequest createPendingRequest(long submittedByUserId, String submitterEmail, long brandId,
                                     long bodyTypeId, Integer year, String model, String description,
-                                    List<CarImagePayload> images,
+                                    List<ImagePayload> images,
                                     String fuelType, Integer horsepower, Integer airbagCount,
                                     String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
                                     BigDecimal priceUsd);
@@ -42,12 +42,12 @@ public interface CarRequestService {
                                   BigDecimal priceUsd);
 
     boolean approvePendingRequest(long id, long brandId, String model, long bodyTypeId, Integer year, String description,
-                                  List<CarImagePayload> images,
+                                  List<ImagePayload> images,
                                   String fuelType, Integer horsepower, Integer airbagCount,
                                   String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
                                   BigDecimal priceUsd);
 
     boolean rejectPendingRequest(long id);
 
-    List<CarImagePayload> collectRetainedImagePayloads(long requestId, List<Long> retainedImageIds);
+    List<ImagePayload> collectRetainedImagePayloads(long requestId, List<Long> retainedImageIds);
 }

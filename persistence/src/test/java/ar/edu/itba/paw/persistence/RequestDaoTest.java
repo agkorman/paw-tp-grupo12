@@ -3,7 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
@@ -369,7 +369,7 @@ public class RequestDaoTest extends AbstractPersistenceTest {
         );
 
         // Exercise
-        carRequestDao.replaceImages(requestId, List.of(new CarImagePayload("image/png", new byte[]{5, 6})));
+        carRequestDao.replaceImages(requestId, List.of(new ImagePayload("image/png", new byte[]{5, 6})));
 
         // Assertions
         assertEquals(1, countRows(
@@ -512,7 +512,7 @@ public class RequestDaoTest extends AbstractPersistenceTest {
         );
 
         // Exercise
-        carRequestDao.replaceImages(requestId, List.of(new CarImagePayload("image/jpeg", new byte[]{9})));
+        carRequestDao.replaceImages(requestId, List.of(new ImagePayload("image/jpeg", new byte[]{9})));
 
         // Assertions
         assertEquals(1, countRows("SELECT COUNT(*) FROM car_request_images WHERE car_request_id = ?", requestId));
