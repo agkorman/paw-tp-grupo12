@@ -243,7 +243,8 @@ public class CarReviewController {
                 null,
                 reviewForm.getMileageKm(),
                 reviewForm.getWouldRecommend(),
-                reviewForm.getTagIds()
+                reviewForm.getTagIds(),
+                java.util.Collections.emptyList()
             );
             LOGGER.info(
                 "created review carId={} userId={}",
@@ -520,7 +521,8 @@ public class CarReviewController {
                 null,
                 reviewForm.getMileageKm(),
                 reviewForm.getWouldRecommend(),
-                reviewForm.getTagIds()
+                reviewForm.getTagIds(),
+                java.util.Collections.emptyList()
             );
             LOGGER.info(
                 "updated review id={} userId={}",

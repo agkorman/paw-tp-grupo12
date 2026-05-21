@@ -1,11 +1,14 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewImage;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ReviewDao;
+import ar.edu.itba.paw.persistence.ReviewImageDao;
 import ar.edu.itba.paw.persistence.ReviewTagDao;
 import ar.edu.itba.paw.services.exception.ReviewNotFoundException;
 import ar.edu.itba.paw.services.exception.ReviewOwnershipException;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +35,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewDao reviewDao;
     private final ReviewTagDao reviewTagDao;
+    private final ReviewImageDao reviewImageDao;
     private final ReviewTagService reviewTagService;
     private final CarService carService;
     private final UserService userService;
@@ -38,11 +43,13 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Autowired
     public ReviewServiceImpl(final ReviewDao reviewDao, final ReviewTagDao reviewTagDao,
+                             final ReviewImageDao reviewImageDao,
                              final ReviewTagService reviewTagService,
                              final CarService carService, final UserService userService,
                              final EmailService emailService) {
         this.reviewDao = reviewDao;
         this.reviewTagDao = reviewTagDao;
+        this.reviewImageDao = reviewImageDao;
         this.reviewTagService = reviewTagService;
         this.carService = carService;
         this.userService = userService;
@@ -53,16 +60,21 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
                                String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
-                               Collection<Short> tagIds) {
+                               Collection<Short> tagIds, List<ImagePayload> images) {
         reviewTagService.validateSelection(tagIds);
         final Review review = reviewDao.create(userId, carId, rating, title, body, ownershipStatus, modelYear,
                 mileageKm, wouldRecommend);
+        if (images != null && !images.isEmpty()) {
+            reviewImageDao.replaceAll(review.getId(), ImagePayloadUtils.normalizeImages(images));
+        }
         if (tagIds != null && !tagIds.isEmpty()) {
             reviewTagDao.replaceAssignments(review.getId(), tagIds);
-            LOGGER.info("created review id={} userId={} carId={} tagCount={}", review.getId(), userId, carId, tagIds.size());
+            LOGGER.info("created review id={} userId={} carId={} tagCount={} imageCount={}", review.getId(), userId, carId,
+                    tagIds.size(), images == null ? 0 : images.size());
             return reviewDao.findById(review.getId()).orElse(review);
         }
-        LOGGER.info("created review id={} userId={} carId={}", review.getId(), userId, carId);
+        LOGGER.info("created review id={} userId={} carId={} imageCount={}", review.getId(), userId, carId,
+                images == null ? 0 : images.size());
         return review;
     }
 
@@ -140,16 +152,53 @@ public class ReviewServiceImpl implements ReviewService {
                                          final BigDecimal rating, final String title, final String body,
                                          final String ownershipStatus, final Integer modelYear,
                                          final Integer mileageKm, final Boolean wouldRecommend,
-                                         final Collection<Short> tagIds) {
+                                         final Collection<Short> tagIds,
+                                         final List<ImagePayload> finalImages) {
         reviewTagService.validateSelection(tagIds);
         final Optional<Review> updated = reviewDao.update(id, carId, rating, title, body, ownershipStatus,
                 modelYear, mileageKm, wouldRecommend);
         if (updated.isPresent()) {
             reviewTagDao.replaceAssignments(id, tagIds == null ? Collections.emptyList() : tagIds);
-            LOGGER.info("updated review id={} carId={} rating={}", id, carId, rating);
+            final List<ImagePayload> normalized = ImagePayloadUtils.normalizeImages(
+                    finalImages == null ? Collections.emptyList() : finalImages);
+            reviewImageDao.replaceAll(id, normalized);
+            LOGGER.info("updated review id={} carId={} rating={} imageCount={}", id, carId, rating, normalized.size());
             return reviewDao.findById(id);
         }
         return updated;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReviewImage> getReviewImagesByReviewId(final long reviewId) {
+        return reviewImageDao.findAllByReviewId(reviewId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ReviewImage> getReviewImageById(final long reviewId, final long imageId) {
+        return reviewImageDao.findByReviewIdAndImageId(reviewId, imageId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ImagePayload> collectRetainedReviewImagePayloads(final long reviewId,
+                                                                 final List<Long> retainedImageIds) {
+        final List<ImagePayload> payloads = new ArrayList<>();
+        if (retainedImageIds == null) {
+            return payloads;
+        }
+        for (final Long imageId : retainedImageIds) {
+            if (imageId == null) {
+                continue;
+            }
+            final Optional<ReviewImage> image = reviewImageDao.findByReviewIdAndImageId(reviewId, imageId);
+            if (image.isEmpty() || image.get().getImageData() == null) {
+                continue;
+            }
+            payloads.add(new ImagePayload(image.get().getContentType(), image.get().getImageData()));
+        }
+        return payloads;
     }
 
     @Override
