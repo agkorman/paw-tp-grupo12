@@ -43,8 +43,6 @@ public class CommunityServiceImpl implements CommunityService {
     private static final String DEFAULT_COMMUNITY_SLUG = "community";
     private static final int MAX_POST_SLUG_LENGTH = 80;
     private static final String DEFAULT_POST_SLUG = "post";
-    private static final int MAX_POST_COMMENT_BODY_LENGTH = 1000;
-
     private final CommunityDao communityDao;
 
     @Autowired
@@ -183,9 +181,6 @@ public class CommunityServiceImpl implements CommunityService {
                 "Community post slug is required."
         );
         final String normalizedBody = StringUtils.normalizeRequired(body, "Community post comment body is required.");
-        if (normalizedBody.length() > MAX_POST_COMMENT_BODY_LENGTH) {
-            throw new InvalidServiceInputException("Community post comment body is too long.");
-        }
 
         final Optional<Community> communityOptional = communityDao.findBySlug(normalizedCommunitySlug);
         if (communityOptional.isEmpty()) {

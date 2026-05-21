@@ -360,8 +360,7 @@ class CommunityControllerTest {
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(view().name("community-post-detail.jsp"))
-                .andExpect(model().attribute("commentError", "validation.communityPostComment.body.required"))
-                .andExpect(model().attribute("commentErrorBody", ""));
+                .andExpect(model().attributeHasFieldErrors("communityPostCommentForm", "body"));
         clearSecurityContext();
     }
 

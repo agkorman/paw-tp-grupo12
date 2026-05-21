@@ -815,9 +815,6 @@ ALTER TABLE community_memberships DROP CONSTRAINT IF EXISTS chk_community_member
 ALTER TABLE community_memberships ADD CONSTRAINT chk_community_memberships_role
     CHECK (role IN ('member', 'moderator'));
 
-ALTER TABLE community_posts DROP COLUMN IF EXISTS type;
-DROP TABLE IF EXISTS community_post_comment_replies;
-
 ALTER TABLE community_posts DROP CONSTRAINT IF EXISTS chk_community_posts_slug_not_blank;
 ALTER TABLE community_posts ADD CONSTRAINT chk_community_posts_slug_not_blank CHECK (BTRIM(slug) <> '');
 ALTER TABLE community_posts DROP CONSTRAINT IF EXISTS chk_community_posts_title_not_blank;

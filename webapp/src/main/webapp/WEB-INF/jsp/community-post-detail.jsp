@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -23,10 +24,6 @@
     </c:url>
     <spring:message var="communityPostBackLabel" code="communities.postDetail.back"/>
     <spring:message var="communityPostCommentPlaceholder" code="communities.postDetail.comment.placeholder"/>
-    <spring:message var="communityPostCommentLabel" code="communities.postDetail.comment.label"/>
-    <spring:message var="communityPostCommentSubmitLabel" code="communities.postDetail.comment.submit"/>
-    <spring:message var="communityPostCommentRequiredMessage" code="validation.communityPostComment.body.required"/>
-    <spring:message var="communityPostCommentMaxMessage" code="validation.communityPostComment.body.max" arguments="1000"/>
     <spring:message var="communityPostCommentLoginPrefix" code="communities.postDetail.comment.loginPrefix"/>
     <spring:message var="communityPostCommentLoginSuffix" code="communities.postDetail.comment.loginSuffix"/>
     <spring:message var="communityPostHelpfulAddLabel" code="communities.postDetail.helpful.add"/>
@@ -87,38 +84,24 @@
             </article>
 
             <sec:authorize access="isAuthenticated()">
-                <c:set var="commentHasError" value="${not empty commentError}"/>
-                <c:set var="communityPostCommentBodyClass" value=""/>
-                <c:if test="${commentHasError}">
-                    <c:set var="communityPostCommentBodyClass" value="is-invalid"/>
-                </c:if>
-                <form method="post" action="${fn:escapeXml(communityPostCommentCreateUrl)}" class="community-comment-composer" novalidate="novalidate">
+                <form:form method="post"
+                           action="${fn:escapeXml(communityPostCommentCreateUrl)}"
+                           modelAttribute="communityPostCommentForm"
+                           cssClass="community-comment-composer"
+                           novalidate="novalidate">
                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                    <label for="communityPostComment"><c:out value="${communityPostCommentLabel}"/></label>
+                    <label for="communityPostComment"><spring:message code="communities.postDetail.comment.label"/></label>
                     <div class="community-comment-composer-row">
-                        <textarea id="communityPostComment"
-                                  name="body"
-                                  rows="2"
-                                  maxlength="1000"
-                                  required="required"
-                                  placeholder="${fn:escapeXml(communityPostCommentPlaceholder)}"
-                                  class="${communityPostCommentBodyClass}"><c:out value="${commentErrorBody}"/></textarea>
-                        <button type="submit" class="btn-secondary"><c:out value="${communityPostCommentSubmitLabel}"/></button>
+                        <form:textarea id="communityPostComment"
+                                       path="body"
+                                       rows="2"
+                                       maxlength="1000"
+                                       required="required"
+                                       placeholder="${fn:escapeXml(communityPostCommentPlaceholder)}"/>
+                        <button type="submit" class="btn-secondary"><spring:message code="communities.postDetail.comment.submit"/></button>
                     </div>
-                    <c:choose>
-                        <c:when test="${commentHasError}">
-                            <span class="community-comment-inline-error client-form-error">
-                                <c:choose>
-                                    <c:when test="${commentError eq 'validation.communityPostComment.body.max'}"><c:out value="${communityPostCommentMaxMessage}"/></c:when>
-                                    <c:otherwise><c:out value="${communityPostCommentRequiredMessage}"/></c:otherwise>
-                                </c:choose>
-                            </span>
-                        </c:when>
-                        <c:otherwise>
-                            <span class="community-comment-inline-error client-form-error" hidden></span>
-                        </c:otherwise>
-                    </c:choose>
-                </form>
+                    <form:errors path="body" cssClass="community-comment-inline-error client-form-error" element="span"/>
+                </form:form>
             </sec:authorize>
             <sec:authorize access="!isAuthenticated()">
                 <p class="community-comment-login">

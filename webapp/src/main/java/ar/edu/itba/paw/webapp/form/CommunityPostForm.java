@@ -1,12 +1,14 @@
 package ar.edu.itba.paw.webapp.form;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 public class CommunityPostForm {
 
     @NotBlank(message = "{validation.communityPost.title.required}")
     @Size(max = 120, message = "{validation.communityPost.title.max}")
+    @Pattern(regexp = "^[^\\r\\n]*$", message = "{validation.communityPost.title.singleLine}")
     private String title;
 
     @NotBlank(message = "{validation.communityPost.body.required}")

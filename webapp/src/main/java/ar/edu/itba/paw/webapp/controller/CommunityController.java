@@ -14,6 +14,7 @@ import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
+import ar.edu.itba.paw.webapp.form.CommunityPostCommentForm;
 import ar.edu.itba.paw.webapp.form.CommunityForm;
 import ar.edu.itba.paw.webapp.form.CommunityPostForm;
 import java.util.ArrayList;
@@ -41,7 +42,6 @@ import org.springframework.web.servlet.ModelAndView;
 public class CommunityController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommunityController.class);
-    private static final int COMMUNITY_POST_COMMENT_MAX_LENGTH = 1000;
 
     private final CommunityService communityService;
     private final RelativeTimeFormatter relativeTimeFormatter;
@@ -69,6 +69,11 @@ public class CommunityController {
     @ModelAttribute("communityPostForm")
     public CommunityPostForm communityPostForm() {
         return new CommunityPostForm();
+    }
+
+    @ModelAttribute("communityPostCommentForm")
+    public CommunityPostCommentForm communityPostCommentForm() {
+        return new CommunityPostCommentForm();
     }
 
     @RequestMapping(value = "/communities", method = RequestMethod.GET)
@@ -203,7 +208,8 @@ public class CommunityController {
     public ModelAndView createCommunityPostComment(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
-        @RequestParam(value = "body", required = false) final String body,
+        @Valid @ModelAttribute("communityPostCommentForm") final CommunityPostCommentForm communityPostCommentForm,
+        final BindingResult errors,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
@@ -214,14 +220,18 @@ public class CommunityController {
                 .getCommunityPostDetail(communitySlug, postSlug, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
 
-        final String validationError = validateCommunityPostCommentBody(body);
-        if (validationError != null) {
+        if (errors.hasFieldErrors("body")) {
             LOGGER.warn("create community post comment rejected: validation errors userId={} communitySlug={} postSlug={}",
                     currentUser.getId(), communitySlug, postSlug);
-            return communityPostPageWithCommentError(postDetail, currentUser, body, validationError);
+            return communityPostPageWithCommentError(postDetail);
         }
 
-        communityService.createCommunityPostComment(communitySlug, postSlug, currentUser.getId(), body)
+        communityService.createCommunityPostComment(
+                        communitySlug,
+                        postSlug,
+                        currentUser.getId(),
+                        communityPostCommentForm.getBody()
+                )
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
         LOGGER.info("user id={} commented on communitySlug={} postSlug={}",
                 currentUser.getId(), communitySlug, postSlug);
@@ -282,17 +292,11 @@ public class CommunityController {
         return currentUser == null ? null : currentUser.getId();
     }
 
-    private ModelAndView communityPostPageWithCommentError(final CommunityPostDetailData postDetail,
-                                                           final AuthenticatedUser currentUser,
-                                                           final String commentErrorBody,
-                                                           final String commentError) {
+    private ModelAndView communityPostPageWithCommentError(final CommunityPostDetailData postDetail) {
         final ModelAndView mav = new ModelAndView("community-post-detail.jsp");
         mav.addObject("pageTitle", postDetail.getPost().getTitle() + " | La Posta Autos");
         mav.addObject("postDetail", postDetail);
         mav.addObject("postView", toPostView(postDetail));
-        mav.addObject("commentError", commentError);
-        mav.addObject("commentErrorBody", bodyOrEmpty(commentErrorBody));
-        mav.addObject("authenticated", currentUser != null);
         return mav;
     }
 
@@ -377,24 +381,6 @@ public class CommunityController {
             postDetail.getCommentCount(),
             comments
         );
-    }
-
-    private String validateCommunityPostCommentBody(final String body) {
-        final String normalizedBody = body == null ? null : body.trim();
-        if (normalizedBody == null || normalizedBody.isEmpty()) {
-            return "validation.communityPostComment.body.required";
-        }
-        if (normalizedBody.length() > COMMUNITY_POST_COMMENT_MAX_LENGTH) {
-            return "validation.communityPostComment.body.max";
-        }
-        return null;
-    }
-
-    private String bodyOrEmpty(final String body) {
-        if (body == null || body.trim().isEmpty()) {
-            return "";
-        }
-        return body;
     }
 
     public static final class TopicView {
