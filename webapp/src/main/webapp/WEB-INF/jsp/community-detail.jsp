@@ -2,7 +2,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
-<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
@@ -16,7 +15,6 @@
     </c:url>
     <c:url var="communitySubmitUrl" value="/communities/${communityDetail.community.slug}/submit"/>
     <c:url var="communityJoinUrl" value="/communities/${communityDetail.community.slug}/join"/>
-    <spring:message var="communityGuestName" code="communities.sidebar.flair.guest"/>
     <spring:message var="communityStatsAria" code="communities.sidebar.stats.aria"/>
     <c:set var="communityJoinButtonClass" value="btn-primary community-banner-join-btn"/>
     <c:if test="${communityDetail.joined}">
@@ -117,25 +115,6 @@
                     <div class="community-stat">
                         <strong><c:out value="${communityDetail.weeklyPostCount}"/></strong>
                         <span><spring:message code="communities.sidebar.stats.posts"/></span>
-                    </div>
-                </section>
-
-                <section class="community-sidebar-card">
-                    <p class="community-sidebar-eyebrow"><spring:message code="communities.sidebar.flair.eyebrow"/></p>
-                    <h2 class="community-sidebar-title"><spring:message code="communities.sidebar.flair.title"/></h2>
-                    <div class="community-flair-card">
-                        <span class="community-flair-avatar" aria-hidden="true"></span>
-                        <div class="community-flair-copy">
-                            <sec:authorize access="isAuthenticated()">
-                                <sec:authentication property="principal.displayName" var="communityDisplayName"/>
-                                <strong><c:out value="${communityDisplayName}"/></strong>
-                                <span><spring:message code="communities.sidebar.flair.authenticated"/></span>
-                            </sec:authorize>
-                            <sec:authorize access="isAnonymous()">
-                                <strong><c:out value="${communityGuestName}"/></strong>
-                                <span><spring:message code="communities.sidebar.flair.anonymous"/></span>
-                            </sec:authorize>
-                        </div>
                     </div>
                 </section>
             </aside>

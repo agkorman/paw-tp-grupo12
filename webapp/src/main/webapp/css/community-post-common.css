@@ -36,10 +36,8 @@
 .community-post-origin {
     display: flex;
     align-items: center;
-    gap: var(--spacing-3);
 }
 
-.community-post-origin-avatar,
 .community-comment-avatar {
     width: 3rem;
     height: 3rem;
@@ -72,4 +70,12 @@
 .community-post-origin-author {
     margin-top: 0.2rem;
     color: var(--secondary);
+    text-decoration: none;
+}
+
+.community-post-origin-author:hover,
+.community-post-origin-author:focus-visible {
+    color: var(--secondary);
+    font-weight: 700;
+    outline: none;
 }

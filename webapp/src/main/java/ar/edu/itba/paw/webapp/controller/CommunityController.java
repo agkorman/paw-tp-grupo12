@@ -346,6 +346,7 @@ public class CommunityController {
         for (final CommunityPostSummary postSummary : postSummaries) {
             cards.add(new PostCardView(
                 "/communities/" + communitySlug + "/posts/" + postSummary.getPost().getSlug(),
+                "/profiles/" + postSummary.getPost().getAuthorUserId(),
                 postSummary.getPost().getAuthorUsername(),
                 relativeTimeFormatter.format(postSummary.getPost().getCreatedAt()),
                 postSummary.getPost().getTitle(),
@@ -361,6 +362,7 @@ public class CommunityController {
         final List<CommentView> comments = new ArrayList<>();
         for (final CommunityPostComment comment : postDetail.getComments()) {
             comments.add(new CommentView(
+                "/profiles/" + comment.getUserId(),
                 comment.getAuthorUsername(),
                 relativeTimeFormatter.format(comment.getCreatedAt()),
                 comment.getBody(),
@@ -372,6 +374,7 @@ public class CommunityController {
         return new PostDetailView(
             postDetail.getCommunity().getName(),
             "c/" + postDetail.getCommunity().getSlug(),
+            "/profiles/" + postDetail.getPost().getAuthorUserId(),
             postDetail.getPost().getAuthorUsername(),
             relativeTimeFormatter.format(postDetail.getPost().getCreatedAt()),
             postDetail.getPost().getTitle(),
@@ -457,6 +460,7 @@ public class CommunityController {
     public static final class PostCardView {
 
         private final String href;
+        private final String authorProfileHref;
         private final String author;
         private final String timeText;
         private final String title;
@@ -464,11 +468,13 @@ public class CommunityController {
         private final long helpfulCount;
         private final long commentCount;
 
-        private PostCardView(final String href, final String author,
+        private PostCardView(final String href, final String authorProfileHref,
+                             final String author,
                              final String timeText, final String title,
                              final String body, final long helpfulCount,
                              final long commentCount) {
             this.href = href;
+            this.authorProfileHref = authorProfileHref;
             this.author = author;
             this.timeText = timeText;
             this.title = title;
@@ -479,6 +485,10 @@ public class CommunityController {
 
         public String getHref() {
             return href;
+        }
+
+        public String getAuthorProfileHref() {
+            return authorProfileHref;
         }
 
         public String getAuthor() {
@@ -510,6 +520,7 @@ public class CommunityController {
 
         private final String communityName;
         private final String communityHandle;
+        private final String authorProfileHref;
         private final String author;
         private final String timeText;
         private final String title;
@@ -520,13 +531,14 @@ public class CommunityController {
         private final List<CommentView> comments;
 
         private PostDetailView(final String communityName, final String communityHandle,
-                               final String author, final String timeText,
+                               final String authorProfileHref, final String author, final String timeText,
                                final String title, final String body,
                                final long helpfulCount, final boolean helpfulByCurrentUser,
                                final long commentCount,
                                final List<CommentView> comments) {
             this.communityName = communityName;
             this.communityHandle = communityHandle;
+            this.authorProfileHref = authorProfileHref;
             this.author = author;
             this.timeText = timeText;
             this.title = title;
@@ -543,6 +555,10 @@ public class CommunityController {
 
         public String getCommunityHandle() {
             return communityHandle;
+        }
+
+        public String getAuthorProfileHref() {
+            return authorProfileHref;
         }
 
         public String getAuthor() {
@@ -580,20 +596,26 @@ public class CommunityController {
 
     public static final class CommentView {
 
+        private final String authorProfileHref;
         private final String author;
         private final String timeText;
         private final String body;
         private final long helpfulCount;
         private final boolean op;
 
-        private CommentView(final String author, final String timeText,
+        private CommentView(final String authorProfileHref, final String author, final String timeText,
                             final String body, final long helpfulCount,
                             final boolean op) {
+            this.authorProfileHref = authorProfileHref;
             this.author = author;
             this.timeText = timeText;
             this.body = body;
             this.helpfulCount = helpfulCount;
             this.op = op;
+        }
+
+        public String getAuthorProfileHref() {
+            return authorProfileHref;
         }
 
         public String getAuthor() {

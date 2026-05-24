@@ -28,6 +28,11 @@
     display: contents;
 }
 
+.review-like-form {
+    display: inline-flex;
+    margin: 0;
+}
+
 .favorite-toggle:hover,
 .review-like-toggle:hover {
     background: var(--surface-container-high);
@@ -63,4 +68,9 @@
 .review-like-count {
     color: inherit;
     font-variant-numeric: tabular-nums;
+}
+
+.review-like-toggle:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
 }
