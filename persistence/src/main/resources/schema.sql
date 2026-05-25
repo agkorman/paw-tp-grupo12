@@ -848,17 +848,28 @@ CREATE INDEX IF NOT EXISTS idx_community_post_images_post_id ON community_post_i
 INSERT INTO community_topics (code)
 VALUES
     ('classics'),
-    ('brands'),
-    ('jdm'),
-    ('electric'),
+    ('sports'),
     ('motorsport'),
     ('offroad'),
-    ('repairs'),
-    ('reviews'),
-    ('buying'),
-    ('local'),
+    ('electric'),
+    ('builds'),
+    ('mechanical'),
     ('photography'),
-    ('daily')
+    ('marketplace'),
+    ('jdm'),
+    ('news')
 ON CONFLICT ((LOWER(BTRIM(code)))) DO NOTHING;
+
+-- Migrate legacy topic assignments before dropping obsolete topics
+UPDATE community_topic_assignments
+SET topic_id = (SELECT topic_id FROM community_topics WHERE code = 'mechanical')
+WHERE topic_id = (SELECT topic_id FROM community_topics WHERE code = 'repairs');
+
+UPDATE community_topic_assignments
+SET topic_id = (SELECT topic_id FROM community_topics WHERE code = 'marketplace')
+WHERE topic_id = (SELECT topic_id FROM community_topics WHERE code = 'buying');
+
+-- Drop obsolete topics (CASCADE removes remaining assignments)
+DELETE FROM community_topics WHERE code IN ('brands', 'repairs', 'reviews', 'buying', 'local', 'daily');
 
 COMMIT;

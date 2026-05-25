@@ -77,6 +77,7 @@
 
 .community-topic-chips .review-tag-chip {
     min-height: 3rem;
+    padding: 0.38rem 0.82rem;
 }
 
 .community-topic-chips .review-tag-chip-text {
