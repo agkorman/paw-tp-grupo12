@@ -84,6 +84,7 @@ public class CommunityServiceImpl implements CommunityService {
             }
             return entries;
         } catch (final DataAccessException e) {
+            LOGGER.warn("failed to load community hub for userId={}", currentUserId, e);
             return Collections.emptyList();
         }
     }
@@ -93,6 +94,7 @@ public class CommunityServiceImpl implements CommunityService {
         try {
             return communityDao.findAllTopics();
         } catch (final DataAccessException e) {
+            LOGGER.warn("failed to load available community topics", e);
             return Collections.emptyList();
         }
     }
@@ -314,6 +316,7 @@ public class CommunityServiceImpl implements CommunityService {
                     joined
             ));
         } catch (final DataAccessException e) {
+            LOGGER.warn("failed to load community detail for slug={}", slug, e);
             return Optional.empty();
         }
     }
@@ -323,6 +326,7 @@ public class CommunityServiceImpl implements CommunityService {
         try {
             return communityDao.findBySlug(slug);
         } catch (final DataAccessException e) {
+            LOGGER.warn("failed to load community for slug={}", slug, e);
             return Optional.empty();
         }
     }
@@ -361,6 +365,7 @@ public class CommunityServiceImpl implements CommunityService {
                     commentCount
             ));
         } catch (final DataAccessException e) {
+            LOGGER.warn("failed to load post detail for communitySlug={} postSlug={}", communitySlug, postSlug, e);
             return Optional.empty();
         }
     }
@@ -369,7 +374,7 @@ public class CommunityServiceImpl implements CommunityService {
         if (topicIds == null || topicIds.isEmpty()) {
             throw new InvalidCommunityTopicSelectionException(
                     InvalidCommunityTopicSelectionException.Reason.REQUIRED,
-                    "Elegí al menos un tema."
+                    "At least one topic is required."
             );
         }
 
@@ -379,13 +384,13 @@ public class CommunityServiceImpl implements CommunityService {
         if (uniqueTopicIds.isEmpty()) {
             throw new InvalidCommunityTopicSelectionException(
                     InvalidCommunityTopicSelectionException.Reason.REQUIRED,
-                    "Elegí al menos un tema."
+                    "At least one topic is required."
             );
         }
         if (uniqueTopicIds.size() > MAX_TOPICS_PER_COMMUNITY) {
             throw new InvalidCommunityTopicSelectionException(
                     InvalidCommunityTopicSelectionException.Reason.TOO_MANY,
-                    "Podés elegir hasta " + MAX_TOPICS_PER_COMMUNITY + " temas."
+                    "Too many topics selected: max=" + MAX_TOPICS_PER_COMMUNITY
             );
         }
 
@@ -393,7 +398,7 @@ public class CommunityServiceImpl implements CommunityService {
         if (resolvedTopics.size() != uniqueTopicIds.size()) {
             throw new InvalidCommunityTopicSelectionException(
                     InvalidCommunityTopicSelectionException.Reason.UNKNOWN_TOPIC,
-                    "Uno de los temas seleccionados no es válido."
+                    "One or more selected topics are unknown."
             );
         }
         return resolvedTopics;

@@ -12,6 +12,7 @@ import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.exception.InvalidCommunityTopicSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.CommunityPostCommentForm;
@@ -123,7 +124,7 @@ public class CommunityController {
         } catch (final InvalidCommunityTopicSelectionException e) {
             LOGGER.warn("create community rejected: invalid topic selection userId={} reason={}",
                     currentUser.getId(), e.getReason());
-            errors.rejectValue("selectedTopicIds", "validation.community.topics.invalid", e.getMessage());
+            errors.rejectValue("selectedTopicIds", resolveTopicErrorKey(e.getReason()));
             populateCreateCommunityPageModel(model);
             return "community-create.jsp";
         }
@@ -222,7 +223,9 @@ public class CommunityController {
 
         if (errors.hasFieldErrors("body")) {
             LOGGER.warn("create community post comment rejected: validation errors userId={} communitySlug={} postSlug={}",
-                    currentUser.getId(), communitySlug, postSlug);
+                    currentUser.getId(),
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                    LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
             return communityPostPageWithCommentError(postDetail);
         }
 
@@ -234,7 +237,9 @@ public class CommunityController {
                 )
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
         LOGGER.info("user id={} commented on communitySlug={} postSlug={}",
-                currentUser.getId(), communitySlug, postSlug);
+                currentUser.getId(),
+                LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
         return new ModelAndView("redirect:/communities/" + communitySlug + "/posts/" + postSlug);
     }
 
@@ -274,7 +279,9 @@ public class CommunityController {
 
         if (errors.hasErrors()) {
             LOGGER.warn("create community post rejected: validation errors userId={} communitySlug={} errorCount={}",
-                    currentUser.getId(), communitySlug, errors.getErrorCount());
+                    currentUser.getId(),
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                    errors.getErrorCount());
             populateCommunityPostFormModel(model, community);
             return "community-post-form.jsp";
         }
@@ -284,12 +291,22 @@ public class CommunityController {
                     communityPostForm.getTitle(), communityPostForm.getBody())
             .orElseThrow(() -> new ResourceNotFoundException("community not found"));
         LOGGER.info("created community post slug={} communitySlug={} userId={}",
-                createdPost.getSlug(), communitySlug, currentUser.getId());
+                LogSanitizer.forLog(createdPost.getSlug(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                currentUser.getId());
         return "redirect:/communities/" + communitySlug + "/posts/" + createdPost.getSlug();
     }
 
     private Long currentUserId(final AuthenticatedUser currentUser) {
         return currentUser == null ? null : currentUser.getId();
+    }
+
+    private String resolveTopicErrorKey(final InvalidCommunityTopicSelectionException.Reason reason) {
+        switch (reason) {
+            case REQUIRED: return "validation.community.topics.required";
+            case TOO_MANY: return "validation.community.topics.max";
+            default:       return "validation.community.topics.invalid";
+        }
     }
 
     private ModelAndView communityPostPageWithCommentError(final CommunityPostDetailData postDetail) {
