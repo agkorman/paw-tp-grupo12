@@ -1,0 +1,67 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<!DOCTYPE html>
+<html lang="es">
+<pa:page-head titleCode="communities.postForm.title" styles="/css/community-post-common.css|/css/community-post-form.css|/css/communities-responsive.css"/>
+<body>
+    <pa:nav activePage="communities"/>
+    <spring:message var="communityPostFormToolbarAria" code="communities.postForm.toolbar.aria"/>
+    <c:url var="communityPostCreateUrl" value="/communities/${community.slug}/posts"/>
+    <main class="community-post-form-page">
+        <form:form cssClass="community-post-form-shell"
+                   modelAttribute="communityPostForm"
+                   method="post"
+                   action="${fn:escapeXml(communityPostCreateUrl)}"
+                   novalidate="novalidate">
+            <form:errors cssClass="alert alert-error" element="div"/>
+            <div class="community-post-form-header">
+                <p class="community-post-form-target">
+                    <spring:message code="communities.postForm.postingTo"/>
+                    <strong class="community-post-form-target-name"># <c:out value="${community.name}"/></strong>
+                </p>
+            </div>
+
+            <div class="community-post-form-card">
+                <div class="community-post-form-title-block">
+                    <label for="communityPostTitle"><spring:message code="communities.postForm.field.title"/></label>
+                    <form:textarea id="communityPostTitle"
+                                   path="title"
+                                   rows="2"
+                                   maxlength="120"
+                                   required="required"/>
+                    <form:errors path="title" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="community-post-form-body-block">
+                    <label for="communityPostBody"><spring:message code="communities.postForm.field.body"/></label>
+                    <form:textarea id="communityPostBody"
+                                   path="body"
+                                   rows="8"
+                                   maxlength="5000"
+                                   required="required"/>
+                    <form:errors path="body" cssClass="form-error" element="span"/>
+                </div>
+
+                <div class="community-post-form-toolbar" aria-label="${fn:escapeXml(communityPostFormToolbarAria)}">
+                    <button type="button"><spring:message code="communities.postForm.toolbar.link"/></button>
+                    <button type="button"><spring:message code="communities.postForm.toolbar.photo"/></button>
+                    <button type="button"><spring:message code="communities.postForm.toolbar.car"/></button>
+                </div>
+            </div>
+
+            <div class="community-post-form-footer">
+                <div class="community-post-form-actions">
+                    <div class="community-post-form-actions-group">
+                        <button type="submit" class="btn-primary"><spring:message code="communities.postForm.submit"/></button>
+                    </div>
+                </div>
+            </div>
+        </form:form>
+    </main>
+    <pa:footer/>
+</body>
+</html>

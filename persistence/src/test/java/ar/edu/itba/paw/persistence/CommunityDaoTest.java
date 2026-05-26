@@ -1,0 +1,437 @@
+package ar.edu.itba.paw.persistence;
+
+import ar.edu.itba.paw.model.Community;
+import ar.edu.itba.paw.model.CommunityPost;
+import ar.edu.itba.paw.model.CommunityTopic;
+import ar.edu.itba.paw.model.User;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class CommunityDaoTest extends AbstractPersistenceTest {
+
+    @Autowired
+    private CommunityDao communityDao;
+
+    @Test
+    void shouldFindCommunityBySlugIgnoringCase() {
+        // Arrange
+        final User creator = insertUser("classics-owner", "classics-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("classics", "Classics", "Pre-1990 cars only.", creator.getId());
+
+        // Exercise
+        final Optional<Community> result = communityDao.findBySlug("CLASSICS");
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals(communityId, result.get().getId());
+        assertEquals("Classics", result.get().getName());
+        assertEquals("Pre-1990 cars only.", result.get().getDescription());
+    }
+
+    @Test
+    void shouldFindTopicsByCommunityIds() {
+        // Arrange
+        final User creator = insertUser("topics-owner", "topics-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("off-road", "Off-road", "Mud and gravel.", creator.getId());
+        final short topicId = insertTopic("offroad");
+        assignTopic(communityId, topicId);
+
+        // Exercise
+        final Map<Long, List<CommunityTopic>> result = communityDao.findTopicsByCommunityIds(List.of(communityId));
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(communityId).size());
+        assertEquals("offroad", result.get(communityId).get(0).getCode());
+    }
+
+    @Test
+    void shouldCreateCommunity() {
+        // Arrange
+        final User creator = insertUser("creator-owner", "creator-owner@example.com", "secret", "user");
+
+        // Exercise
+        final Community result = communityDao.create(
+                creator.getId(),
+                "classics-2",
+                "Classics",
+                "Pre-1990 cars only."
+        );
+
+        // Assertions
+        assertEquals("classics-2", result.getSlug());
+        assertEquals("Classics", result.getName());
+        assertEquals(
+                1,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM communities WHERE community_id = ? AND slug = ? AND created_by_user_id = ?",
+                        Integer.class,
+                        result.getId(),
+                        "classics-2",
+                        creator.getId()
+                )
+        );
+    }
+
+    @Test
+    void shouldReplaceTopicAssignments() {
+        // Arrange
+        final User creator = insertUser("assignment-owner", "assignment-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("classics", "Classics", "Pre-1990 cars only.", creator.getId());
+        final short firstTopicId = insertTopic("classics");
+        final short secondTopicId = insertTopic("repairs");
+
+        // Exercise
+        communityDao.replaceTopicAssignments(communityId, List.of(firstTopicId, secondTopicId));
+
+        // Assertions
+        assertEquals(
+                2,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM community_topic_assignments WHERE community_id = ?",
+                        Integer.class,
+                        communityId
+                )
+        );
+        assertEquals(
+                1,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM community_topic_assignments WHERE community_id = ? AND topic_id = ?",
+                        Integer.class,
+                        communityId,
+                        firstTopicId
+                )
+        );
+        assertEquals(
+                1,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM community_topic_assignments WHERE community_id = ? AND topic_id = ?",
+                        Integer.class,
+                        communityId,
+                        secondTopicId
+                )
+        );
+    }
+
+    @Test
+    void shouldCreateCommunityMembership() {
+        // Arrange
+        final User creator = insertUser("membership-owner", "membership-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("classics", "Classics", "Pre-1990 cars only.", creator.getId());
+
+        // Exercise
+        communityDao.createMembership(communityId, creator.getId(), "moderator");
+
+        // Assertions
+        assertEquals(
+                1,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM community_memberships WHERE community_id = ? AND user_id = ? AND role = ?",
+                        Integer.class,
+                        communityId,
+                        creator.getId(),
+                        "moderator"
+                )
+        );
+    }
+
+    @Test
+    void shouldCreateCommunityPost() {
+        // Arrange
+        final User creator = insertUser("post-create-owner", "post-create-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("classics", "Classics", "Pre-1990 cars only.", creator.getId());
+
+        // Exercise
+        final CommunityPost result = communityDao.createPost(
+                communityId,
+                creator.getId(),
+                "first-post",
+                "First post",
+                "This is the first real community post."
+        );
+
+        // Assertions
+        assertEquals("first-post", result.getSlug());
+        assertEquals(
+                1,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM community_posts WHERE post_id = ? AND community_id = ? AND author_user_id = ? AND slug = ?",
+                        Integer.class,
+                        result.getId(),
+                        communityId,
+                        creator.getId(),
+                        "first-post"
+                )
+        );
+    }
+
+    @Test
+    void shouldCreateCommunityComment() {
+        // Arrange
+        final User creator = insertUser("comment-create-owner", "comment-create-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("classics", "Classics", "Pre-1990 cars only.", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "first-post",
+                "First post",
+                "This is the first real community post.",
+                LocalDateTime.now().minusHours(2)
+        );
+
+        // Exercise
+        final ar.edu.itba.paw.model.CommunityPostComment result = communityDao.createComment(
+                postId,
+                creator.getId(),
+                "This deserves more photos."
+        );
+
+        // Assertions
+        assertEquals("This deserves more photos.", result.getBody());
+        assertEquals(
+                1,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM community_post_comments WHERE comment_id = ? AND post_id = ? AND user_id = ?",
+                        Integer.class,
+                        result.getId(),
+                        postId,
+                        creator.getId()
+                )
+        );
+    }
+
+    @Test
+    void shouldDeleteCommunityMembership() {
+        // Arrange
+        final User creator = insertUser("membership-remove-owner", "membership-remove-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("classics", "Classics", "Pre-1990 cars only.", creator.getId());
+        insertCommunityMembership(communityId, creator.getId(), "member");
+
+        // Exercise
+        communityDao.deleteMembership(communityId, creator.getId());
+
+        // Assertions
+        assertEquals(
+                0,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM community_memberships WHERE community_id = ? AND user_id = ?",
+                        Integer.class,
+                        communityId,
+                        creator.getId()
+                )
+        );
+    }
+
+    @Test
+    void shouldFindCommunityPostWithAuthor() {
+        // Arrange
+        final User creator = insertUser("post-owner", "post-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("classics", "Classics", "Pre-1990 cars only.", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "falcon-60",
+                "My grandfather's Falcon turned 60 today",
+                "Still runs beautifully.",
+                LocalDateTime.now().minusHours(2)
+        );
+
+        // Exercise
+        final Optional<CommunityPost> result = communityDao.findPostByCommunityIdAndSlug(communityId, "FALCON-60");
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals(postId, result.get().getId());
+        assertEquals("post-owner", result.get().getAuthorUsername());
+        assertEquals("My grandfather's Falcon turned 60 today", result.get().getTitle());
+    }
+
+    @Test
+    void shouldCountCommentsByPostIds() {
+        // Arrange
+        final User creator = insertUser("comments-owner", "comments-owner@example.com", "secret", "user");
+        final User commenter = insertUser("comments-user", "comments-user@example.com", "secret", "user");
+        final long communityId = insertCommunity("classics", "Classics", "Pre-1990 cars only.", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "falcon-60",
+                "My grandfather's Falcon turned 60 today",
+                "Still runs beautifully.",
+                LocalDateTime.now().minusHours(2)
+        );
+        insertCommunityComment(postId, commenter.getId(), "That paint looks original.", LocalDateTime.now().minusHours(1));
+
+        // Exercise
+        final Map<Long, Long> result = communityDao.countCommentsByPostIds(List.of(postId));
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(postId));
+    }
+
+    @Test
+    void shouldCountHelpfulReactionsByPostIds() {
+        // Arrange
+        final User creator = insertUser("helpful-owner", "helpful-owner@example.com", "secret", "user");
+        final User helper = insertUser("helpful-user", "helpful-user@example.com", "secret", "user");
+        final long communityId = insertCommunity("classics", "Classics", "Pre-1990 cars only.", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "falcon-60",
+                "My grandfather's Falcon turned 60 today",
+                "Still runs beautifully.",
+                LocalDateTime.now().minusHours(2)
+        );
+        insertHelpfulReaction(postId, helper.getId());
+
+        // Exercise
+        final Map<Long, Long> result = communityDao.countHelpfulReactionsByPostIds(List.of(postId));
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(postId));
+    }
+
+    @Test
+    void shouldAddAndRemoveHelpfulReaction() {
+        // Arrange
+        final User creator = insertUser("helpful-toggle-owner", "helpful-toggle-owner@example.com", "secret", "user");
+        final User helper = insertUser("helpful-toggle-user", "helpful-toggle-user@example.com", "secret", "user");
+        final long communityId = insertCommunity("classics", "Classics", "Pre-1990 cars only.", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "falcon-60",
+                "My grandfather's Falcon turned 60 today",
+                "Still runs beautifully.",
+                LocalDateTime.now().minusHours(2)
+        );
+
+        // Exercise
+        final boolean added = communityDao.addHelpfulReaction(postId, helper.getId());
+
+        // Assertions
+        assertTrue(added);
+        assertEquals(
+                1,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM community_post_helpful_reactions WHERE post_id = ? AND user_id = ?",
+                        Integer.class,
+                        postId,
+                        helper.getId()
+                )
+        );
+        assertTrue(communityDao.isHelpfulReactionAddedByUser(postId, helper.getId()));
+
+        // Arrange
+        final boolean removed = communityDao.removeHelpfulReaction(postId, helper.getId());
+
+        // Assertions
+        assertTrue(removed);
+        assertEquals(
+                0,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM community_post_helpful_reactions WHERE post_id = ? AND user_id = ?",
+                        Integer.class,
+                        postId,
+                        helper.getId()
+                )
+        );
+    }
+
+    private long insertCommunity(final String slug, final String name, final String description, final long createdByUserId) {
+        jdbcTemplate.update(
+                "INSERT INTO communities (slug, name, description, created_by_user_id) VALUES (?, ?, ?, ?)",
+                slug, name, description, createdByUserId
+        );
+        return jdbcTemplate.queryForObject(
+                "SELECT community_id FROM communities WHERE slug = ?",
+                Long.class,
+                slug
+        );
+    }
+
+    private short insertTopic(final String code) {
+        jdbcTemplate.update("INSERT INTO community_topics (code) VALUES (?)", code);
+        return jdbcTemplate.queryForObject(
+                "SELECT topic_id FROM community_topics WHERE code = ?",
+                Short.class,
+                code
+        );
+    }
+
+    private void assignTopic(final long communityId, final short topicId) {
+        jdbcTemplate.update(
+                "INSERT INTO community_topic_assignments (community_id, topic_id) VALUES (?, ?)",
+                communityId,
+                topicId
+        );
+    }
+
+    private void insertCommunityMembership(final long communityId, final long userId, final String role) {
+        jdbcTemplate.update(
+                "INSERT INTO community_memberships (community_id, user_id, role) VALUES (?, ?, ?)",
+                communityId,
+                userId,
+                role
+        );
+    }
+
+    private long insertCommunityPost(final long communityId, final long authorUserId, final String slug,
+                                     final String title, final String body,
+                                     final LocalDateTime createdAt) {
+        jdbcTemplate.update(
+                "INSERT INTO community_posts (community_id, author_user_id, slug, title, body, created_at, updated_at) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                communityId,
+                authorUserId,
+                slug,
+                title,
+                body,
+                Timestamp.valueOf(createdAt),
+                Timestamp.valueOf(createdAt)
+        );
+        return jdbcTemplate.queryForObject(
+                "SELECT post_id FROM community_posts WHERE community_id = ? AND slug = ?",
+                Long.class,
+                communityId,
+                slug
+        );
+    }
+
+    private long insertCommunityComment(final long postId, final long userId, final String body, final LocalDateTime createdAt) {
+        jdbcTemplate.update(
+                "INSERT INTO community_post_comments (post_id, user_id, body, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                postId,
+                userId,
+                body,
+                Timestamp.valueOf(createdAt),
+                Timestamp.valueOf(createdAt)
+        );
+        return jdbcTemplate.queryForObject(
+                "SELECT comment_id FROM community_post_comments WHERE post_id = ? AND user_id = ? AND body = ?",
+                Long.class,
+                postId,
+                userId,
+                body
+        );
+    }
+
+    private void insertHelpfulReaction(final long postId, final long userId) {
+        jdbcTemplate.update(
+                "INSERT INTO community_post_helpful_reactions (post_id, user_id) VALUES (?, ?)",
+                postId,
+                userId
+        );
+    }
+}
