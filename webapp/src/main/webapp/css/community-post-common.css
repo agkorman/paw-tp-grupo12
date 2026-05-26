@@ -36,6 +36,11 @@
 .community-post-origin {
     display: flex;
     align-items: center;
+    min-width: 0;
+}
+
+.community-post-header .community-post-mod-menu {
+    margin-left: auto;
 }
 
 .community-comment-avatar {

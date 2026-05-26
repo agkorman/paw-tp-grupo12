@@ -11,6 +11,7 @@
 <%@ attribute name="actionLabel" required="false" type="java.lang.String" %>
 <%@ attribute name="addAriaLabel" required="false" type="java.lang.String" %>
 <%@ attribute name="removeAriaLabel" required="false" type="java.lang.String" %>
+<%@ attribute name="readonly" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -23,6 +24,7 @@
 <spring:message var="likeRemoveLabel" code="review.like.remove.aria"/>
 <c:set var="likeLabel" value="${empty label ? defaultLikeLabel : label}"/>
 <c:set var="likeDisabled" value="${empty disabled ? false : disabled}"/>
+<c:set var="likeReadonly" value="${empty readonly ? false : readonly}"/>
 <c:set var="likeIntent" value="${empty intent ? 'like-'.concat(reviewId) : intent}"/>
 <c:set var="effectiveLikeLoginLabel" value="${empty loginLabel ? likeLoginLabel : loginLabel}"/>
 <c:set var="effectiveLikeActionLabel" value="${empty actionLabel ? likeActionLabel : actionLabel}"/>
@@ -43,6 +45,15 @@
 </c:url>
 
 <c:choose>
+    <c:when test="${likeReadonly}">
+        <span
+                class="review-like-toggle ${liked ? 'is-active' : ''}"
+                aria-disabled="true">
+            <pa:icon name="heart" size="17"/>
+            <span class="review-like-label"><c:out value="${likeLabel}"/></span>
+            <span class="review-like-count" data-review-like-count><c:out value="${empty likeCount ? 0 : likeCount}"/></span>
+        </span>
+    </c:when>
     <c:when test="${not empty action}">
         <c:choose>
             <c:when test="${likeDisabled}">
