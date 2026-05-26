@@ -5,7 +5,7 @@ import javax.validation.constraints.Size;
 
 public class CommunityHideForm {
 
-    @NotBlank(message = "{communities.hide.reason.required}")
+    @NotBlank(message = "{validation.communityHide.reason.required}")
     @Size(min = 10, max = 600, message = "{validation.communityHide.reason.size}")
     private String reason;
 
