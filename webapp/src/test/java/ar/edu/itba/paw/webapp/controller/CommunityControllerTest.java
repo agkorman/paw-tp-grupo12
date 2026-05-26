@@ -11,6 +11,7 @@ import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CommunityService;
+import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
@@ -257,6 +258,21 @@ class CommunityControllerTest {
     }
 
     @Test
+    void kickCommunityMemberGet_redirectsToMembersPage() throws Exception {
+        // Arrange
+        final String communitySlug = "classics";
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(get("/communities/classics/members/6/kick"));
+
+        // Assertions
+        resultActions
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/communities/" + communitySlug + "/members"));
+    }
+
+    @Test
     void submitCommunityPost_validForm_redirectsToPostDetail() throws Exception {
         // Arrange
         final CommunityPost createdPost = post();
@@ -368,6 +384,29 @@ class CommunityControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("community-post-detail.jsp"))
                 .andExpect(model().attributeHasFieldErrors("communityPostCommentForm", "body"));
+        clearSecurityContext();
+    }
+
+    @Test
+    void createCommunityPostComment_nonMember_redirectsToPostDetail() throws Exception {
+        // Arrange
+        when(communityService.getCommunityPostDetail("classics", "falcon-60", 7L))
+                .thenReturn(Optional.of(communityPostDetailData()));
+        when(communityService.createCommunityPostComment("classics", "falcon-60", 7L, "This deserves more photos."))
+                .thenThrow(new CommunityMembershipRequiredException("classics"));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities/classics/posts/falcon-60/comments")
+                        .param("body", "This deserves more photos.")
+        );
+
+        // Assertions
+        resultActions
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/communities/classics/posts/falcon-60"));
         clearSecurityContext();
     }
 

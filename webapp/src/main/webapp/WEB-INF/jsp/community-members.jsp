@@ -32,8 +32,9 @@
                             <c:out value="${fn:substring(row.username, 0, 1)}"/>
                         </span>
                         <div class="community-member-info">
+                            <c:url var="memberProfileUrl" value="/profiles/${row.userId}"/>
                             <a class="community-member-name"
-                               href="${fn:escapeXml('/profiles/'.concat(row.userId))}">
+                               href="${fn:escapeXml(memberProfileUrl)}">
                                 <c:out value="${row.username}"/>
                             </a>
                             <div class="community-member-badges">

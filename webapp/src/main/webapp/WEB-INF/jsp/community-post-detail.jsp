@@ -14,6 +14,7 @@
     <c:url var="communityPostDetailUrl" value="/communities/${postDetail.community.slug}/posts/${postDetail.post.slug}"/>
     <c:url var="communityPostHelpfulUrl" value="/communities/${postDetail.community.slug}/posts/${postDetail.post.slug}/helpful"/>
     <c:url var="communityPostCommentCreateUrl" value="/communities/${postDetail.community.slug}/posts/${postDetail.post.slug}/comments"/>
+    <c:url var="communityJoinUrl" value="/communities/${postDetail.community.slug}/join"/>
     <c:url var="communityPostCommentLoginUrl" value="/login">
         <c:param name="redirect" value="${communityPostDetailUrl}"/>
         <c:param name="intent" value="community-post-comment-${postDetail.post.id}"/>
@@ -48,13 +49,23 @@
 
                 <div class="community-post-detail-actions">
                     <spring:message var="postCommentCountText" code="communities.post.metric.comments" arguments="${postView.commentCount}"/>
+                    <spring:message var="postHelpfulLabel"       code="communities.post.helpful.label"/>
+                    <spring:message var="postHelpfulLoginLabel"  code="communities.post.helpful.login"/>
+                    <spring:message var="postHelpfulActionLabel" code="communities.post.helpful.action"/>
+                    <spring:message var="postHelpfulAddAria"     code="communities.post.helpful.add.aria"/>
+                    <spring:message var="postHelpfulRemoveAria"  code="communities.post.helpful.remove.aria"/>
                     <pa:review-like-button
                             reviewId="${postDetail.post.id}"
                             liked="${postView.helpfulByCurrentUser}"
                             likeCount="${postView.helpfulCount}"
                             action="${communityPostHelpfulUrl}"
                             disabled="${empty pageContext.request.userPrincipal}"
-                            intent="community-post-helpful-${postDetail.post.id}"/>
+                            intent="community-post-helpful-${postDetail.post.id}"
+                            label="${postHelpfulLabel}"
+                            loginLabel="${postHelpfulLoginLabel}"
+                            actionLabel="${postHelpfulActionLabel}"
+                            addAriaLabel="${postHelpfulAddAria}"
+                            removeAriaLabel="${postHelpfulRemoveAria}"/>
                     <span class="community-post-detail-pill"><c:out value="${postCommentCountText}"/></span>
                     <c:if test="${postView.deletable or postView.viewerModerator}">
                         <spring:message var="postModMenuLabel" code="communities.post.modMenu.label"/>
@@ -85,24 +96,37 @@
             </article>
 
             <sec:authorize access="isAuthenticated()">
-                <form:form method="post"
-                           action="${fn:escapeXml(communityPostCommentCreateUrl)}"
-                           modelAttribute="communityPostCommentForm"
-                           cssClass="community-comment-composer"
-                           novalidate="novalidate">
-                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                    <label for="communityPostComment"><spring:message code="communities.postDetail.comment.label"/></label>
-                    <div class="community-comment-composer-row">
-                        <form:textarea id="communityPostComment"
-                                       path="body"
-                                       rows="2"
-                                       maxlength="1000"
-                                       required="required"
-                                       placeholder="${fn:escapeXml(communityPostCommentPlaceholder)}"/>
-                        <button type="submit" class="btn-secondary"><spring:message code="communities.postDetail.comment.submit"/></button>
-                    </div>
-                    <form:errors path="body" cssClass="community-comment-inline-error client-form-error" element="span"/>
-                </form:form>
+                <c:choose>
+                    <c:when test="${postView.viewerMember}">
+                        <form:form method="post"
+                                   action="${fn:escapeXml(communityPostCommentCreateUrl)}"
+                                   modelAttribute="communityPostCommentForm"
+                                   cssClass="community-comment-composer"
+                                   novalidate="novalidate">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                            <label for="communityPostComment"><spring:message code="communities.postDetail.comment.label"/></label>
+                            <div class="community-comment-composer-row">
+                                <form:textarea id="communityPostComment"
+                                               path="body"
+                                               rows="2"
+                                               maxlength="1000"
+                                               required="required"
+                                               placeholder="${fn:escapeXml(communityPostCommentPlaceholder)}"/>
+                                <button type="submit" class="btn-secondary"><spring:message code="communities.postDetail.comment.submit"/></button>
+                            </div>
+                            <form:errors path="body" cssClass="community-comment-inline-error client-form-error" element="span"/>
+                        </form:form>
+                    </c:when>
+                    <c:otherwise>
+                        <form action="${fn:escapeXml(communityJoinUrl)}" method="post" class="community-comment-login">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                            <span><spring:message code="communities.postDetail.comment.joinRequired"/></span>
+                            <button type="submit" class="community-comment-login-button">
+                                <spring:message code="communities.postDetail.comment.joinAction"/>
+                            </button>
+                        </form>
+                    </c:otherwise>
+                </c:choose>
             </sec:authorize>
             <sec:authorize access="!isAuthenticated()">
                 <p class="community-comment-login">

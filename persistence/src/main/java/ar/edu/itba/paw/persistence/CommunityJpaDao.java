@@ -136,7 +136,7 @@ public class CommunityJpaDao implements CommunityDao {
     @Override
     public List<CommunityTopic> findAllTopics() {
         return em.createQuery(
-                "SELECT t FROM CommunityTopic t ORDER BY t.id ASC",
+                "SELECT t FROM CommunityTopic t WHERE t.active = TRUE ORDER BY t.id ASC",
                 CommunityTopic.class
         ).getResultList();
     }

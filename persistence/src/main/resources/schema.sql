@@ -840,6 +840,8 @@ ALTER TABLE communities ADD CONSTRAINT chk_communities_description_not_blank CHE
 ALTER TABLE community_topics DROP CONSTRAINT IF EXISTS chk_community_topics_code_not_blank;
 ALTER TABLE community_topics ADD CONSTRAINT chk_community_topics_code_not_blank CHECK (BTRIM(code) <> '');
 
+ALTER TABLE community_topics ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE;
+
 ALTER TABLE community_memberships DROP CONSTRAINT IF EXISTS chk_community_memberships_role;
 ALTER TABLE community_memberships ADD CONSTRAINT chk_community_memberships_role
     CHECK (role IN ('member', 'moderator'));
@@ -893,16 +895,16 @@ VALUES
     ('news')
 ON CONFLICT ((LOWER(BTRIM(code)))) DO NOTHING;
 
--- Migrate legacy topic assignments before dropping obsolete topics
+-- Migrate legacy topic assignments to their replacements
 UPDATE community_topic_assignments
 SET topic_id = (SELECT topic_id FROM community_topics WHERE code = 'mechanical')
-WHERE topic_id = (SELECT topic_id FROM community_topics WHERE code = 'repairs');
+WHERE topic_id IN (SELECT topic_id FROM community_topics WHERE code = 'repairs');
 
 UPDATE community_topic_assignments
 SET topic_id = (SELECT topic_id FROM community_topics WHERE code = 'marketplace')
-WHERE topic_id = (SELECT topic_id FROM community_topics WHERE code = 'buying');
+WHERE topic_id IN (SELECT topic_id FROM community_topics WHERE code = 'buying');
 
--- Drop obsolete topics (CASCADE removes remaining assignments)
-DELETE FROM community_topics WHERE code IN ('brands', 'repairs', 'reviews', 'buying', 'local', 'daily');
+-- Deactivate obsolete topics instead of deleting them (backwards-compatible; preserves referential integrity)
+UPDATE community_topics SET active = FALSE WHERE code IN ('brands', 'repairs', 'reviews', 'buying', 'local', 'daily');
 
 COMMIT;

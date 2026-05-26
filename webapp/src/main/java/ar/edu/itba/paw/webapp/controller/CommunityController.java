@@ -14,6 +14,7 @@ import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.services.CommunityService;
+import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
 import ar.edu.itba.paw.services.exception.InvalidCommunityTopicSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
@@ -337,13 +338,21 @@ public class CommunityController {
             return communityPostPageWithCommentError(postDetail);
         }
 
-        communityService.createCommunityPostComment(
-                        communitySlug,
-                        postSlug,
-                        currentUser.getId(),
-                        communityPostCommentForm.getBody()
-                )
-                .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
+        try {
+            communityService.createCommunityPostComment(
+                            communitySlug,
+                            postSlug,
+                            currentUser.getId(),
+                            communityPostCommentForm.getBody()
+                    )
+                    .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
+        } catch (final CommunityMembershipRequiredException e) {
+            LOGGER.warn("create community post comment rejected: not a member userId={} communitySlug={} postSlug={}",
+                    currentUser.getId(),
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                    LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
+            return new ModelAndView("redirect:/communities/" + communitySlug + "/posts/" + postSlug);
+        }
         LOGGER.info("user id={} commented on communitySlug={} postSlug={}",
                 currentUser.getId(),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
@@ -449,6 +458,13 @@ public class CommunityController {
         return "redirect:/communities/" + communitySlug + "/members";
     }
 
+    @RequestMapping(value = "/communities/{communitySlug}/members/{userId}/kick", method = RequestMethod.GET)
+    public String kickCommunityMemberGet(
+        @PathVariable final String communitySlug
+    ) {
+        return "redirect:/communities/" + communitySlug + "/members";
+    }
+
     @RequestMapping(value = "/communities/{communitySlug}/members/{userId}/transfer", method = RequestMethod.POST)
     public String transferCommunityOwnership(
         @PathVariable final String communitySlug,
@@ -463,6 +479,13 @@ public class CommunityController {
         return "redirect:/communities/" + communitySlug + "/members";
     }
 
+    @RequestMapping(value = "/communities/{communitySlug}/members/{userId}/transfer", method = RequestMethod.GET)
+    public String transferCommunityOwnershipGet(
+        @PathVariable final String communitySlug
+    ) {
+        return "redirect:/communities/" + communitySlug + "/members";
+    }
+
     @RequestMapping(value = "/communities/{communitySlug}/members/{userId}/promote", method = RequestMethod.POST)
     public String promoteCommunityMember(
         @PathVariable final String communitySlug,
@@ -474,6 +497,13 @@ public class CommunityController {
         }
         communityService.promoteToModerator(communitySlug, userId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        return "redirect:/communities/" + communitySlug + "/members";
+    }
+
+    @RequestMapping(value = "/communities/{communitySlug}/members/{userId}/promote", method = RequestMethod.GET)
+    public String promoteCommunityMemberGet(
+        @PathVariable final String communitySlug
+    ) {
         return "redirect:/communities/" + communitySlug + "/members";
     }
 
