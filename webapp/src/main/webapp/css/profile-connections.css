@@ -2,6 +2,33 @@
     width: min(560px, 100%);
 }
 
+.profile-connections-search {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.5rem 1rem 0.75rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-lg);
+    background: var(--surface-container);
+    color: var(--secondary);
+}
+
+.profile-connections-search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--on-surface);
+    font: inherit;
+}
+
+.profile-connections-search input::placeholder {
+    color: var(--secondary);
+}
+
 .profile-connections-list {
     flex: 1;
     min-height: 0;
@@ -103,37 +130,6 @@
     background: var(--surface-container-highest);
     border-color: var(--outline-variant);
     color: var(--on-surface);
-}
-
-.profile-connections-tabs {
-    display: flex;
-    gap: 0.25rem;
-    padding: 0 1rem;
-    margin-bottom: 0.5rem;
-}
-
-.profile-connections-tab {
-    flex: 1;
-    text-align: center;
-    text-decoration: none;
-    color: var(--secondary);
-    font-weight: 700;
-    padding: 0.6rem 0.75rem;
-    border-radius: var(--radius-md);
-    border-bottom: 2px solid transparent;
-    background: transparent;
-}
-
-.profile-connections-tab:hover,
-.profile-connections-tab:focus-visible {
-    background: var(--surface-container-high);
-    color: var(--on-surface);
-}
-
-.profile-connections-tab.is-active {
-    color: var(--on-surface);
-    border-bottom-color: var(--secondary);
-    background: var(--surface-container-high);
 }
 
 .profile-connections-pagination {
