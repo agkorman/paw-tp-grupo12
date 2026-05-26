@@ -7,7 +7,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${pageTitle}" styles="/css/community-post-common.css|/css/community-post-detail.css|/css/communities-responsive.css"/>
+<pa:page-head title="${pageTitle}" styles="/css/community-post-common.css|/css/community-post-detail.css|/css/communities-responsive.css|/css/profile-modal.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:url var="communityDetailUrl" value="/communities/${postDetail.community.slug}"/>
@@ -56,6 +56,31 @@
                             disabled="${empty pageContext.request.userPrincipal}"
                             intent="community-post-helpful-${postDetail.post.id}"/>
                     <span class="community-post-detail-pill"><c:out value="${postCommentCountText}"/></span>
+                    <c:if test="${postView.deletable or postView.viewerModerator}">
+                        <spring:message var="postModMenuLabel" code="communities.post.modMenu.label"/>
+                        <pa:action-menu label="${postModMenuLabel}" cssClass="community-post-mod-menu">
+                            <c:if test="${postView.deletable}">
+                                <c:url var="communityPostDeleteUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/delete"/>
+                                <form method="post" action="${fn:escapeXml(communityPostDeleteUrl)}"
+                                      data-confirm-modal="deletePostConfirmModal">
+                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                    <button type="submit" class="action-menu-danger">
+                                        <spring:message code="communities.post.deleteAction"/>
+                                    </button>
+                                </form>
+                            </c:if>
+                            <c:if test="${postView.viewerModerator and not postView.deletable}">
+                                <c:url var="communityPostHideUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/hide"/>
+                                <button type="button"
+                                        class="action-menu-danger"
+                                        data-open-community-hide-modal
+                                        data-community-hide-modal-target="hideCommunityPostModal"
+                                        data-community-hide-action="${fn:escapeXml(communityPostHideUrl)}">
+                                    <spring:message code="communities.post.hideAction"/>
+                                </button>
+                            </c:if>
+                        </pa:action-menu>
+                    </c:if>
                 </div>
             </article>
 
@@ -87,18 +112,76 @@
             </sec:authorize>
 
             <section class="community-comments-list">
+                <spring:message var="commentModMenuLabel" code="communities.comment.modMenu.label"/>
                 <c:forEach var="comment" items="${postView.comments}">
-                    <pa:community-comment-card
-                            authorProfileHref="${comment.authorProfileHref}"
-                            author="${comment.author}"
-                            timeText="${comment.timeText}"
-                            body="${comment.body}"
-                            helpfulCount="${comment.helpfulCount}"
-                            isOp="${comment.op}"/>
+                    <div class="community-comment-row">
+                        <pa:community-comment-card
+                                authorProfileHref="${comment.authorProfileHref}"
+                                author="${comment.author}"
+                                timeText="${comment.timeText}"
+                                body="${comment.body}"
+                                helpfulCount="${comment.helpfulCount}"
+                                isOp="${comment.op}"/>
+                        <c:if test="${comment.deletable or comment.hideable}">
+                            <div class="community-comment-row-meta">
+                                <pa:action-menu label="${commentModMenuLabel}" cssClass="community-comment-mod-menu">
+                                    <c:if test="${comment.deletable}">
+                                        <c:url var="communityCommentDeleteUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/comments/${comment.commentId}/delete"/>
+                                        <form method="post" action="${fn:escapeXml(communityCommentDeleteUrl)}"
+                                              data-confirm-modal="deleteCommentConfirmModal">
+                                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                            <button type="submit" class="action-menu-danger">
+                                                <spring:message code="communities.comment.deleteAction"/>
+                                            </button>
+                                        </form>
+                                    </c:if>
+                                    <c:if test="${comment.hideable and not comment.deletable}">
+                                        <c:url var="communityCommentHideUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/comments/${comment.commentId}/hide"/>
+                                        <button type="button"
+                                                class="action-menu-danger"
+                                                data-open-community-hide-modal
+                                                data-community-hide-modal-target="hideCommunityCommentModal"
+                                                data-community-hide-action="${fn:escapeXml(communityCommentHideUrl)}">
+                                            <spring:message code="communities.comment.hideAction"/>
+                                        </button>
+                                    </c:if>
+                                </pa:action-menu>
+                            </div>
+                        </c:if>
+                    </div>
                 </c:forEach>
             </section>
         </section>
     </main>
+
+    <sec:authorize access="isAuthenticated()">
+        <pa:confirmation-modal id="deletePostConfirmModal"
+                               titleCode="communities.post.delete.title"
+                               bodyCode="communities.post.delete.body"
+                               confirmCode="communities.post.deleteAction"
+                               confirmCssClass="btn-primary"/>
+        <pa:confirmation-modal id="deleteCommentConfirmModal"
+                               titleCode="communities.comment.delete.title"
+                               bodyCode="communities.comment.delete.body"
+                               confirmCode="communities.comment.deleteAction"
+                               confirmCssClass="btn-primary"/>
+        <c:if test="${postView.viewerModerator}">
+            <pa:community-hide-modal id="hideCommunityPostModal"
+                                     titleCode="communities.post.hide.title"
+                                     bodyCode="communities.post.hide.body"
+                                     confirmCode="communities.post.hideAction"
+                                     placeholderCode="communities.post.hide.reason.placeholder"/>
+            <pa:community-hide-modal id="hideCommunityCommentModal"
+                                     titleCode="communities.comment.hide.title"
+                                     bodyCode="communities.comment.hide.body"
+                                     confirmCode="communities.comment.hideAction"
+                                     placeholderCode="communities.comment.hide.reason.placeholder"/>
+        </c:if>
+        <pa:script src="/js/shared/action-menu.js"/>
+        <pa:script src="/js/shared/confirmation-modal.js"/>
+        <pa:script src="/js/communities/community-moderation.js"/>
+    </sec:authorize>
+
     <pa:footer/>
 </body>
 </html>

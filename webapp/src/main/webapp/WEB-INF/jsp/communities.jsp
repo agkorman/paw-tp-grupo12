@@ -5,11 +5,12 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="communities.title" styles="/css/communities-hub.css|/css/communities-responsive.css"/>
+<pa:page-head titleCode="communities.title" styles="/css/cars.css|/css/communities-hub.css|/css/communities-responsive.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:url var="createCommunityUrl" value="/communities/new"/>
     <spring:message var="communitiesGridAria" code="communities.hub.grid.aria"/>
+    <c:set var="resultCount" value="${empty communitiesTotalItems ? fn:length(communityCards) : communitiesTotalItems}"/>
     <main class="communities-hub-page">
         <section class="communities-hub-hero">
             <div class="communities-hub-copy">
@@ -22,6 +23,17 @@
             </a>
         </section>
 
+        <pa:communities-toolbar
+                topics="${communityTopics}"
+                selectedTopic="${selectedTopic}"
+                searchQuery="${searchQuery}"
+                sortBy="${sortBy}"
+                hasAdvancedFilters="${hasAdvancedFilters}"/>
+
+        <pa:communities-filters-panel
+                criteria="${criteria}"
+                authenticated="${authenticated}"/>
+
         <section class="communities-card-grid" aria-label="${fn:escapeXml(communitiesGridAria)}">
             <c:forEach var="card" items="${communityCards}">
                 <pa:community-card
@@ -33,7 +45,23 @@
                         joined="${card.joined}"/>
             </c:forEach>
         </section>
+
+        <c:if test="${communitiesTotalPages > 1}">
+            <jsp:useBean id="communitiesPaginationParams" class="java.util.LinkedHashMap"/>
+            <c:if test="${not empty criteria.q}"><c:set target="${communitiesPaginationParams}" property="q" value="${criteria.q}"/></c:if>
+            <c:if test="${not empty criteria.topic}"><c:set target="${communitiesPaginationParams}" property="topic" value="${criteria.topic}"/></c:if>
+            <c:if test="${criteria.joinedOnly}"><c:set target="${communitiesPaginationParams}" property="joinedOnly" value="true"/></c:if>
+            <c:if test="${not empty criteria.sortBy}"><c:set target="${communitiesPaginationParams}" property="sortBy" value="${criteria.sortBy}"/></c:if>
+            <spring:message var="communitiesPaginationAria" code="communities.pagination.aria"/>
+            <pa:pagination currentPage="${communitiesCurrentPage}"
+                           totalPages="${communitiesTotalPages}"
+                           baseUrl="/communities"
+                           extraParams="${communitiesPaginationParams}"
+                           ariaLabel="${communitiesPaginationAria}"/>
+        </c:if>
     </main>
+    <pa:script src="/js/cars/cars-toolbar.js"/>
+    <pa:script src="/js/communities/community-filters-panel.js"/>
     <pa:footer/>
 </body>
 </html>

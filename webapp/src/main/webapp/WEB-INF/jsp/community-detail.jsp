@@ -5,7 +5,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css"/>
+<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -15,6 +15,11 @@
     </c:url>
     <c:url var="communitySubmitUrl" value="/communities/${communityDetail.community.slug}/submit"/>
     <c:url var="communityJoinUrl" value="/communities/${communityDetail.community.slug}/join"/>
+    <c:url var="communityMembersUrl" value="/communities/${communityDetail.community.slug}/members"/>
+    <c:url var="communityDetailUrl" value="/communities/${communityDetail.community.slug}"/>
+    <c:set var="viewerIsMember" value="${communityDetail.viewerMember}"/>
+    <c:set var="viewerIsModerator" value="${communityDetail.viewerModerator}"/>
+    <c:set var="viewerIsCreator" value="${communityDetail.viewerCreator}"/>
     <spring:message var="communityStatsAria" code="communities.sidebar.stats.aria"/>
     <c:set var="communityJoinButtonClass" value="btn-primary community-banner-join-btn"/>
     <c:if test="${communityDetail.joined}">
@@ -29,22 +34,49 @@
                     <div class="community-banner-heading">
                         <h1 class="community-banner-title"><c:out value="${communityDetail.community.name}"/></h1>
                         <div class="community-banner-actions">
-                            <c:if test="${authenticated}">
-                                <form action="${fn:escapeXml(communityJoinUrl)}" method="post" class="community-banner-join-form">
+                            <c:if test="${viewerIsModerator}">
+                                <c:url var="communityEditUrl" value="/communities/${communityDetail.community.slug}/edit"/>
+                                <a class="btn-secondary community-banner-edit-btn" href="${fn:escapeXml(communityEditUrl)}">
+                                    <spring:message code="communities.detail.edit"/>
+                                </a>
+                            </c:if>
+                            <c:if test="${viewerIsCreator}">
+                                <c:url var="communityDeleteUrl" value="/communities/${communityDetail.community.slug}/delete"/>
+                                <form action="${fn:escapeXml(communityDeleteUrl)}" method="post"
+                                      class="community-banner-join-form"
+                                      data-confirm-modal="leaveCreatorConfirmModal">
                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                    <button type="submit"
-                                            class="${communityJoinButtonClass}"
-                                            aria-pressed="${communityDetail.joined}">
-                                        <c:choose>
-                                            <c:when test="${communityDetail.joined}">
-                                                <spring:message code="communities.hero.primaryAction.joined"/>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <spring:message code="communities.hero.primaryAction.authenticated"/>
-                                            </c:otherwise>
-                                        </c:choose>
+                                    <button type="submit" class="btn-secondary community-banner-leave-btn">
+                                        <spring:message code="communities.hero.leaveCreator"/>
                                     </button>
                                 </form>
+                            </c:if>
+                            <c:if test="${authenticated and not viewerIsCreator}">
+                                <c:choose>
+                                    <c:when test="${communityDetail.joined}">
+                                        <form action="${fn:escapeXml(communityJoinUrl)}" method="post"
+                                              class="community-banner-join-form"
+                                              data-confirm-modal="leaveCommunityConfirmModal">
+                                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                            <button type="submit"
+                                                    class="${communityJoinButtonClass}"
+                                                    aria-pressed="true">
+                                                <spring:message code="communities.hero.primaryAction.joined"/>
+                                            </button>
+                                        </form>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <form action="${fn:escapeXml(communityJoinUrl)}" method="post"
+                                              class="community-banner-join-form">
+                                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                            <button type="submit"
+                                                    class="${communityJoinButtonClass}"
+                                                    aria-pressed="false">
+                                                <spring:message code="communities.hero.primaryAction.authenticated"/>
+                                            </button>
+                                        </form>
+                                    </c:otherwise>
+                                </c:choose>
                             </c:if>
                             <c:if test="${not authenticated}">
                                 <a class="btn-primary community-banner-join-btn" href="${fn:escapeXml(communitiesLoginUrl)}">
@@ -65,11 +97,21 @@
                         <h2 id="communityFeedTitle" class="community-section-title"><spring:message code="communities.feed.title"/></h2>
                     </div>
                     <div class="community-feed-header-actions">
+                        <c:if test="${authenticated and viewerIsMember}">
+                            <a class="btn-secondary community-members-btn" href="${fn:escapeXml(communityMembersUrl)}">
+                                <spring:message code="communities.detail.viewMembers"/>
+                            </a>
+                        </c:if>
                         <c:choose>
-                            <c:when test="${authenticated}">
+                            <c:when test="${authenticated and viewerIsMember}">
                                 <a class="btn-primary community-create-post-btn" href="${fn:escapeXml(communitySubmitUrl)}">
                                     <spring:message code="communities.detail.createPost"/>
                                 </a>
+                            </c:when>
+                            <c:when test="${authenticated}">
+                                <span class="community-create-post-hint">
+                                    <spring:message code="communities.detail.joinToPost"/>
+                                </span>
                             </c:when>
                             <c:otherwise>
                                 <a class="btn-primary community-create-post-btn" href="${fn:escapeXml(communitiesLoginUrl)}">
@@ -79,6 +121,28 @@
                         </c:choose>
                     </div>
                 </div>
+
+                <c:if test="${not empty postCards}">
+                    <form method="get" action="${fn:escapeXml(communityDetailUrl)}" class="community-sort-form">
+                        <label class="community-sort-label" for="communitySortSelect">
+                            <spring:message code="communities.feed.sort"/>
+                        </label>
+                        <select id="communitySortSelect" name="sort" class="community-sort-select">
+                            <option value="recent" ${currentSort eq 'recent' ? 'selected' : ''}>
+                                <spring:message code="communities.feed.sort.recent"/>
+                            </option>
+                            <option value="helpful" ${currentSort eq 'helpful' ? 'selected' : ''}>
+                                <spring:message code="communities.feed.sort.helpful"/>
+                            </option>
+                            <option value="commented" ${currentSort eq 'commented' ? 'selected' : ''}>
+                                <spring:message code="communities.feed.sort.commented"/>
+                            </option>
+                        </select>
+                        <button type="submit" class="btn-secondary community-sort-submit">
+                            <spring:message code="common.action.apply"/>
+                        </button>
+                    </form>
+                </c:if>
 
                 <div class="community-post-list">
                     <c:forEach var="postCard" items="${postCards}">
@@ -92,6 +156,20 @@
                                 commentCount="${postCard.commentCount}"/>
                     </c:forEach>
                 </div>
+
+                <c:if test="${postsTotalPages > 1}">
+                    <jsp:useBean id="communityPostsPaginationParams" class="java.util.LinkedHashMap"/>
+                    <c:if test="${not empty currentSort}">
+                        <c:set target="${communityPostsPaginationParams}" property="sort" value="${currentSort}"/>
+                    </c:if>
+                    <spring:message var="communityPostsPaginationAria" code="communities.posts.pagination.aria"/>
+                    <pa:pagination currentPage="${postsCurrentPage}"
+                                   totalPages="${postsTotalPages}"
+                                   baseUrl="${communityDetailUrl}"
+                                   extraParams="${communityPostsPaginationParams}"
+                                   fragment="communityFeedTitle"
+                                   ariaLabel="${communityPostsPaginationAria}"/>
+                </c:if>
             </section>
 
             <aside class="community-sidebar">
@@ -120,6 +198,23 @@
             </aside>
         </div>
     </main>
+
+    <c:if test="${authenticated and communityDetail.joined and not viewerIsCreator}">
+        <pa:confirmation-modal id="leaveCommunityConfirmModal"
+                               titleCode="communities.leave.confirm.title"
+                               bodyCode="communities.leave.confirm.body"
+                               confirmCode="communities.leave.confirm.action"
+                               confirmCssClass="btn-primary"/>
+        <pa:script src="/js/shared/confirmation-modal.js"/>
+    </c:if>
+    <c:if test="${viewerIsCreator}">
+        <pa:confirmation-modal id="leaveCreatorConfirmModal"
+                               titleCode="communities.leave.creator.title"
+                               bodyCode="communities.leave.creator.body"
+                               confirmCode="communities.leave.creator.action"
+                               confirmCssClass="btn-primary"/>
+        <pa:script src="/js/shared/confirmation-modal.js"/>
+    </c:if>
 
     <pa:footer/>
 </body>

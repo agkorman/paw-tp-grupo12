@@ -184,6 +184,24 @@
     line-height: 1.75;
 }
 
+.community-comment-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--spacing-3);
+}
+
+.community-comment-row-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.community-post-mod-menu,
+.community-comment-mod-menu {
+    position: relative;
+}
+
 @media (max-width: 640px) {
     .community-comment-composer-row {
         grid-template-columns: 1fr;

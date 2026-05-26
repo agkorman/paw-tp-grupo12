@@ -1,7 +1,10 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Community;
+import ar.edu.itba.paw.model.CommunityMembershipEntry;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.CommunityPost;
+import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.User;
 import java.sql.Timestamp;
@@ -51,6 +54,52 @@ class CommunityDaoTest extends AbstractPersistenceTest {
         assertEquals(1, result.size());
         assertEquals(1, result.get(communityId).size());
         assertEquals("offroad", result.get(communityId).get(0).getCode());
+    }
+
+    @Test
+    void shouldFindCommunitiesPaginated() {
+        // Arrange
+        final User creator = insertUser("paged-communities-owner", "paged-communities-owner@example.com", "secret", "user");
+        for (int i = 1; i <= 13; i++) {
+            insertCommunity("paged-community-" + i, "Community " + i, "Description " + i, creator.getId());
+        }
+
+        // Exercise
+        final Page<Community> result = communityDao.findAll(2);
+
+        // Assertions
+        assertEquals(2, result.getPageNumber());
+        assertEquals(2, result.getTotalPages());
+        assertEquals(1, result.getItems().size());
+        assertEquals("paged-community-13", result.getItems().get(0).getSlug());
+    }
+
+    @Test
+    void shouldFindCommunitiesBySearchCriteria() {
+        // Arrange
+        final User creator = insertUser("criteria-owner", "criteria-owner@example.com", "secret", "user");
+        final User member = insertUser("criteria-member", "criteria-member@example.com", "secret", "user");
+        final long matchingCommunityId = insertCommunity("x-track", "X Track", "Track day setup.", creator.getId());
+        final long otherCommunityId = insertCommunity("daily", "Daily Drivers", "Commute setups.", creator.getId());
+        final short motorsportTopicId = insertTopic("motorsport");
+        final short classicsTopicId = insertTopic("classics");
+        assignTopic(matchingCommunityId, motorsportTopicId);
+        assignTopic(otherCommunityId, classicsTopicId);
+        insertCommunityMembership(matchingCommunityId, member.getId(), "member");
+        final CommunitySearchCriteria criteria = new CommunitySearchCriteria();
+        criteria.setQ("x");
+        criteria.setTopic("motorsport");
+        criteria.setJoinedOnly(true);
+        criteria.setSortBy("name_asc");
+        criteria.setPage(1);
+
+        // Exercise
+        final Page<Community> result = communityDao.findByCriteria(criteria, member.getId());
+
+        // Assertions
+        assertEquals(1, result.getItems().size());
+        assertEquals(matchingCommunityId, result.getItems().get(0).getId());
+        assertEquals(1L, result.getTotalItems());
     }
 
     @Test
@@ -255,6 +304,77 @@ class CommunityDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    void shouldFindVisibleCommunityPostsPaginatedByRecent() {
+        // Arrange
+        final User creator = insertUser("paged-posts-owner", "paged-posts-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("paged-posts", "Paged posts", "Posts by page.", creator.getId());
+        final LocalDateTime baseTime = LocalDateTime.now();
+        for (int i = 1; i <= 7; i++) {
+            insertCommunityPost(
+                    communityId,
+                    creator.getId(),
+                    "post-" + i,
+                    "Post " + i,
+                    "Body " + i,
+                    baseTime.minusMinutes(i)
+            );
+        }
+        final long hiddenPostId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "hidden-post",
+                "Hidden post",
+                "Hidden body",
+                baseTime.plusMinutes(1)
+        );
+        jdbcTemplate.update("UPDATE community_posts SET hidden = TRUE WHERE post_id = ?", hiddenPostId);
+
+        // Exercise
+        final Page<CommunityPost> result = communityDao.findVisiblePostsByCommunityId(communityId, "recent", 2);
+
+        // Assertions
+        assertEquals(2, result.getPageNumber());
+        assertEquals(2, result.getTotalPages());
+        assertEquals(1, result.getItems().size());
+        assertEquals("post-7", result.getItems().get(0).getSlug());
+    }
+
+    @Test
+    void shouldFindVisibleCommunityPostsOrderedByHelpful() {
+        // Arrange
+        final User creator = insertUser("helpful-page-owner", "helpful-page-owner@example.com", "secret", "user");
+        final User helper = insertUser("helpful-page-user", "helpful-page-user@example.com", "secret", "user");
+        final long communityId = insertCommunity("helpful-page", "Helpful page", "Helpful posts.", creator.getId());
+        final long lowPostId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "low-helpful",
+                "Low helpful",
+                "Body",
+                LocalDateTime.now().minusHours(2)
+        );
+        final long highPostId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "high-helpful",
+                "High helpful",
+                "Body",
+                LocalDateTime.now().minusHours(3)
+        );
+        insertHelpfulReaction(highPostId, helper.getId());
+
+        // Exercise
+        final Page<CommunityPost> result = communityDao.findVisiblePostsByCommunityId(communityId, "helpful", 1);
+
+        // Assertions
+        assertEquals(1, result.getPageNumber());
+        assertEquals(1, result.getTotalPages());
+        assertEquals(2, result.getItems().size());
+        assertEquals(highPostId, result.getItems().get(0).getId());
+        assertEquals(lowPostId, result.getItems().get(1).getId());
+    }
+
+    @Test
     void shouldCountCommentsByPostIds() {
         // Arrange
         final User creator = insertUser("comments-owner", "comments-owner@example.com", "secret", "user");
@@ -347,6 +467,167 @@ class CommunityDaoTest extends AbstractPersistenceTest {
                         helper.getId()
                 )
         );
+    }
+
+    @Test
+    void shouldFindMembershipRole() {
+        // Arrange
+        final User creator = insertUser("role-owner", "role-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("role-c", "Role", "Desc", creator.getId());
+        insertCommunityMembership(communityId, creator.getId(), "moderator");
+
+        // Exercise
+        final Optional<String> result = communityDao.findMembershipRole(communityId, creator.getId());
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals("moderator", result.get());
+    }
+
+    @Test
+    void shouldUpdateMembershipRole() {
+        // Arrange
+        final User creator = insertUser("promote-owner", "promote-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("promote-c", "Promote", "Desc", creator.getId());
+        insertCommunityMembership(communityId, creator.getId(), "member");
+
+        // Exercise
+        communityDao.updateMembershipRole(communityId, creator.getId(), "moderator");
+
+        // Assertions
+        assertEquals(
+                "moderator",
+                jdbcTemplate.queryForObject(
+                        "SELECT role FROM community_memberships WHERE community_id = ? AND user_id = ?",
+                        String.class,
+                        communityId,
+                        creator.getId()
+                )
+        );
+    }
+
+    @Test
+    void shouldListMembersWithRoleAndUsername() {
+        // Arrange
+        final User creator = insertUser("list-owner", "list-owner@example.com", "secret", "user");
+        final User other = insertUser("list-other", "list-other@example.com", "secret", "user");
+        final long communityId = insertCommunity("list-c", "List", "Desc", creator.getId());
+        insertCommunityMembership(communityId, creator.getId(), "moderator");
+        insertCommunityMembership(communityId, other.getId(), "member");
+
+        // Exercise
+        final List<CommunityMembershipEntry> result = communityDao.listMembers(communityId);
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals("moderator", result.get(0).getRole());
+        assertEquals("list-owner", result.get(0).getUsername());
+        assertEquals("member", result.get(1).getRole());
+        assertEquals("list-other", result.get(1).getUsername());
+    }
+
+    @Test
+    void shouldSetPostHidden() {
+        // Arrange
+        final User creator = insertUser("hide-post-owner", "hide-post-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("hide-c", "Hide", "Desc", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "p1",
+                "Title",
+                "Body",
+                LocalDateTime.now().minusHours(1)
+        );
+
+        // Exercise
+        communityDao.setPostHidden(postId, true);
+
+        // Assertions
+        flushAndClear();
+        assertEquals(
+                Boolean.TRUE,
+                jdbcTemplate.queryForObject(
+                        "SELECT hidden FROM community_posts WHERE post_id = ?",
+                        Boolean.class,
+                        postId
+                )
+        );
+    }
+
+    @Test
+    void shouldSetCommentHidden() {
+        // Arrange
+        final User creator = insertUser("hide-comment-owner", "hide-comment-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("hide-c-c", "HideC", "Desc", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "p1",
+                "Title",
+                "Body",
+                LocalDateTime.now().minusHours(1)
+        );
+        final long commentId = insertCommunityComment(postId, creator.getId(), "body", LocalDateTime.now().minusMinutes(30));
+
+        // Exercise
+        communityDao.setCommentHidden(commentId, true);
+
+        // Assertions
+        flushAndClear();
+        assertEquals(
+                Boolean.TRUE,
+                jdbcTemplate.queryForObject(
+                        "SELECT hidden FROM community_post_comments WHERE comment_id = ?",
+                        Boolean.class,
+                        commentId
+                )
+        );
+    }
+
+    @Test
+    void shouldUpdateCommunityDetails() {
+        // Arrange
+        final User creator = insertUser("edit-owner", "edit-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("edit-c", "Old name", "Old description.", creator.getId());
+
+        // Exercise
+        communityDao.updateDetails(communityId, "New name", "New description.");
+
+        // Assertions
+        flushAndClear();
+        final Map<String, Object> row = jdbcTemplate.queryForMap(
+                "SELECT name, description FROM communities WHERE community_id = ?",
+                communityId
+        );
+        assertEquals("New name", row.get("name"));
+        assertEquals("New description.", row.get("description"));
+    }
+
+    @Test
+    void shouldDeleteCommunityAndCascadeChildren() {
+        // Arrange
+        final User creator = insertUser("delete-owner", "delete-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("delete-c", "Doomed", "Soon gone.", creator.getId());
+        insertCommunityMembership(communityId, creator.getId(), "moderator");
+        final long postId = insertCommunityPost(
+                communityId, creator.getId(), "p1", "Title", "Body", LocalDateTime.now().minusHours(1));
+        insertCommunityComment(postId, creator.getId(), "a comment", LocalDateTime.now().minusMinutes(30));
+
+        // Exercise
+        final boolean deleted = communityDao.delete(communityId);
+
+        // Assertions
+        flushAndClear();
+        assertTrue(deleted);
+        assertEquals(0, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM communities WHERE community_id = ?", Integer.class, communityId));
+        assertEquals(0, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM community_memberships WHERE community_id = ?", Integer.class, communityId));
+        assertEquals(0, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM community_posts WHERE community_id = ?", Integer.class, communityId));
+        assertEquals(0, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM community_post_comments WHERE post_id = ?", Integer.class, postId));
     }
 
     private long insertCommunity(final String slug, final String name, final String description, final long createdByUserId) {

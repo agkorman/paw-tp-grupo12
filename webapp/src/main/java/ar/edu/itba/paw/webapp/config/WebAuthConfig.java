@@ -51,12 +51,23 @@ public class WebAuthConfig {
                             .permitAll()
                         .requestMatchers(
                                 antMatcher(HttpMethod.GET, "/communities/new"),
+                                antMatcher(HttpMethod.GET, "/communities/*/edit"),
+                                antMatcher(HttpMethod.POST, "/communities/*/edit"),
+                                antMatcher(HttpMethod.POST, "/communities/*/delete"),
                                 antMatcher(HttpMethod.GET, "/communities/*/submit"),
                                 antMatcher(HttpMethod.POST, "/communities"),
                                 antMatcher(HttpMethod.POST, "/communities/*/join"),
                                 antMatcher(HttpMethod.POST, "/communities/*/posts"),
                                 antMatcher(HttpMethod.POST, "/communities/*/posts/*/helpful"),
-                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments"))
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments"),
+                                antMatcher(HttpMethod.GET, "/communities/*/members"),
+                                antMatcher(HttpMethod.POST, "/communities/*/members/*/kick"),
+                                antMatcher(HttpMethod.POST, "/communities/*/members/*/promote"),
+                                antMatcher(HttpMethod.POST, "/communities/*/members/*/transfer"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/hide"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments/*/hide"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/delete"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments/*/delete"))
                             .authenticated()
                         .requestMatchers(
                                 antMatcher(HttpMethod.GET, "/"),

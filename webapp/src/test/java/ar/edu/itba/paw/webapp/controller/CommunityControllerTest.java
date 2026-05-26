@@ -8,6 +8,7 @@ import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.CommunityTopic;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
@@ -32,6 +33,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -79,7 +81,8 @@ class CommunityControllerTest {
     @Test
     void communitiesPage_rendersHubView() throws Exception {
         // Arrange
-        when(communityService.getCommunityHub(any())).thenReturn(List.of(communityHubEntry()));
+        when(communityService.getCommunityHub(any(), any()))
+                .thenReturn(new Page<>(List.of(communityHubEntry()), 1, 12, 1L));
         final MockMvc mockMvc = communityMockMvc();
 
         // Exercise
@@ -89,7 +92,9 @@ class CommunityControllerTest {
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(view().name("communities.jsp"))
-                .andExpect(model().attributeExists("communityCards"));
+                .andExpect(model().attributeExists("communityCards"))
+                .andExpect(model().attribute("communitiesCurrentPage", 1))
+                .andExpect(model().attribute("communitiesTotalPages", 1));
     }
 
     @Test
@@ -111,7 +116,7 @@ class CommunityControllerTest {
     @Test
     void communityDetail_knownSlug_rendersDetailView() throws Exception {
         // Arrange
-        when(communityService.getCommunityDetail(anyString(), any()))
+        when(communityService.getCommunityDetail(anyString(), any(), any(), anyInt()))
                 .thenReturn(Optional.of(communityDetailData()));
         when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("2 hours ago");
         final MockMvc mockMvc = communityMockMvc();
@@ -124,7 +129,9 @@ class CommunityControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("community-detail.jsp"))
                 .andExpect(model().attributeExists("communityDetail"))
-                .andExpect(model().attributeExists("postCards"));
+                .andExpect(model().attributeExists("postCards"))
+                .andExpect(model().attribute("postsCurrentPage", 1))
+                .andExpect(model().attribute("postsTotalPages", 1));
     }
 
     @Test
@@ -381,7 +388,10 @@ class CommunityControllerTest {
                 List.of(new CommunityPostSummary(post(), 4L, 2L)),
                 12L,
                 3L,
-                true
+                true,
+                "member",
+                "recent",
+                false
         );
     }
 
@@ -392,7 +402,9 @@ class CommunityControllerTest {
                 List.of(comment()),
                 4L,
                 true,
-                1L
+                1L,
+                "member",
+                7L
         );
     }
 

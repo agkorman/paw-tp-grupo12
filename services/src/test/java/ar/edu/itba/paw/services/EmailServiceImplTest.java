@@ -79,6 +79,56 @@ public class EmailServiceImplTest {
     }
 
     @Test
+    public void shouldSendCommunityPostHiddenNotificationWithReasonAndLink() throws Exception {
+        // Arrange
+        final RecordingMailSender mailSender = new RecordingMailSender();
+        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
+
+        // Exercise
+        emailService.sendCommunityPostHiddenNotification(
+                "author@example.com",
+                "Classics",
+                "My Falcon",
+                "Duplicated content.",
+                "/communities/classics/posts/my-falcon"
+        );
+
+        // Assertions
+        assertEquals(1, mailSender.sentMessages.size());
+        final MimeMessage message = mailSender.sentMessages.get(0);
+        final Address[] recipients = message.getRecipients(Message.RecipientType.TO);
+        assertEquals(1, recipients.length);
+        assertEquals("author@example.com", recipients[0].toString());
+        assertEquals("[La Posta Autos] Tu posteo fue ocultado en Classics", message.getSubject());
+        final String text = extractText(message);
+        assertTrue(text.contains("Duplicated content."));
+        assertTrue(text.contains(APP_BASE_URL + "/communities/classics/posts/my-falcon"));
+    }
+
+    @Test
+    public void shouldSendCommunityModeratorPromotedNotificationWithMembersLink() throws Exception {
+        // Arrange
+        final RecordingMailSender mailSender = new RecordingMailSender();
+        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
+
+        // Exercise
+        emailService.sendCommunityModeratorPromotedNotification(
+                "member@example.com",
+                "Classics",
+                "/communities/classics/members"
+        );
+
+        // Assertions
+        assertEquals(1, mailSender.sentMessages.size());
+        final MimeMessage message = mailSender.sentMessages.get(0);
+        final Address[] recipients = message.getRecipients(Message.RecipientType.TO);
+        assertEquals(1, recipients.length);
+        assertEquals("member@example.com", recipients[0].toString());
+        assertEquals("[La Posta Autos] Ahora sos moderador en Classics", message.getSubject());
+        assertTrue(extractText(message).contains(APP_BASE_URL + "/communities/classics/members"));
+    }
+
+    @Test
     public void shouldSendApprovedNotificationWithDefaultLocaleWhenRecipientLookupFails() throws Exception {
         // Arrange
         final String recipientEmail = "owner@example.com";

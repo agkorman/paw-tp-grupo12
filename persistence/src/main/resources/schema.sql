@@ -737,10 +737,39 @@ CREATE TABLE IF NOT EXISTS communities (
     slug                VARCHAR(60)  NOT NULL,
     name                VARCHAR(60)  NOT NULL,
     description         TEXT         NOT NULL,
+    search_vector       tsvector,
     created_by_user_id  BIGINT       REFERENCES users(user_id) ON DELETE SET NULL,
     created_at          TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE communities ADD COLUMN IF NOT EXISTS search_vector tsvector;
+
+CREATE OR REPLACE FUNCTION communities_build_search_vector(
+    p_name        TEXT,
+    p_slug        TEXT,
+    p_description TEXT
+) RETURNS tsvector LANGUAGE sql IMMUTABLE AS $$
+    SELECT
+        setweight(to_tsvector('simple', COALESCE(p_name,        '')), 'A') ||
+        setweight(to_tsvector('simple', COALESCE(p_slug,        '')), 'B') ||
+        setweight(to_tsvector('simple', COALESCE(p_description, '')), 'C')
+$$;
+
+CREATE OR REPLACE FUNCTION communities_search_vector_trigger_fn()
+RETURNS TRIGGER LANGUAGE plpgsql AS
+'BEGIN
+    NEW.search_vector := communities_build_search_vector(NEW.name, NEW.slug, NEW.description);
+    RETURN NEW;
+END';
+
+CREATE OR REPLACE TRIGGER communities_search_vector_trigger
+    BEFORE INSERT OR UPDATE ON communities
+    FOR EACH ROW EXECUTE FUNCTION communities_search_vector_trigger_fn();
+
+UPDATE communities
+SET search_vector = communities_build_search_vector(name, slug, description)
+WHERE search_vector IS NULL;
 
 CREATE TABLE IF NOT EXISTS community_topics (
     topic_id     SMALLSERIAL  PRIMARY KEY,
@@ -825,6 +854,9 @@ ALTER TABLE community_posts ADD CONSTRAINT chk_community_posts_body_not_blank CH
 ALTER TABLE community_post_comments DROP CONSTRAINT IF EXISTS chk_community_post_comments_body_not_blank;
 ALTER TABLE community_post_comments ADD CONSTRAINT chk_community_post_comments_body_not_blank CHECK (BTRIM(body) <> '');
 
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE community_post_comments ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT FALSE;
+
 ALTER TABLE community_post_images DROP CONSTRAINT IF EXISTS chk_community_post_images_display_order;
 ALTER TABLE community_post_images ADD CONSTRAINT chk_community_post_images_display_order CHECK (display_order >= 0);
 
@@ -834,6 +866,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_community_posts_slug ON community_posts (co
 CREATE UNIQUE INDEX IF NOT EXISTS uq_community_post_images_order ON community_post_images (post_id, display_order);
 
 CREATE INDEX IF NOT EXISTS idx_communities_creator_id ON communities (created_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_communities_fts ON communities USING GIN (search_vector);
 CREATE INDEX IF NOT EXISTS idx_community_topic_assignments_topic_id ON community_topic_assignments (topic_id);
 CREATE INDEX IF NOT EXISTS idx_community_memberships_user_id ON community_memberships (user_id);
 CREATE INDEX IF NOT EXISTS idx_community_posts_community_created_at ON community_posts (community_id, created_at DESC);

@@ -259,6 +259,7 @@ CREATE TABLE community_posts (
     linked_review_id INTEGER      REFERENCES reviews(review_id) ON DELETE SET NULL,
     created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    hidden           BOOLEAN      NOT NULL DEFAULT FALSE,
     CONSTRAINT uq_community_posts_slug UNIQUE (community_id, slug),
     CONSTRAINT chk_community_posts_slug_not_blank CHECK (TRIM(BOTH FROM slug) <> ''),
     CONSTRAINT chk_community_posts_title_not_blank CHECK (TRIM(BOTH FROM title) <> ''),
@@ -272,6 +273,7 @@ CREATE TABLE community_post_comments (
     body         LONGVARCHAR NOT NULL,
     created_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    hidden       BOOLEAN     NOT NULL DEFAULT FALSE,
     CONSTRAINT chk_community_post_comments_body_not_blank CHECK (TRIM(BOTH FROM body) <> '')
 );
 

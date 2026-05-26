@@ -6,6 +6,8 @@ public final class Pagination {
     public static final int REQUESTS_PAGE_SIZE = 12;
     public static final int REVIEWS_PAGE_SIZE = 6;
     public static final int CONNECTIONS_PAGE_SIZE = 8;
+    public static final int COMMUNITIES_PAGE_SIZE = 12;
+    public static final int COMMUNITY_POSTS_PAGE_SIZE = 6;
     public static final int DEFAULT_PAGE = 1;
 
     private Pagination() {}

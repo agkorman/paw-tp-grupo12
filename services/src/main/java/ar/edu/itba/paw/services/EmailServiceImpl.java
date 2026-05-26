@@ -193,6 +193,132 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async("mailTaskExecutor")
+    public void sendCommunityPostHiddenNotification(final String recipientEmail, final String communityName,
+                                                    final String postTitle, final String moderatorReason,
+                                                    final String postUrl) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+
+        final Locale locale = resolveRecipientLocale(recipientEmail);
+        sendEmail(
+                msg("email.community.postHidden.subject", locale, APP_NAME, sanitizeHeaderValue(communityName)),
+                buildCommunityModerationPlainText(
+                        msg("email.community.postHidden.heading", locale),
+                        msg("email.community.postHidden.intro", locale, APP_NAME),
+                        msg("email.community.label.community", locale),
+                        communityName,
+                        msg("email.community.label.post", locale),
+                        postTitle,
+                        moderatorReason,
+                        absoluteUrl(postUrl),
+                        locale
+                ),
+                buildCommunityModerationHtml(
+                        msg("email.community.postHidden.preheader", locale, safeValue(communityName)),
+                        msg("email.community.postHidden.heading", locale),
+                        msg("email.community.postHidden.intro", locale, APP_NAME),
+                        msg("email.community.label.post", locale),
+                        safeValue(postTitle),
+                        communityName,
+                        moderatorReason,
+                        absoluteUrl(postUrl),
+                        locale
+                ),
+                "Failed to send hidden community post notification to " + recipientEmail,
+                helper -> helper.setTo(recipientEmail)
+        );
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendCommunityCommentHiddenNotification(final String recipientEmail, final String communityName,
+                                                       final String postTitle, final String commentBody,
+                                                       final String moderatorReason, final String postUrl) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+
+        final Locale locale = resolveRecipientLocale(recipientEmail);
+        sendEmail(
+                msg("email.community.commentHidden.subject", locale, APP_NAME, sanitizeHeaderValue(communityName)),
+                buildCommunityModerationPlainText(
+                        msg("email.community.commentHidden.heading", locale),
+                        msg("email.community.commentHidden.intro", locale, APP_NAME),
+                        msg("email.community.label.community", locale),
+                        communityName,
+                        msg("email.community.label.comment", locale),
+                        previewDescription(commentBody, locale),
+                        moderatorReason,
+                        absoluteUrl(postUrl),
+                        locale
+                ),
+                buildCommunityModerationHtml(
+                        msg("email.community.commentHidden.preheader", locale, safeValue(communityName)),
+                        msg("email.community.commentHidden.heading", locale),
+                        msg("email.community.commentHidden.intro", locale, APP_NAME),
+                        msg("email.community.label.comment", locale),
+                        previewDescription(commentBody, locale),
+                        communityName + " / " + safeValue(postTitle),
+                        moderatorReason,
+                        absoluteUrl(postUrl),
+                        locale
+                ),
+                "Failed to send hidden community comment notification to " + recipientEmail,
+                helper -> helper.setTo(recipientEmail)
+        );
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendCommunityMemberKickedNotification(final String recipientEmail, final String communityName,
+                                                      final String communityUrl) {
+        sendCommunityRoleNotification(
+                recipientEmail,
+                communityName,
+                communityUrl,
+                "email.community.memberKicked.subject",
+                "email.community.memberKicked.preheader",
+                "email.community.memberKicked.heading",
+                "email.community.memberKicked.intro",
+                "email.action.viewCommunity"
+        );
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendCommunityModeratorPromotedNotification(final String recipientEmail, final String communityName,
+                                                          final String communityMembersUrl) {
+        sendCommunityRoleNotification(
+                recipientEmail,
+                communityName,
+                communityMembersUrl,
+                "email.community.moderatorPromoted.subject",
+                "email.community.moderatorPromoted.preheader",
+                "email.community.moderatorPromoted.heading",
+                "email.community.moderatorPromoted.intro",
+                "email.action.viewMembers"
+        );
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendCommunityOwnershipTransferredNotification(final String recipientEmail, final String communityName,
+                                                             final String communityMembersUrl) {
+        sendCommunityRoleNotification(
+                recipientEmail,
+                communityName,
+                communityMembersUrl,
+                "email.community.ownershipTransferred.subject",
+                "email.community.ownershipTransferred.preheader",
+                "email.community.ownershipTransferred.heading",
+                "email.community.ownershipTransferred.intro",
+                "email.action.viewMembers"
+        );
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
     public void sendWeeklyModeratorDigest(final List<EmailRecipient> moderatorRecipients,
                                           final int pendingRequestCount) {
         if (moderatorRecipients == null || moderatorRecipients.isEmpty()) {
@@ -571,6 +697,141 @@ public class EmailServiceImpl implements EmailService {
                 COLOR_ON_SURFACE,
                 BODY_FONT,
                 escapeHtml(safeValue(moderatorReason))
+        );
+    }
+
+    private String buildCommunityModerationPlainText(final String heading, final String intro,
+                                                     final String communityLabel, final String communityName,
+                                                     final String contentLabel, final String contentTitle,
+                                                     final String moderatorReason, final String actionUrl,
+                                                     final Locale locale) {
+        return """
+                %s
+
+                %s
+
+                %s: %s
+                %s: %s
+
+                %s:
+                %s
+
+                %s: %s
+                """.formatted(
+                safeValue(heading),
+                safeValue(intro),
+                safeValue(communityLabel),
+                safeValue(communityName),
+                safeValue(contentLabel),
+                safeValue(contentTitle),
+                msg("email.community.label.reason", locale),
+                safeValue(moderatorReason),
+                msg("email.community.label.link", locale),
+                safeValue(actionUrl)
+        );
+    }
+
+    private String buildCommunityModerationHtml(final String preheader, final String heading,
+                                                final String intro, final String contentLabel,
+                                                final String contentTitle, final String communityName,
+                                                final String moderatorReason, final String actionUrl,
+                                                final Locale locale) {
+        final String bodyHtml = buildCommunitySummaryCard(contentLabel, contentTitle, communityName, locale)
+                + buildModerationReason(msg("email.community.label.reason", locale), moderatorReason)
+                + buildCenteredAction(escapeHtml(actionUrl), msg("email.action.viewCommunity", locale));
+
+        return buildEmailShell(
+                escapeHtml(preheader),
+                heading,
+                intro,
+                bodyHtml,
+                locale
+        );
+    }
+
+    private String buildCommunitySummaryCard(final String contentLabel, final String contentTitle,
+                                             final String communityName, final Locale locale) {
+        return """
+                <div style="background:%s;border:1px solid %s;border-radius:18px;padding:22px 24px;margin-bottom:24px;">
+                    %s
+                    <div style="font-size:24px;line-height:1.2;font-weight:700;color:%s;font-family:%s;">
+                        %s
+                    </div>
+                    <div style="margin-top:10px;font-size:14px;line-height:1.6;color:%s;font-family:%s;">
+                        <strong style="color:%s;">%s:</strong> %s
+                    </div>
+                </div>
+                """.formatted(
+                COLOR_SURFACE_HIGH,
+                COLOR_OUTLINE,
+                buildSectionLabel(contentLabel),
+                COLOR_ON_SURFACE,
+                DISPLAY_FONT,
+                escapeHtml(safeValue(contentTitle)),
+                COLOR_ON_SURFACE_VARIANT,
+                BODY_FONT,
+                COLOR_ON_SURFACE,
+                escapeHtml(msg("email.community.label.community", locale)),
+                escapeHtml(safeValue(communityName))
+        );
+    }
+
+    private void sendCommunityRoleNotification(final String recipientEmail, final String communityName,
+                                               final String actionUrl, final String subjectCode,
+                                               final String preheaderCode, final String headingCode,
+                                               final String introCode, final String actionLabelCode) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+        final Locale locale = resolveRecipientLocale(recipientEmail);
+        final String resolvedUrl = absoluteUrl(actionUrl);
+        sendEmail(
+                msg(subjectCode, locale, APP_NAME, sanitizeHeaderValue(communityName)),
+                buildCommunityRolePlainText(headingCode, introCode, communityName, resolvedUrl, locale),
+                buildCommunityRoleHtml(preheaderCode, headingCode, introCode, communityName, resolvedUrl,
+                        actionLabelCode, locale),
+                "Failed to send community role notification to " + recipientEmail,
+                helper -> helper.setTo(recipientEmail)
+        );
+    }
+
+    private String buildCommunityRolePlainText(final String headingCode, final String introCode,
+                                               final String communityName, final String actionUrl,
+                                               final Locale locale) {
+        return """
+                %s
+
+                %s
+
+                %s: %s
+                %s: %s
+                """.formatted(
+                msg(headingCode, locale),
+                msg(introCode, locale, safeValue(communityName), APP_NAME),
+                msg("email.community.label.community", locale),
+                safeValue(communityName),
+                msg("email.community.label.link", locale),
+                safeValue(actionUrl)
+        );
+    }
+
+    private String buildCommunityRoleHtml(final String preheaderCode, final String headingCode,
+                                          final String introCode, final String communityName,
+                                          final String actionUrl, final String actionLabelCode,
+                                          final Locale locale) {
+        final String bodyHtml = buildCommunitySummaryCard(
+                msg("email.community.label.community", locale),
+                communityName,
+                communityName,
+                locale
+        ) + buildCenteredAction(escapeHtml(actionUrl), msg(actionLabelCode, locale));
+
+        return buildEmailShell(
+                escapeHtml(msg(preheaderCode, locale, safeValue(communityName))),
+                msg(headingCode, locale),
+                msg(introCode, locale, safeValue(communityName), APP_NAME),
+                bodyHtml,
+                locale
         );
     }
 
@@ -1039,6 +1300,20 @@ public class EmailServiceImpl implements EmailService {
 
     private String safeValue(final String value) {
         return value == null || value.isBlank() ? "-" : value;
+    }
+
+    private String absoluteUrl(final String pathOrUrl) {
+        if (pathOrUrl == null || pathOrUrl.isBlank()) {
+            return appBaseUrl;
+        }
+        final String trimmed = pathOrUrl.trim();
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            return trimmed;
+        }
+        if (trimmed.startsWith("/")) {
+            return appBaseUrl + trimmed;
+        }
+        return appBaseUrl + "/" + trimmed;
     }
 
     private Locale resolveRecipientLocale(final String recipientEmail) {

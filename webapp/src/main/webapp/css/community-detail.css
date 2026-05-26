@@ -39,6 +39,42 @@
 
 .community-banner-actions {
     justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.community-banner-edit-btn {
+    height: 3.25rem;
+    padding: 0 1.25rem;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.community-edit-danger {
+    margin-top: var(--spacing-6);
+    padding: var(--spacing-5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+    border: 1px solid rgba(255, 107, 53, 0.35);
+    background: rgba(255, 107, 53, 0.06);
+}
+
+.community-edit-danger-copy h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1.1rem;
+    color: var(--on-surface);
+}
+
+.community-edit-danger-copy p {
+    margin: 0;
+    color: var(--on-surface-variant);
+    font-size: 0.9rem;
 }
 
 .community-banner-join-form {
@@ -149,18 +185,27 @@
 
 .community-feed-header-actions {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: flex-end;
     flex: 0 0 auto;
     margin-left: auto;
+    gap: var(--spacing-3);
 }
 
+.community-members-btn,
 .community-create-post-btn {
-    width: 10.25rem;
     height: 3rem;
-    padding: 0 1rem;
+    padding: 0 1.25rem;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
+}
+
+.community-create-post-hint {
+    align-self: center;
+    color: var(--on-surface-variant);
+    font-size: 0.9rem;
 }
 
 .community-section-title {
@@ -294,4 +339,47 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+}
+
+.community-sort-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-4);
+}
+
+.community-sort-label {
+    color: var(--secondary);
+    font-size: 0.875rem;
+}
+
+.community-sort-select {
+    appearance: none;
+    padding: 0.25rem 1.5rem 0.25rem 0;
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--on-surface);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c4c6cc' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0 center;
+}
+
+.community-sort-select:focus {
+    outline: none;
+}
+
+.community-sort-select option {
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+}
+
+.community-sort-submit {
+    min-height: 2.25rem;
+    padding: 0 0.85rem;
 }
