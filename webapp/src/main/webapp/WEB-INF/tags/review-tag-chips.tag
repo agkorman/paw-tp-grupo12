@@ -74,7 +74,7 @@
                     <spring:message code="review.tag.emoji.fallback" var="tagEmojiFallback" text="🏷️"/>
                     <spring:message code="${tagEmojiKey}" var="tagEmojiDisplay" text="${tagEmojiFallback}"/>
                     <li class="review-tag-chip review-tag-chip--display review-tag-chip--${tag.sentiment}">
-                        <a class="review-tag-chip-link" href="${tagFilterUrl}" aria-label="${fn:escapeXml(filterCarsByTagLabel)}">
+                        <a class="review-tag-chip-link" href="${fn:escapeXml(tagFilterUrl)}" aria-label="${fn:escapeXml(filterCarsByTagLabel)}">
                             <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${tagEmojiDisplay}"/></span>
                             <span class="review-tag-chip-label"><pa:review-tag-label tag="${tag}"/></span>
                         </a>
