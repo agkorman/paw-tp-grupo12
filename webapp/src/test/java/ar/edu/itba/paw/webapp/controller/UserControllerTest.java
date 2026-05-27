@@ -51,7 +51,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class ProfileControllerTest {
+class UserControllerTest {
 
     @Mock
     private ReviewService reviewService;
@@ -81,7 +81,7 @@ class ProfileControllerTest {
     private LocaleResolver localeResolver;
 
     @InjectMocks
-    private ProfileController controller;
+    private UserController controller;
 
     private MockMvc profileMockMvc() throws Exception {
         final LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
@@ -134,7 +134,7 @@ class ProfileControllerTest {
         arrangeMessageBundle();
         final MockMvc mockMvc = profileMockMvc();
         // Exercise
-        final ResultActions resultActions = mockMvc.perform(get("/profile"));
+        final ResultActions resultActions = mockMvc.perform(get("/user"));
         // Assertions
         resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login"));
     }
@@ -148,7 +148,7 @@ class ProfileControllerTest {
         try {
             final MockMvc mockMvc = profileMockMvc();
             // Exercise
-            final ResultActions resultActions = mockMvc.perform(get("/profile"));
+            final ResultActions resultActions = mockMvc.perform(get("/user"));
             // Assertions
             resultActions.andExpect(status().isOk()).andExpect(view().name("profile.jsp"));
         } finally {
@@ -167,7 +167,7 @@ class ProfileControllerTest {
         try {
             final MockMvc mockMvc = profileMockMvc();
             // Exercise
-            final ResultActions resultActions = mockMvc.perform(get("/profile").param("tab", "favorites"));
+            final ResultActions resultActions = mockMvc.perform(get("/user").param("tab", "favorites"));
             // Assertions
             resultActions.andExpect(status().isOk()).andExpect(model().attribute("activeTab", "favorites"));
         } finally {
@@ -182,7 +182,7 @@ class ProfileControllerTest {
         when(userService.getUserById(eq(999L))).thenReturn(Optional.empty());
         final MockMvc mockMvc = profileMockMvc();
         // Exercise
-        final ResultActions resultActions = mockMvc.perform(get("/profiles/999"));
+        final ResultActions resultActions = mockMvc.perform(get("/users/999"));
         // Assertions
         resultActions.andExpect(status().isNotFound()).andExpect(forwardedUrl("/error/404"));
     }
@@ -197,9 +197,9 @@ class ProfileControllerTest {
             final MockMvc mockMvc = profileMockMvc();
             // Exercise
             final ResultActions resultActions =
-                    mockMvc.perform(post("/profile").param("displayName", ""));
+                    mockMvc.perform(post("/user").param("displayName", ""));
             // Assertions
-            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/profile"));
+            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/user"));
         } finally {
             ControllerTestMvcSupport.clearSecurityContext();
         }
@@ -219,9 +219,9 @@ class ProfileControllerTest {
             final MockMvc mockMvc = profileMockMvc();
             // Exercise
             final ResultActions resultActions =
-                    mockMvc.perform(post("/profile").param("displayName", "RenamedGood"));
+                    mockMvc.perform(post("/user").param("displayName", "RenamedGood"));
             // Assertions
-            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/profile"));
+            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/user"));
         } finally {
             ControllerTestMvcSupport.clearSecurityContext();
         }
@@ -238,9 +238,9 @@ class ProfileControllerTest {
             final MockMvc mockMvc = profileMockMvc();
             // Exercise
             final ResultActions resultActions =
-                    mockMvc.perform(post("/profile").param("displayName", "TakenName"));
+                    mockMvc.perform(post("/user").param("displayName", "TakenName"));
             // Assertions
-            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/profile"));
+            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/user"));
         } finally {
             ControllerTestMvcSupport.clearSecurityContext();
         }
@@ -253,13 +253,13 @@ class ProfileControllerTest {
         final MockMvc mockMvc = profileMockMvc();
         // Exercise
         final ResultActions resultActions =
-                mockMvc.perform(post("/profiles/20/follow"));
+                mockMvc.perform(post("/users/20/follow"));
         // Assertions
         resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login"));
     }
 
     @Test
-    void toggleFollow_selfAttempt_redirectsToOwnProfile() throws Exception {
+    void toggleFollow_selfAttempt_redirectsToTargetProfile() throws Exception {
         // Arrange
         ControllerTestMvcSupport.bindPrincipal(testUser(22L, "SelfFollow"));
         arrangeExistingProfile(22L);
@@ -269,9 +269,9 @@ class ProfileControllerTest {
             final MockMvc mockMvc = profileMockMvc();
             // Exercise
             final ResultActions resultActions =
-                    mockMvc.perform(post("/profiles/22/follow"));
+                    mockMvc.perform(post("/users/22/follow"));
             // Assertions
-            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/profile"));
+            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/users/22"));
         } finally {
             ControllerTestMvcSupport.clearSecurityContext();
         }
@@ -287,7 +287,7 @@ class ProfileControllerTest {
             final MockMvc mockMvc = profileMockMvc();
             // Exercise
             final ResultActions resultActions =
-                    mockMvc.perform(post("/profiles/777/follow"));
+                    mockMvc.perform(post("/users/777/follow"));
             // Assertions
             resultActions.andExpect(status().isNotFound()).andExpect(forwardedUrl("/error/404"));
         } finally {
@@ -308,10 +308,10 @@ class ProfileControllerTest {
         try {
             final MockMvc mockMvc = profileMockMvc();
             // Exercise
-            final ResultActions resultActions = mockMvc.perform(post("/profiles/24/follow"));
+            final ResultActions resultActions = mockMvc.perform(post("/users/24/follow"));
             // Assertions
             resultActions.andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/profiles/24"));
+                    .andExpect(redirectedUrl("/users/24"));
         } finally {
             ControllerTestMvcSupport.clearSecurityContext();
         }

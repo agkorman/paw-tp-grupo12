@@ -14,11 +14,15 @@ import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
+import ar.edu.itba.paw.services.exception.SelfFollowException;
 import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ProfileForm;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -49,15 +53,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-public class ProfileController {
+public class UserController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
-        ProfileController.class
+        UserController.class
     );
 
     private static final String TAB_REVIEWS = "reviews";
@@ -78,7 +83,7 @@ public class ProfileController {
     private final LocaleResolver localeResolver;
 
     @Autowired
-    public ProfileController(
+    public UserController(
         final ReviewService reviewService,
         final ReviewLikeService reviewLikeService,
         final CarService carService,
@@ -106,7 +111,7 @@ public class ProfileController {
         );
     }
 
-    @RequestMapping(value = "/profile", method = RequestMethod.GET)
+    @RequestMapping(value = "/user", method = RequestMethod.GET)
     public ModelAndView ownProfile(
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
         @RequestParam(value = "tab", required = false) final String tab,
@@ -130,7 +135,7 @@ public class ProfileController {
         return ownProfile(currentUser, null, 1, null, null, 1, 1);
     }
 
-    @RequestMapping(value = "/profiles/{userId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/users/{userId}", method = RequestMethod.GET)
     public ModelAndView publicProfile(
         @PathVariable("userId") final long userId,
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
@@ -155,7 +160,7 @@ public class ProfileController {
         return publicProfile(userId, currentUser, null, 1, null, null, 1, 1);
     }
 
-    @RequestMapping(value = "/profile", method = RequestMethod.POST)
+    @RequestMapping(value = "/user", method = RequestMethod.POST)
     public ModelAndView updateOwnProfile(
         @Valid @ModelAttribute("profileForm") final ProfileForm profileForm,
         final BindingResult errors,
@@ -183,7 +188,7 @@ public class ProfileController {
                 normalizedUsername
             );
             refreshAuthenticatedUser(currentUser, updatedUser);
-            return new ModelAndView("redirect:/profile");
+            return new ModelAndView("redirect:/user");
         } catch (final DataIntegrityViolationException e) {
             return profileEditError(
                 "profile.edit.error.username.exists",
@@ -211,7 +216,7 @@ public class ProfileController {
         }
     }
 
-    @RequestMapping(value = "/profile/language", method = RequestMethod.POST)
+    @RequestMapping(value = "/user/language", method = RequestMethod.POST)
     public ModelAndView updateOwnProfileLanguage(
         @RequestParam("lang") final String language,
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
@@ -244,15 +249,18 @@ public class ProfileController {
                 "profile.language.error"
             );
         }
-        return new ModelAndView("redirect:/profile");
+        return new ModelAndView("redirect:/user");
     }
 
     @RequestMapping(
-        value = "/profiles/{userId}/follow",
+        value = "/users/{userId}/follow",
         method = RequestMethod.POST
     )
     public ModelAndView toggleFollow(
         @PathVariable("userId") final long userId,
+        @RequestParam(value = "back", required = false) final String back,
+        @RequestParam(value = "q", required = false) final String query,
+        @RequestParam(value = "page", defaultValue = "1") final int page,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
@@ -264,10 +272,59 @@ public class ProfileController {
 
         try {
             userFollowService.toggleFollow(currentUser.getId(), userId);
-            return new ModelAndView("redirect:/profiles/" + userId);
-        } catch (final Exception e) {
-            return new ModelAndView("redirect:/profile");
+        } catch (final SelfFollowException e) {
+            LOGGER.warn("self-follow attempt blocked userId={}", userId);
         }
+
+        if ("search".equals(back)) {
+            return new ModelAndView(new RedirectView(buildSearchRedirect(query, page), true));
+        }
+        return new ModelAndView("redirect:/users/" + userId);
+    }
+
+    @RequestMapping(value = "/users/search", method = RequestMethod.GET)
+    public ModelAndView searchUsers(@RequestParam(value = "q", required = false) final String query,
+                                    @RequestParam(value = "page", defaultValue = "1") final int page,
+                                    @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        LOGGER.debug("rendering user search results page={} hasQuery={}", page, query != null && !query.isBlank());
+        final Page<User> resultsPage = userService.searchUsers(query, page);
+        final List<User> results = resultsPage.getItems();
+
+        final Set<Long> followedIds;
+        if (currentUser != null && !results.isEmpty()) {
+            final List<Long> targetIds = results.stream()
+                    .map(User::getId)
+                    .filter(id -> id != currentUser.getId())
+                    .collect(Collectors.toList());
+            followedIds = targetIds.isEmpty()
+                    ? Collections.emptySet()
+                    : userFollowService.getFollowedIds(currentUser.getId(), targetIds);
+        } else {
+            followedIds = Collections.emptySet();
+        }
+
+        final ModelAndView mav = new ModelAndView("users-search.jsp");
+        mav.addObject("query", query == null ? "" : query);
+        mav.addObject("results", results);
+        mav.addObject("currentPage", resultsPage.getPageNumber());
+        mav.addObject("totalPages", resultsPage.getTotalPages());
+        mav.addObject("totalItems", resultsPage.getTotalItems());
+        mav.addObject("followedIds", followedIds);
+        mav.addObject("currentUserId", currentUser == null ? null : currentUser.getId());
+        return mav;
+    }
+
+    private String buildSearchRedirect(final String query, final int page) {
+        final StringBuilder sb = new StringBuilder("/users/search");
+        boolean hasParam = false;
+        if (query != null && !query.isBlank()) {
+            sb.append("?q=").append(URLEncoder.encode(query, StandardCharsets.UTF_8));
+            hasParam = true;
+        }
+        if (page > 1) {
+            sb.append(hasParam ? "&" : "?").append("page=").append(page);
+        }
+        return sb.toString();
     }
 
     private String profileErrorCode(final BindingResult errors) {
@@ -292,7 +349,7 @@ public class ProfileController {
         redirectAttributes.addFlashAttribute("profileEditErrorCode", errorCode);
         redirectAttributes.addFlashAttribute("profileEditUsername", username);
         redirectAttributes.addFlashAttribute("openEditProfileModal", true);
-        return new ModelAndView("redirect:/profile");
+        return new ModelAndView("redirect:/user");
     }
 
     private void refreshAuthenticatedUser(
@@ -339,8 +396,8 @@ public class ProfileController {
             ? normalizeProfileTab(tab)
             : TAB_REVIEWS;
         final String profileBasePath = ownProfile
-            ? "/profile"
-            : "/profiles/" + profileUser.getId();
+            ? "/user"
+            : "/users/" + profileUser.getId();
 
         final long reviewCount = reviewService.countReviewsByUser(
             profileUser.getId()
