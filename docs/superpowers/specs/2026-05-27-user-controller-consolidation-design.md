@@ -86,7 +86,6 @@ the new base. Hardcoded `/profile` / `/profiles` references are updated in:
 - `profile.jsp`
 - `profile-connections-modal.tag`
 - `review-form.jsp`
-- `car-review.jsp`
 - `users-search.jsp`
 
 Follow forms:
