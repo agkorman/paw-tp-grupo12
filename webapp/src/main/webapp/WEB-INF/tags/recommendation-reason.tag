@@ -20,7 +20,7 @@
                         <spring:message code="review.tag.emoji.fallback" var="recTagEmojiFallback" text="🏷️"/>
                         <spring:message code="${recTagEmojiKey}" var="recTagEmojiDisplay" text="${recTagEmojiFallback}"/>
                         <li class="review-tag-chip review-tag-chip--display review-tag-chip--positive recommendation-rail-item">
-                            <a class="review-tag-chip-link" href="${positiveTagFilterUrl}" aria-label="${fn:escapeXml(filterCarsByTagLabel)}">
+                            <a class="review-tag-chip-link" href="${fn:escapeXml(positiveTagFilterUrl)}" aria-label="${fn:escapeXml(filterCarsByTagLabel)}">
                                 <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${recTagEmojiDisplay}"/></span>
                                 <span class="review-tag-chip-label"><pa:review-tag-label tag="${highlight.tag}"/></span>
                             </a>
