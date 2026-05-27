@@ -41,6 +41,31 @@
                         </a>
                     </div>
                 </div>
+                <c:if test="${postView.deletable or postView.viewerModerator}">
+                    <spring:message var="postModMenuLabel" code="communities.post.modMenu.label"/>
+                    <pa:action-menu label="${postModMenuLabel}" cssClass="community-post-mod-menu">
+                        <c:if test="${postView.deletable}">
+                            <c:url var="communityPostDeleteUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/delete"/>
+                            <form method="post" action="${fn:escapeXml(communityPostDeleteUrl)}"
+                                  data-confirm-modal="deletePostConfirmModal">
+                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                <button type="submit" class="action-menu-danger">
+                                    <spring:message code="communities.post.deleteAction"/>
+                                </button>
+                            </form>
+                        </c:if>
+                        <c:if test="${postView.viewerModerator and not postView.deletable}">
+                            <c:url var="communityPostHideUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/hide"/>
+                            <button type="button"
+                                    class="action-menu-danger"
+                                    data-open-community-hide-modal
+                                    data-community-hide-modal-target="hideCommunityPostModal"
+                                    data-community-hide-action="${fn:escapeXml(communityPostHideUrl)}">
+                                <spring:message code="communities.post.hideAction"/>
+                            </button>
+                        </c:if>
+                    </pa:action-menu>
+                </c:if>
             </div>
 
             <article class="community-post-detail-card">
@@ -49,23 +74,13 @@
 
                 <div class="community-post-detail-actions">
                     <spring:message var="postCommentCountText" code="communities.post.metric.comments" arguments="${postView.commentCount}"/>
-                    <spring:message var="postHelpfulLabel"       code="communities.post.helpful.label"/>
-                    <spring:message var="postHelpfulLoginLabel"  code="communities.post.helpful.login"/>
-                    <spring:message var="postHelpfulActionLabel" code="communities.post.helpful.action"/>
-                    <spring:message var="postHelpfulAddAria"     code="communities.post.helpful.add.aria"/>
-                    <spring:message var="postHelpfulRemoveAria"  code="communities.post.helpful.remove.aria"/>
                     <pa:review-like-button
                             reviewId="${postDetail.post.id}"
                             liked="${postView.helpfulByCurrentUser}"
                             likeCount="${postView.helpfulCount}"
                             action="${communityPostHelpfulUrl}"
                             disabled="${empty pageContext.request.userPrincipal}"
-                            intent="community-post-helpful-${postDetail.post.id}"
-                            label="${postHelpfulLabel}"
-                            loginLabel="${postHelpfulLoginLabel}"
-                            actionLabel="${postHelpfulActionLabel}"
-                            addAriaLabel="${postHelpfulAddAria}"
-                            removeAriaLabel="${postHelpfulRemoveAria}"/>
+                            intent="community-post-helpful-${postDetail.post.id}"/>
                     <span class="community-post-detail-pill"><c:out value="${postCommentCountText}"/></span>
                     <c:if test="${postView.deletable or postView.viewerModerator}">
                         <spring:message var="postModMenuLabel" code="communities.post.modMenu.label"/>

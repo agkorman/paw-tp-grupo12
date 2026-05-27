@@ -52,12 +52,6 @@
                                    required="required"/>
                     <form:errors path="body" cssClass="form-error" element="span"/>
                 </div>
-
-                <div class="community-post-form-toolbar" aria-label="${fn:escapeXml(communityPostFormToolbarAria)}">
-                    <button type="button"><spring:message code="communities.postForm.toolbar.link"/></button>
-                    <button type="button"><spring:message code="communities.postForm.toolbar.photo"/></button>
-                    <button type="button"><spring:message code="communities.postForm.toolbar.car"/></button>
-                </div>
             </div>
 
             <div class="community-post-form-footer">

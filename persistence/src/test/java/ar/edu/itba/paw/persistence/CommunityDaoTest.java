@@ -532,6 +532,89 @@ class CommunityDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    void shouldCountHelpfulReactionsByCommentIds() {
+        // Arrange
+        final User creator = insertUser("comment-helpful-owner", "comment-helpful-owner@example.com", "secret", "user");
+        final User helper = insertUser("comment-helpful-user", "comment-helpful-user@example.com", "secret", "user");
+        final long communityId = insertCommunity("comment-helpful", "Comment helpful", "Comment helpful posts.", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "falcon-60",
+                "My grandfather's Falcon turned 60 today",
+                "Still runs beautifully.",
+                LocalDateTime.now().minusHours(2)
+        );
+        final long commentId = insertCommunityComment(
+                postId,
+                creator.getId(),
+                "That paint looks original.",
+                LocalDateTime.now().minusHours(1)
+        );
+        insertCommentHelpfulReaction(commentId, helper.getId());
+
+        // Exercise
+        final Map<Long, Long> result = communityDao.countHelpfulReactionsByCommentIds(List.of(commentId));
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(commentId));
+    }
+
+    @Test
+    void shouldAddAndRemoveCommentHelpfulReaction() {
+        // Arrange
+        final User creator = insertUser("comment-toggle-owner", "comment-toggle-owner@example.com", "secret", "user");
+        final User helper = insertUser("comment-toggle-user", "comment-toggle-user@example.com", "secret", "user");
+        final long communityId = insertCommunity("comment-toggle", "Comment toggle", "Comment toggle posts.", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "falcon-60",
+                "My grandfather's Falcon turned 60 today",
+                "Still runs beautifully.",
+                LocalDateTime.now().minusHours(2)
+        );
+        final long commentId = insertCommunityComment(
+                postId,
+                creator.getId(),
+                "That paint looks original.",
+                LocalDateTime.now().minusHours(1)
+        );
+
+        // Exercise
+        final boolean added = communityDao.addCommentHelpfulReaction(commentId, helper.getId());
+
+        // Assertions
+        assertTrue(added);
+        assertEquals(
+                1,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM community_post_comment_helpful_reactions WHERE comment_id = ? AND user_id = ?",
+                        Integer.class,
+                        commentId,
+                        helper.getId()
+                )
+        );
+        assertTrue(communityDao.isCommentHelpfulReactionAddedByUser(commentId, helper.getId()));
+
+        // Arrange
+        final boolean removed = communityDao.removeCommentHelpfulReaction(commentId, helper.getId());
+
+        // Assertions
+        assertTrue(removed);
+        assertEquals(
+                0,
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM community_post_comment_helpful_reactions WHERE comment_id = ? AND user_id = ?",
+                        Integer.class,
+                        commentId,
+                        helper.getId()
+                )
+        );
+    }
+
+    @Test
     void shouldFindMembershipRole() {
         // Arrange
         final User creator = insertUser("role-owner", "role-owner@example.com", "secret", "user");
@@ -774,6 +857,14 @@ class CommunityDaoTest extends AbstractPersistenceTest {
         jdbcTemplate.update(
                 "INSERT INTO community_post_helpful_reactions (post_id, user_id) VALUES (?, ?)",
                 postId,
+                userId
+        );
+    }
+
+    private void insertCommentHelpfulReaction(final long commentId, final long userId) {
+        jdbcTemplate.update(
+                "INSERT INTO community_post_comment_helpful_reactions (comment_id, user_id) VALUES (?, ?)",
+                commentId,
                 userId
         );
     }

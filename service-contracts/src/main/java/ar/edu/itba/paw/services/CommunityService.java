@@ -32,6 +32,7 @@ public interface CommunityService {
     Optional<CommunityPostComment> updateCommunityPostComment(String communitySlug, long commentId, long callerUserId, String body);
     Optional<Boolean> toggleMembership(String slug, long userId);
     Optional<Boolean> togglePostHelpfulReaction(String communitySlug, String postSlug, long userId);
+    Optional<Boolean> toggleCommentHelpfulReaction(String communitySlug, String postSlug, long commentId, long userId);
     Optional<CommunityDetailData> getCommunityDetail(String slug, Long currentUserId, String sort);
     Optional<CommunityDetailData> getCommunityDetail(String slug, Long currentUserId, String sort, int page);
     Optional<Community> getCommunityBySlug(String slug);

@@ -227,7 +227,6 @@
     gap: var(--spacing-2);
 }
 
-.community-post-mod-menu,
 .community-comment-mod-menu {
     position: relative;
 }

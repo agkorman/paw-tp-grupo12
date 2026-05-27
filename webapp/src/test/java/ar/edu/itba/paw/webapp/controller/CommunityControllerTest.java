@@ -385,6 +385,28 @@ class CommunityControllerTest {
     }
 
     @Test
+    void toggleCommentHelpful_authenticatedUser_redirectsToPostDetail() throws Exception {
+        // Arrange
+        when(communityService.toggleCommentHelpfulReaction("classics", "falcon-60", 10L, 7L))
+                .thenReturn(Optional.of(true));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
+                        "/communities/classics/posts/falcon-60/comments/10/helpful"
+                )
+        );
+
+        // Assertions
+        resultActions
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/communities/classics/posts/falcon-60"));
+        clearSecurityContext();
+    }
+
+    @Test
     void createCommunityPostComment_validBody_redirectsToPostDetail() throws Exception {
         // Arrange
         when(communityService.getCommunityPostDetail("classics", "falcon-60", 7L))
@@ -485,6 +507,8 @@ class CommunityControllerTest {
                 4L,
                 true,
                 1L,
+                java.util.Map.of(10L, 2L),
+                java.util.Map.of(10L, true),
                 "member",
                 7L
         );

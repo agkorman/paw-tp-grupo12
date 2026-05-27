@@ -466,6 +466,61 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional
+    public Optional<Boolean> toggleCommentHelpfulReaction(final String communitySlug,
+                                                          final String postSlug,
+                                                          final long commentId,
+                                                          final long userId) {
+        if (userId <= 0) {
+            throw new InvalidServiceInputException("Community comment helpful reaction user is required.");
+        }
+        if (commentId <= 0) {
+            throw new InvalidServiceInputException("Community comment id is required.");
+        }
+
+        final String normalizedCommunitySlug = StringUtils.normalizeRequired(
+                communitySlug,
+                "Community slug is required."
+        );
+        final String normalizedPostSlug = StringUtils.normalizeRequired(
+                postSlug,
+                "Community post slug is required."
+        );
+        final Optional<Community> communityOptional = communityDao.findBySlug(normalizedCommunitySlug);
+        if (communityOptional.isEmpty()) {
+            return Optional.empty();
+        }
+
+        final Optional<CommunityPostComment> commentOptional = communityDao.findCommentById(commentId);
+        if (commentOptional.isEmpty()) {
+            return Optional.empty();
+        }
+
+        final CommunityPostComment comment = commentOptional.get();
+        final CommunityPost post = comment.getPost();
+        if (post == null
+                || post.getCommunity() == null
+                || post.getCommunity().getId() != communityOptional.get().getId()
+                || !normalizedPostSlug.equals(post.getSlug())
+                || comment.isHidden()
+                || post.isHidden()) {
+            return Optional.empty();
+        }
+
+        if (communityDao.isCommentHelpfulReactionAddedByUser(commentId, userId)) {
+            communityDao.removeCommentHelpfulReaction(commentId, userId);
+            LOGGER.info("removed helpful reaction communityCommentId={} communitySlug={} userId={}",
+                    commentId, communityOptional.get().getSlug(), userId);
+            return Optional.of(false);
+        }
+
+        communityDao.addCommentHelpfulReaction(commentId, userId);
+        LOGGER.info("added helpful reaction communityCommentId={} communitySlug={} userId={}",
+                commentId, communityOptional.get().getSlug(), userId);
+        return Optional.of(true);
+    }
+
+    @Override
     public Optional<CommunityDetailData> getCommunityDetail(final String slug, final Long currentUserId,
                                                             final String sort) {
         return getCommunityDetail(slug, currentUserId, sort, Pagination.DEFAULT_PAGE);
@@ -573,12 +628,25 @@ public class CommunityServiceImpl implements CommunityService {
             final List<CommunityPostComment> comments = communityDao.findCommentsByPostId(post.getId()).stream()
                     .filter(c -> !c.isHidden())
                     .collect(Collectors.toList());
+            final List<Long> commentIds = comments.stream()
+                    .map(CommunityPostComment::getId)
+                    .collect(Collectors.toList());
             final long helpfulCount = communityDao.countHelpfulReactionsByPostIds(List.of(post.getId()))
                     .getOrDefault(post.getId(), 0L);
             final boolean helpfulByCurrentUser = currentUserId != null
                     && communityDao.isHelpfulReactionAddedByUser(post.getId(), currentUserId);
             final long commentCount = communityDao.countCommentsByPostIds(List.of(post.getId()))
                     .getOrDefault(post.getId(), 0L);
+            final java.util.Map<Long, Long> commentHelpfulCounts =
+                    communityDao.countHelpfulReactionsByCommentIds(commentIds);
+            final java.util.Map<Long, Boolean> commentHelpfulByCurrentUser = new java.util.LinkedHashMap<>();
+            if (currentUserId != null) {
+                final java.util.Set<Long> reactedIds =
+                        communityDao.findCommentHelpfulReactionsByUser(commentIds, currentUserId);
+                for (final Long commentId : commentIds) {
+                    commentHelpfulByCurrentUser.put(commentId, reactedIds.contains(commentId));
+                }
+            }
             return Optional.of(new CommunityPostDetailData(
                     community,
                     post,
@@ -586,6 +654,8 @@ public class CommunityServiceImpl implements CommunityService {
                     helpfulCount,
                     helpfulByCurrentUser,
                     commentCount,
+                    commentHelpfulCounts,
+                    commentHelpfulByCurrentUser,
                     viewerRole,
                     currentUserId
             ));
