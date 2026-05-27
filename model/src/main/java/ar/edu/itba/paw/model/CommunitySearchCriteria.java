@@ -18,16 +18,21 @@ public class CommunitySearchCriteria implements Serializable {
             SORT_NEWEST
     );
 
+    public static final String MEMBERSHIP_ALL      = "";
+    public static final String MEMBERSHIP_JOINED   = "joined";
+    public static final String MEMBERSHIP_NOT_JOINED = "not_joined";
+
     private String q;
     private String topic;
     private Boolean joinedOnly;
+    private Boolean notJoinedOnly;
     private String sortBy;
     private Integer page;
 
     public CommunitySearchCriteria() {}
 
     public boolean hasAdvancedFilters() {
-        return Boolean.TRUE.equals(joinedOnly);
+        return false;
     }
 
     public boolean isValid() {
@@ -66,6 +71,49 @@ public class CommunitySearchCriteria implements Serializable {
 
     public void setJoinedOnly(final String joinedOnly) {
         this.joinedOnly = "true".equalsIgnoreCase(joinedOnly) || "on".equalsIgnoreCase(joinedOnly);
+    }
+
+    public boolean isNotJoinedOnly() {
+        return Boolean.TRUE.equals(notJoinedOnly);
+    }
+
+    public Boolean getNotJoinedOnly() {
+        return notJoinedOnly;
+    }
+
+    public void setNotJoinedOnly(final Boolean notJoinedOnly) {
+        this.notJoinedOnly = Boolean.TRUE.equals(notJoinedOnly);
+    }
+
+    /**
+     * Convenience accessor for the toolbar membership dropdown.
+     * Returns {@code "joined"}, {@code "not_joined"}, or {@code ""} (all).
+     */
+    public String getMembership() {
+        if (Boolean.TRUE.equals(joinedOnly)) {
+            return MEMBERSHIP_JOINED;
+        }
+        if (Boolean.TRUE.equals(notJoinedOnly)) {
+            return MEMBERSHIP_NOT_JOINED;
+        }
+        return MEMBERSHIP_ALL;
+    }
+
+    /**
+     * Accepts values {@code "joined"}, {@code "not_joined"}, or anything else for "all".
+     * Updates the underlying {@code joinedOnly} / {@code notJoinedOnly} booleans.
+     */
+    public void setMembership(final String membership) {
+        if (MEMBERSHIP_JOINED.equalsIgnoreCase(membership)) {
+            this.joinedOnly    = true;
+            this.notJoinedOnly = false;
+        } else if (MEMBERSHIP_NOT_JOINED.equalsIgnoreCase(membership)) {
+            this.joinedOnly    = false;
+            this.notJoinedOnly = true;
+        } else {
+            this.joinedOnly    = false;
+            this.notJoinedOnly = false;
+        }
     }
 
     public String getSortBy() {

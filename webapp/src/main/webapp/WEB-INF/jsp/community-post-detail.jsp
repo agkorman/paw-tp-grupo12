@@ -70,6 +70,12 @@
                     <c:if test="${postView.deletable or postView.viewerModerator}">
                         <spring:message var="postModMenuLabel" code="communities.post.modMenu.label"/>
                         <pa:action-menu label="${postModMenuLabel}" cssClass="community-post-mod-menu">
+                            <c:if test="${postView.editable}">
+                                <c:url var="communityPostEditUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/edit"/>
+                                <a href="${fn:escapeXml(communityPostEditUrl)}">
+                                    <spring:message code="common.action.edit"/>
+                                </a>
+                            </c:if>
                             <c:if test="${postView.deletable}">
                                 <c:url var="communityPostDeleteUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/delete"/>
                                 <form method="post" action="${fn:escapeXml(communityPostDeleteUrl)}"
@@ -138,17 +144,57 @@
             <section class="community-comments-list">
                 <spring:message var="commentModMenuLabel" code="communities.comment.modMenu.label"/>
                 <c:forEach var="comment" items="${postView.comments}">
-                    <div class="community-comment-row">
-                        <pa:community-comment-card
-                                authorProfileHref="${comment.authorProfileHref}"
-                                author="${comment.author}"
-                                timeText="${comment.timeText}"
-                                body="${comment.body}"
-                                helpfulCount="${comment.helpfulCount}"
-                                isOp="${comment.op}"/>
+                    <div class="community-comment-row" id="comment-${comment.commentId}">
+                        <article class="community-comment">
+                            <div class="community-comment-header">
+                                <span class="community-comment-avatar" aria-hidden="true"></span>
+                                <div class="community-comment-meta">
+                                    <a class="community-author-link" href="${fn:escapeXml(comment.authorProfileHref)}">
+                                        <strong><c:out value="${comment.author}"/></strong>
+                                    </a>
+                                    <c:if test="${comment.op}">
+                                        <span class="community-comment-badge"><spring:message code="communities.postDetail.comment.op"/></span>
+                                    </c:if>
+                                    <span aria-hidden="true">•</span>
+                                    <span><c:out value="${comment.timeText}"/></span>
+                                </div>
+                            </div>
+                            <p class="community-comment-body" data-community-comment-body><c:out value="${comment.body}"/></p>
+                            <sec:authorize access="isAuthenticated()">
+                                <c:if test="${comment.editable}">
+                                    <c:url var="communityCommentUpdateUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/comments/${comment.commentId}/update"/>
+                                    <form method="post"
+                                          action="${fn:escapeXml(communityCommentUpdateUrl)}"
+                                          class="community-comment-edit-form"
+                                          data-community-comment-edit-form
+                                          hidden
+                                          novalidate="novalidate">
+                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                        <textarea name="body" rows="2" maxlength="1000" required><c:out value="${comment.body}"/></textarea>
+                                        <div class="community-comment-edit-actions">
+                                            <button type="button" class="btn-secondary" data-cancel-community-comment-edit>
+                                                <spring:message code="common.action.cancel"/>
+                                            </button>
+                                            <button type="submit" class="btn-primary">
+                                                <spring:message code="common.action.save"/>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </c:if>
+                            </sec:authorize>
+                            <spring:message var="commentHelpfulText" code="communities.post.metric.helpful" arguments="${comment.helpfulCount}"/>
+                            <div class="community-comment-actions">
+                                <span class="community-comment-action"><c:out value="${commentHelpfulText}"/></span>
+                            </div>
+                        </article>
                         <c:if test="${comment.deletable or comment.hideable}">
                             <div class="community-comment-row-meta">
                                 <pa:action-menu label="${commentModMenuLabel}" cssClass="community-comment-mod-menu">
+                                    <c:if test="${comment.editable}">
+                                        <button type="button" data-edit-community-comment-trigger>
+                                            <spring:message code="common.action.edit"/>
+                                        </button>
+                                    </c:if>
                                     <c:if test="${comment.deletable}">
                                         <c:url var="communityCommentDeleteUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/comments/${comment.commentId}/delete"/>
                                         <form method="post" action="${fn:escapeXml(communityCommentDeleteUrl)}"
@@ -203,6 +249,7 @@
         </c:if>
         <pa:script src="/js/shared/action-menu.js"/>
         <pa:script src="/js/shared/confirmation-modal.js"/>
+        <pa:script src="/js/communities/community-comment-edit.js"/>
         <pa:script src="/js/communities/community-moderation.js"/>
     </sec:authorize>
 

@@ -159,6 +159,7 @@
     <pa:script src="/js/shared/toast.js"/>
     <sec:authorize access="isAuthenticated()">
         <pa:script src="/js/shared/confirmation-modal.js"/>
+        <pa:script src="/js/reviews/reply-edit.js"/>
     </sec:authorize>
     <sec:authorize access="hasRole('ADMIN')">
         <pa:script src="/js/cars/car-admin.js"/>

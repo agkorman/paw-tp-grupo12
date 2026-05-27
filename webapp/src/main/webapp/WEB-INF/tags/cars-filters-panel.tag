@@ -259,6 +259,52 @@
             <input type="hidden" id="panelAirbagMin" name="airbagMin" value="<c:out value='${criteria.airbagMin}'/>">
         </section>
 
+        <c:if test="${not empty reviewTagsBySentiment}">
+            <section class="filters-panel-section filters-panel-section--tags">
+                <h3 class="filters-panel-section-title"><spring:message code="cars.filter.tags.title"/></h3>
+                <div class="filters-tag-group"
+                     data-filter-target="panelTagCode"
+                     data-filter-multiple="true"
+                     data-filter-exclusive-by="dimension">
+                    <c:if test="${not empty reviewTagsBySentiment['positive']}">
+                        <div class="filters-tag-group-label"><spring:message code="cars.filter.tags.positive"/></div>
+                        <div class="filters-tag-row">
+                            <c:forEach var="filterTag" items="${reviewTagsBySentiment['positive']}">
+                                <c:set var="filterTagEmojiKey" value="review.tag.emoji.${filterTag.code}"/>
+                                <spring:message code="review.tag.emoji.fallback" var="filterTagEmojiFallback" text="🏷️"/>
+                                <spring:message code="${filterTagEmojiKey}" var="filterTagEmojiDisplay" text="${filterTagEmojiFallback}"/>
+                                <button type="button"
+                                        class="review-tag-chip review-tag-chip--positive filter-segment-option${criteria.tagCodes.contains(filterTag.code) ? ' is-selected' : ''}"
+                                        data-value="${fn:escapeXml(filterTag.code)}"
+                                        data-dimension="${fn:escapeXml(filterTag.dimension)}">
+                                    <span class="review-tag-chip-emoji" aria-hidden="true"><c:out value="${filterTagEmojiDisplay}"/></span>
+                                    <span class="review-tag-chip-text"><pa:review-tag-label tag="${filterTag}"/></span>
+                                </button>
+                            </c:forEach>
+                        </div>
+                    </c:if>
+                    <c:if test="${not empty reviewTagsBySentiment['negative']}">
+                        <div class="filters-tag-group-label"><spring:message code="cars.filter.tags.negative"/></div>
+                        <div class="filters-tag-row">
+                            <c:forEach var="filterTag" items="${reviewTagsBySentiment['negative']}">
+                                <c:set var="filterTagEmojiKey" value="review.tag.emoji.${filterTag.code}"/>
+                                <spring:message code="review.tag.emoji.fallback" var="filterTagEmojiFallback" text="🏷️"/>
+                                <spring:message code="${filterTagEmojiKey}" var="filterTagEmojiDisplay" text="${filterTagEmojiFallback}"/>
+                                <button type="button"
+                                        class="review-tag-chip review-tag-chip--negative filter-segment-option${criteria.tagCodes.contains(filterTag.code) ? ' is-selected' : ''}"
+                                        data-value="${fn:escapeXml(filterTag.code)}"
+                                        data-dimension="${fn:escapeXml(filterTag.dimension)}">
+                                    <span class="review-tag-chip-emoji" aria-hidden="true"><c:out value="${filterTagEmojiDisplay}"/></span>
+                                    <span class="review-tag-chip-text"><pa:review-tag-label tag="${filterTag}"/></span>
+                                </button>
+                            </c:forEach>
+                        </div>
+                    </c:if>
+                </div>
+                <input type="hidden" id="panelTagCode" name="tagCode" value="<c:out value='${criteria.tagCode}'/>">
+            </section>
+        </c:if>
+
         <%-- Footer --%>
         <div class="cars-filters-footer">
             <button type="button" id="filtersClearBtn" class="filters-clear-btn"><spring:message code="cars.filter.clear"/></button>

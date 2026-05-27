@@ -274,6 +274,46 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    public Optional<CommunityPost> getCommunityPostForEdit(final String communitySlug,
+                                                           final String postSlug,
+                                                           final long callerUserId) {
+        if (callerUserId <= 0) {
+            throw new InvalidServiceInputException("Caller is required.");
+        }
+        final Optional<CommunityPost> postOptional = findPostInCommunity(communitySlug, postSlug);
+        if (postOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        final CommunityPost post = postOptional.get();
+        if (post.getAuthorUserId() != callerUserId) {
+            LOGGER.warn("post edit denied: caller userId={} is not author of postId={}", callerUserId, post.getId());
+            throw new CommunityContentOwnershipException("Only the author can edit this post.");
+        }
+        return Optional.of(post);
+    }
+
+    @Override
+    @Transactional
+    public Optional<CommunityPost> updateCommunityPost(final String communitySlug,
+                                                       final String postSlug,
+                                                       final long callerUserId,
+                                                       final String title,
+                                                       final String body) {
+        final CommunityPost post = getCommunityPostForEdit(communitySlug, postSlug, callerUserId)
+                .orElse(null);
+        if (post == null) {
+            return Optional.empty();
+        }
+        final String normalizedTitle = StringUtils.normalizeRequired(title, "Community post title is required.");
+        final String normalizedBody = StringUtils.normalizeRequired(body, "Community post body is required.");
+        communityDao.updatePost(post.getId(), normalizedTitle, normalizedBody);
+        post.setTitle(normalizedTitle);
+        post.setBody(normalizedBody);
+        LOGGER.info("author userId={} updated community post id={}", callerUserId, post.getId());
+        return Optional.of(post);
+    }
+
+    @Override
     @Transactional
     public Optional<CommunityPostComment> createCommunityPostComment(final String communitySlug,
                                                                      final String postSlug,
@@ -312,6 +352,39 @@ public class CommunityServiceImpl implements CommunityService {
         final CommunityPostComment comment = communityDao.createComment(postOptional.get().getId(), userId, normalizedBody);
         LOGGER.info("created community post comment id={} communityId={} postId={} userId={}",
                 comment.getId(), community.getId(), postOptional.get().getId(), userId);
+        return Optional.of(comment);
+    }
+
+    @Override
+    @Transactional
+    public Optional<CommunityPostComment> updateCommunityPostComment(final String communitySlug,
+                                                                     final long commentId,
+                                                                     final long callerUserId,
+                                                                     final String body) {
+        if (callerUserId <= 0) {
+            throw new InvalidServiceInputException("Caller is required.");
+        }
+        final String normalizedBody = StringUtils.normalizeRequired(body, "Community post comment body is required.");
+        final Optional<Community> communityOptional = communityDao.findBySlug(
+                StringUtils.normalizeRequired(communitySlug, "Community slug is required.")
+        );
+        if (communityOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        final Optional<CommunityPostComment> commentOptional = communityDao.findCommentById(commentId);
+        if (commentOptional.isEmpty()
+                || commentOptional.get().getPost().getCommunity().getId() != communityOptional.get().getId()) {
+            return Optional.empty();
+        }
+        final CommunityPostComment comment = commentOptional.get();
+        if (comment.getUserId() != callerUserId) {
+            LOGGER.warn("comment edit denied: caller userId={} is not author of commentId={}", callerUserId, commentId);
+            throw new CommunityContentOwnershipException("Only the author can edit this comment.");
+        }
+        communityDao.updateComment(commentId, normalizedBody);
+        comment.setBody(normalizedBody);
+        LOGGER.info("author userId={} updated communityId={} commentId={}",
+                callerUserId, communityOptional.get().getId(), commentId);
         return Optional.of(comment);
     }
 
@@ -848,6 +921,23 @@ public class CommunityServiceImpl implements CommunityService {
 
     private String communityPostPath(final Community community, final CommunityPost post) {
         return communityPath(community) + "/posts/" + post.getSlug();
+    }
+
+    private Optional<CommunityPost> findPostInCommunity(final String communitySlug, final String postSlug) {
+        final String normalizedCommunitySlug = StringUtils.normalizeRequired(
+                communitySlug,
+                "Community slug is required."
+        );
+        final String normalizedPostSlug = StringUtils.normalizeRequired(
+                postSlug,
+                "Community post slug is required."
+        );
+        final Optional<Community> communityOptional = communityDao.findBySlug(normalizedCommunitySlug);
+        if (communityOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        final Community community = communityOptional.get();
+        return communityDao.findPostByCommunityIdAndSlug(community.getId(), normalizedPostSlug);
     }
 
     private Community requireModerator(final String communitySlug, final long callerUserId) {

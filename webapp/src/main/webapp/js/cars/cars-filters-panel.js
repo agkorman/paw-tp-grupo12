@@ -62,9 +62,37 @@
 
     /* ── UNIFIED FILTER GROUP HANDLER (chips + segmented controls) ── */
 
+    function refreshExclusiveState(group, options) {
+        var exclusiveBy = group.getAttribute('data-filter-exclusive-by');
+        if (!exclusiveBy) {
+            return;
+        }
+        var selectedKeys = {};
+        Array.prototype.forEach.call(options, function (opt) {
+            if (!opt.classList.contains('is-selected')) {
+                return;
+            }
+            var key = opt.getAttribute('data-' + exclusiveBy);
+            if (key) {
+                selectedKeys[key] = true;
+            }
+        });
+        Array.prototype.forEach.call(options, function (opt) {
+            var key = opt.getAttribute('data-' + exclusiveBy);
+            var disabled = key && selectedKeys[key] && !opt.classList.contains('is-selected');
+            opt.classList.toggle('is-disabled', !!disabled);
+            if (disabled) {
+                opt.setAttribute('aria-disabled', 'true');
+            } else {
+                opt.removeAttribute('aria-disabled');
+            }
+        });
+    }
+
     panel.addEventListener('click', function (event) {
         var btn = event.target instanceof Element && event.target.closest('.filter-toggle-option, .filter-segment-option');
         if (!btn) { return; }
+        if (btn.classList.contains('is-disabled')) { return; }
 
         var group = btn.closest('[data-filter-target]');
         if (!group) { return; }
@@ -76,6 +104,7 @@
 
         if (isMultiple) {
             btn.classList.toggle('is-selected');
+            refreshExclusiveState(group, options);
             if (hidden) {
                 hidden.value = Array.prototype.map.call(options, function (opt) {
                     return opt.classList.contains('is-selected') ? opt.getAttribute('data-value') : '';
@@ -599,12 +628,12 @@
     var PANEL_PARAM_KEYS = [
         'yearMin', 'yearMax', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
-        'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
+        'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin', 'tagCode'
     ];
     var ADVANCED_PANEL_PARAM_KEYS = [
         'yearMin', 'yearMax', 'priceMin', 'priceMax',
         'fuelType', 'horsepowerMin', 'horsepowerMax',
-        'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin'
+        'airbagMin', 'transmission', 'fuelConsumptionMax', 'maxSpeedMin', 'tagCode'
     ];
 
     function syncFiltersToggleState(panelParams) {
@@ -870,12 +899,14 @@
         Array.prototype.forEach.call(options, function (opt) {
             opt.classList.toggle('is-selected', opt.getAttribute('data-value') === '');
         });
+        refreshExclusiveState(container, options);
     }
 
     function resetPanel() {
         resetFilterGroup('panelFuelType');
         resetFilterGroup('panelAirbagMin');
         resetFilterGroup('panelTransmission');
+        resetFilterGroup('panelTagCode');
         clearValidationErrors();
 
         var priceMin = document.getElementById('panelPriceMin');
@@ -937,6 +968,9 @@
     });
 
     syncFiltersToggleState(collectPanelParams());
+    Array.prototype.forEach.call(panel.querySelectorAll('[data-filter-exclusive-by]'), function (group) {
+        refreshExclusiveState(group, group.querySelectorAll('.filter-toggle-option, .filter-segment-option'));
+    });
     updateConsumptionFilterVisibility();
 
 })();

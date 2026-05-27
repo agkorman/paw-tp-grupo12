@@ -27,6 +27,8 @@ public interface CommunityDao {
     boolean delete(long communityId);
     CommunityPost createPost(long communityId, long authorUserId, String slug, String title, String body);
     CommunityPostComment createComment(long postId, long userId, String body);
+    void updatePost(long postId, String title, String body);
+    void updateComment(long commentId, String body);
     void replaceTopicAssignments(long communityId, Collection<Short> topicIds);
     void createMembership(long communityId, long userId, String role);
     void deleteMembership(long communityId, long userId);

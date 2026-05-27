@@ -235,6 +235,27 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public void updatePost(final long postId, final String title, final String body) {
+        final CommunityPost post = em.find(CommunityPost.class, postId);
+        if (post == null) {
+            return;
+        }
+        post.setTitle(title);
+        post.setBody(body);
+        LOGGER.info("updated community post id={}", postId);
+    }
+
+    @Override
+    public void updateComment(final long commentId, final String body) {
+        final CommunityPostComment comment = em.find(CommunityPostComment.class, commentId);
+        if (comment == null) {
+            return;
+        }
+        comment.setBody(body);
+        LOGGER.info("updated community post comment id={}", commentId);
+    }
+
+    @Override
     public void replaceTopicAssignments(final long communityId, final Collection<Short> topicIds) {
         em.createNativeQuery("DELETE FROM community_topic_assignments WHERE community_id = :communityId")
                 .setParameter("communityId", communityId)
@@ -751,6 +772,19 @@ public class CommunityJpaDao implements CommunityDao {
                         .append("WHERE cm.community_id = c.community_id AND cm.user_id = ?")
                         .append(") ");
                 params.add(currentUserId);
+            }
+            hasWhere = true;
+        } else if (criteria.isNotJoinedOnly()) {
+            if (currentUserId == null || currentUserId <= 0L) {
+                // unauthenticated: all communities are "not joined", so no extra filter needed
+            } else {
+                sql.append(hasWhere ? "AND " : "WHERE ")
+                        .append("NOT EXISTS (")
+                        .append("SELECT 1 FROM community_memberships cm ")
+                        .append("WHERE cm.community_id = c.community_id AND cm.user_id = ?")
+                        .append(") ");
+                params.add(currentUserId);
+                hasWhere = true;
             }
         }
 

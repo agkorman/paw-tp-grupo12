@@ -323,6 +323,79 @@ class CommunityServiceImplTest {
     }
 
     @Test
+    void updateCommunityPost_byAuthor_updatesAndReturnsPost() {
+        // Arrange
+        final Community community = community();
+        final CommunityPost post = post(community, author(USER_ID, "mateo.classics"));
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findPostByCommunityIdAndSlug(community.getId(), "falcon-60")).thenReturn(Optional.of(post));
+
+        // Exercise
+        final Optional<CommunityPost> result =
+                communityService.updateCommunityPost("classics", "falcon-60", USER_ID, "Updated title", "Updated body");
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals("Updated title", result.get().getTitle());
+        assertEquals("Updated body", result.get().getBody());
+    }
+
+    @Test
+    void updateCommunityPost_byNonAuthor_throws() {
+        // Arrange
+        final Community community = community();
+        final CommunityPost post = post(community, author(42L, "someone"));
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findPostByCommunityIdAndSlug(community.getId(), "falcon-60")).thenReturn(Optional.of(post));
+
+        // Exercise
+        final CommunityContentOwnershipException exception = assertThrows(
+                CommunityContentOwnershipException.class,
+                () -> communityService.updateCommunityPost("classics", "falcon-60", USER_ID, "Updated title", "Updated body")
+        );
+
+        // Assertions
+        assertTrue(exception.getMessage().contains("author"));
+    }
+
+    @Test
+    void updateCommunityPostComment_byAuthor_updatesAndReturnsComment() {
+        // Arrange
+        final Community community = community();
+        final CommunityPost post = post(community, author(99L, "op"));
+        final CommunityPostComment comment = comment(post, author(USER_ID, "me"));
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findCommentById(comment.getId())).thenReturn(Optional.of(comment));
+
+        // Exercise
+        final Optional<CommunityPostComment> result =
+                communityService.updateCommunityPostComment("classics", comment.getId(), USER_ID, "Updated comment");
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals("Updated comment", result.get().getBody());
+    }
+
+    @Test
+    void updateCommunityPostComment_byNonAuthor_throws() {
+        // Arrange
+        final Community community = community();
+        final CommunityPost post = post(community, author(99L, "op"));
+        final CommunityPostComment comment = comment(post, author(42L, "someone"));
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findCommentById(comment.getId())).thenReturn(Optional.of(comment));
+
+        // Exercise
+        final CommunityContentOwnershipException exception = assertThrows(
+                CommunityContentOwnershipException.class,
+                () -> communityService.updateCommunityPostComment("classics", comment.getId(), USER_ID, "Updated comment")
+        );
+
+        // Assertions
+        assertTrue(exception.getMessage().contains("author"));
+    }
+
+    @Test
     void toggleMembership_missingCommunity_returnsEmpty() {
         // Arrange
         when(communityDao.findBySlug("missing")).thenReturn(Optional.empty());
