@@ -9,7 +9,6 @@
 <pa:page-head titleCode="communities.postForm.title" styles="/css/community-post-common.css|/css/community-post-form.css|/css/communities-responsive.css"/>
 <body>
     <pa:nav activePage="communities"/>
-    <spring:message var="communityPostFormToolbarAria" code="communities.postForm.toolbar.aria"/>
     <c:url var="communityPostCreateUrl" value="/communities/${community.slug}/posts"/>
     <main class="community-post-form-page">
         <form:form cssClass="community-post-form-shell"
@@ -44,12 +43,6 @@
                                    maxlength="5000"
                                    required="required"/>
                     <form:errors path="body" cssClass="form-error" element="span"/>
-                </div>
-
-                <div class="community-post-form-toolbar" aria-label="${fn:escapeXml(communityPostFormToolbarAria)}">
-                    <button type="button"><spring:message code="communities.postForm.toolbar.link"/></button>
-                    <button type="button"><spring:message code="communities.postForm.toolbar.photo"/></button>
-                    <button type="button"><spring:message code="communities.postForm.toolbar.car"/></button>
                 </div>
             </div>
 
