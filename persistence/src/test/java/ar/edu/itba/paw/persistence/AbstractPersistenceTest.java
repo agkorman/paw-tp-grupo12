@@ -41,6 +41,9 @@ abstract class AbstractPersistenceTest {
     protected CarImageDao carImageDao;
 
     @Autowired
+    protected ReviewImageDao reviewImageDao;
+
+    @Autowired
     protected CarFavoriteDao carFavoriteDao;
 
     @Autowired

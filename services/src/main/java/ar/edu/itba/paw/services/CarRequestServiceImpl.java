@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
@@ -111,7 +111,7 @@ public class CarRequestServiceImpl implements CarRequestService {
         final Integer year,
         final String model,
         final String description,
-        final List<CarImagePayload> images,
+        final List<ImagePayload> images,
         final String fuelType,
         final Integer horsepower,
         final Integer airbagCount,
@@ -128,9 +128,9 @@ public class CarRequestServiceImpl implements CarRequestService {
             description,
             "Description is required for car requests."
         );
-        final List<CarImagePayload> normalizedImages =
+        final List<ImagePayload> normalizedImages =
             ImagePayloadUtils.normalizeImages(images);
-        final CarImagePayload coverImage = normalizedImages.isEmpty()
+        final ImagePayload coverImage = normalizedImages.isEmpty()
             ? null
             : normalizedImages.get(0);
 
@@ -247,15 +247,15 @@ public class CarRequestServiceImpl implements CarRequestService {
             );
         }
 
-        final List<CarImagePayload> replacementImages = hasImageContentType
+        final List<ImagePayload> replacementImages = hasImageContentType
             ? List.of(
-                  new CarImagePayload(
+                  new ImagePayload(
                       imageContentType.get(),
                       imageData.orElseThrow()
                   )
               )
             : List.of();
-        final List<CarImagePayload> approvalImages = new ArrayList<>(
+        final List<ImagePayload> approvalImages = new ArrayList<>(
             requestImagePayloads(request)
         );
         approvalImages.addAll(replacementImages);
@@ -287,7 +287,7 @@ public class CarRequestServiceImpl implements CarRequestService {
         final long bodyTypeId,
         final Integer year,
         final String description,
-        final List<CarImagePayload> images,
+        final List<ImagePayload> images,
         final String fuelType,
         final Integer horsepower,
         final Integer airbagCount,
@@ -322,7 +322,7 @@ public class CarRequestServiceImpl implements CarRequestService {
             throw new DuplicateCarException();
         }
 
-        final List<CarImagePayload> normalizedImages =
+        final List<ImagePayload> normalizedImages =
             ImagePayloadUtils.normalizeImages(images);
 
         final boolean statusUpdated = carRequestDao.updateStatus(
@@ -351,7 +351,7 @@ public class CarRequestServiceImpl implements CarRequestService {
         if (!normalizedImages.isEmpty()) {
             carImageDao.replaceAll(createdCar.getId(), normalizedImages);
         } else if (images == null) {
-            final List<CarImagePayload> requestGallery = requestImagePayloads(
+            final List<ImagePayload> requestGallery = requestImagePayloads(
                 request
             );
             if (!requestGallery.isEmpty()) {
@@ -374,11 +374,11 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
-    public List<CarImagePayload> collectRetainedImagePayloads(
+    public List<ImagePayload> collectRetainedImagePayloads(
         final long requestId,
         final List<Long> retainedImageIds
     ) {
-        final List<CarImagePayload> payloads = new ArrayList<>();
+        final List<ImagePayload> payloads = new ArrayList<>();
         if (retainedImageIds == null) {
             return payloads;
         }
@@ -398,7 +398,7 @@ public class CarRequestServiceImpl implements CarRequestService {
                     request.getImageData() != null
                 ) {
                     payloads.add(
-                        new CarImagePayload(
+                        new ImagePayload(
                             request.getImageContentType(),
                             request.getImageData()
                         )
@@ -409,7 +409,7 @@ public class CarRequestServiceImpl implements CarRequestService {
                     .findImageByRequestIdAndImageId(requestId, imageId)
                     .filter(img -> img.getImageData() != null)
                     .map(img ->
-                        new CarImagePayload(
+                        new ImagePayload(
                             img.getContentType(),
                             img.getImageData()
                         )
@@ -450,10 +450,10 @@ public class CarRequestServiceImpl implements CarRequestService {
             });
     }
 
-    private List<CarImagePayload> requestImagePayloads(
+    private List<ImagePayload> requestImagePayloads(
         final CarRequest request
     ) {
-        final List<CarImagePayload> galleryPayloads = carRequestDao
+        final List<ImagePayload> galleryPayloads = carRequestDao
             .findImagesByRequestId(request.getId())
             .stream()
             .map(image ->
@@ -466,7 +466,7 @@ public class CarRequestServiceImpl implements CarRequestService {
             )
             .filter(image -> image != null && image.getImageData() != null)
             .map(image ->
-                new CarImagePayload(
+                new ImagePayload(
                     image.getContentType(),
                     image.getImageData()
                 )
@@ -480,7 +480,7 @@ public class CarRequestServiceImpl implements CarRequestService {
             request.getImageData() != null
         ) {
             return List.of(
-                new CarImagePayload(
+                new ImagePayload(
                     request.getImageContentType(),
                     request.getImageData()
                 )

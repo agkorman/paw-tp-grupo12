@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.form;
 
 import ar.edu.itba.paw.webapp.validation.ValidReviewForm;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
@@ -11,7 +12,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @ValidReviewForm
@@ -49,6 +52,10 @@ public class ReviewForm {
 
     @Size(max = 6, message = "{validation.review.tags.max}")
     private Set<Short> tagIds = new LinkedHashSet<>();
+
+    private List<MultipartFile> files = new ArrayList<>();
+
+    private List<Long> retainedImageIds = new ArrayList<>();
 
     public Long getCarId() {
         return carId;
@@ -120,5 +127,21 @@ public class ReviewForm {
 
     public void setTagIds(final Set<Short> tagIds) {
         this.tagIds = tagIds == null ? new LinkedHashSet<>() : tagIds;
+    }
+
+    public List<MultipartFile> getFiles() {
+        return files;
+    }
+
+    public void setFiles(final List<MultipartFile> files) {
+        this.files = files == null ? new ArrayList<>() : files;
+    }
+
+    public List<Long> getRetainedImageIds() {
+        return retainedImageIds;
+    }
+
+    public void setRetainedImageIds(final List<Long> retainedImageIds) {
+        this.retainedImageIds = retainedImageIds == null ? new ArrayList<>() : retainedImageIds;
     }
 }

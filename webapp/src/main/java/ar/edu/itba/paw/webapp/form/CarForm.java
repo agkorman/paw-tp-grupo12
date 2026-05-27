@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.form;
 
+import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.webapp.validation.ValidCarForm;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,8 +29,8 @@ public class CarForm {
     @Size(max = 120, message = "{validation.car.model.max}")
     private String model;
 
-    @Min(value = 1886, message = "{validation.car.year.min}")
-    @Max(value = 2100, message = "{validation.car.year.max}")
+    @Min(value = Car.MIN_YEAR, message = "{validation.car.year.min}")
+    @Max(value = Car.MAX_YEAR, message = "{validation.car.year.max}")
     private Integer year;
 
     @Email(message = "{validation.email.invalid}")

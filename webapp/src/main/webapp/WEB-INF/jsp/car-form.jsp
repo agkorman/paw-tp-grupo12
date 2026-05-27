@@ -51,7 +51,6 @@
 <spring:message var="previousImageLabel" code="cars.image.previous"/>
 <spring:message var="nextImageLabel" code="cars.image.next"/>
 <spring:message var="removeImageLabel" code="cars.form.image.remove"/>
-<spring:message var="emptyFileStatus" code="cars.form.image.none"/>
 <spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
 <spring:message var="jsRequiredBrand" code="js.car.required.brand"/>
 <spring:message var="jsRequiredBodyType" code="js.car.required.bodyType"/>
@@ -61,7 +60,6 @@
 <spring:message var="jsRequiredAirbags" code="js.car.required.airbags"/>
 <spring:message var="jsRequiredConsumption" code="js.car.required.consumption"/>
 <spring:message var="jsRequiredMaxSpeed" code="js.car.required.maxSpeed"/>
-<spring:message var="jsRequiredImage" code="js.car.required.image"/>
 <spring:message var="jsYearNumeric" code="js.car.validation.year.numeric"/>
 <spring:message var="jsYearRange" code="js.car.validation.year.range"/>
 <spring:message var="jsHorsepowerNumeric" code="js.car.validation.horsepower.numeric"/>
@@ -79,15 +77,6 @@
 <spring:message var="jsNumberInvalid" code="js.car.validation.number"/>
 <spring:message var="jsNumberMin" code="js.car.validation.min"/>
 <spring:message var="jsNumberMax" code="js.car.validation.max"/>
-<spring:message var="jsImageMaxCountTemplate" code="js.car.image.maxCount"/>
-<spring:message var="jsImageUnsupportedType" code="js.car.image.unsupportedType"/>
-<spring:message var="jsImageTooLarge" code="js.car.image.tooLarge"/>
-<spring:message var="jsImageMultiple" code="js.car.image.multiple"/>
-<spring:message var="jsImagePreview" code="js.car.image.preview"/>
-<spring:message var="jsImageAddSuffix" code="js.car.image.addSuffix"/>
-<spring:message var="jsImageLoadedOne" code="js.car.image.loadedOne"/>
-<spring:message var="jsImageLoadedMultiple" code="js.car.image.loadedMultiple"/>
-<spring:message var="jsImageAddMore" code="js.car.image.addMore"/>
 <c:set var="carFormMaxImageCount" value="${empty carFormMaxImageCount ? 5 : carFormMaxImageCount}"/>
 <!DOCTYPE html>
 <html lang="es">
@@ -100,10 +89,6 @@
                  class="form-page-panel car-form-page"
                  data-admin-mode="${adminCarFormMode}"
                  data-car-form-mode="${resolvedCarFormMode}"
-                 data-existing-image-urls="${fn:escapeXml(resolvedExistingImageUrls)}"
-                 data-existing-image-ids="${fn:escapeXml(resolvedExistingImageIds)}"
-                 data-existing-image-status="${fn:escapeXml(existingImageStatus)}"
-                 data-msg-file-empty="${fn:escapeXml(emptyFileStatus)}"
                  data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
                  data-msg-required-brand="${fn:escapeXml(jsRequiredBrand)}"
                  data-msg-required-body-type="${fn:escapeXml(jsRequiredBodyType)}"
@@ -113,22 +98,11 @@
                  data-msg-required-airbags="${fn:escapeXml(jsRequiredAirbags)}"
                  data-msg-required-consumption="${fn:escapeXml(jsRequiredConsumption)}"
                  data-msg-required-max-speed="${fn:escapeXml(jsRequiredMaxSpeed)}"
-                 data-msg-required-image="${fn:escapeXml(jsRequiredImage)}"
                  data-msg-radio-required="${fn:escapeXml(jsRadioRequired)}"
                  data-msg-email-invalid="${fn:escapeXml(jsEmailInvalid)}"
                  data-msg-number-invalid="${fn:escapeXml(jsNumberInvalid)}"
                  data-msg-number-min="${fn:escapeXml(jsNumberMin)}"
                  data-msg-number-max="${fn:escapeXml(jsNumberMax)}"
-                 data-msg-image-max-count="${fn:escapeXml(jsImageMaxCountTemplate)}"
-                 data-msg-image-unsupported-type="${fn:escapeXml(jsImageUnsupportedType)}"
-                 data-msg-image-too-large="${fn:escapeXml(jsImageTooLarge)}"
-                 data-msg-image-multiple="${fn:escapeXml(jsImageMultiple)}"
-                 data-msg-image-preview="${fn:escapeXml(jsImagePreview)}"
-                 data-msg-image-add-suffix="${fn:escapeXml(jsImageAddSuffix)}"
-                 data-msg-image-loaded-one="${fn:escapeXml(jsImageLoadedOne)}"
-                 data-msg-image-loaded-multiple="${fn:escapeXml(jsImageLoadedMultiple)}"
-                 data-msg-image-add-more="${fn:escapeXml(jsImageAddMore)}"
-                 data-max-image-count="${carFormMaxImageCount}"
                  aria-labelledby="carFormTitle">
             <div class="modal-header">
                 <div>
@@ -205,7 +179,7 @@
                                         data-number-field="integer"
                                         data-msg-number-invalid="${fn:escapeXml(jsYearNumeric)}"
                                         data-msg-number-range="${fn:escapeXml(jsYearRange)}"
-                                        min="1886" max="2100"
+                                        min="1950" max="2026"
                                         placeholder="${carYearPlaceholder}"/>
                             <form:errors path="year" cssClass="form-error" element="span"/>
                         </div>
@@ -322,69 +296,16 @@
                             <form:errors path="transmission" cssClass="form-error" element="span"/>
                         </div>
 
-                        <div class="modal-field modal-field-wide car-image-field">
-                            <span class="car-image-label"><spring:message code="cars.form.images"/></span>
-                            <div class="car-image-upload">
-                                <c:choose>
-                                    <c:when test="${adminCarFormMode}">
-                                        <span id="modalCarRetainedImageInputs" hidden>
-                                            <c:forEach var="existingImageId" items="${existingImageIds}">
-                                                <input type="hidden" name="retainedImageIds" value="${existingImageId}">
-                                            </c:forEach>
-                                        </span>
-                                        <form:input id="modalCarFile" path="files" type="file"
-                                                    cssClass="car-image-upload-input"
-                                                    accept="image/jpeg,image/png,image/webp"
-                                                    multiple="multiple"
-                                                    aria-describedby="modalCarFileHelp modalCarFileStatus"/>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <form:input id="modalCarFile" path="files" type="file"
-                                                    cssClass="car-image-upload-input"
-                                                    accept="image/jpeg,image/png,image/webp"
-                                                    multiple="multiple"
-                                                    required="required"
-                                                    aria-describedby="modalCarFileHelp modalCarFileStatus"/>
-                                    </c:otherwise>
-                                </c:choose>
-                                <label class="car-image-upload-card" for="modalCarFile">
-                                    <span class="car-image-upload-icon" aria-hidden="true">
-                                        <pa:icon name="image-upload" size="28"/>
-                                    </span>
-                                    <span id="modalCarImagePreview" class="car-image-upload-preview" hidden aria-hidden="true">
-                                        <button id="modalCarImagePrev" class="car-image-upload-preview-nav car-image-upload-preview-prev" type="button" aria-label="${previousImageLabel}">
-                                            <pa:icon name="chevron-left" size="14"/>
-                                        </button>
-                                        <img id="modalCarImagePreviewImg" alt="">
-                                        <button id="modalCarImageRemove" class="car-image-upload-preview-remove" type="button" aria-label="${removeImageLabel}" hidden>
-                                            <pa:icon name="close" size="14"/>
-                                        </button>
-                                        <button id="modalCarImageNext" class="car-image-upload-preview-nav car-image-upload-preview-next" type="button" aria-label="${nextImageLabel}">
-                                            <pa:icon name="chevron-right" size="14"/>
-                                        </button>
-                                        <span id="modalCarImageCounter" class="car-image-upload-preview-counter">1 / 1</span>
-                                    </span>
-                                    <span class="car-image-upload-copy">
-                                        <strong id="modalCarFileTitle">
-                                            <c:choose>
-                                                <c:when test="${resolvedCarFormMode eq 'review-request'}"><spring:message code="cars.form.image.reviewReadonly"/></c:when>
-                                                <c:when test="${resolvedCarFormMode eq 'edit-car'}"><spring:message code="cars.form.image.currentPlural"/></c:when>
-                                                <c:otherwise><spring:message code="cars.form.image.uploadTitle"/></c:otherwise>
-                                            </c:choose>
-                                        </strong>
-                                        <span id="modalCarFileHelp">
-                                            <c:choose>
-                                                <c:when test="${adminCarFormMode}"><spring:message code="cars.form.image.galleryHelp"/></c:when>
-                                                <c:otherwise><spring:message code="cars.form.image.help"/></c:otherwise>
-                                            </c:choose>
-                                        </span>
-                                        <span id="modalCarFileStatus" class="car-image-upload-status"><c:out value="${emptyFileStatus}"/></span>
-                                        <span id="modalCarImageThumbnails" class="car-image-upload-thumbnails" hidden></span>
-                                    </span>
-                                </label>
-                            </div>
-                            <form:errors path="files" cssClass="form-error" element="span"/>
-                        </div>
+                        <pa:image-upload
+                            namePrefix="modalCar"
+                            inputName="files"
+                            required="${not adminCarFormMode}"
+                            mode="${resolvedCarFormMode}"
+                            adminMode="${adminCarFormMode}"
+                            maxImageCount="${carFormMaxImageCount}"
+                            existingImageUrlsJoined="${resolvedExistingImageUrls}"
+                            existingImageIdsJoined="${resolvedExistingImageIds}"
+                            existingImageStatus="${existingImageStatus}"/>
                     </div>
                 </div>
 
@@ -416,6 +337,7 @@
     </c:if>
     <pa:toast messageCode="${submittedToastMessageCode}"/>
 
+    <pa:script src="/js/shared/image-upload-picker.js"/>
     <pa:script src="/js/cars/car-form.js"/>
     <c:if test="${catalogRequestLinksEnabled}">
         <pa:script src="/js/shared/modal-utils.js"/>

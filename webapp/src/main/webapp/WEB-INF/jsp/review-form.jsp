@@ -9,7 +9,7 @@
 <c:set var="reviewFormPageTitle" value="${reviewFormTitleText} | ${appNameTitleText}"/>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${reviewFormPageTitle}" styles="/css/reviews.css|/css/rating-controls.css|/css/review-tags.css|/css/form-pages.css"/>
+<pa:page-head title="${reviewFormPageTitle}" styles="/css/reviews.css|/css/rating-controls.css|/css/review-tags.css|/css/car-image-upload.css|/css/form-pages.css"/>
 <body>
     <pa:nav activePage="reviews"/>
     <c:url var="reviewCancelUrl" value="/reviews/car/${selectedCar.id}"/>
@@ -35,6 +35,16 @@
     <spring:message var="jsMsgRatingVeryGood" code="js.review.rating.veryGood"/>
     <spring:message var="jsMsgRatingExcellent" code="js.review.rating.excellent"/>
 
+    <c:set var="reviewExistingImageUrls" value=""/>
+    <c:set var="reviewExistingImageIds" value=""/>
+    <c:if test="${editMode and not empty existingReviewImageIds}">
+        <c:forTokens var="imgId" items="${existingReviewImageIds}" delims=",">
+            <c:url var="reviewExistingImageUrl" value="/reviews/${reviewId}/images/${imgId}"/>
+            <c:set var="reviewExistingImageUrls" value="${reviewExistingImageUrls}${empty reviewExistingImageUrls ? '' : '|'}${reviewExistingImageUrl}"/>
+            <c:set var="reviewExistingImageIds" value="${reviewExistingImageIds}${empty reviewExistingImageIds ? '' : '|'}${imgId}"/>
+        </c:forTokens>
+    </c:if>
+
     <main class="form-page">
         <section id="createReviewFormPage" class="form-page-panel" data-default-car-id="${selectedCar.id}" aria-labelledby="createReviewTitle">
             <div class="modal-header">
@@ -51,6 +61,7 @@
 
             <form:form id="createReviewForm" cssClass="modal-form" modelAttribute="reviewForm"
                        method="post" action="${reviewFormAction}"
+                       enctype="multipart/form-data"
                        data-create-action="${reviewCreateUrl}"
                        data-submit-lock="true"
                        data-msg-required-generic="${fn:escapeXml(jsMsgRequiredGeneric)}"
@@ -179,6 +190,19 @@
                                              selectedTagIds="${reviewForm.tagIds}"/>
                         <form:errors path="tagIds" cssClass="form-error" element="span"/>
                     </div>
+
+                    <pa:image-upload
+                        namePrefix="review"
+                        inputName="files"
+                        required="false"
+                        mode="${editMode ? 'edit' : 'create'}"
+                        maxImageCount="3"
+                        existingImageUrlsJoined="${reviewExistingImageUrls}"
+                        existingImageIdsJoined="${reviewExistingImageIds}"
+                        labelKey="review.form.images"
+                        titleCreateKey="review.form.image.uploadTitle"
+                        titleEditKey="review.form.image.addMore"
+                        helpKey="review.form.image.help"/>
                 </div>
 
                 <div class="modal-actions">
@@ -189,6 +213,7 @@
         </section>
     </main>
 
+    <pa:script src="/js/shared/image-upload-picker.js"/>
     <pa:script src="/js/reviews/review-form.js"/>
     <pa:script src="/js/reviews/review-tag-chips.js" defer="true"/>
     <pa:script src="/js/shared/form-submit-lock.js"/>

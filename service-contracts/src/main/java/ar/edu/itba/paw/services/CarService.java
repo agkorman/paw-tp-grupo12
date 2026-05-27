@@ -2,7 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.CarYearVariant;
@@ -31,9 +31,9 @@ public interface CarService {
 
     Optional<CarImage> getCarImageById(long carId, long imageId);
 
-    void saveCarImages(long carId, List<CarImagePayload> images);
+    void saveCarImages(long carId, List<ImagePayload> images);
 
-    void appendCarImages(long carId, List<CarImagePayload> images);
+    void appendCarImages(long carId, List<ImagePayload> images);
 
     CarRequest requestCarCreation(
         long brandId,
@@ -43,7 +43,7 @@ public interface CarService {
         long submittedByUserId,
         String submitterEmail,
         Optional<String> description,
-        List<CarImagePayload> images,
+        List<ImagePayload> images,
         String fuelType,
         Integer horsepower,
         Integer airbagCount,
@@ -83,7 +83,7 @@ public interface CarService {
 
     boolean deleteCar(long id);
 
-    List<CarImagePayload> collectRetainedImagePayloads(
+    List<ImagePayload> collectRetainedImagePayloads(
         long carId,
         List<Long> retainedImageIds
     );

@@ -728,6 +728,28 @@ ALTER TABLE review_reply_likes ALTER COLUMN reply_id TYPE BIGINT;
 
 ALTER TABLE review_reply_likes ADD CONSTRAINT review_reply_likes_reply_id_fkey FOREIGN KEY (reply_id) REFERENCES review_replies(reply_id) ON DELETE CASCADE;
 
+-- ---- review_images ------------------------------------------
+CREATE SEQUENCE IF NOT EXISTS review_images_image_id_seq;
+
+CREATE TABLE IF NOT EXISTS review_images (
+    image_id      BIGINT       PRIMARY KEY DEFAULT nextval('review_images_image_id_seq'),
+    review_id     BIGINT       NOT NULL REFERENCES reviews(review_id) ON DELETE CASCADE,
+    display_order INT          NOT NULL DEFAULT 0,
+    content_type  VARCHAR(100) NOT NULL,
+    image_data    BYTEA        NOT NULL,
+    updated_at    TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER SEQUENCE review_images_image_id_seq OWNED BY review_images.image_id;
+
+ALTER TABLE review_images
+    DROP CONSTRAINT IF EXISTS chk_review_images_display_order;
+
+ALTER TABLE review_images
+    ADD CONSTRAINT chk_review_images_display_order CHECK (display_order >= 0);
+
+CREATE INDEX IF NOT EXISTS idx_review_images_review_id ON review_images (review_id);
+
 -- ============================================================
 -- Communities
 -- ============================================================

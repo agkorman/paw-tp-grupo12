@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
@@ -59,7 +59,7 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldCreatePendingRequestWithNormalizedFieldsAndCoverImage() {
         // Arrange
-        final CarImagePayload image = new CarImagePayload(CONTENT_TYPE, IMAGE_BYTES);
+        final ImagePayload image = new ImagePayload(CONTENT_TYPE, IMAGE_BYTES);
         final CarRequest created = pendingRequest();
         when(carRequestDao.create(eq(USER_ID), eq(EMAIL), eq(BRAND_ID), eq(BODY_TYPE_ID), eq(2024),
                 eq("Corolla"), eq("A nice car description."), eq(CONTENT_TYPE), any(byte[].class),
@@ -81,7 +81,7 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldRejectCreatePendingWhenModelIsBlank() {
         // Arrange
-        final CarImagePayload image = new CarImagePayload(CONTENT_TYPE, IMAGE_BYTES);
+        final ImagePayload image = new ImagePayload(CONTENT_TYPE, IMAGE_BYTES);
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -96,7 +96,7 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldRejectCreatePendingWhenDescriptionIsBlank() {
         // Arrange
-        final CarImagePayload image = new CarImagePayload(CONTENT_TYPE, IMAGE_BYTES);
+        final ImagePayload image = new ImagePayload(CONTENT_TYPE, IMAGE_BYTES);
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -111,7 +111,7 @@ public class CarRequestServiceImplTest {
     @Test
     public void shouldRejectCreatePendingWhenImageIsInvalid() {
         // Arrange
-        final CarImagePayload bad = new CarImagePayload(null, IMAGE_BYTES);
+        final ImagePayload bad = new ImagePayload(null, IMAGE_BYTES);
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -251,7 +251,7 @@ public class CarRequestServiceImplTest {
         // Exercise
         final boolean result = carRequestService.approvePendingRequest(REQUEST_ID, BRAND_ID, "  Corolla  ",
                 BODY_TYPE_ID, 2024, "  desc  ",
-                List.of(new CarImagePayload(CONTENT_TYPE, IMAGE_BYTES)),
+                List.of(new ImagePayload(CONTENT_TYPE, IMAGE_BYTES)),
                 "GASOLINE", 130, 6, "MANUAL", new BigDecimal("6.5"), 190, new BigDecimal("25000.00"));
 
         // Assertions
@@ -315,7 +315,7 @@ public class CarRequestServiceImplTest {
         // Exercise
         final boolean result = carRequestService.approvePendingRequest(REQUEST_ID, BRAND_ID, "Corolla",
                 BODY_TYPE_ID, 2024, "desc",
-                List.of(new CarImagePayload(CONTENT_TYPE, IMAGE_BYTES)),
+                List.of(new ImagePayload(CONTENT_TYPE, IMAGE_BYTES)),
                 "GASOLINE", 130, 6, "MANUAL", new BigDecimal("6.5"), 190, new BigDecimal("25000.00"));
 
         // Assertions

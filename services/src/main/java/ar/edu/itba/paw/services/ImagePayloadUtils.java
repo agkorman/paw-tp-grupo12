@@ -1,6 +1,6 @@
 package ar.edu.itba.paw.services;
 
-import ar.edu.itba.paw.model.CarImagePayload;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.services.exception.InvalidImagePayloadException;
 
 import java.util.Collections;
@@ -12,13 +12,13 @@ final class ImagePayloadUtils {
 
     private ImagePayloadUtils() {}
 
-    static List<CarImagePayload> normalizeImages(
-        final List<CarImagePayload> images
+    static List<ImagePayload> normalizeImages(
+        final List<ImagePayload> images
     ) {
         if (images == null) {
             return Collections.emptyList();
         }
-        for (final CarImagePayload image : images) {
+        for (final ImagePayload image : images) {
             if (
                 image == null ||
                 image.getContentType() == null ||

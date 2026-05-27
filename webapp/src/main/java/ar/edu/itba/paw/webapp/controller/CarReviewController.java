@@ -3,9 +3,11 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarYearVariant;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewImage;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
@@ -16,9 +18,13 @@ import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
+import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import ar.edu.itba.paw.webapp.validation.ReviewFormValidator;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,6 +52,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
@@ -60,6 +72,7 @@ public class CarReviewController {
     private static final int MAX_REPLY_BODY_LENGTH = 1000;
     private static final int REVIEW_HIDE_REASON_MIN_LENGTH = 10;
     private static final int REVIEW_HIDE_REASON_MAX_LENGTH = 600;
+    private static final int MAX_REVIEW_IMAGE_COUNT = 3;
 
     private final CarService carService;
     private final CarFavoriteService carFavoriteService;
@@ -181,6 +194,7 @@ public class CarReviewController {
         mav.addObject("reviewForm", toReviewForm(review));
         mav.addObject("editMode", true);
         mav.addObject("reviewId", reviewId);
+        mav.addObject("existingReviewImageIds", reviewImageIdsCsv(reviewId));
         LoginRedirectUtils.safeRedirect(redirect, request.getContextPath()).ifPresent(r -> mav.addObject("editRedirect", r));
         return mav;
     }
@@ -209,6 +223,9 @@ public class CarReviewController {
             );
         }
 
+        final List<MultipartFile> uploadedFiles = nonEmptyFiles(reviewForm.getFiles());
+        validateReviewImageUploads(uploadedFiles, 0, errors);
+
         if (errors.hasErrors()) {
             LOGGER.warn(
                 "create review rejected: validation errors carId={} userId={} errorCount={}",
@@ -220,6 +237,19 @@ public class CarReviewController {
             return "review-form.jsp";
         }
 
+        final List<ImagePayload> imagePayloads;
+        try {
+            imagePayloads = toImagePayloads(uploadedFiles);
+        } catch (final IOException e) {
+            LOGGER.error(
+                "failed to read uploaded image during review creation carId={} userId={}",
+                car.getId(),
+                currentUser.getId(),
+                e
+            );
+            throw new UploadedImageReadException(
+                "creating review for car " + car.getId() + " by user " + currentUser.getId(), e);
+        }
         try {
             reviewService.createReview(
                 currentUser.getId(),
@@ -231,7 +261,8 @@ public class CarReviewController {
                 null,
                 reviewForm.getMileageKm(),
                 reviewForm.getWouldRecommend(),
-                reviewForm.getTagIds()
+                reviewForm.getTagIds(),
+                imagePayloads
             );
             LOGGER.info(
                 "created review carId={} userId={}",
@@ -345,6 +376,7 @@ public class CarReviewController {
             normalizedPage
         );
         final List<Review> reviews = reviewPage.getItems();
+        populateReviewImages(reviews);
         final BigDecimal averageRating = reviewService
             .getReviewStatsByCar(selectedCar.getId())
             .map(stats -> stats.getAverageRating())
@@ -455,11 +487,104 @@ public class CarReviewController {
         return reviewService.getReviewsByCar(carId, page);
     }
 
+    private void populateReviewImages(final List<Review> reviews) {
+        if (reviews == null || reviews.isEmpty()) {
+            return;
+        }
+        final List<Long> ids = reviews.stream().map(Review::getId).collect(Collectors.toList());
+        final java.util.Map<Long, List<ReviewImage>> byId = reviewService.getImagesByReviewIds(ids);
+        for (final Review r : reviews) {
+            r.setImages(byId.getOrDefault(r.getId(), Collections.emptyList()));
+        }
+    }
+
     private String normalizeSort(final String sort) {
         if (SORT_RATING_ASC.equals(sort) || SORT_RATING_DESC.equals(sort)) {
             return sort;
         }
         return null;
+    }
+
+    private static List<MultipartFile> nonEmptyFiles(final List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return files.stream()
+                .filter(f -> f != null && !f.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private void validateReviewImageUploads(final List<MultipartFile> files,
+                                            final int retainedCount,
+                                            final BindingResult errors) {
+        final int total = retainedCount + files.size();
+        if (total > MAX_REVIEW_IMAGE_COUNT) {
+            errors.rejectValue("files", "validation.review.files.maxCount",
+                    new Object[]{MAX_REVIEW_IMAGE_COUNT},
+                    message("validation.review.files.maxCount", MAX_REVIEW_IMAGE_COUNT));
+            return;
+        }
+        for (final MultipartFile file : files) {
+            final String errorKey = ControllerUtils.validateUploadedImage(file, false);
+            if (errorKey != null) {
+                errors.rejectValue("files", errorKey, errorKey);
+                return;
+            }
+        }
+    }
+
+    private static List<ImagePayload> toImagePayloads(final List<MultipartFile> files) throws IOException {
+        final List<ImagePayload> result = new ArrayList<>();
+        for (final MultipartFile file : files) {
+            result.add(new ImagePayload(file.getContentType(), file.getBytes()));
+        }
+        return result;
+    }
+
+    private String reviewImageUrlsCsv(final HttpServletRequest request, final long reviewId) {
+        final List<ReviewImage> images = reviewService.getReviewImagesByReviewId(reviewId);
+        if (images.isEmpty()) {
+            return "";
+        }
+        final String contextPath = request.getContextPath();
+        return images.stream()
+                .map(img -> contextPath + "/reviews/" + reviewId + "/images/" + img.getImageId())
+                .collect(Collectors.joining(","));
+    }
+
+    private String reviewImageIdsCsv(final long reviewId) {
+        final List<ReviewImage> images = reviewService.getReviewImagesByReviewId(reviewId);
+        if (images.isEmpty()) {
+            return "";
+        }
+        return images.stream()
+                .map(img -> Long.toString(img.getImageId()))
+                .collect(Collectors.joining(","));
+    }
+
+    @RequestMapping(value = "/reviews/{reviewId}/images/{imageId}", method = RequestMethod.GET)
+    public ResponseEntity<byte[]> getReviewImage(
+            @PathVariable("reviewId") final long reviewId,
+            @PathVariable("imageId") final long imageId,
+            @RequestHeader(value = "If-None-Match", required = false) final String ifNoneMatch
+    ) {
+        final Optional<ReviewImage> image = reviewService.getReviewImageById(reviewId, imageId);
+        if (image.isEmpty() || image.get().getImageData() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        final ReviewImage img = image.get();
+        final String updatedAtStamp = img.getUpdatedAt() == null ? "0" : img.getUpdatedAt().toString();
+        final String etag = "\"r" + reviewId + "-i" + imageId + "-" + updatedAtStamp + "\"";
+        if (etag.equals(ifNoneMatch)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(etag).build();
+        }
+        final String contentType = img.getContentType() == null
+                ? MediaType.APPLICATION_OCTET_STREAM_VALUE : img.getContentType();
+        return ResponseEntity.ok()
+                .eTag(etag)
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(img.getImageData());
     }
 
     @RequestMapping(value = "/reviews/{reviewId}", method = RequestMethod.POST)
@@ -489,12 +614,33 @@ public class CarReviewController {
             "/reviews/car/" + existingReview.getCarId() + "#review-" + reviewId;
         final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath()).orElse(defaultRedirect);
 
+        final List<MultipartFile> uploadedFiles = nonEmptyFiles(reviewForm.getFiles());
+        final List<ImagePayload> retainedPayloads = reviewService.collectRetainedReviewImagePayloads(
+                reviewId, reviewForm.getRetainedImageIds());
+        validateReviewImageUploads(uploadedFiles, retainedPayloads.size(), errors);
+
         if (errors.hasErrors()) {
             model.addAttribute("selectedCar", car);
             model.addAttribute("editMode", true);
             model.addAttribute("reviewId", reviewId);
             model.addAttribute("editRedirect", safeRedirect);
+            model.addAttribute("existingReviewImageUrls", reviewImageUrlsCsv(request, reviewId));
+            model.addAttribute("existingReviewImageIds", reviewImageIdsCsv(reviewId));
             return "review-form.jsp";
+        }
+
+        final List<ImagePayload> finalImages = new ArrayList<>(retainedPayloads);
+        try {
+            finalImages.addAll(toImagePayloads(uploadedFiles));
+        } catch (final IOException e) {
+            LOGGER.error(
+                "failed to read uploaded image during review update reviewId={} userId={}",
+                reviewId,
+                currentUser.getId(),
+                e
+            );
+            throw new UploadedImageReadException(
+                "updating review " + reviewId + " by user " + currentUser.getId(), e);
         }
 
         try {
@@ -508,7 +654,8 @@ public class CarReviewController {
                 null,
                 reviewForm.getMileageKm(),
                 reviewForm.getWouldRecommend(),
-                reviewForm.getTagIds()
+                reviewForm.getTagIds(),
+                finalImages
             );
             LOGGER.info(
                 "updated review id={} userId={}",

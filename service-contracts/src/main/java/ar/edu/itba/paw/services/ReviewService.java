@@ -1,8 +1,10 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewImage;
 import ar.edu.itba.paw.model.ReviewStats;
 
 import java.math.BigDecimal;
@@ -22,7 +24,7 @@ public interface ReviewService {
 
     Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
                         String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
-                        Collection<Short> tagIds);
+                        Collection<Short> tagIds, List<ImagePayload> images);
     List<Review> getAllReviews();
     long countAllReviews();
     Page<Review> getLatestReviews(int page);
@@ -35,7 +37,15 @@ public interface ReviewService {
     List<Review> getReviewsByCarIds(Collection<Long> carIds);
     Optional<Review> updateReview(long id, long carId, BigDecimal rating, String title, String body,
                                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
-                                  Collection<Short> tagIds);
+                                  Collection<Short> tagIds, List<ImagePayload> finalImages);
+
+    List<ReviewImage> getReviewImagesByReviewId(long reviewId);
+
+    Map<Long, List<ReviewImage>> getImagesByReviewIds(Collection<Long> reviewIds);
+
+    Optional<ReviewImage> getReviewImageById(long reviewId, long imageId);
+
+    List<ImagePayload> collectRetainedReviewImagePayloads(long reviewId, List<Long> retainedImageIds);
     boolean deleteReview(long id);
     List<Review> getReviewsByCar(long carId);
     Page<Review> getReviewsByCar(long carId, int page);

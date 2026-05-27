@@ -3,6 +3,7 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.persistence.ReviewDao;
+import ar.edu.itba.paw.persistence.ReviewImageDao;
 import ar.edu.itba.paw.persistence.ReviewTagDao;
 import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,8 @@ public class ReviewServiceImplTest {
     @Mock
     private ReviewTagDao reviewTagDao;
     @Mock
+    private ReviewImageDao reviewImageDao;
+    @Mock
     private ReviewTagService reviewTagService;
 
     @InjectMocks
@@ -54,7 +57,7 @@ public class ReviewServiceImplTest {
         when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(refreshed));
 
         // Exercise
-        final Review result = reviewService.createReview(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true, tagIds);
+        final Review result = reviewService.createReview(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true, tagIds, java.util.Collections.emptyList());
 
         // Assertions
         assertEquals(REVIEW_ID, result.getId());
@@ -72,7 +75,7 @@ public class ReviewServiceImplTest {
 
         // Exercise
         final InvalidReviewTagSelectionException ex = assertThrows(InvalidReviewTagSelectionException.class,
-                () -> reviewService.createReview(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true, tagIds));
+                () -> reviewService.createReview(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true, tagIds, java.util.Collections.emptyList()));
 
         // Assertions
         assertEquals(InvalidReviewTagSelectionException.Reason.UNKNOWN_TAG, ex.getReason());
@@ -87,7 +90,7 @@ public class ReviewServiceImplTest {
                 .thenReturn(created);
 
         // Exercise
-        final Review result = reviewService.createReview(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true, tagIds);
+        final Review result = reviewService.createReview(USER_ID, CAR_ID, new BigDecimal("4.5"), "Title", "Body", "owner", 2026, 1000, true, tagIds, java.util.Collections.emptyList());
 
         // Assertions
         assertEquals(REVIEW_ID, result.getId());
@@ -105,7 +108,7 @@ public class ReviewServiceImplTest {
         when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(refreshed));
 
         // Exercise
-        final Optional<Review> result = reviewService.updateReview(REVIEW_ID, CAR_ID, new BigDecimal("3.5"), "Updated title", "Updated body", "former_owner", 2020, 50000, false, tagIds);
+        final Optional<Review> result = reviewService.updateReview(REVIEW_ID, CAR_ID, new BigDecimal("3.5"), "Updated title", "Updated body", "former_owner", 2020, 50000, false, tagIds, java.util.Collections.emptyList());
 
         // Assertions
         assertTrue(result.isPresent());
@@ -120,7 +123,7 @@ public class ReviewServiceImplTest {
                 "former_owner", 2020, 50000, false)).thenReturn(Optional.empty());
 
         // Exercise
-        final Optional<Review> result = reviewService.updateReview(REVIEW_ID, CAR_ID, new BigDecimal("3.5"), "Updated title", "Updated body", "former_owner", 2020, 50000, false, tagIds);
+        final Optional<Review> result = reviewService.updateReview(REVIEW_ID, CAR_ID, new BigDecimal("3.5"), "Updated title", "Updated body", "former_owner", 2020, 50000, false, tagIds, java.util.Collections.emptyList());
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -138,7 +141,7 @@ public class ReviewServiceImplTest {
         // Exercise
         final InvalidReviewTagSelectionException ex = assertThrows(InvalidReviewTagSelectionException.class,
                 () -> reviewService.updateReview(REVIEW_ID, CAR_ID, new BigDecimal("3.5"), "Updated title",
-                        "Updated body", "former_owner", 2020, 50000, false, tagIds));
+                        "Updated body", "former_owner", 2020, 50000, false, tagIds, java.util.Collections.emptyList()));
 
         // Assertions
         assertEquals(InvalidReviewTagSelectionException.Reason.UNKNOWN_TAG, ex.getReason());
@@ -155,7 +158,7 @@ public class ReviewServiceImplTest {
         when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(refreshed));
 
         // Exercise
-        final Optional<Review> result = reviewService.updateReview(REVIEW_ID, CAR_ID, new BigDecimal("3.5"), "Updated title", "Updated body", "former_owner", 2020, 50000, false, tagIds);
+        final Optional<Review> result = reviewService.updateReview(REVIEW_ID, CAR_ID, new BigDecimal("3.5"), "Updated title", "Updated body", "former_owner", 2020, 50000, false, tagIds, java.util.Collections.emptyList());
 
         // Assertions
         assertTrue(result.isPresent());

@@ -18,6 +18,9 @@ import javax.persistence.Transient;
 @Table(name = "cars")
 public class Car implements Serializable {
 
+    public static final int MIN_YEAR = 1950;
+    public static final int MAX_YEAR = 2026;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "car_id")
