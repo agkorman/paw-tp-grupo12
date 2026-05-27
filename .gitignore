@@ -44,3 +44,5 @@ persistence/src/main/resources/local-demo*.sql
 
 .claude/
 .playwright-mcp/
+run.sh
+docs/
