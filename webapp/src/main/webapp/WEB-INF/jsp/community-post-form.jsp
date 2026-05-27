@@ -16,6 +16,7 @@
                    modelAttribute="communityPostForm"
                    method="post"
                    action="${fn:escapeXml(communityPostCreateUrl)}"
+                   enctype="multipart/form-data"
                    novalidate="novalidate">
             <form:errors cssClass="alert alert-error" element="div"/>
             <div class="community-post-form-header">

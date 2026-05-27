@@ -51,6 +51,7 @@
 
             <form:form id="createReviewForm" cssClass="modal-form" modelAttribute="reviewForm"
                        method="post" action="${reviewFormAction}"
+                       enctype="multipart/form-data"
                        data-create-action="${reviewCreateUrl}"
                        data-submit-lock="true"
                        data-msg-required-generic="${fn:escapeXml(jsMsgRequiredGeneric)}"

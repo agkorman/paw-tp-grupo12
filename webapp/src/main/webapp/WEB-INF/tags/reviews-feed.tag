@@ -172,6 +172,7 @@
                                     <spring:message var="replyRequiredMessage" code="review.reply.body.required"/>
                                     <spring:message var="replyMaxMessage" code="review.reply.body.max" arguments="1000"/>
                                     <form method="post" action="${replyCreateUrl}" class="review-reply-form"
+                                          enctype="multipart/form-data"
                                           data-auth-resume-intent="reply-${review.id}"
                                           data-reply-required-message="${fn:escapeXml(replyRequiredMessage)}"
                                           data-reply-max-message="${fn:escapeXml(replyMaxMessage)}"

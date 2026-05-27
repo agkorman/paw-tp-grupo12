@@ -38,6 +38,7 @@
         </p>
 
         <form id="${fn:escapeXml(formId)}" class="catalog-request-form" method="post" action="${fn:escapeXml(action)}"
+              enctype="multipart/form-data"
               novalidate="novalidate" data-catalog-request-form="true"
               data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
               data-msg-length-max="${fn:escapeXml(jsLengthMax)}">

@@ -64,6 +64,7 @@
                            action="${fn:escapeXml(communityPostCommentCreateUrl)}"
                            modelAttribute="communityPostCommentForm"
                            cssClass="community-comment-composer"
+                           enctype="multipart/form-data"
                            novalidate="novalidate">
                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <label for="communityPostComment"><spring:message code="communities.postDetail.comment.label"/></label>
