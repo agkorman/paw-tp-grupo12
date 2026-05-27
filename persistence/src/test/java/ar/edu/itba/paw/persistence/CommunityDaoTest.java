@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -612,6 +613,47 @@ class CommunityDaoTest extends AbstractPersistenceTest {
                         helper.getId()
                 )
         );
+    }
+
+    @Test
+    void shouldFindCommentHelpfulReactionsByUser() {
+        // Arrange
+        final User creator = insertUser("comment-reaction-owner", "comment-reaction-owner@example.com", "secret", "user");
+        final User helper = insertUser("comment-reaction-user", "comment-reaction-user@example.com", "secret", "user");
+        final User other = insertUser("comment-reaction-other", "comment-reaction-other@example.com", "secret", "user");
+        final long communityId = insertCommunity("comment-reactions", "Comment reactions", "Comment reaction posts.", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "falcon-60",
+                "My grandfather's Falcon turned 60 today",
+                "Still runs beautifully.",
+                LocalDateTime.now().minusHours(2)
+        );
+        final long firstCommentId = insertCommunityComment(
+                postId,
+                creator.getId(),
+                "That paint looks original.",
+                LocalDateTime.now().minusHours(1)
+        );
+        final long secondCommentId = insertCommunityComment(
+                postId,
+                other.getId(),
+                "The interior is perfect.",
+                LocalDateTime.now().minusMinutes(30)
+        );
+        insertCommentHelpfulReaction(firstCommentId, helper.getId());
+        insertCommentHelpfulReaction(secondCommentId, other.getId());
+
+        // Exercise
+        final Set<Long> result = communityDao.findCommentHelpfulReactionsByUser(
+                List.of(firstCommentId, secondCommentId),
+                helper.getId()
+        );
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertTrue(result.contains(firstCommentId));
     }
 
     @Test
