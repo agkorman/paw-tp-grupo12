@@ -51,7 +51,6 @@
 <spring:message var="previousImageLabel" code="cars.image.previous"/>
 <spring:message var="nextImageLabel" code="cars.image.next"/>
 <spring:message var="removeImageLabel" code="cars.form.image.remove"/>
-<spring:message var="emptyFileStatus" code="cars.form.image.none"/>
 <spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
 <spring:message var="jsRequiredBrand" code="js.car.required.brand"/>
 <spring:message var="jsRequiredBodyType" code="js.car.required.bodyType"/>
@@ -61,7 +60,6 @@
 <spring:message var="jsRequiredAirbags" code="js.car.required.airbags"/>
 <spring:message var="jsRequiredConsumption" code="js.car.required.consumption"/>
 <spring:message var="jsRequiredMaxSpeed" code="js.car.required.maxSpeed"/>
-<spring:message var="jsRequiredImage" code="js.car.required.image"/>
 <spring:message var="jsYearNumeric" code="js.car.validation.year.numeric"/>
 <spring:message var="jsYearRange" code="js.car.validation.year.range"/>
 <spring:message var="jsHorsepowerNumeric" code="js.car.validation.horsepower.numeric"/>
@@ -79,15 +77,6 @@
 <spring:message var="jsNumberInvalid" code="js.car.validation.number"/>
 <spring:message var="jsNumberMin" code="js.car.validation.min"/>
 <spring:message var="jsNumberMax" code="js.car.validation.max"/>
-<spring:message var="jsImageMaxCountTemplate" code="js.car.image.maxCount"/>
-<spring:message var="jsImageUnsupportedType" code="js.car.image.unsupportedType"/>
-<spring:message var="jsImageTooLarge" code="js.car.image.tooLarge"/>
-<spring:message var="jsImageMultiple" code="js.car.image.multiple"/>
-<spring:message var="jsImagePreview" code="js.car.image.preview"/>
-<spring:message var="jsImageAddSuffix" code="js.car.image.addSuffix"/>
-<spring:message var="jsImageLoadedOne" code="js.car.image.loadedOne"/>
-<spring:message var="jsImageLoadedMultiple" code="js.car.image.loadedMultiple"/>
-<spring:message var="jsImageAddMore" code="js.car.image.addMore"/>
 <c:set var="carFormMaxImageCount" value="${empty carFormMaxImageCount ? 5 : carFormMaxImageCount}"/>
 <!DOCTYPE html>
 <html lang="es">
@@ -100,10 +89,6 @@
                  class="form-page-panel car-form-page"
                  data-admin-mode="${adminCarFormMode}"
                  data-car-form-mode="${resolvedCarFormMode}"
-                 data-existing-image-urls="${fn:escapeXml(resolvedExistingImageUrls)}"
-                 data-existing-image-ids="${fn:escapeXml(resolvedExistingImageIds)}"
-                 data-existing-image-status="${fn:escapeXml(existingImageStatus)}"
-                 data-msg-file-empty="${fn:escapeXml(emptyFileStatus)}"
                  data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
                  data-msg-required-brand="${fn:escapeXml(jsRequiredBrand)}"
                  data-msg-required-body-type="${fn:escapeXml(jsRequiredBodyType)}"
@@ -113,22 +98,11 @@
                  data-msg-required-airbags="${fn:escapeXml(jsRequiredAirbags)}"
                  data-msg-required-consumption="${fn:escapeXml(jsRequiredConsumption)}"
                  data-msg-required-max-speed="${fn:escapeXml(jsRequiredMaxSpeed)}"
-                 data-msg-required-image="${fn:escapeXml(jsRequiredImage)}"
                  data-msg-radio-required="${fn:escapeXml(jsRadioRequired)}"
                  data-msg-email-invalid="${fn:escapeXml(jsEmailInvalid)}"
                  data-msg-number-invalid="${fn:escapeXml(jsNumberInvalid)}"
                  data-msg-number-min="${fn:escapeXml(jsNumberMin)}"
                  data-msg-number-max="${fn:escapeXml(jsNumberMax)}"
-                 data-msg-image-max-count="${fn:escapeXml(jsImageMaxCountTemplate)}"
-                 data-msg-image-unsupported-type="${fn:escapeXml(jsImageUnsupportedType)}"
-                 data-msg-image-too-large="${fn:escapeXml(jsImageTooLarge)}"
-                 data-msg-image-multiple="${fn:escapeXml(jsImageMultiple)}"
-                 data-msg-image-preview="${fn:escapeXml(jsImagePreview)}"
-                 data-msg-image-add-suffix="${fn:escapeXml(jsImageAddSuffix)}"
-                 data-msg-image-loaded-one="${fn:escapeXml(jsImageLoadedOne)}"
-                 data-msg-image-loaded-multiple="${fn:escapeXml(jsImageLoadedMultiple)}"
-                 data-msg-image-add-more="${fn:escapeXml(jsImageAddMore)}"
-                 data-max-image-count="${carFormMaxImageCount}"
                  aria-labelledby="carFormTitle">
             <div class="modal-header">
                 <div>
@@ -328,7 +302,10 @@
                             required="${not adminCarFormMode}"
                             mode="${resolvedCarFormMode}"
                             adminMode="${adminCarFormMode}"
-                            existingImageIds="${existingImageIds}"/>
+                            maxImageCount="${carFormMaxImageCount}"
+                            existingImageUrlsJoined="${resolvedExistingImageUrls}"
+                            existingImageIdsJoined="${resolvedExistingImageIds}"
+                            existingImageStatus="${existingImageStatus}"/>
                     </div>
                 </div>
 
@@ -360,6 +337,7 @@
     </c:if>
     <pa:toast messageCode="${submittedToastMessageCode}"/>
 
+    <pa:script src="/js/shared/image-upload-picker.js"/>
     <pa:script src="/js/cars/car-form.js"/>
     <c:if test="${catalogRequestLinksEnabled}">
         <pa:script src="/js/shared/modal-utils.js"/>

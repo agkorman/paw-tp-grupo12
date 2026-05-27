@@ -629,55 +629,6 @@
     border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
 }
 
-.review-form-existing-images {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-}
-
-.review-form-existing-image {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.85rem;
-}
-
-.review-form-existing-image-thumb {
-    width: 192px;
-    height: 192px;
-    object-fit: cover;
-    border-radius: 6px;
-    border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
-}
-
-.car-image-upload-thumb {
-    position: relative;
-}
-
-.car-image-upload-thumb-remove {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.72);
-    color: #fff;
-    font-size: 14px;
-    line-height: 16px;
-    text-align: center;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.car-image-upload-thumb-remove:hover {
-    background: var(--error, #c62828);
-}
-
 #reviewImagePreview {
     width: 192px;
     height: 192px;

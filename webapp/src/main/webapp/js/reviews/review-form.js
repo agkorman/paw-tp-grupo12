@@ -382,18 +382,21 @@
         });
     });
 
+    function validateImages() {
+        var picker = window.ImageUploadPicker ? window.ImageUploadPicker.get('review') : null;
+        return picker ? picker.validate() : true;
+    }
+
     form.addEventListener('submit', function (event) {
         clearAllClientErrors();
         if (!validateRating()) {
             event.preventDefault();
             return;
         }
-        if (!validateRequiredFields()) {
-            event.preventDefault();
-            focusFirstInvalid();
-            return;
-        }
-        if (!validateNumerics()) {
+        var requiredOk = validateRequiredFields();
+        var numericsOk = validateNumerics();
+        var imagesOk = validateImages();
+        if (!requiredOk || !numericsOk || !imagesOk) {
             event.preventDefault();
             focusFirstInvalid();
         }

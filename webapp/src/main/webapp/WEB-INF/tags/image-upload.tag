@@ -1,5 +1,6 @@
 <%@ tag pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -8,7 +9,10 @@
 <%@ attribute name="required" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="mode" required="false" %>
 <%@ attribute name="adminMode" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="existingImageIds" required="false" type="java.util.Collection" %>
+<%@ attribute name="maxImageCount" required="false" type="java.lang.Integer" %>
+<%@ attribute name="existingImageUrlsJoined" required="false" %>
+<%@ attribute name="existingImageIdsJoined" required="false" %>
+<%@ attribute name="existingImageStatus" required="false" %>
 <%@ attribute name="emptyFileStatus" required="false" %>
 <%@ attribute name="previousImageLabel" required="false" %>
 <%@ attribute name="nextImageLabel" required="false" %>
@@ -24,6 +28,8 @@
 <c:set var="resolvedRequired" value="${empty required ? false : required}"/>
 <c:set var="resolvedAdminMode" value="${empty adminMode ? false : adminMode}"/>
 <c:set var="resolvedMode" value="${empty mode ? 'create' : mode}"/>
+<c:set var="resolvedMaxImageCount" value="${empty maxImageCount ? 5 : maxImageCount}"/>
+<c:set var="resolvedRequireImage" value="${resolvedRequired or resolvedAdminMode}"/>
 <c:set var="resolvedTitleCreateKey" value="${empty titleCreateKey ? 'cars.form.image.uploadTitle' : titleCreateKey}"/>
 <c:set var="resolvedTitleEditKey" value="${empty titleEditKey ? 'cars.form.image.currentPlural' : titleEditKey}"/>
 <c:set var="resolvedTitleReadonlyKey" value="${empty titleReadonlyKey ? 'cars.form.image.reviewReadonly' : titleReadonlyKey}"/>
@@ -41,12 +47,43 @@
 <c:if test="${not empty removeImageLabel}"><c:set var="resolvedRemoveImageLabel" value="${removeImageLabel}"/></c:if>
 <c:if test="${not empty emptyFileStatus}"><c:set var="resolvedEmptyFileStatus" value="${emptyFileStatus}"/></c:if>
 
+<spring:message var="jsRequiredGeneric" code="js.form.required.generic"/>
+<spring:message var="jsImageRequired" code="js.image.required"/>
+<spring:message var="jsImageMaxCount" code="js.image.maxCount"/>
+<spring:message var="jsImageUnsupportedType" code="js.image.unsupportedType"/>
+<spring:message var="jsImageTooLarge" code="js.image.tooLarge"/>
+<spring:message var="jsImageMultiple" code="js.image.multiple"/>
+<spring:message var="jsImagePreview" code="js.image.preview"/>
+<spring:message var="jsImageAddSuffix" code="js.image.addSuffix"/>
+<spring:message var="jsImageLoadedOne" code="js.image.loadedOne"/>
+<spring:message var="jsImageLoadedMultiple" code="js.image.loadedMultiple"/>
+<spring:message var="jsImageAddMore" code="js.image.addMore"/>
+
 <div class="modal-field modal-field-wide car-image-field">
     <span class="car-image-label"><spring:message code="${resolvedLabelKey}"/></span>
-    <div class="car-image-upload">
-        <c:if test="${resolvedAdminMode and not empty existingImageIds}">
+    <div id="${namePrefix}ImageUpload" class="car-image-upload"
+         data-image-picker
+         data-name-prefix="${namePrefix}"
+         data-max-image-count="${resolvedMaxImageCount}"
+         data-require-image="${resolvedRequireImage}"
+         data-existing-image-urls="${fn:escapeXml(existingImageUrlsJoined)}"
+         data-existing-image-ids="${fn:escapeXml(existingImageIdsJoined)}"
+         data-existing-image-status="${fn:escapeXml(existingImageStatus)}"
+         data-msg-file-empty="${fn:escapeXml(resolvedEmptyFileStatus)}"
+         data-msg-required-image="${fn:escapeXml(jsImageRequired)}"
+         data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
+         data-msg-image-max-count="${fn:escapeXml(jsImageMaxCount)}"
+         data-msg-image-unsupported-type="${fn:escapeXml(jsImageUnsupportedType)}"
+         data-msg-image-too-large="${fn:escapeXml(jsImageTooLarge)}"
+         data-msg-image-multiple="${fn:escapeXml(jsImageMultiple)}"
+         data-msg-image-preview="${fn:escapeXml(jsImagePreview)}"
+         data-msg-image-add-suffix="${fn:escapeXml(jsImageAddSuffix)}"
+         data-msg-image-loaded-one="${fn:escapeXml(jsImageLoadedOne)}"
+         data-msg-image-loaded-multiple="${fn:escapeXml(jsImageLoadedMultiple)}"
+         data-msg-image-add-more="${fn:escapeXml(jsImageAddMore)}">
+        <c:if test="${not empty existingImageIdsJoined}">
             <span id="${namePrefix}RetainedImageInputs" hidden>
-                <c:forEach var="existingImageId" items="${existingImageIds}">
+                <c:forEach var="existingImageId" items="${fn:split(existingImageIdsJoined, '|')}">
                     <input type="hidden" name="retainedImageIds" value="${existingImageId}">
                 </c:forEach>
             </span>

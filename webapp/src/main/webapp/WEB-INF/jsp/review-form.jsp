@@ -35,6 +35,16 @@
     <spring:message var="jsMsgRatingVeryGood" code="js.review.rating.veryGood"/>
     <spring:message var="jsMsgRatingExcellent" code="js.review.rating.excellent"/>
 
+    <c:set var="reviewExistingImageUrls" value=""/>
+    <c:set var="reviewExistingImageIds" value=""/>
+    <c:if test="${editMode and not empty existingReviewImageIds}">
+        <c:forTokens var="imgId" items="${existingReviewImageIds}" delims=",">
+            <c:url var="reviewExistingImageUrl" value="/reviews/${reviewId}/images/${imgId}"/>
+            <c:set var="reviewExistingImageUrls" value="${reviewExistingImageUrls}${empty reviewExistingImageUrls ? '' : '|'}${reviewExistingImageUrl}"/>
+            <c:set var="reviewExistingImageIds" value="${reviewExistingImageIds}${empty reviewExistingImageIds ? '' : '|'}${imgId}"/>
+        </c:forTokens>
+    </c:if>
+
     <main class="form-page">
         <section id="createReviewFormPage" class="form-page-panel" data-default-car-id="${selectedCar.id}" aria-labelledby="createReviewTitle">
             <div class="modal-header">
@@ -181,34 +191,18 @@
                         <form:errors path="tagIds" cssClass="form-error" element="span"/>
                     </div>
 
-                    <c:if test="${editMode and not empty existingReviewImageIds}">
-                        <div class="modal-field modal-field-wide">
-                            <span class="car-image-label"><spring:message code="review.form.images.existing"/></span>
-                            <div class="review-form-existing-images">
-                                <c:forTokens var="imgId" items="${existingReviewImageIds}" delims=",">
-                                    <label class="review-form-existing-image">
-                                        <input type="checkbox" name="retainedImageIds" value="${imgId}" checked>
-                                        <img src="<c:url value='/reviews/${reviewId}/images/${imgId}'/>"
-                                             alt="<spring:message code='review.image.alt'/>"
-                                             class="review-form-existing-image-thumb"/>
-                                        <span class="review-form-existing-image-keep"><spring:message code="review.form.images.keep"/></span>
-                                    </label>
-                                </c:forTokens>
-                            </div>
-                        </div>
-                    </c:if>
-
-                    <div class="modal-field modal-field-wide">
-                        <pa:image-upload
-                            namePrefix="review"
-                            inputName="files"
-                            required="false"
-                            mode="${editMode ? 'edit' : 'create'}"
-                            labelKey="review.form.images"
-                            titleCreateKey="review.form.image.uploadTitle"
-                            titleEditKey="review.form.image.addMore"
-                            helpKey="review.form.image.help"/>
-                    </div>
+                    <pa:image-upload
+                        namePrefix="review"
+                        inputName="files"
+                        required="false"
+                        mode="${editMode ? 'edit' : 'create'}"
+                        maxImageCount="3"
+                        existingImageUrlsJoined="${reviewExistingImageUrls}"
+                        existingImageIdsJoined="${reviewExistingImageIds}"
+                        labelKey="review.form.images"
+                        titleCreateKey="review.form.image.uploadTitle"
+                        titleEditKey="review.form.image.addMore"
+                        helpKey="review.form.image.help"/>
                 </div>
 
                 <div class="modal-actions">
@@ -219,9 +213,9 @@
         </section>
     </main>
 
+    <pa:script src="/js/shared/image-upload-picker.js"/>
     <pa:script src="/js/reviews/review-form.js"/>
     <pa:script src="/js/reviews/review-tag-chips.js" defer="true"/>
-    <pa:script src="/js/reviews/review-image-upload.js" defer="true"/>
     <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:footer/>
 </body>
