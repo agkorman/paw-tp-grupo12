@@ -40,6 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -163,7 +164,7 @@ class CommunityServiceImplTest {
         when(communityDao.isHelpfulReactionAddedByUser(post.getId(), USER_ID)).thenReturn(true);
         when(communityDao.countCommentsByPostIds(anyCollection())).thenReturn(Map.of(post.getId(), 1L));
         when(communityDao.countHelpfulReactionsByCommentIds(anyCollection())).thenReturn(Map.of(comment.getId(), 2L));
-        when(communityDao.isCommentHelpfulReactionAddedByUser(comment.getId(), USER_ID)).thenReturn(true);
+        when(communityDao.findCommentHelpfulReactionsByUser(anyCollection(), eq(USER_ID))).thenReturn(Set.of(comment.getId()));
 
         // Exercise
         final Optional<CommunityPostDetailData> result =

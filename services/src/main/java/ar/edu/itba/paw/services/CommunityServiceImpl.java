@@ -568,11 +568,10 @@ public class CommunityServiceImpl implements CommunityService {
                     communityDao.countHelpfulReactionsByCommentIds(commentIds);
             final java.util.Map<Long, Boolean> commentHelpfulByCurrentUser = new java.util.LinkedHashMap<>();
             if (currentUserId != null) {
+                final java.util.Set<Long> reactedIds =
+                        communityDao.findCommentHelpfulReactionsByUser(commentIds, currentUserId);
                 for (final Long commentId : commentIds) {
-                    commentHelpfulByCurrentUser.put(
-                            commentId,
-                            communityDao.isCommentHelpfulReactionAddedByUser(commentId, currentUserId)
-                    );
+                    commentHelpfulByCurrentUser.put(commentId, reactedIds.contains(commentId));
                 }
             }
             return Optional.of(new CommunityPostDetailData(
