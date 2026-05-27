@@ -184,6 +184,54 @@
     line-height: 1.75;
 }
 
+.community-comment-edit-form {
+    display: grid;
+    gap: 0.625rem;
+}
+
+.community-comment-edit-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 5rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-md);
+    background: var(--surface-container);
+    color: var(--on-surface);
+    font: inherit;
+    resize: vertical;
+}
+
+.community-comment-edit-form textarea:focus {
+    outline: none;
+    border-color: rgba(255, 181, 158, 0.4);
+}
+
+.community-comment-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
+}
+
+.community-comment-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--spacing-3);
+}
+
+.community-comment-row-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.community-post-mod-menu,
+.community-comment-mod-menu {
+    position: relative;
+}
+
 @media (max-width: 640px) {
     .community-comment-composer-row {
         grid-template-columns: 1fr;

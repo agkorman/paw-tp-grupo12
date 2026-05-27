@@ -52,6 +52,9 @@ public class CommunityPost implements Serializable {
     @Column(name = "updated_at", insertable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "hidden")
+    private boolean hidden;
+
     public CommunityPost() {}
 
     public long getId() {
@@ -148,6 +151,14 @@ public class CommunityPost implements Serializable {
 
     public void setUpdatedAt(final LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public void setHidden(final boolean hidden) {
+        this.hidden = hidden;
     }
 
     @PreUpdate

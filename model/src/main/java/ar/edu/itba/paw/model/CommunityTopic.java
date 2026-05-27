@@ -21,6 +21,9 @@ public class CommunityTopic implements Serializable {
     @Column(name = "code")
     private String code;
 
+    @Column(name = "active")
+    private boolean active;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -40,6 +43,14 @@ public class CommunityTopic implements Serializable {
 
     public void setCode(final String code) {
         this.code = code;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(final boolean active) {
+        this.active = active;
     }
 
     public LocalDateTime getCreatedAt() {

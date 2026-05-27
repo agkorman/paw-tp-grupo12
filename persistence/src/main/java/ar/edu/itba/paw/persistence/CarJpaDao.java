@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.Locale;
 
 @Repository
 public class CarJpaDao implements CarDao {
@@ -289,7 +290,7 @@ public class CarJpaDao implements CarDao {
         boolean hasWhere = false;
 
         if (criteria.getQ() != null) {
-            final String escaped = criteria.getQ().toLowerCase()
+            final String escaped = criteria.getQ().toLowerCase(Locale.ROOT)
                     .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
             final String likeQ = "%" + escaped + "%";
             final String tsQ = criteria.getQ().replaceAll("[%_\\\\]", " ").trim();
@@ -378,6 +379,18 @@ public class CarJpaDao implements CarDao {
         if (criteria.getPriceMax() != null) {
             sql.append(hasWhere ? "AND " : "WHERE ").append("c.price_usd <= ? ");
             params.add(criteria.getPriceMax());
+            hasWhere = true;
+        }
+        for (int i = 0; i < criteria.getTagCodes().size(); i++) {
+            sql.append(hasWhere ? "AND " : "WHERE ")
+                    .append("EXISTS (")
+                    .append("SELECT 1 FROM review_tag_assignments rta").append(i).append(" ")
+                    .append("JOIN reviews r").append(i).append(" ON r").append(i).append(".review_id = rta").append(i).append(".review_id ")
+                    .append("JOIN review_tags rt").append(i).append(" ON rt").append(i).append(".tag_id = rta").append(i).append(".tag_id ")
+                    .append("WHERE r").append(i).append(".car_id = c.car_id AND rt").append(i).append(".code = ?")
+                    .append(") ");
+            params.add(criteria.getTagCodes().get(i));
+            hasWhere = true;
         }
         return sql.toString();
     }

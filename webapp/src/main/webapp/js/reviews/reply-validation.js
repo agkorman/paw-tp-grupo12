@@ -52,7 +52,7 @@
         return null;
     }
 
-    var forms = document.querySelectorAll('.review-reply-form');
+    var forms = document.querySelectorAll('.review-reply-form, .review-reply-edit-form');
     forms.forEach(function (form) {
         var textarea = findTextarea(form);
         if (textarea) {

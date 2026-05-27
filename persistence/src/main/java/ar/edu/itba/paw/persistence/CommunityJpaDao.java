@@ -1,13 +1,18 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Community;
+import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
+import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -42,6 +47,79 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public Page<Community> findAll(final int page) {
+        final int pageSize = Pagination.COMMUNITIES_PAGE_SIZE;
+        final Number count = (Number) em.createNativeQuery("SELECT COUNT(*) FROM communities").getSingleResult();
+        final long totalItems = count == null ? 0L : count.longValue();
+        if (totalItems <= 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+
+        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
+        final Query idsQuery = em.createNativeQuery(
+                "SELECT community_id FROM communities ORDER BY community_id ASC LIMIT ? OFFSET ?"
+        );
+        idsQuery.setParameter(1, pageSize);
+        idsQuery.setParameter(2, Pagination.offsetFor(effectivePage, pageSize));
+
+        final List<Long> ids = toLongIds(idsQuery.getResultList());
+        if (ids.isEmpty()) {
+            return Page.empty(effectivePage, pageSize);
+        }
+
+        final List<Community> communities = em.createQuery(
+                "SELECT c FROM Community c WHERE c.id IN :ids",
+                Community.class
+        )
+                .setParameter("ids", ids)
+                .getResultList();
+        return new Page<>(sortByIds(communities, ids, Community::getId), effectivePage, pageSize, totalItems);
+    }
+
+    @Override
+    public Page<Community> findByCriteria(final CommunitySearchCriteria criteria, final Long currentUserId) {
+        final CommunitySearchCriteria safeCriteria = criteria == null ? new CommunitySearchCriteria() : criteria;
+        final int pageSize = Pagination.COMMUNITIES_PAGE_SIZE;
+        final List<Object> params = new ArrayList<>();
+        final String fromJoin = communitySearchFromJoin(safeCriteria);
+        final String whereClause = buildCommunityWhereClause(safeCriteria, currentUserId, params);
+        final String orderClause = buildCommunityOrderClause(safeCriteria);
+
+        final Query countQuery = em.createNativeQuery("SELECT COUNT(*) " + fromJoin + whereClause);
+        for (int i = 0; i < params.size(); i++) {
+            countQuery.setParameter(i + 1, params.get(i));
+        }
+        final Number count = (Number) countQuery.getSingleResult();
+        final long totalItems = count == null ? 0L : count.longValue();
+        if (totalItems <= 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+
+        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(safeCriteria.getPage()), totalItems, pageSize);
+        final Query idsQuery = em.createNativeQuery(
+                "SELECT c.community_id " + fromJoin + whereClause + orderClause + " LIMIT ? OFFSET ?"
+        );
+        for (int i = 0; i < params.size(); i++) {
+            idsQuery.setParameter(i + 1, params.get(i));
+        }
+        idsQuery.setParameter(params.size() + 1, pageSize);
+        idsQuery.setParameter(params.size() + 2, Pagination.offsetFor(effectivePage, pageSize));
+
+        final List<Long> ids = toLongIds(idsQuery.getResultList());
+        if (ids.isEmpty()) {
+            return Page.empty(effectivePage, pageSize);
+        }
+
+        final List<Community> communities = em.createQuery(
+                "SELECT c FROM Community c WHERE c.id IN :ids",
+                Community.class
+        )
+                .setParameter("ids", ids)
+                .getResultList();
+        return new Page<>(sortByIds(communities, ids, Community::getId), effectivePage, pageSize, totalItems);
+    }
+
+    @Override
     public Optional<Community> findBySlug(final String slug) {
         if (slug == null || slug.trim().isEmpty()) {
             return Optional.empty();
@@ -58,7 +136,7 @@ public class CommunityJpaDao implements CommunityDao {
     @Override
     public List<CommunityTopic> findAllTopics() {
         return em.createQuery(
-                "SELECT t FROM CommunityTopic t ORDER BY t.id ASC",
+                "SELECT t FROM CommunityTopic t WHERE t.active = TRUE ORDER BY t.id ASC",
                 CommunityTopic.class
         ).getResultList();
     }
@@ -95,6 +173,38 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public void updateDetails(final long communityId, final String name, final String description) {
+        final Community community = em.find(Community.class, communityId);
+        if (community == null) {
+            return;
+        }
+        community.setName(name);
+        community.setDescription(description);
+        LOGGER.info("updated community details id={}", communityId);
+    }
+
+    @Override
+    public void updateCreatedBy(final long communityId, final long newOwnerUserId) {
+        final Community community = em.find(Community.class, communityId);
+        if (community == null) {
+            return;
+        }
+        community.setCreatedBy(em.getReference(ar.edu.itba.paw.model.User.class, newOwnerUserId));
+        LOGGER.info("transferred community ownership id={} newOwnerUserId={}", communityId, newOwnerUserId);
+    }
+
+    @Override
+    public boolean delete(final long communityId) {
+        final Community community = em.find(Community.class, communityId);
+        if (community == null) {
+            return false;
+        }
+        em.remove(community);
+        LOGGER.info("deleted community id={}", communityId);
+        return true;
+    }
+
+    @Override
     public CommunityPost createPost(final long communityId,
                                     final long authorUserId,
                                     final String slug,
@@ -122,6 +232,27 @@ public class CommunityJpaDao implements CommunityDao {
         LOGGER.info("created community post comment id={} postId={} userId={}",
                 comment.getId(), postId, userId);
         return comment;
+    }
+
+    @Override
+    public void updatePost(final long postId, final String title, final String body) {
+        final CommunityPost post = em.find(CommunityPost.class, postId);
+        if (post == null) {
+            return;
+        }
+        post.setTitle(title);
+        post.setBody(body);
+        LOGGER.info("updated community post id={}", postId);
+    }
+
+    @Override
+    public void updateComment(final long commentId, final String body) {
+        final CommunityPostComment comment = em.find(CommunityPostComment.class, commentId);
+        if (comment == null) {
+            return;
+        }
+        comment.setBody(body);
+        LOGGER.info("updated community post comment id={}", commentId);
     }
 
     @Override
@@ -176,6 +307,88 @@ public class CommunityJpaDao implements CommunityDao {
                 .setParameter("userId", userId)
                 .executeUpdate();
         LOGGER.info("deleted community membership communityId={} userId={}", communityId, userId);
+    }
+
+    @Override
+    public Optional<String> findMembershipRole(final long communityId, final long userId) {
+        final List<?> rows = em.createNativeQuery(
+                "SELECT role FROM community_memberships WHERE community_id = :communityId AND user_id = :userId"
+        )
+                .setParameter("communityId", communityId)
+                .setParameter("userId", userId)
+                .getResultList();
+        if (rows.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable((String) rows.get(0));
+    }
+
+    @Override
+    public void updateMembershipRole(final long communityId, final long userId, final String newRole) {
+        em.createNativeQuery(
+                "UPDATE community_memberships SET role = :role WHERE community_id = :communityId AND user_id = :userId"
+        )
+                .setParameter("role", newRole)
+                .setParameter("communityId", communityId)
+                .setParameter("userId", userId)
+                .executeUpdate();
+        LOGGER.info("updated community membership role communityId={} userId={} role={}",
+                communityId, userId, newRole);
+    }
+
+    @Override
+    public List<CommunityMembershipEntry> listMembers(final long communityId) {
+        final List<?> rows = em.createNativeQuery(
+                "SELECT m.user_id, u.username, m.role, m.joined_at " +
+                "FROM community_memberships m " +
+                "JOIN users u ON u.user_id = m.user_id " +
+                "WHERE m.community_id = :communityId " +
+                "ORDER BY (CASE WHEN m.role = 'moderator' THEN 0 ELSE 1 END) ASC, m.joined_at ASC"
+        )
+                .setParameter("communityId", communityId)
+                .getResultList();
+        final List<CommunityMembershipEntry> entries = new ArrayList<>(rows.size());
+        for (final Object rowObject : rows) {
+            final Object[] row = (Object[]) rowObject;
+            final long userId = ((Number) row[0]).longValue();
+            final String username = (String) row[1];
+            final String role = (String) row[2];
+            final LocalDateTime joinedAt = row[3] == null ? null : toLocalDateTime(row[3]);
+            entries.add(new CommunityMembershipEntry(userId, username, role, joinedAt));
+        }
+        return entries;
+    }
+
+    @Override
+    public void setPostHidden(final long postId, final boolean hidden) {
+        em.createQuery(
+                "UPDATE CommunityPost p SET p.hidden = :hidden WHERE p.id = :postId"
+        )
+                .setParameter("hidden", hidden)
+                .setParameter("postId", postId)
+                .executeUpdate();
+        LOGGER.info("set community post hidden flag postId={} hidden={}", postId, hidden);
+    }
+
+    @Override
+    public void setCommentHidden(final long commentId, final boolean hidden) {
+        em.createQuery(
+                "UPDATE CommunityPostComment c SET c.hidden = :hidden WHERE c.id = :commentId"
+        )
+                .setParameter("hidden", hidden)
+                .setParameter("commentId", commentId)
+                .executeUpdate();
+        LOGGER.info("set community comment hidden flag commentId={} hidden={}", commentId, hidden);
+    }
+
+    private LocalDateTime toLocalDateTime(final Object value) {
+        if (value instanceof LocalDateTime) {
+            return (LocalDateTime) value;
+        }
+        if (value instanceof java.sql.Timestamp) {
+            return ((java.sql.Timestamp) value).toLocalDateTime();
+        }
+        return null;
     }
 
     @Override
@@ -289,6 +502,43 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public Page<CommunityPost> findVisiblePostsByCommunityId(final long communityId,
+                                                             final String sort,
+                                                             final int page) {
+        final int pageSize = Pagination.COMMUNITY_POSTS_PAGE_SIZE;
+        final Number count = (Number) em.createNativeQuery(
+                "SELECT COUNT(*) FROM community_posts WHERE community_id = ? AND hidden = false"
+        )
+                .setParameter(1, communityId)
+                .getSingleResult();
+        final long totalItems = count == null ? 0L : count.longValue();
+        if (totalItems <= 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+
+        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
+        final Query idsQuery = em.createNativeQuery(visiblePostIdsSql(sort));
+        idsQuery.setParameter(1, communityId);
+        idsQuery.setParameter(2, pageSize);
+        idsQuery.setParameter(3, Pagination.offsetFor(effectivePage, pageSize));
+
+        final List<Long> ids = toLongIds(idsQuery.getResultList());
+        if (ids.isEmpty()) {
+            return Page.empty(effectivePage, pageSize);
+        }
+
+        final List<CommunityPost> posts = em.createQuery(
+                "SELECT p FROM CommunityPost p " +
+                "LEFT JOIN FETCH p.author " +
+                "WHERE p.id IN :ids",
+                CommunityPost.class
+        )
+                .setParameter("ids", ids)
+                .getResultList();
+        return new Page<>(sortByIds(posts, ids, CommunityPost::getId), effectivePage, pageSize, totalItems);
+    }
+
+    @Override
     public Optional<CommunityPost> findPostByCommunityIdAndSlug(final long communityId, final String postSlug) {
         if (postSlug == null || postSlug.trim().isEmpty()) {
             return Optional.empty();
@@ -303,6 +553,33 @@ public class CommunityJpaDao implements CommunityDao {
                 .setParameter("slug", postSlug.trim().toLowerCase(Locale.ROOT))
                 .getResultList();
         return results.stream().findFirst();
+    }
+
+    @Override
+    public Optional<CommunityPostComment> findCommentById(final long commentId) {
+        return Optional.ofNullable(em.find(CommunityPostComment.class, commentId));
+    }
+
+    @Override
+    public boolean deletePost(final long postId) {
+        final CommunityPost post = em.find(CommunityPost.class, postId);
+        if (post == null) {
+            return false;
+        }
+        em.remove(post);
+        LOGGER.info("deleted community post id={}", postId);
+        return true;
+    }
+
+    @Override
+    public boolean deleteComment(final long commentId) {
+        final CommunityPostComment comment = em.find(CommunityPostComment.class, commentId);
+        if (comment == null) {
+            return false;
+        }
+        em.remove(comment);
+        LOGGER.info("deleted community post comment id={}", commentId);
+        return true;
     }
 
     @Override
@@ -412,6 +689,122 @@ public class CommunityJpaDao implements CommunityDao {
         return numberMap(countQuery.getResultList());
     }
 
+    private String communitySearchFromJoin(final CommunitySearchCriteria criteria) {
+        final boolean needsMemberCounts = CommunitySearchCriteria.SORT_MEMBERS.equals(criteria.getSortBy());
+        final boolean needsPostCounts = criteria.getSortBy() == null
+                || CommunitySearchCriteria.SORT_ACTIVE.equals(criteria.getSortBy());
+        final StringBuilder sql = new StringBuilder("FROM communities c ");
+        if (needsMemberCounts) {
+            sql.append("LEFT JOIN (")
+                    .append("SELECT community_id, COUNT(*) AS member_count ")
+                    .append("FROM community_memberships GROUP BY community_id")
+                    .append(") mc ON mc.community_id = c.community_id ");
+        }
+        if (needsPostCounts) {
+            sql.append("LEFT JOIN (")
+                    .append("SELECT community_id, COUNT(*) AS post_count ")
+                    .append("FROM community_posts ")
+                    .append("WHERE hidden = false ")
+                    .append("GROUP BY community_id")
+                    .append(") pc ON pc.community_id = c.community_id ");
+        }
+        return sql.toString();
+    }
+
+    private String buildCommunityWhereClause(final CommunitySearchCriteria criteria,
+                                             final Long currentUserId,
+                                             final List<Object> params) {
+        final StringBuilder sql = new StringBuilder();
+        boolean hasWhere = false;
+
+        if (criteria.getQ() != null) {
+            final String escaped = criteria.getQ().toLowerCase(Locale.ROOT)
+                    .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+            final String likeQ = "%" + escaped + "%";
+            final String tsQ = criteria.getQ().replaceAll("[%_\\\\]", " ").trim();
+            final boolean useTsQuery = tsQ.matches(".*[a-zA-Z0-9]{2,}.*");
+            if (useTsQuery) {
+                sql.append("WHERE (c.search_vector @@ websearch_to_tsquery('simple', ?) ")
+                        .append("OR lower(c.name) LIKE ? ESCAPE '\\' ")
+                        .append("OR lower(c.slug) LIKE ? ESCAPE '\\' ")
+                        .append("OR lower(COALESCE(c.description, '')) LIKE ? ESCAPE '\\' ")
+                        .append("OR EXISTS (")
+                        .append("SELECT 1 FROM community_topic_assignments cta ")
+                        .append("JOIN community_topics ct ON ct.topic_id = cta.topic_id ")
+                        .append("WHERE cta.community_id = c.community_id AND lower(ct.code) LIKE ? ESCAPE '\\'")
+                        .append(")) ");
+                params.add(tsQ);
+            } else {
+                sql.append("WHERE (lower(c.name) LIKE ? ESCAPE '\\' ")
+                        .append("OR lower(c.slug) LIKE ? ESCAPE '\\' ")
+                        .append("OR lower(COALESCE(c.description, '')) LIKE ? ESCAPE '\\' ")
+                        .append("OR EXISTS (")
+                        .append("SELECT 1 FROM community_topic_assignments cta ")
+                        .append("JOIN community_topics ct ON ct.topic_id = cta.topic_id ")
+                        .append("WHERE cta.community_id = c.community_id AND lower(ct.code) LIKE ? ESCAPE '\\'")
+                        .append(")) ");
+            }
+            params.add(likeQ);
+            params.add(likeQ);
+            params.add(likeQ);
+            params.add(likeQ);
+            hasWhere = true;
+        }
+
+        if (criteria.getTopic() != null) {
+            sql.append(hasWhere ? "AND " : "WHERE ")
+                    .append("EXISTS (")
+                    .append("SELECT 1 FROM community_topic_assignments cta ")
+                    .append("JOIN community_topics ct ON ct.topic_id = cta.topic_id ")
+                    .append("WHERE cta.community_id = c.community_id AND lower(ct.code) = ?")
+                    .append(") ");
+            params.add(criteria.getTopic());
+            hasWhere = true;
+        }
+
+        if (criteria.isJoinedOnly()) {
+            if (currentUserId == null || currentUserId <= 0L) {
+                sql.append(hasWhere ? "AND " : "WHERE ").append("1 = 0 ");
+            } else {
+                sql.append(hasWhere ? "AND " : "WHERE ")
+                        .append("EXISTS (")
+                        .append("SELECT 1 FROM community_memberships cm ")
+                        .append("WHERE cm.community_id = c.community_id AND cm.user_id = ?")
+                        .append(") ");
+                params.add(currentUserId);
+            }
+            hasWhere = true;
+        } else if (criteria.isNotJoinedOnly()) {
+            if (currentUserId == null || currentUserId <= 0L) {
+                // unauthenticated: all communities are "not joined", so no extra filter needed
+            } else {
+                sql.append(hasWhere ? "AND " : "WHERE ")
+                        .append("NOT EXISTS (")
+                        .append("SELECT 1 FROM community_memberships cm ")
+                        .append("WHERE cm.community_id = c.community_id AND cm.user_id = ?")
+                        .append(") ");
+                params.add(currentUserId);
+                hasWhere = true;
+            }
+        }
+
+        return sql.toString();
+    }
+
+    private String buildCommunityOrderClause(final CommunitySearchCriteria criteria) {
+        final String sortBy = criteria.getSortBy();
+        if (CommunitySearchCriteria.SORT_MEMBERS.equals(sortBy)) {
+            return "ORDER BY COALESCE(mc.member_count, 0) DESC, lower(c.name) ASC, c.community_id ASC";
+        }
+        if (CommunitySearchCriteria.SORT_NAME_ASC.equals(sortBy)) {
+            return "ORDER BY lower(c.name) ASC, c.community_id ASC";
+        }
+        if (CommunitySearchCriteria.SORT_NEWEST.equals(sortBy)) {
+            return "ORDER BY c.created_at DESC, c.community_id DESC";
+        }
+        return "ORDER BY COALESCE(pc.post_count, 0) DESC, c.created_at DESC, c.community_id DESC";
+    }
+
     private List<Long> normalizeIds(final Collection<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
@@ -419,6 +812,50 @@ public class CommunityJpaDao implements CommunityDao {
         return ids.stream()
                 .filter(Objects::nonNull)
                 .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private List<Long> toLongIds(final List<?> rawIds) {
+        if (rawIds == null || rawIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return rawIds.stream()
+                .map(value -> ((Number) value).longValue())
+                .collect(Collectors.toList());
+    }
+
+    private String visiblePostIdsSql(final String sort) {
+        if ("helpful".equals(sort)) {
+            return "SELECT p.post_id " +
+                    "FROM community_posts p " +
+                    "LEFT JOIN community_post_helpful_reactions r ON r.post_id = p.post_id " +
+                    "WHERE p.community_id = ? AND p.hidden = false " +
+                    "GROUP BY p.post_id, p.created_at " +
+                    "ORDER BY COUNT(r.user_id) DESC, p.created_at DESC, p.post_id DESC LIMIT ? OFFSET ?";
+        }
+        if ("commented".equals(sort)) {
+            return "SELECT p.post_id " +
+                    "FROM community_posts p " +
+                    "LEFT JOIN community_post_comments c ON c.post_id = p.post_id " +
+                    "WHERE p.community_id = ? AND p.hidden = false " +
+                    "GROUP BY p.post_id, p.created_at " +
+                    "ORDER BY COUNT(c.comment_id) DESC, p.created_at DESC, p.post_id DESC LIMIT ? OFFSET ?";
+        }
+        return "SELECT p.post_id " +
+                "FROM community_posts p " +
+                "WHERE p.community_id = ? AND p.hidden = false " +
+                "ORDER BY p.created_at DESC, p.post_id DESC LIMIT ? OFFSET ?";
+    }
+
+    private <T> List<T> sortByIds(final List<T> items, final List<Long> ids,
+                                  final java.util.function.ToLongFunction<T> idExtractor) {
+        final Map<Long, Integer> positionById = new HashMap<>();
+        for (int i = 0; i < ids.size(); i++) {
+            positionById.put(ids.get(i), i);
+        }
+        return items.stream()
+                .sorted(Comparator.comparingInt(item ->
+                        positionById.getOrDefault(idExtractor.applyAsLong(item), Integer.MAX_VALUE)))
                 .collect(Collectors.toList());
     }
 

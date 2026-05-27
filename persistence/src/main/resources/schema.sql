@@ -737,10 +737,39 @@ CREATE TABLE IF NOT EXISTS communities (
     slug                VARCHAR(60)  NOT NULL,
     name                VARCHAR(60)  NOT NULL,
     description         TEXT         NOT NULL,
+    search_vector       tsvector,
     created_by_user_id  BIGINT       REFERENCES users(user_id) ON DELETE SET NULL,
     created_at          TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE communities ADD COLUMN IF NOT EXISTS search_vector tsvector;
+
+CREATE OR REPLACE FUNCTION communities_build_search_vector(
+    p_name        TEXT,
+    p_slug        TEXT,
+    p_description TEXT
+) RETURNS tsvector LANGUAGE sql IMMUTABLE AS $$
+    SELECT
+        setweight(to_tsvector('simple', COALESCE(p_name,        '')), 'A') ||
+        setweight(to_tsvector('simple', COALESCE(p_slug,        '')), 'B') ||
+        setweight(to_tsvector('simple', COALESCE(p_description, '')), 'C')
+$$;
+
+CREATE OR REPLACE FUNCTION communities_search_vector_trigger_fn()
+RETURNS TRIGGER LANGUAGE plpgsql AS
+'BEGIN
+    NEW.search_vector := communities_build_search_vector(NEW.name, NEW.slug, NEW.description);
+    RETURN NEW;
+END';
+
+CREATE OR REPLACE TRIGGER communities_search_vector_trigger
+    BEFORE INSERT OR UPDATE ON communities
+    FOR EACH ROW EXECUTE FUNCTION communities_search_vector_trigger_fn();
+
+UPDATE communities
+SET search_vector = communities_build_search_vector(name, slug, description)
+WHERE search_vector IS NULL;
 
 CREATE TABLE IF NOT EXISTS community_topics (
     topic_id     SMALLSERIAL  PRIMARY KEY,
@@ -811,6 +840,8 @@ ALTER TABLE communities ADD CONSTRAINT chk_communities_description_not_blank CHE
 ALTER TABLE community_topics DROP CONSTRAINT IF EXISTS chk_community_topics_code_not_blank;
 ALTER TABLE community_topics ADD CONSTRAINT chk_community_topics_code_not_blank CHECK (BTRIM(code) <> '');
 
+ALTER TABLE community_topics ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE;
+
 ALTER TABLE community_memberships DROP CONSTRAINT IF EXISTS chk_community_memberships_role;
 ALTER TABLE community_memberships ADD CONSTRAINT chk_community_memberships_role
     CHECK (role IN ('member', 'moderator'));
@@ -825,6 +856,9 @@ ALTER TABLE community_posts ADD CONSTRAINT chk_community_posts_body_not_blank CH
 ALTER TABLE community_post_comments DROP CONSTRAINT IF EXISTS chk_community_post_comments_body_not_blank;
 ALTER TABLE community_post_comments ADD CONSTRAINT chk_community_post_comments_body_not_blank CHECK (BTRIM(body) <> '');
 
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE community_post_comments ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT FALSE;
+
 ALTER TABLE community_post_images DROP CONSTRAINT IF EXISTS chk_community_post_images_display_order;
 ALTER TABLE community_post_images ADD CONSTRAINT chk_community_post_images_display_order CHECK (display_order >= 0);
 
@@ -834,6 +868,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_community_posts_slug ON community_posts (co
 CREATE UNIQUE INDEX IF NOT EXISTS uq_community_post_images_order ON community_post_images (post_id, display_order);
 
 CREATE INDEX IF NOT EXISTS idx_communities_creator_id ON communities (created_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_communities_fts ON communities USING GIN (search_vector);
 CREATE INDEX IF NOT EXISTS idx_community_topic_assignments_topic_id ON community_topic_assignments (topic_id);
 CREATE INDEX IF NOT EXISTS idx_community_memberships_user_id ON community_memberships (user_id);
 CREATE INDEX IF NOT EXISTS idx_community_posts_community_created_at ON community_posts (community_id, created_at DESC);
@@ -843,7 +878,7 @@ CREATE INDEX IF NOT EXISTS idx_community_post_comments_post_created_at ON commun
 CREATE INDEX IF NOT EXISTS idx_community_post_comments_user_id ON community_post_comments (user_id);
 CREATE INDEX IF NOT EXISTS idx_community_post_images_post_id ON community_post_images (post_id);
 
--- COMMUNIIES SEED
+-- COMMUNITIES SEED
 
 INSERT INTO community_topics (code)
 VALUES
@@ -860,16 +895,16 @@ VALUES
     ('news')
 ON CONFLICT ((LOWER(BTRIM(code)))) DO NOTHING;
 
--- Migrate legacy topic assignments before dropping obsolete topics
+-- Migrate legacy topic assignments to their replacements
 UPDATE community_topic_assignments
 SET topic_id = (SELECT topic_id FROM community_topics WHERE code = 'mechanical')
-WHERE topic_id = (SELECT topic_id FROM community_topics WHERE code = 'repairs');
+WHERE topic_id IN (SELECT topic_id FROM community_topics WHERE code = 'repairs');
 
 UPDATE community_topic_assignments
 SET topic_id = (SELECT topic_id FROM community_topics WHERE code = 'marketplace')
-WHERE topic_id = (SELECT topic_id FROM community_topics WHERE code = 'buying');
+WHERE topic_id IN (SELECT topic_id FROM community_topics WHERE code = 'buying');
 
--- Drop obsolete topics (CASCADE removes remaining assignments)
-DELETE FROM community_topics WHERE code IN ('brands', 'repairs', 'reviews', 'buying', 'local', 'daily');
+-- Deactivate obsolete topics instead of deleting them (backwards-compatible; preserves referential integrity)
+UPDATE community_topics SET active = FALSE WHERE code IN ('brands', 'repairs', 'reviews', 'buying', 'local', 'daily');
 
 COMMIT;

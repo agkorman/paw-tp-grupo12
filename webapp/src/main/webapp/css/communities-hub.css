@@ -49,6 +49,17 @@
     line-height: 1.65;
 }
 
+/* Remove the horizontal padding cars-toolbar normally adds so it aligns with the card grid */
+.communities-hub-page .cars-toolbar {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Membership dropdown: wider column for 4-field layout */
+.communities-hub-page .cars-toolbar-shell {
+    grid-template-columns: minmax(0, 2fr) minmax(10rem, 1fr) minmax(11rem, 1fr) minmax(10rem, 1fr) auto;
+}
+
 .communities-card-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

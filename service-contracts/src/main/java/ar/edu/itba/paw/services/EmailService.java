@@ -15,6 +15,15 @@ public interface EmailService {
     void sendAdminRequestRejectedNotification(String recipientEmail);
     void sendReviewHiddenNotification(String recipientEmail, String reviewTitle, String carName,
                                       String moderatorReason);
+    void sendCommunityPostHiddenNotification(String recipientEmail, String communityName, String postTitle,
+                                             String moderatorReason, String postUrl);
+    void sendCommunityCommentHiddenNotification(String recipientEmail, String communityName, String postTitle,
+                                                String commentBody, String moderatorReason, String postUrl);
+    void sendCommunityMemberKickedNotification(String recipientEmail, String communityName, String communityUrl);
+    void sendCommunityModeratorPromotedNotification(String recipientEmail, String communityName,
+                                                    String communityMembersUrl);
+    void sendCommunityOwnershipTransferredNotification(String recipientEmail, String communityName,
+                                                       String communityMembersUrl);
     void sendWeeklyModeratorDigest(List<EmailRecipient> moderatorRecipients, int pendingRequestCount);
     void sendWeeklyUserDigest(String recipientEmail, String username,
                               List<ReviewActivityItem> reviewActivity,
