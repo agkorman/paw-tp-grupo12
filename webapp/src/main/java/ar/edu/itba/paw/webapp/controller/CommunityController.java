@@ -509,7 +509,8 @@ public class CommunityController {
                     entry.getUsername(),
                     entry.getRole(),
                     entry.isModerator(),
-                    entry.isCreator()
+                    entry.isCreator(),
+                    entry.getUserId() == currentUser.getId()
             ));
         }
         final ModelAndView mav = new ModelAndView("community-members.jsp");
@@ -529,6 +530,12 @@ public class CommunityController {
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug;
+        }
+        if (userId == currentUser.getId()) {
+            LOGGER.warn("kick community member rejected: self kick userId={} communitySlug={}",
+                    currentUser.getId(),
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
+            return "redirect:/communities/" + communitySlug + "/members";
         }
         communityService.kickMember(communitySlug, userId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
@@ -820,14 +827,17 @@ public class CommunityController {
         private final String role;
         private final boolean moderator;
         private final boolean creator;
+        private final boolean currentUser;
 
         private MemberRowView(final long userId, final String username, final String role,
-                              final boolean moderator, final boolean creator) {
+                              final boolean moderator, final boolean creator,
+                              final boolean currentUser) {
             this.userId = userId;
             this.username = username;
             this.role = role;
             this.moderator = moderator;
             this.creator = creator;
+            this.currentUser = currentUser;
         }
 
         public long getUserId() {
@@ -848,6 +858,10 @@ public class CommunityController {
 
         public boolean getCreator() {
             return creator;
+        }
+
+        public boolean getCurrentUser() {
+            return currentUser;
         }
     }
 
