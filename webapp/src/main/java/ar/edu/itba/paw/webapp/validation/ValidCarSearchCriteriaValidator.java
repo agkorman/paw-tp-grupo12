@@ -15,7 +15,7 @@ public class ValidCarSearchCriteriaValidator implements ConstraintValidator<Vali
     private static final int MAX_SPEED_MIN_BOUND = 0;
     private static final int MAX_SPEED_MAX_BOUND = 500;
     private static final int YEAR_MIN_BOUND = 1950;
-    private static final int YEAR_MAX_BOUND = 2100;
+    private static final int YEAR_MAX_BOUND = 2026;
     private static final BigDecimal FUEL_CONSUMPTION_MIN_BOUND = BigDecimal.ZERO;
     private static final BigDecimal FUEL_CONSUMPTION_MAX_BOUND = BigDecimal.valueOf(30);
     private static final BigDecimal PRICE_MIN_BOUND = BigDecimal.valueOf(10_000);
