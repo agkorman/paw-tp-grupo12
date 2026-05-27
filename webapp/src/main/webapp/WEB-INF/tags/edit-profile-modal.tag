@@ -1,5 +1,5 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
-<%@ attribute name="profile" required="true" type="ar.edu.itba.paw.webapp.controller.ProfileController.ProfileData" %>
+<%@ attribute name="profile" required="true" type="ar.edu.itba.paw.webapp.controller.UserController.ProfileData" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -9,7 +9,7 @@
 <spring:message var="usernameRequiredMessage" code="profile.edit.error.username.required"/>
 <spring:message var="usernameMaxMessage" code="profile.edit.error.username.max"/>
 <spring:message var="usernamePatternMessage" code="profile.edit.error.username.pattern"/>
-<c:url var="profileUpdateUrl" value="/profile"/>
+<c:url var="profileUpdateUrl" value="/user"/>
 <c:set var="resolvedProfileName" value="${empty profileEditUsername ? profile.name : profileEditUsername}"/>
 
 <div id="editProfileModal" class="profile-modal" data-open-on-load="${openEditProfileModal}" hidden>

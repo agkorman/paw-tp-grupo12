@@ -146,7 +146,7 @@
                                     <c:forEach var="replyCard" items="${thread.replies}">
                                         <c:set var="reply" value="${replyCard.reply}"/>
                                         <c:url var="replyLikeUrl" value="/reviews/replies/${reply.id}/like"/>
-                                        <c:url var="replyAuthorProfileUrl" value="/profiles/${reply.userId}"/>
+                                        <c:url var="replyAuthorProfileUrl" value="/users/${reply.userId}"/>
                                         <article class="review-reply" id="reply-${reply.id}">
                                             <div class="review-reply-header">
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">

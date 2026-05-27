@@ -2,7 +2,7 @@
 <%@ attribute name="followingUsers" required="true" type="java.util.List" %>
 <%@ attribute name="followerUsers" required="true" type="java.util.List" %>
 <%@ attribute name="activeKind" required="false" type="java.lang.String" %>
-<%@ attribute name="pagination" required="false" type="ar.edu.itba.paw.webapp.controller.ProfileController.ConnectionsPagination" %>
+<%@ attribute name="pagination" required="false" type="ar.edu.itba.paw.webapp.controller.UserController.ConnectionsPagination" %>
 <%@ attribute name="profileBasePath" required="true" type="java.lang.String" %>
 <%@ attribute name="activeTab" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
@@ -67,7 +67,7 @@
                 </c:when>
                 <c:otherwise>
                     <c:forEach var="user" items="${connectionUsers}">
-                        <c:url var="connectionProfileUrl" value="/profiles/${user.id}"/>
+                        <c:url var="connectionProfileUrl" value="/users/${user.id}"/>
                         <article class="profile-connection-row" data-connection-row data-search-text="${fn:escapeXml(user.username)}">
                             <a class="profile-connection-avatar" href="${connectionProfileUrl}" aria-hidden="true" tabindex="-1">
                                 <pa:icon name="user-avatar" size="24"/>
@@ -78,7 +78,7 @@
                                 </a>
                             </div>
                             <c:if test="${user.followable}">
-                                <c:url var="connectionFollowUrl" value="/profiles/${user.id}/follow"/>
+                                <c:url var="connectionFollowUrl" value="/users/${user.id}/follow"/>
                                 <c:choose>
                                     <c:when test="${authenticated}">
                                         <form class="profile-connection-follow-form"
@@ -98,7 +98,7 @@
                                     </c:when>
                                     <c:otherwise>
                                         <c:url var="connectionFollowLoginUrl" value="/login">
-                                            <c:param name="redirect" value="/profiles/${user.id}"/>
+                                            <c:param name="redirect" value="/users/${user.id}"/>
                                             <c:param name="intent" value="follow-profile-${user.id}"/>
                                         </c:url>
                                         <a href="${connectionFollowLoginUrl}"

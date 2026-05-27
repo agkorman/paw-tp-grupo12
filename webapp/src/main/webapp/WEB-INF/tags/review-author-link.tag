@@ -5,7 +5,7 @@
 
 <c:choose>
     <c:when test="${not empty review.userId}">
-        <c:url var="authorProfileUrl" value="/profiles/${review.userId}"/>
+        <c:url var="authorProfileUrl" value="/users/${review.userId}"/>
         <a class="review-author-link" href="${authorProfileUrl}">
             <c:choose>
                 <c:when test="${not empty review.reviewerUsername}">

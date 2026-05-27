@@ -14,7 +14,7 @@
     <pa:nav activePage="reviews"/>
     <c:url var="reviewCancelUrl" value="/reviews/car/${selectedCar.id}"/>
     <c:url var="reviewCreateUrl" value="/reviews"/>
-    <c:url var="profileUrl" value="/profile"/>
+    <c:url var="profileUrl" value="/user"/>
     <c:url var="reviewUpdateUrl" value="/reviews/${reviewId}"/>
     <c:set var="reviewFormAction" value="${editMode ? reviewUpdateUrl : reviewCreateUrl}"/>
     <c:set var="reviewFormCancelUrl" value="${editMode ? (not empty editRedirect ? editRedirect : profileUrl) : reviewCancelUrl}"/>

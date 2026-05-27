@@ -54,7 +54,7 @@
                     <ul class="users-search-list">
                         <c:forEach items="${results}" var="u">
                             <li class="users-search-item">
-                                <c:url var="profileUrl" value="/profiles/${u.id}"/>
+                                <c:url var="profileUrl" value="/users/${u.id}"/>
                                 <a class="users-search-card" href="${profileUrl}">
                                     <span class="users-search-avatar" aria-hidden="true">
                                         <c:out value="${fn:toUpperCase(fn:substring(u.username, 0, 1))}"/>
@@ -72,6 +72,7 @@
                                                   method="post"
                                                   action="<c:url value='/users/${u.id}/follow'/>">
                                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                                <input type="hidden" name="back" value="search">
                                                 <c:if test="${not empty query}">
                                                     <input type="hidden" name="q" value="<c:out value='${query}'/>">
                                                 </c:if>
