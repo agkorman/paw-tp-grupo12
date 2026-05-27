@@ -59,6 +59,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/communities/*/join"),
                                 antMatcher(HttpMethod.POST, "/communities/*/posts"),
                                 antMatcher(HttpMethod.POST, "/communities/*/posts/*/helpful"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments/*/helpful"),
                                 antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments"),
                                 antMatcher(HttpMethod.GET, "/communities/*/members"),
                                 antMatcher(HttpMethod.POST, "/communities/*/members/*/kick"),

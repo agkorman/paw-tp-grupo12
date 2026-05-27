@@ -5,6 +5,10 @@
 <%@ attribute name="body" required="true" %>
 <%@ attribute name="commentId" required="true" %>
 <%@ attribute name="helpfulCount" required="true" type="java.lang.Long" %>
+<%@ attribute name="helpfulByCurrentUser" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="helpfulAction" required="false" type="java.lang.String" %>
+<%@ attribute name="helpfulDisabled" required="false" %>
+<%@ attribute name="helpfulIntent" required="false" type="java.lang.String" %>
 <%@ attribute name="isOp" required="false" type="java.lang.Boolean" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
@@ -29,8 +33,10 @@
     <div class="community-comment-actions">
         <pa:review-like-button
                 reviewId="${commentId}"
-                liked="false"
+                liked="${helpfulByCurrentUser}"
                 likeCount="${helpfulCount}"
-                readonly="true"/>
+                action="${helpfulAction}"
+                disabled="${helpfulDisabled}"
+                intent="${helpfulIntent}"/>
     </div>
 </article>

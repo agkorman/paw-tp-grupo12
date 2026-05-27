@@ -38,6 +38,9 @@ public interface CommunityDao {
     boolean addHelpfulReaction(long postId, long userId);
     boolean removeHelpfulReaction(long postId, long userId);
     boolean isHelpfulReactionAddedByUser(long postId, long userId);
+    boolean addCommentHelpfulReaction(long commentId, long userId);
+    boolean removeCommentHelpfulReaction(long commentId, long userId);
+    boolean isCommentHelpfulReactionAddedByUser(long commentId, long userId);
     Map<Long, List<CommunityTopic>> findTopicsByCommunityIds(Collection<Long> communityIds);
     List<CommunityPost> findPostsByCommunityId(long communityId);
     Page<CommunityPost> findVisiblePostsByCommunityId(long communityId, String sort, int page);
@@ -51,4 +54,5 @@ public interface CommunityDao {
     Map<Long, Long> countWeeklyPostsByCommunityIds(Collection<Long> communityIds, LocalDateTime since);
     Map<Long, Long> countCommentsByPostIds(Collection<Long> postIds);
     Map<Long, Long> countHelpfulReactionsByPostIds(Collection<Long> postIds);
+    Map<Long, Long> countHelpfulReactionsByCommentIds(Collection<Long> commentIds);
 }

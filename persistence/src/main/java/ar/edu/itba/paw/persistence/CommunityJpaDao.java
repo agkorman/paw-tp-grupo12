@@ -416,6 +416,54 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public boolean addCommentHelpfulReaction(final long commentId, final long userId) {
+        final int rows = em.createNativeQuery(
+                "INSERT INTO community_post_comment_helpful_reactions (comment_id, user_id) " +
+                "SELECT :commentId, :userId FROM (SELECT 1) AS d " +
+                "WHERE NOT EXISTS (" +
+                "SELECT 1 FROM community_post_comment_helpful_reactions " +
+                "WHERE comment_id = :commentId AND user_id = :userId" +
+                ")"
+        )
+                .setParameter("commentId", commentId)
+                .setParameter("userId", userId)
+                .executeUpdate();
+        if (rows == 0) {
+            LOGGER.debug("user id={} already marked community comment id={} as helpful", userId, commentId);
+            return false;
+        }
+        LOGGER.info("user id={} marked community comment id={} as helpful", userId, commentId);
+        return true;
+    }
+
+    @Override
+    public boolean removeCommentHelpfulReaction(final long commentId, final long userId) {
+        final int rows = em.createNativeQuery(
+                "DELETE FROM community_post_comment_helpful_reactions " +
+                "WHERE comment_id = :commentId AND user_id = :userId"
+        )
+                .setParameter("commentId", commentId)
+                .setParameter("userId", userId)
+                .executeUpdate();
+        if (rows > 0) {
+            LOGGER.info("user id={} removed helpful reaction from community comment id={}", userId, commentId);
+        }
+        return rows > 0;
+    }
+
+    @Override
+    public boolean isCommentHelpfulReactionAddedByUser(final long commentId, final long userId) {
+        final Number count = (Number) em.createNativeQuery(
+                "SELECT COUNT(*) FROM community_post_comment_helpful_reactions " +
+                "WHERE comment_id = :commentId AND user_id = :userId"
+        )
+                .setParameter("commentId", commentId)
+                .setParameter("userId", userId)
+                .getSingleResult();
+        return count != null && count.longValue() > 0;
+    }
+
+    @Override
     public Map<Long, List<CommunityTopic>> findTopicsByCommunityIds(final Collection<Long> communityIds) {
         final List<Long> normalizedIds = normalizeIds(communityIds);
         if (normalizedIds.isEmpty()) {
@@ -663,6 +711,23 @@ public class CommunityJpaDao implements CommunityDao {
                 "FROM community_post_helpful_reactions " +
                 "WHERE post_id IN (" + placeholders(normalizedIds.size()) + ") " +
                 "GROUP BY post_id"
+        );
+        applyPositionalParameters(countQuery, normalizedIds);
+        return numberMap(countQuery.getResultList());
+    }
+
+    @Override
+    public Map<Long, Long> countHelpfulReactionsByCommentIds(final Collection<Long> commentIds) {
+        final List<Long> normalizedIds = normalizeIds(commentIds);
+        if (normalizedIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        final Query countQuery = em.createNativeQuery(
+                "SELECT comment_id, COUNT(*) " +
+                "FROM community_post_comment_helpful_reactions " +
+                "WHERE comment_id IN (" + placeholders(normalizedIds.size()) + ") " +
+                "GROUP BY comment_id"
         );
         applyPositionalParameters(countQuery, normalizedIds);
         return numberMap(countQuery.getResultList());

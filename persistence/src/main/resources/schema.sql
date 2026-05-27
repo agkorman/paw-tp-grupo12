@@ -821,6 +821,13 @@ CREATE TABLE IF NOT EXISTS community_post_helpful_reactions (
     CONSTRAINT pk_community_post_helpful_reactions PRIMARY KEY (post_id, user_id)
 );
 
+CREATE TABLE IF NOT EXISTS community_post_comment_helpful_reactions (
+    comment_id   BIGINT       NOT NULL REFERENCES community_post_comments(comment_id) ON DELETE CASCADE,
+    user_id      BIGINT       NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_community_post_comment_helpful_reactions PRIMARY KEY (comment_id, user_id)
+);
+
 CREATE TABLE IF NOT EXISTS community_post_images (
     image_id       BIGSERIAL    PRIMARY KEY,
     post_id        BIGINT       NOT NULL REFERENCES community_posts(post_id) ON DELETE CASCADE,
@@ -874,6 +881,7 @@ CREATE INDEX IF NOT EXISTS idx_community_memberships_user_id ON community_member
 CREATE INDEX IF NOT EXISTS idx_community_posts_community_created_at ON community_posts (community_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_community_posts_author_user_id ON community_posts (author_user_id);
 CREATE INDEX IF NOT EXISTS idx_community_post_helpful_reactions_user_id ON community_post_helpful_reactions (user_id);
+CREATE INDEX IF NOT EXISTS idx_community_post_comment_helpful_reactions_user_id ON community_post_comment_helpful_reactions (user_id);
 CREATE INDEX IF NOT EXISTS idx_community_post_comments_post_created_at ON community_post_comments (post_id, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_community_post_comments_user_id ON community_post_comments (user_id);
 CREATE INDEX IF NOT EXISTS idx_community_post_images_post_id ON community_post_images (post_id);

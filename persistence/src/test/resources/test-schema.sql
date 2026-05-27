@@ -284,3 +284,10 @@ CREATE TABLE community_post_helpful_reactions (
     created_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_community_post_helpful_reactions PRIMARY KEY (post_id, user_id)
 );
+
+CREATE TABLE community_post_comment_helpful_reactions (
+    comment_id   BIGINT      NOT NULL REFERENCES community_post_comments(comment_id) ON DELETE CASCADE,
+    user_id      INTEGER     NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    created_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_community_post_comment_helpful_reactions PRIMARY KEY (comment_id, user_id)
+);

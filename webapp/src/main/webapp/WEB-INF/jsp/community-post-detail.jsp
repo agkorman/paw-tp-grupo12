@@ -128,6 +128,7 @@
             <section class="community-comments-list">
                 <spring:message var="commentModMenuLabel" code="communities.comment.modMenu.label"/>
                 <c:forEach var="comment" items="${postView.comments}">
+                    <c:url var="communityCommentHelpfulUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/comments/${comment.commentId}/helpful"/>
                     <div class="community-comment-row">
                         <pa:community-comment-card
                                 commentId="${comment.commentId}"
@@ -136,6 +137,10 @@
                                 timeText="${comment.timeText}"
                                 body="${comment.body}"
                                 helpfulCount="${comment.helpfulCount}"
+                                helpfulByCurrentUser="${comment.helpfulByCurrentUser}"
+                                helpfulAction="${communityCommentHelpfulUrl}"
+                                helpfulDisabled="${empty pageContext.request.userPrincipal}"
+                                helpfulIntent="community-post-comment-helpful-${comment.commentId}"
                                 isOp="${comment.op}"/>
                         <c:if test="${comment.deletable or comment.hideable}">
                             <div class="community-comment-row-meta">

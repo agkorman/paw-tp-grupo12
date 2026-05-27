@@ -162,6 +162,8 @@ class CommunityServiceImplTest {
         when(communityDao.countHelpfulReactionsByPostIds(anyCollection())).thenReturn(Map.of(post.getId(), 4L));
         when(communityDao.isHelpfulReactionAddedByUser(post.getId(), USER_ID)).thenReturn(true);
         when(communityDao.countCommentsByPostIds(anyCollection())).thenReturn(Map.of(post.getId(), 1L));
+        when(communityDao.countHelpfulReactionsByCommentIds(anyCollection())).thenReturn(Map.of(comment.getId(), 2L));
+        when(communityDao.isCommentHelpfulReactionAddedByUser(comment.getId(), USER_ID)).thenReturn(true);
 
         // Exercise
         final Optional<CommunityPostDetailData> result =
@@ -175,6 +177,8 @@ class CommunityServiceImplTest {
         assertEquals(1L, result.get().getCommentCount());
         assertEquals(1, result.get().getComments().size());
         assertEquals("That paint looks original.", result.get().getComments().get(0).getBody());
+        assertEquals(2L, result.get().getHelpfulCountForComment(comment.getId()));
+        assertTrue(result.get().isHelpfulByCurrentUserForComment(comment.getId()));
     }
 
     @Test
@@ -415,6 +419,62 @@ class CommunityServiceImplTest {
         // Assertions
         assertTrue(result.isPresent());
         assertTrue(result.get());
+    }
+
+    @Test
+    void toggleCommentHelpfulReaction_whenAlreadyHelpful_returnsRemovedState() {
+        // Arrange
+        final Community community = community();
+        final CommunityPost post = post(community, author(9L, "mateo.classics"));
+        final CommunityPostComment comment = comment(post, author(12L, "lu.driver"));
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findCommentById(comment.getId())).thenReturn(Optional.of(comment));
+        when(communityDao.isCommentHelpfulReactionAddedByUser(comment.getId(), USER_ID)).thenReturn(true);
+
+        // Exercise
+        final Optional<Boolean> result =
+                communityService.toggleCommentHelpfulReaction("classics", "falcon-60", comment.getId(), USER_ID);
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertFalse(result.get());
+    }
+
+    @Test
+    void toggleCommentHelpfulReaction_whenNotHelpful_returnsAddedState() {
+        // Arrange
+        final Community community = community();
+        final CommunityPost post = post(community, author(9L, "mateo.classics"));
+        final CommunityPostComment comment = comment(post, author(12L, "lu.driver"));
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findCommentById(comment.getId())).thenReturn(Optional.of(comment));
+        when(communityDao.isCommentHelpfulReactionAddedByUser(comment.getId(), USER_ID)).thenReturn(false);
+
+        // Exercise
+        final Optional<Boolean> result =
+                communityService.toggleCommentHelpfulReaction("classics", "falcon-60", comment.getId(), USER_ID);
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertTrue(result.get());
+    }
+
+    @Test
+    void toggleCommentHelpfulReaction_whenCommentHidden_returnsEmpty() {
+        // Arrange
+        final Community community = community();
+        final CommunityPost post = post(community, author(9L, "mateo.classics"));
+        final CommunityPostComment comment = comment(post, author(12L, "lu.driver"));
+        comment.setHidden(true);
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findCommentById(comment.getId())).thenReturn(Optional.of(comment));
+
+        // Exercise
+        final Optional<Boolean> result =
+                communityService.toggleCommentHelpfulReaction("classics", "falcon-60", comment.getId(), USER_ID);
+
+        // Assertions
+        assertFalse(result.isPresent());
     }
 
     @Test

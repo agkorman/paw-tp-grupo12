@@ -299,16 +299,37 @@ public class CommunityController {
         final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
-        final String defaultRedirect = "/communities/" + communitySlug + "/posts/" + postSlug;
-        if (currentUser == null) {
-            final String safeRedirect = LoginRedirectUtils.safeRedirect(defaultRedirect, request.getContextPath())
-                    .orElse(defaultRedirect);
-            return "redirect:/login?redirect=" + safeRedirect;
+        final String defaultRedirect = communityPostDetailPath(communitySlug, postSlug);
+        final String authRedirect = redirectToLoginIfAnonymous(request, currentUser, defaultRedirect);
+        if (authRedirect != null) {
+            return authRedirect;
         }
 
         communityService.togglePostHelpfulReaction(communitySlug, postSlug, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        return "redirect:" + defaultRedirect;
+        return redirectTo(defaultRedirect);
+    }
+
+    @RequestMapping(
+        value = "/communities/{communitySlug}/posts/{postSlug}/comments/{commentId}/helpful",
+        method = RequestMethod.POST
+    )
+    public String toggleCommentHelpful(
+        @PathVariable final String communitySlug,
+        @PathVariable final String postSlug,
+        @PathVariable final long commentId,
+        final HttpServletRequest request,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        final String defaultRedirect = communityPostDetailPath(communitySlug, postSlug);
+        final String authRedirect = redirectToLoginIfAnonymous(request, currentUser, defaultRedirect);
+        if (authRedirect != null) {
+            return authRedirect;
+        }
+
+        communityService.toggleCommentHelpfulReaction(communitySlug, postSlug, commentId, currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("community post comment not found"));
+        return redirectTo(defaultRedirect);
     }
 
     @RequestMapping(
@@ -648,6 +669,25 @@ public class CommunityController {
         model.addAttribute("community", community);
     }
 
+    private String redirectToLoginIfAnonymous(final HttpServletRequest request,
+                                              final AuthenticatedUser currentUser,
+                                              final String defaultRedirect) {
+        if (currentUser != null) {
+            return null;
+        }
+        final String safeRedirect = LoginRedirectUtils.safeRedirect(defaultRedirect, request.getContextPath())
+                .orElse(defaultRedirect);
+        return redirectTo("/login?redirect=" + safeRedirect);
+    }
+
+    private String communityPostDetailPath(final String communitySlug, final String postSlug) {
+        return "/communities/" + communitySlug + "/posts/" + postSlug;
+    }
+
+    private String redirectTo(final String path) {
+        return "redirect:" + path;
+    }
+
     private List<PostCardView> toPostCards(final List<CommunityPostSummary> postSummaries,
                                            final String communitySlug) {
         final List<PostCardView> cards = new ArrayList<>();
@@ -676,7 +716,8 @@ public class CommunityController {
                 comment.getAuthorUsername(),
                 relativeTimeFormatter.format(comment.getCreatedAt()),
                 comment.getBody(),
-                0,
+                postDetail.getHelpfulCountForComment(comment.getId()),
+                postDetail.isHelpfulByCurrentUserForComment(comment.getId()),
                 comment.getUserId() == postDetail.getPost().getAuthorUserId(),
                 postDetail.isCommentDeletableByViewer(comment),
                 viewerModerator
@@ -998,6 +1039,7 @@ public class CommunityController {
         private final String timeText;
         private final String body;
         private final long helpfulCount;
+        private final boolean helpfulByCurrentUser;
         private final boolean op;
         private final boolean deletable;
         private final boolean hideable;
@@ -1005,6 +1047,7 @@ public class CommunityController {
         private CommentView(final long commentId,
                             final String authorProfileHref, final String author, final String timeText,
                             final String body, final long helpfulCount,
+                            final boolean helpfulByCurrentUser,
                             final boolean op, final boolean deletable, final boolean hideable) {
             this.commentId = commentId;
             this.authorProfileHref = authorProfileHref;
@@ -1012,6 +1055,7 @@ public class CommunityController {
             this.timeText = timeText;
             this.body = body;
             this.helpfulCount = helpfulCount;
+            this.helpfulByCurrentUser = helpfulByCurrentUser;
             this.op = op;
             this.deletable = deletable;
             this.hideable = hideable;
@@ -1047,6 +1091,10 @@ public class CommunityController {
 
         public long getHelpfulCount() {
             return helpfulCount;
+        }
+
+        public boolean getHelpfulByCurrentUser() {
+            return helpfulByCurrentUser;
         }
 
         public boolean getOp() {
