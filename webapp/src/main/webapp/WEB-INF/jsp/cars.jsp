@@ -57,7 +57,7 @@
                     <span class="review-tag-chip review-tag-chip--display review-tag-chip--${activeTag.sentiment}">
                         <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${tagEmojiDisplay}"/></span>
                         <span class="review-tag-chip-label"><pa:review-tag-label tag="${activeTag}"/></span>
-                        <a class="active-tag-filter-clear" href="${clearTagUrl}" aria-label="${fn:escapeXml(clearTagLabel)}">
+                        <a class="active-tag-filter-clear" href="${fn:escapeXml(clearTagUrl)}" aria-label="${fn:escapeXml(clearTagLabel)}">
                             <pa:icon name="close" size="14"/>
                         </a>
                     </span>
