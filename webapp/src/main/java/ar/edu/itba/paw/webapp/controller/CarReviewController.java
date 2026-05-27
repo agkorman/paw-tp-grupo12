@@ -18,6 +18,7 @@ import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
+import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import ar.edu.itba.paw.webapp.validation.ReviewFormValidator;
 import java.math.BigDecimal;
@@ -248,7 +249,19 @@ public class CarReviewController {
             return "review-form.jsp";
         }
 
-        final List<ImagePayload> imagePayloads = toImagePayloads(uploadedFiles);
+        final List<ImagePayload> imagePayloads;
+        try {
+            imagePayloads = toImagePayloads(uploadedFiles);
+        } catch (final IOException e) {
+            LOGGER.error(
+                "failed to read uploaded image during review creation carId={} userId={}",
+                car.getId(),
+                currentUser.getId(),
+                e
+            );
+            throw new UploadedImageReadException(
+                "creating review for car " + car.getId() + " by user " + currentUser.getId(), e);
+        }
         try {
             reviewService.createReview(
                 currentUser.getId(),
@@ -520,7 +533,7 @@ public class CarReviewController {
         if (total > MAX_REVIEW_IMAGE_COUNT) {
             errors.rejectValue("files", "validation.review.files.maxCount",
                     new Object[]{MAX_REVIEW_IMAGE_COUNT},
-                    "A review cannot have more than " + MAX_REVIEW_IMAGE_COUNT + " images.");
+                    message("validation.review.files.maxCount", MAX_REVIEW_IMAGE_COUNT));
             return;
         }
         for (final MultipartFile file : files) {
@@ -532,14 +545,10 @@ public class CarReviewController {
         }
     }
 
-    private static List<ImagePayload> toImagePayloads(final List<MultipartFile> files) {
+    private static List<ImagePayload> toImagePayloads(final List<MultipartFile> files) throws IOException {
         final List<ImagePayload> result = new ArrayList<>();
         for (final MultipartFile file : files) {
-            try {
-                result.add(new ImagePayload(file.getContentType(), file.getBytes()));
-            } catch (final IOException e) {
-                LOGGER.warn("failed to read multipart image bytes", e);
-            }
+            result.add(new ImagePayload(file.getContentType(), file.getBytes()));
         }
         return result;
     }
@@ -633,7 +642,18 @@ public class CarReviewController {
         }
 
         final List<ImagePayload> finalImages = new ArrayList<>(retainedPayloads);
-        finalImages.addAll(toImagePayloads(uploadedFiles));
+        try {
+            finalImages.addAll(toImagePayloads(uploadedFiles));
+        } catch (final IOException e) {
+            LOGGER.error(
+                "failed to read uploaded image during review update reviewId={} userId={}",
+                reviewId,
+                currentUser.getId(),
+                e
+            );
+            throw new UploadedImageReadException(
+                "updating review " + reviewId + " by user " + currentUser.getId(), e);
+        }
 
         try {
             reviewService.updateReview(
