@@ -258,6 +258,68 @@ class CommunityDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    void shouldUpdateCommunityPost() {
+        // Arrange
+        final User creator = insertUser("post-update-owner", "post-update-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("post-update-c", "Post update", "Desc", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "first-post",
+                "Old title",
+                "Old body",
+                LocalDateTime.now().minusHours(2)
+        );
+
+        // Exercise
+        communityDao.updatePost(postId, "New title", "New body");
+
+        // Assertions
+        flushAndClear();
+        final Map<String, Object> row = jdbcTemplate.queryForMap(
+                "SELECT title, body FROM community_posts WHERE post_id = ?",
+                postId
+        );
+        assertEquals("New title", row.get("title"));
+        assertEquals("New body", row.get("body"));
+    }
+
+    @Test
+    void shouldUpdateCommunityComment() {
+        // Arrange
+        final User creator = insertUser("comment-update-owner", "comment-update-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("comment-update-c", "Comment update", "Desc", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "first-post",
+                "First post",
+                "Post body",
+                LocalDateTime.now().minusHours(2)
+        );
+        final long commentId = insertCommunityComment(
+                postId,
+                creator.getId(),
+                "Old comment",
+                LocalDateTime.now().minusHours(1)
+        );
+
+        // Exercise
+        communityDao.updateComment(commentId, "New comment");
+
+        // Assertions
+        flushAndClear();
+        assertEquals(
+                "New comment",
+                jdbcTemplate.queryForObject(
+                        "SELECT body FROM community_post_comments WHERE comment_id = ?",
+                        String.class,
+                        commentId
+                )
+        );
+    }
+
+    @Test
     void shouldDeleteCommunityMembership() {
         // Arrange
         final User creator = insertUser("membership-remove-owner", "membership-remove-owner@example.com", "secret", "user");

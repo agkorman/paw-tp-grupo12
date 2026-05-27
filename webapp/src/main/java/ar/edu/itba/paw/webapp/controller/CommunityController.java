@@ -105,8 +105,8 @@ public class CommunityController {
         mav.addObject("criteria", criteria);
         mav.addObject("searchQuery", criteria.getQ());
         mav.addObject("selectedTopic", criteria.getTopic());
+        mav.addObject("selectedMembership", criteria.getMembership());
         mav.addObject("sortBy", criteria.getSortBy());
-        mav.addObject("hasAdvancedFilters", criteria.hasAdvancedFilters());
         mav.addObject("communityTopics", toTopicViews(communityService.getAvailableTopics()));
         mav.addObject("authenticated", currentUser != null);
         return mav;
@@ -397,6 +397,34 @@ public class CommunityController {
     }
 
     @RequestMapping(
+        value = "/communities/{communitySlug}/posts/{postSlug}/edit",
+        method = RequestMethod.GET
+    )
+    public ModelAndView editCommunityPost(
+        @PathVariable final String communitySlug,
+        @PathVariable final String postSlug,
+        @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        if (currentUser == null) {
+            return new ModelAndView("redirect:/communities/" + communitySlug + "/posts/" + postSlug);
+        }
+        final CommunityPost post = communityService
+                .getCommunityPostForEdit(communitySlug, postSlug, currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
+        final Community community = communityService
+                .getCommunityBySlug(communitySlug)
+                .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        communityPostForm.setTitle(post.getTitle());
+        communityPostForm.setBody(post.getBody());
+        final ModelAndView mav = new ModelAndView("community-post-form.jsp");
+        populateCommunityPostFormModel(mav, community);
+        mav.addObject("editMode", true);
+        mav.addObject("postSlug", postSlug);
+        return mav;
+    }
+
+    @RequestMapping(
         value = "/communities/{communitySlug}/posts",
         method = RequestMethod.POST
     )
@@ -435,6 +463,55 @@ public class CommunityController {
         return "redirect:/communities/" + communitySlug + "/posts/" + createdPost.getSlug();
     }
 
+    @RequestMapping(
+        value = "/communities/{communitySlug}/posts/{postSlug}/edit",
+        method = RequestMethod.POST
+    )
+    public String updateCommunityPost(
+        @PathVariable final String communitySlug,
+        @PathVariable final String postSlug,
+        @Valid @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
+        final BindingResult errors,
+        final Model model,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        if (currentUser == null) {
+            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+        }
+
+        final CommunityPost post = communityService
+                .getCommunityPostForEdit(communitySlug, postSlug, currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
+        final Community community = communityService
+                .getCommunityBySlug(communitySlug)
+                .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        if (errors.hasErrors()) {
+            LOGGER.warn("edit community post rejected: validation errors userId={} communitySlug={} postSlug={} errorCount={}",
+                    currentUser.getId(),
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                    LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                    errors.getErrorCount());
+            populateCommunityPostFormModel(model, community);
+            model.addAttribute("editMode", true);
+            model.addAttribute("postSlug", postSlug);
+            return "community-post-form.jsp";
+        }
+
+        communityService.updateCommunityPost(
+                        communitySlug,
+                        postSlug,
+                        currentUser.getId(),
+                        communityPostForm.getTitle(),
+                        communityPostForm.getBody()
+                )
+                .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
+        LOGGER.info("updated community post slug={} communitySlug={} userId={}",
+                LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                currentUser.getId());
+        return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+    }
+
     @RequestMapping(value = "/communities/{communitySlug}/members", method = RequestMethod.GET)
     public ModelAndView communityMembers(
         @PathVariable final String communitySlug,
@@ -453,7 +530,8 @@ public class CommunityController {
                     entry.getUsername(),
                     entry.getRole(),
                     entry.isModerator(),
-                    entry.isCreator()
+                    entry.isCreator(),
+                    entry.getUserId() == currentUser.getId()
             ));
         }
         final ModelAndView mav = new ModelAndView("community-members.jsp");
@@ -473,6 +551,12 @@ public class CommunityController {
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug;
+        }
+        if (userId == currentUser.getId()) {
+            LOGGER.warn("kick community member rejected: self kick userId={} communitySlug={}",
+                    currentUser.getId(),
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
+            return "redirect:/communities/" + communitySlug + "/members";
         }
         communityService.kickMember(communitySlug, userId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
@@ -582,6 +666,38 @@ public class CommunityController {
         communityService.deletePost(communitySlug, postSlug, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
         return "redirect:/communities/" + communitySlug;
+    }
+
+    @RequestMapping(
+        value = "/communities/{communitySlug}/posts/{postSlug}/comments/{commentId}/update",
+        method = RequestMethod.POST
+    )
+    public String updateComment(
+        @PathVariable final String communitySlug,
+        @PathVariable final String postSlug,
+        @PathVariable final long commentId,
+        @Valid @ModelAttribute("communityPostCommentForm") final CommunityPostCommentForm communityPostCommentForm,
+        final BindingResult errors,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        if (currentUser == null) {
+            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+        }
+        if (!errors.hasFieldErrors("body")) {
+            communityService.updateCommunityPostComment(
+                            communitySlug,
+                            commentId,
+                            currentUser.getId(),
+                            communityPostCommentForm.getBody()
+                    )
+                    .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+            LOGGER.info("updated community comment id={} communitySlug={} postSlug={} userId={}",
+                    commentId,
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                    LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                    currentUser.getId());
+        }
+        return "redirect:/communities/" + communitySlug + "/posts/" + postSlug + "#comment-" + commentId;
     }
 
     @RequestMapping(
@@ -752,14 +868,17 @@ public class CommunityController {
         private final String role;
         private final boolean moderator;
         private final boolean creator;
+        private final boolean currentUser;
 
         private MemberRowView(final long userId, final String username, final String role,
-                              final boolean moderator, final boolean creator) {
+                              final boolean moderator, final boolean creator,
+                              final boolean currentUser) {
             this.userId = userId;
             this.username = username;
             this.role = role;
             this.moderator = moderator;
             this.creator = creator;
+            this.currentUser = currentUser;
         }
 
         public long getUserId() {
@@ -780,6 +899,10 @@ public class CommunityController {
 
         public boolean getCreator() {
             return creator;
+        }
+
+        public boolean getCurrentUser() {
+            return currentUser;
         }
     }
 
@@ -932,6 +1055,7 @@ public class CommunityController {
         private final boolean viewerModerator;
         private final boolean viewerMember;
         private final boolean deletable;
+        private final boolean editable;
 
         private PostDetailView(final String communityName, final String communityHandle,
                                final String communitySlug, final String postSlug,
@@ -960,6 +1084,7 @@ public class CommunityController {
             this.viewerModerator = viewerModerator;
             this.viewerMember = viewerMember;
             this.deletable = deletable;
+            this.editable = deletable;
         }
 
         public String getCommunitySlug() {
@@ -984,6 +1109,10 @@ public class CommunityController {
 
         public boolean getDeletable() {
             return deletable;
+        }
+
+        public boolean getEditable() {
+            return editable;
         }
 
         public String getCommunityName() {
@@ -1043,6 +1172,7 @@ public class CommunityController {
         private final boolean op;
         private final boolean deletable;
         private final boolean hideable;
+        private final boolean editable;
 
         private CommentView(final long commentId,
                             final String authorProfileHref, final String author, final String timeText,
@@ -1059,6 +1189,7 @@ public class CommunityController {
             this.op = op;
             this.deletable = deletable;
             this.hideable = hideable;
+            this.editable = deletable;
         }
 
         public long getCommentId() {
@@ -1071,6 +1202,10 @@ public class CommunityController {
 
         public boolean getHideable() {
             return hideable;
+        }
+
+        public boolean getEditable() {
+            return editable;
         }
 
         public String getAuthorProfileHref() {

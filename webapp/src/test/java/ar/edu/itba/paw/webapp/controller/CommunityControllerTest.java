@@ -3,6 +3,8 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.Community;
 import ar.edu.itba.paw.model.CommunityDetailData;
 import ar.edu.itba.paw.model.CommunityHubEntry;
+import ar.edu.itba.paw.model.CommunityMembersData;
+import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
@@ -29,9 +31,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -39,7 +43,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -273,6 +276,46 @@ class CommunityControllerTest {
     }
 
     @Test
+    void communityMembers_marksCurrentUserRow() throws Exception {
+        // Arrange
+        when(communityService.getCommunityMembers("classics", 7L))
+                .thenReturn(Optional.of(communityMembersData()));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(get("/communities/classics/members"));
+
+        // Assertions
+        final MvcResult mvcResult = resultActions
+                .andExpect(status().isOk())
+                .andExpect(view().name("community-members.jsp"))
+                .andReturn();
+        final List<?> rows = (List<?>) mvcResult.getModelAndView().getModel().get("memberRows");
+        assertTrue(rows.stream().anyMatch(row -> ((CommunityController.MemberRowView) row).getCurrentUser()));
+        clearSecurityContext();
+    }
+
+    @Test
+    void kickCommunityMember_selfRedirectsToMembersPage() throws Exception {
+        // Arrange
+        final String communitySlug = "classics";
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities/classics/members/7/kick")
+        );
+
+        // Assertions
+        resultActions
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/communities/" + communitySlug + "/members"));
+        clearSecurityContext();
+    }
+
+    @Test
     void submitCommunityPost_validForm_redirectsToPostDetail() throws Exception {
         // Arrange
         final CommunityPost createdPost = post();
@@ -468,6 +511,18 @@ class CommunityControllerTest {
                 java.util.Map.of(10L, true),
                 "member",
                 7L
+        );
+    }
+
+    private static CommunityMembersData communityMembersData() {
+        return new CommunityMembersData(
+                community(),
+                List.of(
+                        new CommunityMembershipEntry(7L, "mateo.classics", "moderator", LocalDateTime.now(), false),
+                        new CommunityMembershipEntry(8L, "lu.driver", "member", LocalDateTime.now(), false)
+                ),
+                "moderator",
+                false
         );
     }
 

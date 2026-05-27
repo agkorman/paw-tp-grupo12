@@ -26,12 +26,9 @@
         <pa:communities-toolbar
                 topics="${communityTopics}"
                 selectedTopic="${selectedTopic}"
+                selectedMembership="${selectedMembership}"
                 searchQuery="${searchQuery}"
                 sortBy="${sortBy}"
-                hasAdvancedFilters="${hasAdvancedFilters}"/>
-
-        <pa:communities-filters-panel
-                criteria="${criteria}"
                 authenticated="${authenticated}"/>
 
         <section class="communities-card-grid" aria-label="${fn:escapeXml(communitiesGridAria)}">
@@ -50,7 +47,7 @@
             <jsp:useBean id="communitiesPaginationParams" class="java.util.LinkedHashMap"/>
             <c:if test="${not empty criteria.q}"><c:set target="${communitiesPaginationParams}" property="q" value="${criteria.q}"/></c:if>
             <c:if test="${not empty criteria.topic}"><c:set target="${communitiesPaginationParams}" property="topic" value="${criteria.topic}"/></c:if>
-            <c:if test="${criteria.joinedOnly}"><c:set target="${communitiesPaginationParams}" property="joinedOnly" value="true"/></c:if>
+            <c:if test="${not empty criteria.membership}"><c:set target="${communitiesPaginationParams}" property="membership" value="${criteria.membership}"/></c:if>
             <c:if test="${not empty criteria.sortBy}"><c:set target="${communitiesPaginationParams}" property="sortBy" value="${criteria.sortBy}"/></c:if>
             <spring:message var="communitiesPaginationAria" code="communities.pagination.aria"/>
             <pa:pagination currentPage="${communitiesCurrentPage}"
@@ -61,7 +58,6 @@
         </c:if>
     </main>
     <pa:script src="/js/cars/cars-toolbar.js"/>
-    <pa:script src="/js/communities/community-filters-panel.js"/>
     <pa:footer/>
 </body>
 </html>

@@ -9,12 +9,20 @@
 <pa:page-head titleCode="communities.postForm.title" styles="/css/community-post-common.css|/css/community-post-form.css|/css/communities-responsive.css"/>
 <body>
     <pa:nav activePage="communities"/>
-    <c:url var="communityPostCreateUrl" value="/communities/${community.slug}/posts"/>
+    <spring:message var="communityPostFormToolbarAria" code="communities.postForm.toolbar.aria"/>
+    <c:choose>
+        <c:when test="${editMode}">
+            <c:url var="communityPostFormActionUrl" value="/communities/${community.slug}/posts/${postSlug}/edit"/>
+        </c:when>
+        <c:otherwise>
+            <c:url var="communityPostFormActionUrl" value="/communities/${community.slug}/posts"/>
+        </c:otherwise>
+    </c:choose>
     <main class="community-post-form-page">
         <form:form cssClass="community-post-form-shell"
                    modelAttribute="communityPostForm"
                    method="post"
-                   action="${fn:escapeXml(communityPostCreateUrl)}"
+                   action="${fn:escapeXml(communityPostFormActionUrl)}"
                    novalidate="novalidate">
             <form:errors cssClass="alert alert-error" element="div"/>
             <div class="community-post-form-header">
@@ -49,7 +57,12 @@
             <div class="community-post-form-footer">
                 <div class="community-post-form-actions">
                     <div class="community-post-form-actions-group">
-                        <button type="submit" class="btn-primary"><spring:message code="communities.postForm.submit"/></button>
+                        <button type="submit" class="btn-primary">
+                            <c:choose>
+                                <c:when test="${editMode}"><spring:message code="communities.postForm.update"/></c:when>
+                                <c:otherwise><spring:message code="communities.postForm.submit"/></c:otherwise>
+                            </c:choose>
+                        </button>
                     </div>
                 </div>
             </div>

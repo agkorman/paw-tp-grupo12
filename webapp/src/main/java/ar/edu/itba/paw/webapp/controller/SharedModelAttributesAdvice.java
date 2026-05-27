@@ -53,4 +53,9 @@ public class SharedModelAttributesAdvice {
     public Map<String, List<ReviewTag>> reviewTagsBySentiment() {
         return reviewTagService.getAllGroupedBySentiment();
     }
+
+    @ModelAttribute("reviewTagsByCode")
+    public Map<String, ReviewTag> reviewTagsByCode() {
+        return reviewTagService.getAllByCode();
+    }
 }

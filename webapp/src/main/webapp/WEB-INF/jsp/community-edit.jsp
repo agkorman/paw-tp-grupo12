@@ -23,7 +23,7 @@
             <p><spring:message code="communities.edit.description"/></p>
         </section>
 
-        <form:form id="communityEditForm"
+        <form:form id="communityCreateForm"
                    cssClass="community-create-layout community-create-form"
                    modelAttribute="communityForm"
                    method="post"
@@ -48,22 +48,22 @@
                 <div class="community-create-section">
                     <div class="community-create-fields">
                         <div class="community-create-field">
-                            <label for="communityEditName"><spring:message code="communities.create.field.name"/></label>
-                            <form:input id="communityEditName"
+                            <label for="communityCreateName"><spring:message code="communities.create.field.name"/></label>
+                            <form:input id="communityCreateName"
                                         path="name"
                                         type="text"
                                         maxlength="21"
                                         required="required"
-                                        aria-describedby="communityEditNameHelp"/>
+                                        aria-describedby="communityCreateNameHelp"/>
                             <div class="community-create-field-meta">
-                                <span id="communityEditNameHelp"><spring:message code="communities.create.field.name.help"/></span>
+                                <span id="communityCreateNameHelp"><spring:message code="communities.create.field.name.help"/></span>
                             </div>
                             <form:errors path="name" cssClass="form-error" element="span"/>
                         </div>
 
                         <div class="community-create-field">
-                            <label for="communityEditDescription"><spring:message code="communities.create.field.description"/></label>
-                            <form:textarea id="communityEditDescription"
+                            <label for="communityCreateDescription"><spring:message code="communities.create.field.description"/></label>
+                            <form:textarea id="communityCreateDescription"
                                            path="description"
                                            rows="6"
                                            maxlength="180"

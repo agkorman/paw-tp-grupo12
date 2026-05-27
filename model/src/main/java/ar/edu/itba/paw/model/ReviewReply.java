@@ -10,6 +10,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 
 @Entity
@@ -35,7 +36,7 @@ public class ReviewReply implements Serializable {
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @Column(name = "updated_at", insertable = false)
     private LocalDateTime updatedAt;
 
     public ReviewReply() {}
@@ -65,5 +66,10 @@ public class ReviewReply implements Serializable {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(final LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    @PreUpdate
+    private void touchUpdatedAt() {
+        updatedAt = LocalDateTime.now();
+    }
 
 }

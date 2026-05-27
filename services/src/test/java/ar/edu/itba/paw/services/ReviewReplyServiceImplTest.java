@@ -39,6 +39,10 @@ public class ReviewReplyServiceImplTest {
     private ReviewDao reviewDao;
     @Mock
     private UserDao userDao;
+    @Mock
+    private CarService carService;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private ReviewReplyServiceImpl reviewReplyService;
@@ -128,6 +132,76 @@ public class ReviewReplyServiceImplTest {
 
         // Assertions
         assertTrue(result);
+    }
+
+    @Test
+    public void shouldUpdateReplyWithTrimmedBodyWhenUserOwnsReply() {
+        // Arrange
+        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(Optional.of(reply(USER_ID)));
+        when(reviewReplyDao.update(REPLY_ID, "Updated body")).thenReturn(true);
+
+        // Exercise
+        final boolean result = reviewReplyService.updateReply(REPLY_ID, USER_ID, "  Updated body  ");
+
+        // Assertions
+        assertTrue(result);
+    }
+
+    @Test
+    public void shouldRejectUpdateReplyWhenBodyIsBlank() {
+        // Arrange
+        final String blankBody = "   ";
+        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(Optional.of(reply(USER_ID)));
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> reviewReplyService.updateReply(REPLY_ID, USER_ID, blankBody));
+
+        // Assertions
+        assertEquals("Reply body is required.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldRejectUpdateReplyWhenUserDoesNotOwnReply() {
+        // Arrange
+        final long requestingUserId = 99L;
+        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(Optional.of(reply(USER_ID)));
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> reviewReplyService.updateReply(REPLY_ID, requestingUserId, "Updated body"));
+
+        // Assertions
+        assertEquals("Review reply 30 does not belong to user 99", ex.getMessage());
+    }
+
+    @Test
+    public void shouldHideReplyWhenReplyAndReviewExist() {
+        // Arrange
+        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(Optional.of(reply(USER_ID)));
+        when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(review()));
+        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(carService.getCarById(1L)).thenReturn(Optional.of(TestModels.car(1L, 2L, "Brand", "Model",
+                3L, "Sedan", "Description", LocalDateTime.now())));
+        when(reviewReplyDao.delete(REPLY_ID)).thenReturn(true);
+
+        // Exercise
+        final boolean result = reviewReplyService.hideReply(REPLY_ID, "Moderation reason");
+
+        // Assertions
+        assertTrue(result);
+    }
+
+    @Test
+    public void shouldReturnFalseWhenHidingMissingReply() {
+        // Arrange
+        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(Optional.empty());
+
+        // Exercise
+        final boolean result = reviewReplyService.hideReply(REPLY_ID, "Moderation reason");
+
+        // Assertions
+        assertFalse(result);
     }
 
     @Test

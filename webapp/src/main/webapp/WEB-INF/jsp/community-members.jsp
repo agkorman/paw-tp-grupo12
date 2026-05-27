@@ -58,7 +58,7 @@
                             </div>
                         </div>
                         <div class="community-member-actions">
-                            <c:if test="${viewerIsModerator and not row.creator}">
+                            <c:if test="${viewerIsModerator and not row.creator and not row.currentUser}">
                                 <pa:action-menu label="${memberActionMenuLabel}" cssClass="community-member-menu">
                                     <c:if test="${not row.moderator}">
                                         <c:url var="promoteUrl" value="/communities/${community.slug}/members/${row.userId}/promote"/>

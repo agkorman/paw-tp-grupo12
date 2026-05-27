@@ -17,6 +17,8 @@ public interface ReviewTagService {
      */
     Map<String, List<ReviewTag>> getAllGroupedBySentiment();
 
+    Map<String, ReviewTag> getAllByCode();
+
     /**
      * Throws {@link ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException}
      * if any id is unknown, the count exceeds {@link #MAX_TAGS_PER_REVIEW}, or two ids

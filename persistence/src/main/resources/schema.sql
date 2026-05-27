@@ -886,7 +886,7 @@ CREATE INDEX IF NOT EXISTS idx_community_post_comments_post_created_at ON commun
 CREATE INDEX IF NOT EXISTS idx_community_post_comments_user_id ON community_post_comments (user_id);
 CREATE INDEX IF NOT EXISTS idx_community_post_images_post_id ON community_post_images (post_id);
 
--- COMMUNIIES SEED
+-- COMMUNITIES SEED
 
 INSERT INTO community_topics (code)
 VALUES

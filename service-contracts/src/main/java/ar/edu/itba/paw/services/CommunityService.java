@@ -26,7 +26,10 @@ public interface CommunityService {
     Optional<Community> editCommunity(String communitySlug, long callerUserId, String name, String description, Collection<Short> topicIds);
     Optional<Boolean> deleteCommunity(String communitySlug, long callerUserId);
     Optional<CommunityPost> createCommunityPost(String communitySlug, long userId, String title, String body);
+    Optional<CommunityPost> getCommunityPostForEdit(String communitySlug, String postSlug, long callerUserId);
+    Optional<CommunityPost> updateCommunityPost(String communitySlug, String postSlug, long callerUserId, String title, String body);
     Optional<CommunityPostComment> createCommunityPostComment(String communitySlug, String postSlug, long userId, String body);
+    Optional<CommunityPostComment> updateCommunityPostComment(String communitySlug, long commentId, long callerUserId, String body);
     Optional<Boolean> toggleMembership(String slug, long userId);
     Optional<Boolean> togglePostHelpfulReaction(String communitySlug, String postSlug, long userId);
     Optional<Boolean> toggleCommentHelpfulReaction(String communitySlug, String postSlug, long commentId, long userId);

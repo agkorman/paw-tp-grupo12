@@ -81,6 +81,19 @@ public class ReviewReplyJpaDao implements ReviewReplyDao {
     }
 
     @Override
+    public boolean update(final long id, final String body) {
+        final ReviewReply reply = em.find(ReviewReply.class, id);
+        if (reply == null) {
+            LOGGER.warn("reply update affected 0 rows id={}", id);
+            return false;
+        }
+        reply.setBody(body);
+        reply.setUpdatedAt(LocalDateTime.now());
+        LOGGER.info("updated reply id={}", id);
+        return true;
+    }
+
+    @Override
     public Map<Long, Long> countNewRepliesPerReview(final long userId, final LocalDateTime since) {
         final List<?> rawRows = em.createQuery(
                         "SELECT rr.review.id, COUNT(rr.id) "
