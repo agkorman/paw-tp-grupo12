@@ -492,9 +492,10 @@ public class CommunityJpaDao implements CommunityDao {
         }
         final Query q = em.createNativeQuery(
                 "SELECT comment_id FROM community_post_comment_helpful_reactions " +
-                "WHERE comment_id IN (" + placeholders(normalizedIds.size()) + ") AND user_id = :userId"
-        ).setParameter("userId", userId);
+                "WHERE comment_id IN (" + placeholders(normalizedIds.size()) + ") AND user_id = ?"
+        );
         applyPositionalParameters(q, normalizedIds);
+        q.setParameter(normalizedIds.size() + 1, userId);
         @SuppressWarnings("unchecked")
         final List<Number> rows = q.getResultList();
         final Set<Long> result = new java.util.HashSet<>();

@@ -32,7 +32,7 @@
                             <c:out value="${fn:substring(row.username, 0, 1)}"/>
                         </span>
                         <div class="community-member-info">
-                            <c:url var="memberProfileUrl" value="/profiles/${row.userId}"/>
+                            <c:url var="memberProfileUrl" value="/users/${row.userId}"/>
                             <a class="community-member-name"
                                href="${fn:escapeXml(memberProfileUrl)}">
                                 <c:out value="${row.username}"/>

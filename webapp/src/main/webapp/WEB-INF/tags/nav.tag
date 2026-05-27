@@ -72,11 +72,16 @@
             <sec:authentication property="principal.displayName" var="displayName"/>
             <span class="nav-profile">
                 <spring:message var="profileLabel" code="nav.profile"/>
-                <a class="nav-user nav-profile-text ${activePage eq 'profile' ? 'active' : ''}" href="<c:url value='/profile'/>" aria-label="${fn:escapeXml(profileLabel)}">
+                <a class="nav-user nav-profile-text ${activePage eq 'profile' ? 'active' : ''}" href="<c:url value='/user'/>" aria-label="${fn:escapeXml(profileLabel)}">
                     <c:out value="${displayName}"/>
                 </a>
-                <a class="avatar nav-avatar-link" href="<c:url value='/profile'/>" aria-label="${fn:escapeXml(profileLabel)}">
+                <a class="avatar nav-avatar-link" href="<c:url value='/user'/>" aria-label="${fn:escapeXml(profileLabel)}">
                     <pa:icon name="user-avatar" size="18"/>
+                </a>
+                <spring:message var="searchUsersLabel" code="nav.searchUsers"/>
+                <a class="avatar nav-avatar-link nav-user-search" href="<c:url value='/users/search'/>" aria-label="${fn:escapeXml(searchUsersLabel)}">
+                    <pa:icon name="search" size="18"/>
+                    <span class="nav-user-search-tooltip" aria-hidden="true"><c:out value="${searchUsersLabel}"/></span>
                 </a>
             </span>
         </sec:authorize>

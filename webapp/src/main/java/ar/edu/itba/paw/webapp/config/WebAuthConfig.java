@@ -86,7 +86,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.GET, "/car-image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/images/*"),
-                                antMatcher(HttpMethod.GET, "/profiles/*"),
+                                antMatcher(HttpMethod.GET, "/users/*"),
                                 antMatcher(HttpMethod.GET, "/login"),
                                 antMatcher(HttpMethod.GET, "/register"))
                             .permitAll()
@@ -106,7 +106,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.GET, "/cars/new"),
                                 antMatcher(HttpMethod.GET, "/reviews/new"),
                                 antMatcher(HttpMethod.GET, "/reviews/*/edit"),
-                                antMatcher(HttpMethod.GET, "/profile"),
+                                antMatcher(HttpMethod.GET, "/user"),
                                 antMatcher(HttpMethod.POST, "/cars"),
                                 antMatcher(HttpMethod.POST, "/reviews/*"),
                                 antMatcher(HttpMethod.POST, "/reviews/*/delete"),
@@ -117,10 +117,10 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/reviews/replies/*/update"),
                                 antMatcher(HttpMethod.POST, "/reviews/replies/*/like"),
                                 antMatcher(HttpMethod.POST, "/logout"),
-                                antMatcher(HttpMethod.POST, "/profile"),
-                                antMatcher(HttpMethod.POST, "/profile/language"),
+                                antMatcher(HttpMethod.POST, "/user"),
+                                antMatcher(HttpMethod.POST, "/user/language"),
                                 antMatcher(HttpMethod.POST, "/cars/*/favorite"),
-                                antMatcher(HttpMethod.POST, "/profiles/*/follow"),
+                                antMatcher(HttpMethod.POST, "/users/*/follow"),
                                 antMatcher(HttpMethod.POST, "/brand-requests"),
                                 antMatcher(HttpMethod.POST, "/body-type-requests"),
                                 antMatcher(HttpMethod.POST, "/admin-requests"))

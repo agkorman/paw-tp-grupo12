@@ -345,3 +345,54 @@ body.activity-preview-scroll-lock {
         font-size: 1rem;
     }
 }
+
+.activity-users-search {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+    margin: 0 0 24px;
+    width: 100%;
+}
+
+.activity-users-search-field {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 0 12px;
+}
+
+.activity-users-search-icon {
+    color: var(--text-muted);
+    display: inline-flex;
+}
+
+.activity-users-search-input {
+    flex: 1;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 15px;
+    padding: 12px 0;
+}
+
+.activity-users-search-submit {
+    border: 0;
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 0 20px;
+    cursor: pointer;
+}
+
+.activity-users-search-submit:hover {
+    filter: brightness(1.08);
+}

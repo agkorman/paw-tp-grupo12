@@ -70,7 +70,7 @@
             <c:choose>
                 <c:when test="${ownProfile}">
                     <div class="profile-owner-actions">
-                        <c:url var="profileLanguageUrl" value="/profile/language"/>
+                        <c:url var="profileLanguageUrl" value="/user/language"/>
                         <spring:message var="profileLanguageLabel" code="profile.language.label"/>
                         <form class="profile-language-form" method="post" action="${profileLanguageUrl}" novalidate="novalidate">
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
@@ -106,7 +106,7 @@
                     </div>
                 </c:when>
                 <c:otherwise>
-                    <c:url var="profileFollowUrl" value="/profiles/${profile.id}/follow"/>
+                    <c:url var="profileFollowUrl" value="/users/${profile.id}/follow"/>
                     <c:choose>
                         <c:when test="${authenticated}">
                             <form class="profile-action-form profile-follow-form"
@@ -127,7 +127,7 @@
                         </c:when>
                         <c:otherwise>
                             <c:url var="profileFollowLoginUrl" value="/login">
-                                <c:param name="redirect" value="/profiles/${profile.id}"/>
+                                <c:param name="redirect" value="/users/${profile.id}"/>
                                 <c:param name="intent" value="follow-profile-${profile.id}"/>
                             </c:url>
                             <a href="${profileFollowLoginUrl}"

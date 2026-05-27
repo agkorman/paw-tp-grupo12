@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.EmailRecipient;
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 
 import java.util.List;
@@ -16,4 +17,5 @@ public interface UserService {
     boolean updateRole(long userId, String role);
     List<EmailRecipient> getModeratorEmailRecipients();
     List<User> getAllUsers();
+    Page<User> searchUsers(String query, int page);
 }

@@ -1,5 +1,5 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
-<%@ attribute name="reviewCard" required="true" type="ar.edu.itba.paw.webapp.controller.ProfileController.ProfileReviewCard" %>
+<%@ attribute name="reviewCard" required="true" type="ar.edu.itba.paw.webapp.controller.UserController.ProfileReviewCard" %>
 <%@ attribute name="editable" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="actionRedirect" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>

@@ -471,8 +471,8 @@ public class CarController {
                 "/".equals(path) ||
                 "/cars".equals(path) ||
                 path.matches("/reviews/car/\\d+") ||
-                "/profile".equals(path) ||
-                path.matches("/profiles/\\d+")
+                "/user".equals(path) ||
+                path.matches("/users/\\d+")
             ) {
                 final String query = uri.getRawQuery();
                 return path + (query == null ? "" : "?" + query);

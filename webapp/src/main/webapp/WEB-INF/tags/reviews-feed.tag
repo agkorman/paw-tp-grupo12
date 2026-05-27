@@ -150,10 +150,11 @@
                                     <c:forEach var="replyCard" items="${thread.replies}">
                                         <c:set var="reply" value="${replyCard.reply}"/>
                                         <c:url var="replyLikeUrl" value="/reviews/replies/${reply.id}/like"/>
+                                        <c:url var="replyAuthorProfileUrl" value="/users/${reply.userId}"/>
                                         <c:url var="replyHideUrl" value="/reviews/replies/${reply.id}/hide"/>
                                         <c:url var="replyDeleteUrl" value="/reviews/replies/${reply.id}/delete"/>
                                         <c:url var="replyUpdateUrl" value="/reviews/replies/${reply.id}/update"/>
-                                        <c:url var="replyAuthorProfileUrl" value="/profiles/${reply.userId}"/>
+                                       
                                         <article class="review-reply" id="reply-${reply.id}">
                                             <div class="review-reply-header">
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">

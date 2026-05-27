@@ -152,12 +152,12 @@ class CatalogRequestControllerTest {
                     mockMvc.perform(
                             post("/admin-requests")
                                     .with(ControllerTestMvcSupport.authenticationPrincipalRequestPostProcessor())
-                                    .header("Referer", "http://localhost/profile")
+                                    .header("Referer", "http://localhost/user")
                                     .param("motivation", "I want to help.")
                                     .param("bio", "Experienced moderator.")
                                     .param("justification", "Fair and consistent."));
             // Assertions
-            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/profile"));
+            resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/user"));
         } finally {
             ControllerTestMvcSupport.clearSecurityContext();
         }

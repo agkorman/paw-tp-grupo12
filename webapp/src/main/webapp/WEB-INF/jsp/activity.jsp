@@ -35,7 +35,25 @@
     <spring:message var="activityFavoritesAria" code="activity.favorites.aria"/>
     <spring:message var="activityPreviewAria" code="activity.preview.aria"/>
 
+    <spring:message var="usersSearchPlaceholder" code="users.search.placeholder"/>
+    <spring:message var="usersSearchAria" code="users.search.aria"/>
+    <spring:message var="usersSearchAction" code="common.action.search"/>
     <main class="activity-page" data-activity-tabs>
+        <form class="activity-users-search" method="get" action="<c:url value='/users/search'/>" role="search">
+            <label class="activity-users-search-field" for="activity-users-search-input">
+                <span class="activity-users-search-icon" aria-hidden="true">
+                    <pa:icon name="search" size="20"/>
+                </span>
+                <input id="activity-users-search-input"
+                       class="activity-users-search-input"
+                       type="search"
+                       name="q"
+                       placeholder="${usersSearchPlaceholder}"
+                       autocomplete="off"
+                       aria-label="${usersSearchAria}">
+            </label>
+            <button type="submit" class="activity-users-search-submit"><c:out value="${usersSearchAction}"/></button>
+        </form>
         <c:choose>
             <c:when test="${authenticated}">
                 <pa:subtabs tabCount="3"

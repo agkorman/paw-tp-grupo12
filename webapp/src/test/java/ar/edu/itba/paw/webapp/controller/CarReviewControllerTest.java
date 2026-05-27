@@ -352,10 +352,10 @@ class CarReviewControllerTest {
             // Exercise
             final ResultActions resultActions = mockMvc.perform(
                     post("/reviews/1/like")
-                            .param("redirect", "/profile?tab=liked&page=2#profileLikedPanel"));
+                            .param("redirect", "/user?tab=liked&page=2#profileLikedPanel"));
             // Assertions
             resultActions.andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/profile?tab=liked&page=2#profileLikedPanel"));
+                    .andExpect(redirectedUrl("/user?tab=liked&page=2#profileLikedPanel"));
         } finally {
             clearSecurityContext();
         }
@@ -380,10 +380,10 @@ class CarReviewControllerTest {
                             .param("title", "Updated title")
                             .param("body", "Updated body with enough detail.")
                             .param("mileageKm", "15000")
-                            .param("redirect", "/profile?tab=reviews#profileReviewsPanel"));
+                            .param("redirect", "/user?tab=reviews#profileReviewsPanel"));
             // Assertions
             resultActions.andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/profile?tab=reviews#profileReviewsPanel"));
+                    .andExpect(redirectedUrl("/user?tab=reviews#profileReviewsPanel"));
         } finally {
             clearSecurityContext();
         }

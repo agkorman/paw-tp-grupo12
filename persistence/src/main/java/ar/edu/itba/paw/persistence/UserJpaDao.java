@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.EmailRecipient;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,6 +115,51 @@ public class UserJpaDao implements UserDao {
                         EmailRecipient.class)
                 .setParameter("roles", normalizedRoles)
                 .getResultList();
+    }
+
+    @Override
+    public Page<User> searchByQuery(final String query, final int page, final int pageSize) {
+        if (query == null || query.isBlank()) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final String escaped = query.toLowerCase(Locale.ROOT)
+                .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        final String likeQ = "%" + escaped + "%";
+
+        final Number total = (Number) em.createNativeQuery(
+                "SELECT COUNT(*) FROM users " +
+                "WHERE LOWER(username) LIKE ? ESCAPE '\\' OR LOWER(email) LIKE ? ESCAPE '\\'")
+                .setParameter(1, likeQ)
+                .setParameter(2, likeQ)
+                .getSingleResult();
+        final long totalItems = total == null ? 0L : total.longValue();
+        if (totalItems == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+
+        final int clampedPage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
+        final long offset = Pagination.offsetFor(clampedPage, pageSize);
+
+        @SuppressWarnings("unchecked")
+        final List<Number> idRows = em.createNativeQuery(
+                "SELECT user_id FROM users " +
+                "WHERE LOWER(username) LIKE ? ESCAPE '\\' OR LOWER(email) LIKE ? ESCAPE '\\' " +
+                "ORDER BY username ASC, user_id ASC LIMIT ? OFFSET ?")
+                .setParameter(1, likeQ)
+                .setParameter(2, likeQ)
+                .setParameter(3, pageSize)
+                .setParameter(4, offset)
+                .getResultList();
+        if (idRows.isEmpty()) {
+            return Page.empty(clampedPage, pageSize);
+        }
+        final List<Long> ids = idRows.stream().map(Number::longValue).collect(Collectors.toList());
+
+        final List<User> users = em.createQuery(
+                "SELECT u FROM User u WHERE u.id IN :ids ORDER BY u.username ASC, u.id ASC", User.class)
+                .setParameter("ids", ids)
+                .getResultList();
+        return new Page<>(users, clampedPage, pageSize, totalItems);
     }
 
     private List<String> normalizeRoles(Collection<String> roles) {

@@ -87,6 +87,27 @@
         }
     }
 
+    function filterConnections(query) {
+        var modal = document.getElementById('profileConnectionsModal');
+        var visibleList = modal ? modal.querySelector('[data-connections-list]') : null;
+        var rows = visibleList ? visibleList.querySelectorAll('[data-connection-row]') : [];
+        var normalizedQuery = (query || '').toLowerCase();
+        var empty = visibleList ? visibleList.querySelector('[data-connections-empty]') : null;
+        var visibleCount = 0;
+
+        for (var i = 0; i < rows.length; i += 1) {
+            var haystack = (rows[i].getAttribute('data-search-text') || '').toLowerCase();
+            rows[i].hidden = normalizedQuery !== '' && haystack.indexOf(normalizedQuery) < 0;
+            if (!rows[i].hidden) {
+                visibleCount += 1;
+            }
+        }
+
+        if (empty) {
+            empty.hidden = normalizedQuery === '' || visibleCount > 0;
+        }
+    }
+
     function setupProfileEditValidation() {
         var form = document.querySelector('[data-profile-edit-form]');
         var username = document.getElementById('profileNameInput');
@@ -285,6 +306,18 @@
         }
     }
 
+    function setupConnectionsSearch() {
+        var search = document.querySelector('[data-connections-search]');
+
+        if (!search) {
+            return;
+        }
+
+        search.addEventListener('input', function () {
+            filterConnections(search.value);
+        });
+    }
+
     document.addEventListener('click', function (event) {
         var editButton = closestByAttribute(event.target, 'data-open-edit-profile-modal');
         if (editButton) {
@@ -394,5 +427,6 @@
 
     setupProfileTabs();
     setupAutoOpenModals();
+    setupConnectionsSearch();
     setupProfileEditValidation();
 }());
