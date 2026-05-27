@@ -50,6 +50,16 @@ public class ReviewTagServiceImpl implements ReviewTagService {
 
     @Override
     @Transactional(readOnly = true)
+    public Map<String, ReviewTag> getAllByCode() {
+        final Map<String, ReviewTag> byCode = new LinkedHashMap<>();
+        for (final ReviewTag tag : reviewTagDao.findAll()) {
+            byCode.putIfAbsent(tag.getCode(), tag);
+        }
+        return byCode;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ReviewTag> validateSelection(final Collection<Short> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) {
             return Collections.emptyList();

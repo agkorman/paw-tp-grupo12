@@ -560,6 +560,68 @@
     border-color: rgba(255, 181, 158, 0.58);
 }
 
+.review-reply-form textarea.is-invalid,
+.review-reply-edit-form textarea.is-invalid {
+    border-color: var(--error);
+}
+
+.review-reply-form .client-form-error[hidden],
+.review-reply-edit-form .client-form-error[hidden] {
+    display: none;
+}
+
+.review-reply-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.review-reply-menu .action-menu-toggle {
+    width: 1.9rem;
+    height: 1.9rem;
+}
+
+.review-reply-edit-form {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0.35rem 0 0.5rem;
+}
+
+.review-reply-edit-form[hidden] {
+    display: none;
+}
+
+.review-reply-edit-form textarea {
+    width: 100%;
+    min-height: 3rem;
+    resize: vertical;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-md);
+    background: var(--surface-container);
+    color: var(--on-surface);
+    padding: 0.625rem 0.75rem;
+    font: inherit;
+}
+
+.review-reply-edit-form textarea:focus {
+    outline: none;
+    border-color: rgba(255, 181, 158, 0.58);
+    box-shadow: 0 0 0 3px rgba(255, 181, 158, 0.12);
+}
+
+.review-reply-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.review-reply-edit-actions .btn-primary,
+.review-reply-edit-actions .btn-secondary {
+    min-height: 2rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.82rem;
+}
+
 .review-reply-inline-error {
     margin: 0;
     color: var(--error-dim);

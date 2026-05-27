@@ -1,0 +1,140 @@
+.communities-hub-page {
+    width: min(1440px, calc(100% - 3rem));
+    margin: 0 auto;
+    padding: var(--spacing-8) 0 var(--spacing-16);
+    display: grid;
+    gap: var(--spacing-6);
+}
+
+.communities-hub-hero {
+    padding: var(--spacing-7) 0 var(--spacing-3);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--spacing-6);
+    align-items: end;
+}
+
+.communities-hub-copy {
+    max-width: 42rem;
+    display: grid;
+    gap: var(--spacing-3);
+}
+
+.communities-hub-cta {
+    align-self: center;
+}
+
+.communities-hub-kicker {
+    margin: 0;
+    color: var(--primary-container);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.communities-hub-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 5vw, 4.7rem);
+    line-height: 0.95;
+    color: var(--on-surface);
+}
+
+.communities-hub-description {
+    margin: 0;
+    max-width: 34rem;
+    color: var(--on-surface-variant);
+    font-size: 1.05rem;
+    line-height: 1.65;
+}
+
+/* Remove the horizontal padding cars-toolbar normally adds so it aligns with the card grid */
+.communities-hub-page .cars-toolbar {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Membership dropdown: wider column for 4-field layout */
+.communities-hub-page .cars-toolbar-shell {
+    grid-template-columns: minmax(0, 2fr) minmax(10rem, 1fr) minmax(11rem, 1fr) minmax(10rem, 1fr) auto;
+}
+
+.communities-card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-5);
+}
+
+.community-card {
+    display: grid;
+    position: relative;
+    color: inherit;
+    text-decoration: none;
+    background: var(--surface-container-low);
+    border: 1px solid rgba(229, 226, 225, 0.08);
+    box-shadow: var(--shadow-float);
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.community-card::before {
+    content: "";
+    display: block;
+    height: 0.35rem;
+    background: linear-gradient(135deg, var(--primary-container), var(--primary));
+}
+
+.community-card:hover,
+.community-card:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(255, 181, 158, 0.4);
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+    outline: none;
+}
+
+.community-card-badge {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--primary-container);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.community-card-badge svg {
+    color: var(--primary);
+}
+
+.community-card-body {
+    padding: var(--spacing-5);
+    display: grid;
+    gap: var(--spacing-3);
+}
+
+.community-card-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 3vw, 2.7rem);
+    line-height: 1;
+    color: var(--on-surface);
+}
+
+.community-card-description,
+.community-card-meta {
+    margin: 0;
+    color: var(--on-surface-variant);
+    line-height: 1.6;
+}
+
+.community-card-footer {
+    margin-top: var(--spacing-2);
+    display: block;
+}
+
+.community-card-meta {
+    font-size: 0.95rem;
+}

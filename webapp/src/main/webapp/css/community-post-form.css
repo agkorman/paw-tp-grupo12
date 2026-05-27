@@ -1,0 +1,121 @@
+.community-post-form-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+}
+
+.community-post-form-shell .alert-error {
+    margin: 0;
+    padding: var(--spacing-4) var(--spacing-5);
+    border: 1px solid rgba(255, 120, 120, 0.35);
+    background: rgba(200, 64, 64, 0.18);
+    color: var(--on-surface);
+    font-size: 0.9375rem;
+}
+
+.community-post-form-target {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    color: var(--secondary);
+    font-size: 1.15rem;
+    line-height: 1.4;
+}
+
+.community-post-form-target-name {
+    color: var(--on-surface);
+    font-weight: 700;
+    font-size: 1.35rem;
+}
+
+.community-post-form-card {
+    display: grid;
+    border: 1px solid rgba(229, 226, 225, 0.08);
+}
+
+.community-post-form-title-block,
+.community-post-form-body-block {
+    padding: var(--spacing-5);
+    display: grid;
+    gap: var(--spacing-3);
+}
+
+.community-post-form-title-block {
+    border-bottom: 1px solid rgba(229, 226, 225, 0.08);
+}
+
+.community-post-form-title-block label,
+.community-post-form-body-block label {
+    color: var(--secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.community-post-form-title-block .form-error,
+.community-post-form-body-block .form-error {
+    color: var(--error);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.community-post-form-title-block textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--on-surface);
+    font-family: var(--font-display);
+    font-size: clamp(1.45rem, 3vw, 2.1rem);
+    line-height: 1.18;
+    resize: none;
+    overflow: hidden;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+.community-post-form-body-block textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 16rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--on-surface);
+    font-size: 1.15rem;
+    line-height: 1.8;
+    resize: vertical;
+}
+
+.community-post-form-title-block textarea:focus,
+.community-post-form-body-block textarea:focus {
+    outline: none;
+}
+
+.community-post-form-footer {
+    display: grid;
+    gap: 0;
+}
+
+.community-post-form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.community-post-form-actions-group {
+    display: flex;
+    gap: var(--spacing-3);
+    flex-wrap: wrap;
+}
+
+.community-post-form-actions-group .btn-primary {
+    min-width: 11rem;
+    min-height: 3.25rem;
+    padding: 0 1.5rem;
+    font-size: 0.8rem;
+}

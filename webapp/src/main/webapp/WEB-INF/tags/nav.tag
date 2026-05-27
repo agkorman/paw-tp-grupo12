@@ -27,6 +27,7 @@
     <ul class="nav-links">
         <li><a href="<c:url value='/cars'/>" class="${activePage eq 'reviews' ? 'active' : ''}"><spring:message code="nav.catalog"/></a></li>
         <li><a href="<c:url value='/activity'/>" class="${activePage eq 'activity' ? 'active' : ''}"><spring:message code="nav.activity"/></a></li>
+        <li><a href="<c:url value='/communities'/>" class="${activePage eq 'communities' ? 'active' : ''}"><spring:message code="nav.communities"/></a></li>
         <sec:authorize access="hasRole('ADMIN')">
             <li><a href="<c:url value='/admin'/>" class="${activePage eq 'admin' ? 'active' : ''}"><spring:message code="nav.admin"/></a></li>
         </sec:authorize>

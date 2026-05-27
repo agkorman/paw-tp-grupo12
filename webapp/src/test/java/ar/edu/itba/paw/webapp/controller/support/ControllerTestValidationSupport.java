@@ -4,8 +4,10 @@ import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
+import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewTagService;
 import ar.edu.itba.paw.webapp.validation.ValidCarFormValidator;
+import ar.edu.itba.paw.webapp.validation.ValidCommunityFormValidator;
 import ar.edu.itba.paw.webapp.validation.ValidRecommendationFormValidator;
 import ar.edu.itba.paw.webapp.validation.ValidReviewFormValidator;
 import org.springframework.validation.beanvalidation.SpringValidatorAdapter;
@@ -52,6 +54,19 @@ public final class ControllerTestValidationSupport {
         });
     }
 
+    public static SpringValidatorAdapter communityFormSpringValidator(final CommunityService communityService) {
+        return buildDelegating(new SpecialFactory() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public <T extends ConstraintValidator<?, ?>> T create(final Class<T> key) {
+                if (ValidCommunityFormValidator.class.equals(key)) {
+                    return (T) new ValidCommunityFormValidator(communityService);
+                }
+                return null;
+            }
+        });
+    }
+
     public static SpringValidatorAdapter recommendationFormSpringValidator(final BodyTypeService bodyTypeService) {
         return buildDelegating(new SpecialFactory() {
             @SuppressWarnings("unchecked")
@@ -73,6 +88,7 @@ public final class ControllerTestValidationSupport {
             @Override
             public void releaseInstance(final ConstraintValidator<?, ?> instance) {
                 if (instance instanceof ValidCarFormValidator
+                        || instance instanceof ValidCommunityFormValidator
                         || instance instanceof ValidReviewFormValidator
                         || instance instanceof ValidRecommendationFormValidator) {
                     return;

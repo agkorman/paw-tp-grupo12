@@ -106,6 +106,7 @@
                 <c:if test="${not empty criteria.priceMin}"><c:set target="${paginationParams}" property="priceMin" value="${criteria.priceMin}"/></c:if>
                 <c:if test="${not empty criteria.priceMax}"><c:set target="${paginationParams}" property="priceMax" value="${criteria.priceMax}"/></c:if>
                 <c:if test="${not empty criteria.sortBy}"><c:set target="${paginationParams}" property="sortBy" value="${criteria.sortBy}"/></c:if>
+                <c:if test="${not empty criteria.tagCode}"><c:set target="${paginationParams}" property="tagCode" value="${criteria.tagCode}"/></c:if>
             </c:if>
             <pa:pagination currentPage="${currentPage}"
                            totalPages="${totalPages}"

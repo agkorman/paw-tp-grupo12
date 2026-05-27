@@ -1,5 +1,11 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.services.exception.CannotModerateCreatorException;
+import ar.edu.itba.paw.services.exception.CommunityContentOwnershipException;
+import ar.edu.itba.paw.services.exception.CommunityCreatorCannotLeaveException;
+import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
+import ar.edu.itba.paw.services.exception.CommunityModeratorRequiredException;
+import ar.edu.itba.paw.services.exception.CommunityOwnerRequiredException;
 import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import ar.edu.itba.paw.services.exception.CarNotFoundException;
@@ -60,7 +66,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             ForbiddenException.class,
             ReviewOwnershipException.class,
-            ReviewReplyOwnershipException.class
+            ReviewReplyOwnershipException.class,
+            CommunityMembershipRequiredException.class,
+            CommunityModeratorRequiredException.class,
+            CannotModerateCreatorException.class,
+            CommunityContentOwnershipException.class,
+            CommunityCreatorCannotLeaveException.class,
+            CommunityOwnerRequiredException.class
     })
     public ModelAndView handleForbidden(final RuntimeException e,
                                         final HttpServletRequest request) {

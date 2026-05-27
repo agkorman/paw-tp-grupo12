@@ -2,21 +2,28 @@
 <%@ attribute name="positives" required="false" type="java.util.List" %>
 <%@ attribute name="negatives" required="false" type="java.util.List" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <c:if test="${not empty positives or not empty negatives}">
+    <spring:message var="filterCarsByTagLabel" code="review.tags.filterCarsByTag"/>
     <div class="recommendation-reason">
         <c:if test="${not empty positives}">
             <ul class="recommendation-rail-list">
                 <c:forEach var="highlight" items="${positives}">
                     <c:if test="${highlight.visible}">
+                        <c:url var="positiveTagFilterUrl" value="/cars">
+                            <c:param name="tagCode" value="${highlight.tag.code}"/>
+                        </c:url>
                         <c:set var="recTagEmojiKey" value="review.tag.emoji.${highlight.tag.code}"/>
                         <spring:message code="review.tag.emoji.fallback" var="recTagEmojiFallback" text="🏷️"/>
                         <spring:message code="${recTagEmojiKey}" var="recTagEmojiDisplay" text="${recTagEmojiFallback}"/>
                         <li class="review-tag-chip review-tag-chip--display review-tag-chip--positive recommendation-rail-item">
-                            <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${recTagEmojiDisplay}"/></span>
-                            <span class="review-tag-chip-label"><pa:review-tag-label tag="${highlight.tag}"/></span>
+                            <a class="review-tag-chip-link" href="${fn:escapeXml(positiveTagFilterUrl)}" aria-label="${fn:escapeXml(filterCarsByTagLabel)}">
+                                <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${recTagEmojiDisplay}"/></span>
+                                <span class="review-tag-chip-label"><pa:review-tag-label tag="${highlight.tag}"/></span>
+                            </a>
                         </li>
                     </c:if>
                 </c:forEach>
@@ -26,12 +33,17 @@
             <ul class="recommendation-rail-list">
                 <c:forEach var="highlight" items="${negatives}">
                     <c:if test="${highlight.visible}">
+                        <c:url var="negativeTagFilterUrl" value="/cars">
+                            <c:param name="tagCode" value="${highlight.tag.code}"/>
+                        </c:url>
                         <c:set var="recTagEmojiKey" value="review.tag.emoji.${highlight.tag.code}"/>
                         <spring:message code="review.tag.emoji.fallback" var="recTagEmojiFallback" text="🏷️"/>
                         <spring:message code="${recTagEmojiKey}" var="recTagEmojiDisplay" text="${recTagEmojiFallback}"/>
                         <li class="review-tag-chip review-tag-chip--display review-tag-chip--negative recommendation-rail-item">
-                            <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${recTagEmojiDisplay}"/></span>
-                            <span class="review-tag-chip-label"><pa:review-tag-label tag="${highlight.tag}"/></span>
+                            <a class="review-tag-chip-link" href="${fn:escapeXml(negativeTagFilterUrl)}" aria-label="${fn:escapeXml(filterCarsByTagLabel)}">
+                                <span class="review-tag-chip-glyph" aria-hidden="true"><c:out value="${recTagEmojiDisplay}"/></span>
+                                <span class="review-tag-chip-label"><pa:review-tag-label tag="${highlight.tag}"/></span>
+                            </a>
                         </li>
                     </c:if>
                 </c:forEach>

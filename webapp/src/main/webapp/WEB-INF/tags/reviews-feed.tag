@@ -16,10 +16,14 @@
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 <spring:message var="reviewRepliesLabel" code="review.feed.replies.aria"/>
 <spring:message var="replyPlaceholder" code="review.feed.reply.placeholder"/>
+<spring:message var="replyRequiredMessage" code="review.reply.body.required"/>
+<spring:message var="replyMaxMessage" code="review.reply.body.max" arguments="1000"/>
 <spring:message var="replyAuthAction" code="review.authRequired.replyAction"/>
 <spring:message var="likeLabel" code="review.like.label"/>
 <spring:message var="reviewActionMenuLabel" code="review.actionMenu.open"/>
 <spring:message var="reviewHideLabel" code="review.hide.action.aria"/>
+<spring:message var="replyHideLabel" code="reply.hide.action.aria"/>
+<spring:message var="replyDeleteLabel" code="reply.delete.action.aria"/>
 <spring:message var="reviewAuthorFallback" code="review.author.fallback"/>
 
 <section id="reviewsFeed" class="reviews-feed">
@@ -147,14 +151,77 @@
                                         <c:set var="reply" value="${replyCard.reply}"/>
                                         <c:url var="replyLikeUrl" value="/reviews/replies/${reply.id}/like"/>
                                         <c:url var="replyAuthorProfileUrl" value="/users/${reply.userId}"/>
+                                        <c:url var="replyHideUrl" value="/reviews/replies/${reply.id}/hide"/>
+                                        <c:url var="replyDeleteUrl" value="/reviews/replies/${reply.id}/delete"/>
+                                        <c:url var="replyUpdateUrl" value="/reviews/replies/${reply.id}/update"/>
+                                       
                                         <article class="review-reply" id="reply-${reply.id}">
                                             <div class="review-reply-header">
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">
                                                     <c:out value="${empty reply.authorUsername ? reviewAuthorFallback : reply.authorUsername}"/>
                                                 </a>
-                                                <span><c:out value="${relativeTimeFormatter.format(reply.createdAt)}"/></span>
+                                                <div class="review-reply-header-actions">
+                                                    <span><c:out value="${relativeTimeFormatter.format(reply.createdAt)}"/></span>
+                                                    <sec:authorize access="hasRole('ADMIN')">
+                                                        <c:if test="${empty currentUserId or reply.userId != currentUserId}">
+                                                            <button type="button"
+                                                                    class="review-hide-button"
+                                                                    aria-label="${fn:escapeXml(replyHideLabel)}"
+                                                                    title="${fn:escapeXml(replyHideLabel)}"
+                                                                    data-open-hide-review-modal
+                                                                    data-review-id="${fn:escapeXml(reply.id)}"
+                                                                    data-review-hide-action="${fn:escapeXml(replyHideUrl)}"
+                                                                    data-review-hide-redirect="${fn:escapeXml(reviewItemRedirect)}"
+                                                                    data-review-title="${fn:escapeXml(reply.body)}">
+                                                                <pa:icon name="visibility-off" size="18"/>
+                                                            </button>
+                                                        </c:if>
+                                                    </sec:authorize>
+                                                    <sec:authorize access="isAuthenticated()">
+                                                        <c:if test="${not empty currentUserId and reply.userId == currentUserId}">
+                                                            <pa:action-menu label="${reviewActionMenuLabel}" cssClass="review-reply-menu">
+                                                                <button type="button" data-edit-reply-trigger>
+                                                                    <spring:message code="common.action.edit"/>
+                                                                </button>
+                                                                <form method="post" action="${fn:escapeXml(replyDeleteUrl)}"
+                                                                      data-confirm-modal="deleteReviewConfirmModal">
+                                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                                                    <input type="hidden" name="redirect" value="${fn:escapeXml(reviewItemRedirect)}">
+                                                                    <button type="submit" class="action-menu-danger" aria-label="${fn:escapeXml(replyDeleteLabel)}">
+                                                                        <spring:message code="common.action.delete"/>
+                                                                    </button>
+                                                                </form>
+                                                            </pa:action-menu>
+                                                        </c:if>
+                                                    </sec:authorize>
+                                                </div>
                                             </div>
-                                            <p class="review-reply-body"><c:out value="${reply.body}"/></p>
+                                            <p class="review-reply-body" data-reply-body><c:out value="${reply.body}"/></p>
+                                            <sec:authorize access="isAuthenticated()">
+                                                <c:if test="${not empty currentUserId and reply.userId == currentUserId}">
+                                                    <form method="post"
+                                                          action="${fn:escapeXml(replyUpdateUrl)}"
+                                                          class="review-reply-edit-form"
+                                                          data-reply-edit-form
+                                                          data-reply-required-message="${fn:escapeXml(replyRequiredMessage)}"
+                                                          data-reply-max-message="${fn:escapeXml(replyMaxMessage)}"
+                                                          hidden
+                                                          novalidate="novalidate">
+                                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                                        <input type="hidden" name="redirect" value="${fn:escapeXml(reviewsContextRedirect)}#reply-${reply.id}">
+                                                        <textarea name="body" rows="2" maxlength="1000" required><c:out value="${reply.body}"/></textarea>
+                                                        <span class="client-form-error" data-reply-error hidden></span>
+                                                        <div class="review-reply-edit-actions">
+                                                            <button type="button" class="btn-secondary" data-cancel-reply-edit>
+                                                                <spring:message code="common.action.cancel"/>
+                                                            </button>
+                                                            <button type="submit" class="btn-primary">
+                                                                <spring:message code="common.action.save"/>
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </c:if>
+                                            </sec:authorize>
                                             <pa:review-like-button
                                                     reviewId="${reply.id}"
                                                     action="${replyLikeUrl}"
@@ -169,8 +236,6 @@
                             <c:choose>
                                 <c:when test="${authenticated}">
                                     <c:set var="replyHasError" value="${not empty replyErrorReviewId and replyErrorReviewId eq review.id}"/>
-                                    <spring:message var="replyRequiredMessage" code="review.reply.body.required"/>
-                                    <spring:message var="replyMaxMessage" code="review.reply.body.max" arguments="1000"/>
                                     <form method="post" action="${replyCreateUrl}" class="review-reply-form"
                                           data-auth-resume-intent="reply-${review.id}"
                                           data-reply-required-message="${fn:escapeXml(replyRequiredMessage)}"

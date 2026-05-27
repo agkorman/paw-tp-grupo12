@@ -1,0 +1,103 @@
+package ar.edu.itba.paw.model;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+public class CommunityPostDetailData implements Serializable {
+
+    private final Community community;
+    private final CommunityPost post;
+    private final List<CommunityPostComment> comments;
+    private final long helpfulCount;
+    private final boolean helpfulByCurrentUser;
+    private final long commentCount;
+    private final String viewerRole;
+    private final Long viewerUserId;
+    private final Map<Long, Long> commentHelpfulCounts;
+    private final Map<Long, Boolean> commentHelpfulByCurrentUser;
+
+    public CommunityPostDetailData(final Community community, final CommunityPost post,
+                                   final List<CommunityPostComment> comments,
+                                   final long helpfulCount,
+                                   final boolean helpfulByCurrentUser,
+                                   final long commentCount,
+                                   final Map<Long, Long> commentHelpfulCounts,
+                                   final Map<Long, Boolean> commentHelpfulByCurrentUser,
+                                   final String viewerRole,
+                                   final Long viewerUserId) {
+        this.community = community;
+        this.post = post;
+        this.comments = comments == null ? new ArrayList<>() : new ArrayList<>(comments);
+        this.helpfulCount = helpfulCount;
+        this.helpfulByCurrentUser = helpfulByCurrentUser;
+        this.commentCount = commentCount;
+        this.commentHelpfulCounts = commentHelpfulCounts == null
+                ? Collections.emptyMap()
+                : Collections.unmodifiableMap(new LinkedHashMap<>(commentHelpfulCounts));
+        this.commentHelpfulByCurrentUser = commentHelpfulByCurrentUser == null
+                ? Collections.emptyMap()
+                : Collections.unmodifiableMap(new LinkedHashMap<>(commentHelpfulByCurrentUser));
+        this.viewerRole = viewerRole;
+        this.viewerUserId = viewerUserId;
+    }
+
+    public Community getCommunity() {
+        return community;
+    }
+
+    public CommunityPost getPost() {
+        return post;
+    }
+
+    public List<CommunityPostComment> getComments() {
+        return new ArrayList<>(comments);
+    }
+
+    public long getHelpfulCount() {
+        return helpfulCount;
+    }
+
+    public boolean isHelpfulByCurrentUser() {
+        return helpfulByCurrentUser;
+    }
+
+    public boolean getHelpfulByCurrentUser() {
+        return helpfulByCurrentUser;
+    }
+
+    public long getCommentCount() {
+        return commentCount;
+    }
+
+    public long getHelpfulCountForComment(final long commentId) {
+        return commentHelpfulCounts.getOrDefault(commentId, 0L);
+    }
+
+    public boolean isHelpfulByCurrentUserForComment(final long commentId) {
+        return commentHelpfulByCurrentUser.getOrDefault(commentId, Boolean.FALSE);
+    }
+
+    public String getViewerRole() {
+        return viewerRole;
+    }
+
+    public boolean isViewerModerator() {
+        return "moderator".equals(viewerRole);
+    }
+
+    public boolean isViewerMember() {
+        return "member".equals(viewerRole) || "moderator".equals(viewerRole);
+    }
+
+    public boolean isPostDeletableByViewer() {
+        return viewerUserId != null && post != null && post.getAuthorUserId() == viewerUserId;
+    }
+
+    public boolean isCommentDeletableByViewer(final CommunityPostComment comment) {
+        return viewerUserId != null && comment != null && comment.getUserId() == viewerUserId;
+    }
+}
