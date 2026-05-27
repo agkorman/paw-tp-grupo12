@@ -1,0 +1,122 @@
+.community-members-shell {
+    width: min(960px, 100%);
+    margin: 0 auto;
+    padding: var(--spacing-6) var(--spacing-5);
+    display: grid;
+    gap: var(--spacing-5);
+    background: var(--surface-container);
+    border: 1px solid rgba(229, 226, 225, 0.08);
+}
+
+.community-members-header {
+    display: grid;
+    gap: var(--spacing-2);
+}
+
+.community-members-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--on-surface-variant);
+    text-decoration: none;
+    font-size: 0.85rem;
+    width: fit-content;
+}
+
+.community-members-back:hover {
+    color: var(--on-surface);
+}
+
+.community-members-count {
+    margin: 0;
+    color: var(--on-surface-variant);
+    font-size: 0.92rem;
+}
+
+.community-members-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--spacing-3);
+}
+
+.community-member-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--spacing-4);
+    padding: var(--spacing-4);
+    background: var(--surface-container-high);
+    border: 1px solid rgba(229, 226, 225, 0.06);
+}
+
+.community-member-avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--primary-container);
+    color: var(--on-primary-container, #1a1a1a);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-family: var(--font-display);
+}
+
+.community-member-info {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.community-member-name {
+    color: var(--on-surface);
+    font-weight: 600;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.community-member-name:hover {
+    text-decoration: underline;
+}
+
+.community-member-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.community-member-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    background: rgba(229, 226, 225, 0.08);
+    color: var(--on-surface-variant);
+}
+
+.community-member-badge.is-moderator {
+    background: rgba(255, 107, 53, 0.18);
+    color: var(--primary-container);
+}
+
+.community-member-badge.is-creator {
+    background: rgba(255, 215, 0, 0.18);
+    color: #ffd166;
+}
+
+.community-member-actions {
+    justify-self: end;
+}
+
+.community-member-menu {
+    position: relative;
+}

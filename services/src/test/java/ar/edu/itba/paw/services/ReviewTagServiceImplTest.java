@@ -195,6 +195,23 @@ public class ReviewTagServiceImplTest {
     }
 
     @Test
+    public void shouldReturnTagsByCodePreservingFirstDuplicate() {
+        // Arrange
+        final ReviewTag first = tag((short) 1, "comfort", ReviewTag.SENTIMENT_POSITIVE, "d1");
+        final ReviewTag duplicate = tag((short) 2, "comfort", ReviewTag.SENTIMENT_NEGATIVE, "d2");
+        final ReviewTag second = tag((short) 3, "agile", ReviewTag.SENTIMENT_POSITIVE, "d3");
+        when(reviewTagDao.findAll()).thenReturn(List.of(first, duplicate, second));
+
+        // Exercise
+        final Map<String, ReviewTag> result = reviewTagService.getAllByCode();
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertSame(first, result.get("comfort"));
+        assertSame(second, result.get("agile"));
+    }
+
+    @Test
     public void shouldAcceptExactlyMaxUniqueTags() {
         // Arrange
         final List<ReviewTag> resolved = List.of(

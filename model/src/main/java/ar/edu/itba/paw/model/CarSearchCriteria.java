@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class CarSearchCriteria {
 
@@ -38,6 +39,7 @@ public class CarSearchCriteria {
     private static final BigDecimal FUEL_CONSUMPTION_MAX_BOUND = BigDecimal.valueOf(30);
     private static final BigDecimal PRICE_MIN_BOUND = BigDecimal.ZERO;
     private static final BigDecimal PRICE_MAX_BOUND = BigDecimal.valueOf(5_000_000);
+    private static final Pattern TAG_CODE_PATTERN = Pattern.compile("[a-z0-9_]{1,64}");
 
     private String q;
     private String brand;
@@ -55,6 +57,7 @@ public class CarSearchCriteria {
     private BigDecimal priceMax;
     private String sortBy;
     private Integer page;
+    private List<String> tagCodes = new ArrayList<>();
 
     public CarSearchCriteria() {}
 
@@ -69,7 +72,8 @@ public class CarSearchCriteria {
                 || fuelConsumptionMax != null
                 || maxSpeedMin != null
                 || priceMin != null
-                || priceMax != null;
+                || priceMax != null
+                || !tagCodes.isEmpty();
     }
 
     public boolean isValid() {
@@ -229,6 +233,47 @@ public class CarSearchCriteria {
 
     private String normalizeFuelType(final String fuelType) {
         return fuelType == null || fuelType.trim().isEmpty() ? null : fuelType.trim().toLowerCase(Locale.ROOT);
+    }
+
+    public String getTagCode() {
+        return tagCodes.isEmpty() ? null : String.join(",", tagCodes);
+    }
+
+    public void setTagCode(final String tagCode) {
+        this.tagCodes = normalizeTagCodes(tagCode == null ? null : List.of(tagCode));
+    }
+
+    public void setTagCode(final String[] tagCodeValues) {
+        this.tagCodes = normalizeTagCodes(tagCodeValues == null ? null : Arrays.asList(tagCodeValues));
+    }
+
+    public List<String> getTagCodes() {
+        return Collections.unmodifiableList(tagCodes);
+    }
+
+    public void setTagCodes(final List<String> tagCodeValues) {
+        this.tagCodes = normalizeTagCodes(tagCodeValues);
+    }
+
+    private List<String> normalizeTagCodes(final List<String> values) {
+        final List<String> normalizedValues = new ArrayList<>();
+        if (values == null) {
+            return normalizedValues;
+        }
+        for (final String value : values) {
+            if (value == null) {
+                continue;
+            }
+            for (final String part : value.split(",")) {
+                final String normalized = part.trim().toLowerCase(Locale.ROOT);
+                if (!normalized.isEmpty()
+                        && TAG_CODE_PATTERN.matcher(normalized).matches()
+                        && !normalizedValues.contains(normalized)) {
+                    normalizedValues.add(normalized);
+                }
+            }
+        }
+        return normalizedValues;
     }
 
     public Integer getHorsepowerMin() {

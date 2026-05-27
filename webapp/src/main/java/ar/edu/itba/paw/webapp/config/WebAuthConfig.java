@@ -50,11 +50,38 @@ public class WebAuthConfig {
                         .requestMatchers(antMatcher("/error/**"))
                             .permitAll()
                         .requestMatchers(
+                                antMatcher(HttpMethod.GET, "/communities/new"),
+                                antMatcher(HttpMethod.GET, "/communities/*/edit"),
+                                antMatcher(HttpMethod.POST, "/communities/*/edit"),
+                                antMatcher(HttpMethod.POST, "/communities/*/delete"),
+                                antMatcher(HttpMethod.GET, "/communities/*/submit"),
+                                antMatcher(HttpMethod.GET, "/communities/*/posts/*/edit"),
+                                antMatcher(HttpMethod.POST, "/communities"),
+                                antMatcher(HttpMethod.POST, "/communities/*/join"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/edit"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/helpful"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments/*/helpful"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments/*/update"),
+                                antMatcher(HttpMethod.GET, "/communities/*/members"),
+                                antMatcher(HttpMethod.POST, "/communities/*/members/*/kick"),
+                                antMatcher(HttpMethod.POST, "/communities/*/members/*/promote"),
+                                antMatcher(HttpMethod.POST, "/communities/*/members/*/transfer"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/hide"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments/*/hide"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/delete"),
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments/*/delete"))
+                            .authenticated()
+                        .requestMatchers(
                                 antMatcher(HttpMethod.GET, "/"),
                                 antMatcher(HttpMethod.GET, "/cars"),
                                 antMatcher(HttpMethod.GET, "/cars/recommend"),
                                 antMatcher(HttpMethod.GET, "/cars/recommend/results"),
                                 antMatcher(HttpMethod.GET, "/activity"),
+                                antMatcher(HttpMethod.GET, "/communities"),
+                                antMatcher(HttpMethod.GET, "/communities/*"),
+                                antMatcher(HttpMethod.GET, "/communities/*/posts/*"),
                                 antMatcher(HttpMethod.GET, "/reviews/car/*"),
                                 antMatcher(HttpMethod.GET, "/car-image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/image"),
@@ -72,7 +99,9 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/car-image"),
                                 antMatcher(HttpMethod.POST, "/cars/*/image"))
                             .hasRole("ADMIN")
-                        .requestMatchers(antMatcher(HttpMethod.POST, "/reviews/*/hide"))
+                        .requestMatchers(
+                                antMatcher(HttpMethod.POST, "/reviews/*/hide"),
+                                antMatcher(HttpMethod.POST, "/reviews/replies/*/hide"))
                             .hasRole("ADMIN")
                         .requestMatchers(
                                 antMatcher(HttpMethod.GET, "/cars/new"),
@@ -85,6 +114,8 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/reviews"),
                                 antMatcher(HttpMethod.POST, "/reviews/*/like"),
                                 antMatcher(HttpMethod.POST, "/reviews/*/replies"),
+                                antMatcher(HttpMethod.POST, "/reviews/replies/*/delete"),
+                                antMatcher(HttpMethod.POST, "/reviews/replies/*/update"),
                                 antMatcher(HttpMethod.POST, "/reviews/replies/*/like"),
                                 antMatcher(HttpMethod.POST, "/logout"),
                                 antMatcher(HttpMethod.POST, "/profile"),

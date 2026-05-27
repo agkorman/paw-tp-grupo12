@@ -88,6 +88,11 @@
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.6-4 4.2-6 8-6s6.4 2 8 6"/></svg>
     </c:when>
 
+    <c:when test="${name eq 'users'}">
+        <c:set var="s" value="${empty size ? 18 : size}"/>
+        <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><circle cx="9" cy="7" r="3.5"/><path d="M2 21c1.3-3.4 3.6-5 7-5s5.7 1.6 7 5"/><path d="M20 12c1.7.4 3 1.8 3 4" opacity=".6"/><circle cx="17" cy="7" r="2.5" opacity=".6"/></svg>
+    </c:when>
+
     <%-- Cars & catalog --%>
     <c:when test="${name eq 'car-placeholder'}">
         <c:set var="s" value="${empty size ? 48 : size}"/>

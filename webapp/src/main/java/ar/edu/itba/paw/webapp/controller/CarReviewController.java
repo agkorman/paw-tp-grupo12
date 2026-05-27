@@ -21,7 +21,10 @@ import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import ar.edu.itba.paw.webapp.validation.ReviewFormValidator;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -56,21 +59,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
-
-import javax.validation.Valid;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Controller
 public class CarReviewController {
@@ -814,6 +802,112 @@ public class CarReviewController {
         }
         target.append("#review-").append(reviewId);
         return new ModelAndView(target.toString());
+    }
+
+    @RequestMapping(
+        value = "/reviews/replies/{replyId}/update",
+        method = RequestMethod.POST
+    )
+    public ModelAndView updateReply(
+        @PathVariable("replyId") final long replyId,
+        @RequestParam(value = "body", required = false) final String body,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        if (currentUser == null) {
+            return new ModelAndView("redirect:/login");
+        }
+        final ReviewReply reply = reviewReplyService
+            .getReplyById(replyId)
+            .orElseThrow(() -> new ResourceNotFoundException("Review reply", replyId));
+        final Review review = reviewService
+            .getReviewById(reply.getReviewId())
+            .orElseThrow(() -> new ResourceNotFoundException("Review", reply.getReviewId()));
+        final String defaultRedirect =
+            "/reviews/car/" + review.getCarId() + "#reply-" + replyId;
+        final String safeRedirect = LoginRedirectUtils
+            .safeRedirect(redirect, request.getContextPath())
+            .orElse(defaultRedirect);
+        final String feedRedirect = "redirect:" + safeRedirect;
+
+        if (validateReplyInput(body) != null) {
+            return new ModelAndView(feedRedirect);
+        }
+
+        reviewReplyService.updateReply(replyId, currentUser.getId(), body);
+        LOGGER.info("user id={} updated reply id={}", currentUser.getId(), replyId);
+        return new ModelAndView(feedRedirect);
+    }
+
+    @RequestMapping(
+        value = "/reviews/replies/{replyId}/delete",
+        method = RequestMethod.POST
+    )
+    public ModelAndView deleteReply(
+        @PathVariable("replyId") final long replyId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        if (currentUser == null) {
+            return new ModelAndView("redirect:/login");
+        }
+        final ReviewReply reply = reviewReplyService
+            .getReplyById(replyId)
+            .orElseThrow(() -> new ResourceNotFoundException("Review reply", replyId));
+        final Review review = reviewService
+            .getReviewById(reply.getReviewId())
+            .orElseThrow(() -> new ResourceNotFoundException("Review", reply.getReviewId()));
+        final String defaultRedirect =
+            "/reviews/car/" + review.getCarId() + "#review-" + review.getId();
+        final String safeRedirect = LoginRedirectUtils
+            .safeRedirect(redirect, request.getContextPath())
+            .orElse(defaultRedirect);
+
+        reviewReplyService.deleteReply(replyId, currentUser.getId());
+        LOGGER.info("user id={} deleted reply id={}", currentUser.getId(), replyId);
+        return new ModelAndView("redirect:" + safeRedirect);
+    }
+
+    @RequestMapping(
+        value = "/reviews/replies/{replyId}/hide",
+        method = RequestMethod.POST
+    )
+    public ModelAndView hideReply(
+        @PathVariable("replyId") final long replyId,
+        @RequestParam(value = "reason", required = false) final String reason,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        if (currentUser == null) {
+            return new ModelAndView("redirect:/login");
+        }
+        final ReviewReply reply = reviewReplyService
+            .getReplyById(replyId)
+            .orElseThrow(() -> new ResourceNotFoundException("Review reply", replyId));
+        final Review review = reviewService
+            .getReviewById(reply.getReviewId())
+            .orElseThrow(() -> new ResourceNotFoundException("Review", reply.getReviewId()));
+        final String defaultRedirect =
+            "/reviews/car/" + review.getCarId() + "#review-" + review.getId();
+        final String safeRedirect = LoginRedirectUtils
+            .safeRedirect(redirect, request.getContextPath())
+            .orElse(defaultRedirect);
+        final String feedRedirect = "redirect:" + safeRedirect;
+
+        final String normalizedReason = ControllerUtils.normalize(reason);
+        if (validateReviewHideReason(normalizedReason) != null) {
+            return new ModelAndView(feedRedirect);
+        }
+
+        if (!reviewReplyService.hideReply(replyId, normalizedReason)) {
+            LOGGER.warn("hide reply failed replyId={}", replyId);
+            return new ModelAndView(feedRedirect);
+        }
+        LOGGER.info("admin id={} hid reply id={}", currentUser.getId(), replyId);
+        return new ModelAndView(feedRedirect);
     }
 
     @RequestMapping(
