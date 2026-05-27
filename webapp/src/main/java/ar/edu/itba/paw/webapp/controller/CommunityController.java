@@ -810,7 +810,7 @@ public class CommunityController {
         for (final CommunityPostSummary postSummary : postSummaries) {
             cards.add(new PostCardView(
                 "/communities/" + communitySlug + "/posts/" + postSummary.getPost().getSlug(),
-                "/profiles/" + postSummary.getPost().getAuthorUserId(),
+                "/users/" + postSummary.getPost().getAuthorUserId(),
                 postSummary.getPost().getAuthorUsername(),
                 relativeTimeFormatter.format(postSummary.getPost().getCreatedAt()),
                 postSummary.getPost().getTitle(),
@@ -828,7 +828,7 @@ public class CommunityController {
         for (final CommunityPostComment comment : postDetail.getComments()) {
             comments.add(new CommentView(
                 comment.getId(),
-                "/profiles/" + comment.getUserId(),
+                "/users/" + comment.getUserId(),
                 comment.getAuthorUsername(),
                 relativeTimeFormatter.format(comment.getCreatedAt()),
                 comment.getBody(),
@@ -845,7 +845,7 @@ public class CommunityController {
             "c/" + postDetail.getCommunity().getSlug(),
             postDetail.getCommunity().getSlug(),
             postDetail.getPost().getSlug(),
-            "/profiles/" + postDetail.getPost().getAuthorUserId(),
+            "/users/" + postDetail.getPost().getAuthorUserId(),
             postDetail.getPost().getAuthorUsername(),
             relativeTimeFormatter.format(postDetail.getPost().getCreatedAt()),
             postDetail.getPost().getTitle(),
