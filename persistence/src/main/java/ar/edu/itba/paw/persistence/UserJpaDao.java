@@ -104,6 +104,17 @@ public class UserJpaDao implements UserDao {
     }
 
     @Override
+    public List<User> findByIds(final Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return em.createQuery(
+                        "SELECT u FROM User u WHERE u.id IN :ids ORDER BY u.id", User.class)
+                .setParameter("ids", ids)
+                .getResultList();
+    }
+
+    @Override
     public List<EmailRecipient> findEmailRecipientsByRoles(Collection<String> roles) {
         final List<String> normalizedRoles = normalizeRoles(roles);
         if (normalizedRoles.isEmpty()) {

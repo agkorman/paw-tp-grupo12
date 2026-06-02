@@ -24,4 +24,5 @@ public interface ReviewLikeService {
     List<Long> getLikedReplyIdsByUser(long userId);
 
     Map<Long, Long> countNewLikesPerReview(long userId, LocalDateTime since);
+    Map<Long, Long> countNewLikesPerReviewSince(LocalDateTime since);
 }

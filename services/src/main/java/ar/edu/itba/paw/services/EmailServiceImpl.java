@@ -320,7 +320,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async("mailTaskExecutor")
     public void sendWeeklyModeratorDigest(final List<EmailRecipient> moderatorRecipients,
-                                          final int pendingRequestCount) {
+                                          final long pendingRequestCount) {
         if (moderatorRecipients == null || moderatorRecipients.isEmpty()) {
             return;
         }
@@ -481,20 +481,20 @@ public class EmailServiceImpl implements EmailService {
 
     // ── Weekly moderator digest ───────────────────────────────────────────────
 
-    private String buildModeratorDigestSubject(final int pendingCount, final Locale locale) {
+    private String buildModeratorDigestSubject(final long pendingCount, final Locale locale) {
         return pendingCount == 0
                 ? msg("email.moderatorDigest.subject.empty", locale, APP_NAME)
                 : msg("email.moderatorDigest.subject.pending", locale, APP_NAME, pendingCount);
     }
 
-    private String buildModeratorDigestPlainText(final int pendingCount, final Locale locale) {
+    private String buildModeratorDigestPlainText(final long pendingCount, final Locale locale) {
         if (pendingCount == 0) {
             return msg("email.moderatorDigest.plain.empty", locale, APP_NAME, appBaseUrl + "/admin");
         }
         return msg("email.moderatorDigest.plain.pending", locale, APP_NAME, pendingCount, appBaseUrl + "/admin");
     }
 
-    private String buildModeratorDigestHtml(final int pendingCount, final Locale locale) {
+    private String buildModeratorDigestHtml(final long pendingCount, final Locale locale) {
         final boolean hasPending = pendingCount > 0;
         final String preheader = hasPending
                 ? escapeHtml(msg("email.moderatorDigest.preheader.pending", locale, pendingCount))
@@ -513,7 +513,7 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
-    private String buildModeratorDigestStatusCard(final int pendingCount, final Locale locale) {
+    private String buildModeratorDigestStatusCard(final long pendingCount, final Locale locale) {
         if (pendingCount > 0) {
             return """
                     <div style="background:%s;border:1px solid %s;border-radius:18px;padding:28px 24px;margin-bottom:28px;text-align:center;">

@@ -7,8 +7,11 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
+import java.sql.Timestamp;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -115,6 +118,31 @@ public class ReviewDaoTest extends AbstractPersistenceTest {
         assertEquals("Followed", followedReviews.getItems().get(0).getTitle());
         assertEquals(1L, favoriteReviews.getTotalItems());
         assertEquals("Favorite", favoriteReviews.getItems().get(0).getTitle());
+    }
+
+    @Test
+    public void shouldCountOnlyRecentReviewsByCarIds() {
+        // Arrange
+        final User user = createUser("review-recent-count");
+        final Car recentCar = createCar("review-recent-count");
+        final Car oldCar = createCar("review-old-count");
+        insertReview(user.getId(), user.getUsername(), recentCar.getId(), new BigDecimal("4.0"), "Recent review",
+                "Body", "owner", 2026, 1000, true);
+        insertReview(user.getId(), user.getUsername(), oldCar.getId(), new BigDecimal("3.0"), "Old review",
+                "Body", "owner", 2025, 2000, false);
+        jdbcTemplate.update("UPDATE reviews SET created_at = ? WHERE title = ?",
+                Timestamp.valueOf(LocalDateTime.now().minusHours(6)), "Recent review");
+        jdbcTemplate.update("UPDATE reviews SET created_at = ? WHERE title = ?",
+                Timestamp.valueOf(LocalDateTime.now().minusDays(9)), "Old review");
+        final LocalDateTime since = LocalDateTime.now().minusDays(7);
+
+        // Exercise
+        final Map<Long, Long> result = reviewDao.countByCarIdsSince(List.of(recentCar.getId(), oldCar.getId()), since);
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(recentCar.getId()));
+        assertTrue(!result.containsKey(oldCar.getId()));
     }
 
     @Test

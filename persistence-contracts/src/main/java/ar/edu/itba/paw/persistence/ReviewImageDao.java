@@ -11,7 +11,7 @@ public interface ReviewImageDao {
 
     List<ReviewImage> findAllByReviewId(long reviewId);
 
-    List<ReviewImage> findAllByReviewIdWithData(long reviewId);
+    List<ReviewImage> findByReviewIdAndImageIdsWithData(long reviewId, Collection<Long> imageIds);
 
     List<ReviewImage> findAllByReviewIds(Collection<Long> reviewIds);
 

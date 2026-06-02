@@ -199,6 +199,116 @@ public class CarDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldFindCarsByBrandBodyTypeAndNormalizedModel() {
+        // Arrange
+        final long brandId = insertBrand("Lookup Brand").getId();
+        final long bodyTypeId = insertBodyType("Lookup Body").getId();
+        final Car matching = insertCar(brandId, "Lookup Brand", "  Skyline  ", bodyTypeId, "Lookup Body",
+                2026, "Desc", "combustion", 300, 6, "manual", new BigDecimal("9.0"), 280,
+                new BigDecimal("55000.00"));
+        insertCar(brandId, "Lookup Brand", "Civic", bodyTypeId, "Lookup Body",
+                2026, "Desc", "combustion", 150, 6, "manual", new BigDecimal("7.0"), 220,
+                new BigDecimal("25000.00"));
+
+        // Exercise
+        final List<Car> result = carDao.findByBrandIdAndBodyTypeIdAndModel(brandId, bodyTypeId, "skyline");
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals(matching.getId(), result.get(0).getId());
+    }
+
+    @Test
+    public void shouldOrderModelVariantsByYearDescendingWithNullsLast() {
+        // Arrange
+        final long brandId = insertBrand("Variant Brand").getId();
+        final long bodyTypeId = insertBodyType("Variant Body").getId();
+        final Car older = insertCar(brandId, "Variant Brand", "Variant", bodyTypeId, "Variant Body",
+                2020, "Desc", "combustion", 150, 6, "manual", new BigDecimal("7.0"), 200, new BigDecimal("20000.00"));
+        final Car newer = insertCar(brandId, "Variant Brand", "Variant", bodyTypeId, "Variant Body",
+                2024, "Desc", "combustion", 150, 6, "manual", new BigDecimal("7.0"), 200, new BigDecimal("20000.00"));
+        jdbcTemplate.update(
+                "INSERT INTO cars (brand_id, model, body_type_id, year, description, fuel_type) "
+                        + "VALUES (?, ?, ?, NULL, ?, ?)",
+                brandId, "Variant", bodyTypeId, "Desc", "combustion");
+        final long noYearId = jdbcTemplate.queryForObject(
+                "SELECT car_id FROM cars WHERE brand_id = ? AND model = ? AND body_type_id = ? AND year IS NULL",
+                Long.class, brandId, "Variant", bodyTypeId);
+
+        // Exercise
+        final List<Car> result = carDao.findByBrandIdAndBodyTypeIdAndModel(brandId, bodyTypeId, "variant");
+
+        // Assertions
+        assertEquals(3, result.size());
+        assertEquals(newer.getId(), result.get(0).getId());
+        assertEquals(older.getId(), result.get(1).getId());
+        assertEquals(noYearId, result.get(2).getId());
+    }
+
+    @Test
+    public void shouldFindAllMatchingIdsByCriteriaWithoutPagination() {
+        // Arrange
+        final long brandId = insertBrand("Crit Brand").getId();
+        final long bodyTypeId = insertBodyType("Crit Body").getId();
+        final long otherBodyTypeId = insertBodyType("Crit Other Body").getId();
+        final Car first = insertCar(brandId, "Crit Brand", "Crit One", bodyTypeId, "Crit Body",
+                2024, "Desc", "hybrid", 200, 6, "automatic", new BigDecimal("6.0"), 220, new BigDecimal("40000.00"));
+        final Car second = insertCar(brandId, "Crit Brand", "Crit Two", bodyTypeId, "Crit Body",
+                2023, "Desc", "hybrid", 180, 6, "automatic", new BigDecimal("6.5"), 210, new BigDecimal("38000.00"));
+        insertCar(brandId, "Crit Brand", "Crit Miss Body", otherBodyTypeId, "Crit Other Body",
+                2024, "Desc", "hybrid", 200, 6, "automatic", new BigDecimal("6.0"), 220, new BigDecimal("40000.00"));
+        insertCar(brandId, "Crit Brand", "Crit Miss Fuel", bodyTypeId, "Crit Body",
+                2024, "Desc", "combustion", 200, 6, "automatic", new BigDecimal("6.0"), 220, new BigDecimal("40000.00"));
+        final CarSearchCriteria criteria = new CarSearchCriteria();
+        criteria.setBodyType("Crit Body");
+        criteria.setFuelTypes(List.of("hybrid"));
+
+        // Exercise
+        final List<Long> result = carDao.findIdsByCriteria(criteria);
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertTrue(result.contains(first.getId()));
+        assertTrue(result.contains(second.getId()));
+    }
+
+    @Test
+    public void shouldDetectExistingCarByBrandBodyTypeModelAndYearExcludingId() {
+        // Arrange
+        final long brandId = insertBrand("Duplicate Brand").getId();
+        final long bodyTypeId = insertBodyType("Duplicate Body").getId();
+        final Car existing = insertCar(brandId, "Duplicate Brand", "Corolla", bodyTypeId, "Duplicate Body",
+                2024, "Desc", "combustion", 150, 6, "automatic", new BigDecimal("7.2"), 210,
+                new BigDecimal("22000.00"));
+
+        // Exercise
+        final boolean result = carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(
+                brandId, bodyTypeId, "corolla", 2024, existing.getId() + 1
+        );
+
+        // Assertions
+        assertTrue(result);
+    }
+
+    @Test
+    public void shouldIgnoreExcludedCarWhenCheckingDuplicateExistence() {
+        // Arrange
+        final long brandId = insertBrand("Duplicate Exclude Brand").getId();
+        final long bodyTypeId = insertBodyType("Duplicate Exclude Body").getId();
+        final Car existing = insertCar(brandId, "Duplicate Exclude Brand", "Corolla", bodyTypeId, "Duplicate Exclude Body",
+                2024, "Desc", "combustion", 150, 6, "automatic", new BigDecimal("7.2"), 210,
+                new BigDecimal("22000.00"));
+
+        // Exercise
+        final boolean result = carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(
+                brandId, bodyTypeId, "corolla", 2024, existing.getId()
+        );
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
     public void shouldReturnEmptyPageWhenCriteriaHasNoMatches() {
         // Arrange
         createCar("no-match");

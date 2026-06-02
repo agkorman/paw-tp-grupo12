@@ -264,7 +264,6 @@ public class CarRequestServiceImplTest {
         final Car createdCar = TestModels.car(99L, BRAND_ID, "Toyota", "Corolla", BODY_TYPE_ID, 2024, "sedan",
                 "desc", LocalDateTime.now(), false, "GASOLINE", 130, 6, "MANUAL",
                 new BigDecimal("6.5"), 190, new BigDecimal("25000.00"));
-        final CarRequestImage metadata = TestModels.carRequestImage(55L, REQUEST_ID, 0, CONTENT_TYPE, null, LocalDateTime.now());
         final CarRequestImage payload = TestModels.carRequestImage(55L, REQUEST_ID, 0, CONTENT_TYPE, IMAGE_BYTES, LocalDateTime.now());
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
         when(carRequestDao.updateStatus(REQUEST_ID, CarRequestService.STATUS_PENDING,
@@ -272,8 +271,7 @@ public class CarRequestServiceImplTest {
         when(carDao.create(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("A nice car description."),
                 eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"), eq(new BigDecimal("6.5")), eq(190),
                 eq(new BigDecimal("25000.00")))).thenReturn(createdCar);
-        when(carRequestDao.findImagesByRequestId(REQUEST_ID)).thenReturn(List.of(metadata));
-        when(carRequestDao.findImageByRequestIdAndImageId(REQUEST_ID, 55L)).thenReturn(Optional.of(payload));
+        when(carRequestDao.findImagesByRequestIdWithData(REQUEST_ID)).thenReturn(List.of(payload));
 
         // Exercise
         final boolean result = carRequestService.approvePendingRequest(REQUEST_ID);
@@ -294,7 +292,7 @@ public class CarRequestServiceImplTest {
         when(carDao.create(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("desc"),
                 eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"), eq(new BigDecimal("6.5")), eq(190),
                 eq(new BigDecimal("25000.00")))).thenReturn(createdCar);
-        when(carRequestDao.findImagesByRequestId(REQUEST_ID)).thenReturn(List.of());
+        when(carRequestDao.findImagesByRequestIdWithData(REQUEST_ID)).thenReturn(List.of());
 
         // Exercise
         final boolean result = carRequestService.approvePendingRequest(REQUEST_ID, BRAND_ID, "Corolla",
