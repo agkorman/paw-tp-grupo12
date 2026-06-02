@@ -153,6 +153,7 @@
     <pa:script src="/js/cars/car-image-carousel.js"/>
     <pa:script src="/js/reviews/review-anchor-highlight.js"/>
     <pa:script src="/js/reviews/reply-validation.js"/>
+    <pa:script src="/js/reviews/reply-disclosure.js"/>
     <pa:script src="/js/reviews/review-tag-chips.js" defer="true"/>
     <pa:script src="/js/shared/modal-utils.js"/>
     <pa:script src="/js/auth/auth-required-modal.js"/>

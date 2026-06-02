@@ -256,6 +256,8 @@
                                     <c:set var="replyHasError" value="${not empty replyErrorReviewId and replyErrorReviewId eq review.id}"/>
                                     <form method="post" action="${replyCreateUrl}" class="review-reply-form"
                                           data-auth-resume-intent="reply-${review.id}"
+                                          data-reply-intent="reply-${review.id}"
+                                          data-reply-has-error="${replyHasError}"
                                           data-reply-required-message="${fn:escapeXml(replyRequiredMessage)}"
                                           data-reply-max-message="${fn:escapeXml(replyMaxMessage)}"
                                           novalidate="novalidate">
@@ -266,14 +268,18 @@
                                         <c:if test="${not empty currentSort}">
                                             <input type="hidden" name="sort" value="${fn:escapeXml(currentSort)}">
                                         </c:if>
-                                        <label for="replyBody-${review.id}"><spring:message code="review.feed.reply"/></label>
-                                        <div class="review-reply-form-row">
-                                            <textarea id="replyBody-${review.id}" name="body" rows="2" maxlength="1000" required
-                                                      placeholder="${replyPlaceholder}"
-                                                      class="${replyHasError ? 'is-invalid' : ''}"><c:if test="${replyHasError}"><c:out value="${replyErrorBody}"/></c:if></textarea>
-                                            <button type="submit" class="btn-secondary"><spring:message code="review.feed.reply"/></button>
+                                        <button type="button" class="review-reply-toggle" data-reply-toggle
+                                                aria-expanded="false" aria-controls="replyPanel-${review.id}"><spring:message code="review.feed.reply"/></button>
+                                        <div class="review-reply-panel" id="replyPanel-${review.id}" data-reply-panel>
+                                            <label for="replyBody-${review.id}"><spring:message code="review.feed.reply"/></label>
+                                            <div class="review-reply-form-row">
+                                                <textarea id="replyBody-${review.id}" name="body" rows="2" maxlength="1000" required
+                                                          placeholder="${replyPlaceholder}"
+                                                          class="${replyHasError ? 'is-invalid' : ''}"><c:if test="${replyHasError}"><c:out value="${replyErrorBody}"/></c:if></textarea>
+                                                <button type="submit" class="btn-secondary"><spring:message code="review.feed.reply"/></button>
+                                            </div>
+                                            <span class="client-form-error" data-reply-error <c:if test="${not replyHasError}">hidden</c:if>><c:if test="${replyHasError}"><c:out value="${replyError}"/></c:if></span>
                                         </div>
-                                        <span class="client-form-error" data-reply-error <c:if test="${not replyHasError}">hidden</c:if>><c:if test="${replyHasError}"><c:out value="${replyError}"/></c:if></span>
                                     </form>
                                 </c:when>
                                 <c:otherwise>

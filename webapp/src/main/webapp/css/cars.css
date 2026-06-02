@@ -222,6 +222,13 @@
     padding-top: 1.35rem;
 }
 
+/* Match the Next button's sizing to the Back (btn-secondary) button. */
+.wizard-actions .wizard-next {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    padding: 0.75rem 2rem;
+}
+
 .wizard-fallback-actions {
     display: flex;
     flex-wrap: wrap;
