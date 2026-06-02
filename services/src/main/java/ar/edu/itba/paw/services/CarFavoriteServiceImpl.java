@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -39,6 +40,12 @@ public class CarFavoriteServiceImpl implements CarFavoriteService {
         return carFavoriteDao.findFavoriteCars(userId).stream()
                 .map(Car::getId)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, List<Long>> findAllFavoriteCarIdsByUser() {
+        return carFavoriteDao.findAllFavoriteCarIdsByUser();
     }
 
     @Override

@@ -5,10 +5,13 @@ import ar.edu.itba.paw.model.Page;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface CarFavoriteService {
     List<Long> findFavoriteCarIdsByUser(long userId);
+
+    Map<Long, List<Long>> findAllFavoriteCarIdsByUser();
 
     void setFavorite(long userId, long carId, boolean favorite);
 

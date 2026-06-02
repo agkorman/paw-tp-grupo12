@@ -141,6 +141,21 @@ public class CarFavoriteJpaDao implements CarFavoriteDao {
         return result.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toCollection(HashSet::new));
     }
 
+    @Override
+    public Map<Long, List<Long>> findAllFavoriteCarIdsByUser() {
+        final List<?> rawRows = em.createNativeQuery(
+                "SELECT user_id, car_id FROM car_favorites ORDER BY user_id, car_id")
+                .getResultList();
+        final Map<Long, List<Long>> favoritesByUser = new java.util.LinkedHashMap<>();
+        for (final Object element : rawRows) {
+            final Object[] row = (Object[]) element;
+            final long userId = ((Number) row[0]).longValue();
+            final long carId = ((Number) row[1]).longValue();
+            favoritesByUser.computeIfAbsent(userId, k -> new java.util.ArrayList<>()).add(carId);
+        }
+        return favoritesByUser;
+    }
+
     private List<Car> loadCarsByIds(final List<Long> ids) {
         return em.createQuery(
                 "SELECT c FROM Car c JOIN FETCH c.brand JOIN FETCH c.bodyTypeEntity WHERE c.id IN :ids",

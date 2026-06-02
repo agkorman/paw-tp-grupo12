@@ -120,6 +120,78 @@ public class ImageDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldReturnOnlyRequestedImagesWithDataForCar() {
+        // Arrange
+        final Car car = createCar("retained-images");
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 0, "image/png", new byte[]{1, 1}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 1, "image/jpeg", new byte[]{2, 2}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 2, "image/png", new byte[]{3, 3}
+        );
+        final long firstId = jdbcTemplate.queryForObject(
+                "SELECT image_id FROM car_images WHERE car_id = ? AND display_order = 0", Long.class, car.getId());
+        final long thirdId = jdbcTemplate.queryForObject(
+                "SELECT image_id FROM car_images WHERE car_id = ? AND display_order = 2", Long.class, car.getId());
+
+        // Exercise
+        final List<CarImage> result = carImageDao.findByCarIdAndImageIdsWithData(car.getId(), List.of(firstId, thirdId));
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals(firstId, result.get(0).getImageId());
+        assertEquals(thirdId, result.get(1).getImageId());
+        assertArrayEquals(new byte[]{1, 1}, result.get(0).getImageData());
+        assertArrayEquals(new byte[]{3, 3}, result.get(1).getImageData());
+    }
+
+    @Test
+    public void shouldNotReturnImageFromAnotherCarWhenFilteringByImageIds() {
+        // Arrange
+        final Car car = createCar("scoped-target");
+        final Car otherCar = createCar("scoped-other");
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 0, "image/png", new byte[]{1}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                otherCar.getId(), 0, "image/png", new byte[]{2}
+        );
+        final long otherImageId = jdbcTemplate.queryForObject(
+                "SELECT image_id FROM car_images WHERE car_id = ? AND display_order = 0", Long.class, otherCar.getId());
+
+        // Exercise
+        final List<CarImage> result = carImageDao.findByCarIdAndImageIdsWithData(car.getId(), List.of(otherImageId));
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenRequestedImageIdsAreEmpty() {
+        // Arrange
+        final Car car = createCar("empty-ids");
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 0, "image/png", new byte[]{1}
+        );
+        final List<Long> requestedIds = List.of();
+
+        // Exercise
+        final List<CarImage> result = carImageDao.findByCarIdAndImageIdsWithData(car.getId(), requestedIds);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
     public void shouldFindCarImageByCarAndImageId() {
         // Arrange
         final Car car = createCar("image-id");

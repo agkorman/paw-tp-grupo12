@@ -16,7 +16,9 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -138,6 +140,45 @@ public class CarRequestJpaDao implements CarRequestDao {
         } catch (final Exception e) {
             LOGGER.error("failed to fetch image metadata for car request id={}", requestId, e);
             throw new PersistenceOperationException("fetch image metadata for car request " + requestId, e);
+        }
+    }
+
+    @Override
+    public List<CarRequestImage> findImagesByRequestIdWithData(final long requestId) {
+        try {
+            return em.createQuery(
+                    "SELECT i FROM CarRequestImage i WHERE i.request.id = :requestId " +
+                    "ORDER BY i.displayOrder ASC, i.imageId ASC",
+                    CarRequestImage.class)
+                    .setParameter("requestId", requestId)
+                    .getResultList();
+        } catch (final Exception e) {
+            LOGGER.error("failed to fetch images with data for car request id={}", requestId, e);
+            throw new PersistenceOperationException("fetch images with data for car request " + requestId, e);
+        }
+    }
+
+    @Override
+    public List<CarRequestImage> findImagesByRequestIdAndImageIdsWithData(final long requestId,
+                                                                          final Collection<Long> imageIds) {
+        if (imageIds == null) {
+            return List.of();
+        }
+        final List<Long> ids = imageIds.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        try {
+            return em.createQuery(
+                    "SELECT i FROM CarRequestImage i WHERE i.request.id = :requestId AND i.imageId IN :imageIds " +
+                    "ORDER BY i.displayOrder ASC, i.imageId ASC",
+                    CarRequestImage.class)
+                    .setParameter("requestId", requestId)
+                    .setParameter("imageIds", ids)
+                    .getResultList();
+        } catch (final Exception e) {
+            LOGGER.error("failed to fetch images with data for car request id={}", requestId, e);
+            throw new PersistenceOperationException("fetch images with data for car request " + requestId, e);
         }
     }
 

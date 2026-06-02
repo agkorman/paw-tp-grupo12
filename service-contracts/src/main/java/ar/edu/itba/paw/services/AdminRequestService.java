@@ -2,7 +2,9 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.User;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface AdminRequestService {
@@ -41,4 +43,6 @@ public interface AdminRequestService {
     String resolveSubmitterEmail(String submitterEmail, Long submittedByUserId);
 
     String getSubmitterLabel(String submitterEmail, Long submittedByUserId);
+
+    String getSubmitterLabel(String submitterEmail, Long submittedByUserId, Map<Long, User> usersById);
 }

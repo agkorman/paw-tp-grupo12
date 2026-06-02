@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -388,6 +387,18 @@ public class CarRequestServiceImpl implements CarRequestService {
         if (request == null) {
             return payloads;
         }
+        final List<Long> nonLegacyIds = new ArrayList<>();
+        for (final Long imageId : retainedImageIds) {
+            if (imageId != null && imageId != CarService.LEGACY_IMAGE_ID) {
+                nonLegacyIds.add(imageId);
+            }
+        }
+        final java.util.Map<Long, CarRequestImage> imagesById =
+            new java.util.LinkedHashMap<>();
+        for (final CarRequestImage image : carRequestDao
+            .findImagesByRequestIdAndImageIdsWithData(requestId, nonLegacyIds)) {
+            imagesById.putIfAbsent(image.getImageId(), image);
+        }
         for (final Long imageId : retainedImageIds) {
             if (imageId == null) {
                 continue;
@@ -405,16 +416,15 @@ public class CarRequestServiceImpl implements CarRequestService {
                     );
                 }
             } else {
-                carRequestDao
-                    .findImageByRequestIdAndImageId(requestId, imageId)
-                    .filter(img -> img.getImageData() != null)
-                    .map(img ->
+                final CarRequestImage image = imagesById.get(imageId);
+                if (image != null && image.getImageData() != null) {
+                    payloads.add(
                         new ImagePayload(
-                            img.getContentType(),
-                            img.getImageData()
+                            image.getContentType(),
+                            image.getImageData()
                         )
-                    )
-                    .ifPresent(payloads::add);
+                    );
+                }
             }
         }
         return payloads;
@@ -431,40 +441,22 @@ public class CarRequestServiceImpl implements CarRequestService {
         if (normalizedModel == null) {
             return false;
         }
-        final String lowerModel = normalizedModel.toLowerCase(Locale.ROOT);
-        return carDao
-            .findByBrandIdAndBodyTypeId(brandId, bodyTypeId)
-            .stream()
-            .anyMatch(car -> {
-                if (car.getId() == ignoredCarId) {
-                    return false;
-                }
-                final String existingModel = StringUtils.normalize(
-                    car.getModel()
-                );
-                return (
-                    existingModel != null &&
-                    lowerModel.equals(existingModel.toLowerCase(Locale.ROOT)) &&
-                    Objects.equals(car.getYear(), year)
-                );
-            });
+        return carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(
+            brandId,
+            bodyTypeId,
+            normalizedModel.toLowerCase(Locale.ROOT),
+            year,
+            ignoredCarId
+        );
     }
 
     private List<ImagePayload> requestImagePayloads(
         final CarRequest request
     ) {
         final List<ImagePayload> galleryPayloads = carRequestDao
-            .findImagesByRequestId(request.getId())
+            .findImagesByRequestIdWithData(request.getId())
             .stream()
-            .map(image ->
-                carRequestDao
-                    .findImageByRequestIdAndImageId(
-                        request.getId(),
-                        image.getImageId()
-                    )
-                    .orElse(null)
-            )
-            .filter(image -> image != null && image.getImageData() != null)
+            .filter(image -> image.getImageData() != null)
             .map(image ->
                 new ImagePayload(
                     image.getContentType(),

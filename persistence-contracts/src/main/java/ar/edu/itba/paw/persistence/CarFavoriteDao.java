@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.Page;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface CarFavoriteDao {
@@ -21,4 +22,6 @@ public interface CarFavoriteDao {
     long countFavoriteCars(long userId);
 
     Set<Long> findFavoritedCarIds(long userId, Collection<Long> carIds);
+
+    Map<Long, List<Long>> findAllFavoriteCarIdsByUser();
 }

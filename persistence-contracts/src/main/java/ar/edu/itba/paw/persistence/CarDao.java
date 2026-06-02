@@ -18,7 +18,15 @@ public interface CarDao {
 
     List<Car> findByBrandIdAndBodyTypeId(long brandId, long bodyTypeId);
 
+    List<Car> findByBrandIdAndBodyTypeIdAndModel(long brandId, long bodyTypeId, String normalizedModel);
+
+    boolean existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(long brandId, long bodyTypeId,
+                                                                   String normalizedModel, Integer year,
+                                                                   long excludedCarId);
+
     Page<Car> findByCriteria(CarSearchCriteria criteria);
+
+    List<Long> findIdsByCriteria(CarSearchCriteria criteria);
 
     Car create(long brandId, String model, long bodyTypeId, Integer year, String description,
                String fuelType, Integer horsepower, Integer airbagCount,

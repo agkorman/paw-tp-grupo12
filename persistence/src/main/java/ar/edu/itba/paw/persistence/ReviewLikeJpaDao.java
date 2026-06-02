@@ -88,6 +88,21 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
     }
 
     @Override
+    public Map<Long, Long> countNewLikesPerReviewSince(final LocalDateTime since) {
+        final List<?> rawRows = em.createNativeQuery(
+                "SELECT rl.review_id, COUNT(*) AS like_count " +
+                "FROM review_likes rl WHERE rl.created_at >= ? GROUP BY rl.review_id")
+                .setParameter(1, since)
+                .getResultList();
+        final Map<Long, Long> counts = new HashMap<>();
+        for (final Object element : rawRows) {
+            final Object[] row = (Object[]) element;
+            counts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
+        return counts;
+    }
+
+    @Override
     public Set<Long> findLikedReviewIds(final Collection<Long> reviewIds, final long userId) {
         return findLikedIds("review_likes", "review_id", reviewIds, userId);
     }

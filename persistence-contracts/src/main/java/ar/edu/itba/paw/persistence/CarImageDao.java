@@ -3,6 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.ImagePayload;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +14,8 @@ public interface CarImageDao {
     List<CarImage> findAllByCarId(long carId);
 
     List<CarImage> findAllByCarIdWithData(long carId);
+
+    List<CarImage> findByCarIdAndImageIdsWithData(long carId, Collection<Long> imageIds);
 
     Optional<CarImage> findByCarIdAndImageId(long carId, long imageId);
 

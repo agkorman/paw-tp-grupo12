@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +25,10 @@ public interface CarRequestDao {
                       String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh, BigDecimal priceUsd);
 
     List<CarRequestImage> findImagesByRequestId(long requestId);
+
+    List<CarRequestImage> findImagesByRequestIdWithData(long requestId);
+
+    List<CarRequestImage> findImagesByRequestIdAndImageIdsWithData(long requestId, Collection<Long> imageIds);
 
     Optional<CarRequestImage> findImageByRequestIdAndImageId(long requestId, long imageId);
 

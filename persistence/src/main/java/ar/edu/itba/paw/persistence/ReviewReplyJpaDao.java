@@ -112,6 +112,23 @@ public class ReviewReplyJpaDao implements ReviewReplyDao {
     }
 
     @Override
+    public Map<Long, Long> countNewRepliesPerReviewSince(final LocalDateTime since) {
+        final List<?> rawRows = em.createQuery(
+                        "SELECT rr.review.id, COUNT(rr.id) "
+                        + "FROM ReviewReply rr "
+                        + "WHERE rr.createdAt >= :since "
+                        + "GROUP BY rr.review.id")
+                .setParameter("since", since)
+                .getResultList();
+        final Map<Long, Long> counts = new HashMap<>();
+        for (final Object element : rawRows) {
+            final Object[] row = (Object[]) element;
+            counts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
+        return counts;
+    }
+
+    @Override
     public boolean delete(final long id) {
         final ReviewReply reply = em.find(ReviewReply.class, id);
         if (reply == null) {

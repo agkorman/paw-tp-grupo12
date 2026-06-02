@@ -24,7 +24,7 @@ public interface EmailService {
                                                     String communityMembersUrl);
     void sendCommunityOwnershipTransferredNotification(String recipientEmail, String communityName,
                                                        String communityMembersUrl);
-    void sendWeeklyModeratorDigest(List<EmailRecipient> moderatorRecipients, int pendingRequestCount);
+    void sendWeeklyModeratorDigest(List<EmailRecipient> moderatorRecipients, long pendingRequestCount);
     void sendWeeklyUserDigest(String recipientEmail, String username,
                               List<ReviewActivityItem> reviewActivity,
                               List<FavoriteActivityItem> favoriteActivity);
