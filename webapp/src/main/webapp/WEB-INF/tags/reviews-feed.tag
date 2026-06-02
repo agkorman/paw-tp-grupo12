@@ -131,6 +131,7 @@
                                 </sec:authorize>
                             </div>
                         </div>
+                        <p class="review-body"><c:out value="${review.body}"/></p>
                         <c:if test="${not empty review.images}">
                             <c:set var="reviewImageUrlsCsv" value=""/>
                             <c:forEach var="urlImg" items="${review.images}" varStatus="urlStatus">
@@ -139,7 +140,6 @@
                             </c:forEach>
                             <pa:image-gallery imageUrlsJoined="${reviewImageUrlsCsv}" altKey="review.image.alt"/>
                         </c:if>
-                        <p class="review-body"><c:out value="${review.body}"/></p>
                         <pa:review-tag-chips mode="display" tags="${review.tags}"/>
                         <div class="review-meta">
                             <pa:review-author-link review="${review}"/>
