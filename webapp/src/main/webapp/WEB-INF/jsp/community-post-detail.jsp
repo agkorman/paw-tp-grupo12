@@ -7,7 +7,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${pageTitle}" styles="/css/community-post-common.css|/css/community-post-detail.css|/css/communities-responsive.css|/css/profile-modal.css"/>
+<pa:page-head title="${pageTitle}" styles="/css/community-post-common.css|/css/community-post-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:url var="communityDetailUrl" value="/communities/${postDetail.community.slug}"/>
@@ -71,6 +71,7 @@
             <article class="community-post-detail-card">
                 <h1><c:out value="${postView.title}"/></h1>
                 <p class="community-post-detail-body"><c:out value="${postView.body}"/></p>
+                <pa:image-gallery imageUrls="${postView.imageUrls}" altKey="communities.post.image.alt"/>
 
                 <div class="community-post-detail-actions">
                     <spring:message var="postCommentCountText" code="communities.post.metric.comments" arguments="${postView.commentCount}"/>
@@ -267,6 +268,8 @@
         <pa:script src="/js/communities/community-comment-edit.js"/>
         <pa:script src="/js/communities/community-moderation.js"/>
     </sec:authorize>
+    <pa:image-lightbox/>
+    <pa:script src="/js/shared/image-lightbox.js" defer="true"/>
 
     <pa:footer/>
 </body>
