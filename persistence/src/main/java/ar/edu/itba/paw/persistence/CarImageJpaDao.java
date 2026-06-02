@@ -43,12 +43,8 @@ public class CarImageJpaDao implements CarImageDao {
         final List<CarImage> result = new ArrayList<>();
         for (final Object element : rawRows) {
             final Object[] row = (Object[]) element;
-            final CarImage image = new CarImage();
+            final CarImage image = new CarImage(carRef, ((Number) row[2]).intValue(), (String) row[3], null);
             image.setImageId(((Number) row[0]).longValue());
-            image.setCar(carRef);
-            image.setDisplayOrder(((Number) row[2]).intValue());
-            image.setContentType((String) row[3]);
-            image.setImageData(null);
             image.setUpdatedAt((java.time.LocalDateTime) row[4]);
             result.add(image);
         }
@@ -88,11 +84,7 @@ public class CarImageJpaDao implements CarImageDao {
         final Car carRef = em.getReference(Car.class, carId);
         for (int i = 0; i < images.size(); i++) {
             final ImagePayload payload = images.get(i);
-            final CarImage img = new CarImage();
-            img.setCar(carRef);
-            img.setDisplayOrder(i);
-            img.setContentType(payload.getContentType());
-            img.setImageData(payload.getImageData());
+            final CarImage img = new CarImage(carRef, i, payload.getContentType(), payload.getImageData());
             em.persist(img);
         }
         LOGGER.info("replaced image gallery for car id={} imageCount={}", carId, images.size());

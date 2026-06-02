@@ -9,7 +9,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,9 @@ public class ReviewTagServiceImplTest {
     private ReviewTagServiceImpl reviewTagService;
 
     private static ReviewTag tag(final short id, final String code, final String sentiment, final String dimension) {
-        return new ReviewTag(id, code, "label-" + code, sentiment, dimension, LocalDateTime.now());
+        final ReviewTag tag = new ReviewTag(code, "label-" + code, sentiment, dimension);
+        tag.setId(id);
+        return tag;
     }
 
     @Test

@@ -23,54 +23,61 @@ public class Car implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "car_id")
+    @Column(name = "car_id", nullable = false)
     private long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "brand_id")
+    @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 
-    @Column(name = "model")
+    @Column(name = "model", nullable = false, length = 120)
     private String model;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "body_type_id")
+    @JoinColumn(name = "body_type_id", nullable = false)
     private BodyType bodyTypeEntity;
 
-    @Column(name = "year")
+    @Column(name = "year", nullable = true)
     private Integer year;
 
-    @Column(name = "description")
+    @Column(name = "description", nullable = true)
     private String description;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Transient
     private boolean hasImage;
 
-    @Column(name = "fuel_type")
+    @Column(name = "fuel_type", nullable = true, length = 20)
     private String fuelType;
 
-    @Column(name = "horsepower")
+    @Column(name = "horsepower", nullable = true)
     private Integer horsepower;
 
-    @Column(name = "airbag_count")
+    @Column(name = "airbag_count", nullable = true)
     private Integer airbagCount;
 
-    @Column(name = "transmission")
+    @Column(name = "transmission", nullable = true, length = 20)
     private String transmission;
 
-    @Column(name = "fuel_consumption")
+    @Column(name = "fuel_consumption", nullable = true, precision = 4, scale = 1)
     private BigDecimal fuelConsumption;
 
-    @Column(name = "max_speed_kmh")
+    @Column(name = "max_speed_kmh", nullable = true)
     private Integer maxSpeedKmh;
 
-    @Column(name = "price_usd")
+    @Column(name = "price_usd", nullable = true, precision = 12, scale = 2)
     private BigDecimal priceUsd;
 
-    public Car() {}
+    Car() {}
+
+    public Car(final Brand brand, final String model, final BodyType bodyTypeEntity) {
+        this.brand = brand;
+        this.model = model;
+        this.bodyTypeEntity = bodyTypeEntity;
+        this.createdAt = LocalDateTime.now();
+    }
 
     public long getId() {
         return id;

@@ -90,13 +90,9 @@ public class AdminRequestJpaDao implements AdminRequestDao {
     public AdminRequest create(final long submittedByUserId, final String submitterEmail,
                                final String motivation, final String bio, final String justification,
                                final String status) {
-        final AdminRequest request = new AdminRequest();
-        request.setSubmittedByUser(em.getReference(User.class, submittedByUserId));
+        final AdminRequest request = new AdminRequest(
+                em.getReference(User.class, submittedByUserId), motivation, bio, justification, status);
         request.setSubmitterEmail(submitterEmail);
-        request.setMotivation(motivation);
-        request.setBio(bio);
-        request.setJustification(justification);
-        request.setStatus(status);
         em.persist(request);
         LOGGER.info("created admin request id={} userId={} status={}", request.getId(), submittedByUserId, status);
         return request;

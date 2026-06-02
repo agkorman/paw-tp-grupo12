@@ -527,30 +527,25 @@ class CommunityControllerTest {
     }
 
     private static Community community() {
-        final Community community = new Community();
+        final Community community = new Community(
+                "classics", "Classics", "Pre-1990 cars and honest restoration projects.");
         community.setId(1L);
-        community.setSlug("classics");
-        community.setName("Classics");
-        community.setDescription("Pre-1990 cars and honest restoration projects.");
         community.setCreatedAt(LocalDateTime.now().minusDays(10));
         return community;
     }
 
     private static CommunityTopic topic(final short id, final String code) {
-        final CommunityTopic topic = new CommunityTopic();
+        final CommunityTopic topic = new CommunityTopic(code, true);
         topic.setId(id);
-        topic.setCode(code);
         topic.setCreatedAt(LocalDateTime.now().minusDays(10));
         return topic;
     }
 
     private static CommunityPost post() {
-        final CommunityPost post = new CommunityPost();
+        final CommunityPost post = new CommunityPost(
+                community(), author(7L, "mateo.classics"), "falcon-60",
+                "My grandfather's Falcon turned 60 today", false);
         post.setId(1L);
-        post.setCommunity(community());
-        post.setAuthor(author(7L, "mateo.classics"));
-        post.setSlug("falcon-60");
-        post.setTitle("My grandfather's Falcon turned 60 today");
         post.setBody("Still runs beautifully and keeps every original detail intact.");
         post.setCreatedAt(LocalDateTime.now().minusHours(2));
         post.setUpdatedAt(LocalDateTime.now().minusHours(2));
@@ -558,24 +553,17 @@ class CommunityControllerTest {
     }
 
     private static CommunityPostComment comment() {
-        final CommunityPostComment comment = new CommunityPostComment();
+        final CommunityPostComment comment = new CommunityPostComment(
+                post(), author(8L, "lu.driver"), "That paint looks original.", false);
         comment.setId(10L);
-        comment.setPost(post());
-        comment.setUser(author(8L, "lu.driver"));
-        comment.setBody("That paint looks original.");
         comment.setCreatedAt(LocalDateTime.now().minusHours(1));
         comment.setUpdatedAt(LocalDateTime.now().minusHours(1));
         return comment;
     }
 
     private static User author(final long id, final String username) {
-        final User user = new User();
+        final User user = new User(username, username + "@example.com", "secret", "user", "es");
         user.setId(id);
-        user.setUsername(username);
-        user.setEmail(username + "@example.com");
-        user.setPassword("secret");
-        user.setRole("user");
-        user.setPreferredLocale("es");
         user.setCreatedAt(LocalDateTime.now().minusDays(100));
         return user;
     }

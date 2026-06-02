@@ -34,12 +34,8 @@ public class ReviewImageJpaDao implements ReviewImageDao {
         final List<ReviewImage> result = new ArrayList<>();
         for (final Object element : rawRows) {
             final Object[] row = (Object[]) element;
-            final ReviewImage image = new ReviewImage();
+            final ReviewImage image = new ReviewImage(reviewRef, ((Number) row[2]).intValue(), (String) row[3], null);
             image.setImageId(((Number) row[0]).longValue());
-            image.setReview(reviewRef);
-            image.setDisplayOrder(((Number) row[2]).intValue());
-            image.setContentType((String) row[3]);
-            image.setImageData(null);
             image.setUpdatedAt((java.time.LocalDateTime) row[4]);
             result.add(image);
         }
@@ -60,12 +56,10 @@ public class ReviewImageJpaDao implements ReviewImageDao {
         final List<ReviewImage> result = new ArrayList<>();
         for (final Object element : rawRows) {
             final Object[] row = (Object[]) element;
-            final ReviewImage image = new ReviewImage();
+            final ReviewImage image = new ReviewImage(
+                    em.getReference(Review.class, ((Number) row[1]).longValue()),
+                    ((Number) row[2]).intValue(), (String) row[3], null);
             image.setImageId(((Number) row[0]).longValue());
-            image.setReview(em.getReference(Review.class, ((Number) row[1]).longValue()));
-            image.setDisplayOrder(((Number) row[2]).intValue());
-            image.setContentType((String) row[3]);
-            image.setImageData(null);
             image.setUpdatedAt((java.time.LocalDateTime) row[4]);
             result.add(image);
         }
@@ -104,11 +98,7 @@ public class ReviewImageJpaDao implements ReviewImageDao {
         final Review reviewRef = em.getReference(Review.class, reviewId);
         for (int i = 0; i < images.size(); i++) {
             final ImagePayload payload = images.get(i);
-            final ReviewImage img = new ReviewImage();
-            img.setReview(reviewRef);
-            img.setDisplayOrder(i);
-            img.setContentType(payload.getContentType());
-            img.setImageData(payload.getImageData());
+            final ReviewImage img = new ReviewImage(reviewRef, i, payload.getContentType(), payload.getImageData());
             em.persist(img);
         }
         LOGGER.info("replaced image gallery for review id={} imageCount={}", reviewId, images.size());

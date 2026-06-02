@@ -518,17 +518,17 @@ class CarReviewControllerTest {
     }
 
     private static Review reviewOwnedBy(final long reviewId, final long carId) {
-        final Review r = new Review();
-        final User user = new User();
-        final Car car = new Car();
-        r.setId(reviewId);
+        final User user = new User("user1", "user1@test.com", "pass", "user", "es");
         user.setId(1L);
+        final Car car = TestModels.car(carId, 1L, "Toyota", "Corolla", 1L, 2024, "Sedan",
+                "desc", LocalDateTime.now(), false,
+                ar.edu.itba.paw.model.CarSearchCriteria.FUEL_TYPE_COMBUSTION, 140,
+                6, ar.edu.itba.paw.model.CarSearchCriteria.TRANSMISSION_AUTOMATIC,
+                BigDecimal.valueOf(8.0), 200, BigDecimal.valueOf(20000));
+        final Review r = new Review(car, new BigDecimal("4.5"), "t", "b");
+        r.setId(reviewId);
         r.setUser(user);
         car.setId(carId);
-        r.setCar(car);
-        r.setRating(new BigDecimal("4.5"));
-        r.setTitle("t");
-        r.setBody("b");
         return r;
     }
 }

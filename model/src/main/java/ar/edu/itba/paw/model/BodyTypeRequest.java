@@ -18,29 +18,35 @@ public class BodyTypeRequest implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "body_type_request_id")
+    @Column(name = "body_type_request_id", nullable = false)
     private long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "submitted_by_user_id")
+    @JoinColumn(name = "submitted_by_user_id", nullable = true)
     private User submittedByUser;
 
-    @Column(name = "submitter_email")
+    @Column(name = "submitter_email", nullable = true, length = 100)
     private String submitterEmail;
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false, length = 80)
     private String name;
 
-    @Column(name = "comments")
+    @Column(name = "comments", nullable = true)
     private String comments;
 
-    @Column(name = "status")
+    @Column(name = "status", nullable = false, length = 20)
     private String status;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public BodyTypeRequest() {}
+    BodyTypeRequest() {}
+
+    public BodyTypeRequest(final String name, final String status) {
+        this.name = name;
+        this.status = status;
+        this.createdAt = LocalDateTime.now();
+    }
 
     public long getId() {
         return id;

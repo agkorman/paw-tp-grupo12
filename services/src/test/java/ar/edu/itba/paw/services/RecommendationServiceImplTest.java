@@ -54,8 +54,9 @@ public class RecommendationServiceImplTest {
     }
 
     private static ReviewTag tag(final short id, final String code) {
-        return new ReviewTag(id, code, "label-" + code, ReviewTag.SENTIMENT_POSITIVE, code + "-dim",
-                LocalDateTime.now());
+        final ReviewTag tag = new ReviewTag(code, "label-" + code, ReviewTag.SENTIMENT_POSITIVE, code + "-dim");
+        tag.setId(id);
+        return tag;
     }
 
     private static List<ReviewTag> allTags() {

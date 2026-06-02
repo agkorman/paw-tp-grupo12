@@ -19,67 +19,77 @@ public class CarRequest implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "car_request_id")
+    @Column(name = "car_request_id", nullable = false)
     private long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "submitted_by_user_id")
+    @JoinColumn(name = "submitted_by_user_id", nullable = true)
     private User submittedByUser;
 
-    @Column(name = "submitter_email")
+    @Column(name = "submitter_email", nullable = true, length = 100)
     private String submitterEmail;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "brand_id")
+    @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "body_type_id")
+    @JoinColumn(name = "body_type_id", nullable = false)
     private BodyType bodyType;
 
-    @Column(name = "year")
+    @Column(name = "year", nullable = true)
     private Integer year;
 
-    @Column(name = "model")
+    @Column(name = "model", nullable = false, length = 120)
     private String model;
 
-    @Column(name = "description")
+    @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(name = "image_content_type")
+    @Column(name = "image_content_type", nullable = true, length = 100)
     private String imageContentType;
 
-    @Column(name = "image_data")
+    @Column(name = "image_data", nullable = true)
     private byte[] imageData;
 
-    @Column(name = "status")
+    @Column(name = "status", nullable = false, length = 20)
     private String status;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "fuel_type")
+    @Column(name = "fuel_type", nullable = true, length = 20)
     private String fuelType;
 
-    @Column(name = "horsepower")
+    @Column(name = "horsepower", nullable = true)
     private Integer horsepower;
 
-    @Column(name = "airbag_count")
+    @Column(name = "airbag_count", nullable = true)
     private Integer airbagCount;
 
-    @Column(name = "transmission")
+    @Column(name = "transmission", nullable = true, length = 20)
     private String transmission;
 
-    @Column(name = "fuel_consumption")
+    @Column(name = "fuel_consumption", nullable = true, precision = 4, scale = 1)
     private BigDecimal fuelConsumption;
 
-    @Column(name = "max_speed_kmh")
+    @Column(name = "max_speed_kmh", nullable = true)
     private Integer maxSpeedKmh;
 
-    @Column(name = "price_usd")
+    @Column(name = "price_usd", nullable = true, precision = 12, scale = 2)
     private BigDecimal priceUsd;
 
-    public CarRequest() {}
+    CarRequest() {}
+
+    public CarRequest(final Brand brand, final BodyType bodyType, final String model,
+                      final String description, final String status) {
+        this.brand = brand;
+        this.bodyType = bodyType;
+        this.model = model;
+        this.description = description;
+        this.status = status;
+        this.createdAt = LocalDateTime.now();
+    }
 
     public long getId() {
         return id;

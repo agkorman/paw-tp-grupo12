@@ -18,32 +18,42 @@ public class AdminRequest implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "admin_request_id")
+    @Column(name = "admin_request_id", nullable = false)
     private long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "submitted_by_user_id")
+    @JoinColumn(name = "submitted_by_user_id", nullable = false)
     private User submittedByUser;
 
-    @Column(name = "submitter_email")
+    @Column(name = "submitter_email", nullable = true, length = 100)
     private String submitterEmail;
 
-    @Column(name = "motivation")
+    @Column(name = "motivation", nullable = false)
     private String motivation;
 
-    @Column(name = "bio")
+    @Column(name = "bio", nullable = false)
     private String bio;
 
-    @Column(name = "justification")
+    @Column(name = "justification", nullable = false)
     private String justification;
 
-    @Column(name = "status")
+    @Column(name = "status", nullable = false, length = 20)
     private String status;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public AdminRequest() {}
+    AdminRequest() {}
+
+    public AdminRequest(final User submittedByUser, final String motivation, final String bio,
+                        final String justification, final String status) {
+        this.submittedByUser = submittedByUser;
+        this.motivation = motivation;
+        this.bio = bio;
+        this.justification = justification;
+        this.status = status;
+        this.createdAt = LocalDateTime.now();
+    }
 
     public long getId() {
         return id;

@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.BodyType;
+import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.EmailRecipient;
@@ -80,7 +82,9 @@ public class WeeklyDigestServiceImplTest {
         final List<EmailRecipient> moderatorRecipients = List.of(new EmailRecipient("mod@example.com", "es"));
         when(userService.getModeratorEmailRecipients()).thenReturn(moderatorRecipients);
         when(carRequestService.getCarRequestsByStatus(CarRequestService.STATUS_PENDING))
-                .thenReturn(List.of(new CarRequest(), new CarRequest()));
+                .thenReturn(List.of(
+                        new CarRequest(new Brand("Toyota"), new BodyType("Sedan"), "Corolla", "desc", "pending"),
+                        new CarRequest(new Brand("Honda"), new BodyType("SUV"), "CR-V", "desc", "pending")));
         when(userService.getAllUsers()).thenReturn(List.of());
         doAnswer(invocation -> {
             capturedRecipients.add(invocation.getArgument(0));

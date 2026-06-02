@@ -111,31 +111,24 @@ abstract class AbstractPersistenceTest {
                 username, email, password, role
         );
         final long id = jdbcTemplate.queryForObject("SELECT user_id FROM users WHERE email = ?", Long.class, email);
-        final User user = new User();
+        final User user = new User(username, email, password, role, "es");
         user.setId(id);
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(password);
-        user.setRole(role);
-        user.setPreferredLocale("es");
         return user;
     }
 
     protected Brand insertBrand(final String name) {
         jdbcTemplate.update("INSERT INTO brands (name) VALUES (?)", name);
         final long id = jdbcTemplate.queryForObject("SELECT brand_id FROM brands WHERE name = ?", Long.class, name);
-        final Brand brand = new Brand();
+        final Brand brand = new Brand(name);
         brand.setId(id);
-        brand.setName(name);
         return brand;
     }
 
     protected BodyType insertBodyType(final String name) {
         jdbcTemplate.update("INSERT INTO body_types (name) VALUES (?)", name);
         final long id = jdbcTemplate.queryForObject("SELECT body_type_id FROM body_types WHERE name = ?", Long.class, name);
-        final BodyType bodyType = new BodyType();
+        final BodyType bodyType = new BodyType(name);
         bodyType.setId(id);
-        bodyType.setName(name);
         return bodyType;
     }
 
@@ -155,11 +148,8 @@ abstract class AbstractPersistenceTest {
                 "SELECT car_id FROM cars WHERE brand_id = ? AND model = ? AND body_type_id = ? AND year = ?",
                 Long.class, brandId, model, bodyTypeId, year
         );
-        final Car car = new Car();
+        final Car car = new Car(entityBrand(brandId, brandName), model, entityBodyType(bodyTypeId, bodyType));
         car.setId(id);
-        car.setBrand(entityBrand(brandId, brandName));
-        car.setModel(model);
-        car.setBodyTypeEntity(entityBodyType(bodyTypeId, bodyType));
         car.setYear(year);
         car.setDescription(description);
         car.setHasImage(false);
@@ -183,13 +173,9 @@ abstract class AbstractPersistenceTest {
                 userId, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend
         );
         final long id = jdbcTemplate.queryForObject("SELECT review_id FROM reviews WHERE title = ?", Long.class, title);
-        final Review review = new Review();
+        final Review review = new Review(entityCar(carId), rating, title, body);
         review.setId(id);
         review.setUser(entityUser(userId, reviewerUsername));
-        review.setCar(entityCar(carId));
-        review.setRating(rating);
-        review.setTitle(title);
-        review.setBody(body);
         review.setOwnershipStatus(ownershipStatus);
         review.setModelYear(modelYear);
         review.setMileageKm(mileageKm);
@@ -207,11 +193,8 @@ abstract class AbstractPersistenceTest {
                 "SELECT reply_id FROM review_replies WHERE review_id = ? AND user_id = ? AND body = ?",
                 Long.class, reviewId, userId, body
         );
-        final ReviewReply reply = new ReviewReply();
+        final ReviewReply reply = new ReviewReply(entityReview(reviewId), entityUser(userId, authorUsername), body);
         reply.setId(id);
-        reply.setReview(entityReview(reviewId));
-        reply.setUser(entityUser(userId, authorUsername));
-        reply.setBody(body);
         return reply;
     }
 
@@ -231,34 +214,31 @@ abstract class AbstractPersistenceTest {
     }
 
     private User entityUser(final long id, final String username) {
-        final User user = new User();
+        final User user = new User(username, null, null, null, null);
         user.setId(id);
-        user.setUsername(username);
         return user;
     }
 
     private Brand entityBrand(final long id, final String name) {
-        final Brand brand = new Brand();
+        final Brand brand = new Brand(name);
         brand.setId(id);
-        brand.setName(name);
         return brand;
     }
 
     private BodyType entityBodyType(final long id, final String name) {
-        final BodyType bodyType = new BodyType();
+        final BodyType bodyType = new BodyType(name);
         bodyType.setId(id);
-        bodyType.setName(name);
         return bodyType;
     }
 
     private Car entityCar(final long id) {
-        final Car car = new Car();
+        final Car car = new Car(entityBrand(0, null), null, entityBodyType(0, null));
         car.setId(id);
         return car;
     }
 
     private Review entityReview(final long id) {
-        final Review review = new Review();
+        final Review review = new Review(entityCar(0), null, null, null);
         review.setId(id);
         return review;
     }

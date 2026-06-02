@@ -1012,11 +1012,9 @@ class CommunityServiceImplTest {
     }
 
     private static Community community() {
-        final Community community = new Community();
+        final Community community = new Community(
+                "classics", "Classics", "Pre-1990 cars and honest restoration projects.");
         community.setId(1L);
-        community.setSlug("classics");
-        community.setName("Classics");
-        community.setDescription("Pre-1990 cars and honest restoration projects.");
         community.setCreatedAt(LocalDateTime.now().minusDays(10));
         return community;
     }
@@ -1024,20 +1022,16 @@ class CommunityServiceImplTest {
     private static final long USER_ID = 7L;
 
     private static CommunityTopic topic(final short id, final String code) {
-        final CommunityTopic topic = new CommunityTopic();
+        final CommunityTopic topic = new CommunityTopic(code, true);
         topic.setId(id);
-        topic.setCode(code);
         topic.setCreatedAt(LocalDateTime.now().minusDays(20));
         return topic;
     }
 
     private static CommunityPost post(final Community community, final User author) {
-        final CommunityPost post = new CommunityPost();
+        final CommunityPost post = new CommunityPost(
+                community, author, "falcon-60", "My grandfather's Falcon turned 60 today", false);
         post.setId(3L);
-        post.setCommunity(community);
-        post.setAuthor(author);
-        post.setSlug("falcon-60");
-        post.setTitle("My grandfather's Falcon turned 60 today");
         post.setBody("Still runs beautifully.");
         post.setCreatedAt(LocalDateTime.now().minusHours(2));
         post.setUpdatedAt(LocalDateTime.now().minusHours(2));
@@ -1045,11 +1039,9 @@ class CommunityServiceImplTest {
     }
 
     private static CommunityPostComment comment(final CommunityPost post, final User author) {
-        final CommunityPostComment comment = new CommunityPostComment();
+        final CommunityPostComment comment = new CommunityPostComment(
+                post, author, "That paint looks original.", false);
         comment.setId(5L);
-        comment.setPost(post);
-        comment.setUser(author);
-        comment.setBody("That paint looks original.");
         comment.setCreatedAt(LocalDateTime.now().minusHours(1));
         comment.setUpdatedAt(LocalDateTime.now().minusHours(1));
         return comment;

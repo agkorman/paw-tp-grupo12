@@ -110,16 +110,14 @@ class AdminControllerTest {
     }
 
     private Brand toyotaBrand() {
-        final Brand b = new Brand();
+        final Brand b = new Brand("Toyota");
         b.setId(1L);
-        b.setName("Toyota");
         return b;
     }
 
     private BodyType sedanBody() {
-        final BodyType bt = new BodyType();
+        final BodyType bt = new BodyType("Sedan");
         bt.setId(1L);
-        bt.setName("Sedan");
         return bt;
     }
 

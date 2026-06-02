@@ -80,14 +80,12 @@ public class BodyTypeRequestJpaDao implements BodyTypeRequestDao {
     @Override
     public BodyTypeRequest create(final Long submittedByUserId, final String submitterEmail,
                                   final String name, final String comments, final String status) {
-        final BodyTypeRequest request = new BodyTypeRequest();
+        final BodyTypeRequest request = new BodyTypeRequest(name, status);
         if (submittedByUserId != null) {
             request.setSubmittedByUser(em.getReference(User.class, submittedByUserId));
         }
         request.setSubmitterEmail(submitterEmail);
-        request.setName(name);
         request.setComments(comments);
-        request.setStatus(status);
         em.persist(request);
         LOGGER.info("created body type request id={} userId={} name={} status={}", request.getId(), submittedByUserId, name, status);
         return request;

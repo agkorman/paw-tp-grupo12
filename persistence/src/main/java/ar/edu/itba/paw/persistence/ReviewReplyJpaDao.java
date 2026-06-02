@@ -71,10 +71,8 @@ public class ReviewReplyJpaDao implements ReviewReplyDao {
 
     @Override
     public ReviewReply create(final long reviewId, final long userId, final String body) {
-        final ReviewReply reply = new ReviewReply();
-        reply.setReview(em.getReference(Review.class, reviewId));
-        reply.setUser(em.getReference(User.class, userId));
-        reply.setBody(body);
+        final ReviewReply reply = new ReviewReply(
+                em.getReference(Review.class, reviewId), em.getReference(User.class, userId), body);
         em.persist(reply);
         LOGGER.info("created reply id={} reviewId={} userId={}", reply.getId(), reviewId, userId);
         return reply;

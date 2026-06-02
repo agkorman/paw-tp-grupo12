@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,9 +39,7 @@ public class BrandJpaDao implements BrandDao {
 
     @Override
     public Brand create(final String name) {
-        final Brand brand = new Brand();
-        brand.setName(name);
-        brand.setCreatedAt(LocalDateTime.now());
+        final Brand brand = new Brand(name);
         em.persist(brand);
         LOGGER.info("created brand id={} name={}", brand.getId(), name);
         return brand;

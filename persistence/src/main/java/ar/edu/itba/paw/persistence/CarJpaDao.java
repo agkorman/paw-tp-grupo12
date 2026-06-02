@@ -179,10 +179,7 @@ public class CarJpaDao implements CarDao {
                       final String description, final String fuelType, final Integer horsepower,
                       final Integer airbagCount, final String transmission, final BigDecimal fuelConsumption,
                       final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-        final Car car = new Car();
-        car.setBrand(em.getReference(Brand.class, brandId));
-        car.setModel(model);
-        car.setBodyTypeEntity(em.getReference(BodyType.class, bodyTypeId));
+        final Car car = new Car(em.getReference(Brand.class, brandId), model, em.getReference(BodyType.class, bodyTypeId));
         car.setYear(year);
         car.setDescription(description);
         car.setFuelType(fuelType);

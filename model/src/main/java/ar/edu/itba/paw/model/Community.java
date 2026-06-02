@@ -19,29 +19,37 @@ public class Community implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "community_id")
+    @Column(name = "community_id", nullable = false)
     private long id;
 
-    @Column(name = "slug")
+    @Column(name = "slug", nullable = false, length = 60)
     private String slug;
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false, length = 60)
     private String name;
 
-    @Column(name = "description")
+    @Column(name = "description", nullable = false)
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "created_by_user_id")
+    @JoinColumn(name = "created_by_user_id", nullable = true)
     private User createdBy;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false)
+    @Column(name = "updated_at", nullable = false, insertable = false)
     private LocalDateTime updatedAt;
 
-    public Community() {}
+    Community() {}
+
+    public Community(final String slug, final String name, final String description) {
+        this.slug = slug;
+        this.name = name;
+        this.description = description;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 
     public long getId() {
         return id;

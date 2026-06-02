@@ -18,26 +18,35 @@ public class CarRequestImage implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "image_id")
+    @Column(name = "image_id", nullable = false)
     private long imageId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "car_request_id")
+    @JoinColumn(name = "car_request_id", nullable = false)
     private CarRequest request;
 
-    @Column(name = "display_order")
+    @Column(name = "display_order", nullable = false)
     private int displayOrder;
 
-    @Column(name = "content_type")
+    @Column(name = "content_type", nullable = false, length = 100)
     private String contentType;
 
-    @Column(name = "image_data")
+    @Column(name = "image_data", nullable = false)
     private byte[] imageData;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
-    public CarRequestImage() {}
+    CarRequestImage() {}
+
+    public CarRequestImage(final CarRequest request, final int displayOrder, final String contentType,
+                           final byte[] imageData) {
+        this.request = request;
+        this.displayOrder = displayOrder;
+        this.contentType = contentType;
+        this.imageData = imageData;
+        this.updatedAt = LocalDateTime.now();
+    }
 
     public long getImageId() {
         return imageId;

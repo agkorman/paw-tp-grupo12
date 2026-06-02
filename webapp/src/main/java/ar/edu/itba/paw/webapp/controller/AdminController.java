@@ -989,12 +989,10 @@ public class AdminController {
         final Map<Long, Brand> brandsById,
         final Map<Long, BodyType> bodyTypesById
     ) {
-        final String brandName = brandsById
-            .getOrDefault(request.getBrandId(), new Brand())
-            .getName();
-        final String bodyTypeName = bodyTypesById
-            .getOrDefault(request.getBodyTypeId(), new BodyType())
-            .getName();
+        final Brand brand = brandsById.get(request.getBrandId());
+        final BodyType bodyType = bodyTypesById.get(request.getBodyTypeId());
+        final String brandName = brand == null ? null : brand.getName();
+        final String bodyTypeName = bodyType == null ? null : bodyType.getName();
         final List<String> imageUrls = buildRequestImageUrls(request);
         return new AdminCarRequestCard(
                 request.getId(),

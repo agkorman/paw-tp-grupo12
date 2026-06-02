@@ -90,17 +90,14 @@ public class CarRequestJpaDao implements CarRequestDao {
                              final String fuelType, final Integer horsepower, final Integer airbagCount,
                              final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
                              final BigDecimal priceUsd) {
-        final CarRequest request = new CarRequest();
+        final Brand brand = em.getReference(Brand.class, brandId);
+        final BodyType bodyType = em.getReference(BodyType.class, bodyTypeId);
+        final CarRequest request = new CarRequest(brand, bodyType, model, description, status);
         request.setSubmittedByUser(em.getReference(User.class, submittedByUserId));
         request.setSubmitterEmail(submitterEmail);
-        request.setBrand(em.getReference(Brand.class, brandId));
-        request.setBodyType(em.getReference(BodyType.class, bodyTypeId));
         request.setYear(year);
-        request.setModel(model);
-        request.setDescription(description);
         request.setImageContentType(imageContentType);
         request.setImageData(imageData);
-        request.setStatus(status);
         request.setFuelType(fuelType);
         request.setHorsepower(horsepower);
         request.setAirbagCount(airbagCount);
@@ -126,12 +123,8 @@ public class CarRequestJpaDao implements CarRequestDao {
             final CarRequest requestRef = em.getReference(CarRequest.class, requestId);
             return rawRows.stream().map(element -> {
                 final Object[] r = (Object[]) element;
-                final CarRequestImage img = new CarRequestImage();
+                final CarRequestImage img = new CarRequestImage(requestRef, ((Number) r[2]).intValue(), (String) r[3], null);
                 img.setImageId(((Number) r[0]).longValue());
-                img.setRequest(requestRef);
-                img.setDisplayOrder(((Number) r[2]).intValue());
-                img.setContentType((String) r[3]);
-                img.setImageData(null);
                 img.setUpdatedAt((java.time.LocalDateTime) r[4]);
                 return img;
             }).collect(Collectors.toList());
@@ -167,11 +160,8 @@ public class CarRequestJpaDao implements CarRequestDao {
             final CarRequest requestRef = em.getReference(CarRequest.class, requestId);
             for (int i = 0; i < images.size(); i++) {
                 final ImagePayload payload = images.get(i);
-                final CarRequestImage img = new CarRequestImage();
-                img.setRequest(requestRef);
-                img.setDisplayOrder(i);
-                img.setContentType(payload.getContentType());
-                img.setImageData(payload.getImageData());
+                final CarRequestImage img = new CarRequestImage(
+                        requestRef, i, payload.getContentType(), payload.getImageData());
                 em.persist(img);
             }
             LOGGER.info("replaced image gallery for car request id={} imageCount={}", requestId, images.size());

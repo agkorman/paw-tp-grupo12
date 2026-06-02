@@ -463,16 +463,14 @@ class CarControllerTest {
     }
 
     private static Brand brand(final String name, final long id) {
-        final Brand b = new Brand();
+        final Brand b = new Brand(name);
         b.setId(id);
-        b.setName(name);
         return b;
     }
 
     private static BodyType bodyType(final String name, final long id) {
-        final BodyType bt = new BodyType();
+        final BodyType bt = new BodyType(name);
         bt.setId(id);
-        bt.setName(name);
         return bt;
     }
 
