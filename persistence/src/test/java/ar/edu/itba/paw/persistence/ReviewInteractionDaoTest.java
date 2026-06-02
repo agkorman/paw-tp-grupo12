@@ -254,7 +254,7 @@ public class ReviewInteractionDaoTest extends AbstractPersistenceTest {
     public void shouldReplaceReviewTagAssignmentsAndRemovePreviousTags() {
         // Arrange
         final Review review = createReview("tags-replace");
-        final short previous = createReviewTag("previous-tag", "neutral", "comfort");
+        final short previous = createReviewTag("previous-tag", "negative", "comfort");
         final short replacement = createReviewTag("replacement-tag", "positive", "comfort");
         jdbcTemplate.update(
                 "INSERT INTO review_tag_assignments (review_id, tag_id) VALUES (?, ?)",
