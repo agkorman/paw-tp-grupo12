@@ -127,6 +127,58 @@ public class CarJpaDao implements CarDao {
     }
 
     @Override
+    public List<Car> findByBrandIdAndBodyTypeIdAndModel(final long brandId, final long bodyTypeId,
+                                                        final String normalizedModel) {
+        if (normalizedModel == null) {
+            return List.of();
+        }
+        final List<Car> cars = em.createQuery(
+                "SELECT c FROM Car c JOIN FETCH c.brand JOIN FETCH c.bodyTypeEntity " +
+                "WHERE c.brand.id = :brandId " +
+                "AND c.bodyTypeEntity.id = :bodyTypeId " +
+                "AND LOWER(TRIM(c.model)) = :normalizedModel " +
+                "ORDER BY CASE WHEN c.year IS NULL THEN 1 ELSE 0 END, c.year DESC, c.id ASC",
+                Car.class)
+                .setParameter("brandId", brandId)
+                .setParameter("bodyTypeId", bodyTypeId)
+                .setParameter("normalizedModel", normalizedModel)
+                .getResultList();
+        populateHasImage(cars);
+        return cars;
+    }
+
+    @Override
+    public boolean existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(final long brandId, final long bodyTypeId,
+                                                                          final String normalizedModel,
+                                                                          final Integer year,
+                                                                          final long excludedCarId) {
+        if (normalizedModel == null) {
+            return false;
+        }
+        final StringBuilder jpql = new StringBuilder(
+                "SELECT COUNT(c) FROM Car c " +
+                "WHERE c.brand.id = :brandId " +
+                "AND c.bodyTypeEntity.id = :bodyTypeId " +
+                "AND LOWER(TRIM(c.model)) = :normalizedModel " +
+                "AND c.id <> :excludedCarId "
+        );
+        if (year == null) {
+            jpql.append("AND c.year IS NULL");
+        } else {
+            jpql.append("AND c.year = :year");
+        }
+        final javax.persistence.TypedQuery<Long> query = em.createQuery(jpql.toString(), Long.class)
+                .setParameter("brandId", brandId)
+                .setParameter("bodyTypeId", bodyTypeId)
+                .setParameter("normalizedModel", normalizedModel)
+                .setParameter("excludedCarId", excludedCarId);
+        if (year != null) {
+            query.setParameter("year", year);
+        }
+        return query.getSingleResult() > 0L;
+    }
+
+    @Override
     public Page<Car> findByCriteria(final CarSearchCriteria criteria) {
         final List<Object> params = new ArrayList<>();
         final String whereClause = buildWhereClause(criteria, params);
@@ -172,6 +224,23 @@ public class CarJpaDao implements CarDao {
         final List<Car> cars = loadCarsByIds(longIds);
         populateHasImage(cars);
         return new Page<>(sortByIds(cars, longIds), page, pageSize, totalItems);
+    }
+
+    @Override
+    public List<Long> findIdsByCriteria(final CarSearchCriteria criteria) {
+        final List<Object> params = new ArrayList<>();
+        final String whereClause = buildWhereClause(criteria, params);
+        final String fromJoin = "FROM cars c " +
+                "JOIN brands b ON c.brand_id = b.brand_id " +
+                "JOIN body_types bt ON c.body_type_id = bt.body_type_id ";
+
+        final javax.persistence.Query idsQuery = em.createNativeQuery(
+                "SELECT c.car_id " + fromJoin + whereClause + "ORDER BY c.car_id ASC");
+        for (int i = 0; i < params.size(); i++) {
+            idsQuery.setParameter(i + 1, params.get(i));
+        }
+        final List<?> ids = idsQuery.getResultList();
+        return ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
     }
 
     @Override

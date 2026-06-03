@@ -4,7 +4,9 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -274,5 +276,44 @@ public class ReviewInteractionDaoTest extends AbstractPersistenceTest {
                 "SELECT COUNT(*) FROM review_tag_assignments WHERE review_id = ? AND tag_id = ?",
                 review.getId(), replacement
         ));
+    }
+
+    @Test
+    public void shouldCountNewLikesPerReviewSinceAcrossReviewsRegardlessOfOwner() {
+        // Arrange
+        final Review review = createReview("likes-since");
+        final User recentLiker = createUser("likes-since-recent");
+        final User oldLiker = createUser("likes-since-old");
+        final LocalDateTime since = LocalDateTime.now().minusDays(7);
+        jdbcTemplate.update(
+                "INSERT INTO review_likes (review_id, user_id, created_at) VALUES (?, ?, ?)",
+                review.getId(), recentLiker.getId(), LocalDateTime.now()
+        );
+        jdbcTemplate.update(
+                "INSERT INTO review_likes (review_id, user_id, created_at) VALUES (?, ?, ?)",
+                review.getId(), oldLiker.getId(), LocalDateTime.now().minusDays(30)
+        );
+
+        // Exercise
+        final Map<Long, Long> result = reviewLikeDao.countNewLikesPerReviewSince(since);
+
+        // Assertions
+        assertEquals(1L, result.get(review.getId()));
+    }
+
+    @Test
+    public void shouldCountNewRepliesPerReviewSinceAcrossReviewsRegardlessOfOwner() {
+        // Arrange
+        final Review review = createReview("replies-since");
+        final User author = createUser("replies-since-author");
+        final LocalDateTime since = LocalDateTime.now().minusDays(7);
+        insertReviewReply(review.getId(), author.getId(), author.getUsername(), "Recent reply");
+        insertReviewReply(review.getId(), author.getId(), author.getUsername(), "Another recent reply");
+
+        // Exercise
+        final Map<Long, Long> result = reviewReplyDao.countNewRepliesPerReviewSince(since);
+
+        // Assertions
+        assertEquals(2L, result.get(review.getId()));
     }
 }

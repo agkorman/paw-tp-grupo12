@@ -161,10 +161,14 @@ public class AdminController {
                         BrandRequestService.STATUS_PENDING,
                         page
                     );
+                final Map<Long, User> brandSubmitters = fetchSubmitters(
+                    requestPage.getItems(),
+                    BrandRequest::getSubmittedByUserId
+                );
                 pendingBrandRequests = requestPage
                     .getItems()
                     .stream()
-                    .map(this::toBrandCard)
+                    .map(request -> toBrandCard(request, brandSubmitters))
                     .toList();
                 currentPage = requestPage.getPageNumber();
                 totalPages = requestPage.getTotalPages();
@@ -177,10 +181,14 @@ public class AdminController {
                         BodyTypeRequestService.STATUS_PENDING,
                         page
                     );
+                final Map<Long, User> bodyTypeSubmitters = fetchSubmitters(
+                    requestPage.getItems(),
+                    BodyTypeRequest::getSubmittedByUserId
+                );
                 pendingBodyTypeRequests = requestPage
                     .getItems()
                     .stream()
-                    .map(this::toBodyTypeCard)
+                    .map(request -> toBodyTypeCard(request, bodyTypeSubmitters))
                     .toList();
                 currentPage = requestPage.getPageNumber();
                 totalPages = requestPage.getTotalPages();
@@ -193,10 +201,14 @@ public class AdminController {
                         AdminRequestService.STATUS_PENDING,
                         page
                     );
+                final Map<Long, User> adminSubmitters = fetchSubmitters(
+                    requestPage.getItems(),
+                    AdminRequest::getSubmittedByUserId
+                );
                 pendingAdminRequests = requestPage
                     .getItems()
                     .stream()
-                    .map(this::toAdminRequestCard)
+                    .map(request -> toAdminRequestCard(request, adminSubmitters))
                     .toList();
                 currentPage = requestPage.getPageNumber();
                 totalPages = requestPage.getTotalPages();
@@ -220,10 +232,14 @@ public class AdminController {
                         CarRequestService.STATUS_PENDING,
                         page
                     );
+                final Map<Long, User> carSubmitters = fetchSubmitters(
+                    requestPage.getItems(),
+                    CarRequest::getSubmittedByUserId
+                );
                 pendingRequests = requestPage
                     .getItems()
                     .stream()
-                    .map(request -> toCard(request, brandsById, bodyTypesById))
+                    .map(request -> toCard(request, brandsById, bodyTypesById, carSubmitters))
                     .toList();
                 currentPage = requestPage.getPageNumber();
                 totalPages = requestPage.getTotalPages();
@@ -987,7 +1003,8 @@ public class AdminController {
     private AdminCarRequestCard toCard(
         final CarRequest request,
         final Map<Long, Brand> brandsById,
-        final Map<Long, BodyType> bodyTypesById
+        final Map<Long, BodyType> bodyTypesById,
+        final Map<Long, User> usersById
     ) {
         final Brand brand = brandsById.get(request.getBrandId());
         final BodyType bodyType = bodyTypesById.get(request.getBodyTypeId());
@@ -1001,7 +1018,7 @@ public class AdminController {
                 request.getYear(),
                 valueOrFallback(bodyTypeName, "Carrocería pendiente"),
                 request.getDescription(),
-                submitterLabel(request),
+                submitterLabel(request, usersById),
                 !imageUrls.isEmpty(),
                 imageUrls.isEmpty() ? null : imageUrls.get(0),
                 String.join("|", imageUrls),
@@ -1110,52 +1127,87 @@ public class AdminController {
         return List.of(CarService.LEGACY_IMAGE_ID);
     }
 
-    private String submitterLabel(final CarRequest request) {
+    private <T> Map<Long, User> fetchSubmitters(
+        final List<T> requests,
+        final Function<T, Long> userIdExtractor
+    ) {
+        final List<Long> userIds = requests
+            .stream()
+            .map(userIdExtractor)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+        if (userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return userService
+            .getUsersByIds(userIds)
+            .stream()
+            .collect(
+                Collectors.toMap(
+                    User::getId,
+                    user -> user,
+                    (existing, duplicate) -> existing
+                )
+            );
+    }
+
+    private String submitterLabel(
+        final CarRequest request,
+        final Map<Long, User> usersById
+    ) {
         return adminRequestService.getSubmitterLabel(
             request.getSubmitterEmail(),
-            request.getSubmittedByUserId()
+            request.getSubmittedByUserId(),
+            usersById
         );
     }
 
     private String submitterLabel(
         final String submitterEmail,
-        final Long submittedByUserId
+        final Long submittedByUserId,
+        final Map<Long, User> usersById
     ) {
-        return adminRequestService.getSubmitterLabel(submitterEmail, submittedByUserId);
+        return adminRequestService.getSubmitterLabel(submitterEmail, submittedByUserId, usersById);
     }
 
-    private AdminCatalogRequestCard toBrandCard(final BrandRequest request) {
+    private AdminCatalogRequestCard toBrandCard(
+        final BrandRequest request,
+        final Map<Long, User> usersById
+    ) {
         return new AdminCatalogRequestCard(
             request.getId(),
             request.getName(),
             submitterLabel(
                 request.getSubmitterEmail(),
-                request.getSubmittedByUserId()
+                request.getSubmittedByUserId(),
+                usersById
             ),
             request.getComments()
         );
     }
 
     private AdminCatalogRequestCard toBodyTypeCard(
-        final BodyTypeRequest request
+        final BodyTypeRequest request,
+        final Map<Long, User> usersById
     ) {
         return new AdminCatalogRequestCard(
             request.getId(),
             request.getName(),
             submitterLabel(
                 request.getSubmitterEmail(),
-                request.getSubmittedByUserId()
+                request.getSubmittedByUserId(),
+                usersById
             ),
             request.getComments()
         );
     }
 
     private AdminAdminRequestCard toAdminRequestCard(
-        final AdminRequest request
+        final AdminRequest request,
+        final Map<Long, User> usersById
     ) {
-        final User submitter = userService
-            .getUserById(request.getSubmittedByUserId())
-            .orElse(null);
+        final User submitter = usersById.get(request.getSubmittedByUserId());
         final String username =
             submitter != null &&
             submitter.getUsername() != null &&

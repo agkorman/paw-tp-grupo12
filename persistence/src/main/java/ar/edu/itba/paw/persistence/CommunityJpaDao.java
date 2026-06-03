@@ -652,7 +652,7 @@ public class CommunityJpaDao implements CommunityDao {
         return em.createQuery(
                 "SELECT c FROM CommunityPostComment c " +
                 "LEFT JOIN FETCH c.user " +
-                "WHERE c.post.id = :postId " +
+                "WHERE c.post.id = :postId AND c.hidden = false " +
                 "ORDER BY c.createdAt ASC, c.id ASC",
                 CommunityPostComment.class
         )

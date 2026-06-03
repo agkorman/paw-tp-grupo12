@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
@@ -384,6 +385,89 @@ public class RequestDaoTest extends AbstractPersistenceTest {
                 "SELECT image_data FROM car_request_images WHERE car_request_id = ?",
                 byte[].class, requestId
         ));
+    }
+
+    @Test
+    public void shouldFindCarRequestImagesWithDataOrderedByDisplayOrder() {
+        // Arrange
+        final User user = createUser("request-images-with-data");
+        final Car car = createCar("request-images-with-data");
+        jdbcTemplate.update(
+                "INSERT INTO car_requests (submitted_by_user_id, submitter_email, brand_id, body_type_id, year, "
+                        + "model, description, status, fuel_type, horsepower, airbag_count, transmission, "
+                        + "fuel_consumption, max_speed_kmh, price_usd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                user.getId(), user.getEmail(), car.getBrandId(), car.getBodyTypeId(), 2026, "Request Image WithData",
+                "Description", "pending", "combustion", 180, 6, "manual", new BigDecimal("7.0"), 220,
+                new BigDecimal("30000.00")
+        );
+        final long requestId = jdbcTemplate.queryForObject(
+                "SELECT car_request_id FROM car_requests WHERE model = ?", Long.class, "Request Image WithData"
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_request_images (car_request_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                requestId, 1, "image/jpeg", new byte[]{3, 4}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_request_images (car_request_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                requestId, 0, "image/png", new byte[]{1, 2}
+        );
+
+        // Exercise
+        final List<CarRequestImage> result = carRequestDao.findImagesByRequestIdWithData(requestId);
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals("image/png", result.get(0).getContentType());
+        assertArrayEquals(new byte[]{1, 2}, result.get(0).getImageData());
+        assertEquals("image/jpeg", result.get(1).getContentType());
+        assertArrayEquals(new byte[]{3, 4}, result.get(1).getImageData());
+    }
+
+    @Test
+    public void shouldReturnOnlyRequestedCarRequestImagesWithData() {
+        // Arrange
+        final User user = createUser("request-images-retained");
+        final Car car = createCar("request-images-retained");
+        jdbcTemplate.update(
+                "INSERT INTO car_requests (submitted_by_user_id, submitter_email, brand_id, body_type_id, year, "
+                        + "model, description, status, fuel_type, horsepower, airbag_count, transmission, "
+                        + "fuel_consumption, max_speed_kmh, price_usd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                user.getId(), user.getEmail(), car.getBrandId(), car.getBodyTypeId(), 2026, "Request Image Retained",
+                "Description", "pending", "combustion", 180, 6, "manual", new BigDecimal("7.0"), 220,
+                new BigDecimal("30000.00")
+        );
+        final long requestId = jdbcTemplate.queryForObject(
+                "SELECT car_request_id FROM car_requests WHERE model = ?", Long.class, "Request Image Retained"
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_request_images (car_request_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                requestId, 0, "image/png", new byte[]{1, 1}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_request_images (car_request_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                requestId, 1, "image/jpeg", new byte[]{2, 2}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_request_images (car_request_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                requestId, 2, "image/png", new byte[]{3, 3}
+        );
+        final long firstId = jdbcTemplate.queryForObject(
+                "SELECT image_id FROM car_request_images WHERE car_request_id = ? AND display_order = 0",
+                Long.class, requestId);
+        final long thirdId = jdbcTemplate.queryForObject(
+                "SELECT image_id FROM car_request_images WHERE car_request_id = ? AND display_order = 2",
+                Long.class, requestId);
+
+        // Exercise
+        final List<CarRequestImage> result =
+                carRequestDao.findImagesByRequestIdAndImageIdsWithData(requestId, List.of(firstId, thirdId));
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals(firstId, result.get(0).getImageId());
+        assertEquals(thirdId, result.get(1).getImageId());
+        assertArrayEquals(new byte[]{1, 1}, result.get(0).getImageData());
+        assertArrayEquals(new byte[]{3, 3}, result.get(1).getImageData());
     }
 
     @Test

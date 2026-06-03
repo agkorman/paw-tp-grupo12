@@ -13,7 +13,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public class ReviewImageJpaDao implements ReviewImageDao {
@@ -67,11 +69,20 @@ public class ReviewImageJpaDao implements ReviewImageDao {
     }
 
     @Override
-    public List<ReviewImage> findAllByReviewIdWithData(final long reviewId) {
+    public List<ReviewImage> findByReviewIdAndImageIdsWithData(final long reviewId, final Collection<Long> imageIds) {
+        if (imageIds == null) {
+            return List.of();
+        }
+        final List<Long> ids = imageIds.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return List.of();
+        }
         return em.createQuery(
-                        "SELECT i FROM ReviewImage i WHERE i.review.id = :reviewId ORDER BY i.displayOrder ASC, i.imageId ASC",
+                        "SELECT i FROM ReviewImage i WHERE i.review.id = :reviewId AND i.imageId IN :imageIds "
+                        + "ORDER BY i.displayOrder ASC, i.imageId ASC",
                         ReviewImage.class)
                 .setParameter("reviewId", reviewId)
+                .setParameter("imageIds", ids)
                 .getResultList();
     }
 

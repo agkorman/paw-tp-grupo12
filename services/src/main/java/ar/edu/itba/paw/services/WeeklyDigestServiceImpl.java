@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,8 +65,18 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
         sendModeratorDigest();
 
         final List<User> users = userService.getAllUsers();
+
+        final Map<Long, List<EmailService.ReviewActivityItem>> reviewActivityByUser =
+                buildReviewActivityByUser(since);
+        final Map<Long, List<EmailService.FavoriteActivityItem>> favoriteActivityByUser =
+                buildFavoriteActivityByUser(since);
+
         for (final User user : users) {
-            sendUserDigest(user, since);
+            final List<EmailService.ReviewActivityItem> reviewActivities =
+                    reviewActivityByUser.getOrDefault(user.getId(), Collections.emptyList());
+            final List<EmailService.FavoriteActivityItem> favoriteActivities =
+                    favoriteActivityByUser.getOrDefault(user.getId(), Collections.emptyList());
+            emailService.sendWeeklyUserDigest(user.getEmail(), user.getUsername(), reviewActivities, favoriteActivities);
         }
         LOGGER.info("weekly digest completed userCount={}", users.size());
     }
@@ -80,67 +92,70 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
         if (moderatorRecipients.isEmpty()) {
             return;
         }
-        final int pendingCount = carRequestService.getCarRequestsByStatus(CarRequestService.STATUS_PENDING).size();
+        final long pendingCount = carRequestService.countCarRequestsByStatus(CarRequestService.STATUS_PENDING);
         emailService.sendWeeklyModeratorDigest(moderatorRecipients, pendingCount);
     }
 
-    private void sendUserDigest(final User user, final LocalDateTime since) {
-        final List<EmailService.ReviewActivityItem> reviewActivities = buildReviewActivities(user.getId(), since);
-        final List<EmailService.FavoriteActivityItem> favoriteActivities = buildFavoriteActivities(user.getId(), since);
-        emailService.sendWeeklyUserDigest(user.getEmail(), user.getUsername(), reviewActivities, favoriteActivities);
-    }
-
-    private List<EmailService.ReviewActivityItem> buildReviewActivities(final long userId, final LocalDateTime since) {
-        final Map<Long, Long> likesPerReview = reviewLikeService.countNewLikesPerReview(userId, since);
-        final Map<Long, Long> repliesPerReview = reviewReplyService.countNewRepliesPerReview(userId, since);
+    private Map<Long, List<EmailService.ReviewActivityItem>> buildReviewActivityByUser(final LocalDateTime since) {
+        final Map<Long, Long> likesPerReview = reviewLikeService.countNewLikesPerReviewSince(since);
+        final Map<Long, Long> repliesPerReview = reviewReplyService.countNewRepliesPerReviewSince(since);
         final Set<Long> activeReviewIds = new HashSet<>();
         activeReviewIds.addAll(likesPerReview.keySet());
         activeReviewIds.addAll(repliesPerReview.keySet());
         if (activeReviewIds.isEmpty()) {
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
-        final Map<Long, Review> reviewsById = reviewService.getReviewsByIds(activeReviewIds)
-                .stream()
-                .collect(Collectors.toMap(Review::getId, r -> r));
-        final Set<Long> carIds = reviewsById.values().stream()
+        final List<Review> reviews = reviewService.getReviewsByIds(activeReviewIds);
+        final Set<Long> carIds = reviews.stream()
                 .map(Review::getCarId)
                 .collect(Collectors.toSet());
         final Map<Long, String> carNamesById = carService.getCarsByIds(carIds)
                 .stream()
                 .collect(Collectors.toMap(Car::getId, car -> car.getBrandName() + " " + car.getModel()));
-        return activeReviewIds.stream()
-                .filter(reviewsById::containsKey)
-                .map(reviewId -> {
-                    final Review review = reviewsById.get(reviewId);
-                    return new EmailService.ReviewActivityItem(
-                            review.getTitle(),
-                            carNamesById.getOrDefault(review.getCarId(), "un auto"),
-                            likesPerReview.getOrDefault(reviewId, 0L),
-                            repliesPerReview.getOrDefault(reviewId, 0L)
-                    );
-                })
-                .collect(Collectors.toList());
+
+        final Map<Long, List<EmailService.ReviewActivityItem>> activityByUser = new HashMap<>();
+        for (final Review review : reviews) {
+            final Long ownerId = review.getUserId();
+            if (ownerId == null) {
+                continue;
+            }
+            final EmailService.ReviewActivityItem item = new EmailService.ReviewActivityItem(
+                    review.getTitle(),
+                    carNamesById.getOrDefault(review.getCarId(), "un auto"),
+                    likesPerReview.getOrDefault(review.getId(), 0L),
+                    repliesPerReview.getOrDefault(review.getId(), 0L)
+            );
+            activityByUser.computeIfAbsent(ownerId, key -> new ArrayList<>()).add(item);
+        }
+        return activityByUser;
     }
 
-    private List<EmailService.FavoriteActivityItem> buildFavoriteActivities(final long userId,
-                                                                            final LocalDateTime since) {
-        final List<Long> favoriteCarIds = carFavoriteService.findFavoriteCarIdsByUser(userId);
-        if (favoriteCarIds.isEmpty()) {
-            return Collections.emptyList();
+    private Map<Long, List<EmailService.FavoriteActivityItem>> buildFavoriteActivityByUser(final LocalDateTime since) {
+        final Map<Long, List<Long>> favoritesByUser = carFavoriteService.findAllFavoriteCarIdsByUser();
+        if (favoritesByUser.isEmpty()) {
+            return Collections.emptyMap();
         }
-        final Map<Long, String> carNamesById = carService.getCarsByIds(favoriteCarIds)
+        final Set<Long> allFavoriteCarIds = favoritesByUser.values().stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toSet());
+        final Map<Long, String> carNamesById = carService.getCarsByIds(allFavoriteCarIds)
                 .stream()
                 .collect(Collectors.toMap(Car::getId, car -> car.getBrandName() + " " + car.getModel()));
-        final Map<Long, Long> newReviewsPerCar = reviewService.getReviewsByCarIds(favoriteCarIds)
-                .stream()
-                .filter(review -> review.getCreatedAt() != null && review.getCreatedAt().isAfter(since))
-                .collect(Collectors.groupingBy(Review::getCarId, Collectors.counting()));
-        return favoriteCarIds.stream()
-                .filter(carId -> newReviewsPerCar.getOrDefault(carId, 0L) > 0)
-                .map(carId -> new EmailService.FavoriteActivityItem(
-                        carNamesById.getOrDefault(carId, "un auto"),
-                        newReviewsPerCar.get(carId)
-                ))
-                .collect(Collectors.toList());
+        final Map<Long, Long> newReviewsPerCar = reviewService.countNewReviewsByCarIds(allFavoriteCarIds, since);
+
+        final Map<Long, List<EmailService.FavoriteActivityItem>> activityByUser = new HashMap<>();
+        for (final Map.Entry<Long, List<Long>> entry : favoritesByUser.entrySet()) {
+            final List<EmailService.FavoriteActivityItem> items = entry.getValue().stream()
+                    .filter(carId -> newReviewsPerCar.getOrDefault(carId, 0L) > 0)
+                    .map(carId -> new EmailService.FavoriteActivityItem(
+                            carNamesById.getOrDefault(carId, "un auto"),
+                            newReviewsPerCar.get(carId)
+                    ))
+                    .collect(Collectors.toList());
+            if (!items.isEmpty()) {
+                activityByUser.put(entry.getKey(), items);
+            }
+        }
+        return activityByUser;
     }
 }

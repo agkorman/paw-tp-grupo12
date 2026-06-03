@@ -10,8 +10,11 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public class CarImageJpaDao implements CarImageDao {
@@ -57,6 +60,24 @@ public class CarImageJpaDao implements CarImageDao {
                         "SELECT i FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
                         CarImage.class)
                 .setParameter("carId", carId)
+                .getResultList();
+    }
+
+    @Override
+    public List<CarImage> findByCarIdAndImageIdsWithData(final long carId, final Collection<Long> imageIds) {
+        if (imageIds == null) {
+            return List.of();
+        }
+        final List<Long> ids = imageIds.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return em.createQuery(
+                        "SELECT i FROM CarImage i WHERE i.car.id = :carId AND i.imageId IN :imageIds "
+                        + "ORDER BY i.displayOrder ASC, i.imageId ASC",
+                        CarImage.class)
+                .setParameter("carId", carId)
+                .setParameter("imageIds", ids)
                 .getResultList();
     }
 

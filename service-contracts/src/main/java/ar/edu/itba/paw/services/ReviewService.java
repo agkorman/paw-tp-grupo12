@@ -8,6 +8,7 @@ import ar.edu.itba.paw.model.ReviewImage;
 import ar.edu.itba.paw.model.ReviewStats;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -35,6 +36,7 @@ public interface ReviewService {
     Optional<Review> getReviewById(long id);
     List<Review> getReviewsByIds(Collection<Long> ids);
     List<Review> getReviewsByCarIds(Collection<Long> carIds);
+    Map<Long, Long> countNewReviewsByCarIds(Collection<Long> carIds, LocalDateTime since);
     Optional<Review> updateReview(long id, long carId, BigDecimal rating, String title, String body,
                                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                                   Collection<Short> tagIds, List<ImagePayload> finalImages);

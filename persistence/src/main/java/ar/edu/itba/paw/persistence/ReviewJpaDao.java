@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -237,6 +238,27 @@ public class ReviewJpaDao implements ReviewDao {
                 .getResultList();
         attachTags(reviews);
         return reviews;
+    }
+
+    @Override
+    public Map<Long, Long> countByCarIdsSince(final Collection<Long> carIds, final LocalDateTime since) {
+        if (carIds == null || carIds.isEmpty() || since == null) {
+            return Collections.emptyMap();
+        }
+        final List<?> rows = em.createQuery(
+                "SELECT r.car.id, COUNT(r) FROM Review r " +
+                "WHERE r.car.id IN :carIds AND r.createdAt >= :since " +
+                "GROUP BY r.car.id",
+                Object[].class)
+                .setParameter("carIds", carIds)
+                .setParameter("since", since)
+                .getResultList();
+        final Map<Long, Long> countsByCarId = new HashMap<>();
+        for (final Object rowObject : rows) {
+            final Object[] row = (Object[]) rowObject;
+            countsByCarId.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
+        return countsByCarId;
     }
 
     @Override

@@ -20,9 +20,10 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -151,14 +152,9 @@ public class CarServiceImpl implements CarService {
             return;
         }
         final List<ImagePayload> existingImages = carImageDao
-            .findAllByCarId(carId)
+            .findAllByCarIdWithData(carId)
             .stream()
-            .map(image ->
-                carImageDao
-                    .findByCarIdAndImageId(carId, image.getImageId())
-                    .orElse(null)
-            )
-            .filter(image -> image != null && image.getImageData() != null)
+            .filter(image -> image.getImageData() != null)
             .map(image ->
                 new ImagePayload(
                     image.getContentType(),
@@ -354,19 +350,22 @@ public class CarServiceImpl implements CarService {
             return false;
         }
         final String lowerModel = normalizedModel.toLowerCase(Locale.ROOT);
-        return getCarsByBrandAndBodyType(brandName, bodyTypeName)
-            .stream()
-            .anyMatch(car -> {
-                final String existingModel = StringUtils.normalize(
-                    car.getModel()
-                );
-                return (
-                    car.getId() != ignoredCarId &&
-                    existingModel != null &&
-                    lowerModel.equals(existingModel.toLowerCase(Locale.ROOT)) &&
-                    Objects.equals(car.getYear(), year)
-                );
-            });
+        return brandDao
+            .findByName(brandName)
+            .flatMap(brand ->
+                bodyTypeDao
+                    .findByName(bodyTypeName)
+                    .map(bodyType ->
+                        carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(
+                            brand.getId(),
+                            bodyType.getId(),
+                            lowerModel,
+                            year,
+                            ignoredCarId
+                        )
+                    )
+            )
+            .orElse(false);
     }
 
     @Override
@@ -378,23 +377,37 @@ public class CarServiceImpl implements CarService {
         if (retainedImageIds == null) {
             return payloads;
         }
+        final List<Long> nonLegacyIds = retainedImageIds.stream()
+            .filter(Objects::nonNull)
+            .filter(imageId -> imageId != LEGACY_IMAGE_ID)
+            .collect(Collectors.toList());
+        final Map<Long, CarImage> imagesById = carImageDao
+            .findByCarIdAndImageIdsWithData(carId, nonLegacyIds)
+            .stream()
+            .collect(
+                Collectors.toMap(
+                    CarImage::getImageId,
+                    carImage -> carImage,
+                    (existing, duplicate) -> existing,
+                    LinkedHashMap::new
+                )
+            );
         for (final Long imageId : retainedImageIds) {
             if (imageId == null) {
                 continue;
             }
-            final Optional<CarImage> image =
+            final CarImage image =
                 imageId == LEGACY_IMAGE_ID
-                    ? carImageDao.findByCarId(carId)
-                    : carImageDao.findByCarIdAndImageId(carId, imageId);
-            image
-                .filter(carImage -> carImage.getImageData() != null)
-                .map(carImage ->
+                    ? carImageDao.findByCarId(carId).orElse(null)
+                    : imagesById.get(imageId);
+            if (image != null && image.getImageData() != null) {
+                payloads.add(
                     new ImagePayload(
-                        carImage.getContentType(),
-                        carImage.getImageData()
+                        image.getContentType(),
+                        image.getImageData()
                     )
-                )
-                .ifPresent(payloads::add);
+                );
+            }
         }
         return payloads;
     }
@@ -424,23 +437,13 @@ public class CarServiceImpl implements CarService {
         if (normalizedModel == null) {
             return false;
         }
-        final String lowerModel = normalizedModel.toLowerCase(Locale.ROOT);
-        return carDao
-            .findByBrandIdAndBodyTypeId(brandId, bodyTypeId)
-            .stream()
-            .anyMatch(car -> {
-                if (car.getId() == ignoredCarId) {
-                    return false;
-                }
-                final String existingModel = StringUtils.normalize(
-                    car.getModel()
-                );
-                return (
-                    existingModel != null &&
-                    lowerModel.equals(existingModel.toLowerCase(Locale.ROOT)) &&
-                    Objects.equals(car.getYear(), year)
-                );
-            });
+        return carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(
+            brandId,
+            bodyTypeId,
+            normalizedModel.toLowerCase(Locale.ROOT),
+            year,
+            ignoredCarId
+        );
     }
 
     private void validateImagePair(
@@ -471,20 +474,16 @@ public class CarServiceImpl implements CarService {
     @Transactional(readOnly = true)
     public List<CarYearVariant> getYearVariants(final long carId) {
         final Car selectedCar = carDao.findById(carId).orElse(null);
-        if (selectedCar == null || selectedCar.getBrandName() == null || selectedCar.getBodyType() == null || selectedCar.getModel() == null) {
+        if (selectedCar == null || selectedCar.getModel() == null) {
             return Collections.emptyList();
         }
         final String selectedModel = selectedCar.getModel().trim().toLowerCase(Locale.ROOT);
-        return carDao.findByBrandIdAndBodyTypeId(
-            brandDao.findByName(selectedCar.getBrandName()).map(b -> b.getId()).orElse(-1L),
-            bodyTypeDao.findByName(selectedCar.getBodyType()).map(bt -> bt.getId()).orElse(-1L)
+        return carDao.findByBrandIdAndBodyTypeIdAndModel(
+            selectedCar.getBrandId(),
+            selectedCar.getBodyTypeId(),
+            selectedModel
         )
             .stream()
-            .filter(car -> car.getModel() != null
-                && car.getModel().trim().toLowerCase(Locale.ROOT).equals(selectedModel))
-            .sorted(Comparator
-                .comparing(Car::getYear, Comparator.nullsLast(Comparator.reverseOrder()))
-                .thenComparingLong(Car::getId))
             .map(car -> new CarYearVariant(car.getId(), car.getYear(), car.getId() == selectedCar.getId()))
             .collect(Collectors.toList());
     }

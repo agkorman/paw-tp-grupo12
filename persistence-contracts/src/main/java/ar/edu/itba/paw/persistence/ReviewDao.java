@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ public interface ReviewDao {
     Optional<Review> findById(long id);
     List<Review> findByIds(Collection<Long> ids);
     List<Review> findByCarIds(Collection<Long> carIds);
+    Map<Long, Long> countByCarIdsSince(Collection<Long> carIds, LocalDateTime since);
     List<Review> findByCarId(long carId);
     Page<Review> findByCarId(long carId, int page);
     Optional<Review> findLatestByCarId(long carId);

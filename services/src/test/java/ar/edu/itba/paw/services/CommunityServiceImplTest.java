@@ -1139,7 +1139,7 @@ class CommunityServiceImplTest {
 
         @Override
         public void sendWeeklyModeratorDigest(final List<EmailRecipient> moderatorRecipients,
-                                              final int pendingRequestCount) {
+                                              final long pendingRequestCount) {
         }
 
         @Override
