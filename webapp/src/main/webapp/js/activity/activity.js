@@ -59,12 +59,26 @@
         if (layout) {
             layout.classList.toggle('has-active-preview', active);
             if (active) {
+                scrollLayoutBelowNav(layout);
                 updatePreviewLayoutHeight(layout);
             } else {
                 layout.style.removeProperty('--activity-panel-height');
             }
         }
         syncBodyScrollLock();
+    }
+
+    function scrollLayoutBelowNav(layout) {
+        var nav = document.querySelector('body > nav');
+        var navHeight = nav ? nav.offsetHeight : 0;
+        var targetTop;
+
+        if (!layout || window.innerWidth <= 1100) {
+            return;
+        }
+
+        targetTop = layout.getBoundingClientRect().top + window.pageYOffset - navHeight - 16;
+        window.scrollTo(0, Math.max(0, targetTop));
     }
 
     function updatePreviewLayoutHeight(layout) {

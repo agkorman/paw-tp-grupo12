@@ -279,7 +279,6 @@
     justify-content: flex-end;
     margin: auto -3rem -1.25rem;
     padding: 1.25rem 3rem;
-    background: linear-gradient(180deg, rgba(13, 13, 13, 0), rgba(13, 13, 13, 0.96) 38%);
 }
 
 .review-preview-actions .btn-primary {

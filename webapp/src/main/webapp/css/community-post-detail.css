@@ -27,6 +27,8 @@
     color: var(--on-surface);
     font-size: 1.18rem;
     line-height: 1.8;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
 }
 
 .community-post-detail-actions,
