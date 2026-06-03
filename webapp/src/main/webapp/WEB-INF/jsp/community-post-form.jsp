@@ -6,7 +6,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="communities.postForm.title" styles="/css/community-post-common.css|/css/community-post-form.css|/css/communities-responsive.css"/>
+<pa:page-head titleCode="communities.postForm.title" styles="/css/community-post-common.css|/css/community-post-form.css|/css/communities-responsive.css|/css/car-image-upload.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <spring:message var="communityPostFormToolbarAria" code="communities.postForm.toolbar.aria"/>
@@ -18,11 +18,21 @@
             <c:url var="communityPostFormActionUrl" value="/communities/${community.slug}/posts"/>
         </c:otherwise>
     </c:choose>
+    <c:set var="communityPostExistingImageUrls" value=""/>
+    <c:set var="communityPostExistingImageIds" value=""/>
+    <c:if test="${editMode and not empty existingPostImageIds}">
+        <c:forTokens var="imgId" items="${existingPostImageIds}" delims=",">
+            <c:url var="communityPostExistingImageUrl" value="/communities/${community.slug}/posts/${postSlug}/images/${imgId}"/>
+            <c:set var="communityPostExistingImageUrls" value="${communityPostExistingImageUrls}${empty communityPostExistingImageUrls ? '' : '|'}${communityPostExistingImageUrl}"/>
+            <c:set var="communityPostExistingImageIds" value="${communityPostExistingImageIds}${empty communityPostExistingImageIds ? '' : '|'}${imgId}"/>
+        </c:forTokens>
+    </c:if>
     <main class="community-post-form-page">
         <form:form cssClass="community-post-form-shell"
                    modelAttribute="communityPostForm"
                    method="post"
                    action="${fn:escapeXml(communityPostFormActionUrl)}"
+                   enctype="multipart/form-data"
                    novalidate="novalidate">
             <form:errors cssClass="alert alert-error" element="div"/>
             <div class="community-post-form-header">
@@ -52,6 +62,19 @@
                                    required="required"/>
                     <form:errors path="body" cssClass="form-error" element="span"/>
                 </div>
+
+                <pa:image-upload
+                    namePrefix="communityPost"
+                    inputName="files"
+                    required="false"
+                    mode="${editMode ? 'edit' : 'create'}"
+                    maxImageCount="3"
+                    existingImageUrlsJoined="${communityPostExistingImageUrls}"
+                    existingImageIdsJoined="${communityPostExistingImageIds}"
+                    labelKey="communities.postForm.images"
+                    titleCreateKey="communities.postForm.image.uploadTitle"
+                    titleEditKey="communities.postForm.image.addMore"
+                    helpKey="communities.postForm.image.help"/>
             </div>
 
             <div class="community-post-form-footer">
@@ -68,6 +91,7 @@
             </div>
         </form:form>
     </main>
+    <pa:script src="/js/shared/image-upload-picker.js"/>
     <pa:footer/>
 </body>
 </html>

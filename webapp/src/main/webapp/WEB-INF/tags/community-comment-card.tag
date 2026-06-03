@@ -17,7 +17,9 @@
 
 <article class="community-comment">
     <div class="community-comment-header">
-        <span class="community-comment-avatar" aria-hidden="true"></span>
+        <span class="community-comment-avatar" aria-hidden="true">
+            <pa:icon name="user-avatar" size="24"/>
+        </span>
         <div class="community-comment-meta">
             <a class="community-author-link" href="${fn:escapeXml(authorProfileHref)}">
                 <strong><c:out value="${author}"/></strong>

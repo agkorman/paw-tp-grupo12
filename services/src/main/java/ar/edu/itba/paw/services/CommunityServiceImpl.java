@@ -9,13 +9,16 @@ import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
+import ar.edu.itba.paw.model.CommunityPostImage;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CommunityDao;
+import ar.edu.itba.paw.persistence.CommunityPostImageDao;
 import ar.edu.itba.paw.services.exception.CannotModerateCreatorException;
 import ar.edu.itba.paw.services.exception.CommunityContentOwnershipException;
 import ar.edu.itba.paw.services.exception.CommunityCreatorCannotLeaveException;
@@ -61,13 +64,16 @@ public class CommunityServiceImpl implements CommunityService {
     private static final int MAX_POST_SLUG_LENGTH = 80;
     private static final String DEFAULT_POST_SLUG = "post";
     private final CommunityDao communityDao;
+    private final CommunityPostImageDao communityPostImageDao;
     private final UserService userService;
     private final EmailService emailService;
 
     @Autowired
-    public CommunityServiceImpl(final CommunityDao communityDao, final UserService userService,
+    public CommunityServiceImpl(final CommunityDao communityDao, final CommunityPostImageDao communityPostImageDao,
+                                final UserService userService,
                                 final EmailService emailService) {
         this.communityDao = communityDao;
+        this.communityPostImageDao = communityPostImageDao;
         this.userService = userService;
         this.emailService = emailService;
     }
@@ -238,7 +244,8 @@ public class CommunityServiceImpl implements CommunityService {
     public Optional<CommunityPost> createCommunityPost(final String communitySlug,
                                                        final long userId,
                                                        final String title,
-                                                       final String body) {
+                                                       final String body,
+                                                       final List<ImagePayload> images) {
         if (userId <= 0) {
             throw new InvalidServiceInputException("Community post author is required.");
         }
@@ -268,6 +275,10 @@ public class CommunityServiceImpl implements CommunityService {
                 normalizedTitle,
                 normalizedBody
         );
+        final List<ImagePayload> normalizedImages = ImagePayloadUtils.normalizeImages(images);
+        if (!normalizedImages.isEmpty()) {
+            communityPostImageDao.replaceAll(post.getId(), normalizedImages);
+        }
         LOGGER.info("created community post id={} communityId={} userId={} slug={}",
                 post.getId(), community.getId(), userId, slug);
         return Optional.of(post);
@@ -298,7 +309,8 @@ public class CommunityServiceImpl implements CommunityService {
                                                        final String postSlug,
                                                        final long callerUserId,
                                                        final String title,
-                                                       final String body) {
+                                                       final String body,
+                                                       final List<ImagePayload> images) {
         final CommunityPost post = getCommunityPostForEdit(communitySlug, postSlug, callerUserId)
                 .orElse(null);
         if (post == null) {
@@ -307,6 +319,10 @@ public class CommunityServiceImpl implements CommunityService {
         final String normalizedTitle = StringUtils.normalizeRequired(title, "Community post title is required.");
         final String normalizedBody = StringUtils.normalizeRequired(body, "Community post body is required.");
         communityDao.updatePost(post.getId(), normalizedTitle, normalizedBody);
+        communityPostImageDao.replaceAll(
+                post.getId(),
+                ImagePayloadUtils.normalizeImages(images == null ? Collections.emptyList() : images)
+        );
         post.setTitle(normalizedTitle);
         post.setBody(normalizedBody);
         LOGGER.info("author userId={} updated community post id={}", callerUserId, post.getId());
@@ -546,6 +562,7 @@ public class CommunityServiceImpl implements CommunityService {
                     normalizedSort,
                     page
             );
+            populatePostImages(posts.getItems());
             final List<Long> postIds = posts.getItems().stream().map(CommunityPost::getId).collect(Collectors.toList());
             final Map<Long, Long> commentCounts = communityDao.countCommentsByPostIds(postIds);
             final Map<Long, Long> helpfulCounts = communityDao.countHelpfulReactionsByPostIds(postIds);
@@ -622,6 +639,7 @@ public class CommunityServiceImpl implements CommunityService {
             if (post.isHidden()) {
                 return Optional.empty();
             }
+            populatePostImages(List.of(post));
             final String viewerRole = currentUserId == null
                     ? null
                     : communityDao.findMembershipRole(community.getId(), currentUserId).orElse(null);
@@ -661,6 +679,48 @@ public class CommunityServiceImpl implements CommunityService {
             LOGGER.warn("failed to load post detail for communitySlug={} postSlug={}", communitySlug, postSlug, e);
             return Optional.empty();
         }
+    }
+
+    @Override
+    public List<CommunityPostImage> getPostImagesByPostId(final long postId) {
+        return communityPostImageDao.findAllByPostId(postId);
+    }
+
+    @Override
+    public Map<Long, List<CommunityPostImage>> getImagesByPostIds(final Collection<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        final List<CommunityPostImage> images = communityPostImageDao.findAllByPostIds(postIds);
+        final Map<Long, List<CommunityPostImage>> result = new java.util.LinkedHashMap<>();
+        for (final CommunityPostImage image : images) {
+            result.computeIfAbsent(image.getPostId(), key -> new ArrayList<>()).add(image);
+        }
+        return result;
+    }
+
+    @Override
+    public Optional<CommunityPostImage> getPostImageById(final long postId, final long imageId) {
+        return communityPostImageDao.findByPostIdAndImageId(postId, imageId);
+    }
+
+    @Override
+    public List<ImagePayload> collectRetainedPostImagePayloads(final long postId, final List<Long> retainedImageIds) {
+        final List<ImagePayload> payloads = new ArrayList<>();
+        if (retainedImageIds == null) {
+            return payloads;
+        }
+        for (final Long imageId : retainedImageIds) {
+            if (imageId == null) {
+                continue;
+            }
+            final Optional<CommunityPostImage> image = communityPostImageDao.findByPostIdAndImageId(postId, imageId);
+            if (image.isEmpty() || image.get().getImageData() == null) {
+                continue;
+            }
+            payloads.add(new ImagePayload(image.get().getContentType(), image.get().getImageData()));
+        }
+        return payloads;
     }
 
     @Override
@@ -989,6 +1049,17 @@ public class CommunityServiceImpl implements CommunityService {
 
     private String communityPostPath(final Community community, final CommunityPost post) {
         return communityPath(community) + "/posts/" + post.getSlug();
+    }
+
+    private void populatePostImages(final List<CommunityPost> posts) {
+        if (posts == null || posts.isEmpty()) {
+            return;
+        }
+        final List<Long> ids = posts.stream().map(CommunityPost::getId).collect(Collectors.toList());
+        final Map<Long, List<CommunityPostImage>> imagesByPostId = getImagesByPostIds(ids);
+        for (final CommunityPost post : posts) {
+            post.setImages(imagesByPostId.getOrDefault(post.getId(), Collections.emptyList()));
+        }
     }
 
     private Optional<CommunityPost> findPostInCommunity(final String communitySlug, final String postSlug) {

@@ -19,10 +19,6 @@ import java.util.Optional;
 
 public interface ReviewService {
 
-    String FEED_LATEST = "latest";
-    String FEED_FOLLOWING = "following";
-    String FEED_FAVORITES = "favorites";
-
     Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
                         String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                         Collection<Short> tagIds, List<ImagePayload> images);
@@ -93,9 +89,6 @@ public interface ReviewService {
     long countReviewsByUser(long userId);
     Optional<ReviewStats> getReviewStatsByCar(long carId);
     List<ReviewStats> getReviewStatsByCarIds(Collection<Long> carIds);
-
-    Page<Review> getActivityFeedReviews(String feedMode, Long userId, int page);
-
     Review getReviewAndCheckAccess(long reviewId, long requestingUserId, boolean isAdmin);
 
     boolean hideReview(long reviewId, String reason);

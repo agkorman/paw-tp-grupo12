@@ -33,8 +33,9 @@
 
         <section class="communities-card-grid" aria-label="${fn:escapeXml(communitiesGridAria)}">
             <c:forEach var="card" items="${communityCards}">
+                <c:url var="cardHref" value="${card.href}"/>
                 <pa:community-card
-                        href="${card.href}"
+                        href="${cardHref}"
                         title="${card.title}"
                         description="${card.description}"
                         memberCount="${card.memberCount}"
