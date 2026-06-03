@@ -213,7 +213,6 @@
     <pa:script src="/js/shared/modal-utils.js"/>
     <pa:script src="/js/admin/admin-catalog-request-modal.js"/>
     <pa:script src="/js/admin/moderator-application-review-modal.js"/>
-    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:script src="/js/shared/toast.js"/>
     <pa:footer/>
 </body>
