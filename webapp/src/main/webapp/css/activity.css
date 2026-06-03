@@ -6,10 +6,6 @@
     gap: var(--spacing-6);
 }
 
-body.activity-preview-scroll-lock {
-    overflow: hidden;
-}
-
 .activity-feed-panel,
 .activity-card {
     background: var(--surface-container-low);
@@ -176,6 +172,7 @@ body.activity-preview-scroll-lock {
     width: 100%;
     max-width: 100%;
     height: auto;
+    max-height: 24rem;
     aspect-ratio: auto;
     display: block;
     border-radius: 1.1rem;
@@ -227,118 +224,10 @@ body.activity-preview-scroll-lock {
     color: var(--secondary);
 }
 
-/* Legacy preview layout kept for future reuse, intentionally disconnected from /activity. */
-.activity-panel-layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    align-items: start;
-    gap: var(--spacing-6);
-}
-
-.activity-panel-layout.has-active-preview {
-    grid-template-columns: minmax(18rem, 0.78fr) minmax(0, 1.22fr);
-    height: var(--activity-panel-height, calc(100vh - 12rem));
-    min-height: 22.5rem;
-    overflow: hidden;
-}
-
-.activity-panel-layout.has-active-preview .activity-feed {
-    grid-template-columns: 1fr;
-    height: 100%;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-right: 0.35rem;
-    scrollbar-color: var(--surface-container-highest) var(--surface-container-lowest);
-}
-
-.activity-panel-layout.has-active-preview .activity-feed::-webkit-scrollbar,
-.activity-preview-column::-webkit-scrollbar {
-    width: 0.75rem;
-}
-
-.activity-panel-layout.has-active-preview .activity-feed::-webkit-scrollbar-track,
-.activity-preview-column::-webkit-scrollbar-track {
-    background: var(--surface-container-lowest);
-}
-
-.activity-panel-layout.has-active-preview .activity-feed::-webkit-scrollbar-thumb,
-.activity-preview-column::-webkit-scrollbar-thumb {
-    border: 2px solid var(--surface-container-lowest);
-    border-radius: var(--radius-full);
-    background: var(--surface-container-highest);
-}
-
-.activity-panel-layout.has-active-preview .activity-feed::-webkit-scrollbar-thumb:hover,
-.activity-preview-column::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary);
-}
-
-.activity-preview-column {
-    height: 100%;
-    min-height: 0;
-    min-width: 0;
-    display: none;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-color: var(--surface-container-highest) var(--surface-container-lowest);
-}
-
-.activity-panel-layout.has-active-preview .activity-preview-column {
-    display: grid;
-}
-
-.activity-review-preview-panel {
-    position: relative;
-    min-width: 0;
-    min-height: 100%;
-    background: var(--surface);
-    box-shadow: var(--shadow-float);
-}
-
-.activity-review-preview-panel[hidden] {
-    display: none;
-}
-
-.activity-preview-close {
-    top: 0.85rem;
-    right: 0.85rem;
-    z-index: 6;
-}
-
-.activity-preview-layout {
-    min-height: 100%;
-}
-
-.activity-review-preview-panel .review-preview-car,
-.activity-review-preview-panel .review-preview-content {
-    min-height: 100%;
-}
-
 @media (max-width: 1100px) {
     .activity-page {
         width: min(100% - 2rem, 1120px);
         padding-top: var(--spacing-6);
-    }
-
-    .activity-panel-layout,
-    .activity-panel-layout.has-active-preview {
-        grid-template-columns: 1fr;
-        height: auto;
-        min-height: 0;
-        overflow: visible;
-    }
-
-    .activity-panel-layout.has-active-preview .activity-feed {
-        grid-template-columns: 1fr;
-        max-height: none;
-        overflow: visible;
-        padding-right: 0;
-    }
-
-    .activity-preview-column {
-        height: auto;
-        overflow: visible;
     }
 }
 
@@ -358,11 +247,5 @@ body.activity-preview-scroll-lock {
     .activity-card-gallery .image-gallery-thumb-button:first-child,
     .activity-card-gallery .image-gallery-thumb-button:first-child .image-gallery-thumb {
         width: 100%;
-    }
-
-    .activity-review-preview-panel .review-preview-car,
-    .activity-review-preview-panel .review-preview-content,
-    .activity-preview-layout {
-        min-height: 0;
     }
 }

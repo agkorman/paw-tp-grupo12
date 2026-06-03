@@ -12,6 +12,7 @@
     var nextButton = lightbox.querySelector('[data-image-lightbox-next]');
     var urls = [];
     var index = 0;
+    var lastFocused = null;
 
     function render() {
         if (!urls.length) {
@@ -40,9 +41,14 @@
         urls = urlList.slice();
         index = Math.max(0, Math.min(startIndex || 0, urls.length - 1));
         render();
+        lastFocused = document.activeElement;
         lightbox.hidden = false;
         lightbox.setAttribute('aria-hidden', 'false');
         document.body.classList.add('image-lightbox-open');
+        var closeButton = lightbox.querySelector('[data-image-lightbox-close]');
+        if (closeButton) {
+            closeButton.focus();
+        }
     }
 
     function close() {
@@ -52,6 +58,10 @@
         image.removeAttribute('src');
         urls = [];
         index = 0;
+        if (lastFocused) {
+            lastFocused.focus();
+            lastFocused = null;
+        }
     }
 
     document.addEventListener('click', function (event) {
