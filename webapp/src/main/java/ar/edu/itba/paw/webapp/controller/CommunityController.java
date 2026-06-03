@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -168,6 +169,9 @@ public class CommunityController {
             populateCreateCommunityPageModel(model);
             return "community-create.jsp";
         } catch (final DataIntegrityViolationException e) {
+            if (!isConstraintViolation(e, "uq_communities_slug")) {
+                throw e;
+            }
             LOGGER.warn("create community rejected: slug conflict (concurrent creation) userId={}",
                     currentUser.getId());
             errors.reject("communities.create.error.slugConflict");
@@ -503,6 +507,9 @@ public class CommunityController {
                         communityPostForm.getTitle(), communityPostForm.getBody(), imagePayloads)
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
         } catch (final DataIntegrityViolationException e) {
+            if (!isConstraintViolation(e, "uq_community_posts_slug")) {
+                throw e;
+            }
             LOGGER.warn("create community post rejected: slug conflict (concurrent creation) userId={} communitySlug={}",
                     currentUser.getId(),
                     LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
@@ -917,6 +924,26 @@ public class CommunityController {
 
     private String redirectTo(final String path) {
         return "redirect:" + path;
+    }
+
+    private static boolean isConstraintViolation(
+            final DataIntegrityViolationException e,
+            final String constraintName
+    ) {
+        if (e == null || constraintName == null) {
+            return false;
+        }
+        final String normalizedConstraint = constraintName.toLowerCase(Locale.ROOT);
+        return containsConstraint(e.getMessage(), normalizedConstraint)
+                || containsConstraint(e.getMostSpecificCause().getMessage(), normalizedConstraint);
+    }
+
+    private static boolean containsConstraint(
+            final String message,
+            final String normalizedConstraint
+    ) {
+        return message != null
+                && message.toLowerCase(Locale.ROOT).contains(normalizedConstraint);
     }
 
     private static List<MultipartFile> nonEmptyFiles(final List<MultipartFile> files) {

@@ -18,10 +18,13 @@ import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
+import ar.edu.itba.paw.webapp.form.CommunityForm;
+import ar.edu.itba.paw.webapp.form.CommunityPostForm;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,12 +36,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.ui.ExtendedModelMap;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
@@ -290,6 +297,26 @@ class CommunityControllerTest {
     }
 
     @Test
+    void createCommunity_unrelatedIntegrityViolation_rethrowsException() {
+        // Arrange
+        final CommunityForm form = communityForm();
+        final BindingResult errors = new BeanPropertyBindingResult(form, "communityForm");
+        final DataIntegrityViolationException exception =
+                new DataIntegrityViolationException("uq_community_members_user_id_community_id");
+        when(communityService.createCommunity(anyLong(), anyString(), anyString(), anyCollection()))
+                .thenThrow(exception);
+
+        // Exercise
+        final DataIntegrityViolationException thrown = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> controller.createCommunity(form, errors, new ExtendedModelMap(), testUser(7L))
+        );
+
+        // Assertions
+        assertSame(exception, thrown);
+    }
+
+    @Test
     void joinCommunity_authenticatedUser_redirectsToDetail() throws Exception {
         // Arrange
         when(communityService.toggleMembership("classics", 7L)).thenReturn(Optional.of(true));
@@ -445,6 +472,32 @@ class CommunityControllerTest {
                         "communities.postForm.error.slugConflict"))
                 .andExpect(model().attributeExists("community"));
         clearSecurityContext();
+    }
+
+    @Test
+    void submitCommunityPost_unrelatedIntegrityViolation_rethrowsException() {
+        // Arrange
+        final CommunityPostForm form = communityPostForm();
+        final BindingResult errors = new BeanPropertyBindingResult(form, "communityPostForm");
+        final DataIntegrityViolationException exception =
+                new DataIntegrityViolationException("fk_community_post_images_post_id");
+        when(communityService.getCommunityBySlug("classics")).thenReturn(Optional.of(community()));
+        when(communityService.createCommunityPost(
+                anyString(),
+                anyLong(),
+                anyString(),
+                anyString(),
+                any()
+        )).thenThrow(exception);
+
+        // Exercise
+        final DataIntegrityViolationException thrown = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> controller.submitCommunityPost("classics", form, errors, new ExtendedModelMap(), testUser(7L))
+        );
+
+        // Assertions
+        assertSame(exception, thrown);
     }
 
     @Test
@@ -713,6 +766,21 @@ class CommunityControllerTest {
         user.setPreferredLocale("es");
         user.setCreatedAt(LocalDateTime.now().minusDays(100));
         return user;
+    }
+
+    private static CommunityForm communityForm() {
+        final CommunityForm form = new CommunityForm();
+        form.setName("Classics");
+        form.setDescription("Pre-1990 cars and honest restoration projects.");
+        form.setSelectedTopicIds(Set.of((short) 1));
+        return form;
+    }
+
+    private static CommunityPostForm communityPostForm() {
+        final CommunityPostForm form = new CommunityPostForm();
+        form.setTitle("First post");
+        form.setBody("This is the first real community post.");
+        return form;
     }
 
     private static AuthenticatedUser testUser(final long id) {
