@@ -21,6 +21,7 @@ import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import ar.edu.itba.paw.webapp.form.CommunityForm;
 import ar.edu.itba.paw.webapp.form.CommunityPostForm;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -106,7 +107,7 @@ class CommunityControllerTest {
         final BindingResult errors = (BindingResult) errorsObject;
         assertTrue(errors.getGlobalErrors()
                 .stream()
-                .anyMatch(error -> expectedCode.equals(error.getCode())));
+                .anyMatch(error -> Arrays.asList(error.getCodes()).contains(expectedCode)));
     }
 
     @Test
