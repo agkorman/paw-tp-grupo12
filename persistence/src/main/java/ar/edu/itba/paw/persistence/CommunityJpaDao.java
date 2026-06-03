@@ -571,6 +571,25 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public List<CommunityPost> findPostsByIds(final Collection<Long> postIds) {
+        final List<Long> normalizedIds = normalizeIds(postIds);
+        if (normalizedIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return em.createQuery(
+                "SELECT p FROM CommunityPost p " +
+                "LEFT JOIN FETCH p.author " +
+                "LEFT JOIN FETCH p.community " +
+                "WHERE p.id IN :postIds " +
+                "ORDER BY p.createdAt DESC, p.id DESC",
+                CommunityPost.class
+        )
+                .setParameter("postIds", normalizedIds)
+                .getResultList();
+    }
+
+    @Override
     public Page<CommunityPost> findVisiblePostsByCommunityId(final long communityId,
                                                              final String sort,
                                                              final int page) {

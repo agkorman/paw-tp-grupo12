@@ -294,18 +294,6 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public Page<Review> getActivityFeedReviews(final String feedMode, final Long userId,
-                                               final int page) {
-        if (FEED_FOLLOWING.equals(feedMode) && userId != null) {
-            return reviewDao.findByFollowedUsers(userId, page);
-        }
-        if (FEED_FAVORITES.equals(feedMode) && userId != null) {
-            return reviewDao.findByFavoriteCars(userId, page);
-        }
-        return reviewDao.findLatest(page);
-    }
-
-    @Override
     public Review getReviewAndCheckAccess(final long reviewId, final long requestingUserId,
                                           final boolean isAdmin) {
         final Review review = reviewDao.findById(reviewId)

@@ -367,6 +367,38 @@ class CommunityDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    void shouldFindCommunityPostsByIdsWithAuthorAndCommunity() {
+        // Arrange
+        final User creator = insertUser("post-ids-owner", "post-ids-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("jdm-heads", "JDM Heads", "Boost noises.", creator.getId());
+        final long firstPostId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "first-post",
+                "First post",
+                "Body 1",
+                LocalDateTime.now().minusHours(2)
+        );
+        final long secondPostId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "second-post",
+                "Second post",
+                "Body 2",
+                LocalDateTime.now().minusHours(1)
+        );
+
+        // Exercise
+        final List<CommunityPost> result = communityDao.findPostsByIds(List.of(firstPostId, secondPostId));
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals("post-ids-owner", result.get(0).getAuthorUsername());
+        assertEquals("jdm-heads", result.get(0).getCommunity().getSlug());
+        assertEquals("JDM Heads", result.get(0).getCommunity().getName());
+    }
+
+    @Test
     void shouldFindVisibleCommunityPostsPaginatedByRecent() {
         // Arrange
         final User creator = insertUser("paged-posts-owner", "paged-posts-owner@example.com", "secret", "user");
