@@ -20,7 +20,9 @@
     <c:when test="${not empty href}">
         <a class="community-post-card community-post-card-link" href="${fn:escapeXml(href)}">
             <div class="community-post-topline">
-                <div class="community-post-avatar" aria-hidden="true"></div>
+                <div class="community-post-avatar" aria-hidden="true">
+                    <pa:icon name="user-avatar" size="24"/>
+                </div>
                 <p class="community-post-meta">
                     <strong><c:out value="${author}"/></strong>
                     <span aria-hidden="true">•</span>
@@ -41,7 +43,9 @@
     <c:otherwise>
         <article class="community-post-card">
             <div class="community-post-topline">
-                <div class="community-post-avatar" aria-hidden="true"></div>
+                <div class="community-post-avatar" aria-hidden="true">
+                    <pa:icon name="user-avatar" size="24"/>
+                </div>
                 <p class="community-post-meta">
                     <strong><c:out value="${author}"/></strong>
                     <span aria-hidden="true">•</span>

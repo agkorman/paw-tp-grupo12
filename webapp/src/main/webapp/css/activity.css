@@ -73,12 +73,20 @@
 }
 
 .activity-card-avatar {
-    width: 2rem;
-    height: 2rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 50%;
-    flex: 0 0 2rem;
-    background: radial-gradient(circle at 30% 30%, rgba(255, 181, 158, 0.25), transparent 38%), var(--surface-container-highest);
+    flex: 0 0 2.5rem;
+    display: grid;
+    place-items: center;
+    background: var(--surface-container-highest);
     border: 1px solid rgba(229, 226, 225, 0.08);
+    color: var(--secondary);
+}
+
+.activity-card-avatar svg {
+    width: 72%;
+    height: 72%;
 }
 
 .activity-card-topline-copy {

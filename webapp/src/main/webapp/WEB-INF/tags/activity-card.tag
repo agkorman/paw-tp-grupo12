@@ -43,7 +43,9 @@
 
 <article class="activity-card">
     <div class="activity-card-topline">
-        <div class="activity-card-avatar" aria-hidden="true"></div>
+        <div class="activity-card-avatar" aria-hidden="true">
+            <pa:icon name="user-avatar" size="24"/>
+        </div>
         <div class="activity-card-topline-copy">
             <p class="activity-card-meta">
                 <c:choose>

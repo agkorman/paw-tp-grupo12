@@ -163,7 +163,9 @@
                     <div class="community-comment-row" id="comment-${comment.commentId}">
                         <article class="community-comment">
                             <div class="community-comment-header">
-                                <span class="community-comment-avatar" aria-hidden="true"></span>
+                                <span class="community-comment-avatar" aria-hidden="true">
+                                    <pa:icon name="user-avatar" size="24"/>
+                                </span>
                                 <div class="community-comment-meta">
                                     <a class="community-author-link" href="${fn:escapeXml(comment.authorProfileHref)}">
                                         <strong><c:out value="${comment.author}"/></strong>
