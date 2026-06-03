@@ -16,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -37,9 +36,6 @@ class ActivityControllerTest {
 
     @Mock
     private RelativeTimeFormatter relativeTimeFormatter;
-
-    @Mock
-    private MessageSource messageSource;
 
     @InjectMocks
     private ActivityController controller;
@@ -86,7 +82,6 @@ class ActivityControllerTest {
         // Arrange
         final LocalDateTime now = LocalDateTime.now();
         when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("now");
-        when(messageSource.getMessage(eq("activity.card.car.unknown"), eq(null), any())).thenReturn("Auto no disponible");
         when(activityService.getLatestActivityFeed(eq(1))).thenReturn(new Page<>(
                 List.of(
                         ActivityFeedItem.reviewItem(review(now.minusMinutes(3)), null, 2, List.of()),

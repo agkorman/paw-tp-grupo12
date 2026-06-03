@@ -43,7 +43,7 @@ class ActivityJpaDaoTest extends AbstractPersistenceTest {
 
     private UserData createUserData(final String suffix) {
         final ar.edu.itba.paw.model.User user = createUser(suffix);
-        return new UserData(user.getId(), user.getUsername(), user.getEmail());
+        return new UserData(user.getId());
     }
 
     private ReviewData createReviewData(final String suffix, final LocalDateTime createdAt) {
@@ -82,13 +82,9 @@ class ActivityJpaDaoTest extends AbstractPersistenceTest {
 
     private static final class UserData {
         private final long id;
-        private final String username;
-        private final String email;
 
-        private UserData(final long id, final String username, final String email) {
+        private UserData(final long id) {
             this.id = id;
-            this.username = username;
-            this.email = email;
         }
 
         private long id() {

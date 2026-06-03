@@ -9,12 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.context.MessageSource;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,15 +25,12 @@ public class ActivityController {
 
     private final ActivityService activityService;
     private final RelativeTimeFormatter relativeTimeFormatter;
-    private final MessageSource messageSource;
 
     @Autowired
     public ActivityController(final ActivityService activityService,
-                              final RelativeTimeFormatter relativeTimeFormatter,
-                              final MessageSource messageSource) {
+                              final RelativeTimeFormatter relativeTimeFormatter) {
         this.activityService = activityService;
         this.relativeTimeFormatter = relativeTimeFormatter;
-        this.messageSource = messageSource;
     }
 
     @RequestMapping(value = "/activity", method = RequestMethod.GET)
@@ -59,10 +54,11 @@ public class ActivityController {
 
     private ActivityCardView toActivityCard(final ActivityFeedItem item) {
         if (item.isReview()) {
-            final String detailUrl = reviewHref(item);
-            final String carName = resolveCarName(item);
+            final String carName = item.getCar() != null
+                    ? item.getCar().getBrandName() + " " + item.getCar().getModel()
+                    : null;
             return new ActivityCardView(
-                    detailUrl,
+                    reviewHref(item),
                     userHref(item.getReview().getUserId()),
                     resolveReviewAuthorName(item),
                     relativeTimeFormatter.format(item.getReview().getCreatedAt()),
@@ -72,18 +68,16 @@ public class ActivityController {
                     "review.image.alt",
                     "activity.card.context.review",
                     carName,
-                    "activity.card.metric.car",
+                    carName != null ? null : "activity.card.car.unknown",
                     carName,
-                    "activity.card.metric.rating",
-                    item.getReview().getRating() + " / 5",
-                    "activity.card.detail.review"
+                    null,
+                    item.getReview().getRating() + " / 5"
             );
         }
 
-        final String detailUrl = "/communities/" + item.getCommunityPost().getCommunity().getSlug()
-                + "/posts/" + item.getCommunityPost().getSlug();
         return new ActivityCardView(
-                detailUrl,
+                "/communities/" + item.getCommunityPost().getCommunity().getSlug()
+                        + "/posts/" + item.getCommunityPost().getSlug(),
                 userHref(item.getCommunityPost().getAuthorUserId()),
                 item.getCommunityPost().getAuthorUsername(),
                 relativeTimeFormatter.format(item.getCommunityPost().getCreatedAt()),
@@ -96,8 +90,7 @@ public class ActivityController {
                 "activity.card.metric.helpful",
                 Long.toString(item.getHelpfulCount()),
                 "activity.card.metric.comments",
-                Long.toString(item.getCommentCount()),
-                "activity.card.detail.post"
+                Long.toString(item.getCommentCount())
         );
     }
 
@@ -122,18 +115,7 @@ public class ActivityController {
         if (item.getReview().getReviewerEmail() != null && !item.getReview().getReviewerEmail().trim().isEmpty()) {
             return item.getReview().getReviewerEmail().trim();
         }
-        return message("activity.card.author.unknown");
-    }
-
-    private String resolveCarName(final ActivityFeedItem item) {
-        if (item.getCar() == null) {
-            return message("activity.card.car.unknown");
-        }
-        return item.getCar().getBrandName() + " " + item.getCar().getModel();
-    }
-
-    private String message(final String code) {
-        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+        return null;
     }
 
     private List<String> toReviewImageUrls(final long reviewId, final List<ReviewImage> images) {
@@ -170,7 +152,6 @@ public class ActivityController {
         private final String primaryMetricValue;
         private final String secondaryMetricKey;
         private final String secondaryMetricValue;
-        private final String detailLabelKey;
 
         private ActivityCardView(final String href,
                                  final String authorHref,
@@ -185,8 +166,7 @@ public class ActivityController {
                                  final String primaryMetricKey,
                                  final String primaryMetricValue,
                                  final String secondaryMetricKey,
-                                 final String secondaryMetricValue,
-                                 final String detailLabelKey) {
+                                 final String secondaryMetricValue) {
             this.href = href;
             this.authorHref = authorHref;
             this.authorName = authorName;
@@ -201,7 +181,6 @@ public class ActivityController {
             this.primaryMetricValue = primaryMetricValue;
             this.secondaryMetricKey = secondaryMetricKey;
             this.secondaryMetricValue = secondaryMetricValue;
-            this.detailLabelKey = detailLabelKey;
         }
 
         public String getHref() {
@@ -258,10 +237,6 @@ public class ActivityController {
 
         public String getSecondaryMetricValue() {
             return secondaryMetricValue;
-        }
-
-        public String getDetailLabelKey() {
-            return detailLabelKey;
         }
     }
 }

@@ -108,7 +108,6 @@ public class ActivityServiceImpl implements ActivityService {
             if (post == null) {
                 continue;
             }
-            post.setImages(postImagesById.getOrDefault(post.getId(), Collections.emptyList()));
             items.add(ActivityFeedItem.communityPostItem(
                     post,
                     helpfulCountsByPostId.getOrDefault(post.getId(), 0L),
