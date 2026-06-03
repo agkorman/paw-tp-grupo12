@@ -27,6 +27,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
@@ -242,6 +243,30 @@ class CommunityControllerTest {
     }
 
     @Test
+    void createCommunity_slugConflict_returnsFormWithGlobalError() throws Exception {
+        // Arrange
+        when(communityService.getAvailableTopics()).thenReturn(List.of(topic((short) 1, "classics")));
+        when(communityService.createCommunity(anyLong(), anyString(), anyString(), anyCollection()))
+                .thenThrow(new DataIntegrityViolationException("uq_communities_slug"));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities")
+                .param("name", "Classics")
+                .param("description", "Pre-1990 cars and honest restoration projects.")
+                .param("selectedTopicIds", "1"));
+
+        // Assertions
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(view().name("community-create.jsp"))
+                .andExpect(model().attributeHasErrors("communityForm"))
+                .andExpect(model().attributeExists("communityTopics"));
+        clearSecurityContext();
+    }
+
+    @Test
     void joinCommunity_authenticatedUser_redirectsToDetail() throws Exception {
         // Arrange
         when(communityService.toggleMembership("classics", 7L)).thenReturn(Optional.of(true));
@@ -361,6 +386,31 @@ class CommunityControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("community-post-form.jsp"))
                 .andExpect(model().attributeHasFieldErrors("communityPostForm", "title"))
+                .andExpect(model().attributeExists("community"));
+        clearSecurityContext();
+    }
+
+    @Test
+    void submitCommunityPost_slugConflict_returnsFormWithGlobalError() throws Exception {
+        // Arrange
+        when(communityService.getCommunityBySlug("classics")).thenReturn(Optional.of(community()));
+        when(communityService.createCommunityPost("classics", 7L, "First post", "This is the first real community post."))
+                .thenThrow(new DataIntegrityViolationException("uq_community_posts_slug"));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities/classics/posts")
+                        .param("title", "First post")
+                        .param("body", "This is the first real community post.")
+        );
+
+        // Assertions
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(view().name("community-post-form.jsp"))
+                .andExpect(model().attributeHasErrors("communityPostForm"))
                 .andExpect(model().attributeExists("community"));
         clearSecurityContext();
     }

@@ -192,8 +192,6 @@ public class CarController {
         ) final String submitted
     ) {
         final ModelAndView mav = new ModelAndView("car-form.jsp");
-        mav.addObject("carForm", new CarForm());
-        populateCarFormPageModel(mav);
         addSubmittedToast(mav, submitted);
         return mav;
     }
@@ -310,11 +308,6 @@ public class CarController {
         );
 
         return "redirect:/cars?submitted=true";
-    }
-
-    private void populateCarFormPageModel(final ModelAndView mav) {
-        mav.addObject("brands", brandService.findAll());
-        mav.addObject("bodyTypes", bodyTypeService.findAll());
     }
 
     private void addSubmittedToast(

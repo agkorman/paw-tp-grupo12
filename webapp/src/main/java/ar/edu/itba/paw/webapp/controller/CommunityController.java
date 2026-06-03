@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -150,6 +151,12 @@ public class CommunityController {
             LOGGER.warn("create community rejected: invalid topic selection userId={} reason={}",
                     currentUser.getId(), e.getReason());
             errors.rejectValue("selectedTopicIds", resolveTopicErrorKey(e.getReason()));
+            populateCreateCommunityPageModel(model);
+            return "community-create.jsp";
+        } catch (final DataIntegrityViolationException e) {
+            LOGGER.warn("create community rejected: slug conflict (concurrent creation) userId={}",
+                    currentUser.getId());
+            errors.reject("communities.create.error.slugConflict");
             populateCreateCommunityPageModel(model);
             return "community-create.jsp";
         }
@@ -452,10 +459,20 @@ public class CommunityController {
             return "community-post-form.jsp";
         }
 
-        final CommunityPost createdPost = communityService
-            .createCommunityPost(communitySlug, currentUser.getId(),
-                    communityPostForm.getTitle(), communityPostForm.getBody())
-            .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        final CommunityPost createdPost;
+        try {
+            createdPost = communityService
+                .createCommunityPost(communitySlug, currentUser.getId(),
+                        communityPostForm.getTitle(), communityPostForm.getBody())
+                .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        } catch (final DataIntegrityViolationException e) {
+            LOGGER.warn("create community post rejected: slug conflict (concurrent creation) userId={} communitySlug={}",
+                    currentUser.getId(),
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
+            errors.reject("communities.postForm.error.slugConflict");
+            populateCommunityPostFormModel(model, community);
+            return "community-post-form.jsp";
+        }
         LOGGER.info("created community post slug={} communitySlug={} userId={}",
                 LogSanitizer.forLog(createdPost.getSlug(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),

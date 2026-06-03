@@ -893,12 +893,15 @@ public class AdminController {
         );
         mav.addObject("rejectLabel", "Rechazar");
         mav.addObject("showCatalogRequestLinks", false);
+        final List<CarRequestImage> requestImages =
+            carRequestService.getCarRequestImages(request.getId());
         final List<Long> retainedImageIds = retainedImageIds(
             carForm.getRetainedImageIds(),
-            buildRequestImageIds(request)
+            imageIdsFrom(request, requestImages)
         );
         final List<String> imageUrls = buildRequestImageUrls(
             request,
+            requestImages,
             retainedImageIds
         );
         mav.addObject("existingImageUrls", imageUrls);
@@ -1035,16 +1038,32 @@ public class AdminController {
     }
 
     private List<String> buildRequestImageUrls(final CarRequest request) {
-        return buildRequestImageUrls(request, buildRequestImageIds(request));
+        final List<CarRequestImage> requestImages =
+            carRequestService.getCarRequestImages(request.getId());
+        return buildRequestImageUrls(
+            request,
+            requestImages,
+            imageIdsFrom(request, requestImages)
+        );
     }
 
     private List<String> buildRequestImageUrls(
         final CarRequest request,
         final List<Long> imageIds
     ) {
+        return buildRequestImageUrls(
+            request,
+            carRequestService.getCarRequestImages(request.getId()),
+            imageIds
+        );
+    }
+
+    private List<String> buildRequestImageUrls(
+        final CarRequest request,
+        final List<CarRequestImage> requestImages,
+        final List<Long> imageIds
+    ) {
         final Set<Long> retainedIds = new LinkedHashSet<>(imageIds);
-        final List<CarRequestImage> requestImages =
-            carRequestService.getCarRequestImages(request.getId());
         if (!requestImages.isEmpty()) {
             return requestImages
                 .stream()
@@ -1068,8 +1087,16 @@ public class AdminController {
     }
 
     private List<Long> buildRequestImageIds(final CarRequest request) {
-        final List<CarRequestImage> requestImages =
-            carRequestService.getCarRequestImages(request.getId());
+        return imageIdsFrom(
+            request,
+            carRequestService.getCarRequestImages(request.getId())
+        );
+    }
+
+    private List<Long> imageIdsFrom(
+        final CarRequest request,
+        final List<CarRequestImage> requestImages
+    ) {
         if (!requestImages.isEmpty()) {
             return requestImages
                 .stream()
