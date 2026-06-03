@@ -236,10 +236,20 @@ public class AdminController {
                     requestPage.getItems(),
                     CarRequest::getSubmittedByUserId
                 );
+                final Map<Long, List<CarRequestImage>> requestImagesById =
+                    fetchRequestImagesById(requestPage.getItems());
                 pendingRequests = requestPage
                     .getItems()
                     .stream()
-                    .map(request -> toCard(request, brandsById, bodyTypesById, carSubmitters))
+                    .map(request ->
+                        toCard(
+                            request,
+                            brandsById,
+                            bodyTypesById,
+                            carSubmitters,
+                            requestImagesById
+                        )
+                    )
                     .toList();
                 currentPage = requestPage.getPageNumber();
                 totalPages = requestPage.getTotalPages();
@@ -281,7 +291,14 @@ public class AdminController {
         ) {
             return new ModelAndView("redirect:/admin");
         }
-        return carRequestFormPage(request, toForm(request), null);
+        final List<CarRequestImage> requestImages =
+            carRequestService.getCarRequestImages(request.getId());
+        return carRequestFormPage(
+            request,
+            toForm(request, requestImages),
+            null,
+            requestImages
+        );
     }
 
     @RequestMapping(value = "/cars/{carId}/edit", method = RequestMethod.GET)
@@ -871,6 +888,20 @@ public class AdminController {
         final CarForm carForm,
         final BindingResult errors
     ) {
+        return carRequestFormPage(
+            request,
+            carForm,
+            errors,
+            carRequestService.getCarRequestImages(request.getId())
+        );
+    }
+
+    private ModelAndView carRequestFormPage(
+        final CarRequest request,
+        final CarForm carForm,
+        final BindingResult errors,
+        final List<CarRequestImage> requestImages
+    ) {
         prepareCarFormContext(carForm, "review-request", null, request.getId());
         final ModelAndView mav = new ModelAndView("car-form.jsp");
         addCarFormBinding(mav, carForm, errors);
@@ -895,10 +926,11 @@ public class AdminController {
         mav.addObject("showCatalogRequestLinks", false);
         final List<Long> retainedImageIds = retainedImageIds(
             carForm.getRetainedImageIds(),
-            buildRequestImageIds(request)
+            imageIdsFrom(request, requestImages)
         );
         final List<String> imageUrls = buildRequestImageUrls(
             request,
+            requestImages,
             retainedImageIds
         );
         mav.addObject("existingImageUrls", imageUrls);
@@ -957,7 +989,10 @@ public class AdminController {
         carForm.setRequestId(requestId);
     }
 
-    private CarForm toForm(final CarRequest request) {
+    private CarForm toForm(
+        final CarRequest request,
+        final List<CarRequestImage> requestImages
+    ) {
         final CarForm form = new CarForm();
         brandService
             .findById(request.getBrandId())
@@ -978,7 +1013,7 @@ public class AdminController {
         form.setFuelConsumption(request.getFuelConsumption());
         form.setMaxSpeedKmh(request.getMaxSpeedKmh());
         form.setPriceUsd(request.getPriceUsd());
-        form.setRetainedImageIds(buildRequestImageIds(request));
+        form.setRetainedImageIds(imageIdsFrom(request, requestImages));
         return form;
     }
 
@@ -1004,7 +1039,8 @@ public class AdminController {
         final CarRequest request,
         final Map<Long, Brand> brandsById,
         final Map<Long, BodyType> bodyTypesById,
-        final Map<Long, User> usersById
+        final Map<Long, User> usersById,
+        final Map<Long, List<CarRequestImage>> requestImagesById
     ) {
         final String brandName = brandsById
             .getOrDefault(request.getBrandId(), new Brand())
@@ -1012,7 +1048,13 @@ public class AdminController {
         final String bodyTypeName = bodyTypesById
             .getOrDefault(request.getBodyTypeId(), new BodyType())
             .getName();
-        final List<String> imageUrls = buildRequestImageUrls(request);
+        final List<CarRequestImage> requestImages =
+            requestImagesById.getOrDefault(request.getId(), List.of());
+        final List<String> imageUrls = buildRequestImageUrls(
+            request,
+            requestImages,
+            imageIdsFrom(request, requestImages)
+        );
         return new AdminCarRequestCard(
                 request.getId(),
                 valueOrFallback(brandName, "Marca pendiente"),
@@ -1034,17 +1076,29 @@ public class AdminController {
         );
     }
 
-    private List<String> buildRequestImageUrls(final CarRequest request) {
-        return buildRequestImageUrls(request, buildRequestImageIds(request));
+    private Map<Long, List<CarRequestImage>> fetchRequestImagesById(
+        final List<CarRequest> requests
+    ) {
+        final List<Long> requestIds = requests
+            .stream()
+            .map(CarRequest::getId)
+            .distinct()
+            .toList();
+        if (requestIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return carRequestService
+            .getCarRequestImagesByRequestIds(requestIds)
+            .stream()
+            .collect(Collectors.groupingBy(CarRequestImage::getRequestId));
     }
 
     private List<String> buildRequestImageUrls(
         final CarRequest request,
+        final List<CarRequestImage> requestImages,
         final List<Long> imageIds
     ) {
         final Set<Long> retainedIds = new LinkedHashSet<>(imageIds);
-        final List<CarRequestImage> requestImages =
-            carRequestService.getCarRequestImages(request.getId());
         if (!requestImages.isEmpty()) {
             return requestImages
                 .stream()
@@ -1068,8 +1122,16 @@ public class AdminController {
     }
 
     private List<Long> buildRequestImageIds(final CarRequest request) {
-        final List<CarRequestImage> requestImages =
-            carRequestService.getCarRequestImages(request.getId());
+        return imageIdsFrom(
+            request,
+            carRequestService.getCarRequestImages(request.getId())
+        );
+    }
+
+    private List<Long> imageIdsFrom(
+        final CarRequest request,
+        final List<CarRequestImage> requestImages
+    ) {
         if (!requestImages.isEmpty()) {
             return requestImages
                 .stream()

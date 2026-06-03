@@ -56,6 +56,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - Use `@RequestMapping(value="...", method=RequestMethod.GET/POST)` — not `@GetMapping`/`@PostMapping`.
 - Standard page-rendering methods return `ModelAndView` or `String` (logical view name). Image and AJAX endpoints return `ResponseEntity`.
 - Access the authenticated user via `@AuthenticationPrincipal final AuthenticatedUser currentUser`.
+- Controller methods that map a page/list into view cards must not call services once per item. Resolve related data in one batch before mapping (e.g. users by ID, image metadata, counters), then pass lookup maps into the mapper.
 - All controllers register `StringTrimmerEditor(true)` via `@InitBinder` to trim and nullify blank string inputs before they reach the service.
 - Validate input at the controller boundary, then delegate to the service. Do not put validation logic inside services or JSPs.
 - Use `GlobalExceptionHandler` for exception handling that is shared across controllers. Prefer reusable web exceptions and centralized mappings over private controller exception classes or repeated controller-local `@ExceptionHandler` methods.
@@ -66,11 +67,15 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - Services use constructor injection (`@Autowired` on constructor, `final` fields).
 - Return `Optional<T>` for single results; return empty collections (never `null`) for list results.
+- If a use case needs existence, counts, filtering, ordering, a subset by IDs, or duplicate detection, express that in a DAO query (`exists...`, `count...`, `find...By...`, `find...Ids...`) instead of loading entities and using `.size()`, `.anyMatch()`, `.filter()`, `.sorted()`, `.limit()`, or page-by-page accumulation in the service.
+- Do not call DAO or service methods inside loops/streams over entities, users, IDs, or page items. Batch with `WHERE ... IN (...)`, aggregate maps in SQL/DAO methods, and preserve input order explicitly when the UI depends on it.
+- Scheduled/bulk workflows such as digests must aggregate data across all affected users/items in a small fixed number of queries; never run per-user/per-review/per-car query loops.
 - The persistence layer uses JPA/Hibernate DAOs backed by `@PersistenceContext EntityManager`.
 - JPA migration safety is the top priority when changing persistence code, entity mappings, or schema-related behavior. Any JPA change must remain backwards-compatible with the live PostgreSQL data already present in the database. Do not introduce mapping, fetch, cascade, column, or identifier changes that can reinterpret existing rows, break startup validation, or require destructive data fixes unless explicitly authorized and accompanied by a safe migration/backfill plan.
-- JPA DAOs: use JPQL for entity queries; use `em.createNativeQuery()` only for operations involving unmapped join tables or for the ID-fetch step of paginated queries (see below). Use `GenerationType.IDENTITY` for all `@Id` fields. Prefer `fetch = LAZY` for all `@ManyToOne` and `@OneToMany`. Only annotate the owning side (the entity holding the FK column); the inverse side does not need `@OneToMany` unless that navigation is required.
+- JPA DAOs: use JPQL for entity queries; use `em.createNativeQuery()` only for operations involving unmapped join tables (e.g. `review_tag_assignments` before the owning entity is migrated) or for the ID-fetch step of paginated queries (see below). Use `GenerationType.IDENTITY` for all `@Id` fields. Prefer `fetch = LAZY` for all `@ManyToOne` and `@OneToMany`. Only annotate the owning side (the entity holding the FK column); the inverse side does not need `@OneToMany` unless that navigation is required.
 - Paginated DAO queries must use the 1+1 query pattern: (1) a native SQL `SELECT id ... LIMIT ? OFFSET ?` to get the page of IDs, then (2) a JPQL `WHERE entity.id IN :ids` to load the full entities. Never use `setFirstResult`/`setMaxResults` on an entity-returning JPQL query — Hibernate may silently paginate in memory. `CarJpaDao.findBySearchCriteria` is the canonical example.
-- `@Column(name = "...")` is the only required attribute. Do not add `length`, `nullable`, or `unique`; with `hbm2ddl.auto=validate` these attributes do not affect schema validation and have no runtime enforcement effect. Real data constraints belong in the database schema and must be introduced with idempotent, backwards-compatible migrations.
+- Queries that need image bytes must be as narrow as possible. For retained images, fetch by owner ID plus retained image IDs in one DAO query; do not fetch the whole gallery with BLOB data and filter in memory, and do not query one image per retained ID.
+- `@Column(name = "...")` is the only required attribute. Do not add `length`, `nullable`, or `unique`; with `hbm2ddl.auto=validate` these attributes do not affect schema validation (Hibernate only checks column existence and type compatibility) and have no runtime enforcement effect. Real data constraints belong in the database schema and must be introduced with idempotent, backwards-compatible migrations.
 - Model entities keep JPA no-arg constructors. Do not add raw-id constructors or setters that synthesize association stubs; set relationships through entity references/objects inside JPA DAOs.
 
 ## Views
@@ -87,6 +92,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 ## JavaScript
 
 - JavaScript is for UX enhancement only: client-side validation, modal/menu behavior, tabs, carousels, previews, maps, accessibility state, and double-submit prevention.
+- The double-submit guard (`js/shared/form-submit-lock.js`) is included **globally** via `footer.tag`, so every page is covered automatically. Never add a per-page `<pa:script>` for it — a second copy installs a duplicate submit listener that sees the button already disabled and cancels the real submit. It auto-locks the submit buttons of every `method="post"` form; opt out with `data-submit-lock="false"`. Keep it non-`defer`: it self-registers on `DOMContentLoaded` so it always runs after parse-time validation handlers — if it ever loaded deferred/async it could lock a button before validation cancels the submit and strand it disabled.
 - JavaScript must not own business flow, persistence flow, authorization decisions, or source-of-truth rendering. State-changing actions must use normal form/link requests handled by Spring MVC, followed by JSP rendering.
 - Do not implement AJAX/fetch/XHR for create, update, delete, like, favorite, follow, moderation, approval, or other mutating domain actions. Do not remove, insert, or replace domain cards/items after mutating actions; let the server redirect and render the updated JSP.
 - Avoid DOM-injection patterns such as inserting server/client HTML with `innerHTML`, `insertAdjacentHTML`, or fragment replacement for mutating workflows. Use DOM writes only for local UX state such as validation messages, modal labels, selected controls, counters that are purely presentational, or map/widget setup.
@@ -126,6 +132,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - All routes are protected by Spring Security (`WebAuthConfig`). When adding a new endpoint, explicitly decide whether it is public or requires authentication/role, and add the corresponding `requestMatchers` rule.
 - Password encoding uses `BCryptPasswordEncoder`. Do not use plaintext encoders.
 - Any user-supplied redirect URL must be validated through `LoginRedirectUtils.safeRedirect()` before use. Never trust raw redirect parameters — they are an open-redirect vector.
+- Controllers must not parse `AuthenticatedUser.getAuthorities()`, `GrantedAuthority`, or raw `ROLE_*` strings. Endpoint access belongs in `WebAuthConfig`; if a service method needs the current user's role context after access has already been granted, pass `request.isUserInRole("ADMIN")`.
 - To gate UI sections by role in JSPs, use the Spring Security tag: `<sec:authorize access="hasRole('ADMIN')">`. Don't rely on a model attribute for role checks in views.
 - CSRF tokens must be included in every mutating form. The hidden input pattern is: `<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">`. Spring's `<form:form>` includes it automatically; plain HTML `<form>` elements require it explicitly.
 
@@ -182,6 +189,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 `schema.sql` runs on every application startup against a live database that already has data. Every statement must be safe to run on an already-initialized database.
 
+- Keep startup `schema.sql` focused on idempotent structural evolution and lookup data required by the app. One-shot legacy backfills, demo seeds, cleanup updates, and historical data moves belong in `schema.deprecated.sql` or an explicitly-run migration script, not in startup DDL.
 - Tables: always `CREATE TABLE IF NOT EXISTS`.
 - Columns: always `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`. New columns must be nullable or have a default so that existing rows are not broken.
 - Constraints: always `DROP CONSTRAINT IF EXISTS` before `ADD CONSTRAINT`, so re-runs do not fail on already-existing constraints.

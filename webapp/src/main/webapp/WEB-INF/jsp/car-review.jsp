@@ -165,7 +165,6 @@
         <pa:script src="/js/cars/car-admin.js"/>
         <pa:script src="/js/reviews/review-moderation.js"/>
     </sec:authorize>
-    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>

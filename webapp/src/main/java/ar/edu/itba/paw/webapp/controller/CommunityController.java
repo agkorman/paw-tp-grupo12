@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -42,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -164,6 +166,15 @@ public class CommunityController {
             LOGGER.warn("create community rejected: invalid topic selection userId={} reason={}",
                     currentUser.getId(), e.getReason());
             errors.rejectValue("selectedTopicIds", resolveTopicErrorKey(e.getReason()));
+            populateCreateCommunityPageModel(model);
+            return "community-create.jsp";
+        } catch (final DataIntegrityViolationException e) {
+            if (!isConstraintViolation(e, "uq_communities_slug")) {
+                throw e;
+            }
+            LOGGER.warn("create community rejected: slug conflict (concurrent creation) userId={}",
+                    currentUser.getId());
+            errors.reject("communities.create.error.slugConflict");
             populateCreateCommunityPageModel(model);
             return "community-create.jsp";
         }
@@ -489,10 +500,24 @@ public class CommunityController {
                     "creating community post in " + communitySlug + " by user " + currentUser.getId(), e);
         }
 
-        final CommunityPost createdPost = communityService
-            .createCommunityPost(communitySlug, currentUser.getId(),
-                    communityPostForm.getTitle(), communityPostForm.getBody(), imagePayloads)
-            .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        final CommunityPost createdPost;
+        try {
+            createdPost = communityService
+                .createCommunityPost(communitySlug, currentUser.getId(),
+                        communityPostForm.getTitle(), communityPostForm.getBody(), imagePayloads)
+                .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        } catch (final DataIntegrityViolationException e) {
+            if (!isConstraintViolation(e, "uq_community_posts_slug")) {
+                throw e;
+            }
+            LOGGER.warn("create community post rejected: slug conflict (concurrent creation) userId={} communitySlug={}",
+                    currentUser.getId(),
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
+            errors.reject("communities.postForm.error.slugConflict");
+            populateCommunityPostFormModel(model, community);
+            model.addAttribute("existingPostImageIds", "");
+            return "community-post-form.jsp";
+        }
         LOGGER.info("created community post slug={} communitySlug={} userId={}",
                 LogSanitizer.forLog(createdPost.getSlug(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
@@ -899,6 +924,26 @@ public class CommunityController {
 
     private String redirectTo(final String path) {
         return "redirect:" + path;
+    }
+
+    private static boolean isConstraintViolation(
+            final DataIntegrityViolationException e,
+            final String constraintName
+    ) {
+        if (e == null || constraintName == null) {
+            return false;
+        }
+        final String normalizedConstraint = constraintName.toLowerCase(Locale.ROOT);
+        return containsConstraint(e.getMessage(), normalizedConstraint)
+                || containsConstraint(e.getMostSpecificCause().getMessage(), normalizedConstraint);
+    }
+
+    private static boolean containsConstraint(
+            final String message,
+            final String normalizedConstraint
+    ) {
+        return message != null
+                && message.toLowerCase(Locale.ROOT).contains(normalizedConstraint);
     }
 
     private static List<MultipartFile> nonEmptyFiles(final List<MultipartFile> files) {

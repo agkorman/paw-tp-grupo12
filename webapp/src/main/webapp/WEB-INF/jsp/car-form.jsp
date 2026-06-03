@@ -344,7 +344,6 @@
         <pa:script src="/js/catalog/catalog-request-modal.js"/>
         <pa:script src="/js/catalog/catalog-request-validation.js"/>
     </c:if>
-    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:script src="/js/shared/toast.js"/>
     <pa:footer/>
 </body>
