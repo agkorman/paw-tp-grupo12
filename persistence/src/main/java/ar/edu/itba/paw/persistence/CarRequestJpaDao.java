@@ -17,7 +17,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -140,6 +142,48 @@ public class CarRequestJpaDao implements CarRequestDao {
         } catch (final Exception e) {
             LOGGER.error("failed to fetch image metadata for car request id={}", requestId, e);
             throw new PersistenceOperationException("fetch image metadata for car request " + requestId, e);
+        }
+    }
+
+    @Override
+    public List<CarRequestImage> findImagesByRequestIds(final Collection<Long> requestIds) {
+        if (requestIds == null) {
+            return List.of();
+        }
+        final List<Long> ids = requestIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        try {
+            final List<?> rawRows = em.createQuery(
+                    "SELECT i.imageId, i.request.id, i.displayOrder, i.contentType, i.updatedAt " +
+                    "FROM CarRequestImage i WHERE i.request.id IN :requestIds " +
+                    "ORDER BY i.request.id ASC, i.displayOrder ASC, i.imageId ASC")
+                    .setParameter("requestIds", ids)
+                    .getResultList();
+
+            final Map<Long, CarRequest> requestRefs = new HashMap<>();
+            return rawRows.stream().map(element -> {
+                final Object[] r = (Object[]) element;
+                final long requestId = ((Number) r[1]).longValue();
+                final CarRequestImage img = new CarRequestImage();
+                img.setImageId(((Number) r[0]).longValue());
+                img.setRequest(requestRefs.computeIfAbsent(
+                        requestId,
+                        id -> em.getReference(CarRequest.class, id)
+                ));
+                img.setDisplayOrder(((Number) r[2]).intValue());
+                img.setContentType((String) r[3]);
+                img.setImageData(null);
+                img.setUpdatedAt((java.time.LocalDateTime) r[4]);
+                return img;
+            }).collect(Collectors.toList());
+        } catch (final Exception e) {
+            LOGGER.error("failed to fetch image metadata for car request ids={}", ids, e);
+            throw new PersistenceOperationException("fetch image metadata for car requests", e);
         }
     }
 

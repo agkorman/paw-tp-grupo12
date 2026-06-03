@@ -236,10 +236,20 @@ public class AdminController {
                     requestPage.getItems(),
                     CarRequest::getSubmittedByUserId
                 );
+                final Map<Long, List<CarRequestImage>> requestImagesById =
+                    fetchRequestImagesById(requestPage.getItems());
                 pendingRequests = requestPage
                     .getItems()
                     .stream()
-                    .map(request -> toCard(request, brandsById, bodyTypesById, carSubmitters))
+                    .map(request ->
+                        toCard(
+                            request,
+                            brandsById,
+                            bodyTypesById,
+                            carSubmitters,
+                            requestImagesById
+                        )
+                    )
                     .toList();
                 currentPage = requestPage.getPageNumber();
                 totalPages = requestPage.getTotalPages();
@@ -1029,7 +1039,8 @@ public class AdminController {
         final CarRequest request,
         final Map<Long, Brand> brandsById,
         final Map<Long, BodyType> bodyTypesById,
-        final Map<Long, User> usersById
+        final Map<Long, User> usersById,
+        final Map<Long, List<CarRequestImage>> requestImagesById
     ) {
         final String brandName = brandsById
             .getOrDefault(request.getBrandId(), new Brand())
@@ -1037,7 +1048,13 @@ public class AdminController {
         final String bodyTypeName = bodyTypesById
             .getOrDefault(request.getBodyTypeId(), new BodyType())
             .getName();
-        final List<String> imageUrls = buildRequestImageUrls(request);
+        final List<CarRequestImage> requestImages =
+            requestImagesById.getOrDefault(request.getId(), List.of());
+        final List<String> imageUrls = buildRequestImageUrls(
+            request,
+            requestImages,
+            imageIdsFrom(request, requestImages)
+        );
         return new AdminCarRequestCard(
                 request.getId(),
                 valueOrFallback(brandName, "Marca pendiente"),
@@ -1059,14 +1076,21 @@ public class AdminController {
         );
     }
 
-    private List<String> buildRequestImageUrls(final CarRequest request) {
-        final List<CarRequestImage> requestImages =
-            carRequestService.getCarRequestImages(request.getId());
-        return buildRequestImageUrls(
-            request,
-            requestImages,
-            imageIdsFrom(request, requestImages)
-        );
+    private Map<Long, List<CarRequestImage>> fetchRequestImagesById(
+        final List<CarRequest> requests
+    ) {
+        final List<Long> requestIds = requests
+            .stream()
+            .map(CarRequest::getId)
+            .distinct()
+            .toList();
+        if (requestIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return carRequestService
+            .getCarRequestImagesByRequestIds(requestIds)
+            .stream()
+            .collect(Collectors.groupingBy(CarRequestImage::getRequestId));
     }
 
     private List<String> buildRequestImageUrls(

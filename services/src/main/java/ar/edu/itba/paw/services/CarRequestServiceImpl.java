@@ -15,6 +15,7 @@ import ar.edu.itba.paw.services.exception.InvalidImagePayloadException;
 import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -168,6 +169,13 @@ public class CarRequestServiceImpl implements CarRequestService {
     @Override
     public List<CarRequestImage> getCarRequestImages(final long requestId) {
         return carRequestDao.findImagesByRequestId(requestId);
+    }
+
+    @Override
+    public List<CarRequestImage> getCarRequestImagesByRequestIds(
+        final Collection<Long> requestIds
+    ) {
+        return carRequestDao.findImagesByRequestIds(requestIds);
     }
 
     @Override

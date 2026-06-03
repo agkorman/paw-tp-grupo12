@@ -26,6 +26,8 @@ public interface CarRequestDao {
 
     List<CarRequestImage> findImagesByRequestId(long requestId);
 
+    List<CarRequestImage> findImagesByRequestIds(Collection<Long> requestIds);
+
     List<CarRequestImage> findImagesByRequestIdWithData(long requestId);
 
     List<CarRequestImage> findImagesByRequestIdAndImageIdsWithData(long requestId, Collection<Long> imageIds);
