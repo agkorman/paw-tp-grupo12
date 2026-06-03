@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
@@ -82,9 +81,9 @@ class ActivityControllerTest {
         // Arrange
         final LocalDateTime now = LocalDateTime.now();
         when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("now");
-        when(activityService.getLatestActivityFeed(eq(1))).thenReturn(new Page<>(
+        when(activityService.getLatestActivityFeed(1)).thenReturn(new Page<>(
                 List.of(
-                        ActivityFeedItem.reviewItem(review(now.minusMinutes(3)), null, 2, List.of()),
+                        ActivityFeedItem.reviewItem(review(now.minusMinutes(3)), 0L, 0L, null, 2, List.of()),
                         ActivityFeedItem.communityPostItem(post(now.minusMinutes(1)), 5L, 2L, List.of())
                 ),
                 1,

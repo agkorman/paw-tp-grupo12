@@ -17,8 +17,11 @@ import ar.edu.itba.paw.persistence.CommunityDao;
 import ar.edu.itba.paw.persistence.CommunityPostImageDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewImageDao;
+import ar.edu.itba.paw.persistence.ReviewLikeDao;
+import ar.edu.itba.paw.persistence.ReviewReplyDao;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -40,6 +43,10 @@ public class ActivityServiceImplTest {
     private ReviewDao reviewDao;
     @Mock
     private ReviewImageDao reviewImageDao;
+    @Mock
+    private ReviewLikeDao reviewLikeDao;
+    @Mock
+    private ReviewReplyDao reviewReplyDao;
     @Mock
     private CommunityDao communityDao;
     @Mock
@@ -94,6 +101,8 @@ public class ActivityServiceImplTest {
         when(communityPostImageDao.findAllByPostIds(List.of(post.getId()))).thenReturn(List.of(postImage));
         when(communityDao.countCommentsByPostIds(List.of(post.getId()))).thenReturn(Map.of(post.getId(), 9L));
         when(communityDao.countHelpfulReactionsByPostIds(List.of(post.getId()))).thenReturn(Map.of(post.getId(), 7L));
+        when(reviewLikeDao.countReviewLikesByReviewIds(List.of(review.getId()))).thenReturn(Map.of(review.getId(), 3L));
+        when(reviewReplyDao.countRepliesByReviewIds(List.of(review.getId()))).thenReturn(Map.of(review.getId(), 2L));
 
         // Exercise
         final Page<ActivityFeedItem> result = activityService.getLatestActivityFeed(1);
@@ -107,6 +116,8 @@ public class ActivityServiceImplTest {
         assertEquals(1, result.getItems().get(0).getCommunityPostImages().size());
         assertTrue(result.getItems().get(1).isReview());
         assertEquals(review.getId(), result.getItems().get(1).getReview().getId());
+        assertEquals(3L, result.getItems().get(1).getReviewLikeCount());
+        assertEquals(2L, result.getItems().get(1).getReviewReplyCount());
         assertEquals(2, result.getItems().get(1).getReviewPage());
         assertEquals(1, result.getItems().get(1).getReviewImages().size());
     }
@@ -128,6 +139,8 @@ public class ActivityServiceImplTest {
         when(carDao.findByIds(List.of(review.getCarId()))).thenReturn(List.of(car));
         when(reviewDao.findDefaultPagesByReviewIds(List.of(review.getId()))).thenReturn(Map.of(review.getId(), 1));
         when(reviewImageDao.findAllByReviewIds(List.of(review.getId()))).thenReturn(List.of());
+        when(reviewLikeDao.countReviewLikesByReviewIds(List.of(review.getId()))).thenReturn(Collections.emptyMap());
+        when(reviewReplyDao.countRepliesByReviewIds(List.of(review.getId()))).thenReturn(Collections.emptyMap());
 
         // Exercise
         final Page<ActivityFeedItem> result = activityService.getLatestActivityFeed(2);

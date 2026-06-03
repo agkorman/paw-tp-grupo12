@@ -15,13 +15,14 @@ import ar.edu.itba.paw.persistence.CommunityDao;
 import ar.edu.itba.paw.persistence.CommunityPostImageDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewImageDao;
+import ar.edu.itba.paw.persistence.ReviewLikeDao;
+import ar.edu.itba.paw.persistence.ReviewReplyDao;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ public class ActivityServiceImpl implements ActivityService {
     private final ActivityDao activityDao;
     private final ReviewDao reviewDao;
     private final ReviewImageDao reviewImageDao;
+    private final ReviewLikeDao reviewLikeDao;
+    private final ReviewReplyDao reviewReplyDao;
     private final CommunityDao communityDao;
     private final CommunityPostImageDao communityPostImageDao;
     private final CarDao carDao;
@@ -42,12 +45,16 @@ public class ActivityServiceImpl implements ActivityService {
     public ActivityServiceImpl(final ActivityDao activityDao,
                                final ReviewDao reviewDao,
                                final ReviewImageDao reviewImageDao,
+                               final ReviewLikeDao reviewLikeDao,
+                               final ReviewReplyDao reviewReplyDao,
                                final CommunityDao communityDao,
                                final CommunityPostImageDao communityPostImageDao,
                                final CarDao carDao) {
         this.activityDao = activityDao;
         this.reviewDao = reviewDao;
         this.reviewImageDao = reviewImageDao;
+        this.reviewLikeDao = reviewLikeDao;
+        this.reviewReplyDao = reviewReplyDao;
         this.communityDao = communityDao;
         this.communityPostImageDao = communityPostImageDao;
         this.carDao = carDao;
@@ -87,6 +94,12 @@ public class ActivityServiceImpl implements ActivityService {
         final Map<Long, Long> helpfulCountsByPostId = communityPostIds.isEmpty()
                 ? Collections.emptyMap()
                 : communityDao.countHelpfulReactionsByPostIds(communityPostIds);
+        final Map<Long, Long> reviewLikeCountsById = reviewIds.isEmpty()
+                ? Collections.emptyMap()
+                : reviewLikeDao.countReviewLikesByReviewIds(reviewIds);
+        final Map<Long, Long> reviewReplyCountsById = reviewIds.isEmpty()
+                ? Collections.emptyMap()
+                : reviewReplyDao.countRepliesByReviewIds(reviewIds);
 
         final List<ActivityFeedItem> items = new ArrayList<>();
         for (final ActivityFeedReference ref : refsPage.getItems()) {
@@ -97,6 +110,8 @@ public class ActivityServiceImpl implements ActivityService {
                 }
                 items.add(ActivityFeedItem.reviewItem(
                         review,
+                        reviewLikeCountsById.getOrDefault(review.getId(), 0L),
+                        reviewReplyCountsById.getOrDefault(review.getId(), 0L),
                         carsById.get(review.getCarId()),
                         reviewPagesById.getOrDefault(review.getId(), Pagination.DEFAULT_PAGE),
                         reviewImagesById.getOrDefault(review.getId(), Collections.emptyList())

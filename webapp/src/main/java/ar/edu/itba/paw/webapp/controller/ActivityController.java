@@ -68,10 +68,10 @@ public class ActivityController {
                     "review.image.alt",
                     "activity.card.context.review",
                     carName,
-                    carName != null ? null : "activity.card.car.unknown",
-                    carName,
-                    null,
-                    item.getReview().getRating() + " / 5"
+                    "activity.card.metric.likes",
+                    Long.toString(item.getReviewLikeCount()),
+                    "activity.card.metric.comments",
+                    Long.toString(item.getReviewReplyCount())
             );
         }
 
@@ -87,7 +87,7 @@ public class ActivityController {
                 "communities.post.image.alt",
                 "activity.card.context.community",
                 item.getCommunityPost().getCommunity().getName(),
-                "activity.card.metric.helpful",
+                "activity.card.metric.likes",
                 Long.toString(item.getHelpfulCount()),
                 "activity.card.metric.comments",
                 Long.toString(item.getCommentCount())
@@ -183,60 +183,19 @@ public class ActivityController {
             this.secondaryMetricValue = secondaryMetricValue;
         }
 
-        public String getHref() {
-            return href;
-        }
-
-        public String getAuthorHref() {
-            return authorHref;
-        }
-
-        public String getAuthorName() {
-            return authorName;
-        }
-
-        public String getTimeText() {
-            return timeText;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public String getBody() {
-            return body;
-        }
-
-        public List<String> getImageUrls() {
-            return imageUrls;
-        }
-
-        public String getImageAltKey() {
-            return imageAltKey;
-        }
-
-        public String getContextLabelKey() {
-            return contextLabelKey;
-        }
-
-        public String getContextValue() {
-            return contextValue;
-        }
-
-        public String getPrimaryMetricKey() {
-            return primaryMetricKey;
-        }
-
-        public String getPrimaryMetricValue() {
-            return primaryMetricValue;
-        }
-
-        public String getSecondaryMetricKey() {
-            return secondaryMetricKey;
-        }
-
-        public String getSecondaryMetricValue() {
-            return secondaryMetricValue;
-        }
+        public String getHref() { return href; }
+        public String getAuthorHref() { return authorHref; }
+        public String getAuthorName() { return authorName; }
+        public String getTimeText() { return timeText; }
+        public String getTitle() { return title; }
+        public String getBody() { return body; }
+        public List<String> getImageUrls() { return imageUrls; }
+        public String getImageAltKey() { return imageAltKey; }
+        public String getContextLabelKey() { return contextLabelKey; }
+        public String getContextValue() { return contextValue; }
+        public String getPrimaryMetricKey() { return primaryMetricKey; }
+        public String getPrimaryMetricValue() { return primaryMetricValue; }
+        public String getSecondaryMetricKey() { return secondaryMetricKey; }
+        public String getSecondaryMetricValue() { return secondaryMetricValue; }
     }
 }

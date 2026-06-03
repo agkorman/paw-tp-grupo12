@@ -8,6 +8,8 @@ public class ActivityFeedItem implements Serializable {
 
     private final ActivityFeedReference reference;
     private final Review review;
+    private final long reviewLikeCount;
+    private final long reviewReplyCount;
     private final Car car;
     private final int reviewPage;
     private final List<ReviewImage> reviewImages;
@@ -18,6 +20,8 @@ public class ActivityFeedItem implements Serializable {
 
     private ActivityFeedItem(final ActivityFeedReference reference,
                              final Review review,
+                             final long reviewLikeCount,
+                             final long reviewReplyCount,
                              final Car car,
                              final int reviewPage,
                              final List<ReviewImage> reviewImages,
@@ -27,6 +31,8 @@ public class ActivityFeedItem implements Serializable {
                              final List<CommunityPostImage> communityPostImages) {
         this.reference = reference;
         this.review = review;
+        this.reviewLikeCount = reviewLikeCount;
+        this.reviewReplyCount = reviewReplyCount;
         this.car = car;
         this.reviewPage = reviewPage;
         this.reviewImages = reviewImages == null ? new ArrayList<>() : new ArrayList<>(reviewImages);
@@ -37,12 +43,16 @@ public class ActivityFeedItem implements Serializable {
     }
 
     public static ActivityFeedItem reviewItem(final Review review,
+                                              final long reviewLikeCount,
+                                              final long reviewReplyCount,
                                               final Car car,
                                               final int reviewPage,
                                               final List<ReviewImage> reviewImages) {
         return new ActivityFeedItem(
                 new ActivityFeedReference(ActivityFeedReference.TYPE_REVIEW, review.getId()),
                 review,
+                reviewLikeCount,
+                reviewReplyCount,
                 car,
                 reviewPage,
                 reviewImages,
@@ -60,6 +70,8 @@ public class ActivityFeedItem implements Serializable {
         return new ActivityFeedItem(
                 new ActivityFeedReference(ActivityFeedReference.TYPE_COMMUNITY_POST, communityPost.getId()),
                 null,
+                0L,
+                0L,
                 null,
                 Pagination.DEFAULT_PAGE,
                 null,
@@ -70,51 +82,18 @@ public class ActivityFeedItem implements Serializable {
         );
     }
 
-    public ActivityFeedReference getReference() {
-        return reference;
-    }
-
-    public String getType() {
-        return reference.getType();
-    }
-
-    public boolean isReview() {
-        return reference.isReview();
-    }
-
-    public boolean isCommunityPost() {
-        return reference.isCommunityPost();
-    }
-
-    public Review getReview() {
-        return review;
-    }
-
-    public Car getCar() {
-        return car;
-    }
-
-    public int getReviewPage() {
-        return reviewPage;
-    }
-
-    public List<ReviewImage> getReviewImages() {
-        return reviewImages;
-    }
-
-    public CommunityPost getCommunityPost() {
-        return communityPost;
-    }
-
-    public long getHelpfulCount() {
-        return helpfulCount;
-    }
-
-    public long getCommentCount() {
-        return commentCount;
-    }
-
-    public List<CommunityPostImage> getCommunityPostImages() {
-        return communityPostImages;
-    }
+    public ActivityFeedReference getReference() { return reference; }
+    public String getType() { return reference.getType(); }
+    public boolean isReview() { return reference.isReview(); }
+    public boolean isCommunityPost() { return reference.isCommunityPost(); }
+    public Review getReview() { return review; }
+    public long getReviewLikeCount() { return reviewLikeCount; }
+    public long getReviewReplyCount() { return reviewReplyCount; }
+    public Car getCar() { return car; }
+    public int getReviewPage() { return reviewPage; }
+    public List<ReviewImage> getReviewImages() { return reviewImages; }
+    public CommunityPost getCommunityPost() { return communityPost; }
+    public long getHelpfulCount() { return helpfulCount; }
+    public long getCommentCount() { return commentCount; }
+    public List<CommunityPostImage> getCommunityPostImages() { return communityPostImages; }
 }
