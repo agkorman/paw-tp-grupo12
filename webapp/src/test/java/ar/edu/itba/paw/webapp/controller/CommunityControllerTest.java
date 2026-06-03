@@ -35,6 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.BindingResult;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -81,6 +82,21 @@ class CommunityControllerTest {
 
     private static void clearSecurityContext() {
         SecurityContextHolder.clearContext();
+    }
+
+    private static void assertGlobalErrorCode(
+            final MvcResult result,
+            final String formName,
+            final String expectedCode
+    ) {
+        final Object errorsObject = result.getModelAndView()
+                .getModel()
+                .get(BindingResult.MODEL_KEY_PREFIX + formName);
+        assertTrue(errorsObject instanceof BindingResult);
+        final BindingResult errors = (BindingResult) errorsObject;
+        assertTrue(errors.getGlobalErrors()
+                .stream()
+                .anyMatch(error -> expectedCode.equals(error.getCode())));
     }
 
     @Test
@@ -262,6 +278,10 @@ class CommunityControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("community-create.jsp"))
                 .andExpect(model().attributeHasErrors("communityForm"))
+                .andExpect(result -> assertGlobalErrorCode(
+                        result,
+                        "communityForm",
+                        "communities.create.error.slugConflict"))
                 .andExpect(model().attributeExists("communityTopics"));
         clearSecurityContext();
     }
@@ -411,6 +431,10 @@ class CommunityControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("community-post-form.jsp"))
                 .andExpect(model().attributeHasErrors("communityPostForm"))
+                .andExpect(result -> assertGlobalErrorCode(
+                        result,
+                        "communityPostForm",
+                        "communities.postForm.error.slugConflict"))
                 .andExpect(model().attributeExists("community"));
         clearSecurityContext();
     }

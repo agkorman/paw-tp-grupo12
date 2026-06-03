@@ -281,7 +281,14 @@ public class AdminController {
         ) {
             return new ModelAndView("redirect:/admin");
         }
-        return carRequestFormPage(request, toForm(request), null);
+        final List<CarRequestImage> requestImages =
+            carRequestService.getCarRequestImages(request.getId());
+        return carRequestFormPage(
+            request,
+            toForm(request, requestImages),
+            null,
+            requestImages
+        );
     }
 
     @RequestMapping(value = "/cars/{carId}/edit", method = RequestMethod.GET)
@@ -871,6 +878,20 @@ public class AdminController {
         final CarForm carForm,
         final BindingResult errors
     ) {
+        return carRequestFormPage(
+            request,
+            carForm,
+            errors,
+            carRequestService.getCarRequestImages(request.getId())
+        );
+    }
+
+    private ModelAndView carRequestFormPage(
+        final CarRequest request,
+        final CarForm carForm,
+        final BindingResult errors,
+        final List<CarRequestImage> requestImages
+    ) {
         prepareCarFormContext(carForm, "review-request", null, request.getId());
         final ModelAndView mav = new ModelAndView("car-form.jsp");
         addCarFormBinding(mav, carForm, errors);
@@ -893,8 +914,6 @@ public class AdminController {
         );
         mav.addObject("rejectLabel", "Rechazar");
         mav.addObject("showCatalogRequestLinks", false);
-        final List<CarRequestImage> requestImages =
-            carRequestService.getCarRequestImages(request.getId());
         final List<Long> retainedImageIds = retainedImageIds(
             carForm.getRetainedImageIds(),
             imageIdsFrom(request, requestImages)
@@ -960,7 +979,10 @@ public class AdminController {
         carForm.setRequestId(requestId);
     }
 
-    private CarForm toForm(final CarRequest request) {
+    private CarForm toForm(
+        final CarRequest request,
+        final List<CarRequestImage> requestImages
+    ) {
         final CarForm form = new CarForm();
         brandService
             .findById(request.getBrandId())
@@ -981,7 +1003,7 @@ public class AdminController {
         form.setFuelConsumption(request.getFuelConsumption());
         form.setMaxSpeedKmh(request.getMaxSpeedKmh());
         form.setPriceUsd(request.getPriceUsd());
-        form.setRetainedImageIds(buildRequestImageIds(request));
+        form.setRetainedImageIds(imageIdsFrom(request, requestImages));
         return form;
     }
 
@@ -1044,17 +1066,6 @@ public class AdminController {
             request,
             requestImages,
             imageIdsFrom(request, requestImages)
-        );
-    }
-
-    private List<String> buildRequestImageUrls(
-        final CarRequest request,
-        final List<Long> imageIds
-    ) {
-        return buildRequestImageUrls(
-            request,
-            carRequestService.getCarRequestImages(request.getId()),
-            imageIds
         );
     }
 
