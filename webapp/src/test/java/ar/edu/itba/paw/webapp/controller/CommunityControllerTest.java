@@ -8,6 +8,7 @@ import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
+import ar.edu.itba.paw.model.CommunityPostImage;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.Page;
@@ -30,6 +31,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -43,6 +45,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -323,14 +326,14 @@ class CommunityControllerTest {
         createdPost.setTitle("First post");
         createdPost.setBody("This is the first real community post.");
         when(communityService.getCommunityBySlug("classics")).thenReturn(Optional.of(community()));
-        when(communityService.createCommunityPost("classics", 7L, "First post", "This is the first real community post."))
+        when(communityService.createCommunityPost("classics", 7L, "First post", "This is the first real community post.", List.of()))
                 .thenReturn(Optional.of(createdPost));
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
 
         // Exercise
         final ResultActions resultActions = mockMvc.perform(
-                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities/classics/posts")
+                multipart("/communities/classics/posts")
                         .param("title", "First post")
                         .param("body", "This is the first real community post.")
         );
@@ -351,7 +354,7 @@ class CommunityControllerTest {
 
         // Exercise
         final ResultActions resultActions = mockMvc.perform(
-                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities/classics/posts")
+                multipart("/communities/classics/posts")
                         .param("title", "   ")
                         .param("body", "This is the first real community post.")
         );
@@ -363,6 +366,59 @@ class CommunityControllerTest {
                 .andExpect(model().attributeHasFieldErrors("communityPostForm", "title"))
                 .andExpect(model().attributeExists("community"));
         clearSecurityContext();
+    }
+
+    @Test
+    void submitCommunityPost_tooManyImages_returnsFormWithErrors() throws Exception {
+        // Arrange
+        when(communityService.getCommunityBySlug("classics")).thenReturn(Optional.of(community()));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+        final MockMultipartFile imageOne = new MockMultipartFile("files", "one.png", "image/png", new byte[]{1});
+        final MockMultipartFile imageTwo = new MockMultipartFile("files", "two.png", "image/png", new byte[]{2});
+        final MockMultipartFile imageThree = new MockMultipartFile("files", "three.png", "image/png", new byte[]{3});
+        final MockMultipartFile imageFour = new MockMultipartFile("files", "four.png", "image/png", new byte[]{4});
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                multipart("/communities/classics/posts")
+                        .file(imageOne)
+                        .file(imageTwo)
+                        .file(imageThree)
+                        .file(imageFour)
+                        .param("title", "First post")
+                        .param("body", "This is the first real community post.")
+        );
+
+        // Assertions
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(view().name("community-post-form.jsp"))
+                .andExpect(model().attributeHasFieldErrors("communityPostForm", "files"));
+        clearSecurityContext();
+    }
+
+    @Test
+    void getCommunityPostImage_existingImage_returnsBytes() throws Exception {
+        // Arrange
+        final CommunityPostDetailData detailData = communityPostDetailData();
+        final CommunityPostImage image = new CommunityPostImage();
+        image.setImageId(15L);
+        image.setContentType("image/png");
+        image.setImageData(new byte[]{1, 2, 3});
+        image.setUpdatedAt(LocalDateTime.of(2026, 6, 1, 12, 0));
+        when(communityService.getCommunityPostDetail("classics", "falcon-60", null))
+                .thenReturn(Optional.of(detailData));
+        when(communityService.getPostImageById(1L, 15L)).thenReturn(Optional.of(image));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions =
+                mockMvc.perform(get("/communities/classics/posts/falcon-60/images/15"));
+
+        // Assertions
+        resultActions
+                .andExpect(status().isOk());
     }
 
     @Test

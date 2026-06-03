@@ -10,6 +10,11 @@ Use this file as the working guide for contributors and coding agents. Keep chan
 
 This repository is an ITBA PAW course project: a server-rendered car listing and review web application. It is a multi-module Maven project using Spring MVC, JPA/Hibernate, JSP/JSTL, PostgreSQL, and Jetty for local execution.
 
+## Code Discipline
+
+- Do not create planning, analysis, or design documents (e.g. `feature-refactor.md`, `plan.md`) and commit them to the repository. Work from the task description and conversation context. If intermediate notes are needed, keep them outside version control.
+- Do not leave dead code after a feature is removed or refactored: delete unused tag files, orphaned JS files, dead i18n keys, and unused model/view helper classes in the same change that removes the feature.
+
 ## Commands
 
 ```bash
@@ -17,6 +22,9 @@ mvn clean install        # build all modules
 mvn -pl webapp jetty:run # start dev server at http://localhost:8080/webapp
 mvn test                 # run all tests
 mvn -pl services test    # run only service tests (faster)
+mvn -pl persistence test # run only persistence tests
+mvn -pl persistence test -Dtest=UserDaoTest                              # run a single test class
+mvn -pl persistence test -Dtest=UserDaoTest#shouldCreateUserAndPersistFields # run a single test method
 mvn -pl model install && mvn -pl persistence test # required when JPA entity annotations change
 ```
 
@@ -41,7 +49,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 ## Transactions
 
 - In production code, `@Transactional` goes on service methods only — never on DAO methods or controllers.
-- Use `@Transactional(readOnly = true)` for read-only service methods.
+- Use `@Transactional(readOnly = true)` for read-only service methods. Inside a `readOnly` method, do not mutate managed JPA entities (calling setters on objects returned by the `EntityManager`). The mutation is a no-op at best and semantically wrong — the intent is a read.
 
 ## Controllers
 
@@ -70,7 +78,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - JSPs live under `WEB-INF/jsp/` and are resolved by the configured `InternalResourceViewResolver`. Controllers return logical names, not full paths.
 - Views must not contain business logic. Use JSTL and EL only — no raw Java scriptlets.
 - Always escape user-visible output: `<c:out value="${...}"/>` for text, `fn:escapeXml()` for values inside HTML attributes. Never print raw `${...}` where user-controlled data can appear (XSS prevention).
-- Use `<c:url>` for all application URLs. Never hardcode context paths.
+- Use `<c:url>` for all application URLs. Never hardcode context paths. This applies to JSPs, tag files, and redirects — but also means **do not build URL strings in controllers and store them in the model**. A URL computed in a controller and rendered in a tag as `href="${model.someUrl}"` bypasses `<c:url>` and breaks context path resolution. Let the view construct every link with `<c:url value="..."/>`.
 - Custom tags use the `pa:` namespace prefix and live in `WEB-INF/tags/`.
 - Reuse the existing confirmation modal component whenever a confirmation UI is needed. Do not create a second modal pattern or inline ad hoc confirmation dialogs.
 - Every JSP starts with `<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>`.
@@ -88,6 +96,9 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - All user-visible UI text belongs in the message bundles: `webapp/src/main/resources/messages.properties` and `webapp/src/main/resources/messages_en.properties`. Do not add hardcoded Spanish/English copy directly in JSPs, tag files, controllers, form validation annotations, or JavaScript when it is meant for users.
 - Use Spring messages in JSP/tag files: declare `<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>` and render with `<spring:message code="..."/>`. For HTML attributes, resolve into a variable first with `var` and escape it when needed.
+- Do not inject `MessageSource` into controllers to pre-resolve i18n strings and store them in the view model. Message resolution must happen in the view layer. If a controller injects `MessageSource` and calls `messageSource.getMessage(...)` to build display strings, that is a violation — move the `<spring:message>` call into the JSP/tag instead.
+- When removing a feature or UI section, delete all i18n keys from both `messages.properties` and `messages_en.properties` that were only used by that feature. Orphaned keys accumulate silently — they are dead code in the bundle.
+- Message keys must provide localizable content beyond bare argument pass-through. A key whose sole template is `{0}` (e.g., `my.key={0}`) is an identity function: it adds nothing and should be replaced by outputting the value directly in the template.
 - Bean Validation messages use bundle keys in braces, e.g. `@NotBlank(message = "{validation.review.body.required}")`. Spring MVC validation is wired to the app `MessageSource`; keep it that way when touching `WebConfig`.
 - Key naming standard is dot-separated and domain-first: `domain.section.element.state`. Examples: `cars.form.description`, `review.feed.empty`, `admin.catalogRequest.title`, `auth.login.error`.
 - Validation keys use `validation.entity.field.rule`, e.g. `validation.car.model.max`, `validation.review.rating.required`. Shared validation keys may use `validation.option.required` or `validation.email.invalid`.
