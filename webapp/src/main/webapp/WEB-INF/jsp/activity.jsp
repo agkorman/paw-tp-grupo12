@@ -5,7 +5,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="activity.title" styles="/css/activity.css|/css/image-lightbox.css"/>
+<pa:page-head titleCode="activity.title" styles="/css/activity.css|/css/reactions.css|/css/image-lightbox.css"/>
 <body>
     <pa:nav activePage="activity"/>
     <spring:message var="activityFeedAria" code="activity.feed.aria"/>

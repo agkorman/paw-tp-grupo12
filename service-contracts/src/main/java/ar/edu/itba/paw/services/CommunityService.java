@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface CommunityService {
     List<CommunityHubEntry> getCommunityHub(Long currentUserId);
@@ -36,6 +37,7 @@ public interface CommunityService {
     Optional<CommunityPostComment> createCommunityPostComment(String communitySlug, String postSlug, long userId, String body);
     Optional<CommunityPostComment> updateCommunityPostComment(String communitySlug, long commentId, long callerUserId, String body);
     Optional<Boolean> toggleMembership(String slug, long userId);
+    Set<Long> getHelpfulPostIds(Collection<Long> postIds, long userId);
     Optional<Boolean> togglePostHelpfulReaction(String communitySlug, String postSlug, long userId);
     Optional<Boolean> toggleCommentHelpfulReaction(String communitySlug, String postSlug, long commentId, long userId);
     Optional<CommunityDetailData> getCommunityDetail(String slug, Long currentUserId, String sort);

@@ -64,32 +64,10 @@
     gap: var(--spacing-3);
     border-radius: 1.25rem;
     width: min(100%, 52rem);
+    scroll-margin-top: 72px;
 }
 
 .activity-card-topline {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-3);
-}
-
-.activity-card-avatar {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    flex: 0 0 2.5rem;
-    display: grid;
-    place-items: center;
-    background: var(--surface-container-highest);
-    border: 1px solid rgba(229, 226, 225, 0.08);
-    color: var(--secondary);
-}
-
-.activity-card-avatar svg {
-    width: 72%;
-    height: 72%;
-}
-
-.activity-card-topline-copy {
     min-width: 0;
     display: grid;
     gap: 0.2rem;
@@ -109,6 +87,7 @@
 }
 
 .activity-card-author-link,
+.activity-card-context-link,
 .activity-card-title a,
 .activity-card-detail-link {
     color: inherit;
@@ -117,6 +96,8 @@
 
 .activity-card-author-link:hover,
 .activity-card-author-link:focus-visible,
+.activity-card-context-link:hover,
+.activity-card-context-link:focus-visible,
 .activity-card-title a:hover,
 .activity-card-title a:focus-visible,
 .activity-card-detail-link:hover,
@@ -155,6 +136,17 @@
 
 .activity-card-body {
     max-width: 72ch;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.activity-card-body--text-only {
+    -webkit-line-clamp: 6;
+}
+
+.activity-card-body--with-image {
+    -webkit-line-clamp: 2;
 }
 
 .activity-card-gallery-shell {

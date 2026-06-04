@@ -29,15 +29,6 @@
     </c:otherwise>
 </c:choose>
 
-<c:choose>
-    <c:when test="${not empty activityCard.primaryMetricKey}">
-        <spring:message var="primaryMetricText" code="${activityCard.primaryMetricKey}" arguments="${activityCard.primaryMetricValue}"/>
-    </c:when>
-    <c:otherwise>
-        <c:set var="primaryMetricText" value="${activityCard.primaryMetricValue}"/>
-    </c:otherwise>
-</c:choose>
-
 <c:if test="${not empty activityCard.secondaryMetricKey or not empty activityCard.secondaryMetricValue}">
     <c:choose>
         <c:when test="${not empty activityCard.secondaryMetricKey}">
@@ -49,12 +40,19 @@
     </c:choose>
 </c:if>
 
-<article class="activity-card">
+<c:url var="resolvedLikeAction" value="${activityCard.likeAction}"/>
+<c:set var="activityLikeRedirectPath" value="${requestScope['javax.servlet.forward.servlet_path']}"/>
+<c:if test="${empty activityLikeRedirectPath}">
+    <c:set var="activityLikeRedirectPath" value="/"/>
+</c:if>
+<c:set var="activityLikeQueryStr" value="${requestScope['javax.servlet.forward.query_string']}"/>
+<c:if test="${not empty activityLikeQueryStr}">
+    <c:set var="activityLikeRedirectPath" value="${activityLikeRedirectPath}?${activityLikeQueryStr}"/>
+</c:if>
+<c:set var="activityLikeRedirectPath" value="${activityLikeRedirectPath}#${activityCard.cardAnchorId}"/>
+
+<article class="activity-card" id="${fn:escapeXml(activityCard.cardAnchorId)}">
     <div class="activity-card-topline">
-        <div class="activity-card-avatar" aria-hidden="true">
-            <pa:icon name="user-avatar" size="24"/>
-        </div>
-        <div class="activity-card-topline-copy">
             <p class="activity-card-meta">
                 <c:choose>
                     <c:when test="${not empty activityCard.authorHref}">
@@ -73,16 +71,25 @@
             <p class="activity-card-context">
                 <span class="activity-card-context-label"><spring:message code="${activityCard.contextLabelKey}"/></span>
                 <c:if test="${not empty activityCard.contextValue}">
-                    <span class="activity-card-context-value"><c:out value="${activityCard.contextValue}"/></span>
+                    <c:choose>
+                        <c:when test="${not empty activityCard.contextHref}">
+                            <c:url var="resolvedContextHref" value="${activityCard.contextHref}"/>
+                            <a class="activity-card-context-link" href="${fn:escapeXml(resolvedContextHref)}">
+                                <c:out value="${activityCard.contextValue}"/>
+                            </a>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="activity-card-context-value"><c:out value="${activityCard.contextValue}"/></span>
+                        </c:otherwise>
+                    </c:choose>
                 </c:if>
             </p>
-        </div>
     </div>
 
     <h2 class="activity-card-title">
         <a href="${fn:escapeXml(resolvedCardHref)}"><c:out value="${activityCard.title}"/></a>
     </h2>
-    <p class="activity-card-body"><c:out value="${activityCard.body}"/></p>
+    <p class="activity-card-body ${not empty activityCard.imageUrls ? 'activity-card-body--with-image' : 'activity-card-body--text-only'}"><c:out value="${activityCard.body}"/></p>
     <c:if test="${not empty activityCard.imageUrls}">
         <c:set var="resolvedImageUrlsJoined" value=""/>
         <c:forEach var="rawImageUrl" items="${activityCard.imageUrls}" varStatus="status">
@@ -100,7 +107,14 @@
     </c:if>
 
     <div class="activity-card-metrics" aria-label="${fn:escapeXml(activityMetricsAria)}">
-        <span class="activity-card-metric"><c:out value="${primaryMetricText}"/></span>
+        <pa:review-like-button
+                reviewId="${activityCard.likeEntityId}"
+                action="${resolvedLikeAction}"
+                redirect="${activityLikeRedirectPath}"
+                liked="${activityCard.liked}"
+                likeCount="${activityCard.likeCount}"
+                disabled="${not activityCard.authenticated}"
+                intent="${activityCard.cardAnchorId}"/>
         <c:if test="${not empty secondaryMetricText}">
             <span class="activity-card-metric"><c:out value="${secondaryMetricText}"/></span>
         </c:if>

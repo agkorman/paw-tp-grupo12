@@ -321,6 +321,7 @@ public class CommunityController {
     public String togglePostHelpful(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
@@ -332,7 +333,10 @@ public class CommunityController {
 
         communityService.togglePostHelpfulReaction(communitySlug, postSlug, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        return redirectTo(defaultRedirect);
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse(defaultRedirect);
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(

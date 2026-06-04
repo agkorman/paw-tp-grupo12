@@ -439,6 +439,12 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Set<Long> getHelpfulPostIds(final Collection<Long> postIds, final long userId) {
+        return communityDao.findPostHelpfulReactionsByUser(postIds, userId);
+    }
+
+    @Override
     @Transactional
     public Optional<Boolean> togglePostHelpfulReaction(final String communitySlug,
                                                        final String postSlug,
