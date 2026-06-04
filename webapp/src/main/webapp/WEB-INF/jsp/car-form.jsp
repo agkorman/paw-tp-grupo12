@@ -249,8 +249,8 @@
                                 <div class="modal-field">
                                     <label for="modalCarPrice"><spring:message code="cars.form.price"/></label>
                                     <form:input id="modalCarPrice" path="priceUsd" type="text"
-                                                inputmode="numeric" autocomplete="off"
-                                                data-number-field="integer"
+                                                inputmode="decimal" autocomplete="off"
+                                                data-number-field="decimal"
                                                 data-msg-number-invalid="${fn:escapeXml(jsPriceNumeric)}"
                                                 data-msg-number-range="${fn:escapeXml(jsPriceRange)}"
                                                 step="1" min="1" max="5000000"
