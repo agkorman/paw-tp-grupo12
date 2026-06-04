@@ -76,24 +76,24 @@ public class WeeklyDigestServiceImplTest {
     public void shouldSendModeratorDigestWithPendingRequestCount() {
         // Arrange
         final List<List<EmailRecipient>> capturedRecipients = new ArrayList<>();
-        final List<Integer> capturedPendingCounts = new ArrayList<>();
+        final List<Long> capturedPendingCounts = new ArrayList<>();
         final List<EmailRecipient> moderatorRecipients = List.of(new EmailRecipient("mod@example.com", "es"));
         when(userService.getModeratorEmailRecipients()).thenReturn(moderatorRecipients);
-        when(carRequestService.getCarRequestsByStatus(CarRequestService.STATUS_PENDING))
-                .thenReturn(List.of(new CarRequest(), new CarRequest()));
+        when(carRequestService.countCarRequestsByStatus(CarRequestService.STATUS_PENDING))
+                .thenReturn(2L);
         when(userService.getAllUsers()).thenReturn(List.of());
         doAnswer(invocation -> {
             capturedRecipients.add(invocation.getArgument(0));
             capturedPendingCounts.add(invocation.getArgument(1));
             return null;
-        }).when(emailService).sendWeeklyModeratorDigest(moderatorRecipients, 2);
+        }).when(emailService).sendWeeklyModeratorDigest(moderatorRecipients, 2L);
 
         // Exercise
         weeklyDigestService.sendWeeklyDigest();
 
         // Assertions
         assertEquals(List.of(moderatorRecipients), capturedRecipients);
-        assertEquals(List.of(2), capturedPendingCounts);
+        assertEquals(List.of(2L), capturedPendingCounts);
     }
 
     @Test
@@ -102,12 +102,11 @@ public class WeeklyDigestServiceImplTest {
         final List<List<EmailService.ReviewActivityItem>> capturedReviewActivity = new ArrayList<>();
         final List<List<EmailService.FavoriteActivityItem>> capturedFavoriteActivity = new ArrayList<>();
         final LocalDateTime recent = LocalDateTime.now().minusDays(1);
-        final LocalDateTime old = LocalDateTime.now().minusDays(10);
         when(userService.getModeratorEmailRecipients()).thenReturn(List.of());
         when(userService.getAllUsers()).thenReturn(List.of(user()));
-        when(reviewLikeService.countNewLikesPerReview(eq(USER_ID), any(LocalDateTime.class)))
+        when(reviewLikeService.countNewLikesPerReviewSince(any(LocalDateTime.class)))
                 .thenReturn(Map.of(REVIEW_ID, 3L));
-        when(reviewReplyService.countNewRepliesPerReview(eq(USER_ID), any(LocalDateTime.class)))
+        when(reviewReplyService.countNewRepliesPerReviewSince(any(LocalDateTime.class)))
                 .thenReturn(Map.of(REVIEW_ID, 1L, SECOND_REVIEW_ID, 2L));
         when(reviewService.getReviewsByIds(anyCollection()))
                 .thenReturn(List.of(
@@ -116,15 +115,12 @@ public class WeeklyDigestServiceImplTest {
                 ));
         when(carService.getCarsByIds(argThat(c -> c != null && c.contains(CAR_ID))))
                 .thenReturn(List.of(car(CAR_ID, "Toyota", "Corolla")));
-        when(carFavoriteService.findFavoriteCarIdsByUser(USER_ID)).thenReturn(List.of(FAVORITE_CAR_ID));
+        when(carFavoriteService.findAllFavoriteCarIdsByUser())
+                .thenReturn(Map.of(USER_ID, List.of(FAVORITE_CAR_ID)));
         when(carService.getCarsByIds(argThat(c -> c != null && c.contains(FAVORITE_CAR_ID))))
                 .thenReturn(List.of(car(FAVORITE_CAR_ID, "Honda", "Civic")));
-        when(reviewService.getReviewsByCarIds(anyCollection()))
-                .thenReturn(List.of(
-                        review(40L, FAVORITE_CAR_ID, "New favorite review", recent),
-                        review(41L, FAVORITE_CAR_ID, "Old favorite review", old),
-                        review(42L, FAVORITE_CAR_ID, "Undated favorite review", null)
-                ));
+        when(reviewService.countNewReviewsByCarIds(anyCollection(), any(LocalDateTime.class)))
+                .thenReturn(Map.of(FAVORITE_CAR_ID, 1L));
         doAnswer(invocation -> {
             capturedReviewActivity.add(invocation.getArgument(2));
             capturedFavoriteActivity.add(invocation.getArgument(3));
@@ -159,11 +155,11 @@ public class WeeklyDigestServiceImplTest {
         final List<List<EmailService.FavoriteActivityItem>> capturedFavoriteActivity = new ArrayList<>();
         when(userService.getModeratorEmailRecipients()).thenReturn(List.of());
         when(userService.getAllUsers()).thenReturn(List.of(user()));
-        when(reviewLikeService.countNewLikesPerReview(eq(USER_ID), any(LocalDateTime.class)))
+        when(reviewLikeService.countNewLikesPerReviewSince(any(LocalDateTime.class)))
                 .thenReturn(Map.of());
-        when(reviewReplyService.countNewRepliesPerReview(eq(USER_ID), any(LocalDateTime.class)))
+        when(reviewReplyService.countNewRepliesPerReviewSince(any(LocalDateTime.class)))
                 .thenReturn(Map.of());
-        when(carFavoriteService.findFavoriteCarIdsByUser(USER_ID)).thenReturn(List.of());
+        when(carFavoriteService.findAllFavoriteCarIdsByUser()).thenReturn(Map.of());
         doAnswer(invocation -> {
             capturedReviewActivity.add(invocation.getArgument(2));
             capturedFavoriteActivity.add(invocation.getArgument(3));
@@ -186,11 +182,15 @@ public class WeeklyDigestServiceImplTest {
         final List<List<EmailService.FavoriteActivityItem>> capturedFavoriteActivity = new ArrayList<>();
         when(userService.getModeratorEmailRecipients()).thenReturn(List.of());
         when(userService.getAllUsers()).thenReturn(List.of(user()));
-        when(reviewLikeService.countNewLikesPerReview(eq(USER_ID), any(LocalDateTime.class)))
+        when(reviewLikeService.countNewLikesPerReviewSince(any(LocalDateTime.class)))
                 .thenReturn(Map.of(REVIEW_ID, 1L));
-        when(reviewReplyService.countNewRepliesPerReview(eq(USER_ID), any(LocalDateTime.class)))
+        when(reviewReplyService.countNewRepliesPerReviewSince(any(LocalDateTime.class)))
                 .thenReturn(Map.of());
-        when(carFavoriteService.findFavoriteCarIdsByUser(USER_ID)).thenReturn(List.of(FAVORITE_CAR_ID));
+        when(carFavoriteService.findAllFavoriteCarIdsByUser())
+                .thenReturn(Map.of(USER_ID, List.of(FAVORITE_CAR_ID)));
+        when(carService.getCarsByIds(anyCollection())).thenReturn(List.of());
+        when(reviewService.countNewReviewsByCarIds(anyCollection(), any(LocalDateTime.class)))
+                .thenReturn(Map.of());
         doAnswer(invocation -> {
             capturedReviewActivity.add(invocation.getArgument(2));
             capturedFavoriteActivity.add(invocation.getArgument(3));

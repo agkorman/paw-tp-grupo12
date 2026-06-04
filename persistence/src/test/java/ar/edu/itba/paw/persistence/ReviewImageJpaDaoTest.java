@@ -145,6 +145,64 @@ public class ReviewImageJpaDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldReturnOnlyRequestedImagesWithDataForReview() {
+        // Arrange
+        final Review review = createReview("retained");
+        jdbcTemplate.update(
+                "INSERT INTO review_images (review_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                review.getId(), 0, "image/png", new byte[]{1, 1}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO review_images (review_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                review.getId(), 1, "image/jpeg", new byte[]{2, 2}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO review_images (review_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                review.getId(), 2, "image/png", new byte[]{3, 3}
+        );
+        final long firstId = jdbcTemplate.queryForObject(
+                "SELECT image_id FROM review_images WHERE review_id = ? AND display_order = 0", Long.class, review.getId());
+        final long thirdId = jdbcTemplate.queryForObject(
+                "SELECT image_id FROM review_images WHERE review_id = ? AND display_order = 2", Long.class, review.getId());
+
+        // Exercise
+        final List<ReviewImage> result =
+                reviewImageDao.findByReviewIdAndImageIdsWithData(review.getId(), List.of(firstId, thirdId));
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals(firstId, result.get(0).getImageId());
+        assertEquals(thirdId, result.get(1).getImageId());
+        assertArrayEquals(new byte[]{1, 1}, result.get(0).getImageData());
+        assertArrayEquals(new byte[]{3, 3}, result.get(1).getImageData());
+    }
+
+    @Test
+    public void shouldNotReturnImageFromAnotherReviewWhenFilteringByImageIds() {
+        // Arrange
+        final Review review = createReview("scoped-target");
+        final Review otherReview = createReview("scoped-other");
+        jdbcTemplate.update(
+                "INSERT INTO review_images (review_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                review.getId(), 0, "image/png", new byte[]{1}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO review_images (review_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                otherReview.getId(), 0, "image/png", new byte[]{2}
+        );
+        final long otherImageId = jdbcTemplate.queryForObject(
+                "SELECT image_id FROM review_images WHERE review_id = ? AND display_order = 0",
+                Long.class, otherReview.getId());
+
+        // Exercise
+        final List<ReviewImage> result =
+                reviewImageDao.findByReviewIdAndImageIdsWithData(review.getId(), List.of(otherImageId));
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
     public void shouldReturnEmptyWhenImageIdMismatchesReview() {
         // Arrange
         final Review review = createReview("mismatch");

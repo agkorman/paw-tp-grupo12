@@ -643,9 +643,7 @@ public class CommunityServiceImpl implements CommunityService {
             final String viewerRole = currentUserId == null
                     ? null
                     : communityDao.findMembershipRole(community.getId(), currentUserId).orElse(null);
-            final List<CommunityPostComment> comments = communityDao.findCommentsByPostId(post.getId()).stream()
-                    .filter(c -> !c.isHidden())
-                    .collect(Collectors.toList());
+            final List<CommunityPostComment> comments = communityDao.findCommentsByPostId(post.getId());
             final List<Long> commentIds = comments.stream()
                     .map(CommunityPostComment::getId)
                     .collect(Collectors.toList());

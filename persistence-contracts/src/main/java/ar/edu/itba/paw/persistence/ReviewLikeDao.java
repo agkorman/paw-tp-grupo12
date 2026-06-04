@@ -14,6 +14,7 @@ public interface ReviewLikeDao {
     boolean isReviewLikedByUser(long reviewId, long userId);
     Map<Long, Long> countReviewLikesByReviewIds(Collection<Long> reviewIds);
     Map<Long, Long> countNewLikesPerReview(long userId, LocalDateTime since);
+    Map<Long, Long> countNewLikesPerReviewSince(LocalDateTime since);
     Set<Long> findLikedReviewIds(Collection<Long> reviewIds, long userId);
     List<Long> findLikedReviewIdsByUserId(long userId);
     Page<Long> findLikedReviewIdsByUserId(long userId, int page);

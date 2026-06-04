@@ -4,11 +4,13 @@ import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
     Optional<User> getUserById(long id);
+    List<User> getUsersByIds(Collection<Long> ids);
     Optional<User> findByEmail(String email);
     Optional<User> findByUsername(String username);
     User createUser(String username, String email, String rawPassword);

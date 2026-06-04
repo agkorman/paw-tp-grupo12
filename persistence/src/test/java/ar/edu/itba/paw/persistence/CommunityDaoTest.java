@@ -494,6 +494,42 @@ class CommunityDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    void shouldReturnOnlyVisibleCommentsByPostId() {
+        // Arrange
+        final User creator = insertUser("visible-comments-owner", "visible-comments-owner@example.com", "secret", "user");
+        final User commenter = insertUser("visible-comments-user", "visible-comments-user@example.com", "secret", "user");
+        final long communityId = insertCommunity("visible-comments", "Visible Comments", "Desc", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "visible-post",
+                "Visible post",
+                "Visible body",
+                LocalDateTime.now().minusHours(2)
+        );
+        final long visibleCommentId = insertCommunityComment(
+                postId,
+                commenter.getId(),
+                "Shown comment",
+                LocalDateTime.now().minusHours(1)
+        );
+        final long hiddenCommentId = insertCommunityComment(
+                postId,
+                commenter.getId(),
+                "Hidden comment",
+                LocalDateTime.now().minusMinutes(30)
+        );
+        jdbcTemplate.update("UPDATE community_post_comments SET hidden = TRUE WHERE comment_id = ?", hiddenCommentId);
+
+        // Exercise
+        final List<ar.edu.itba.paw.model.CommunityPostComment> result = communityDao.findCommentsByPostId(postId);
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals(visibleCommentId, result.get(0).getId());
+    }
+
+    @Test
     void shouldCountHelpfulReactionsByPostIds() {
         // Arrange
         final User creator = insertUser("helpful-owner", "helpful-owner@example.com", "secret", "user");

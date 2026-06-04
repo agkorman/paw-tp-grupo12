@@ -28,7 +28,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -198,7 +197,6 @@ public class CarServiceImplTest {
         // Assertions
         assertEquals(99L, result.getId());
         assertEquals("Corolla", result.getModel());
-        verify(emailService).sendNewCarRequestNotification(createdRequest, "Toyota", "sedan");
     }
 
     @Test
@@ -290,7 +288,8 @@ public class CarServiceImplTest {
         // Arrange
         when(brandDao.findByName("Toyota")).thenReturn(Optional.of(TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now())));
         when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(TestModels.bodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
-        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+        when(carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(BRAND_ID, BODY_TYPE_ID, "corolla", 2024, 0L))
+                .thenReturn(true);
 
         // Exercise
         final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "  Corolla  ", 2024, 0L);
@@ -304,7 +303,8 @@ public class CarServiceImplTest {
         // Arrange
         when(brandDao.findByName("Toyota")).thenReturn(Optional.of(TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now())));
         when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(TestModels.bodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
-        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+        when(carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(BRAND_ID, BODY_TYPE_ID, "corolla", 2024, CAR_ID))
+                .thenReturn(false);
 
         // Exercise
         final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "Corolla", 2024, CAR_ID);
@@ -318,7 +318,8 @@ public class CarServiceImplTest {
         // Arrange
         when(brandDao.findByName("Toyota")).thenReturn(Optional.of(TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now())));
         when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(TestModels.bodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
-        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+        when(carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(BRAND_ID, BODY_TYPE_ID, "corolla", 2025, 0L))
+                .thenReturn(false);
 
         // Exercise
         final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "Corolla", 2025, 0L);

@@ -197,4 +197,33 @@ public class UserDaoTest extends AbstractPersistenceTest {
         // Assertions
         assertEquals(1, countRows("SELECT COUNT(*) FROM users WHERE email = ?", "duplicate@example.com"));
     }
+
+    @Test
+    public void shouldFindOnlyRequestedUsersByIds() {
+        // Arrange
+        final User first = insertUser("batch-first", "batch-first@example.com", "password", "user");
+        final User second = insertUser("batch-second", "batch-second@example.com", "password", "user");
+        final User excluded = insertUser("batch-excluded", "batch-excluded@example.com", "password", "user");
+
+        // Exercise
+        final List<User> result = userDao.findByIds(List.of(first.getId(), second.getId()));
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals(first.getId(), result.get(0).getId());
+        assertEquals(second.getId(), result.get(1).getId());
+        assertFalse(result.stream().anyMatch(user -> user.getId() == excluded.getId()));
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenFindingByEmptyIds() {
+        // Arrange
+        final List<Long> ids = List.of();
+
+        // Exercise
+        final List<User> result = userDao.findByIds(ids);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
 }

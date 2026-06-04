@@ -84,7 +84,6 @@
     </main>
     <pa:script src="/js/communities/community-topic-chips.js" defer="true"/>
     <pa:script src="/js/communities/community-create-form.js" defer="true"/>
-    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>
