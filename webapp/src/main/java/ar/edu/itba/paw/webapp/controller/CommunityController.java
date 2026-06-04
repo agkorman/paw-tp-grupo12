@@ -625,12 +625,18 @@ public class CommunityController {
         if (etag.equals(ifNoneMatch)) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(etag).build();
         }
-        final String contentType = img.getContentType() == null
-                ? MediaType.APPLICATION_OCTET_STREAM_VALUE : img.getContentType();
+        MediaType mediaType;
+        try {
+            mediaType = img.getContentType() == null
+                    ? MediaType.APPLICATION_OCTET_STREAM
+                    : MediaType.parseMediaType(img.getContentType());
+        } catch (final IllegalArgumentException e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
         return ResponseEntity.ok()
                 .eTag(etag)
                 .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
-                .contentType(MediaType.parseMediaType(contentType))
+                .contentType(mediaType)
                 .body(img.getImageData());
     }
 

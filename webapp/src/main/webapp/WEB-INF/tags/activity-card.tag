@@ -7,7 +7,15 @@
 
 <spring:message var="activityMetricsAria" code="activity.card.metrics.aria"/>
 
-<c:url var="resolvedCardHref" value="${activityCard.href}"/>
+<c:choose>
+    <c:when test="${fn:contains(activityCard.href, '#')}">
+        <c:url var="resolvedCardHref" value="${fn:substringBefore(activityCard.href, '#')}"/>
+        <c:set var="resolvedCardHref" value="${resolvedCardHref}#${fn:substringAfter(activityCard.href, '#')}"/>
+    </c:when>
+    <c:otherwise>
+        <c:url var="resolvedCardHref" value="${activityCard.href}"/>
+    </c:otherwise>
+</c:choose>
 <c:if test="${not empty activityCard.authorHref}">
     <c:url var="resolvedAuthorHref" value="${activityCard.authorHref}"/>
 </c:if>

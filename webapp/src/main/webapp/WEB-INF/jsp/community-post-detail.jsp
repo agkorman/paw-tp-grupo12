@@ -36,7 +36,8 @@
                             <span aria-hidden="true">•</span>
                             <span><c:out value="${postView.timeText}"/></span>
                         </p>
-                        <a class="community-post-origin-author" href="${fn:escapeXml(postView.authorProfileHref)}">
+                        <c:url var="postAuthorProfileHref" value="${postView.authorProfileHref}"/>
+                        <a class="community-post-origin-author" href="${fn:escapeXml(postAuthorProfileHref)}">
                             <c:out value="${postView.author}"/>
                         </a>
                     </div>
@@ -167,7 +168,8 @@
                                     <pa:icon name="user-avatar" size="24"/>
                                 </span>
                                 <div class="community-comment-meta">
-                                    <a class="community-author-link" href="${fn:escapeXml(comment.authorProfileHref)}">
+                                    <c:url var="commentAuthorProfileHref" value="${comment.authorProfileHref}"/>
+                                    <a class="community-author-link" href="${fn:escapeXml(commentAuthorProfileHref)}">
                                         <strong><c:out value="${comment.author}"/></strong>
                                     </a>
                                     <c:if test="${comment.op}">

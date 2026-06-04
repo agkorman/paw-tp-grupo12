@@ -561,8 +561,16 @@ public class CarController {
                 .build();
         }
 
+        MediaType carImageMediaType;
+        try {
+            carImageMediaType = carImage.getContentType() == null
+                    ? MediaType.APPLICATION_OCTET_STREAM
+                    : MediaType.parseMediaType(carImage.getContentType());
+        } catch (final IllegalArgumentException e) {
+            carImageMediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
         return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(carImage.getContentType()))
+            .contentType(carImageMediaType)
             .contentLength(carImage.getImageData().length)
             .cacheControl(cacheControl)
             .eTag(eTag)
