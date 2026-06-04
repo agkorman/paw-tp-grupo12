@@ -4,10 +4,14 @@ import ar.edu.itba.paw.model.ActivityFeedItem;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.ReviewImage;
 import ar.edu.itba.paw.services.ActivityService;
+import ar.edu.itba.paw.services.CommunityService;
+import ar.edu.itba.paw.services.ReviewLikeService;
+import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -16,6 +20,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -24,39 +29,68 @@ public class ActivityController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
     private final ActivityService activityService;
+    private final ReviewLikeService reviewLikeService;
+    private final CommunityService communityService;
     private final RelativeTimeFormatter relativeTimeFormatter;
 
     @Autowired
     public ActivityController(final ActivityService activityService,
+                              final ReviewLikeService reviewLikeService,
+                              final CommunityService communityService,
                               final RelativeTimeFormatter relativeTimeFormatter) {
         this.activityService = activityService;
+        this.reviewLikeService = reviewLikeService;
+        this.communityService = communityService;
         this.relativeTimeFormatter = relativeTimeFormatter;
     }
 
     @RequestMapping(value = "/activity", method = RequestMethod.GET)
     public ModelAndView activity(
-                                 @RequestParam(value = "page", defaultValue = "1") final int page) {
+                                 @RequestParam(value = "page", defaultValue = "1") final int page,
+                                 @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         LOGGER.debug("rendering mixed activity feed page={}", page);
         final Page<ActivityFeedItem> activityPage = activityService.getLatestActivityFeed(page);
+        final List<ActivityFeedItem> items = activityPage.getItems();
+
+        final Set<Long> likedReviewIds;
+        final Set<Long> helpfulPostIds;
+        if (currentUser != null) {
+            final List<Long> reviewIds = items.stream()
+                    .filter(ActivityFeedItem::isReview)
+                    .map(i -> i.getReview().getId())
+                    .collect(Collectors.toList());
+            final List<Long> postIds = items.stream()
+                    .filter(i -> !i.isReview())
+                    .map(i -> i.getCommunityPost().getId())
+                    .collect(Collectors.toList());
+            likedReviewIds = reviewLikeService.getLikedReviewIds(reviewIds, currentUser.getId());
+            helpfulPostIds = communityService.getHelpfulPostIds(postIds, currentUser.getId());
+        } else {
+            likedReviewIds = Collections.emptySet();
+            helpfulPostIds = Collections.emptySet();
+        }
+
+        final boolean authenticated = currentUser != null;
+        final List<ActivityCardView> cards = items.stream()
+                .map(item -> toActivityCard(item, likedReviewIds, helpfulPostIds, authenticated))
+                .collect(Collectors.toList());
 
         final ModelAndView mav = new ModelAndView("activity.jsp");
-        mav.addObject("activityCards", toActivityCards(activityPage.getItems()));
+        mav.addObject("activityCards", cards);
         mav.addObject("activityCurrentPage", activityPage.getPageNumber());
         mav.addObject("activityTotalPages", activityPage.getTotalPages());
         return mav;
     }
 
-    private List<ActivityCardView> toActivityCards(final List<ActivityFeedItem> items) {
-        return items.stream()
-                .map(this::toActivityCard)
-                .collect(Collectors.toList());
-    }
-
-    private ActivityCardView toActivityCard(final ActivityFeedItem item) {
+    private ActivityCardView toActivityCard(final ActivityFeedItem item,
+                                            final Set<Long> likedReviewIds,
+                                            final Set<Long> helpfulPostIds,
+                                            final boolean authenticated) {
         if (item.isReview()) {
             final String carName = item.getCar() != null
                     ? item.getCar().getBrandName() + " " + item.getCar().getModel()
                     : null;
+            final long reviewId = item.getReview().getId();
             return new ActivityCardView(
                     reviewHref(item),
                     userHref(item.getReview().getUserId()),
@@ -64,20 +98,27 @@ public class ActivityController {
                     relativeTimeFormatter.format(item.getReview().getCreatedAt()),
                     item.getReview().getTitle(),
                     item.getReview().getBody(),
-                    toReviewImageUrls(item.getReview().getId(), item.getReviewImages()),
+                    toReviewImageUrls(reviewId, item.getReviewImages()),
                     "review.image.alt",
                     "activity.card.context.review",
                     carName,
-                    "activity.card.metric.likes",
-                    Long.toString(item.getReviewLikeCount()),
+                    item.getCar() != null ? "/reviews/car/" + item.getCar().getId() : null,
+                    "/reviews/" + reviewId + "/like",
+                    likedReviewIds.contains(reviewId),
+                    item.getReviewLikeCount(),
+                    reviewId,
+                    authenticated,
+                    "activity-review-" + reviewId,
                     "activity.card.metric.comments",
                     Long.toString(item.getReviewReplyCount())
             );
         }
 
+        final long postId = item.getCommunityPost().getId();
+        final String communitySlug = item.getCommunityPost().getCommunity().getSlug();
+        final String postSlug = item.getCommunityPost().getSlug();
         return new ActivityCardView(
-                "/communities/" + item.getCommunityPost().getCommunity().getSlug()
-                        + "/posts/" + item.getCommunityPost().getSlug(),
+                "/communities/" + communitySlug + "/posts/" + postSlug,
                 userHref(item.getCommunityPost().getAuthorUserId()),
                 item.getCommunityPost().getAuthorUsername(),
                 relativeTimeFormatter.format(item.getCommunityPost().getCreatedAt()),
@@ -87,8 +128,13 @@ public class ActivityController {
                 "communities.post.image.alt",
                 "activity.card.context.community",
                 item.getCommunityPost().getCommunity().getName(),
-                "activity.card.metric.likes",
-                Long.toString(item.getHelpfulCount()),
+                "/communities/" + communitySlug,
+                "/communities/" + communitySlug + "/posts/" + postSlug + "/helpful",
+                helpfulPostIds.contains(postId),
+                item.getHelpfulCount(),
+                postId,
+                authenticated,
+                "activity-post-" + postId,
                 "activity.card.metric.comments",
                 Long.toString(item.getCommentCount())
         );
@@ -148,8 +194,13 @@ public class ActivityController {
         private final String imageAltKey;
         private final String contextLabelKey;
         private final String contextValue;
-        private final String primaryMetricKey;
-        private final String primaryMetricValue;
+        private final String contextHref;
+        private final String likeAction;
+        private final boolean liked;
+        private final long likeCount;
+        private final long likeEntityId;
+        private final boolean authenticated;
+        private final String cardAnchorId;
         private final String secondaryMetricKey;
         private final String secondaryMetricValue;
 
@@ -163,8 +214,13 @@ public class ActivityController {
                                  final String imageAltKey,
                                  final String contextLabelKey,
                                  final String contextValue,
-                                 final String primaryMetricKey,
-                                 final String primaryMetricValue,
+                                 final String contextHref,
+                                 final String likeAction,
+                                 final boolean liked,
+                                 final long likeCount,
+                                 final long likeEntityId,
+                                 final boolean authenticated,
+                                 final String cardAnchorId,
                                  final String secondaryMetricKey,
                                  final String secondaryMetricValue) {
             this.href = href;
@@ -177,8 +233,13 @@ public class ActivityController {
             this.imageAltKey = imageAltKey;
             this.contextLabelKey = contextLabelKey;
             this.contextValue = contextValue;
-            this.primaryMetricKey = primaryMetricKey;
-            this.primaryMetricValue = primaryMetricValue;
+            this.contextHref = contextHref;
+            this.likeAction = likeAction;
+            this.liked = liked;
+            this.likeCount = likeCount;
+            this.likeEntityId = likeEntityId;
+            this.authenticated = authenticated;
+            this.cardAnchorId = cardAnchorId;
             this.secondaryMetricKey = secondaryMetricKey;
             this.secondaryMetricValue = secondaryMetricValue;
         }
@@ -193,8 +254,13 @@ public class ActivityController {
         public String getImageAltKey() { return imageAltKey; }
         public String getContextLabelKey() { return contextLabelKey; }
         public String getContextValue() { return contextValue; }
-        public String getPrimaryMetricKey() { return primaryMetricKey; }
-        public String getPrimaryMetricValue() { return primaryMetricValue; }
+        public String getContextHref() { return contextHref; }
+        public String getLikeAction() { return likeAction; }
+        public boolean isLiked() { return liked; }
+        public long getLikeCount() { return likeCount; }
+        public long getLikeEntityId() { return likeEntityId; }
+        public boolean isAuthenticated() { return authenticated; }
+        public String getCardAnchorId() { return cardAnchorId; }
         public String getSecondaryMetricKey() { return secondaryMetricKey; }
         public String getSecondaryMetricValue() { return secondaryMetricValue; }
     }

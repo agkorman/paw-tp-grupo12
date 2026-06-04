@@ -20,8 +20,6 @@ import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.form.ProfileForm;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -55,7 +53,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.view.RedirectView;
+
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -258,9 +256,6 @@ public class UserController {
     )
     public ModelAndView toggleFollow(
         @PathVariable("userId") final long userId,
-        @RequestParam(value = "back", required = false) final String back,
-        @RequestParam(value = "q", required = false) final String query,
-        @RequestParam(value = "page", defaultValue = "1") final int page,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
@@ -276,55 +271,20 @@ public class UserController {
             LOGGER.warn("self-follow attempt blocked userId={}", userId);
         }
 
-        if ("search".equals(back)) {
-            return new ModelAndView(new RedirectView(buildSearchRedirect(query, page), true));
-        }
         return new ModelAndView("redirect:/users/" + userId);
     }
 
     @RequestMapping(value = "/users/search", method = RequestMethod.GET)
-    public ModelAndView searchUsers(@RequestParam(value = "q", required = false) final String query,
-                                    @RequestParam(value = "page", defaultValue = "1") final int page,
-                                    @AuthenticationPrincipal final AuthenticatedUser currentUser) {
-        LOGGER.debug("rendering user search results page={} hasQuery={}", page, query != null && !query.isBlank());
-        final Page<User> resultsPage = userService.searchUsers(query, page);
-        final List<User> results = resultsPage.getItems();
-
-        final Set<Long> followedIds;
-        if (currentUser != null && !results.isEmpty()) {
-            final List<Long> targetIds = results.stream()
-                    .map(User::getId)
-                    .filter(id -> id != currentUser.getId())
-                    .collect(Collectors.toList());
-            followedIds = targetIds.isEmpty()
-                    ? Collections.emptySet()
-                    : userFollowService.getFollowedIds(currentUser.getId(), targetIds);
-        } else {
-            followedIds = Collections.emptySet();
-        }
-
+    public ModelAndView searchUsers(@RequestParam(value = "q", required = false) final String query) {
+        LOGGER.debug("rendering user search panel page={}", query != null && !query.isBlank());
         final ModelAndView mav = new ModelAndView("users-search.jsp");
-        mav.addObject("query", query == null ? "" : query);
-        mav.addObject("results", results);
-        mav.addObject("currentPage", resultsPage.getPageNumber());
-        mav.addObject("totalPages", resultsPage.getTotalPages());
-        mav.addObject("totalItems", resultsPage.getTotalItems());
-        mav.addObject("followedIds", followedIds);
-        mav.addObject("currentUserId", currentUser == null ? null : currentUser.getId());
+        if (query == null || query.isBlank()) {
+            return mav;
+        }
+        final List<User> results = userService.searchUsers(query, 1).getItems();
+        mav.addObject("userSearchQuery", query);
+        mav.addObject("userSearchResults", results);
         return mav;
-    }
-
-    private String buildSearchRedirect(final String query, final int page) {
-        final StringBuilder sb = new StringBuilder("/users/search");
-        boolean hasParam = false;
-        if (query != null && !query.isBlank()) {
-            sb.append("?q=").append(URLEncoder.encode(query, StandardCharsets.UTF_8));
-            hasParam = true;
-        }
-        if (page > 1) {
-            sb.append(hasParam ? "&" : "?").append("page=").append(page);
-        }
-        return sb.toString();
     }
 
     private String profileErrorCode(final BindingResult errors) {

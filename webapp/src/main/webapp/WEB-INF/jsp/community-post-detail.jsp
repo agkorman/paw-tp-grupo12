@@ -26,7 +26,8 @@
     <main class="community-post-page">
         <section class="community-post-shell">
             <div class="community-post-header">
-                <a class="community-back-link" href="${fn:escapeXml(communityDetailUrl)}" aria-label="${fn:escapeXml(communityPostBackLabel)}">
+                <a class="community-back-link" href="${fn:escapeXml(communityDetailUrl)}" aria-label="${fn:escapeXml(communityPostBackLabel)}"
+                   onclick="if (document.referrer &amp;&amp; document.referrer.indexOf(location.origin) === 0) { history.back(); return false; }">
                     <pa:icon name="chevron-left" size="18"/>
                 </a>
                 <div class="community-post-origin">
@@ -36,7 +37,8 @@
                             <span aria-hidden="true">•</span>
                             <span><c:out value="${postView.timeText}"/></span>
                         </p>
-                        <a class="community-post-origin-author" href="${fn:escapeXml(postView.authorProfileHref)}">
+                        <c:url var="postAuthorProfileHref" value="${postView.authorProfileHref}"/>
+                        <a class="community-post-origin-author" href="${fn:escapeXml(postAuthorProfileHref)}">
                             <c:out value="${postView.author}"/>
                         </a>
                     </div>
@@ -163,11 +165,9 @@
                     <div class="community-comment-row" id="comment-${comment.commentId}">
                         <article class="community-comment">
                             <div class="community-comment-header">
-                                <span class="community-comment-avatar" aria-hidden="true">
-                                    <pa:icon name="user-avatar" size="24"/>
-                                </span>
                                 <div class="community-comment-meta">
-                                    <a class="community-author-link" href="${fn:escapeXml(comment.authorProfileHref)}">
+                                    <c:url var="commentAuthorProfileHref" value="${comment.authorProfileHref}"/>
+                                    <a class="community-author-link" href="${fn:escapeXml(commentAuthorProfileHref)}">
                                         <strong><c:out value="${comment.author}"/></strong>
                                     </a>
                                     <c:if test="${comment.op}">

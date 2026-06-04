@@ -7,6 +7,8 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.services.ActivityService;
+import ar.edu.itba.paw.services.CommunityService;
+import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -34,13 +37,21 @@ class ActivityControllerTest {
     private ActivityService activityService;
 
     @Mock
+    private ReviewLikeService reviewLikeService;
+
+    @Mock
+    private CommunityService communityService;
+
+    @Mock
     private RelativeTimeFormatter relativeTimeFormatter;
 
     @InjectMocks
     private ActivityController controller;
 
     private MockMvc activityMockMvc() {
-        return MockMvcBuilders.standaloneSetup(controller).build();
+        return MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
+                .build();
     }
 
     @Test

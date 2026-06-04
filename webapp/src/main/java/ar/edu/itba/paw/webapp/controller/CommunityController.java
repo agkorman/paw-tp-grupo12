@@ -321,6 +321,7 @@ public class CommunityController {
     public String togglePostHelpful(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
@@ -332,7 +333,10 @@ public class CommunityController {
 
         communityService.togglePostHelpfulReaction(communitySlug, postSlug, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        return redirectTo(defaultRedirect);
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse(defaultRedirect);
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -625,12 +629,18 @@ public class CommunityController {
         if (etag.equals(ifNoneMatch)) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(etag).build();
         }
-        final String contentType = img.getContentType() == null
-                ? MediaType.APPLICATION_OCTET_STREAM_VALUE : img.getContentType();
+        MediaType mediaType;
+        try {
+            mediaType = img.getContentType() == null
+                    ? MediaType.APPLICATION_OCTET_STREAM
+                    : MediaType.parseMediaType(img.getContentType());
+        } catch (final IllegalArgumentException e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
         return ResponseEntity.ok()
                 .eTag(etag)
                 .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
-                .contentType(MediaType.parseMediaType(contentType))
+                .contentType(mediaType)
                 .body(img.getImageData());
     }
 

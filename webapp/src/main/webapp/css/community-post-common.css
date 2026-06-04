@@ -43,23 +43,6 @@
     margin-left: auto;
 }
 
-.community-comment-avatar {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: var(--surface-container-highest);
-    border: 1px solid rgba(229, 226, 225, 0.08);
-    color: var(--secondary);
-    flex: 0 0 3rem;
-}
-
-.community-comment-avatar svg {
-    width: 72%;
-    height: 72%;
-}
-
 .community-post-origin-line,
 .community-post-origin-author {
     margin: 0;
