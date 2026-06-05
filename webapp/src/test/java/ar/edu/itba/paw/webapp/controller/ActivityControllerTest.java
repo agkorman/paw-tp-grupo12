@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.ActivityFeedCriteria;
 import ar.edu.itba.paw.model.ActivityFeedItem;
 import ar.edu.itba.paw.model.Community;
 import ar.edu.itba.paw.model.CommunityPost;
@@ -23,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -57,7 +59,7 @@ class ActivityControllerTest {
     @Test
     void activity_rendersMixedFeedPage() throws Exception {
         // Arrange
-        when(activityService.getLatestActivityFeed(1)).thenReturn(Page.empty(1, Pagination.ACTIVITY_PAGE_SIZE));
+        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class))).thenReturn(Page.empty(1, Pagination.ACTIVITY_PAGE_SIZE));
         final MockMvc mockMvc = activityMockMvc();
 
         // Exercise
@@ -74,7 +76,7 @@ class ActivityControllerTest {
     @Test
     void activity_usesRequestedPageAndExposesPagination() throws Exception {
         // Arrange
-        when(activityService.getLatestActivityFeed(3)).thenReturn(new Page<>(List.of(), 3, Pagination.ACTIVITY_PAGE_SIZE, 20L));
+        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class))).thenReturn(new Page<>(List.of(), 3, Pagination.ACTIVITY_PAGE_SIZE, 20L));
         final MockMvc mockMvc = activityMockMvc();
 
         // Exercise
@@ -88,11 +90,35 @@ class ActivityControllerTest {
     }
 
     @Test
+    void activity_bindsFilterParamsAndExposesCriteria() throws Exception {
+        // Arrange
+        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class))).thenReturn(Page.empty(1, Pagination.ACTIVITY_PAGE_SIZE));
+        final MockMvc mockMvc = activityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(get("/activity")
+                .param("sort", "controversial")
+                .param("type", "reviews")
+                .param("timeframe", "week"));
+
+        // Assertions
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    final ActivityFeedCriteria criteria = (ActivityFeedCriteria)
+                            result.getModelAndView().getModel().get("activityCriteria");
+                    assertEquals("controversial", criteria.getSort());
+                    assertEquals("reviews", criteria.getType());
+                    assertEquals("week", criteria.getTimeframe());
+                });
+    }
+
+    @Test
     void activity_mapsReviewAndCommunityPostIntoGenericCards() throws Exception {
         // Arrange
         final LocalDateTime now = LocalDateTime.now();
         when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("now");
-        when(activityService.getLatestActivityFeed(1)).thenReturn(new Page<>(
+        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class))).thenReturn(new Page<>(
                 List.of(
                         ActivityFeedItem.reviewItem(review(now.minusMinutes(3)), 0L, 0L, null, 2, List.of()),
                         ActivityFeedItem.communityPostItem(post(now.minusMinutes(1)), 5L, 2L, List.of())

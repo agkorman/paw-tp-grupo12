@@ -26,6 +26,22 @@
     gap: var(--spacing-4);
 }
 
+/* Reuse the cars toolbar styling for the feed filters: three fields + apply,
+   no search bar, aligned within the activity panel. */
+.activity-toolbar {
+    padding: 0;
+}
+
+.activity-toolbar .cars-toolbar-shell {
+    grid-template-columns: repeat(3, minmax(11rem, 1fr)) auto;
+}
+
+@media (max-width: 900px) {
+    .activity-toolbar .cars-toolbar-shell {
+        grid-template-columns: 1fr;
+    }
+}
+
 .activity-feed-heading {
     flex: 1;
     min-width: 0;

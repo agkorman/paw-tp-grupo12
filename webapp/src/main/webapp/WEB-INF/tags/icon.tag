@@ -67,6 +67,11 @@
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
     </c:when>
 
+    <c:when test="${name eq 'clock'}">
+        <c:set var="s" value="${empty size ? 18 : size}"/>
+        <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    </c:when>
+
     <c:when test="${name eq 'more-vertical'}">
         <c:set var="s" value="${empty size ? 18 : size}"/>
         <svg width="${s}" height="${s}" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><circle cx="9" cy="4" r="1.6"/><circle cx="9" cy="9" r="1.6"/><circle cx="9" cy="14" r="1.6"/></svg>
