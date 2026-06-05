@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.ActivityFeedCriteria;
 import ar.edu.itba.paw.model.ActivityFeedItem;
 import ar.edu.itba.paw.model.ActivityFeedReference;
 import ar.edu.itba.paw.model.Car;
@@ -24,6 +25,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class ActivityServiceImpl implements ActivityService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActivityServiceImpl.class);
 
     private final ActivityDao activityDao;
     private final ReviewDao reviewDao;
@@ -61,9 +66,12 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public Page<ActivityFeedItem> getLatestActivityFeed(final int page) {
-        final Page<ActivityFeedReference> refsPage = activityDao.findLatest(page);
+    public Page<ActivityFeedItem> getActivityFeed(final ActivityFeedCriteria criteria) {
+        LOGGER.debug("loading activity feed type={} timeframe={} sort={} page={}",
+                criteria.getType(), criteria.getTimeframe(), criteria.getSort(), criteria.getPage());
+        final Page<ActivityFeedReference> refsPage = activityDao.findFeed(criteria);
         if (refsPage.isEmpty()) {
+            LOGGER.debug("loaded empty activity feed page={}", refsPage.getPageNumber());
             return Page.empty(refsPage.getPageNumber(), Pagination.ACTIVITY_PAGE_SIZE);
         }
 
@@ -131,6 +139,8 @@ public class ActivityServiceImpl implements ActivityService {
             ));
         }
 
+        LOGGER.debug("loaded activity feed page={} itemCount={} totalItems={}",
+                refsPage.getPageNumber(), items.size(), refsPage.getTotalItems());
         return new Page<>(items, refsPage.getPageNumber(), refsPage.getPageSize(), refsPage.getTotalItems());
     }
 

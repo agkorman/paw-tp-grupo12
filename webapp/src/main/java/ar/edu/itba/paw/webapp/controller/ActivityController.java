@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.ActivityFeedCriteria;
 import ar.edu.itba.paw.model.ActivityFeedItem;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.ReviewImage;
@@ -11,11 +12,14 @@ import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.Collections;
@@ -44,12 +48,21 @@ public class ActivityController {
         this.relativeTimeFormatter = relativeTimeFormatter;
     }
 
+    @InitBinder
+    public void initBinder(final WebDataBinder binder) {
+        binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
+    }
+
     @RequestMapping(value = "/activity", method = RequestMethod.GET)
     public ModelAndView activity(
-                                 @RequestParam(value = "page", defaultValue = "1") final int page,
+                                 @ModelAttribute("activityCriteria") final ActivityFeedCriteria criteria,
                                  @AuthenticationPrincipal final AuthenticatedUser currentUser) {
-        LOGGER.debug("rendering mixed activity feed page={}", page);
-        final Page<ActivityFeedItem> activityPage = activityService.getLatestActivityFeed(page);
+        if (!criteria.isValid()) {
+            LOGGER.warn("activity feed received unrecognized filter values; applying defaults");
+        }
+        LOGGER.debug("rendering mixed activity feed type={} timeframe={} sort={} page={}",
+                criteria.getType(), criteria.getTimeframe(), criteria.getSort(), criteria.getPage());
+        final Page<ActivityFeedItem> activityPage = activityService.getActivityFeed(criteria);
         final List<ActivityFeedItem> items = activityPage.getItems();
 
         final Set<Long> likedReviewIds;
@@ -79,6 +92,7 @@ public class ActivityController {
         mav.addObject("activityCards", cards);
         mav.addObject("activityCurrentPage", activityPage.getPageNumber());
         mav.addObject("activityTotalPages", activityPage.getTotalPages());
+        mav.addObject("activityCriteria", criteria);
         return mav;
     }
 

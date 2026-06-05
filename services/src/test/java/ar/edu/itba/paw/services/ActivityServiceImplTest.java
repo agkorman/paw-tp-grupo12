@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.ActivityFeedCriteria;
 import ar.edu.itba.paw.model.ActivityFeedItem;
 import ar.edu.itba.paw.model.ActivityFeedReference;
 import ar.edu.itba.paw.model.Car;
@@ -32,6 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,10 +62,10 @@ public class ActivityServiceImplTest {
     @Test
     public void shouldReturnEmptyPageWhenActivityDaoReturnsEmpty() {
         // Arrange
-        when(activityDao.findLatest(1)).thenReturn(Page.empty(1, Pagination.ACTIVITY_PAGE_SIZE));
+        when(activityDao.findFeed(any(ActivityFeedCriteria.class))).thenReturn(Page.empty(1, Pagination.ACTIVITY_PAGE_SIZE));
 
         // Exercise
-        final Page<ActivityFeedItem> result = activityService.getLatestActivityFeed(1);
+        final Page<ActivityFeedItem> result = activityService.getActivityFeed(new ActivityFeedCriteria());
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -84,7 +86,7 @@ public class ActivityServiceImplTest {
         final CommunityPost post = post(community, now.minusMinutes(2));
         final CommunityPostImage postImage = communityPostImage(post.getId(), 400L);
 
-        when(activityDao.findLatest(1)).thenReturn(new Page<>(
+        when(activityDao.findFeed(any(ActivityFeedCriteria.class))).thenReturn(new Page<>(
                 List.of(
                         new ActivityFeedReference(ActivityFeedReference.TYPE_COMMUNITY_POST, post.getId()),
                         new ActivityFeedReference(ActivityFeedReference.TYPE_REVIEW, review.getId())
@@ -105,7 +107,7 @@ public class ActivityServiceImplTest {
         when(reviewReplyDao.countRepliesByReviewIds(List.of(review.getId()))).thenReturn(Map.of(review.getId(), 2L));
 
         // Exercise
-        final Page<ActivityFeedItem> result = activityService.getLatestActivityFeed(1);
+        final Page<ActivityFeedItem> result = activityService.getActivityFeed(new ActivityFeedCriteria());
 
         // Assertions
         assertEquals(2, result.getItems().size());
@@ -129,7 +131,7 @@ public class ActivityServiceImplTest {
         final Car car = TestModels.car(10L, 3L, "Ford", "Focus", 4L, 2021, "Sedan", "desc",
                 LocalDateTime.now().minusYears(1), false, null, null, null, null, null, null, null);
         car.setId(10L);
-        when(activityDao.findLatest(2)).thenReturn(new Page<>(
+        when(activityDao.findFeed(any(ActivityFeedCriteria.class))).thenReturn(new Page<>(
                 List.of(new ActivityFeedReference(ActivityFeedReference.TYPE_REVIEW, review.getId())),
                 2,
                 Pagination.ACTIVITY_PAGE_SIZE,
@@ -143,7 +145,7 @@ public class ActivityServiceImplTest {
         when(reviewReplyDao.countRepliesByReviewIds(List.of(review.getId()))).thenReturn(Collections.emptyMap());
 
         // Exercise
-        final Page<ActivityFeedItem> result = activityService.getLatestActivityFeed(2);
+        final Page<ActivityFeedItem> result = activityService.getActivityFeed(new ActivityFeedCriteria());
 
         // Assertions
         assertEquals(1, result.getItems().size());
