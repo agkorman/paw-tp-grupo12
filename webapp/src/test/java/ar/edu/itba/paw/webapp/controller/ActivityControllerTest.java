@@ -99,7 +99,8 @@ class ActivityControllerTest {
         final ResultActions resultActions = mockMvc.perform(get("/activity")
                 .param("sort", "controversial")
                 .param("type", "reviews")
-                .param("timeframe", "week"));
+                .param("timeframe", "week")
+                .param("page", "2"));
 
         // Assertions
         resultActions
@@ -110,6 +111,7 @@ class ActivityControllerTest {
                     assertEquals("controversial", criteria.getSort());
                     assertEquals("reviews", criteria.getType());
                     assertEquals("week", criteria.getTimeframe());
+                    assertEquals(Integer.valueOf(2), criteria.getPage());
                 });
     }
 

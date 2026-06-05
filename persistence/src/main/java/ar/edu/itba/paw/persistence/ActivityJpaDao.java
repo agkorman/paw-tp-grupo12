@@ -97,6 +97,13 @@ public class ActivityJpaDao implements ActivityDao {
         return total == null ? 0L : total.longValue();
     }
 
+    /**
+     * Builds the rank union exposing per-row {@code approvals}/{@code discussions} engagement
+     * counts via correlated subqueries. Note: because the sort key is derived from these counts,
+     * the score is evaluated for every matching row before {@code LIMIT} — this is O(rows) count
+     * subqueries per request. Acceptable at the current scale (the count source tables are indexed
+     * on the FK columns); if the feed grows large, precompute the engagement counts instead.
+     */
     private String buildRankUnion(final boolean includeReviews, final boolean includePosts,
                                   final LocalDateTime timeframeCutoff) {
         final List<String> arms = new ArrayList<>();
@@ -109,7 +116,9 @@ public class ActivityJpaDao implements ActivityDao {
         if (includePosts) {
             arms.add("SELECT " + COMMUNITY_POST_TYPE + " AS item_type, p.post_id AS item_id, p.created_at AS created_at, "
                     + "(SELECT COUNT(*) FROM community_post_helpful_reactions h WHERE h.post_id = p.post_id) AS approvals, "
-                    + "(SELECT COUNT(*) FROM community_post_comments c WHERE c.post_id = p.post_id AND c.hidden = false) AS discussions "
+                    // Count all comments (not just visible ones) to match the comment metric shown on the card,
+                    // which comes from CommunityDao.countCommentsByPostIds and does not filter on hidden.
+                    + "(SELECT COUNT(*) FROM community_post_comments c WHERE c.post_id = p.post_id) AS discussions "
                     + "FROM community_posts p WHERE p.hidden = false" + timeframeAndClause("p", timeframeCutoff));
         }
         return String.join(" UNION ALL ", arms);
@@ -174,6 +183,7 @@ public class ActivityJpaDao implements ActivityDao {
         final LocalDateTime now = LocalDateTime.now();
         switch (timeframe) {
             case ActivityFeedCriteria.TIMEFRAME_TODAY:
+                // "today" means the last 24 hours (a rolling window), not the current calendar day.
                 return now.minusDays(1);
             case ActivityFeedCriteria.TIMEFRAME_WEEK:
                 return now.minusDays(7);

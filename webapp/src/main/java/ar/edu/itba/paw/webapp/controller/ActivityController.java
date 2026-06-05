@@ -57,6 +57,9 @@ public class ActivityController {
     public ModelAndView activity(
                                  @ModelAttribute("activityCriteria") final ActivityFeedCriteria criteria,
                                  @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        if (!criteria.isValid()) {
+            LOGGER.warn("activity feed received unrecognized filter values; applying defaults");
+        }
         LOGGER.debug("rendering mixed activity feed type={} timeframe={} sort={} page={}",
                 criteria.getType(), criteria.getTimeframe(), criteria.getSort(), criteria.getPage());
         final Page<ActivityFeedItem> activityPage = activityService.getActivityFeed(criteria);
