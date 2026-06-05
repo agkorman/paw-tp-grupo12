@@ -558,6 +558,23 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public List<CommunityPost> findPostsByIds(final Collection<Long> postIds) {
+        final List<Long> ids = normalizeIds(postIds);
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return em.createQuery(
+                "SELECT p FROM CommunityPost p " +
+                "LEFT JOIN FETCH p.author " +
+                "LEFT JOIN FETCH p.community " +
+                "WHERE p.id IN :ids",
+                CommunityPost.class
+        )
+                .setParameter("ids", ids)
+                .getResultList();
+    }
+
+    @Override
     public List<CommunityPost> findPostsByCommunityId(final long communityId) {
         return em.createQuery(
                 "SELECT p FROM CommunityPost p " +

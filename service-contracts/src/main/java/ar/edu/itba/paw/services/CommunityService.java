@@ -14,6 +14,7 @@ import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.Page;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface CommunityService {
@@ -47,4 +48,7 @@ public interface CommunityService {
     Optional<Boolean> kickMember(String communitySlug, long targetUserId, long callerUserId);
     Optional<Boolean> promoteToModerator(String communitySlug, long targetUserId, long callerUserId);
     Optional<Boolean> transferOwnership(String communitySlug, long newOwnerUserId, long callerUserId);
+    List<CommunityPost> getPostsByIds(Collection<Long> postIds);
+    Map<Long, Long> countHelpfulReactionsByPostIds(Collection<Long> postIds);
+    Map<Long, Long> countCommentsByPostIds(Collection<Long> postIds);
 }

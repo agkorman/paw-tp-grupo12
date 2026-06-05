@@ -1158,4 +1158,28 @@ public class CommunityServiceImpl implements CommunityService {
         }
         return slug.substring(0, maxLength);
     }
+
+    @Override
+    public List<CommunityPost> getPostsByIds(final Collection<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return List.of();
+        }
+        return communityDao.findPostsByIds(postIds);
+    }
+
+    @Override
+    public Map<Long, Long> countHelpfulReactionsByPostIds(final Collection<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return Map.of();
+        }
+        return communityDao.countHelpfulReactionsByPostIds(postIds);
+    }
+
+    @Override
+    public Map<Long, Long> countCommentsByPostIds(final Collection<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return Map.of();
+        }
+        return communityDao.countCommentsByPostIds(postIds);
+    }
 }

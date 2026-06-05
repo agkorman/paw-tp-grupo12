@@ -1,16 +1,21 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.model.ProfileActivityItem;
+import ar.edu.itba.paw.model.ProfileActivityItem.ItemType;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
+import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.services.UserActivityService;
 import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
@@ -22,6 +27,8 @@ import ar.edu.itba.paw.webapp.form.ProfileForm;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -65,9 +72,9 @@ public class UserController {
         UserController.class
     );
 
-    private static final String TAB_REVIEWS = "reviews";
+    private static final String TAB_ACTIVITY = "activity";
     private static final String TAB_FAVORITES = "favorites";
-    private static final String TAB_LIKED = "liked";
+    private static final String TAB_LIKES = "likes";
 
     private static final int CONNECTIONS_PAGE_SIZE = Pagination.CONNECTIONS_PAGE_SIZE;
     private static final String CONNECTIONS_KIND_FOLLOWERS = "followers";
@@ -80,6 +87,8 @@ public class UserController {
     private final UserService userService;
     private final UserFollowService userFollowService;
     private final AdminRequestService adminRequestService;
+    private final CommunityService communityService;
+    private final UserActivityService userActivityService;
     private final LocaleResolver localeResolver;
 
     @Autowired
@@ -91,6 +100,8 @@ public class UserController {
         final UserService userService,
         final UserFollowService userFollowService,
         final AdminRequestService adminRequestService,
+        final CommunityService communityService,
+        final UserActivityService userActivityService,
         final LocaleResolver localeResolver
     ) {
         this.reviewService = reviewService;
@@ -100,6 +111,8 @@ public class UserController {
         this.userService = userService;
         this.userFollowService = userFollowService;
         this.adminRequestService = adminRequestService;
+        this.communityService = communityService;
+        this.userActivityService = userActivityService;
         this.localeResolver = localeResolver;
     }
 
@@ -394,28 +407,28 @@ public class UserController {
             currentUserId != null && currentUserId == profileUser.getId();
         final String activeTab = ownProfile
             ? normalizeProfileTab(tab)
-            : TAB_REVIEWS;
+            : TAB_ACTIVITY;
         final String profileBasePath = ownProfile
             ? "/user"
             : "/users/" + profileUser.getId();
 
-        final long reviewCount = reviewService.countReviewsByUser(
+        final long activityCount = userActivityService.countAuthoredActivity(
             profileUser.getId()
         );
         final long favoriteCarCount = ownProfile
             ? carFavoriteService.countFavoriteCars(profileUser.getId())
             : 0L;
-        final long likedReviewCount = ownProfile
-            ? reviewLikeService.countLikedReviewsByUser(profileUser.getId())
+        final long likedCount = ownProfile
+            ? userActivityService.countLikedActivity(profileUser.getId())
             : 0L;
 
-        Page<Review> userReviewPage = Page.empty(1, 0);
+        Page<ProfileActivityItem> activityPage = Page.empty(1, 0);
         Page<Car> favoriteCarPage = Page.empty(1, 0);
-        Page<Long> likedReviewIdPage = Page.empty(1, 0);
+        Page<ProfileActivityItem> likesPage = Page.empty(1, 0);
 
-        List<ProfileReviewCard> reviews = List.of();
+        List<ProfileActivityEntry> activityEntries = List.of();
         List<Car> favoriteCars = List.of();
-        List<ProfileReviewCard> likedReviewCards = List.of();
+        List<ProfileActivityEntry> likesEntries = List.of();
         Map<Long, ReviewStats> reviewStatsByCarId = Map.of();
 
         if (TAB_FAVORITES.equals(activeTab)) {
@@ -425,23 +438,22 @@ public class UserController {
             );
             favoriteCars = favoriteCarPage.getItems();
             reviewStatsByCarId = reviewStatsByCarId(favoriteCars);
-        } else if (TAB_LIKED.equals(activeTab)) {
-            likedReviewIdPage = reviewLikeService.getLikedReviewIdsByUser(
+        } else if (TAB_LIKES.equals(activeTab)) {
+            likesPage = userActivityService.getLikedActivity(
                 profileUser.getId(),
                 page
             );
-            likedReviewCards = buildLikedReviewCards(
-                likedReviewIdPage.getItems(),
+            likesEntries = buildActivityEntries(
+                likesPage.getItems(),
                 currentUserId
             );
         } else {
-            userReviewPage = reviewService.getReviewsByUser(
+            activityPage = userActivityService.getAuthoredActivity(
                 profileUser.getId(),
                 page
             );
-            reviews = buildProfileReviewCards(
-                userReviewPage.getItems(),
-                reviewedCarsById(userReviewPage.getItems()),
+            activityEntries = buildActivityEntries(
+                activityPage.getItems(),
                 currentUserId
             );
         }
@@ -452,31 +464,30 @@ public class UserController {
             userFollowService.isFollowing(currentUserId, profileUser.getId());
 
         final ModelAndView mav = new ModelAndView("profile.jsp");
-        mav.addObject("profile", toProfileData(profileUser, reviewCount));
+        mav.addObject("profile", toProfileData(profileUser, activityCount));
         mav.addObject("profileBasePath", profileBasePath);
         mav.addObject("activeTab", activeTab);
-        mav.addObject("profileReviewCount", reviewCount);
+        mav.addObject("activityCount", activityCount);
         mav.addObject("favoriteCarCount", favoriteCarCount);
-        mav.addObject("likedReviewCount", likedReviewCount);
-        mav.addObject("profileReviews", reviews);
+        mav.addObject("likedCount", likedCount);
+        mav.addObject("activityEntries", activityEntries);
         mav.addObject(
-            "profileReviewsCurrentPage",
-            userReviewPage.getPageNumber()
+            "activityCurrentPage",
+            activityPage.getPageNumber()
         );
         mav.addObject(
-            "profileReviewsTotalPages",
-            userReviewPage.getTotalPages()
+            "activityTotalPages",
+            activityPage.getTotalPages()
         );
-        mav.addObject("likedReviews", likedReviewCards);
+        mav.addObject("likesEntries", likesEntries);
         mav.addObject(
-            "likedReviewsCurrentPage",
-            likedReviewIdPage.getPageNumber()
+            "likesCurrentPage",
+            likesPage.getPageNumber()
         );
         mav.addObject(
-            "likedReviewsTotalPages",
-            likedReviewIdPage.getTotalPages()
+            "likesTotalPages",
+            likesPage.getTotalPages()
         );
-        mav.addObject("likedActivityCount", likedReviewCount);
         mav.addObject("favoriteCars", favoriteCars);
         mav.addObject(
             "favoriteCarsCurrentPage",
@@ -547,6 +558,98 @@ public class UserController {
         }
     }
 
+    private List<ProfileActivityEntry> buildActivityEntries(
+        final List<ProfileActivityItem> items,
+        final Long currentUserId
+    ) {
+        final List<Long> reviewIds = items.stream()
+            .filter(i -> i.getType() == ItemType.REVIEW)
+            .map(ProfileActivityItem::getEntityId)
+            .toList();
+        final List<Long> postIds = items.stream()
+            .filter(i -> i.getType() == ItemType.POST)
+            .map(ProfileActivityItem::getEntityId)
+            .toList();
+
+        final Map<Long, Review> reviewsById = hydrateReviews(reviewIds);
+        final Map<Long, Car> carsById = reviewedCarsById(new ArrayList<>(reviewsById.values()));
+        final Map<Long, Long> reviewLikeCounts =
+            reviewLikeService.countReviewLikesByReviewIds(reviewIds);
+        final Set<Long> likedByCurrentUser = currentUserId == null
+            ? Set.of()
+            : reviewLikeService.getLikedReviewIds(reviewIds, currentUserId);
+
+        final Map<Long, CommunityPost> postsById = hydratePosts(postIds);
+        final Map<Long, Long> helpfulCounts =
+            communityService.countHelpfulReactionsByPostIds(postIds);
+        final Map<Long, Long> commentCounts =
+            communityService.countCommentsByPostIds(postIds);
+
+        final List<ProfileActivityEntry> entries = new ArrayList<>(items.size());
+        for (final ProfileActivityItem item : items) {
+            if (item.getType() == ItemType.REVIEW) {
+                final Review review = reviewsById.get(item.getEntityId());
+                if (review == null) {
+                    continue;
+                }
+                entries.add(ProfileActivityEntry.review(
+                    new ProfileReviewCard(
+                        review,
+                        carsById.get(review.getCarId()),
+                        likedByCurrentUser.contains(review.getId()),
+                        reviewLikeCounts.getOrDefault(review.getId(), 0L),
+                        isOwnedByCurrentUser(review, currentUserId)
+                    )
+                ));
+            } else {
+                final CommunityPost post = postsById.get(item.getEntityId());
+                if (post == null) {
+                    continue;
+                }
+                entries.add(ProfileActivityEntry.post(
+                    new ProfilePostCard(
+                        post.getId(),
+                        postAuthorName(post),
+                        post.getCommunity().getSlug(),
+                        post.getSlug(),
+                        post.getTitle(),
+                        post.getBody(),
+                        post.getCreatedAt(),
+                        helpfulCounts.getOrDefault(post.getId(), 0L),
+                        commentCounts.getOrDefault(post.getId(), 0L)
+                    )
+                ));
+            }
+        }
+        return entries;
+    }
+
+    private Map<Long, Review> hydrateReviews(final List<Long> reviewIds) {
+        if (reviewIds.isEmpty()) {
+            return Map.of();
+        }
+        return reviewService.getReviewsByIds(reviewIds)
+            .stream()
+            .collect(Collectors.toMap(
+                Review::getId,
+                Function.identity(),
+                (left, right) -> left
+            ));
+    }
+
+    private Map<Long, CommunityPost> hydratePosts(final List<Long> postIds) {
+        if (postIds.isEmpty()) {
+            return Map.of();
+        }
+        return communityService.getPostsByIds(postIds)
+            .stream()
+            .collect(Collectors.toMap(
+                CommunityPost::getId,
+                Function.identity(),
+                (left, right) -> left
+            ));
+    }
+
     private Map<Long, Car> reviewedCarsById(final List<Review> reviews) {
         final Set<Long> reviewedCarIds = reviews
             .stream()
@@ -558,90 +661,12 @@ public class UserController {
             .collect(Collectors.toMap(Car::getId, Function.identity()));
     }
 
-    private List<ProfileReviewCard> buildProfileReviewCards(
-        final List<Review> reviews,
-        final Map<Long, Car> carsById,
-        final Long currentUserId
-    ) {
-        final List<Long> reviewIds = reviews
-            .stream()
-            .map(Review::getId)
-            .toList();
-        final Map<Long, Long> likeCounts =
-            reviewLikeService.countReviewLikesByReviewIds(reviewIds);
-        final Set<Long> likedByCurrentUser = likedReviewIds(
-            reviewIds,
-            currentUserId
-        );
-        return reviews
-            .stream()
-            .map(review ->
-                toProfileReviewCard(
-                    review,
-                    carsById,
-                    likeCounts,
-                    likedByCurrentUser,
-                    currentUserId
-                )
-            )
-            .toList();
-    }
-
-    private List<ProfileReviewCard> buildLikedReviewCards(
-        final List<Long> reviewIds,
-        final Long currentUserId
-    ) {
-        final List<Review> likedReviews = orderedExistingReviews(reviewIds);
-        final Map<Long, Car> carsById = reviewedCarsById(likedReviews);
-        final List<Long> likedReviewIds = likedReviews
-            .stream()
-            .map(Review::getId)
-            .toList();
-        final Map<Long, Long> likeCounts =
-            reviewLikeService.countReviewLikesByReviewIds(likedReviewIds);
-        final Set<Long> likedByCurrentUser = likedReviewIds(
-            likedReviewIds,
-            currentUserId
-        );
-        return likedReviews
-            .stream()
-            .map(review ->
-                toProfileReviewCard(
-                    review,
-                    carsById,
-                    likeCounts,
-                    likedByCurrentUser,
-                    currentUserId
-                )
-            )
-            .toList();
-    }
-
-    private List<Review> orderedExistingReviews(final List<Long> reviewIds) {
-        final Map<Long, Review> reviewsById = reviewService
-            .getReviewsByIds(reviewIds)
-            .stream()
-            .collect(
-                Collectors.toMap(
-                    Review::getId,
-                    Function.identity(),
-                    (left, right) -> left
-                )
-            );
-        return reviewIds
-            .stream()
-            .map(reviewsById::get)
-            .filter(Objects::nonNull)
-            .toList();
-    }
-
-    private Set<Long> likedReviewIds(
-        final List<Long> reviewIds,
-        final Long currentUserId
-    ) {
-        return currentUserId == null
-            ? Set.of()
-            : reviewLikeService.getLikedReviewIds(reviewIds, currentUserId);
+    private String postAuthorName(final CommunityPost post) {
+        final User author = post.getAuthor();
+        if (author == null) {
+            return null;
+        }
+        return displayName(author);
     }
 
     private Map<Long, ReviewStats> reviewStatsByCarId(
@@ -670,22 +695,6 @@ public class UserController {
             reviewCount,
             userFollowService.countFollowing(user.getId()),
             userFollowService.countFollowers(user.getId())
-        );
-    }
-
-    private ProfileReviewCard toProfileReviewCard(
-        final Review review,
-        final Map<Long, Car> carsById,
-        final Map<Long, Long> likeCounts,
-        final Set<Long> likedByCurrentUser,
-        final Long currentUserId
-    ) {
-        return new ProfileReviewCard(
-            review,
-            carsById.get(review.getCarId()),
-            likedByCurrentUser.contains(review.getId()),
-            likeCounts.getOrDefault(review.getId(), 0L),
-            isOwnedByCurrentUser(review, currentUserId)
         );
     }
 
@@ -768,17 +777,16 @@ public class UserController {
 
     private String normalizeProfileTab(final String tab) {
         if (tab == null || tab.isBlank()) {
-            return TAB_REVIEWS;
+            return TAB_ACTIVITY;
         }
         final String normalizedTab = tab.trim().toLowerCase(Locale.ROOT);
         switch (normalizedTab) {
             case TAB_FAVORITES:
                 return TAB_FAVORITES;
-            case TAB_LIKED:
-                return TAB_LIKED;
-            case TAB_REVIEWS:
+            case TAB_LIKES:
+                return TAB_LIKES;
             default:
-                return TAB_REVIEWS;
+                return TAB_ACTIVITY;
         }
     }
 
@@ -897,6 +905,122 @@ public class UserController {
 
         public boolean getOwnedByCurrentUser() {
             return ownedByCurrentUser;
+        }
+    }
+
+    public static final class ProfileActivityEntry {
+
+        private final String type;
+        private final ProfileReviewCard reviewCard;
+        private final ProfilePostCard postCard;
+
+        private ProfileActivityEntry(
+            final String type,
+            final ProfileReviewCard reviewCard,
+            final ProfilePostCard postCard
+        ) {
+            this.type = type;
+            this.reviewCard = reviewCard;
+            this.postCard = postCard;
+        }
+
+        static ProfileActivityEntry review(final ProfileReviewCard card) {
+            return new ProfileActivityEntry("review", card, null);
+        }
+
+        static ProfileActivityEntry post(final ProfilePostCard card) {
+            return new ProfileActivityEntry("post", null, card);
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public boolean getIsReview() {
+            return "review".equals(type);
+        }
+
+        public boolean getIsPost() {
+            return "post".equals(type);
+        }
+
+        public ProfileReviewCard getReviewCard() {
+            return reviewCard;
+        }
+
+        public ProfilePostCard getPostCard() {
+            return postCard;
+        }
+    }
+
+    public static final class ProfilePostCard {
+
+        private final long postId;
+        private final String authorName;
+        private final String communitySlug;
+        private final String postSlug;
+        private final String title;
+        private final String body;
+        private final LocalDateTime createdAt;
+        private final long helpfulCount;
+        private final long commentCount;
+
+        private ProfilePostCard(
+            final long postId,
+            final String authorName,
+            final String communitySlug,
+            final String postSlug,
+            final String title,
+            final String body,
+            final LocalDateTime createdAt,
+            final long helpfulCount,
+            final long commentCount
+        ) {
+            this.postId = postId;
+            this.authorName = authorName;
+            this.communitySlug = communitySlug;
+            this.postSlug = postSlug;
+            this.title = title;
+            this.body = body;
+            this.createdAt = createdAt;
+            this.helpfulCount = helpfulCount;
+            this.commentCount = commentCount;
+        }
+
+        public long getPostId() {
+            return postId;
+        }
+
+        public String getAuthorName() {
+            return authorName;
+        }
+
+        public String getCommunitySlug() {
+            return communitySlug;
+        }
+
+        public String getPostSlug() {
+            return postSlug;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getBody() {
+            return body;
+        }
+
+        public LocalDateTime getCreatedAt() {
+            return createdAt;
+        }
+
+        public long getHelpfulCount() {
+            return helpfulCount;
+        }
+
+        public long getCommentCount() {
+            return commentCount;
         }
     }
 

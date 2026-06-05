@@ -5,7 +5,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="profile.title" styles="/css/reviews.css|/css/profile.css|/css/profile-review-card.css|/css/profile-modal.css|/css/profile-connections.css|/css/review-tags.css|/css/catalog-request-modal.css|/css/moderator-application-modal.css|/css/cars.css"/>
+<pa:page-head titleCode="profile.title" styles="/css/reviews.css|/css/profile.css|/css/profile-review-card.css|/css/profile-modal.css|/css/profile-connections.css|/css/review-tags.css|/css/catalog-request-modal.css|/css/moderator-application-modal.css|/css/cars.css|/css/community-detail.css"/>
 <body>
     <pa:nav activePage="profile"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -29,7 +29,7 @@
                         <dt>
                             <span class="profile-stat-value"><c:out value="${profile.reviewCount}"/></span>
                         </dt>
-                        <dd><spring:message code="common.label.reviews"/></dd>
+                        <dd><spring:message code="profile.stat.activity"/></dd>
                     </div>
                     <div>
                         <dt>
@@ -145,33 +145,33 @@
         </section>
 
         <section class="profile-tabs" aria-label="${profileContentAria}">
-            <c:url var="profileReviewsTabUrl" value="${profileBasePath}">
-                <c:param name="tab" value="reviews"/>
+            <c:url var="profileActivityTabUrl" value="${profileBasePath}">
+                <c:param name="tab" value="activity"/>
             </c:url>
             <c:url var="profileFavoritesTabUrl" value="${profileBasePath}">
                 <c:param name="tab" value="favorites"/>
             </c:url>
-            <c:url var="profileLikedTabUrl" value="${profileBasePath}">
-                <c:param name="tab" value="liked"/>
+            <c:url var="profileLikesTabUrl" value="${profileBasePath}">
+                <c:param name="tab" value="likes"/>
             </c:url>
 
-            <spring:message var="profileMyReviewsLabel" code="profile.tab.myReviews"/>
-            <spring:message var="profileReviewsLabel" code="common.label.reviews"/>
+            <spring:message var="profileActivityLabel" code="profile.tab.activity"/>
+            <spring:message var="profileActivityHeadingLabel" code="profile.tab.activity.heading"/>
             <spring:message var="profileFavoritesLabel" code="profile.tab.favorites"/>
-            <spring:message var="profileLikedLabel" code="profile.tab.liked"/>
+            <spring:message var="profileLikesLabel" code="profile.tab.likes"/>
             <c:if test="${ownProfile}">
                 <pa:subtabs tabCount="3"
-                            labels="${profileMyReviewsLabel}|${profileFavoritesLabel}|${profileLikedLabel}"
-                            hrefs="${profileReviewsTabUrl}|${profileFavoritesTabUrl}|${profileLikedTabUrl}"
-                            counts="${profileReviewCount}|${favoriteCarCount}|${likedActivityCount}"
-                            values="reviews|favorites|liked"
+                            labels="${profileActivityLabel}|${profileFavoritesLabel}|${profileLikesLabel}"
+                            hrefs="${profileActivityTabUrl}|${profileFavoritesTabUrl}|${profileLikesTabUrl}"
+                            counts="${activityCount}|${favoriteCarCount}|${likedCount}"
+                            values="activity|favorites|likes"
                             activeValue="${activeTab}"
                             ariaLabel="${profileTabsAria}"/>
             </c:if>
             <c:if test="${not ownProfile}">
                 <header class="profile-section-heading">
-                    <h2 id="profileReviewsTitle"><c:out value="${profileReviewsLabel}"/></h2>
-                    <span><c:out value="${profileReviewCount}"/></span>
+                    <h2 id="profileActivityTitle"><c:out value="${profileActivityHeadingLabel}"/></h2>
+                    <span><c:out value="${activityCount}"/></span>
                 </header>
             </c:if>
 
@@ -216,81 +216,111 @@
                         </c:choose>
                     </section>
                 </c:when>
-                <c:when test="${activeTab eq 'liked'}">
-                    <section id="profileLikedPanel"
+                <c:when test="${activeTab eq 'likes'}">
+                    <section id="profileLikesPanel"
                              class="profile-tab-panel profile-liked-section"
-                             aria-labelledby="profileLikedTab">
+                             aria-labelledby="profileLikesTab">
 
                         <c:choose>
-                            <c:when test="${empty likedReviews}">
+                            <c:when test="${empty likesEntries}">
                                 <div class="profile-empty-state">
-                                    <p><spring:message code="profile.empty.liked"/></p>
+                                    <p><spring:message code="profile.empty.likes"/></p>
                                 </div>
                             </c:when>
                             <c:otherwise>
-                                <c:set var="likedActionRedirect" value="${profileBasePath}?tab=liked"/>
-                                <c:if test="${not empty likedReviewsCurrentPage and likedReviewsCurrentPage > 1}">
-                                    <c:set var="likedActionRedirect" value="${likedActionRedirect}&page=${likedReviewsCurrentPage}"/>
+                                <c:set var="likesActionRedirect" value="${profileBasePath}?tab=likes"/>
+                                <c:if test="${not empty likesCurrentPage and likesCurrentPage > 1}">
+                                    <c:set var="likesActionRedirect" value="${likesActionRedirect}&page=${likesCurrentPage}"/>
                                 </c:if>
-                                <c:set var="likedActionRedirect" value="${likedActionRedirect}#profileLikedPanel"/>
-                                <div class="profile-review-list">
-                                    <c:forEach var="likedReview" items="${likedReviews}">
-                                        <pa:profile-review-card
-                                                reviewCard="${likedReview}"
-                                                editable="${likedReview.ownedByCurrentUser}"
-                                                actionRedirect="${likedActionRedirect}"/>
+                                <c:set var="likesActionRedirect" value="${likesActionRedirect}#profileLikesPanel"/>
+                                <div class="profile-activity-list">
+                                    <c:forEach var="entry" items="${likesEntries}">
+                                        <c:choose>
+                                            <c:when test="${entry.isReview}">
+                                                <pa:profile-review-card
+                                                        reviewCard="${entry.reviewCard}"
+                                                        editable="${entry.reviewCard.ownedByCurrentUser}"
+                                                        actionRedirect="${likesActionRedirect}"/>
+                                            </c:when>
+                                            <c:when test="${entry.isPost}">
+                                                <c:url var="likedPostHref" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}"/>
+                                                <pa:community-post-card
+                                                        author="${entry.postCard.authorName}"
+                                                        timeText="${relativeTimeFormatter.format(entry.postCard.createdAt)}"
+                                                        title="${entry.postCard.title}"
+                                                        body="${entry.postCard.body}"
+                                                        helpfulCount="${entry.postCard.helpfulCount}"
+                                                        commentCount="${entry.postCard.commentCount}"
+                                                        href="${likedPostHref}"/>
+                                            </c:when>
+                                        </c:choose>
                                     </c:forEach>
                                 </div>
-                                <c:if test="${likedReviewsTotalPages > 1}">
-                                    <jsp:useBean id="likedReviewsPaginationParams" class="java.util.LinkedHashMap"/>
-                                    <c:set target="${likedReviewsPaginationParams}" property="tab" value="liked"/>
-                                    <spring:message var="likedReviewsPaginationAria" code="profile.liked.pagination.aria"/>
-                                    <pa:pagination currentPage="${likedReviewsCurrentPage}"
-                                                   totalPages="${likedReviewsTotalPages}"
+                                <c:if test="${likesTotalPages > 1}">
+                                    <jsp:useBean id="likesPaginationParams" class="java.util.LinkedHashMap"/>
+                                    <c:set target="${likesPaginationParams}" property="tab" value="likes"/>
+                                    <spring:message var="likesPaginationAria" code="profile.likes.pagination.aria"/>
+                                    <pa:pagination currentPage="${likesCurrentPage}"
+                                                   totalPages="${likesTotalPages}"
                                                    baseUrl="${profileBasePath}"
-                                                   extraParams="${likedReviewsPaginationParams}"
-                                                   fragment="profileLikedPanel"
-                                                   ariaLabel="${likedReviewsPaginationAria}"/>
+                                                   extraParams="${likesPaginationParams}"
+                                                   fragment="profileLikesPanel"
+                                                   ariaLabel="${likesPaginationAria}"/>
                                 </c:if>
                             </c:otherwise>
                         </c:choose>
                     </section>
                 </c:when>
                 <c:otherwise>
-                    <section id="profileReviewsPanel"
+                    <section id="profileActivityPanel"
                              class="profile-tab-panel profile-reviews-section"
-                             aria-labelledby="${ownProfile ? 'profileReviewsTab' : 'profileReviewsTitle'}">
+                             aria-labelledby="${ownProfile ? 'profileActivityTab' : 'profileActivityTitle'}">
 
                         <c:choose>
-                            <c:when test="${empty profileReviews}">
+                            <c:when test="${empty activityEntries}">
                                 <div class="profile-empty-state">
-                                    <p><spring:message code="profile.empty.reviews"/></p>
+                                    <p><spring:message code="profile.empty.activity"/></p>
                                 </div>
                             </c:when>
                             <c:otherwise>
-                                <c:set var="profileReviewsActionRedirect" value="${profileBasePath}?tab=reviews"/>
-                                <c:if test="${not empty profileReviewsCurrentPage and profileReviewsCurrentPage > 1}">
-                                    <c:set var="profileReviewsActionRedirect" value="${profileReviewsActionRedirect}&page=${profileReviewsCurrentPage}"/>
+                                <c:set var="activityActionRedirect" value="${profileBasePath}?tab=activity"/>
+                                <c:if test="${not empty activityCurrentPage and activityCurrentPage > 1}">
+                                    <c:set var="activityActionRedirect" value="${activityActionRedirect}&page=${activityCurrentPage}"/>
                                 </c:if>
-                                <c:set var="profileReviewsActionRedirect" value="${profileReviewsActionRedirect}#profileReviewsPanel"/>
-                                <div class="profile-review-list">
-                                    <c:forEach var="profileReview" items="${profileReviews}">
-                                        <pa:profile-review-card
-                                                reviewCard="${profileReview}"
-                                                editable="${profileReview.ownedByCurrentUser}"
-                                                actionRedirect="${profileReviewsActionRedirect}"/>
+                                <c:set var="activityActionRedirect" value="${activityActionRedirect}#profileActivityPanel"/>
+                                <div class="profile-activity-list">
+                                    <c:forEach var="entry" items="${activityEntries}">
+                                        <c:choose>
+                                            <c:when test="${entry.isReview}">
+                                                <pa:profile-review-card
+                                                        reviewCard="${entry.reviewCard}"
+                                                        editable="${entry.reviewCard.ownedByCurrentUser}"
+                                                        actionRedirect="${activityActionRedirect}"/>
+                                            </c:when>
+                                            <c:when test="${entry.isPost}">
+                                                <c:url var="activityPostHref" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}"/>
+                                                <pa:community-post-card
+                                                        author="${entry.postCard.authorName}"
+                                                        timeText="${relativeTimeFormatter.format(entry.postCard.createdAt)}"
+                                                        title="${entry.postCard.title}"
+                                                        body="${entry.postCard.body}"
+                                                        helpfulCount="${entry.postCard.helpfulCount}"
+                                                        commentCount="${entry.postCard.commentCount}"
+                                                        href="${activityPostHref}"/>
+                                            </c:when>
+                                        </c:choose>
                                     </c:forEach>
                                 </div>
-                                <c:if test="${profileReviewsTotalPages > 1}">
-                                    <jsp:useBean id="profileReviewsPaginationParams" class="java.util.LinkedHashMap"/>
-                                    <c:set target="${profileReviewsPaginationParams}" property="tab" value="reviews"/>
-                                    <spring:message var="profileReviewsPaginationAria" code="profile.reviews.pagination.aria"/>
-                                    <pa:pagination currentPage="${profileReviewsCurrentPage}"
-                                                   totalPages="${profileReviewsTotalPages}"
+                                <c:if test="${activityTotalPages > 1}">
+                                    <jsp:useBean id="activityPaginationParams" class="java.util.LinkedHashMap"/>
+                                    <c:set target="${activityPaginationParams}" property="tab" value="activity"/>
+                                    <spring:message var="activityPaginationAria" code="profile.activity.pagination.aria"/>
+                                    <pa:pagination currentPage="${activityCurrentPage}"
+                                                   totalPages="${activityTotalPages}"
                                                    baseUrl="${profileBasePath}"
-                                                   extraParams="${profileReviewsPaginationParams}"
-                                                   fragment="profileReviewsPanel"
-                                                   ariaLabel="${profileReviewsPaginationAria}"/>
+                                                   extraParams="${activityPaginationParams}"
+                                                   fragment="profileActivityPanel"
+                                                   ariaLabel="${activityPaginationAria}"/>
                                 </c:if>
                             </c:otherwise>
                         </c:choose>
