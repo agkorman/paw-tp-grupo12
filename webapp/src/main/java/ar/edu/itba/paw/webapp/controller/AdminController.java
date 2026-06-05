@@ -22,7 +22,6 @@ import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.services.exception.DuplicateCarException;
-import ar.edu.itba.paw.webapp.auth.AuthenticatedSessionRegistry;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import ar.edu.itba.paw.webapp.util.ImageValidationService;
@@ -102,7 +101,6 @@ public class AdminController {
     private final UserService userService;
     private final MessageSource messageSource;
     private final ImageValidationService imageValidationService;
-    private final AuthenticatedSessionRegistry authenticatedSessionRegistry;
 
     @Autowired
     public AdminController(
@@ -115,8 +113,7 @@ public class AdminController {
         final AdminRequestService adminRequestService,
         final UserService userService,
         final MessageSource messageSource,
-        final ImageValidationService imageValidationService,
-        final AuthenticatedSessionRegistry authenticatedSessionRegistry
+        final ImageValidationService imageValidationService
     ) {
         this.carRequestService = carRequestService;
         this.carService = carService;
@@ -128,7 +125,6 @@ public class AdminController {
         this.userService = userService;
         this.messageSource = messageSource;
         this.imageValidationService = imageValidationService;
-        this.authenticatedSessionRegistry = authenticatedSessionRegistry;
     }
 
     private String message(final String code, final Object... args) {
@@ -767,16 +763,12 @@ public class AdminController {
         @RequestHeader(value = "Referer", required = false) final String referer
     ) {
         LOGGER.info("admin accept admin-role request id={}", requestId);
-        final Optional<Long> promotedUserId =
-            adminRequestService.approvePendingRequestAndReturnUserId(
-                requestId
-            );
-        promotedUserId.ifPresent(
-            authenticatedSessionRegistry::promoteUserToAdmin
+        final boolean accepted = adminRequestService.approvePendingRequest(
+            requestId
         );
         return redirectBackToAdmin(
             referer,
-            promotedUserId.isPresent() ? "requestAccepted" : "requestError"
+            accepted ? "requestAccepted" : "requestError"
         );
     }
 

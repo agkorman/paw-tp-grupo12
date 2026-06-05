@@ -32,8 +32,6 @@ public interface AdminRequestService {
         String justification
     );
 
-    Optional<Long> approvePendingRequestAndReturnUserId(long id);
-
     boolean approvePendingRequest(long id);
 
     boolean rejectPendingRequest(long id);

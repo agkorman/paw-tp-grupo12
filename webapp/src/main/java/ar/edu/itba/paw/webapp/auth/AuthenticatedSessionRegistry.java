@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import ar.edu.itba.paw.services.AuthenticatedSessionService;
 import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,7 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthenticatedSessionRegistry {
+public class AuthenticatedSessionRegistry implements AuthenticatedSessionService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
         AuthenticatedSessionRegistry.class
@@ -66,6 +67,7 @@ public class AuthenticatedSessionRegistry {
         }
     }
 
+    @Override
     public int promoteUserToAdmin(final long userId) {
         final Set<String> sessionIds = sessionIdsByUserId.get(userId);
         if (sessionIds == null || sessionIds.isEmpty()) {
