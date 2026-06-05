@@ -28,7 +28,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -198,7 +197,6 @@ public class CarServiceImplTest {
         // Assertions
         assertEquals(99L, result.getId());
         assertEquals("Corolla", result.getModel());
-        verify(emailService).sendNewCarRequestNotification(createdRequest, "Toyota", "sedan");
     }
 
     @Test

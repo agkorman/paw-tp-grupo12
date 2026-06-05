@@ -685,14 +685,14 @@ public class UserController {
             );
     }
 
-    private ProfileData toProfileData(final User user, final long reviewCount) {
+    private ProfileData toProfileData(final User user, final long activityCount) {
         return new ProfileData(
             user.getId(),
             displayName(user),
             user.getEmail(),
             user.getPreferredLocale(),
             initials(user),
-            reviewCount,
+            activityCount,
             userFollowService.countFollowing(user.getId()),
             userFollowService.countFollowers(user.getId())
         );
@@ -797,7 +797,7 @@ public class UserController {
         private final String email;
         private final String preferredLocale;
         private final String initials;
-        private final long reviewCount;
+        private final long activityCount;
         private final long followingCount;
         private final long followerCount;
 
@@ -807,7 +807,7 @@ public class UserController {
             final String email,
             final String preferredLocale,
             final String initials,
-            final long reviewCount,
+            final long activityCount,
             final long followingCount,
             final long followerCount
         ) {
@@ -816,7 +816,7 @@ public class UserController {
             this.email = email;
             this.preferredLocale = preferredLocale;
             this.initials = initials;
-            this.reviewCount = reviewCount;
+            this.activityCount = activityCount;
             this.followingCount = followingCount;
             this.followerCount = followerCount;
         }
@@ -841,8 +841,8 @@ public class UserController {
             return initials;
         }
 
-        public long getReviewCount() {
-            return reviewCount;
+        public long getActivityCount() {
+            return activityCount;
         }
 
         public long getFollowingCount() {

@@ -27,7 +27,7 @@
                 <dl class="profile-stats" aria-label="${profileStatsAria}">
                     <div>
                         <dt>
-                            <span class="profile-stat-value"><c:out value="${profile.reviewCount}"/></span>
+                            <span class="profile-stat-value"><c:out value="${profile.activityCount}"/></span>
                         </dt>
                         <dd><spring:message code="profile.stat.activity"/></dd>
                     </div>

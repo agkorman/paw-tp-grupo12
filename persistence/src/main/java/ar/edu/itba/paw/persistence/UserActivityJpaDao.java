@@ -8,14 +8,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class UserActivityJpaDao implements UserActivityDao {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserActivityJpaDao.class);
 
     private static final int PAGE_SIZE = Pagination.PROFILE_ACTIVITY_PAGE_SIZE;
 
@@ -74,7 +70,10 @@ public class UserActivityJpaDao implements UserActivityDao {
                 "SELECT type, entity_id FROM (" +
                 "  SELECT 'REVIEW' AS type, review_id AS entity_id, created_at FROM review_likes WHERE user_id = ?1 " +
                 "  UNION ALL " +
-                "  SELECT 'POST' AS type, post_id AS entity_id, created_at FROM community_post_helpful_reactions WHERE user_id = ?1" +
+                "  SELECT 'POST' AS type, r.post_id AS entity_id, r.created_at " +
+                "    FROM community_post_helpful_reactions r " +
+                "    JOIN community_posts p ON p.post_id = r.post_id " +
+                "    WHERE r.user_id = ?1 AND p.hidden = false" +
                 ") combined ORDER BY created_at DESC, entity_id DESC LIMIT ?2 OFFSET ?3"
         )
                 .setParameter(1, userId)
@@ -91,7 +90,9 @@ public class UserActivityJpaDao implements UserActivityDao {
         final Number count = (Number) em.createNativeQuery(
                 "SELECT " +
                 "  (SELECT COUNT(*) FROM review_likes WHERE user_id = ?1) + " +
-                "  (SELECT COUNT(*) FROM community_post_helpful_reactions WHERE user_id = ?1)"
+                "  (SELECT COUNT(*) FROM community_post_helpful_reactions r " +
+                "    JOIN community_posts p ON p.post_id = r.post_id " +
+                "    WHERE r.user_id = ?1 AND p.hidden = false)"
         )
                 .setParameter(1, userId)
                 .getSingleResult();
@@ -102,7 +103,9 @@ public class UserActivityJpaDao implements UserActivityDao {
         return rows.stream()
                 .map(row -> {
                     final Object[] cols = (Object[]) row;
-                    final String type = (String) cols[0];
+                    // The UNION ALL string literal column may come back fixed-width
+                    // padded on some databases (e.g. HSQLDB CHAR), so trim before comparing.
+                    final String type = ((String) cols[0]).trim();
                     final long entityId = ((Number) cols[1]).longValue();
                     return new ProfileActivityItem(
                             "POST".equals(type) ? ItemType.POST : ItemType.REVIEW,

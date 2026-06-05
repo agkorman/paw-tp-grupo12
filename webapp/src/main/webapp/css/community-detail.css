@@ -243,15 +243,6 @@
     gap: var(--spacing-3);
 }
 
-.community-post-avatar {
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 50%;
-    flex: 0 0 2.75rem;
-    background: radial-gradient(circle at 30% 30%, rgba(255, 181, 158, 0.25), transparent 38%), var(--surface-container-highest);
-    border: 1px solid rgba(229, 226, 225, 0.08);
-}
-
 .community-post-meta {
     margin: 0;
     color: var(--secondary);

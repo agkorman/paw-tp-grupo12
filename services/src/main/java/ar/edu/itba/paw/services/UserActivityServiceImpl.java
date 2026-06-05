@@ -3,8 +3,6 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.ProfileActivityItem;
 import ar.edu.itba.paw.persistence.UserActivityDao;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,8 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class UserActivityServiceImpl implements UserActivityService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserActivityServiceImpl.class);
 
     private final UserActivityDao userActivityDao;
 
