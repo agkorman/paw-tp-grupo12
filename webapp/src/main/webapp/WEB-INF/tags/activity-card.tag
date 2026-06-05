@@ -112,18 +112,9 @@
         <c:if test="${activityCard.actionMenuVisible}">
             <pa:action-menu label="${activityActionMenuLabel}" cssClass="activity-card-menu">
                 <c:if test="${activityCard.editable}">
-                    <c:choose>
-                        <c:when test="${activityCard.review}">
-                            <c:url var="activityCardEditUrl" value="${activityCard.editHref}">
-                                <c:param name="redirect" value="${activityCardRedirectPath}"/>
-                            </c:url>
-                        </c:when>
-                        <c:otherwise>
-                            <c:url var="activityCardEditUrl" value="${activityCard.editHref}">
-                                <c:param name="redirect" value="${activityCardRedirectPath}"/>
-                            </c:url>
-                        </c:otherwise>
-                    </c:choose>
+                    <c:url var="activityCardEditUrl" value="${activityCard.editHref}">
+                        <c:param name="redirect" value="${activityCardRedirectPath}"/>
+                    </c:url>
                     <a href="${fn:escapeXml(activityCardEditUrl)}">
                         <spring:message code="common.action.edit"/>
                     </a>
@@ -133,12 +124,7 @@
                     <form method="post" action="${fn:escapeXml(activityCardDeleteUrl)}"
                           data-confirm-modal="${activityCard.review ? 'deleteReviewConfirmModal' : 'deletePostConfirmModal'}">
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                        <c:if test="${activityCard.review}">
-                            <input type="hidden" name="redirect" value="${fn:escapeXml(activityCurrentPath)}">
-                        </c:if>
-                        <c:if test="${activityCard.communityPost}">
-                            <input type="hidden" name="redirect" value="${fn:escapeXml(activityCurrentPath)}">
-                        </c:if>
+                        <input type="hidden" name="redirect" value="${fn:escapeXml(activityCurrentPath)}">
                         <button type="submit" class="action-menu-danger">
                             <c:choose>
                                 <c:when test="${activityCard.review}">
