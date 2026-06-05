@@ -17,11 +17,11 @@ import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewTagService;
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.webapp.auth.AuthenticatedSessionRegistry;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport;
 import ar.edu.itba.paw.webapp.util.ImageValidationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -35,10 +35,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -93,11 +97,23 @@ class AdminControllerTest {
     @Mock
     private ImageValidationService imageValidationService;
 
-    @InjectMocks
-    private AdminController controller;
+    private final RecordingAuthenticatedSessionRegistry authenticatedSessionRegistry =
+            new RecordingAuthenticatedSessionRegistry();
 
     private MockMvc adminMvc() throws Exception {
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenAnswer(inv -> inv.getArgument(0));
+        final AdminController controller = new AdminController(
+                carRequestService,
+                carService,
+                brandService,
+                bodyTypeService,
+                brandRequestService,
+                bodyTypeRequestService,
+                adminRequestService,
+                userService,
+                messageSource,
+                imageValidationService,
+                authenticatedSessionRegistry);
         return MockMvcBuilders.standaloneSetup(controller)
                 .setValidator(
                         ControllerTestValidationSupport.carFormSpringValidator(
@@ -522,7 +538,8 @@ class AdminControllerTest {
     void adminRoleRequests_acceptReject_redirectAdmin() throws Exception {
         // Arrange
         arrangeDashboardDefaultsSimple();
-        when(adminRequestService.approvePendingRequest(eq(21L))).thenReturn(true);
+        authenticatedSessionRegistry.clear();
+        when(adminRequestService.approvePendingRequestAndReturnUserId(eq(21L))).thenReturn(Optional.of(44L));
         when(adminRequestService.rejectPendingRequest(eq(21L))).thenReturn(true);
         final MockMvc mockMvc = adminMvc();
 
@@ -535,6 +552,27 @@ class AdminControllerTest {
         mockMvc.perform(post("/admin/admin-requests/21/reject"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin?requestRejected=1"));
+
+        assertEquals(List.of(44L), authenticatedSessionRegistry.promotedUserIds());
+    }
+
+    @Test
+    void adminRoleRequests_acceptFailure_doesNotRefreshSessions() throws Exception {
+        // Arrange
+        arrangeDashboardDefaultsSimple();
+        authenticatedSessionRegistry.clear();
+        when(adminRequestService.approvePendingRequestAndReturnUserId(eq(21L))).thenReturn(Optional.empty());
+        final MockMvc mockMvc = adminMvc();
+
+        // Exercise
+        final ResultActions resultActions =
+                mockMvc.perform(post("/admin/admin-requests/21/accept"));
+
+        // Assertions
+        resultActions
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin?requestError=1"));
+        assertTrue(authenticatedSessionRegistry.promotedUserIds().isEmpty());
     }
 
     @Test
@@ -626,5 +664,23 @@ class AdminControllerTest {
 
         mockMvc.perform(get("/admin/requests/702/images/903").header("If-None-Match", eTag))
                 .andExpect(status().isNotModified());
+    }
+
+    private static final class RecordingAuthenticatedSessionRegistry extends AuthenticatedSessionRegistry {
+        private final List<Long> promotedUserIds = new ArrayList<>();
+
+        @Override
+        public int promoteUserToAdmin(final long userId) {
+            promotedUserIds.add(userId);
+            return 0;
+        }
+
+        private List<Long> promotedUserIds() {
+            return List.copyOf(promotedUserIds);
+        }
+
+        private void clear() {
+            promotedUserIds.clear();
+        }
     }
 }

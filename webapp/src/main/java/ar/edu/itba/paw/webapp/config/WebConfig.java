@@ -53,6 +53,7 @@ import java.util.concurrent.Executor;
 @EnableTransactionManagement
 @ComponentScan({
         "ar.edu.itba.paw.webapp.controller",
+        "ar.edu.itba.paw.webapp.auth",
         "ar.edu.itba.paw.webapp.validation",
         "ar.edu.itba.paw.webapp.util",
         "ar.edu.itba.paw.services",

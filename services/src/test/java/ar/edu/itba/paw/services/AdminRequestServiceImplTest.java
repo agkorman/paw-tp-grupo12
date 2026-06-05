@@ -139,6 +139,22 @@ public class AdminRequestServiceImplTest {
     }
 
     @Test
+    public void shouldApprovePendingRequestAndReturnPromotedUserId() {
+        // Arrange
+        when(adminRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
+        when(adminRequestDao.updateStatus(REQUEST_ID, AdminRequestService.STATUS_PENDING,
+                AdminRequestService.STATUS_APPROVED)).thenReturn(true);
+        when(userService.updateRole(USER_ID, AdminRequestService.GRANTED_ROLE)).thenReturn(true);
+
+        // Exercise
+        final Optional<Long> result = adminRequestService.approvePendingRequestAndReturnUserId(REQUEST_ID);
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals(USER_ID, result.get());
+    }
+
+    @Test
     public void shouldNotApproveWhenRequestDoesNotExist() {
         // Arrange
         when(adminRequestDao.findById(REQUEST_ID)).thenReturn(Optional.empty());
@@ -148,6 +164,18 @@ public class AdminRequestServiceImplTest {
 
         // Assertions
         assertFalse(result);
+    }
+
+    @Test
+    public void shouldReturnEmptyPromotedUserIdWhenRequestDoesNotExist() {
+        // Arrange
+        when(adminRequestDao.findById(REQUEST_ID)).thenReturn(Optional.empty());
+
+        // Exercise
+        final Optional<Long> result = adminRequestService.approvePendingRequestAndReturnUserId(REQUEST_ID);
+
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 
     @Test
@@ -176,6 +204,20 @@ public class AdminRequestServiceImplTest {
 
         // Assertions
         assertFalse(result);
+    }
+
+    @Test
+    public void shouldReturnEmptyPromotedUserIdWhenStatusUpdateFails() {
+        // Arrange
+        when(adminRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
+        when(adminRequestDao.updateStatus(REQUEST_ID, AdminRequestService.STATUS_PENDING,
+                AdminRequestService.STATUS_APPROVED)).thenReturn(false);
+
+        // Exercise
+        final Optional<Long> result = adminRequestService.approvePendingRequestAndReturnUserId(REQUEST_ID);
+
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 
     @Test

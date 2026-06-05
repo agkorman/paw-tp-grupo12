@@ -141,14 +141,14 @@ public class AdminRequestServiceImpl implements AdminRequestService {
 
     @Override
     @Transactional
-    public boolean approvePendingRequest(final long id) {
+    public Optional<Long> approvePendingRequestAndReturnUserId(final long id) {
         final AdminRequest request = adminRequestDao.findById(id).orElse(null);
         if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
             LOGGER.warn(
                 "approve admin request rejected: not found or not pending id={}",
                 id
             );
-            return false;
+            return Optional.empty();
         }
 
         final boolean statusUpdated = adminRequestDao.updateStatus(
@@ -157,7 +157,7 @@ public class AdminRequestServiceImpl implements AdminRequestService {
             STATUS_APPROVED
         );
         if (!statusUpdated) {
-            return false;
+            return Optional.empty();
         }
 
         userService.updateRole(request.getSubmittedByUserId(), GRANTED_ROLE);
@@ -168,7 +168,13 @@ public class AdminRequestServiceImpl implements AdminRequestService {
             request.getSubmittedByUserId(),
             GRANTED_ROLE
         );
-        return true;
+        return Optional.of(request.getSubmittedByUserId());
+    }
+
+    @Override
+    @Transactional
+    public boolean approvePendingRequest(final long id) {
+        return approvePendingRequestAndReturnUserId(id).isPresent();
     }
 
     @Override
