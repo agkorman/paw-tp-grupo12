@@ -16,5 +16,6 @@ public interface ReviewReplyDao {
     ReviewReply create(long reviewId, long userId, String body);
     boolean update(long id, String body);
     Map<Long, Long> countNewRepliesPerReview(long userId, LocalDateTime since);
+    Map<Long, Long> countRepliesByReviewIds(Collection<Long> reviewIds);
     boolean delete(long id);
 }

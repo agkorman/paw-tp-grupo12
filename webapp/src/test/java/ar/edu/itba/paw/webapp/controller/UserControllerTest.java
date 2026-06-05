@@ -8,6 +8,7 @@ import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewLikeService;
+import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserActivityService;
 import ar.edu.itba.paw.services.UserFollowService;
@@ -60,6 +61,9 @@ class UserControllerTest {
 
     @Mock
     private ReviewLikeService reviewLikeService;
+
+    @Mock
+    private ReviewReplyService reviewReplyService;
 
     @Mock
     private CarService carService;

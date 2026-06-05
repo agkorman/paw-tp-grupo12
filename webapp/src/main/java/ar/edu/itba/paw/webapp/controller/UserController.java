@@ -14,6 +14,7 @@ import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewLikeService;
+import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.UserActivityService;
 import ar.edu.itba.paw.services.UserFollowService;
@@ -82,6 +83,7 @@ public class UserController {
 
     private final ReviewService reviewService;
     private final ReviewLikeService reviewLikeService;
+    private final ReviewReplyService reviewReplyService;
     private final CarService carService;
     private final CarFavoriteService carFavoriteService;
     private final UserService userService;
@@ -95,6 +97,7 @@ public class UserController {
     public UserController(
         final ReviewService reviewService,
         final ReviewLikeService reviewLikeService,
+        final ReviewReplyService reviewReplyService,
         final CarService carService,
         final CarFavoriteService carFavoriteService,
         final UserService userService,
@@ -106,6 +109,7 @@ public class UserController {
     ) {
         this.reviewService = reviewService;
         this.reviewLikeService = reviewLikeService;
+        this.reviewReplyService = reviewReplyService;
         this.carService = carService;
         this.carFavoriteService = carFavoriteService;
         this.userService = userService;
@@ -575,6 +579,8 @@ public class UserController {
         final Map<Long, Car> carsById = reviewedCarsById(new ArrayList<>(reviewsById.values()));
         final Map<Long, Long> reviewLikeCounts =
             reviewLikeService.countReviewLikesByReviewIds(reviewIds);
+        final Map<Long, Long> reviewReplyCounts =
+            reviewReplyService.countRepliesByReviewIds(reviewIds);
         final Set<Long> likedByCurrentUser = currentUserId == null
             ? Set.of()
             : reviewLikeService.getLikedReviewIds(reviewIds, currentUserId);
@@ -598,7 +604,8 @@ public class UserController {
                         carsById.get(review.getCarId()),
                         likedByCurrentUser.contains(review.getId()),
                         reviewLikeCounts.getOrDefault(review.getId(), 0L),
-                        isOwnedByCurrentUser(review, currentUserId)
+                        isOwnedByCurrentUser(review, currentUserId),
+                        reviewReplyCounts.getOrDefault(review.getId(), 0L)
                     )
                 ));
             } else {
@@ -611,6 +618,7 @@ public class UserController {
                         post.getId(),
                         postAuthorName(post),
                         post.getCommunity().getSlug(),
+                        post.getCommunity().getName(),
                         post.getSlug(),
                         post.getTitle(),
                         post.getBody(),
@@ -861,19 +869,22 @@ public class UserController {
         private final boolean liked;
         private final long likeCount;
         private final boolean ownedByCurrentUser;
+        private final long replyCount;
 
         private ProfileReviewCard(
             final Review review,
             final Car car,
             final boolean liked,
             final long likeCount,
-            final boolean ownedByCurrentUser
+            final boolean ownedByCurrentUser,
+            final long replyCount
         ) {
             this.review = review;
             this.car = car;
             this.liked = liked;
             this.likeCount = likeCount;
             this.ownedByCurrentUser = ownedByCurrentUser;
+            this.replyCount = replyCount;
         }
 
         public Review getReview() {
@@ -905,6 +916,10 @@ public class UserController {
 
         public boolean getOwnedByCurrentUser() {
             return ownedByCurrentUser;
+        }
+
+        public long getReplyCount() {
+            return replyCount;
         }
     }
 
@@ -958,6 +973,7 @@ public class UserController {
         private final long postId;
         private final String authorName;
         private final String communitySlug;
+        private final String communityName;
         private final String postSlug;
         private final String title;
         private final String body;
@@ -969,6 +985,7 @@ public class UserController {
             final long postId,
             final String authorName,
             final String communitySlug,
+            final String communityName,
             final String postSlug,
             final String title,
             final String body,
@@ -979,6 +996,7 @@ public class UserController {
             this.postId = postId;
             this.authorName = authorName;
             this.communitySlug = communitySlug;
+            this.communityName = communityName;
             this.postSlug = postSlug;
             this.title = title;
             this.body = body;
@@ -997,6 +1015,10 @@ public class UserController {
 
         public String getCommunitySlug() {
             return communitySlug;
+        }
+
+        public String getCommunityName() {
+            return communityName;
         }
 
         public String getPostSlug() {

@@ -80,8 +80,7 @@
     justify-content: flex-end;
 }
 
-.profile-review-date,
-.profile-review-car {
+.profile-review-date {
     color: var(--secondary);
     font-size: 0.75rem;
     font-weight: 700;
@@ -89,23 +88,8 @@
     text-transform: uppercase;
 }
 
-.profile-review-rating-row,
 .profile-review-menu-slot {
     flex: 0 0 auto;
-}
-
-.profile-review-rating-row .card-rating-badge {
-    gap: 0.35rem;
-    padding: 0.32rem 0.65rem;
-    font-size: 0.82rem;
-}
-
-.profile-review-rating-row .card-rating-badge svg {
-    width: 12px;
-    height: 12px;
-}
-
-.profile-review-menu-slot {
     width: 2rem;
     min-width: 2rem;
     display: inline-flex;
@@ -114,19 +98,28 @@
 
 .profile-review-card h3 {
     font-family: var(--font-display);
-    font-size: 1.55rem;
+    font-size: clamp(1.4rem, 2.5vw, 1.55rem);
     line-height: 1.25;
     overflow-wrap: anywhere;
 }
 
-.profile-review-body {
-    color: var(--on-surface-variant);
-    line-height: 1.65;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+.profile-review-context-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
 }
+
+.profile-review-inline-rating {
+    gap: 0.35rem;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.78rem;
+}
+
+.profile-review-inline-rating svg {
+    width: 12px;
+    height: 12px;
+}
+
 
 @media (max-width: 900px) {
     .profile-review-card {

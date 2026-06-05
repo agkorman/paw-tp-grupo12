@@ -251,6 +251,7 @@
                                                         body="${entry.postCard.body}"
                                                         helpfulCount="${entry.postCard.helpfulCount}"
                                                         commentCount="${entry.postCard.commentCount}"
+                                                        communityName="${entry.postCard.communityName}"
                                                         href="${likedPostHref}"/>
                                             </c:when>
                                         </c:choose>
@@ -306,6 +307,7 @@
                                                         body="${entry.postCard.body}"
                                                         helpfulCount="${entry.postCard.helpfulCount}"
                                                         commentCount="${entry.postCard.commentCount}"
+                                                        communityName="${entry.postCard.communityName}"
                                                         href="${activityPostHref}"/>
                                             </c:when>
                                         </c:choose>

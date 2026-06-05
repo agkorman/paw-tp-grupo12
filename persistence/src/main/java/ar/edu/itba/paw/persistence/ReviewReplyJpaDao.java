@@ -112,6 +112,26 @@ public class ReviewReplyJpaDao implements ReviewReplyDao {
     }
 
     @Override
+    public Map<Long, Long> countRepliesByReviewIds(final Collection<Long> reviewIds) {
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return Map.of();
+        }
+        final List<?> rawRows = em.createQuery(
+                        "SELECT rr.review.id, COUNT(rr.id) "
+                        + "FROM ReviewReply rr "
+                        + "WHERE rr.review.id IN :reviewIds "
+                        + "GROUP BY rr.review.id")
+                .setParameter("reviewIds", reviewIds)
+                .getResultList();
+        final Map<Long, Long> counts = new HashMap<>();
+        for (final Object element : rawRows) {
+            final Object[] row = (Object[]) element;
+            counts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
+        return counts;
+    }
+
+    @Override
     public boolean delete(final long id) {
         final ReviewReply reply = em.find(ReviewReply.class, id);
         if (reply == null) {
