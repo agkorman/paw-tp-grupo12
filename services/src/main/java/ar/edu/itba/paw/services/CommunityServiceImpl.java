@@ -1176,6 +1176,12 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Set<Long> findPostHelpfulReactionsByUser(final Collection<Long> postIds, final long userId) {
+        return communityDao.findPostHelpfulReactionsByUser(postIds, userId);
+    }
+
+    @Override
     public Map<Long, Long> countCommentsByPostIds(final Collection<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) {
             return Map.of();

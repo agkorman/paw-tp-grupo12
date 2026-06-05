@@ -28,6 +28,7 @@ import ar.edu.itba.paw.webapp.form.CommunityPostForm;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -249,7 +250,7 @@ public class CommunityController {
         mav.addObject("pageTitle", communityDetail.getCommunity().getName() + " | La Posta Autos");
         mav.addObject("communityDetail", communityDetail);
         mav.addObject("currentSort", communityDetail.getCurrentSort());
-        mav.addObject("postCards", toPostCards(communityDetail.getPosts(), communityDetail.getCommunity().getSlug()));
+        mav.addObject("postCards", toPostCards(communityDetail.getPosts(), communityDetail.getCommunity().getSlug(), currentUserId(currentUser)));
         mav.addObject("postsCurrentPage", communityDetail.getPostsPage().getPageNumber());
         mav.addObject("postsTotalPages", communityDetail.getPostsPage().getTotalPages());
         return mav;
@@ -296,6 +297,7 @@ public class CommunityController {
     public String togglePostHelpful(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
@@ -307,7 +309,9 @@ public class CommunityController {
 
         communityService.togglePostHelpfulReaction(communitySlug, postSlug, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        return redirectTo(defaultRedirect);
+        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath())
+                .orElse(defaultRedirect);
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -805,18 +809,30 @@ public class CommunityController {
     }
 
     private List<PostCardView> toPostCards(final List<CommunityPostSummary> postSummaries,
-                                           final String communitySlug) {
+                                           final String communitySlug,
+                                           final Long currentUserId) {
+        final List<Long> postIds = postSummaries.stream()
+            .map(s -> s.getPost().getId())
+            .toList();
+        final Set<Long> helpfulByUser = currentUserId == null
+            ? Set.of()
+            : communityService.findPostHelpfulReactionsByUser(postIds, currentUserId);
+
         final List<PostCardView> cards = new ArrayList<>();
         for (final CommunityPostSummary postSummary : postSummaries) {
+            final String postSlug = postSummary.getPost().getSlug();
             cards.add(new PostCardView(
-                "/communities/" + communitySlug + "/posts/" + postSummary.getPost().getSlug(),
+                "/communities/" + communitySlug + "/posts/" + postSlug,
                 "/users/" + postSummary.getPost().getAuthorUserId(),
                 postSummary.getPost().getAuthorUsername(),
                 relativeTimeFormatter.format(postSummary.getPost().getCreatedAt()),
                 postSummary.getPost().getTitle(),
                 postSummary.getPost().getBody(),
                 postSummary.getHelpfulCount(),
-                postSummary.getCommentCount()
+                postSummary.getCommentCount(),
+                postSummary.getPost().getId(),
+                "/communities/" + communitySlug + "/posts/" + postSlug + "/helpful",
+                helpfulByUser.contains(postSummary.getPost().getId())
             ));
         }
         return cards;
@@ -987,12 +1003,17 @@ public class CommunityController {
         private final String body;
         private final long helpfulCount;
         private final long commentCount;
+        private final long postId;
+        private final String helpfulAction;
+        private final boolean helpfulByCurrentUser;
 
         private PostCardView(final String href, final String authorProfileHref,
                              final String author,
                              final String timeText, final String title,
                              final String body, final long helpfulCount,
-                             final long commentCount) {
+                             final long commentCount, final long postId,
+                             final String helpfulAction,
+                             final boolean helpfulByCurrentUser) {
             this.href = href;
             this.authorProfileHref = authorProfileHref;
             this.author = author;
@@ -1001,6 +1022,9 @@ public class CommunityController {
             this.body = body;
             this.helpfulCount = helpfulCount;
             this.commentCount = commentCount;
+            this.postId = postId;
+            this.helpfulAction = helpfulAction;
+            this.helpfulByCurrentUser = helpfulByCurrentUser;
         }
 
         public String getHref() {
@@ -1033,6 +1057,18 @@ public class CommunityController {
 
         public long getCommentCount() {
             return commentCount;
+        }
+
+        public long getPostId() {
+            return postId;
+        }
+
+        public String getHelpfulAction() {
+            return helpfulAction;
+        }
+
+        public boolean getHelpfulByCurrentUser() {
+            return helpfulByCurrentUser;
         }
     }
 

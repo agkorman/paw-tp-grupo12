@@ -228,11 +228,11 @@
                                 </div>
                             </c:when>
                             <c:otherwise>
-                                <c:set var="likesActionRedirect" value="${profileBasePath}?tab=likes"/>
+                                <c:set var="likesActionRedirectBase" value="${profileBasePath}?tab=likes"/>
                                 <c:if test="${not empty likesCurrentPage and likesCurrentPage > 1}">
-                                    <c:set var="likesActionRedirect" value="${likesActionRedirect}&page=${likesCurrentPage}"/>
+                                    <c:set var="likesActionRedirectBase" value="${likesActionRedirectBase}&page=${likesCurrentPage}"/>
                                 </c:if>
-                                <c:set var="likesActionRedirect" value="${likesActionRedirect}#profileLikesPanel"/>
+                                <c:set var="likesActionRedirect" value="${likesActionRedirectBase}#profileLikesPanel"/>
                                 <div class="profile-activity-list">
                                     <c:forEach var="entry" items="${likesEntries}">
                                         <c:choose>
@@ -244,6 +244,7 @@
                                             </c:when>
                                             <c:when test="${entry.isPost}">
                                                 <c:url var="likedPostHref" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}"/>
+                                                <c:url var="likedPostHelpfulAction" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}/helpful"/>
                                                 <pa:community-post-card
                                                         author="${entry.postCard.authorName}"
                                                         timeText="${relativeTimeFormatter.format(entry.postCard.createdAt)}"
@@ -252,7 +253,11 @@
                                                         helpfulCount="${entry.postCard.helpfulCount}"
                                                         commentCount="${entry.postCard.commentCount}"
                                                         communityName="${entry.postCard.communityName}"
-                                                        href="${likedPostHref}"/>
+                                                        href="${likedPostHref}"
+                                                        postId="${entry.postCard.postId}"
+                                                        helpfulAction="${likedPostHelpfulAction}"
+                                                        helpfulByCurrentUser="${entry.postCard.helpfulByCurrentUser}"
+                                                        helpfulRedirect="${likesActionRedirectBase}#post-${entry.postCard.postId}"/>
                                             </c:when>
                                         </c:choose>
                                     </c:forEach>
@@ -284,11 +289,11 @@
                                 </div>
                             </c:when>
                             <c:otherwise>
-                                <c:set var="activityActionRedirect" value="${profileBasePath}?tab=activity"/>
+                                <c:set var="activityActionRedirectBase" value="${profileBasePath}?tab=activity"/>
                                 <c:if test="${not empty activityCurrentPage and activityCurrentPage > 1}">
-                                    <c:set var="activityActionRedirect" value="${activityActionRedirect}&page=${activityCurrentPage}"/>
+                                    <c:set var="activityActionRedirectBase" value="${activityActionRedirectBase}&page=${activityCurrentPage}"/>
                                 </c:if>
-                                <c:set var="activityActionRedirect" value="${activityActionRedirect}#profileActivityPanel"/>
+                                <c:set var="activityActionRedirect" value="${activityActionRedirectBase}#profileActivityPanel"/>
                                 <div class="profile-activity-list">
                                     <c:forEach var="entry" items="${activityEntries}">
                                         <c:choose>
@@ -300,6 +305,7 @@
                                             </c:when>
                                             <c:when test="${entry.isPost}">
                                                 <c:url var="activityPostHref" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}"/>
+                                                <c:url var="activityPostHelpfulAction" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}/helpful"/>
                                                 <pa:community-post-card
                                                         author="${entry.postCard.authorName}"
                                                         timeText="${relativeTimeFormatter.format(entry.postCard.createdAt)}"
@@ -308,7 +314,11 @@
                                                         helpfulCount="${entry.postCard.helpfulCount}"
                                                         commentCount="${entry.postCard.commentCount}"
                                                         communityName="${entry.postCard.communityName}"
-                                                        href="${activityPostHref}"/>
+                                                        href="${activityPostHref}"
+                                                        postId="${entry.postCard.postId}"
+                                                        helpfulAction="${activityPostHelpfulAction}"
+                                                        helpfulByCurrentUser="${entry.postCard.helpfulByCurrentUser}"
+                                                        helpfulRedirect="${activityActionRedirectBase}#post-${entry.postCard.postId}"/>
                                             </c:when>
                                         </c:choose>
                                     </c:forEach>

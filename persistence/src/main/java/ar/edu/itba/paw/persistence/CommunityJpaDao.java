@@ -506,6 +506,27 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public Set<Long> findPostHelpfulReactionsByUser(final Collection<Long> postIds, final long userId) {
+        final List<Long> normalizedIds = normalizeIds(postIds);
+        if (normalizedIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        final Query q = em.createNativeQuery(
+                "SELECT post_id FROM community_post_helpful_reactions " +
+                "WHERE post_id IN (" + placeholders(normalizedIds.size()) + ") AND user_id = ?"
+        );
+        applyPositionalParameters(q, normalizedIds);
+        q.setParameter(normalizedIds.size() + 1, userId);
+        @SuppressWarnings("unchecked")
+        final List<Number> rows = q.getResultList();
+        final Set<Long> result = new java.util.HashSet<>();
+        for (final Number row : rows) {
+            result.add(row.longValue());
+        }
+        return result;
+    }
+
+    @Override
     public Map<Long, List<CommunityTopic>> findTopicsByCommunityIds(final Collection<Long> communityIds) {
         final List<Long> normalizedIds = normalizeIds(communityIds);
         if (normalizedIds.isEmpty()) {

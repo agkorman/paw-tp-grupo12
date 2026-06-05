@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface CommunityService {
     List<CommunityHubEntry> getCommunityHub(Long currentUserId);
@@ -50,5 +51,6 @@ public interface CommunityService {
     Optional<Boolean> transferOwnership(String communitySlug, long newOwnerUserId, long callerUserId);
     List<CommunityPost> getPostsByIds(Collection<Long> postIds);
     Map<Long, Long> countHelpfulReactionsByPostIds(Collection<Long> postIds);
+    Set<Long> findPostHelpfulReactionsByUser(Collection<Long> postIds, long userId);
     Map<Long, Long> countCommentsByPostIds(Collection<Long> postIds);
 }

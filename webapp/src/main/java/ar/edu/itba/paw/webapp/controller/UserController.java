@@ -590,6 +590,9 @@ public class UserController {
             communityService.countHelpfulReactionsByPostIds(postIds);
         final Map<Long, Long> commentCounts =
             communityService.countCommentsByPostIds(postIds);
+        final Set<Long> helpfulByCurrentUser = currentUserId == null
+            ? Set.of()
+            : communityService.findPostHelpfulReactionsByUser(postIds, currentUserId);
 
         final List<ProfileActivityEntry> entries = new ArrayList<>(items.size());
         for (final ProfileActivityItem item : items) {
@@ -624,7 +627,8 @@ public class UserController {
                         post.getBody(),
                         post.getCreatedAt(),
                         helpfulCounts.getOrDefault(post.getId(), 0L),
-                        commentCounts.getOrDefault(post.getId(), 0L)
+                        commentCounts.getOrDefault(post.getId(), 0L),
+                        helpfulByCurrentUser.contains(post.getId())
                     )
                 ));
             }
@@ -980,6 +984,7 @@ public class UserController {
         private final LocalDateTime createdAt;
         private final long helpfulCount;
         private final long commentCount;
+        private final boolean helpfulByCurrentUser;
 
         private ProfilePostCard(
             final long postId,
@@ -991,7 +996,8 @@ public class UserController {
             final String body,
             final LocalDateTime createdAt,
             final long helpfulCount,
-            final long commentCount
+            final long commentCount,
+            final boolean helpfulByCurrentUser
         ) {
             this.postId = postId;
             this.authorName = authorName;
@@ -1003,6 +1009,7 @@ public class UserController {
             this.createdAt = createdAt;
             this.helpfulCount = helpfulCount;
             this.commentCount = commentCount;
+            this.helpfulByCurrentUser = helpfulByCurrentUser;
         }
 
         public long getPostId() {
@@ -1043,6 +1050,10 @@ public class UserController {
 
         public long getCommentCount() {
             return commentCount;
+        }
+
+        public boolean getHelpfulByCurrentUser() {
+            return helpfulByCurrentUser;
         }
     }
 

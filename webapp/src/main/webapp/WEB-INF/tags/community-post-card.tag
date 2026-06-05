@@ -7,25 +7,37 @@
 <%@ attribute name="commentCount" required="true" type="java.lang.Long" %>
 <%@ attribute name="href" required="false" %>
 <%@ attribute name="communityName" required="false" %>
+<%@ attribute name="postId" required="false" type="java.lang.Long" %>
+<%@ attribute name="helpfulAction" required="false" %>
+<%@ attribute name="helpfulByCurrentUser" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="helpfulRedirect" required="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
-<spring:message var="helpfulCountText" code="communities.post.metric.helpful" arguments="${helpfulCount}"/>
 <spring:message var="commentCountText" code="communities.post.metric.comments" arguments="${commentCount}"/>
 <spring:message var="postMetricsAria" code="communities.post.metrics.aria"/>
+<c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 
 <c:choose>
     <c:when test="${not empty href}">
-        <a class="community-post-card community-post-card-link" href="${fn:escapeXml(href)}">
+        <a class="community-post-card community-post-card-link" href="${fn:escapeXml(href)}"${not empty postId ? ' id="post-'.concat(postId).concat('"') : ''}>
             <div class="community-post-topline">
                 <p class="community-post-meta">
                     <strong><c:out value="${author}"/></strong>
                     <span aria-hidden="true">•</span>
                     <span><c:out value="${timeText}"/></span>
                 </p>
-                <div class="profile-card-metrics" aria-label="${fn:escapeXml(postMetricsAria)}">
-                    <span class="profile-card-metric"><c:out value="${helpfulCountText}"/></span>
+                <div class="community-post-card-actions" aria-label="${fn:escapeXml(postMetricsAria)}">
+                    <pa:review-like-button
+                            reviewId="${postId}"
+                            action="${helpfulAction}"
+                            redirect="${helpfulRedirect}"
+                            liked="${helpfulByCurrentUser}"
+                            likeCount="${helpfulCount}"
+                            disabled="${not authenticated}"
+                            intent="community-post-helpful-${postId}"/>
                     <span class="profile-card-metric"><c:out value="${commentCountText}"/></span>
                 </div>
             </div>
@@ -38,15 +50,22 @@
         </a>
     </c:when>
     <c:otherwise>
-        <article class="community-post-card">
+        <article class="community-post-card"${not empty postId ? ' id="post-'.concat(postId).concat('"') : ''}>
             <div class="community-post-topline">
                 <p class="community-post-meta">
                     <strong><c:out value="${author}"/></strong>
                     <span aria-hidden="true">•</span>
                     <span><c:out value="${timeText}"/></span>
                 </p>
-                <div class="profile-card-metrics" aria-label="${fn:escapeXml(postMetricsAria)}">
-                    <span class="profile-card-metric"><c:out value="${helpfulCountText}"/></span>
+                <div class="community-post-card-actions" aria-label="${fn:escapeXml(postMetricsAria)}">
+                    <pa:review-like-button
+                            reviewId="${postId}"
+                            action="${helpfulAction}"
+                            redirect="${helpfulRedirect}"
+                            liked="${helpfulByCurrentUser}"
+                            likeCount="${helpfulCount}"
+                            disabled="${not authenticated}"
+                            intent="community-post-helpful-${postId}"/>
                     <span class="profile-card-metric"><c:out value="${commentCountText}"/></span>
                 </div>
             </div>

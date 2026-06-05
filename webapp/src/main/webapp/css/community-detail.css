@@ -221,6 +221,7 @@
     padding: var(--spacing-5);
     display: grid;
     gap: var(--spacing-4);
+    scroll-margin-top: calc(50vh - 5rem);
 }
 
 .community-post-card-link {
@@ -242,6 +243,13 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--spacing-3);
+}
+
+.community-post-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: nowrap;
 }
 
 .community-post-meta {
