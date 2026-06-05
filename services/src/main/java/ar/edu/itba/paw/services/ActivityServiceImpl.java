@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.ActivityFeedCriteria;
 import ar.edu.itba.paw.model.ActivityFeedItem;
+import ar.edu.itba.paw.model.ActivityFeedPermissions;
 import ar.edu.itba.paw.model.ActivityFeedReference;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CommunityPost;
@@ -36,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ActivityServiceImpl implements ActivityService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityServiceImpl.class);
+    private static final String COMMUNITY_MODERATOR_ROLE = "moderator";
 
     private final ActivityDao activityDao;
     private final ReviewDao reviewDao;
@@ -142,6 +144,67 @@ public class ActivityServiceImpl implements ActivityService {
         LOGGER.debug("loaded activity feed page={} itemCount={} totalItems={}",
                 refsPage.getPageNumber(), items.size(), refsPage.getTotalItems());
         return new Page<>(items, refsPage.getPageNumber(), refsPage.getPageSize(), refsPage.getTotalItems());
+    }
+
+    @Override
+    public Map<ActivityFeedReference, ActivityFeedPermissions> getActivityFeedPermissions(
+            final Collection<ActivityFeedItem> items,
+            final Long viewerUserId,
+            final boolean viewerAdmin) {
+        if (items == null || items.isEmpty() || (viewerUserId == null && !viewerAdmin)) {
+            return Collections.emptyMap();
+        }
+
+        final List<Long> communityIds = items.stream()
+                .filter(ActivityFeedItem::isCommunityPost)
+                .map(item -> item.getCommunityPost().getCommunityId())
+                .distinct()
+                .toList();
+        final Map<Long, String> communityRolesById = viewerUserId == null || communityIds.isEmpty()
+                ? Collections.emptyMap()
+                : communityDao.findMembershipRoles(viewerUserId, communityIds);
+
+        final Map<ActivityFeedReference, ActivityFeedPermissions> permissionsByReference = new LinkedHashMap<>();
+        for (final ActivityFeedItem item : items) {
+            if (item.isReview()) {
+                permissionsByReference.put(item.getReference(), reviewPermissions(item, viewerUserId, viewerAdmin));
+                continue;
+            }
+            permissionsByReference.put(
+                    item.getReference(),
+                    communityPostPermissions(item, viewerUserId, viewerAdmin, communityRolesById)
+            );
+        }
+        return permissionsByReference;
+    }
+
+    private ActivityFeedPermissions reviewPermissions(final ActivityFeedItem item,
+                                                      final Long viewerUserId,
+                                                      final boolean viewerAdmin) {
+        final boolean ownedByViewer = viewerUserId != null
+                && item.getReview().getUserId() != null
+                && item.getReview().getUserId().equals(viewerUserId);
+        return new ActivityFeedPermissions(
+                item.getReference(),
+                ownedByViewer,
+                ownedByViewer,
+                viewerAdmin && !ownedByViewer
+        );
+    }
+
+    private ActivityFeedPermissions communityPostPermissions(final ActivityFeedItem item,
+                                                             final Long viewerUserId,
+                                                             final boolean viewerAdmin,
+                                                             final Map<Long, String> communityRolesById) {
+        final long communityId = item.getCommunityPost().getCommunityId();
+        final boolean ownedByViewer = viewerUserId != null && item.getCommunityPost().getAuthorUserId() == viewerUserId;
+        final boolean viewerCommunityModerator = COMMUNITY_MODERATOR_ROLE.equals(communityRolesById.get(communityId));
+        return new ActivityFeedPermissions(
+                item.getReference(),
+                ownedByViewer,
+                ownedByViewer,
+                (viewerAdmin || viewerCommunityModerator) && !ownedByViewer
+        );
     }
 
     private Map<Long, Car> loadCarsById(final Collection<Review> reviews) {

@@ -85,8 +85,20 @@
 
 .activity-card-topline {
     min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-3);
+}
+
+.activity-card-topline-content {
+    min-width: 0;
     display: grid;
     gap: 0.2rem;
+}
+
+.activity-card-menu {
+    flex: 0 0 auto;
 }
 
 .activity-card-meta {
@@ -234,6 +246,18 @@
     font-weight: 600;
 }
 
+a.activity-card-metric-link {
+    text-decoration: none;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+a.activity-card-metric-link:hover,
+a.activity-card-metric-link:focus-visible {
+    color: var(--on-surface);
+    border-color: rgba(229, 226, 225, 0.32);
+    background: var(--surface-container-highest);
+}
+
 .activity-empty-state {
     padding: var(--spacing-8);
     background: var(--surface-container-low);
@@ -254,6 +278,10 @@
 
     .activity-card {
         padding: var(--spacing-4);
+    }
+
+    .activity-card-topline {
+        gap: var(--spacing-2);
     }
 
     .activity-card-title {

@@ -49,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -169,21 +170,26 @@ class CommunityControllerTest {
     @Test
     void communityPostDetail_knownPost_rendersPostDetailView() throws Exception {
         // Arrange
-        when(communityService.getCommunityPostDetail(anyString(), anyString(), any()))
+        when(communityService.getCommunityPostDetail(anyString(), anyString(), any(), anyBoolean()))
                 .thenReturn(Optional.of(communityPostDetailData()));
         when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("2 hours ago");
         final MockMvc mockMvc = communityMockMvc();
 
         // Exercise
         final ResultActions resultActions =
-                mockMvc.perform(get("/communities/classics/posts/falcon-60"));
+                mockMvc.perform(get("/communities/classics/posts/falcon-60")
+                        .param("redirect", "/communities/classics?sort=commented&page=2#communityFeedTitle"));
 
         // Assertions
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(view().name("community-post-detail.jsp"))
                 .andExpect(model().attributeExists("postDetail"))
-                .andExpect(model().attributeExists("postView"));
+                .andExpect(model().attributeExists("postView"))
+                .andExpect(model().attribute(
+                        "postReturnRedirect",
+                        "/communities/classics?sort=commented&page=2#communityFeedTitle"
+                ));
     }
 
     @Test

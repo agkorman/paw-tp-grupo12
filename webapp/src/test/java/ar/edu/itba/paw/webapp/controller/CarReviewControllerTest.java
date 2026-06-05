@@ -434,6 +434,30 @@ class CarReviewControllerTest {
     }
 
     @Test
+    void hideReview_withFeedRedirect_preservesFiltersPageAndFeedAnchor() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        final Review existing = reviewOwnedBy(1L, 42L);
+        when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(existing));
+        when(reviewService.hideReview(eq(1L), eq("Duplicated review."))).thenReturn(true);
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(
+                    post("/reviews/1/hide")
+                            .param("reason", "Duplicated review.")
+                            .param("redirect", "/reviews/car/42?page=2&sort=rating_desc#reviewsFeed"));
+            // Assertions
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/reviews/car/42?page=2&sort=rating_desc#reviewsFeed"));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
     void deleteReview_notOwner_throwsForbidden() throws Exception {
         // Arrange
         arrangeStandardReviewCollaboratorsAndI18n();

@@ -36,6 +36,7 @@
               data-reason-min-message="${fn:escapeXml(reasonMinMessage)}"
               data-reason-max-message="${fn:escapeXml(reasonMaxMessage)}">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+            <input type="hidden" name="redirect" value="" data-community-hide-redirect>
             <p class="modal-subtitle"><spring:message code="${bodyCode}"/></p>
             <div class="modal-field modal-field-wide">
                 <label for="${fn:escapeXml(id)}Reason"><spring:message code="communities.hide.reason.label"/></label>

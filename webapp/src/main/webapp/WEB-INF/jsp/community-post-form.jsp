@@ -34,6 +34,9 @@
                    action="${fn:escapeXml(communityPostFormActionUrl)}"
                    enctype="multipart/form-data"
                    novalidate="novalidate">
+            <c:if test="${editMode and not empty editRedirect}">
+                <input type="hidden" name="redirect" value="${fn:escapeXml(editRedirect)}">
+            </c:if>
             <form:errors cssClass="alert alert-error" element="div"/>
             <div class="community-post-form-header">
                 <p class="community-post-form-target">

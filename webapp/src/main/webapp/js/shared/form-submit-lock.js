@@ -47,49 +47,47 @@
         return false;
     }
 
-    function installOn(form) {
-        form.addEventListener('submit', function (event) {
-            // If an earlier handler already blocked the submit, leave the
-            // button enabled so the user can fix errors and retry.
-            if (event.defaultPrevented) {
-                return;
-            }
-
-            // Forms gated by a confirmation modal submit twice: once to open
-            // the modal (which prevents default) and once after the user
-            // confirms. Skip locking on the pre-confirmation pass; lock only
-            // when the form is actually being submitted for real.
-            if (
-                form.hasAttribute('data-confirm-modal') &&
-                form.getAttribute('data-confirmed') !== 'true'
-            ) {
-                return;
-            }
-
-            var buttons = findSubmitButtons(form);
-            if (anyDisabled(buttons)) {
-                // User clicked again while we were mid-submit - kill the extra.
-                event.preventDefault();
-                return;
-            }
-
-            for (var i = 0; i < buttons.length; i++) {
-                lockButton(buttons[i]);
-            }
-        });
-    }
-
     function shouldLock(form) {
         if (form.dataset.submitLock === 'false') return false;
         var method = (form.getAttribute('method') || 'get').toLowerCase();
         return method === 'post';
     }
 
+    function onSubmit(event) {
+        var form = event.target;
+        if (!form || !form.getAttribute || !shouldLock(form)) {
+            return;
+        }
+
+        // If validation or another enhancement blocked the submit, leave the
+        // button enabled so the user can fix errors and retry.
+        if (event.defaultPrevented) {
+            return;
+        }
+
+        // Forms gated by a confirmation modal submit twice: once to open the
+        // modal (which prevents default) and once after the user confirms.
+        if (
+            form.hasAttribute('data-confirm-modal') &&
+            form.getAttribute('data-confirmed') !== 'true'
+        ) {
+            return;
+        }
+
+        var buttons = findSubmitButtons(form);
+        if (anyDisabled(buttons)) {
+            // User clicked again while we were mid-submit - kill the extra.
+            event.preventDefault();
+            return;
+        }
+
+        for (var i = 0; i < buttons.length; i++) {
+            lockButton(buttons[i]);
+        }
+    }
+
     function init() {
-        var forms = document.querySelectorAll('form');
-        Array.prototype.forEach.call(forms, function (form) {
-            if (shouldLock(form)) installOn(form);
-        });
+        document.addEventListener('submit', onSubmit);
     }
 
     if (document.readyState === 'loading') {

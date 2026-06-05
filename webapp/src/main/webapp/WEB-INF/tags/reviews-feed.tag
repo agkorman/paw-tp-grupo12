@@ -38,12 +38,16 @@
         <div class="feed-header-actions">
             <form method="get" action="<c:url value='/reviews/car/${carId}'/>#reviewsFeed" class="review-sort-form">
                 <label class="review-sort-label" for="reviewSortSelect"><spring:message code="review.feed.sort"/></label>
-                <select id="reviewSortSelect" name="sort" class="review-sort-select">
+                <select id="reviewSortSelect" name="sort" class="review-sort-select" data-auto-submit="true">
                     <option value="" ${empty currentSort ? 'selected' : ''}><spring:message code="review.feed.sort.recent"/></option>
                     <option value="rating_desc" ${currentSort eq 'rating_desc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingDesc"/></option>
                     <option value="rating_asc" ${currentSort eq 'rating_asc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingAsc"/></option>
                 </select>
-                <button type="submit" class="btn-secondary review-sort-submit"><spring:message code="common.action.apply"/></button>
+                <noscript>
+                    <button type="submit" class="btn-secondary review-sort-submit">
+                        <spring:message code="common.action.apply"/>
+                    </button>
+                </noscript>
             </form>
         </div>
     </div>
@@ -105,7 +109,7 @@
                                                     data-open-hide-review-modal
                                                     data-review-id="${fn:escapeXml(review.id)}"
                                                     data-review-hide-action="${fn:escapeXml(reviewHideUrl)}"
-                                                    data-review-hide-redirect="${fn:escapeXml(reviewItemRedirect)}"
+                                                    data-review-hide-redirect="${fn:escapeXml(reviewFeedRedirect)}"
                                                     data-review-title="${fn:escapeXml(review.title)}">
                                                 <pa:icon name="visibility-off" size="18"/>
                                             </button>
@@ -152,7 +156,7 @@
                                     likeCount="${thread.likeCount}"
                                     disabled="${not authenticated}"/>
                         </div>
-                        <div class="review-replies" aria-label="${reviewRepliesLabel}">
+                        <div class="review-replies" id="review-${review.id}-replies" aria-label="${reviewRepliesLabel}">
                             <c:if test="${not empty thread.replies}">
                                 <div class="review-reply-list">
                                     <c:forEach var="replyCard" items="${thread.replies}">

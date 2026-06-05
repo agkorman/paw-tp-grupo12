@@ -33,6 +33,7 @@ public interface CommunityDao {
     void createMembership(long communityId, long userId, String role);
     void deleteMembership(long communityId, long userId);
     Optional<String> findMembershipRole(long communityId, long userId);
+    Map<Long, String> findMembershipRoles(long userId, Collection<Long> communityIds);
     void updateMembershipRole(long communityId, long userId, String newRole);
     List<CommunityMembershipEntry> listMembers(long communityId);
     void setPostHidden(long postId, boolean hidden);

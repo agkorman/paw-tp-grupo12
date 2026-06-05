@@ -301,16 +301,20 @@ public class CommunityController {
     public ModelAndView communityPostDetail(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         final CommunityPostDetailData postDetail = communityService
-            .getCommunityPostDetail(communitySlug, postSlug, currentUserId(currentUser))
+            .getCommunityPostDetail(communitySlug, postSlug, currentUserId(currentUser), request.isUserInRole("ADMIN"))
             .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
 
         final ModelAndView mav = new ModelAndView("community-post-detail.jsp");
         mav.addObject("pageTitle", postDetail.getPost().getTitle() + " | La Posta Autos");
         mav.addObject("postDetail", postDetail);
         mav.addObject("postView", toPostView(postDetail));
+        LoginRedirectUtils.safeRedirect(redirect, request.getContextPath())
+                .ifPresent(r -> mav.addObject("postReturnRedirect", r));
         return mav;
     }
 
@@ -433,6 +437,8 @@ public class CommunityController {
     public ModelAndView editCommunityPost(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
@@ -452,6 +458,8 @@ public class CommunityController {
         mav.addObject("editMode", true);
         mav.addObject("postSlug", postSlug);
         mav.addObject("existingPostImageIds", postImageIdsCsv(post.getId()));
+        LoginRedirectUtils.safeRedirect(redirect, request.getContextPath())
+                .ifPresent(r -> mav.addObject("editRedirect", r));
         return mav;
     }
 
@@ -536,9 +544,11 @@ public class CommunityController {
     public String updateCommunityPost(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @Valid @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
         final BindingResult errors,
         final Model model,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
@@ -551,6 +561,9 @@ public class CommunityController {
         final Community community = communityService
                 .getCommunityBySlug(communitySlug)
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse(communityPostDetailPath(communitySlug, postSlug));
         if (errors.hasErrors()) {
             LOGGER.warn("edit community post rejected: validation errors userId={} communitySlug={} postSlug={} errorCount={}",
                     currentUser.getId(),
@@ -561,6 +574,7 @@ public class CommunityController {
             model.addAttribute("editMode", true);
             model.addAttribute("postSlug", postSlug);
             model.addAttribute("existingPostImageIds", postImageIdsCsv(post.getId()));
+            model.addAttribute("editRedirect", safeRedirect);
             return "community-post-form.jsp";
         }
 
@@ -573,6 +587,7 @@ public class CommunityController {
             model.addAttribute("editMode", true);
             model.addAttribute("postSlug", postSlug);
             model.addAttribute("existingPostImageIds", postImageIdsCsv(post.getId()));
+            model.addAttribute("editRedirect", safeRedirect);
             return "community-post-form.jsp";
         }
 
@@ -602,7 +617,7 @@ public class CommunityController {
                 LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 currentUser.getId());
-        return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -748,19 +763,30 @@ public class CommunityController {
     public String hidePost(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @Valid @ModelAttribute("communityHideForm") final CommunityHideForm communityHideForm,
         final BindingResult errors,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse(communityPostDetailPath(communitySlug, postSlug));
         if (currentUser == null) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
         if (errors.hasErrors()) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
-        communityService.hidePost(communitySlug, postSlug, currentUser.getId(), communityHideForm.getReason())
+        communityService.hidePost(
+                        communitySlug,
+                        postSlug,
+                        currentUser.getId(),
+                        communityHideForm.getReason(),
+                        request.isUserInRole("ADMIN")
+                )
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        return "redirect:/communities/" + communitySlug;
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -771,33 +797,49 @@ public class CommunityController {
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
         @PathVariable final long commentId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @Valid @ModelAttribute("communityHideForm") final CommunityHideForm communityHideForm,
         final BindingResult errors,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse(communityPostDetailPath(communitySlug, postSlug));
         if (currentUser == null) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
         if (errors.hasErrors()) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
-        communityService.hideComment(communitySlug, commentId, currentUser.getId(), communityHideForm.getReason())
+        communityService.hideComment(
+                        communitySlug,
+                        commentId,
+                        currentUser.getId(),
+                        communityHideForm.getReason(),
+                        request.isUserInRole("ADMIN")
+                )
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
-        return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(value = "/communities/{communitySlug}/posts/{postSlug}/delete", method = RequestMethod.POST)
     public String deletePost(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse("/communities/" + communitySlug);
         if (currentUser == null) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
         communityService.deletePost(communitySlug, postSlug, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        return "redirect:/communities/" + communitySlug;
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -1022,7 +1064,7 @@ public class CommunityController {
     }
 
     private PostDetailView toPostView(final CommunityPostDetailData postDetail) {
-        final boolean viewerModerator = postDetail.isViewerModerator();
+        final boolean postHideable = postDetail.isPostHideableByViewer();
         final List<CommentView> comments = new ArrayList<>();
         for (final CommunityPostComment comment : postDetail.getComments()) {
             comments.add(new CommentView(
@@ -1035,9 +1077,10 @@ public class CommunityController {
                 postDetail.isHelpfulByCurrentUserForComment(comment.getId()),
                 comment.getUserId() == postDetail.getPost().getAuthorUserId(),
                 postDetail.isCommentDeletableByViewer(comment),
-                viewerModerator
+                postDetail.isCommentHideableByViewer(comment)
             ));
         }
+        final boolean moderationAvailable = postHideable || comments.stream().anyMatch(CommentView::getHideable);
 
         return new PostDetailView(
             postDetail.getCommunity().getName(),
@@ -1055,9 +1098,10 @@ public class CommunityController {
             postDetail.getCommentCount(),
             comments,
             postDetail.getViewerRole(),
-            viewerModerator,
             postDetail.isViewerMember(),
-            postDetail.isPostDeletableByViewer()
+            postDetail.isPostDeletableByViewer(),
+            postHideable,
+            moderationAvailable
         );
     }
 
@@ -1269,10 +1313,11 @@ public class CommunityController {
         private final long commentCount;
         private final List<CommentView> comments;
         private final String viewerRole;
-        private final boolean viewerModerator;
         private final boolean viewerMember;
         private final boolean deletable;
         private final boolean editable;
+        private final boolean hideable;
+        private final boolean moderationAvailable;
 
         private PostDetailView(final String communityName, final String communityHandle,
                                final String communitySlug, final String postSlug,
@@ -1283,8 +1328,9 @@ public class CommunityController {
                                final long commentCount,
                                final List<CommentView> comments,
                                final String viewerRole,
-                               final boolean viewerModerator, final boolean viewerMember,
-                               final boolean deletable) {
+                               final boolean viewerMember,
+                               final boolean deletable, final boolean hideable,
+                               final boolean moderationAvailable) {
             this.communityName = communityName;
             this.communityHandle = communityHandle;
             this.communitySlug = communitySlug;
@@ -1300,10 +1346,11 @@ public class CommunityController {
             this.commentCount = commentCount;
             this.comments = comments;
             this.viewerRole = viewerRole;
-            this.viewerModerator = viewerModerator;
             this.viewerMember = viewerMember;
             this.deletable = deletable;
             this.editable = deletable;
+            this.hideable = hideable;
+            this.moderationAvailable = moderationAvailable;
         }
 
         public String getCommunitySlug() {
@@ -1318,10 +1365,6 @@ public class CommunityController {
             return viewerRole;
         }
 
-        public boolean getViewerModerator() {
-            return viewerModerator;
-        }
-
         public boolean getViewerMember() {
             return viewerMember;
         }
@@ -1332,6 +1375,14 @@ public class CommunityController {
 
         public boolean getEditable() {
             return editable;
+        }
+
+        public boolean getHideable() {
+            return hideable;
+        }
+
+        public boolean getModerationAvailable() {
+            return moderationAvailable;
         }
 
         public String getCommunityName() {

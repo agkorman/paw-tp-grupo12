@@ -839,6 +839,31 @@ class CommunityServiceImplTest {
     }
 
     @Test
+    void hideComment_byPlatformAdmin_sendsEmailToCommentAuthor() {
+        // Arrange
+        final RecordingEmailService recordingEmailService = new RecordingEmailService();
+        final CommunityServiceImpl service = new CommunityServiceImpl(
+                communityDao, communityPostImageDao, userService, recordingEmailService);
+        final Community community = communityWithCreator(99L);
+        final CommunityPost post = post(community, author(8L, "lu.driver"));
+        final User commentAuthor = author(10L, "commenter");
+        final CommunityPostComment comment = comment(post, commentAuthor);
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findCommentById(comment.getId())).thenReturn(Optional.of(comment));
+        when(userService.getUserById(commentAuthor.getId())).thenReturn(Optional.of(commentAuthor));
+
+        // Exercise
+        final Optional<Boolean> result =
+                service.hideComment("classics", comment.getId(), USER_ID, "Off-topic comment.", true);
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertTrue(result.get());
+        assertEquals(1, recordingEmailService.communityCommentHiddenEmails.size());
+        assertEquals(commentAuthor.getEmail(), recordingEmailService.communityCommentHiddenEmails.get(0));
+    }
+
+    @Test
     void deleteComment_byAuthor_deletes() {
         // Arrange
         final Community community = community();
