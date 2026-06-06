@@ -237,6 +237,7 @@ ALTER TABLE reviews
 
 CREATE INDEX IF NOT EXISTS idx_reviews_car_id ON reviews (car_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews (user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON reviews (created_at DESC);
 
 ALTER TABLE reviews
     DROP CONSTRAINT IF EXISTS reviews_car_id_fkey;
@@ -719,6 +720,7 @@ CREATE INDEX IF NOT EXISTS idx_communities_fts ON communities USING GIN (search_
 CREATE INDEX IF NOT EXISTS idx_community_topic_assignments_topic_id ON community_topic_assignments (topic_id);
 CREATE INDEX IF NOT EXISTS idx_community_memberships_user_id ON community_memberships (user_id);
 CREATE INDEX IF NOT EXISTS idx_community_posts_community_created_at ON community_posts (community_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_community_posts_created_at ON community_posts (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_community_posts_author_user_id ON community_posts (author_user_id);
 CREATE INDEX IF NOT EXISTS idx_community_post_helpful_reactions_user_id ON community_post_helpful_reactions (user_id);
 CREATE INDEX IF NOT EXISTS idx_community_post_comment_helpful_reactions_user_id ON community_post_comment_helpful_reactions (user_id);

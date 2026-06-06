@@ -6,7 +6,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="review.page.title" styles="/css/reviews.css|/css/car-image-carousel.css|/css/review-tags.css|/css/profile-modal.css"/>
+<pa:page-head titleCode="review.page.title" styles="/css/reviews.css|/css/car-image-carousel.css|/css/review-tags.css|/css/profile-modal.css|/css/image-lightbox.css"/>
 <body>
     <pa:nav activePage="reviews"/>
 
@@ -165,7 +165,6 @@
         <pa:script src="/js/cars/car-admin.js"/>
         <pa:script src="/js/reviews/review-moderation.js"/>
     </sec:authorize>
-    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>

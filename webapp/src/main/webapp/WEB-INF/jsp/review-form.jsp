@@ -216,7 +216,6 @@
     <pa:script src="/js/shared/image-upload-picker.js"/>
     <pa:script src="/js/reviews/review-form.js"/>
     <pa:script src="/js/reviews/review-tag-chips.js" defer="true"/>
-    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:footer/>
 </body>
 </html>

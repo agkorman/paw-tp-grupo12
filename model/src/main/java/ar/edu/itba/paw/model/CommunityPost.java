@@ -2,6 +2,8 @@ package ar.edu.itba.paw.model;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -12,6 +14,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.PreUpdate;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Entity
 @Table(name = "community_posts")
@@ -55,10 +58,14 @@ public class CommunityPost implements Serializable {
     @Column(name = "hidden", nullable = false)
     private boolean hidden;
 
-    CommunityPost() {}
+    @Transient
+    private List<CommunityPostImage> images = new ArrayList<>();
+
+    public CommunityPost() {}
 
     public CommunityPost(final Community community, final User author, final String slug,
                          final String title, final boolean hidden) {
+        this();
         this.community = community;
         this.author = author;
         this.slug = slug;
@@ -170,6 +177,14 @@ public class CommunityPost implements Serializable {
 
     public void setHidden(final boolean hidden) {
         this.hidden = hidden;
+    }
+
+    public List<CommunityPostImage> getImages() {
+        return images;
+    }
+
+    public void setImages(final List<CommunityPostImage> images) {
+        this.images = images == null ? new ArrayList<>() : images;
     }
 
     @PreUpdate

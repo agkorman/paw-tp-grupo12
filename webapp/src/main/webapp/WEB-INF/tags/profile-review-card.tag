@@ -18,6 +18,9 @@
 <c:url var="reviewLikeUrl" value="/reviews/${reviewCard.review.id}/like"/>
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 <spring:message var="reviewActionMenuLabel" code="review.actionMenu.open"/>
+<spring:message var="replyCountText" code="profile.card.metric.replies" arguments="${reviewCard.replyCount}"/>
+<spring:message var="likeCountText" code="profile.card.metric.likes" arguments="${reviewCard.likeCount}"/>
+<spring:message var="reviewMetricsAria" code="profile.card.metrics.aria"/>
 
 <article class="profile-review-card" data-profile-card-link="${fn:escapeXml(profileReviewHref)}" role="link" tabindex="0">
     <a class="profile-review-image" href="${profileReviewHref}">
@@ -38,12 +41,6 @@
         <div class="profile-review-meta-row">
             <span class="profile-review-date"><c:out value="${relativeTimeFormatter.format(reviewCard.review.createdAt)}"/></span>
             <div class="profile-review-actions">
-                <span class="card-rating-row profile-review-rating-row">
-                    <span class="card-rating-badge">
-                        <pa:icon name="star-filled" size="12"/>
-                        <span class="card-rating-value"><c:out value="${reviewCard.review.rating}"/></span>
-                    </span>
-                </span>
                 <pa:review-like-button
                         reviewId="${reviewCard.review.id}"
                         action="${reviewLikeUrl}"
@@ -51,6 +48,7 @@
                         liked="${reviewCard.liked}"
                         likeCount="${reviewCard.likeCount}"
                         disabled="${not authenticated}"/>
+                <span class="profile-card-metric"><c:out value="${replyCountText}"/></span>
                 <div class="profile-review-menu-slot">
                     <c:if test="${editable}">
                         <pa:action-menu label="${reviewActionMenuLabel}" cssClass="profile-review-menu">
@@ -72,9 +70,15 @@
                 </div>
             </div>
         </div>
-        <p class="profile-review-car"><c:out value="${reviewCard.carName}"/></p>
+        <div class="profile-review-context-row">
+            <p class="profile-card-context"><c:out value="${reviewCard.carName}"/></p>
+            <span class="card-rating-badge profile-review-inline-rating">
+                <pa:icon name="star-filled" size="12"/>
+                <span class="card-rating-value"><c:out value="${reviewCard.review.rating}"/></span>
+            </span>
+        </div>
         <h3><c:out value="${reviewCard.review.title}"/></h3>
-        <p class="profile-review-body"><c:out value="${reviewCard.review.body}"/></p>
+        <p class="profile-card-body"><c:out value="${reviewCard.review.body}"/></p>
         <pa:review-tag-chips mode="display" tags="${reviewCard.review.tags}"/>
     </div>
 </article>

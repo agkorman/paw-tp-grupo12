@@ -5,114 +5,130 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="activity.title" styles="/css/reviews.css|/css/review-preview.css|/css/review-tags.css|/css/activity.css"/>
+<pa:page-head titleCode="activity.title" styles="/css/cars.css|/css/activity.css|/css/reactions.css|/css/image-lightbox.css"/>
 <body>
     <pa:nav activePage="activity"/>
-    <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
-    <c:url var="activityLatestTabUrl" value="/activity">
-        <c:param name="tab" value="latest"/>
-    </c:url>
-    <c:url var="activityFollowingTabUrl" value="/activity">
-        <c:param name="tab" value="following"/>
-    </c:url>
-    <c:url var="activityFavoritesTabUrl" value="/activity">
-        <c:param name="tab" value="favorites"/>
-    </c:url>
-    <c:url var="activityFollowingLoginUrl" value="/login">
-        <c:param name="redirect" value="/activity"/>
-        <c:param name="intent" value="activity-following"/>
-    </c:url>
-    <c:url var="activityFavoritesLoginUrl" value="/login">
-        <c:param name="redirect" value="/activity"/>
-        <c:param name="intent" value="activity-favorites"/>
-    </c:url>
-    <spring:message var="activityKicker" code="activity.kicker"/>
-    <spring:message var="activityFollowingLabel" code="activity.tab.following"/>
-    <spring:message var="activityFavoritesLabel" code="activity.tab.favorites"/>
-    <spring:message var="activityFiltersAria" code="activity.filters.aria"/>
-    <spring:message var="activityLatestAria" code="activity.latest.aria"/>
-    <spring:message var="activityFollowingAria" code="activity.following.aria"/>
-    <spring:message var="activityFavoritesAria" code="activity.favorites.aria"/>
-    <spring:message var="activityPreviewAria" code="activity.preview.aria"/>
+    <spring:message var="activityFeedAria" code="activity.feed.aria"/>
+    <spring:message var="activityPaginationAria" code="activity.pagination.aria"/>
+    <main class="activity-page">
+        <section class="activity-feed-panel" aria-labelledby="activityFeedTitle">
+            <div class="activity-feed-header">
+                <div class="activity-feed-heading">
+                    <p class="activity-section-kicker"><spring:message code="activity.feed.kicker"/></p>
+                    <h1 id="activityFeedTitle" class="activity-section-title"><spring:message code="activity.feed.title"/></h1>
+                </div>
+            </div>
 
-    <spring:message var="usersSearchPlaceholder" code="users.search.placeholder"/>
-    <spring:message var="usersSearchAria" code="users.search.aria"/>
-    <spring:message var="usersSearchAction" code="common.action.search"/>
-    <main class="activity-page" data-activity-tabs>
-        <form class="activity-users-search" method="get" action="<c:url value='/users/search'/>" role="search">
-            <label class="activity-users-search-field" for="activity-users-search-input">
-                <span class="activity-users-search-icon" aria-hidden="true">
-                    <pa:icon name="search" size="20"/>
-                </span>
-                <input id="activity-users-search-input"
-                       class="activity-users-search-input"
-                       type="search"
-                       name="q"
-                       placeholder="${usersSearchPlaceholder}"
-                       autocomplete="off"
-                       aria-label="${usersSearchAria}">
-            </label>
-            <button type="submit" class="activity-users-search-submit"><c:out value="${usersSearchAction}"/></button>
-        </form>
-        <c:choose>
-            <c:when test="${authenticated}">
-                <pa:subtabs tabCount="3"
-                            labels="${activityKicker}|${activityFollowingLabel}|${activityFavoritesLabel}"
-                            hrefs="${activityLatestTabUrl}|${activityFollowingTabUrl}|${activityFavoritesTabUrl}"
-                            counts="${latestCount}|${followedCount}|${favoriteCount}"
-                            values="latest|following|favorites"
-                            activeValue="${activeTab}"
-                            ariaLabel="${activityFiltersAria}"/>
-            </c:when>
-            <c:otherwise>
-                <pa:subtabs tabCount="3"
-                            labels="${activityKicker}|${activityFollowingLabel}|${activityFavoritesLabel}"
-                            hrefs="${activityLatestTabUrl}|${activityFollowingLoginUrl}|${activityFavoritesLoginUrl}"
-                            counts="${latestCount}|0|0"
-                            values="latest|following|favorites"
-                            activeValue="${activeTab}"
-                            ariaLabel="${activityFiltersAria}"/>
-            </c:otherwise>
-        </c:choose>
+            <spring:message var="activitySortAria" code="activity.filter.sort.label"/>
+            <spring:message var="activityTypeAria" code="activity.filter.type.label"/>
+            <spring:message var="activityTimeframeAria" code="activity.filter.timeframe.label"/>
+            <form class="cars-toolbar activity-toolbar" method="get" action="<c:url value='/activity'/>" id="activity-filter-form"
+                  novalidate="novalidate">
+                <div class="cars-toolbar-shell">
+                    <div class="cars-toolbar-field">
+                        <span class="cars-toolbar-field-ui" aria-hidden="true">
+                            <span class="cars-toolbar-icon"><pa:icon name="sort" size="22"/></span>
+                            <span class="cars-toolbar-field-copy">
+                                <span class="cars-toolbar-label"><spring:message code="activity.filter.sort.label"/></span>
+                                <span class="cars-toolbar-value" data-toolbar-select-value="sort">
+                                    <c:choose>
+                                        <c:when test="${activityCriteria.sort eq 'controversial'}"><spring:message code="activity.filter.sort.controversial"/></c:when>
+                                        <c:when test="${activityCriteria.sort eq 'latest'}"><spring:message code="activity.filter.sort.latest"/></c:when>
+                                        <c:otherwise><spring:message code="activity.filter.sort.trending"/></c:otherwise>
+                                    </c:choose>
+                                </span>
+                            </span>
+                            <span class="cars-toolbar-chevron" aria-hidden="true"><pa:icon name="chevron-down" size="12"/></span>
+                        </span>
+                        <select class="cars-toolbar-select cars-toolbar-select-overlay" id="activity-filter-sort" name="sort" aria-label="${activitySortAria}">
+                            <option value="trending" <c:if test="${activityCriteria.sort eq 'trending'}">selected</c:if>><spring:message code="activity.filter.sort.trending"/></option>
+                            <option value="controversial" <c:if test="${activityCriteria.sort eq 'controversial'}">selected</c:if>><spring:message code="activity.filter.sort.controversial"/></option>
+                            <option value="latest" <c:if test="${activityCriteria.sort eq 'latest'}">selected</c:if>><spring:message code="activity.filter.sort.latest"/></option>
+                        </select>
+                    </div>
 
-        <c:choose>
-            <c:when test="${activeTab eq 'following'}">
-                <pa:activity-tab-panel panelId="activityFollowingPanel"
-                                       tab="following"
-                                       reviews="${activityReviews}"
-                                       currentPage="${activityCurrentPage}"
+                    <div class="cars-toolbar-field">
+                        <span class="cars-toolbar-field-ui" aria-hidden="true">
+                            <span class="cars-toolbar-icon"><pa:icon name="filter" size="22"/></span>
+                            <span class="cars-toolbar-field-copy">
+                                <span class="cars-toolbar-label"><spring:message code="activity.filter.type.label"/></span>
+                                <span class="cars-toolbar-value" data-toolbar-select-value="type">
+                                    <c:choose>
+                                        <c:when test="${activityCriteria.type eq 'reviews'}"><spring:message code="activity.filter.type.reviews"/></c:when>
+                                        <c:when test="${activityCriteria.type eq 'community'}"><spring:message code="activity.filter.type.community"/></c:when>
+                                        <c:otherwise><spring:message code="activity.filter.type.all"/></c:otherwise>
+                                    </c:choose>
+                                </span>
+                            </span>
+                            <span class="cars-toolbar-chevron" aria-hidden="true"><pa:icon name="chevron-down" size="12"/></span>
+                        </span>
+                        <select class="cars-toolbar-select cars-toolbar-select-overlay" id="activity-filter-type" name="type" aria-label="${activityTypeAria}">
+                            <option value="all" <c:if test="${activityCriteria.type eq 'all'}">selected</c:if>><spring:message code="activity.filter.type.all"/></option>
+                            <option value="reviews" <c:if test="${activityCriteria.type eq 'reviews'}">selected</c:if>><spring:message code="activity.filter.type.reviews"/></option>
+                            <option value="community" <c:if test="${activityCriteria.type eq 'community'}">selected</c:if>><spring:message code="activity.filter.type.community"/></option>
+                        </select>
+                    </div>
+
+                    <div class="cars-toolbar-field">
+                        <span class="cars-toolbar-field-ui" aria-hidden="true">
+                            <span class="cars-toolbar-icon"><pa:icon name="clock" size="22"/></span>
+                            <span class="cars-toolbar-field-copy">
+                                <span class="cars-toolbar-label"><spring:message code="activity.filter.timeframe.label"/></span>
+                                <span class="cars-toolbar-value" data-toolbar-select-value="timeframe">
+                                    <c:choose>
+                                        <c:when test="${activityCriteria.timeframe eq 'today'}"><spring:message code="activity.filter.timeframe.today"/></c:when>
+                                        <c:when test="${activityCriteria.timeframe eq 'week'}"><spring:message code="activity.filter.timeframe.week"/></c:when>
+                                        <c:when test="${activityCriteria.timeframe eq 'month'}"><spring:message code="activity.filter.timeframe.month"/></c:when>
+                                        <c:otherwise><spring:message code="activity.filter.timeframe.all"/></c:otherwise>
+                                    </c:choose>
+                                </span>
+                            </span>
+                            <span class="cars-toolbar-chevron" aria-hidden="true"><pa:icon name="chevron-down" size="12"/></span>
+                        </span>
+                        <select class="cars-toolbar-select cars-toolbar-select-overlay" id="activity-filter-timeframe" name="timeframe" aria-label="${activityTimeframeAria}">
+                            <option value="all" <c:if test="${activityCriteria.timeframe eq 'all'}">selected</c:if>><spring:message code="activity.filter.timeframe.all"/></option>
+                            <option value="today" <c:if test="${activityCriteria.timeframe eq 'today'}">selected</c:if>><spring:message code="activity.filter.timeframe.today"/></option>
+                            <option value="week" <c:if test="${activityCriteria.timeframe eq 'week'}">selected</c:if>><spring:message code="activity.filter.timeframe.week"/></option>
+                            <option value="month" <c:if test="${activityCriteria.timeframe eq 'month'}">selected</c:if>><spring:message code="activity.filter.timeframe.month"/></option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-secondary cars-toolbar-apply">
+                        <spring:message code="common.action.apply"/>
+                    </button>
+                </div>
+            </form>
+
+            <c:choose>
+                <c:when test="${empty activityCards}">
+                    <div class="activity-empty-state">
+                        <p><spring:message code="activity.empty.latest"/></p>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <div class="activity-feed" aria-label="${fn:escapeXml(activityFeedAria)}">
+                        <c:forEach var="activityCard" items="${activityCards}">
+                            <pa:activity-card activityCard="${activityCard}"/>
+                        </c:forEach>
+                    </div>
+                    <c:if test="${activityTotalPages > 1}">
+                        <jsp:useBean id="activityPaginationParams" class="java.util.LinkedHashMap"/>
+                        <c:set target="${activityPaginationParams}" property="sort" value="${activityCriteria.sort}"/>
+                        <c:set target="${activityPaginationParams}" property="type" value="${activityCriteria.type}"/>
+                        <c:set target="${activityPaginationParams}" property="timeframe" value="${activityCriteria.timeframe}"/>
+                        <pa:pagination currentPage="${activityCurrentPage}"
                                        totalPages="${activityTotalPages}"
-                                       emptyCode="activity.empty.following"
-                                       feedAria="${activityFollowingAria}"
-                                       previewAria="${activityPreviewAria}"
-                                       idPrefix="activityFollowingReviewPreview"/>
-            </c:when>
-            <c:when test="${activeTab eq 'favorites'}">
-                <pa:activity-tab-panel panelId="activityFavoritesPanel"
-                                       tab="favorites"
-                                       reviews="${activityReviews}"
-                                       currentPage="${activityCurrentPage}"
-                                       totalPages="${activityTotalPages}"
-                                       emptyCode="activity.empty.favorites"
-                                       feedAria="${activityFavoritesAria}"
-                                       previewAria="${activityPreviewAria}"
-                                       idPrefix="activityFavoriteReviewPreview"/>
-            </c:when>
-            <c:otherwise>
-                <pa:activity-tab-panel panelId="activityNewsPanel"
-                                       tab="latest"
-                                       reviews="${activityReviews}"
-                                       currentPage="${activityCurrentPage}"
-                                       totalPages="${activityTotalPages}"
-                                       emptyCode="activity.empty.all"
-                                       feedAria="${activityLatestAria}"
-                                       previewAria="${activityPreviewAria}"
-                                       idPrefix="activityNewsReviewPreview"/>
-            </c:otherwise>
-        </c:choose>
+                                       baseUrl="/activity"
+                                       extraParams="${activityPaginationParams}"
+                                       ariaLabel="${activityPaginationAria}"/>
+                    </c:if>
+                </c:otherwise>
+            </c:choose>
+        </section>
     </main>
-
-    <pa:script src="/js/activity/activity.js"/>
+    <pa:image-lightbox/>
+    <pa:script src="/js/shared/image-lightbox.js"/>
+    <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:footer/>
 </body>
 </html>

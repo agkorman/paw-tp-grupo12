@@ -46,6 +46,7 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.CacheControl;
@@ -54,6 +55,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -76,6 +79,17 @@ public class AdminController {
     private static final String TAB_BODY_TYPES = "body-types";
     private static final String TAB_MODERATORS = "moderators";
     private static final int MAX_IMAGE_COUNT = 5;
+    private static final Set<String> ADMIN_NOTIFICATION_PARAMS = Set.of(
+        "carAccepted",
+        "carRejected",
+        "catalogAccepted",
+        "catalogRejected",
+        "catalogAcceptError",
+        "catalogError",
+        "requestAccepted",
+        "requestRejected",
+        "requestError"
+    );
 
     private final CarRequestService carRequestService;
     private final CarService carService;
@@ -118,6 +132,14 @@ public class AdminController {
             code,
             args,
             LocaleContextHolder.getLocale()
+        );
+    }
+
+    @InitBinder
+    public void initBinder(final WebDataBinder binder) {
+        binder.registerCustomEditor(
+            String.class,
+            new StringTrimmerEditor(true)
         );
     }
 
@@ -236,10 +258,20 @@ public class AdminController {
                     requestPage.getItems(),
                     CarRequest::getSubmittedByUserId
                 );
+                final Map<Long, List<CarRequestImage>> requestImagesById =
+                    fetchRequestImagesById(requestPage.getItems());
                 pendingRequests = requestPage
                     .getItems()
                     .stream()
-                    .map(request -> toCard(request, brandsById, bodyTypesById, carSubmitters))
+                    .map(request ->
+                        toCard(
+                            request,
+                            brandsById,
+                            bodyTypesById,
+                            carSubmitters,
+                            requestImagesById
+                        )
+                    )
                     .toList();
                 currentPage = requestPage.getPageNumber();
                 totalPages = requestPage.getTotalPages();
@@ -281,7 +313,14 @@ public class AdminController {
         ) {
             return new ModelAndView("redirect:/admin");
         }
-        return carRequestFormPage(request, toForm(request), null);
+        final List<CarRequestImage> requestImages =
+            carRequestService.getCarRequestImages(request.getId());
+        return carRequestFormPage(
+            request,
+            toForm(request, requestImages),
+            null,
+            requestImages
+        );
     }
 
     @RequestMapping(value = "/cars/{carId}/edit", method = RequestMethod.GET)
@@ -586,8 +625,14 @@ public class AdminController {
             requestId,
             LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS)
         );
-        brandRequestService.approvePendingRequest(requestId, name);
-        return redirectBackToAdmin(referer);
+        final boolean accepted = brandRequestService.approvePendingRequest(
+            requestId,
+            name
+        );
+        return redirectBackToAdmin(
+            referer,
+            accepted ? "catalogAccepted" : "catalogAcceptError"
+        );
     }
 
     @RequestMapping(
@@ -599,8 +644,13 @@ public class AdminController {
         @RequestHeader(value = "Referer", required = false) final String referer
     ) {
         LOGGER.info("admin reject brand request id={}", requestId);
-        brandRequestService.rejectPendingRequest(requestId);
-        return redirectBackToAdmin(referer);
+        final boolean rejected = brandRequestService.rejectPendingRequest(
+            requestId
+        );
+        return redirectBackToAdmin(
+            referer,
+            rejected ? "catalogRejected" : "catalogError"
+        );
     }
 
     @RequestMapping(value = "/brands/{brandId}", method = RequestMethod.POST)
@@ -645,8 +695,14 @@ public class AdminController {
             requestId,
             LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS)
         );
-        bodyTypeRequestService.approvePendingRequest(requestId, name);
-        return redirectBackToAdmin(referer);
+        final boolean accepted = bodyTypeRequestService.approvePendingRequest(
+            requestId,
+            name
+        );
+        return redirectBackToAdmin(
+            referer,
+            accepted ? "catalogAccepted" : "catalogAcceptError"
+        );
     }
 
     @RequestMapping(
@@ -658,8 +714,13 @@ public class AdminController {
         @RequestHeader(value = "Referer", required = false) final String referer
     ) {
         LOGGER.info("admin reject body type request id={}", requestId);
-        bodyTypeRequestService.rejectPendingRequest(requestId);
-        return redirectBackToAdmin(referer);
+        final boolean rejected = bodyTypeRequestService.rejectPendingRequest(
+            requestId
+        );
+        return redirectBackToAdmin(
+            referer,
+            rejected ? "catalogRejected" : "catalogError"
+        );
     }
 
     @RequestMapping(
@@ -702,8 +763,13 @@ public class AdminController {
         @RequestHeader(value = "Referer", required = false) final String referer
     ) {
         LOGGER.info("admin accept admin-role request id={}", requestId);
-        adminRequestService.approvePendingRequest(requestId);
-        return redirectBackToAdmin(referer);
+        final boolean accepted = adminRequestService.approvePendingRequest(
+            requestId
+        );
+        return redirectBackToAdmin(
+            referer,
+            accepted ? "requestAccepted" : "requestError"
+        );
     }
 
     @RequestMapping(
@@ -715,8 +781,13 @@ public class AdminController {
         @RequestHeader(value = "Referer", required = false) final String referer
     ) {
         LOGGER.info("admin reject admin-role request id={}", requestId);
-        adminRequestService.rejectPendingRequest(requestId);
-        return redirectBackToAdmin(referer);
+        final boolean rejected = adminRequestService.rejectPendingRequest(
+            requestId
+        );
+        return redirectBackToAdmin(
+            referer,
+            rejected ? "requestRejected" : "requestError"
+        );
     }
 
     @RequestMapping(
@@ -871,6 +942,20 @@ public class AdminController {
         final CarForm carForm,
         final BindingResult errors
     ) {
+        return carRequestFormPage(
+            request,
+            carForm,
+            errors,
+            carRequestService.getCarRequestImages(request.getId())
+        );
+    }
+
+    private ModelAndView carRequestFormPage(
+        final CarRequest request,
+        final CarForm carForm,
+        final BindingResult errors,
+        final List<CarRequestImage> requestImages
+    ) {
         prepareCarFormContext(carForm, "review-request", null, request.getId());
         final ModelAndView mav = new ModelAndView("car-form.jsp");
         addCarFormBinding(mav, carForm, errors);
@@ -895,10 +980,11 @@ public class AdminController {
         mav.addObject("showCatalogRequestLinks", false);
         final List<Long> retainedImageIds = retainedImageIds(
             carForm.getRetainedImageIds(),
-            buildRequestImageIds(request)
+            imageIdsFrom(request, requestImages)
         );
         final List<String> imageUrls = buildRequestImageUrls(
             request,
+            requestImages,
             retainedImageIds
         );
         mav.addObject("existingImageUrls", imageUrls);
@@ -957,7 +1043,10 @@ public class AdminController {
         carForm.setRequestId(requestId);
     }
 
-    private CarForm toForm(final CarRequest request) {
+    private CarForm toForm(
+        final CarRequest request,
+        final List<CarRequestImage> requestImages
+    ) {
         final CarForm form = new CarForm();
         brandService
             .findById(request.getBrandId())
@@ -978,7 +1067,7 @@ public class AdminController {
         form.setFuelConsumption(request.getFuelConsumption());
         form.setMaxSpeedKmh(request.getMaxSpeedKmh());
         form.setPriceUsd(request.getPriceUsd());
-        form.setRetainedImageIds(buildRequestImageIds(request));
+        form.setRetainedImageIds(imageIdsFrom(request, requestImages));
         return form;
     }
 
@@ -1004,13 +1093,20 @@ public class AdminController {
         final CarRequest request,
         final Map<Long, Brand> brandsById,
         final Map<Long, BodyType> bodyTypesById,
-        final Map<Long, User> usersById
+        final Map<Long, User> usersById,
+        final Map<Long, List<CarRequestImage>> requestImagesById
     ) {
         final Brand brand = brandsById.get(request.getBrandId());
         final BodyType bodyType = bodyTypesById.get(request.getBodyTypeId());
         final String brandName = brand == null ? null : brand.getName();
         final String bodyTypeName = bodyType == null ? null : bodyType.getName();
-        final List<String> imageUrls = buildRequestImageUrls(request);
+        final List<CarRequestImage> requestImages =
+            requestImagesById.getOrDefault(request.getId(), List.of());
+        final List<String> imageUrls = buildRequestImageUrls(
+            request,
+            requestImages,
+            imageIdsFrom(request, requestImages)
+        );
         return new AdminCarRequestCard(
                 request.getId(),
                 valueOrFallback(brandName, "Marca pendiente"),
@@ -1032,17 +1128,29 @@ public class AdminController {
         );
     }
 
-    private List<String> buildRequestImageUrls(final CarRequest request) {
-        return buildRequestImageUrls(request, buildRequestImageIds(request));
+    private Map<Long, List<CarRequestImage>> fetchRequestImagesById(
+        final List<CarRequest> requests
+    ) {
+        final List<Long> requestIds = requests
+            .stream()
+            .map(CarRequest::getId)
+            .distinct()
+            .toList();
+        if (requestIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return carRequestService
+            .getCarRequestImagesByRequestIds(requestIds)
+            .stream()
+            .collect(Collectors.groupingBy(CarRequestImage::getRequestId));
     }
 
     private List<String> buildRequestImageUrls(
         final CarRequest request,
+        final List<CarRequestImage> requestImages,
         final List<Long> imageIds
     ) {
         final Set<Long> retainedIds = new LinkedHashSet<>(imageIds);
-        final List<CarRequestImage> requestImages =
-            carRequestService.getCarRequestImages(request.getId());
         if (!requestImages.isEmpty()) {
             return requestImages
                 .stream()
@@ -1066,8 +1174,16 @@ public class AdminController {
     }
 
     private List<Long> buildRequestImageIds(final CarRequest request) {
-        final List<CarRequestImage> requestImages =
-            carRequestService.getCarRequestImages(request.getId());
+        return imageIdsFrom(
+            request,
+            carRequestService.getCarRequestImages(request.getId())
+        );
+    }
+
+    private List<Long> imageIdsFrom(
+        final CarRequest request,
+        final List<CarRequestImage> requestImages
+    ) {
         if (!requestImages.isEmpty()) {
             return requestImages
                 .stream()
@@ -1410,18 +1526,32 @@ public class AdminController {
     }
 
     private ModelAndView redirectBackToAdmin(final String referer) {
-        final String fallback = "redirect:/admin";
+        return redirectBackToAdmin(referer, null);
+    }
+
+    private ModelAndView redirectBackToAdmin(
+        final String referer,
+        final String notificationParam
+    ) {
+        final String fallback = adminRedirectView(null, notificationParam);
         if (referer == null || referer.isBlank()) {
             return new ModelAndView(fallback);
         }
         try {
             final URI uri = URI.create(referer);
-            if (!"/admin".equals(ControllerUtils.stripCurrentContextPath(uri.getRawPath()))) {
+            if (
+                !"/admin".equals(
+                    ControllerUtils.stripCurrentContextPath(uri.getRawPath())
+                )
+            ) {
                 return new ModelAndView(fallback);
             }
             final String query = uri.getRawQuery();
             return new ModelAndView(
-                "redirect:/admin" + (query == null ? "" : "?" + query)
+                adminRedirectView(
+                    stripAdminNotificationParams(query),
+                    notificationParam
+                )
             );
         } catch (final IllegalArgumentException e) {
             LOGGER.warn(
@@ -1434,6 +1564,41 @@ public class AdminController {
             );
             return new ModelAndView(fallback);
         }
+    }
+
+    private String adminRedirectView(
+        final String rawQuery,
+        final String notificationParam
+    ) {
+        final boolean hasQuery = rawQuery != null && !rawQuery.isBlank();
+        final StringBuilder redirect = new StringBuilder("redirect:/admin");
+        if (hasQuery) {
+            redirect.append('?').append(rawQuery);
+        }
+        if (notificationParam != null && !notificationParam.isBlank()) {
+            redirect.append(hasQuery ? '&' : '?')
+                .append(notificationParam)
+                .append("=1");
+        }
+        return redirect.toString();
+    }
+
+    private String stripAdminNotificationParams(final String rawQuery) {
+        if (rawQuery == null || rawQuery.isBlank()) {
+            return null;
+        }
+        final StringBuilder sanitized = new StringBuilder();
+        for (final String pair : rawQuery.split("&")) {
+            final String name = pair.split("=", 2)[0];
+            if (ADMIN_NOTIFICATION_PARAMS.contains(name)) {
+                continue;
+            }
+            if (sanitized.length() > 0) {
+                sanitized.append('&');
+            }
+            sanitized.append(pair);
+        }
+        return sanitized.length() == 0 ? null : sanitized.toString();
     }
 
     private ModelAndView redirectBackToCatalog(

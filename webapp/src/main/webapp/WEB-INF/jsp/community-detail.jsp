@@ -5,7 +5,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css"/>
+<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -144,16 +144,34 @@
                     </form>
                 </c:if>
 
-                <div class="community-post-list">
+                <c:set var="communityPostsRedirectBase" value="/communities/${communityDetail.community.slug}"/>
+                <c:if test="${not empty currentSort}">
+                    <c:set var="communityPostsRedirectBase" value="${communityPostsRedirectBase}?sort=${currentSort}"/>
+                </c:if>
+                <c:if test="${postsCurrentPage > 1 and not empty currentSort}">
+                    <c:set var="communityPostsRedirectBase" value="${communityPostsRedirectBase}&page=${postsCurrentPage}"/>
+                </c:if>
+                <c:if test="${postsCurrentPage > 1 and empty currentSort}">
+                    <c:set var="communityPostsRedirectBase" value="${communityPostsRedirectBase}?page=${postsCurrentPage}"/>
+                </c:if>
+
+                <div id="communityPostList" class="community-post-list">
                     <c:forEach var="postCard" items="${postCards}">
+                        <c:url var="postCardHref" value="${postCard.href}"/>
+                        <c:url var="postCardHelpfulAction" value="${postCard.helpfulAction}"/>
                         <pa:community-post-card
-                                href="${postCard.href}"
+                                href="${postCardHref}"
                                 author="${postCard.author}"
                                 timeText="${postCard.timeText}"
                                 title="${postCard.title}"
                                 body="${postCard.body}"
+                                imageUrls="${postCard.imageUrls}"
                                 helpfulCount="${postCard.helpfulCount}"
-                                commentCount="${postCard.commentCount}"/>
+                                commentCount="${postCard.commentCount}"
+                                postId="${postCard.postId}"
+                                helpfulAction="${postCardHelpfulAction}"
+                                helpfulByCurrentUser="${postCard.helpfulByCurrentUser}"
+                                helpfulRedirect="${communityPostsRedirectBase}#post-${postCard.postId}"/>
                     </c:forEach>
                 </div>
 
@@ -215,6 +233,8 @@
                                confirmCssClass="btn-primary"/>
         <pa:script src="/js/shared/confirmation-modal.js"/>
     </c:if>
+    <pa:image-lightbox/>
+    <pa:script src="/js/shared/image-lightbox.js" defer="true"/>
 
     <pa:footer/>
 </body>

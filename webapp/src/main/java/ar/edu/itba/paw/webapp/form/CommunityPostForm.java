@@ -1,8 +1,11 @@
 package ar.edu.itba.paw.webapp.form;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import org.springframework.web.multipart.MultipartFile;
 
 public class CommunityPostForm {
 
@@ -14,6 +17,10 @@ public class CommunityPostForm {
     @NotBlank(message = "{validation.communityPost.body.required}")
     @Size(max = 5000, message = "{validation.communityPost.body.max}")
     private String body;
+
+    private List<MultipartFile> files = new ArrayList<>();
+
+    private List<Long> retainedImageIds = new ArrayList<>();
 
     public String getTitle() {
         return title;
@@ -29,5 +36,21 @@ public class CommunityPostForm {
 
     public void setBody(final String body) {
         this.body = body;
+    }
+
+    public List<MultipartFile> getFiles() {
+        return files;
+    }
+
+    public void setFiles(final List<MultipartFile> files) {
+        this.files = files == null ? new ArrayList<>() : files;
+    }
+
+    public List<Long> getRetainedImageIds() {
+        return retainedImageIds;
+    }
+
+    public void setRetainedImageIds(final List<Long> retainedImageIds) {
+        this.retainedImageIds = retainedImageIds == null ? new ArrayList<>() : retainedImageIds;
     }
 }

@@ -16,6 +16,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RequestDaoTest extends AbstractPersistenceTest {
@@ -421,6 +422,62 @@ public class RequestDaoTest extends AbstractPersistenceTest {
         assertArrayEquals(new byte[]{1, 2}, result.get(0).getImageData());
         assertEquals("image/jpeg", result.get(1).getContentType());
         assertArrayEquals(new byte[]{3, 4}, result.get(1).getImageData());
+    }
+
+    @Test
+    public void shouldFindCarRequestImagesByRequestIdsWithoutData() {
+        // Arrange
+        final User user = createUser("request-images-batch");
+        final Car car = createCar("request-images-batch");
+        jdbcTemplate.update(
+                "INSERT INTO car_requests (submitted_by_user_id, submitter_email, brand_id, body_type_id, year, "
+                        + "model, description, status, fuel_type, horsepower, airbag_count, transmission, "
+                        + "fuel_consumption, max_speed_kmh, price_usd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                user.getId(), user.getEmail(), car.getBrandId(), car.getBodyTypeId(), 2026, "Request Image Batch A",
+                "Description", "pending", "combustion", 180, 6, "manual", new BigDecimal("7.0"), 220,
+                new BigDecimal("30000.00")
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_requests (submitted_by_user_id, submitter_email, brand_id, body_type_id, year, "
+                        + "model, description, status, fuel_type, horsepower, airbag_count, transmission, "
+                        + "fuel_consumption, max_speed_kmh, price_usd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                user.getId(), user.getEmail(), car.getBrandId(), car.getBodyTypeId(), 2026, "Request Image Batch B",
+                "Description", "pending", "combustion", 180, 6, "manual", new BigDecimal("7.0"), 220,
+                new BigDecimal("30000.00")
+        );
+        final long firstRequestId = jdbcTemplate.queryForObject(
+                "SELECT car_request_id FROM car_requests WHERE model = ?", Long.class, "Request Image Batch A"
+        );
+        final long secondRequestId = jdbcTemplate.queryForObject(
+                "SELECT car_request_id FROM car_requests WHERE model = ?", Long.class, "Request Image Batch B"
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_request_images (car_request_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                firstRequestId, 1, "image/jpeg", new byte[]{3, 4}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_request_images (car_request_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                firstRequestId, 0, "image/png", new byte[]{1, 2}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_request_images (car_request_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                secondRequestId, 0, "image/webp", new byte[]{5, 6}
+        );
+
+        // Exercise
+        final List<CarRequestImage> result = carRequestDao.findImagesByRequestIds(List.of(secondRequestId, firstRequestId));
+
+        // Assertions
+        assertEquals(3, result.size());
+        assertEquals(firstRequestId, result.get(0).getRequestId());
+        assertEquals("image/png", result.get(0).getContentType());
+        assertNull(result.get(0).getImageData());
+        assertEquals(firstRequestId, result.get(1).getRequestId());
+        assertEquals("image/jpeg", result.get(1).getContentType());
+        assertNull(result.get(1).getImageData());
+        assertEquals(secondRequestId, result.get(2).getRequestId());
+        assertEquals("image/webp", result.get(2).getContentType());
+        assertNull(result.get(2).getImageData());
     }
 
     @Test

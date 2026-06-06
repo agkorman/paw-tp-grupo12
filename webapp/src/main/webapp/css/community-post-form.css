@@ -97,6 +97,33 @@
     outline: none;
 }
 
+.community-post-form-card .car-image-field {
+    margin: 0;
+    padding: var(--spacing-5);
+    border-top: 1px solid rgba(229, 226, 225, 0.08);
+}
+
+.community-post-form-card .car-image-upload.has-preview .car-image-upload-card {
+    grid-template-columns: minmax(20rem, 24rem) minmax(0, 1fr);
+    align-items: start;
+}
+
+.community-post-form-card .car-image-upload-preview {
+    min-height: 22rem;
+    aspect-ratio: 4 / 5;
+}
+
+.community-post-form-card .car-image-upload.has-preview .car-image-upload-preview {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.community-post-form-card .car-image-upload.has-preview .car-image-upload-copy {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+}
+
 .community-post-form-footer {
     display: grid;
     gap: 0;

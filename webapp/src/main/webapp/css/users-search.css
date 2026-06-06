@@ -1,7 +1,5 @@
-.users-search-page {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 32px 24px 64px;
+.users-search-backdrop {
+    flex: 1;
 }
 
 .users-search-header {
@@ -112,45 +110,6 @@
     transform: translateY(-1px);
 }
 
-.users-search-follow-form {
-    display: flex;
-    align-items: center;
-    margin: 0;
-}
-
-.users-search-follow-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 120px;
-    padding: 0 18px;
-    border: 1px solid var(--accent);
-    border-radius: 12px;
-    background: var(--accent);
-    color: var(--accent-contrast);
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
-}
-
-.users-search-follow-button:hover {
-    filter: brightness(1.08);
-}
-
-.users-search-follow-button.is-following {
-    background: transparent;
-    color: var(--text-primary);
-    border-color: var(--border-subtle);
-}
-
-.users-search-follow-button.is-following:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    filter: none;
-}
 
 .users-search-avatar {
     width: 44px;
@@ -185,4 +144,142 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* ── USERS SEARCH PANEL (sidebar) ── */
+
+.users-panel-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 199;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+}
+
+.users-panel-overlay.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.users-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    height: 100dvh;
+    width: clamp(18rem, 22vw, 26rem);
+    max-width: calc(100vw - 3rem);
+    z-index: 200;
+    transform: translateX(100%);
+    transition: transform 0.28s ease;
+    overflow: hidden;
+    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+}
+
+.users-panel.is-open {
+    transform: translateX(0);
+}
+
+.users-panel-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--surface-container-high, #2a2a2a);
+    border: 1px solid rgba(229, 226, 225, 0.12);
+    border-right: none;
+    border-radius: inherit;
+    box-shadow: -18px 0 46px rgba(0, 0, 0, 0.34);
+}
+
+.users-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(229, 226, 225, 0.07);
+    position: sticky;
+    top: 0;
+    background: var(--surface-container-high, #2a2a2a);
+    z-index: 1;
+}
+
+.users-panel-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--on-surface);
+    margin: 0;
+    letter-spacing: 0.01em;
+}
+
+.users-panel-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    color: rgba(196, 198, 204, 0.72);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.users-panel-close:hover {
+    background: rgba(229, 226, 225, 0.08);
+    color: var(--on-surface);
+}
+
+.users-panel-search-wrap {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(229, 226, 225, 0.07);
+}
+
+.users-panel-search-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface-elevated, rgba(255, 255, 255, 0.06));
+    border: 1px solid rgba(229, 226, 225, 0.12);
+    border-radius: var(--radius-md);
+    padding: 0 14px;
+}
+
+.users-panel-search-icon {
+    color: var(--secondary);
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.users-panel-search-input {
+    flex: 1;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--on-surface);
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 12px 0;
+}
+
+.users-panel-search-input::placeholder {
+    color: rgba(196, 198, 204, 0.5);
+}
+
+.users-panel-results {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    overflow-y: auto;
+}
+
+.users-panel-hint,
+.users-panel-empty {
+    color: var(--secondary);
+    font-size: 0.875rem;
+    margin: 0;
+    padding: 0.5rem 0;
 }

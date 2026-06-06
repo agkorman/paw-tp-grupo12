@@ -247,6 +247,12 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
 
     @Override
     @Transactional(readOnly = true)
+    public Map<Long, Long> countRepliesByReviewIds(final Collection<Long> reviewIds) {
+        return reviewReplyDao.countRepliesByReviewIds(reviewIds);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Map<Long, Long> countNewRepliesPerReviewSince(final LocalDateTime since) {
         if (since == null) {
             return Collections.emptyMap();

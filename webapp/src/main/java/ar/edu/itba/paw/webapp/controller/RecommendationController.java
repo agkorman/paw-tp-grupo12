@@ -3,7 +3,6 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.CarRecommendation;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.ReviewStats;
-import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.RecommendationService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.webapp.form.RecommendationForm;
@@ -29,15 +28,12 @@ public class RecommendationController {
     private static final int DEFAULT_LIMIT = 5;
 
     private final RecommendationService recommendationService;
-    private final BodyTypeService bodyTypeService;
     private final ReviewService reviewService;
 
     @Autowired
     public RecommendationController(final RecommendationService recommendationService,
-                                    final BodyTypeService bodyTypeService,
                                     final ReviewService reviewService) {
         this.recommendationService = recommendationService;
-        this.bodyTypeService = bodyTypeService;
         this.reviewService = reviewService;
     }
 
@@ -77,7 +73,6 @@ public class RecommendationController {
 
     private void populateFormModel(final Model model) {
         model.addAttribute("questions", recommendationService.getQuestions());
-        model.addAttribute("bodyTypes", bodyTypeService.findAll());
         model.addAttribute("fuelTypes", CarSearchCriteria.ALLOWED_FUEL_TYPES);
     }
 

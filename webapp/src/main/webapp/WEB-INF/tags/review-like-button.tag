@@ -30,15 +30,11 @@
 <c:set var="effectiveLikeActionLabel" value="${empty actionLabel ? likeActionLabel : actionLabel}"/>
 <c:set var="effectiveLikeAddLabel" value="${empty addAriaLabel ? likeAddLabel : addAriaLabel}"/>
 <c:set var="effectiveLikeRemoveLabel" value="${empty removeAriaLabel ? likeRemoveLabel : removeAriaLabel}"/>
-<c:set var="likeCurrentPath" value="${pageContext.request.requestURI}"/>
-<c:set var="likeContextPath" value="${pageContext.request.contextPath}"/>
-<c:if test="${not empty likeContextPath and fn:startsWith(likeCurrentPath, likeContextPath)}">
-    <c:set var="likeCurrentPath" value="${fn:substring(likeCurrentPath, fn:length(likeContextPath), fn:length(likeCurrentPath))}"/>
-</c:if>
+<c:set var="likeCurrentPath" value="${requestScope['javax.servlet.forward.servlet_path']}"/>
 <c:if test="${empty likeCurrentPath}">
     <c:set var="likeCurrentPath" value="/"/>
 </c:if>
-<c:set var="likeQueryStr" value="${pageContext.request.queryString}"/>
+<c:set var="likeQueryStr" value="${requestScope['javax.servlet.forward.query_string']}"/>
 <c:url var="likeLoginUrl" value="/login">
     <c:param name="redirect" value="${empty likeQueryStr ? likeCurrentPath : likeCurrentPath.concat('?').concat(likeQueryStr)}"/>
     <c:param name="intent" value="${likeIntent}"/>

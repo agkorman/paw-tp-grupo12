@@ -19,5 +19,6 @@ public interface ReviewReplyService {
     boolean hideReply(long replyId, String reason);
 
     Map<Long, Long> countNewRepliesPerReview(long userId, LocalDateTime since);
+    Map<Long, Long> countRepliesByReviewIds(Collection<Long> reviewIds);
     Map<Long, Long> countNewRepliesPerReviewSince(LocalDateTime since);
 }

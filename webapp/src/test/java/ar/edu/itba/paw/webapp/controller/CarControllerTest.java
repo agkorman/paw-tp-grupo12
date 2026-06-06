@@ -15,6 +15,7 @@ import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.services.ReviewTagService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport;
 import ar.edu.itba.paw.webapp.util.ImageValidationService;
@@ -86,6 +87,9 @@ class CarControllerTest {
     private ReviewService reviewService;
 
     @Mock
+    private ReviewTagService reviewTagService;
+
+    @Mock
     private EmailService emailService;
 
     @Mock
@@ -103,6 +107,8 @@ class CarControllerTest {
     private MockMvc carMockMvc() throws Exception {
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenAnswer(inv -> inv.getArgument(0));
         return MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(
+                        new SharedModelAttributesAdvice(brandService, bodyTypeService, reviewTagService))
                 .setValidator(
                         ControllerTestValidationSupport.carFormSpringValidator(
                                 brandService,

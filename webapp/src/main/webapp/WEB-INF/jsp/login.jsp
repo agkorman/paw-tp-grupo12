@@ -78,7 +78,6 @@
         </c:otherwise>
     </c:choose>
     <pa:script src="/js/auth/auth-form.js"/>
-    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:script src="/js/shared/toast.js"/>
     <pa:footer/>
 </body>

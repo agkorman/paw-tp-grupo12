@@ -192,8 +192,6 @@ public class CarController {
         ) final String submitted
     ) {
         final ModelAndView mav = new ModelAndView("car-form.jsp");
-        mav.addObject("carForm", new CarForm());
-        populateCarFormPageModel(mav);
         addSubmittedToast(mav, submitted);
         return mav;
     }
@@ -310,11 +308,6 @@ public class CarController {
         );
 
         return "redirect:/cars?submitted=true";
-    }
-
-    private void populateCarFormPageModel(final ModelAndView mav) {
-        mav.addObject("brands", brandService.findAll());
-        mav.addObject("bodyTypes", bodyTypeService.findAll());
     }
 
     private void addSubmittedToast(
@@ -568,8 +561,16 @@ public class CarController {
                 .build();
         }
 
+        MediaType carImageMediaType;
+        try {
+            carImageMediaType = carImage.getContentType() == null
+                    ? MediaType.APPLICATION_OCTET_STREAM
+                    : MediaType.parseMediaType(carImage.getContentType());
+        } catch (final IllegalArgumentException e) {
+            carImageMediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
         return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(carImage.getContentType()))
+            .contentType(carImageMediaType)
             .contentLength(carImage.getImageData().length)
             .cacheControl(cacheControl)
             .eTag(eTag)

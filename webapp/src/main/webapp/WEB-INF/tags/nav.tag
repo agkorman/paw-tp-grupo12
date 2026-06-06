@@ -79,11 +79,20 @@
                     <pa:icon name="user-avatar" size="18"/>
                 </a>
                 <spring:message var="searchUsersLabel" code="nav.searchUsers"/>
-                <a class="avatar nav-avatar-link nav-user-search" href="<c:url value='/users/search'/>" aria-label="${fn:escapeXml(searchUsersLabel)}">
+                <button type="button"
+                        id="usersPanelToggleBtn"
+                        class="avatar nav-avatar-link nav-user-search"
+                        data-open-users-panel
+                        aria-controls="usersSearchPanel"
+                        aria-expanded="false"
+                        aria-haspopup="dialog"
+                        aria-label="${fn:escapeXml(searchUsersLabel)}">
                     <pa:icon name="search" size="18"/>
                     <span class="nav-user-search-tooltip" aria-hidden="true"><c:out value="${searchUsersLabel}"/></span>
-                </a>
+                </button>
             </span>
         </sec:authorize>
     </div>
 </nav>
+<pa:users-search-panel/>
+<pa:script src="/js/shared/users-search-panel.js" defer="${true}"/>

@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -481,6 +482,27 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public Set<Long> findPostHelpfulReactionsByUser(final Collection<Long> postIds, final long userId) {
+        final List<Long> normalizedIds = normalizeIds(postIds);
+        if (normalizedIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        final Query q = em.createNativeQuery(
+                "SELECT post_id FROM community_post_helpful_reactions " +
+                "WHERE post_id IN (" + placeholders(normalizedIds.size()) + ") AND user_id = ?"
+        );
+        applyPositionalParameters(q, normalizedIds);
+        q.setParameter(normalizedIds.size() + 1, userId);
+        @SuppressWarnings("unchecked")
+        final List<Number> rows = q.getResultList();
+        final Set<Long> result = new java.util.HashSet<>();
+        for (final Number row : rows) {
+            result.add(row.longValue());
+        }
+        return result;
+    }
+
+    @Override
     public Set<Long> findCommentHelpfulReactionsByUser(final Collection<Long> commentIds, final long userId) {
         final List<Long> normalizedIds = normalizeIds(commentIds);
         if (normalizedIds.isEmpty()) {
@@ -494,7 +516,7 @@ public class CommunityJpaDao implements CommunityDao {
         q.setParameter(normalizedIds.size() + 1, userId);
         @SuppressWarnings("unchecked")
         final List<Number> rows = q.getResultList();
-        final Set<Long> result = new java.util.HashSet<>();
+        final Set<Long> result = new HashSet<>();
         for (final Number row : rows) {
             result.add(row.longValue());
         }
@@ -563,6 +585,25 @@ public class CommunityJpaDao implements CommunityDao {
                 CommunityPost.class
         )
                 .setParameter("communityId", communityId)
+                .getResultList();
+    }
+
+    @Override
+    public List<CommunityPost> findPostsByIds(final Collection<Long> postIds) {
+        final List<Long> normalizedIds = normalizeIds(postIds);
+        if (normalizedIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return em.createQuery(
+                "SELECT p FROM CommunityPost p " +
+                "LEFT JOIN FETCH p.author " +
+                "LEFT JOIN FETCH p.community " +
+                "WHERE p.id IN :postIds " +
+                "ORDER BY p.createdAt DESC, p.id DESC",
+                CommunityPost.class
+        )
+                .setParameter("postIds", normalizedIds)
                 .getResultList();
     }
 

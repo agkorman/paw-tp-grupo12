@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +31,8 @@ public interface CarRequestService {
                                     BigDecimal priceUsd);
 
     List<CarRequestImage> getCarRequestImages(long requestId);
+
+    List<CarRequestImage> getCarRequestImagesByRequestIds(Collection<Long> requestIds);
 
     Optional<CarRequestImage> getCarRequestImageById(long requestId, long imageId);
 
