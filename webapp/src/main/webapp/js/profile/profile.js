@@ -334,10 +334,10 @@
         var reviewsButton = closestByAttribute(event.target, 'data-scroll-to-reviews');
         if (reviewsButton) {
             var tabsRoot = document.querySelector('[data-profile-tabs]');
-            var reviewsPanel = document.getElementById('profileReviewsPanel');
-            var scrollTarget = document.querySelector('[data-profile-tabs]') || document.getElementById('profileReviewsTitle');
-            if (tabsRoot && reviewsPanel) {
-                activateProfileTab(tabsRoot, reviewsPanel.id, false);
+            var activityPanel = document.getElementById('profileActivityPanel');
+            var scrollTarget = document.querySelector('[data-profile-tabs]') || document.getElementById('profileActivityTitle');
+            if (tabsRoot && activityPanel) {
+                activateProfileTab(tabsRoot, activityPanel.id, false);
             }
             if (scrollTarget) {
                 scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
