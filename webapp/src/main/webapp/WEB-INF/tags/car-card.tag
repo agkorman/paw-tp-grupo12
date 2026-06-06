@@ -164,7 +164,7 @@
                         <span class="card-spec-tag">
                             <pa:icon name="shield" size="11"/>
                             <c:choose>
-                                <c:when test="${not empty airbagCount}"><c:out value="${airbagCount}"/> Airbags</c:when>
+                                <c:when test="${not empty airbagCount}"><c:out value="${airbagCount}"/> <spring:message code="cars.card.airbags.unit"/></c:when>
                                 <c:otherwise><spring:message code="cars.card.airbags.na"/></c:otherwise>
                             </c:choose>
                         </span>
