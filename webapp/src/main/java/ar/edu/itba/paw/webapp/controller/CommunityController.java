@@ -1077,6 +1077,7 @@ public class CommunityController {
                 postDetail.isHelpfulByCurrentUserForComment(comment.getId()),
                 comment.getUserId() == postDetail.getPost().getAuthorUserId(),
                 postDetail.isCommentDeletableByViewer(comment),
+                postDetail.isCommentEditableByViewer(comment),
                 postDetail.isCommentHideableByViewer(comment)
             ));
         }
@@ -1100,6 +1101,7 @@ public class CommunityController {
             postDetail.getViewerRole(),
             postDetail.isViewerMember(),
             postDetail.isPostDeletableByViewer(),
+            postDetail.isPostEditableByViewer(),
             postHideable,
             moderationAvailable
         );
@@ -1329,7 +1331,7 @@ public class CommunityController {
                                final List<CommentView> comments,
                                final String viewerRole,
                                final boolean viewerMember,
-                               final boolean deletable, final boolean hideable,
+                               final boolean deletable, final boolean editable, final boolean hideable,
                                final boolean moderationAvailable) {
             this.communityName = communityName;
             this.communityHandle = communityHandle;
@@ -1348,7 +1350,7 @@ public class CommunityController {
             this.viewerRole = viewerRole;
             this.viewerMember = viewerMember;
             this.deletable = deletable;
-            this.editable = deletable;
+            this.editable = editable;
             this.hideable = hideable;
             this.moderationAvailable = moderationAvailable;
         }
@@ -1452,7 +1454,8 @@ public class CommunityController {
                             final String authorProfileHref, final String author, final String timeText,
                             final String body, final long helpfulCount,
                             final boolean helpfulByCurrentUser,
-                            final boolean op, final boolean deletable, final boolean hideable) {
+                            final boolean op, final boolean deletable, final boolean editable,
+                            final boolean hideable) {
             this.commentId = commentId;
             this.authorProfileHref = authorProfileHref;
             this.author = author;
@@ -1463,7 +1466,7 @@ public class CommunityController {
             this.op = op;
             this.deletable = deletable;
             this.hideable = hideable;
-            this.editable = deletable;
+            this.editable = editable;
         }
 
         public long getCommentId() {

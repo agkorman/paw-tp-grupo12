@@ -117,12 +117,22 @@ public class CommunityPostDetailData implements Serializable {
         return viewerUserId != null && post != null && post.getAuthorUserId() == viewerUserId;
     }
 
+    // Authorship grants both editing and deletion; moderators/admins can only hide.
+    public boolean isPostEditableByViewer() {
+        return isPostDeletableByViewer();
+    }
+
     public boolean isPostHideableByViewer() {
         return post != null && !isPostDeletableByViewer() && (viewerAdmin || isViewerModerator());
     }
 
     public boolean isCommentDeletableByViewer(final CommunityPostComment comment) {
         return viewerUserId != null && comment != null && comment.getUserId() == viewerUserId;
+    }
+
+    // Authorship grants both editing and deletion; moderators/admins can only hide.
+    public boolean isCommentEditableByViewer(final CommunityPostComment comment) {
+        return isCommentDeletableByViewer(comment);
     }
 
     public boolean isCommentHideableByViewer(final CommunityPostComment comment) {
