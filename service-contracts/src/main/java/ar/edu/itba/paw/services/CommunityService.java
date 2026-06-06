@@ -44,6 +44,8 @@ public interface CommunityService {
     Optional<CommunityDetailData> getCommunityDetail(String slug, Long currentUserId, String sort, int page);
     Optional<Community> getCommunityBySlug(String slug);
     Optional<CommunityPostDetailData> getCommunityPostDetail(String communitySlug, String postSlug, Long currentUserId);
+    Optional<CommunityPostDetailData> getCommunityPostDetail(String communitySlug, String postSlug, Long currentUserId,
+                                                             boolean viewerAdmin);
     List<CommunityPostImage> getPostImagesByPostId(long postId);
     Map<Long, List<CommunityPostImage>> getImagesByPostIds(Collection<Long> postIds);
     Optional<CommunityPostImage> getPostImageById(long postId, long imageId);
@@ -52,7 +54,9 @@ public interface CommunityService {
     Optional<List<CommunityMembershipEntry>> listMembers(String communitySlug, long callerUserId);
     Optional<CommunityMembersData> getCommunityMembers(String communitySlug, long callerUserId);
     Optional<Boolean> hidePost(String communitySlug, String postSlug, long callerUserId, String reason);
+    Optional<Boolean> hidePost(String communitySlug, String postSlug, long callerUserId, String reason, boolean callerAdmin);
     Optional<Boolean> hideComment(String communitySlug, long commentId, long callerUserId, String reason);
+    Optional<Boolean> hideComment(String communitySlug, long commentId, long callerUserId, String reason, boolean callerAdmin);
     Optional<Boolean> deletePost(String communitySlug, String postSlug, long callerUserId);
     Optional<Boolean> deleteComment(String communitySlug, long commentId, long callerUserId);
     Optional<Boolean> kickMember(String communitySlug, long targetUserId, long callerUserId);

@@ -325,6 +325,33 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public Map<Long, String> findMembershipRoles(final long userId, final Collection<Long> communityIds) {
+        if (communityIds == null || communityIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        final List<Long> normalizedIds = communityIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (normalizedIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        final List<?> rows = em.createNativeQuery(
+                "SELECT community_id, role FROM community_memberships "
+                        + "WHERE user_id = :userId AND community_id IN (:communityIds)"
+        )
+                .setParameter("userId", userId)
+                .setParameter("communityIds", normalizedIds)
+                .getResultList();
+        final Map<Long, String> rolesByCommunityId = new LinkedHashMap<>();
+        for (final Object row : rows) {
+            final Object[] values = (Object[]) row;
+            rolesByCommunityId.put(((Number) values[0]).longValue(), (String) values[1]);
+        }
+        return rolesByCommunityId;
+    }
+
+    @Override
     public void updateMembershipRole(final long communityId, final long userId, final String newRole) {
         em.createNativeQuery(
                 "UPDATE community_memberships SET role = :role WHERE community_id = :communityId AND user_id = :userId"

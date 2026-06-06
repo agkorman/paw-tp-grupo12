@@ -17,6 +17,7 @@ public class CommunityPostDetailData implements Serializable {
     private final long commentCount;
     private final String viewerRole;
     private final Long viewerUserId;
+    private final boolean viewerAdmin;
     private final Map<Long, Long> commentHelpfulCounts;
     private final Map<Long, Boolean> commentHelpfulByCurrentUser;
 
@@ -29,6 +30,20 @@ public class CommunityPostDetailData implements Serializable {
                                    final Map<Long, Boolean> commentHelpfulByCurrentUser,
                                    final String viewerRole,
                                    final Long viewerUserId) {
+        this(community, post, comments, helpfulCount, helpfulByCurrentUser, commentCount,
+                commentHelpfulCounts, commentHelpfulByCurrentUser, viewerRole, viewerUserId, false);
+    }
+
+    public CommunityPostDetailData(final Community community, final CommunityPost post,
+                                   final List<CommunityPostComment> comments,
+                                   final long helpfulCount,
+                                   final boolean helpfulByCurrentUser,
+                                   final long commentCount,
+                                   final Map<Long, Long> commentHelpfulCounts,
+                                   final Map<Long, Boolean> commentHelpfulByCurrentUser,
+                                   final String viewerRole,
+                                   final Long viewerUserId,
+                                   final boolean viewerAdmin) {
         this.community = community;
         this.post = post;
         this.comments = comments == null ? new ArrayList<>() : new ArrayList<>(comments);
@@ -43,6 +58,7 @@ public class CommunityPostDetailData implements Serializable {
                 : Collections.unmodifiableMap(new LinkedHashMap<>(commentHelpfulByCurrentUser));
         this.viewerRole = viewerRole;
         this.viewerUserId = viewerUserId;
+        this.viewerAdmin = viewerAdmin;
     }
 
     public Community getCommunity() {
@@ -93,11 +109,33 @@ public class CommunityPostDetailData implements Serializable {
         return "member".equals(viewerRole) || "moderator".equals(viewerRole);
     }
 
+    public boolean isViewerAdmin() {
+        return viewerAdmin;
+    }
+
     public boolean isPostDeletableByViewer() {
         return viewerUserId != null && post != null && post.getAuthorUserId() == viewerUserId;
     }
 
+    // Authorship grants both editing and deletion; moderators/admins can only hide.
+    public boolean isPostEditableByViewer() {
+        return isPostDeletableByViewer();
+    }
+
+    public boolean isPostHideableByViewer() {
+        return post != null && !isPostDeletableByViewer() && (viewerAdmin || isViewerModerator());
+    }
+
     public boolean isCommentDeletableByViewer(final CommunityPostComment comment) {
         return viewerUserId != null && comment != null && comment.getUserId() == viewerUserId;
+    }
+
+    // Authorship grants both editing and deletion; moderators/admins can only hide.
+    public boolean isCommentEditableByViewer(final CommunityPostComment comment) {
+        return isCommentDeletableByViewer(comment);
+    }
+
+    public boolean isCommentHideableByViewer(final CommunityPostComment comment) {
+        return comment != null && !isCommentDeletableByViewer(comment) && (viewerAdmin || isViewerModerator());
     }
 }

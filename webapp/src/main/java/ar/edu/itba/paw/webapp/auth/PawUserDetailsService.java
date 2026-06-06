@@ -4,20 +4,15 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import ar.edu.itba.paw.webapp.util.LogSanitizer;
-import java.util.Collections;
-import java.util.Locale;
 
 public class PawUserDetailsService implements UserDetailsService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PawUserDetailsService.class);
-
-    private static final String ROLE_PREFIX = "ROLE_";
 
     private final UserService userService;
 
@@ -40,17 +35,7 @@ public class PawUserDetailsService implements UserDetailsService {
                 user.getEmail(),
                 user.getPassword(),
                 user.getPreferredLocale(),
-                Collections.singletonList(new SimpleGrantedAuthority(toAuthority(user.getRole())))
+                RoleAuthorityUtils.authoritiesForRole(user.getRole())
         );
-    }
-
-    private String toAuthority(final String role) {
-        final String normalizedRole = role == null || role.trim().isEmpty()
-                ? "USER"
-                : role.trim().toUpperCase(Locale.ROOT);
-        if (normalizedRole.startsWith(ROLE_PREFIX)) {
-            return normalizedRole;
-        }
-        return ROLE_PREFIX + normalizedRole;
     }
 }

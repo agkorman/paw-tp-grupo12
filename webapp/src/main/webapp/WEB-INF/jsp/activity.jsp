@@ -5,7 +5,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="activity.title" styles="/css/cars.css|/css/activity.css|/css/reactions.css|/css/image-lightbox.css"/>
+<pa:page-head titleCode="activity.title" styles="/css/cars.css|/css/activity.css|/css/reactions.css|/css/profile-modal.css|/css/image-lightbox.css"/>
 <body>
     <pa:nav activePage="activity"/>
     <spring:message var="activityFeedAria" code="activity.feed.aria"/>
@@ -126,7 +126,27 @@
             </c:choose>
         </section>
     </main>
+    <pa:confirmation-modal id="deleteReviewConfirmModal"
+                           titleCode="review.delete.title"
+                           bodyCode="review.delete.body"
+                           confirmCode="common.action.delete"
+                           confirmCssClass="btn-primary"/>
+    <pa:confirmation-modal id="deletePostConfirmModal"
+                           titleCode="communities.post.delete.title"
+                           bodyCode="communities.post.delete.body"
+                           confirmCode="communities.post.deleteAction"
+                           confirmCssClass="btn-primary"/>
+    <pa:review-hide-modal/>
+    <pa:community-hide-modal id="hideCommunityPostModal"
+                             titleCode="communities.post.hide.title"
+                             bodyCode="communities.post.hide.body"
+                             confirmCode="communities.post.hideAction"
+                             placeholderCode="communities.post.hide.reason.placeholder"/>
     <pa:image-lightbox/>
+    <pa:script src="/js/shared/action-menu.js"/>
+    <pa:script src="/js/shared/confirmation-modal.js"/>
+    <pa:script src="/js/reviews/review-moderation.js"/>
+    <pa:script src="/js/communities/community-moderation.js"/>
     <pa:script src="/js/shared/image-lightbox.js"/>
     <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:footer/>
