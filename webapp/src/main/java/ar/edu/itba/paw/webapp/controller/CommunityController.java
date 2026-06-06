@@ -587,6 +587,10 @@ public class CommunityController {
         final Review review = reviewService.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("review not found"));
 
+        if (communityPostForm.getLinkedReviewId() == null || communityPostForm.getLinkedReviewId() != reviewId) {
+            throw new ResourceNotFoundException("linked review id mismatch");
+        }
+
         final String communitySlug = communityPostForm.getCommunitySlug();
         if (communitySlug == null || communitySlug.trim().isEmpty()) {
             errors.rejectValue("communitySlug", "validation.communityPost.communitySlug.required");
@@ -1079,22 +1083,6 @@ public class CommunityController {
     }
 
     private RepostReviewView buildRepostReviewView(final Review review) {
-        final Car car = carService.getCarById(review.getCarId()).orElse(null);
-        final String carName = car != null ? car.getBrandName() + " " + car.getModel() : null;
-        final String authorName = review.getUser() != null ? review.getUser().getUsername() : null;
-        return new RepostReviewView(
-                review.getId(),
-                review.getTitle(),
-                review.getBody(),
-                review.getRating(),
-                carName,
-                review.getCarId(),
-                authorName,
-                review.getTags()
-        );
-    }
-
-    private RepostReviewView buildRepostReviewViewFromLinkedReview(final Review review) {
         final String carName;
         if (review.getCar() != null) {
             carName = review.getCar().getBrandName() + " " + review.getCar().getModel();
@@ -1215,7 +1203,7 @@ public class CommunityController {
             final String postSlug = postSummary.getPost().getSlug();
             final Review linkedReview = postSummary.getPost().getLinkedReview();
             final RepostReviewView repostReview = linkedReview != null
-                    ? buildRepostReviewViewFromLinkedReview(linkedReview)
+                    ? buildRepostReviewView(linkedReview)
                     : null;
             cards.add(new PostCardView(
                 "/communities/" + communitySlug + "/posts/" + postSlug,
@@ -1258,7 +1246,7 @@ public class CommunityController {
 
         final Review linkedReview = postDetail.getPost().getLinkedReview();
         final RepostReviewView repostReview = linkedReview != null
-                ? buildRepostReviewViewFromLinkedReview(linkedReview)
+                ? buildRepostReviewView(linkedReview)
                 : null;
 
         return new PostDetailView(

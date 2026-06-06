@@ -1286,6 +1286,7 @@ public class CommunityServiceImpl implements CommunityService {
         return slug.substring(0, maxLength);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Community> getJoinedCommunities(final long userId) {
         if (userId <= 0) {

@@ -644,7 +644,9 @@ public class CommunityJpaDao implements CommunityDao {
                 "SELECT p FROM CommunityPost p " +
                 "LEFT JOIN FETCH p.author " +
                 "LEFT JOIN FETCH p.community " +
-                "LEFT JOIN FETCH p.linkedReview " +
+                "LEFT JOIN FETCH p.linkedReview lr " +
+                "LEFT JOIN FETCH lr.car " +
+                "LEFT JOIN FETCH lr.user " +
                 "WHERE p.id IN :postIds " +
                 "ORDER BY p.createdAt DESC, p.id DESC",
                 CommunityPost.class
@@ -682,7 +684,9 @@ public class CommunityJpaDao implements CommunityDao {
         final List<CommunityPost> posts = em.createQuery(
                 "SELECT p FROM CommunityPost p " +
                 "LEFT JOIN FETCH p.author " +
-                "LEFT JOIN FETCH p.linkedReview " +
+                "LEFT JOIN FETCH p.linkedReview lr " +
+                "LEFT JOIN FETCH lr.car " +
+                "LEFT JOIN FETCH lr.user " +
                 "WHERE p.id IN :ids",
                 CommunityPost.class
         )
@@ -699,7 +703,9 @@ public class CommunityJpaDao implements CommunityDao {
         final List<CommunityPost> results = em.createQuery(
                 "SELECT p FROM CommunityPost p " +
                 "LEFT JOIN FETCH p.author " +
-                "LEFT JOIN FETCH p.linkedReview " +
+                "LEFT JOIN FETCH p.linkedReview lr " +
+                "LEFT JOIN FETCH lr.car " +
+                "LEFT JOIN FETCH lr.user " +
                 "WHERE p.community.id = :communityId AND LOWER(p.slug) = :slug",
                 CommunityPost.class
         )
