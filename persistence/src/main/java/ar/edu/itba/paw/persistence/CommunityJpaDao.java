@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -324,6 +325,33 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public Map<Long, String> findMembershipRoles(final long userId, final Collection<Long> communityIds) {
+        if (communityIds == null || communityIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        final List<Long> normalizedIds = communityIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (normalizedIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        final List<?> rows = em.createNativeQuery(
+                "SELECT community_id, role FROM community_memberships "
+                        + "WHERE user_id = :userId AND community_id IN (:communityIds)"
+        )
+                .setParameter("userId", userId)
+                .setParameter("communityIds", normalizedIds)
+                .getResultList();
+        final Map<Long, String> rolesByCommunityId = new LinkedHashMap<>();
+        for (final Object row : rows) {
+            final Object[] values = (Object[]) row;
+            rolesByCommunityId.put(((Number) values[0]).longValue(), (String) values[1]);
+        }
+        return rolesByCommunityId;
+    }
+
+    @Override
     public void updateMembershipRole(final long communityId, final long userId, final String newRole) {
         em.createNativeQuery(
                 "UPDATE community_memberships SET role = :role WHERE community_id = :communityId AND user_id = :userId"
@@ -485,6 +513,27 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
+    public Set<Long> findPostHelpfulReactionsByUser(final Collection<Long> postIds, final long userId) {
+        final List<Long> normalizedIds = normalizeIds(postIds);
+        if (normalizedIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        final Query q = em.createNativeQuery(
+                "SELECT post_id FROM community_post_helpful_reactions " +
+                "WHERE post_id IN (" + placeholders(normalizedIds.size()) + ") AND user_id = ?"
+        );
+        applyPositionalParameters(q, normalizedIds);
+        q.setParameter(normalizedIds.size() + 1, userId);
+        @SuppressWarnings("unchecked")
+        final List<Number> rows = q.getResultList();
+        final Set<Long> result = new java.util.HashSet<>();
+        for (final Number row : rows) {
+            result.add(row.longValue());
+        }
+        return result;
+    }
+
+    @Override
     public Set<Long> findCommentHelpfulReactionsByUser(final Collection<Long> commentIds, final long userId) {
         final List<Long> normalizedIds = normalizeIds(commentIds);
         if (normalizedIds.isEmpty()) {
@@ -498,7 +547,7 @@ public class CommunityJpaDao implements CommunityDao {
         q.setParameter(normalizedIds.size() + 1, userId);
         @SuppressWarnings("unchecked")
         final List<Number> rows = q.getResultList();
-        final Set<Long> result = new java.util.HashSet<>();
+        final Set<Long> result = new HashSet<>();
         for (final Number row : rows) {
             result.add(row.longValue());
         }
@@ -567,6 +616,25 @@ public class CommunityJpaDao implements CommunityDao {
                 CommunityPost.class
         )
                 .setParameter("communityId", communityId)
+                .getResultList();
+    }
+
+    @Override
+    public List<CommunityPost> findPostsByIds(final Collection<Long> postIds) {
+        final List<Long> normalizedIds = normalizeIds(postIds);
+        if (normalizedIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return em.createQuery(
+                "SELECT p FROM CommunityPost p " +
+                "LEFT JOIN FETCH p.author " +
+                "LEFT JOIN FETCH p.community " +
+                "WHERE p.id IN :postIds " +
+                "ORDER BY p.createdAt DESC, p.id DESC",
+                CommunityPost.class
+        )
+                .setParameter("postIds", normalizedIds)
                 .getResultList();
     }
 
@@ -656,7 +724,7 @@ public class CommunityJpaDao implements CommunityDao {
         return em.createQuery(
                 "SELECT c FROM CommunityPostComment c " +
                 "LEFT JOIN FETCH c.user " +
-                "WHERE c.post.id = :postId " +
+                "WHERE c.post.id = :postId AND c.hidden = false " +
                 "ORDER BY c.createdAt ASC, c.id ASC",
                 CommunityPostComment.class
         )

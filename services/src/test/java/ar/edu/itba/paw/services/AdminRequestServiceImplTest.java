@@ -42,6 +42,8 @@ public class AdminRequestServiceImplTest {
     private BrandRequestService brandRequestService;
     @Mock
     private BodyTypeRequestService bodyTypeRequestService;
+    @Mock
+    private AuthenticatedSessionService authenticatedSessionService;
 
     @InjectMocks
     private AdminRequestServiceImpl adminRequestService;
@@ -357,7 +359,8 @@ public class AdminRequestServiceImplTest {
     @Test
     public void shouldGetSubmitterLabelAsUserIdWhenEmailCannotBeResolved() {
         // Arrange
-        when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.empty());
+        when(userService.getUsersByIds(java.util.List.of(USER_ID)))
+            .thenReturn(java.util.Collections.emptyList());
 
         // Exercise
         final String result = adminRequestService.getSubmitterLabel(null, USER_ID);

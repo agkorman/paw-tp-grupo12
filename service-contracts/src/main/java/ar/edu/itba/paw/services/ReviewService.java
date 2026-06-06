@@ -8,6 +8,7 @@ import ar.edu.itba.paw.model.ReviewImage;
 import ar.edu.itba.paw.model.ReviewStats;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -17,10 +18,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 public interface ReviewService {
-
-    String FEED_LATEST = "latest";
-    String FEED_FOLLOWING = "following";
-    String FEED_FAVORITES = "favorites";
 
     Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
                         String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
@@ -35,6 +32,7 @@ public interface ReviewService {
     Optional<Review> getReviewById(long id);
     List<Review> getReviewsByIds(Collection<Long> ids);
     List<Review> getReviewsByCarIds(Collection<Long> carIds);
+    Map<Long, Long> countNewReviewsByCarIds(Collection<Long> carIds, LocalDateTime since);
     Optional<Review> updateReview(long id, long carId, BigDecimal rating, String title, String body,
                                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                                   Collection<Short> tagIds, List<ImagePayload> finalImages);
@@ -91,9 +89,6 @@ public interface ReviewService {
     long countReviewsByUser(long userId);
     Optional<ReviewStats> getReviewStatsByCar(long carId);
     List<ReviewStats> getReviewStatsByCarIds(Collection<Long> carIds);
-
-    Page<Review> getActivityFeedReviews(String feedMode, Long userId, int page);
-
     Review getReviewAndCheckAccess(long reviewId, long requestingUserId, boolean isAdmin);
 
     boolean hideReview(long reviewId, String reason);

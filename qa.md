@@ -30,7 +30,7 @@ Public surface — must work without auth.
 - [ ] `GET /activity` renders with only the **Latest** tab (no Following/Favorites).
 - [ ] `GET /cars/recommend` wizard renders.
 - [ ] `GET /reviews/car/{carId}` for an existing car renders reviews + car details.
-- [ ] `GET /profiles/{userId}` for an existing user renders public profile.
+- [ ] `GET /users/{userId}` for an existing user renders public profile.
 - [ ] `GET /login` and `GET /register` render.
 
 Anonymous gating:
@@ -39,14 +39,14 @@ Anonymous gating:
 - [ ] Click like on a review → redirected to login (or auth-required modal opens).
 - [ ] Click Follow on a profile → redirected to login with intent preserved.
 - [ ] Try to submit a reply form → blocked / redirected to login.
-- [ ] Direct-navigate to `/profile` → redirected to `/login`.
+- [ ] Direct-navigate to `/user` → redirected to `/login`.
 - [ ] Direct-navigate to `/admin` → 403 or login redirect.
 - [ ] Direct-navigate to `/cars/new` → redirected to login.
 
 Error pages:
 
 - [ ] `GET /cars/99999999` → 404 page.
-- [ ] `GET /profiles/99999999` → 404 page.
+- [ ] `GET /users/99999999` → 404 page.
 - [ ] `GET /reviews/car/99999999` → 404 page.
 - [ ] `GET /error/403`, `/error/404`, `/error/500` render directly.
 
@@ -207,7 +207,7 @@ Error pages:
 - [ ] As non-owner, non-admin → no edit option; if URL-hacked to edit page → 403/forbidden.
 - [ ] As admin → can edit any review.
 - [ ] Submit edit → redirect back, changes visible.
-- [ ] `?redirect=/profiles/{id}` honored after edit.
+- [ ] `?redirect=/users/{id}` honored after edit.
 
 ### 6.4 Delete review
 
@@ -247,7 +247,7 @@ Error pages:
 
 ## 7. Profile
 
-### 7.1 Own profile (`/profile`)
+### 7.1 Own profile (`/user`)
 
 - [ ] Renders avatar (initials), display name, review count, followers count, following count.
 - [ ] Tabs: Reviews / Favorites / Liked.
@@ -262,7 +262,7 @@ Error pages:
 - [ ] Logout button → confirmation modal → POST `/logout`.
 - [ ] "Request moderator role" button (if eligible): opens modal.
 
-### 7.2 Public profile (`/profiles/{userId}`)
+### 7.2 Public profile (`/users/{userId}`)
 
 - [ ] Other user's profile renders without edit / logout / language controls.
 - [ ] Reviews tab visible; Favorites / Liked tabs **not** visible.

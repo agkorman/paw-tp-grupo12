@@ -180,7 +180,7 @@ public class CarReviewController {
         final Review review = reviewService.getReviewAndCheckAccess(
             reviewId,
             currentUser.getId(),
-            isAdmin(currentUser)
+            request.isUserInRole("ADMIN")
         );
 
         final Car car = carService
@@ -600,7 +600,7 @@ public class CarReviewController {
         final Review existingReview = reviewService.getReviewAndCheckAccess(
             reviewId,
             currentUser.getId(),
-            isAdmin(currentUser)
+            request.isUserInRole("ADMIN")
         );
 
         final Car car = carService
@@ -691,7 +691,7 @@ public class CarReviewController {
         final Review existingReview = reviewService.getReviewAndCheckAccess(
             reviewId,
             currentUser.getId(),
-            isAdmin(currentUser)
+            request.isUserInRole("ADMIN")
         );
         reviewService.deleteReview(reviewId);
         LOGGER.info(
@@ -1001,14 +1001,6 @@ public class CarReviewController {
             );
         }
         return null;
-    }
-
-    private boolean isAdmin(final AuthenticatedUser currentUser) {
-        return currentUser
-            .getAuthorities()
-            .stream()
-            .map(GrantedAuthority::getAuthority)
-            .anyMatch("ROLE_ADMIN"::equals);
     }
 
     private String message(final String code, final Object... args) {

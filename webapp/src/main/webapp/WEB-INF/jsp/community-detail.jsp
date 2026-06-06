@@ -5,7 +5,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css"/>
+<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -17,6 +17,13 @@
     <c:url var="communityJoinUrl" value="/communities/${communityDetail.community.slug}/join"/>
     <c:url var="communityMembersUrl" value="/communities/${communityDetail.community.slug}/members"/>
     <c:url var="communityDetailUrl" value="/communities/${communityDetail.community.slug}"/>
+    <c:url var="communityPostsReturnBaseUrl" value="/communities/${communityDetail.community.slug}">
+        <c:if test="${not empty currentSort}">
+            <c:param name="sort" value="${currentSort}"/>
+        </c:if>
+        <c:param name="page" value="${postsCurrentPage}"/>
+    </c:url>
+    <c:set var="communityPostsReturnUrl" value="${communityPostsReturnBaseUrl}#communityFeedTitle"/>
     <c:set var="viewerIsMember" value="${communityDetail.viewerMember}"/>
     <c:set var="viewerIsModerator" value="${communityDetail.viewerModerator}"/>
     <c:set var="viewerIsCreator" value="${communityDetail.viewerCreator}"/>
@@ -127,7 +134,7 @@
                         <label class="community-sort-label" for="communitySortSelect">
                             <spring:message code="communities.feed.sort"/>
                         </label>
-                        <select id="communitySortSelect" name="sort" class="community-sort-select">
+                        <select id="communitySortSelect" name="sort" class="community-sort-select" data-auto-submit="true">
                             <option value="recent" ${currentSort eq 'recent' ? 'selected' : ''}>
                                 <spring:message code="communities.feed.sort.recent"/>
                             </option>
@@ -138,22 +145,44 @@
                                 <spring:message code="communities.feed.sort.commented"/>
                             </option>
                         </select>
-                        <button type="submit" class="btn-secondary community-sort-submit">
-                            <spring:message code="common.action.apply"/>
-                        </button>
+                        <noscript>
+                            <button type="submit" class="btn-secondary community-sort-submit">
+                                <spring:message code="common.action.apply"/>
+                            </button>
+                        </noscript>
                     </form>
                 </c:if>
 
-                <div class="community-post-list">
+                <c:set var="communityPostsRedirectBase" value="/communities/${communityDetail.community.slug}"/>
+                <c:if test="${not empty currentSort}">
+                    <c:set var="communityPostsRedirectBase" value="${communityPostsRedirectBase}?sort=${currentSort}"/>
+                </c:if>
+                <c:if test="${postsCurrentPage > 1 and not empty currentSort}">
+                    <c:set var="communityPostsRedirectBase" value="${communityPostsRedirectBase}&page=${postsCurrentPage}"/>
+                </c:if>
+                <c:if test="${postsCurrentPage > 1 and empty currentSort}">
+                    <c:set var="communityPostsRedirectBase" value="${communityPostsRedirectBase}?page=${postsCurrentPage}"/>
+                </c:if>
+
+                <div id="communityPostList" class="community-post-list">
                     <c:forEach var="postCard" items="${postCards}">
+                        <c:url var="postCardHref" value="${postCard.href}">
+                            <c:param name="redirect" value="${communityPostsReturnUrl}"/>
+                        </c:url>
+                        <c:url var="postCardHelpfulAction" value="${postCard.helpfulAction}"/>
                         <pa:community-post-card
-                                href="${postCard.href}"
+                                href="${postCardHref}"
                                 author="${postCard.author}"
                                 timeText="${postCard.timeText}"
                                 title="${postCard.title}"
                                 body="${postCard.body}"
+                                imageUrls="${postCard.imageUrls}"
                                 helpfulCount="${postCard.helpfulCount}"
-                                commentCount="${postCard.commentCount}"/>
+                                commentCount="${postCard.commentCount}"
+                                postId="${postCard.postId}"
+                                helpfulAction="${postCardHelpfulAction}"
+                                helpfulByCurrentUser="${postCard.helpfulByCurrentUser}"
+                                helpfulRedirect="${communityPostsRedirectBase}#post-${postCard.postId}"/>
                     </c:forEach>
                 </div>
 
@@ -215,6 +244,9 @@
                                confirmCssClass="btn-primary"/>
         <pa:script src="/js/shared/confirmation-modal.js"/>
     </c:if>
+    <pa:image-lightbox/>
+    <pa:script src="/js/shared/image-lightbox.js" defer="true"/>
+    <pa:script src="/js/communities/community-sort.js" defer="true"/>
 
     <pa:footer/>
 </body>

@@ -11,6 +11,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +95,26 @@ public class ReviewReplyJpaDao implements ReviewReplyDao {
     }
 
     @Override
+    public Map<Long, Long> countRepliesByReviewIds(final Collection<Long> reviewIds) {
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        final List<?> rawRows = em.createQuery(
+                        "SELECT rr.review.id, COUNT(rr.id) "
+                        + "FROM ReviewReply rr "
+                        + "WHERE rr.review.id IN :reviewIds "
+                        + "GROUP BY rr.review.id")
+                .setParameter("reviewIds", reviewIds)
+                .getResultList();
+        final Map<Long, Long> counts = new HashMap<>();
+        for (final Object element : rawRows) {
+            final Object[] row = (Object[]) element;
+            counts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
+        return counts;
+    }
+
+    @Override
     public Map<Long, Long> countNewRepliesPerReview(final long userId, final LocalDateTime since) {
         final List<?> rawRows = em.createQuery(
                         "SELECT rr.review.id, COUNT(rr.id) "
@@ -101,6 +122,23 @@ public class ReviewReplyJpaDao implements ReviewReplyDao {
                         + "WHERE rr.review.user.id = :userId AND rr.createdAt >= :since "
                         + "GROUP BY rr.review.id")
                 .setParameter("userId", userId)
+                .setParameter("since", since)
+                .getResultList();
+        final Map<Long, Long> counts = new HashMap<>();
+        for (final Object element : rawRows) {
+            final Object[] row = (Object[]) element;
+            counts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
+        return counts;
+    }
+
+    @Override
+    public Map<Long, Long> countNewRepliesPerReviewSince(final LocalDateTime since) {
+        final List<?> rawRows = em.createQuery(
+                        "SELECT rr.review.id, COUNT(rr.id) "
+                        + "FROM ReviewReply rr "
+                        + "WHERE rr.createdAt >= :since "
+                        + "GROUP BY rr.review.id")
                 .setParameter("since", since)
                 .getResultList();
         final Map<Long, Long> counts = new HashMap<>();

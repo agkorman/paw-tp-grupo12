@@ -131,6 +131,8 @@
     margin: 0;
     color: var(--on-surface-variant);
     line-height: 1.65;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
 }
 
 .community-post-body {
@@ -226,6 +228,7 @@
     padding: var(--spacing-5);
     display: grid;
     gap: var(--spacing-4);
+    scroll-margin-top: calc(50vh - 5rem);
 }
 
 .community-post-card-link {
@@ -245,16 +248,15 @@
 .community-post-topline {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--spacing-3);
 }
 
-.community-post-avatar {
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 50%;
-    flex: 0 0 2.75rem;
-    background: radial-gradient(circle at 30% 30%, rgba(255, 181, 158, 0.25), transparent 38%), var(--surface-container-highest);
-    border: 1px solid rgba(229, 226, 225, 0.08);
+.community-post-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: nowrap;
 }
 
 .community-post-meta {
@@ -282,18 +284,27 @@
 }
 
 .community-post-title {
-    font-size: clamp(1.5rem, 3vw, 2.2rem);
-    line-height: 1.08;
+    font-size: clamp(1.4rem, 2.5vw, 1.55rem);
+    line-height: 1.25;
 }
 
-.community-post-metrics {
+.profile-activity-list .community-post-body {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.community-post-metrics,
+.profile-card-metrics {
     display: flex;
     align-items: center;
     gap: var(--spacing-3);
     flex-wrap: wrap;
 }
 
-.community-post-metric {
+.community-post-metric,
+.profile-card-metric {
     padding: 0.55rem 0.8rem;
     border-radius: var(--radius-full);
     border: 1px solid rgba(229, 226, 225, 0.14);
@@ -301,6 +312,25 @@
     background: var(--surface-container-high);
     font-size: 0.82rem;
     font-weight: 600;
+}
+
+.profile-card-context {
+    color: var(--secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.profile-card-body {
+    color: var(--on-surface-variant);
+    line-height: 1.65;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
 }
 
 .community-sidebar {

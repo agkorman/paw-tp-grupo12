@@ -5,8 +5,11 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.AdminRequestDao;
 import ar.edu.itba.paw.services.exception.PendingAdminRequestExistsException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,18 +30,21 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     private final CarRequestService carRequestService;
     private final BrandRequestService brandRequestService;
     private final BodyTypeRequestService bodyTypeRequestService;
+    private final AuthenticatedSessionService authenticatedSessionService;
 
     @Autowired
     public AdminRequestServiceImpl(final AdminRequestDao adminRequestDao, final UserService userService,
                                    final EmailService emailService, final CarRequestService carRequestService,
                                    final BrandRequestService brandRequestService,
-                                   final BodyTypeRequestService bodyTypeRequestService) {
+                                   final BodyTypeRequestService bodyTypeRequestService,
+                                   final AuthenticatedSessionService authenticatedSessionService) {
         this.adminRequestDao = adminRequestDao;
         this.userService = userService;
         this.emailService = emailService;
         this.carRequestService = carRequestService;
         this.brandRequestService = brandRequestService;
         this.bodyTypeRequestService = bodyTypeRequestService;
+        this.authenticatedSessionService = authenticatedSessionService;
     }
 
     @Override
@@ -157,12 +163,14 @@ public class AdminRequestServiceImpl implements AdminRequestService {
             return false;
         }
 
-        userService.updateRole(request.getSubmittedByUserId(), GRANTED_ROLE);
+        final long promotedUserId = request.getSubmittedByUserId();
+        userService.updateRole(promotedUserId, GRANTED_ROLE);
         sendRequestApprovedNotification(request);
+        authenticatedSessionService.promoteUserToAdmin(promotedUserId);
         LOGGER.info(
             "approved admin request id={} userId={} grantedRole={}",
             id,
-            request.getSubmittedByUserId(),
+            promotedUserId,
             GRANTED_ROLE
         );
         return true;
@@ -251,11 +259,27 @@ public class AdminRequestServiceImpl implements AdminRequestService {
 
     @Override
     public String getSubmitterLabel(final String submitterEmail, final Long submittedByUserId) {
-        final String resolvedEmail = resolveSubmitterEmail(submitterEmail, submittedByUserId);
-        if (resolvedEmail != null) {
-            return resolvedEmail;
+        if (submitterEmail != null && !submitterEmail.isBlank()) {
+            return submitterEmail;
+        }
+        final Map<Long, User> usersById = submittedByUserId == null
+            ? Collections.emptyMap()
+            : userService.getUsersByIds(List.of(submittedByUserId)).stream()
+                .collect(Collectors.toMap(User::getId, user -> user, (existing, duplicate) -> existing));
+        return getSubmitterLabel(submitterEmail, submittedByUserId, usersById);
+    }
+
+    @Override
+    public String getSubmitterLabel(final String submitterEmail, final Long submittedByUserId,
+                                    final Map<Long, User> usersById) {
+        if (submitterEmail != null && !submitterEmail.isBlank()) {
+            return submitterEmail;
         }
         if (submittedByUserId != null) {
+            final User user = usersById == null ? null : usersById.get(submittedByUserId);
+            if (user != null && user.getEmail() != null && !user.getEmail().isBlank()) {
+                return user.getEmail();
+            }
             return "Usuario #" + submittedByUserId;
         }
         return "Usuario sin identificar";

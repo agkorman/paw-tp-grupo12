@@ -38,12 +38,16 @@
         <div class="feed-header-actions">
             <form method="get" action="<c:url value='/reviews/car/${carId}'/>#reviewsFeed" class="review-sort-form">
                 <label class="review-sort-label" for="reviewSortSelect"><spring:message code="review.feed.sort"/></label>
-                <select id="reviewSortSelect" name="sort" class="review-sort-select">
+                <select id="reviewSortSelect" name="sort" class="review-sort-select" data-auto-submit="true">
                     <option value="" ${empty currentSort ? 'selected' : ''}><spring:message code="review.feed.sort.recent"/></option>
                     <option value="rating_desc" ${currentSort eq 'rating_desc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingDesc"/></option>
                     <option value="rating_asc" ${currentSort eq 'rating_asc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingAsc"/></option>
                 </select>
-                <button type="submit" class="btn-secondary review-sort-submit"><spring:message code="common.action.apply"/></button>
+                <noscript>
+                    <button type="submit" class="btn-secondary review-sort-submit">
+                        <spring:message code="common.action.apply"/>
+                    </button>
+                </noscript>
             </form>
         </div>
     </div>
@@ -105,7 +109,7 @@
                                                     data-open-hide-review-modal
                                                     data-review-id="${fn:escapeXml(review.id)}"
                                                     data-review-hide-action="${fn:escapeXml(reviewHideUrl)}"
-                                                    data-review-hide-redirect="${fn:escapeXml(reviewItemRedirect)}"
+                                                    data-review-hide-redirect="${fn:escapeXml(reviewFeedRedirect)}"
                                                     data-review-title="${fn:escapeXml(review.title)}">
                                                 <pa:icon name="visibility-off" size="18"/>
                                             </button>
@@ -131,25 +135,15 @@
                                 </sec:authorize>
                             </div>
                         </div>
+                        <p class="review-body"><c:out value="${review.body}"/></p>
                         <c:if test="${not empty review.images}">
                             <c:set var="reviewImageUrlsCsv" value=""/>
                             <c:forEach var="urlImg" items="${review.images}" varStatus="urlStatus">
                                 <c:url var="oneUrl" value="/reviews/${review.id}/images/${urlImg.imageId}"/>
                                 <c:set var="reviewImageUrlsCsv" value="${reviewImageUrlsCsv}${urlStatus.first ? '' : '|'}${oneUrl}"/>
                             </c:forEach>
-                            <div class="review-images-row" data-review-image-urls="${fn:escapeXml(reviewImageUrlsCsv)}">
-                                <c:forEach var="reviewImg" items="${review.images}" varStatus="thumbStatus">
-                                    <button type="button" class="review-image-thumb-button"
-                                            data-review-image-index="${thumbStatus.index}"
-                                            aria-label="<spring:message code='review.image.alt'/>">
-                                        <img src="<c:url value='/reviews/${review.id}/images/${reviewImg.imageId}'/>"
-                                             alt="<spring:message code='review.image.alt'/>"
-                                             class="review-image-thumb"/>
-                                    </button>
-                                </c:forEach>
-                            </div>
+                            <pa:image-gallery imageUrlsJoined="${reviewImageUrlsCsv}" altKey="review.image.alt"/>
                         </c:if>
-                        <p class="review-body"><c:out value="${review.body}"/></p>
                         <pa:review-tag-chips mode="display" tags="${review.tags}"/>
                         <div class="review-meta">
                             <pa:review-author-link review="${review}"/>
@@ -162,7 +156,7 @@
                                     likeCount="${thread.likeCount}"
                                     disabled="${not authenticated}"/>
                         </div>
-                        <div class="review-replies" aria-label="${reviewRepliesLabel}">
+                        <div class="review-replies" id="review-${review.id}-replies" aria-label="${reviewRepliesLabel}">
                             <c:if test="${not empty thread.replies}">
                                 <div class="review-reply-list">
                                     <c:forEach var="replyCard" items="${thread.replies}">
@@ -317,25 +311,5 @@
         </c:otherwise>
     </c:choose>
 </section>
-
-<spring:message var="lightboxPrevLabel" code="cars.image.previous"/>
-<spring:message var="lightboxNextLabel" code="cars.image.next"/>
-<spring:message var="lightboxCloseLabel" code="common.action.close"/>
-<div id="reviewImageLightbox" class="review-image-lightbox" hidden aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="review-image-lightbox-backdrop" data-lightbox-close></div>
-    <div class="review-image-lightbox-stage">
-        <button type="button" class="review-image-lightbox-close" data-lightbox-close
-                aria-label="${fn:escapeXml(lightboxCloseLabel)}">×</button>
-        <button type="button" class="review-image-lightbox-nav review-image-lightbox-prev" data-lightbox-prev
-                aria-label="${fn:escapeXml(lightboxPrevLabel)}">
-            <pa:icon name="chevron-left" size="24"/>
-        </button>
-        <img class="review-image-lightbox-img" data-lightbox-img alt="">
-        <button type="button" class="review-image-lightbox-nav review-image-lightbox-next" data-lightbox-next
-                aria-label="${fn:escapeXml(lightboxNextLabel)}">
-            <pa:icon name="chevron-right" size="24"/>
-        </button>
-        <span class="review-image-lightbox-count" data-lightbox-count>1 / 1</span>
-    </div>
-</div>
-<pa:script src="/js/reviews/review-image-lightbox.js" defer="true"/>
+<pa:image-lightbox/>
+<pa:script src="/js/shared/image-lightbox.js" defer="true"/>

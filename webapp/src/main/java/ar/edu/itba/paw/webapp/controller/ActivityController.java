@@ -1,28 +1,34 @@
 package ar.edu.itba.paw.webapp.controller;
 
-import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.ActivityFeedCriteria;
+import ar.edu.itba.paw.model.ActivityFeedItem;
+import ar.edu.itba.paw.model.ActivityFeedPermissions;
+import ar.edu.itba.paw.model.ActivityFeedReference;
 import ar.edu.itba.paw.model.Page;
-import ar.edu.itba.paw.model.Pagination;
-import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.services.CarService;
-import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.model.ReviewImage;
+import ar.edu.itba.paw.services.ActivityService;
+import ar.edu.itba.paw.services.CommunityService;
+import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
-import java.time.LocalDateTime;
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -30,133 +36,331 @@ public class ActivityController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
-    private static final int ACTIVITY_PAGE_SIZE = 6;
-
-    private final ReviewService reviewService;
-    private final CarService carService;
+    private final ActivityService activityService;
+    private final ReviewLikeService reviewLikeService;
+    private final CommunityService communityService;
     private final RelativeTimeFormatter relativeTimeFormatter;
 
     @Autowired
-    public ActivityController(final ReviewService reviewService, final CarService carService,
+    public ActivityController(final ActivityService activityService,
+                              final ReviewLikeService reviewLikeService,
+                              final CommunityService communityService,
                               final RelativeTimeFormatter relativeTimeFormatter) {
-        this.reviewService = reviewService;
-        this.carService = carService;
+        this.activityService = activityService;
+        this.reviewLikeService = reviewLikeService;
+        this.communityService = communityService;
         this.relativeTimeFormatter = relativeTimeFormatter;
     }
 
+    @InitBinder
+    public void initBinder(final WebDataBinder binder) {
+        binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
+    }
+
     @RequestMapping(value = "/activity", method = RequestMethod.GET)
-    public ModelAndView activity(@AuthenticationPrincipal final AuthenticatedUser currentUser,
-                                 @RequestParam(value = "tab", required = false) final String tab,
-                                 @RequestParam(value = "page", defaultValue = "1") final int page) {
+    public ModelAndView activity(
+                                 @ModelAttribute("activityCriteria") final ActivityFeedCriteria criteria,
+                                 final HttpServletRequest request,
+                                 @AuthenticationPrincipal final AuthenticatedUser currentUser) {
+        if (!criteria.isValid()) {
+            LOGGER.warn("activity feed received unrecognized filter values; applying defaults");
+        }
+        LOGGER.debug("rendering mixed activity feed type={} timeframe={} sort={} page={}",
+                criteria.getType(), criteria.getTimeframe(), criteria.getSort(), criteria.getPage());
+        final Page<ActivityFeedItem> activityPage = activityService.getActivityFeed(criteria);
+        final List<ActivityFeedItem> items = activityPage.getItems();
+
+        final Set<Long> likedReviewIds;
+        final Set<Long> helpfulPostIds;
+        if (currentUser != null) {
+            final List<Long> reviewIds = items.stream()
+                    .filter(ActivityFeedItem::isReview)
+                    .map(i -> i.getReview().getId())
+                    .collect(Collectors.toList());
+            final List<Long> postIds = items.stream()
+                    .filter(i -> !i.isReview())
+                    .map(i -> i.getCommunityPost().getId())
+                    .collect(Collectors.toList());
+            likedReviewIds = reviewLikeService.getLikedReviewIds(reviewIds, currentUser.getId());
+            helpfulPostIds = communityService.getHelpfulPostIds(postIds, currentUser.getId());
+        } else {
+            likedReviewIds = Collections.emptySet();
+            helpfulPostIds = Collections.emptySet();
+        }
+
         final boolean authenticated = currentUser != null;
-        final String activeTab = normalizeActivityTab(tab, authenticated);
-        LOGGER.debug("rendering activity feed tab={} page={} authenticated={}", activeTab, page, authenticated);
-
-        final Page<Review> reviewsPage = reviewService.getActivityFeedReviews(
-                activeTab, authenticated ? currentUser.getId() : null, page);
-
-        final List<ActivityReviewCard> activityReviews = toActivityReviewCards(reviewsPage.getItems());
-        final long latestCount = reviewService.countAllReviews();
-        final long followedCount = authenticated
-                ? reviewService.countReviewsByFollowedUsers(currentUser.getId())
-                : 0L;
-        final long favoriteCount = authenticated
-                ? reviewService.countReviewsByFavoriteCars(currentUser.getId())
-                : 0L;
+        final Long currentUserId = currentUser == null ? null : currentUser.getId();
+        final boolean admin = request.isUserInRole("ADMIN");
+        final Map<ActivityFeedReference, ActivityFeedPermissions> permissionsByReference =
+                activityService.getActivityFeedPermissions(items, currentUserId, admin);
+        final List<ActivityCardView> cards = items.stream()
+                .map(item -> toActivityCard(
+                        item,
+                        likedReviewIds,
+                        helpfulPostIds,
+                        authenticated,
+                        permissionsByReference.getOrDefault(
+                                item.getReference(),
+                                ActivityFeedPermissions.none(item.getReference())
+                        )
+                ))
+                .collect(Collectors.toList());
 
         final ModelAndView mav = new ModelAndView("activity.jsp");
-        mav.addObject("activeTab", activeTab);
-        mav.addObject("latestCount", latestCount);
-        mav.addObject("followedCount", followedCount);
-        mav.addObject("favoriteCount", favoriteCount);
-        mav.addObject("activityReviews", activityReviews);
-        mav.addObject("activityCurrentPage", reviewsPage.getPageNumber());
-        mav.addObject("activityTotalPages", reviewsPage.getTotalPages());
+        mav.addObject("activityCards", cards);
+        mav.addObject("activityCurrentPage", activityPage.getPageNumber());
+        mav.addObject("activityTotalPages", activityPage.getTotalPages());
+        mav.addObject("activityCriteria", criteria);
         return mav;
     }
 
-    private List<ActivityReviewCard> toActivityReviewCards(final List<Review> reviews) {
-        final Map<Long, Car> carsById = carService.getCarsByIds(reviews.stream().map(Review::getCarId).distinct().toList())
-                .stream()
-                .collect(Collectors.toMap(Car::getId, Function.identity(), (left, right) -> left));
-        final Map<Long, Integer> reviewPagesById = reviewService.getDefaultPagesForReviewIds(
-                reviews.stream().map(Review::getId).toList());
-        return reviews
-                .stream()
-                .map(review -> new ActivityReviewCard(review, carsById.get(review.getCarId()),
-                        reviewPagesById.getOrDefault(review.getId(), Pagination.DEFAULT_PAGE),
-                        relativeTimeFormatter.format(review.getCreatedAt())))
-                .toList();
+    private ActivityCardView toActivityCard(final ActivityFeedItem item,
+                                            final Set<Long> likedReviewIds,
+                                            final Set<Long> helpfulPostIds,
+                                            final boolean authenticated,
+                                            final ActivityFeedPermissions permissions) {
+        if (item.isReview()) {
+            final String carName = item.getCar() != null
+                    ? item.getCar().getBrandName() + " " + item.getCar().getModel()
+                    : null;
+            final long reviewId = item.getReview().getId();
+            return new ActivityCardView(
+                    true,
+                    reviewHref(item),
+                    userHref(item.getReview().getUserId()),
+                    resolveReviewAuthorName(item),
+                    relativeTimeFormatter.format(item.getReview().getCreatedAt()),
+                    item.getReview().getTitle(),
+                    item.getReview().getBody(),
+                    toReviewImageUrls(reviewId, item.getReviewImages()),
+                    "review.image.alt",
+                    "activity.card.context.review",
+                    carName,
+                    item.getCar() != null ? "/reviews/car/" + item.getCar().getId() : null,
+                    "/reviews/" + reviewId + "/like",
+                    likedReviewIds.contains(reviewId),
+                    item.getReviewLikeCount(),
+                    reviewId,
+                    authenticated,
+                    "activity-review-" + reviewId,
+                    "activity.card.metric.comments",
+                    Long.toString(item.getReviewReplyCount()),
+                    permissions.isEditable(),
+                    permissions.isDeletable(),
+                    permissions.isHideable(),
+                    "/reviews/" + reviewId + "/edit",
+                    "/reviews/" + reviewId + "/delete",
+                    "/reviews/" + reviewId + "/hide",
+                    null,
+                    reviewCommentsHref(item)
+            );
+        }
+
+        final long postId = item.getCommunityPost().getId();
+        final String communitySlug = item.getCommunityPost().getCommunity().getSlug();
+        final String postSlug = item.getCommunityPost().getSlug();
+        return new ActivityCardView(
+                false,
+                "/communities/" + communitySlug + "/posts/" + postSlug,
+                userHref(item.getCommunityPost().getAuthorUserId()),
+                item.getCommunityPost().getAuthorUsername(),
+                relativeTimeFormatter.format(item.getCommunityPost().getCreatedAt()),
+                item.getCommunityPost().getTitle(),
+                item.getCommunityPost().getBody(),
+                toCommunityPostImageUrls(item),
+                "communities.post.image.alt",
+                "activity.card.context.community",
+                item.getCommunityPost().getCommunity().getName(),
+                "/communities/" + communitySlug,
+                "/communities/" + communitySlug + "/posts/" + postSlug + "/helpful",
+                helpfulPostIds.contains(postId),
+                item.getHelpfulCount(),
+                postId,
+                authenticated,
+                "activity-post-" + postId,
+                "activity.card.metric.comments",
+                Long.toString(item.getCommentCount()),
+                permissions.isEditable(),
+                permissions.isDeletable(),
+                permissions.isHideable(),
+                "/communities/" + communitySlug + "/posts/" + postSlug + "/edit",
+                "/communities/" + communitySlug + "/posts/" + postSlug + "/delete",
+                "/communities/" + communitySlug + "/posts/" + postSlug + "/hide",
+                "hideCommunityPostModal",
+                "/communities/" + communitySlug + "/posts/" + postSlug + "#comments"
+        );
     }
 
-    private String normalizeActivityTab(final String tab, final boolean authenticated) {
-        if (tab == null || tab.isBlank()) {
-            return ReviewService.FEED_LATEST;
+    private String reviewHref(final ActivityFeedItem item) {
+        final StringBuilder builder = new StringBuilder("/reviews/car/")
+                .append(item.getReview().getCarId());
+        if (item.getReviewPage() > 1) {
+            builder.append("?page=").append(item.getReviewPage());
         }
-        final String normalized = tab.trim().toLowerCase(Locale.ROOT);
-        if (authenticated && (ReviewService.FEED_FOLLOWING.equals(normalized) || ReviewService.FEED_FAVORITES.equals(normalized))) {
-            return normalized;
-        }
-        return ReviewService.FEED_LATEST;
+        builder.append("#review-").append(item.getReview().getId());
+        return builder.toString();
     }
 
-    public static final class ActivityReviewCard {
-        private final Review review;
-        private final Car car;
-        private final int reviewPage;
-        private final String timeAgo;
+    private String reviewCommentsHref(final ActivityFeedItem item) {
+        final StringBuilder builder = new StringBuilder("/reviews/car/")
+                .append(item.getReview().getCarId());
+        if (item.getReviewPage() > 1) {
+            builder.append("?page=").append(item.getReviewPage());
+        }
+        builder.append("#review-").append(item.getReview().getId()).append("-replies");
+        return builder.toString();
+    }
 
-        private ActivityReviewCard(final Review review, final Car car, final int reviewPage, final String timeAgo) {
+    private String userHref(final Long userId) {
+        return userId == null ? null : "/users/" + userId;
+    }
+
+    private String resolveReviewAuthorName(final ActivityFeedItem item) {
+        if (item.getReview().getReviewerUsername() != null && !item.getReview().getReviewerUsername().trim().isEmpty()) {
+            return item.getReview().getReviewerUsername().trim();
+        }
+        if (item.getReview().getReviewerEmail() != null && !item.getReview().getReviewerEmail().trim().isEmpty()) {
+            return item.getReview().getReviewerEmail().trim();
+        }
+        return null;
+    }
+
+    private List<String> toReviewImageUrls(final long reviewId, final List<ReviewImage> images) {
+        if (images == null || images.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return images.stream()
+                .map(image -> "/reviews/" + reviewId + "/images/" + image.getImageId())
+                .collect(Collectors.toList());
+    }
+
+    private List<String> toCommunityPostImageUrls(final ActivityFeedItem item) {
+        if (item.getCommunityPostImages() == null || item.getCommunityPostImages().isEmpty()) {
+            return Collections.emptyList();
+        }
+        return item.getCommunityPostImages().stream()
+                .map(image -> "/communities/" + item.getCommunityPost().getCommunity().getSlug()
+                        + "/posts/" + item.getCommunityPost().getSlug() + "/images/" + image.getImageId())
+                .collect(Collectors.toList());
+    }
+
+    public static final class ActivityCardView {
+        private final boolean review;
+        private final String href;
+        private final String authorHref;
+        private final String authorName;
+        private final String timeText;
+        private final String title;
+        private final String body;
+        private final List<String> imageUrls;
+        private final String imageAltKey;
+        private final String contextLabelKey;
+        private final String contextValue;
+        private final String contextHref;
+        private final String likeAction;
+        private final boolean liked;
+        private final long likeCount;
+        private final long likeEntityId;
+        private final boolean authenticated;
+        private final String cardAnchorId;
+        private final String secondaryMetricKey;
+        private final String secondaryMetricValue;
+        private final boolean editable;
+        private final boolean deletable;
+        private final boolean hideable;
+        private final String editHref;
+        private final String deleteAction;
+        private final String hideAction;
+        private final String hideModalTarget;
+        private final String commentsHref;
+
+        private ActivityCardView(final boolean review,
+                                 final String href,
+                                 final String authorHref,
+                                 final String authorName,
+                                 final String timeText,
+                                 final String title,
+                                 final String body,
+                                 final List<String> imageUrls,
+                                 final String imageAltKey,
+                                 final String contextLabelKey,
+                                 final String contextValue,
+                                 final String contextHref,
+                                 final String likeAction,
+                                 final boolean liked,
+                                 final long likeCount,
+                                 final long likeEntityId,
+                                 final boolean authenticated,
+                                 final String cardAnchorId,
+                                 final String secondaryMetricKey,
+                                 final String secondaryMetricValue,
+                                 final boolean editable,
+                                 final boolean deletable,
+                                 final boolean hideable,
+                                 final String editHref,
+                                 final String deleteAction,
+                                 final String hideAction,
+                                 final String hideModalTarget,
+                                 final String commentsHref) {
             this.review = review;
-            this.car = car;
-            this.reviewPage = reviewPage;
-            this.timeAgo = timeAgo;
+            this.href = href;
+            this.authorHref = authorHref;
+            this.authorName = authorName;
+            this.timeText = timeText;
+            this.title = title;
+            this.body = body;
+            this.imageUrls = imageUrls;
+            this.imageAltKey = imageAltKey;
+            this.contextLabelKey = contextLabelKey;
+            this.contextValue = contextValue;
+            this.contextHref = contextHref;
+            this.likeAction = likeAction;
+            this.liked = liked;
+            this.likeCount = likeCount;
+            this.likeEntityId = likeEntityId;
+            this.authenticated = authenticated;
+            this.cardAnchorId = cardAnchorId;
+            this.secondaryMetricKey = secondaryMetricKey;
+            this.secondaryMetricValue = secondaryMetricValue;
+            this.editable = editable;
+            this.deletable = deletable;
+            this.hideable = hideable;
+            this.editHref = editHref;
+            this.deleteAction = deleteAction;
+            this.hideAction = hideAction;
+            this.hideModalTarget = hideModalTarget;
+            this.commentsHref = commentsHref;
         }
 
-        public Review getReview() {
-            return review;
-        }
-
-        public Car getCar() {
-            return car;
-        }
-
-        public int getReviewPage() {
-            return reviewPage;
-        }
-
-        public String getCarName() {
-            if (car == null) {
-                return "Auto no disponible";
-            }
-            return car.getBrandName() + " " + car.getModel();
-        }
-
-        public boolean getHasCarImage() {
-            return car != null && car.getHasImage();
-        }
-
-        public String getAuthorName() {
-            if (review.getReviewerUsername() != null && !review.getReviewerUsername().trim().isEmpty()) {
-                return review.getReviewerUsername().trim();
-            }
-            if (review.getReviewerEmail() != null && !review.getReviewerEmail().trim().isEmpty()) {
-                return review.getReviewerEmail().trim();
-            }
-            return "Usuario";
-        }
-
-        public String getAuthorInitials() {
-            final String value = getAuthorName();
-            final String[] parts = value.trim().split("\\s+");
-            if (parts.length > 1) {
-                return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase(Locale.ROOT);
-            }
-            return value.substring(0, Math.min(2, value.length())).toUpperCase(Locale.ROOT);
-        }
-
-        public String getTimeAgo() {
-            return timeAgo;
-        }
+        public boolean isReview() { return review; }
+        public boolean isCommunityPost() { return !review; }
+        public String getHref() { return href; }
+        public String getAuthorHref() { return authorHref; }
+        public String getAuthorName() { return authorName; }
+        public String getTimeText() { return timeText; }
+        public String getTitle() { return title; }
+        public String getBody() { return body; }
+        public List<String> getImageUrls() { return imageUrls; }
+        public String getImageAltKey() { return imageAltKey; }
+        public String getContextLabelKey() { return contextLabelKey; }
+        public String getContextValue() { return contextValue; }
+        public String getContextHref() { return contextHref; }
+        public String getLikeAction() { return likeAction; }
+        public boolean isLiked() { return liked; }
+        public long getLikeCount() { return likeCount; }
+        public long getLikeEntityId() { return likeEntityId; }
+        public boolean isAuthenticated() { return authenticated; }
+        public String getCardAnchorId() { return cardAnchorId; }
+        public String getSecondaryMetricKey() { return secondaryMetricKey; }
+        public String getSecondaryMetricValue() { return secondaryMetricValue; }
+        public boolean isEditable() { return editable; }
+        public boolean isDeletable() { return deletable; }
+        public boolean isHideable() { return hideable; }
+        public boolean isActionMenuVisible() { return editable || deletable || hideable; }
+        public String getEditHref() { return editHref; }
+        public String getDeleteAction() { return deleteAction; }
+        public String getHideAction() { return hideAction; }
+        public String getHideModalTarget() { return hideModalTarget; }
+        public String getCommentsHref() { return commentsHref; }
     }
 }

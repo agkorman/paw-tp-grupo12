@@ -56,6 +56,10 @@
             return;
         }
         parts.form.action = button.getAttribute('data-community-hide-action') || '';
+        var redirectField = parts.form.querySelector('[data-community-hide-redirect]');
+        if (redirectField) {
+            redirectField.value = button.getAttribute('data-community-hide-redirect') || '';
+        }
         parts.reasonField.value = '';
         clearError(parts.reasonField, parts.errorNode);
         setModalOpen(modal, true);
@@ -66,6 +70,10 @@
         var parts = getModalParts(modal);
         if (parts.form) {
             parts.form.removeAttribute('action');
+            var redirectField = parts.form.querySelector('[data-community-hide-redirect]');
+            if (redirectField) {
+                redirectField.value = '';
+            }
         }
         if (parts.reasonField) {
             clearError(parts.reasonField, parts.errorNode);

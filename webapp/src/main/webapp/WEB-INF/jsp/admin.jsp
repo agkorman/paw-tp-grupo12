@@ -206,6 +206,27 @@
         <c:when test="${not empty param.carRejected}">
             <pa:toast messageCode="admin.carRequest.reject.toast.success"/>
         </c:when>
+        <c:when test="${not empty param.catalogAccepted}">
+            <pa:toast messageCode="admin.catalogRequest.accept.toast.success"/>
+        </c:when>
+        <c:when test="${not empty param.catalogRejected}">
+            <pa:toast messageCode="admin.catalogRequest.reject.toast.success"/>
+        </c:when>
+        <c:when test="${not empty param.catalogAcceptError}">
+            <pa:toast messageCode="admin.catalogRequest.accept.toast.error" type="error"/>
+        </c:when>
+        <c:when test="${not empty param.catalogError}">
+            <pa:toast messageCode="admin.catalogRequest.toast.error" type="error"/>
+        </c:when>
+        <c:when test="${not empty param.requestAccepted}">
+            <pa:toast messageCode="admin.request.accept.toast.success"/>
+        </c:when>
+        <c:when test="${not empty param.requestRejected}">
+            <pa:toast messageCode="admin.request.reject.toast.success"/>
+        </c:when>
+        <c:when test="${not empty param.requestError}">
+            <pa:toast messageCode="admin.request.toast.error" type="error"/>
+        </c:when>
         <c:otherwise>
             <pa:toast/>
         </c:otherwise>
@@ -213,7 +234,6 @@
     <pa:script src="/js/shared/modal-utils.js"/>
     <pa:script src="/js/admin/admin-catalog-request-modal.js"/>
     <pa:script src="/js/admin/moderator-application-review-modal.js"/>
-    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:script src="/js/shared/toast.js"/>
     <pa:footer/>
 </body>

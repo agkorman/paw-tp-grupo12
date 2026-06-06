@@ -6,8 +6,11 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
+import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewLikeService;
+import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
+import ar.edu.itba.paw.services.UserActivityService;
 import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.services.exception.SelfFollowException;
@@ -60,6 +63,9 @@ class UserControllerTest {
     private ReviewLikeService reviewLikeService;
 
     @Mock
+    private ReviewReplyService reviewReplyService;
+
+    @Mock
     private CarService carService;
 
     @Mock
@@ -73,6 +79,12 @@ class UserControllerTest {
 
     @Mock
     private AdminRequestService adminRequestService;
+
+    @Mock
+    private CommunityService communityService;
+
+    @Mock
+    private UserActivityService userActivityService;
 
     @Mock
     private MessageSource messageSource;
@@ -103,17 +115,17 @@ class UserControllerTest {
         final User profileUser =
                 TestModels.user(profileUserId, "ProfileUser", profileUserId + "@test.com", "pw", "user", LocalDateTime.now());
         when(userService.getUserById(eq(profileUserId))).thenReturn(Optional.of(profileUser));
-        when(reviewService.countReviewsByUser(eq(profileUserId))).thenReturn(0L);
+        when(userActivityService.countAuthoredActivity(eq(profileUserId))).thenReturn(0L);
         when(carFavoriteService.countFavoriteCars(eq(profileUserId))).thenReturn(1L);
-        when(reviewLikeService.countLikedReviewsByUser(eq(profileUserId))).thenReturn(0L);
+        when(userActivityService.countLikedActivity(eq(profileUserId))).thenReturn(0L);
         when(reviewLikeService.countReviewLikesByReviewIds(any())).thenReturn(Collections.emptyMap());
 
-        when(reviewService.getReviewsByUser(eq(profileUserId), anyInt()))
-                .thenAnswer(invocation -> Page.empty(invocation.getArgument(1), Pagination.REVIEWS_PAGE_SIZE));
+        when(userActivityService.getAuthoredActivity(eq(profileUserId), anyInt()))
+                .thenAnswer(invocation -> Page.empty(invocation.getArgument(1), Pagination.PROFILE_ACTIVITY_PAGE_SIZE));
         when(carFavoriteService.getFavoriteCars(eq(profileUserId), anyInt()))
                 .thenAnswer(invocation -> Page.empty(invocation.getArgument(1), Pagination.CARS_PAGE_SIZE));
-        when(reviewLikeService.getLikedReviewIdsByUser(eq(profileUserId), anyInt()))
-                .thenAnswer(invocation -> Page.empty(invocation.getArgument(1), Pagination.REVIEWS_PAGE_SIZE));
+        when(userActivityService.getLikedActivity(eq(profileUserId), anyInt()))
+                .thenAnswer(invocation -> Page.empty(invocation.getArgument(1), Pagination.PROFILE_ACTIVITY_PAGE_SIZE));
 
         when(userFollowService.countFollowing(eq(profileUserId))).thenReturn(0L);
         when(userFollowService.countFollowers(eq(profileUserId))).thenReturn(0L);
@@ -122,6 +134,9 @@ class UserControllerTest {
         when(carService.getCarsByIds(any())).thenReturn(Collections.emptyList());
         when(reviewService.getReviewStatsByCarIds(any())).thenReturn(Collections.emptyList());
         when(reviewService.getReviewsByIds(any())).thenReturn(Collections.emptyList());
+        when(communityService.getPostsByIds(any())).thenReturn(Collections.emptyList());
+        when(communityService.countHelpfulReactionsByPostIds(any())).thenReturn(Collections.emptyMap());
+        when(communityService.countCommentsByPostIds(any())).thenReturn(Collections.emptyMap());
     }
 
     private static AuthenticatedUser testUser(final long id, final String name) {

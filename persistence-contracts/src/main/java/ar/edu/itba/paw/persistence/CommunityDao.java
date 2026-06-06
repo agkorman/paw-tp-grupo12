@@ -33,6 +33,7 @@ public interface CommunityDao {
     void createMembership(long communityId, long userId, String role);
     void deleteMembership(long communityId, long userId);
     Optional<String> findMembershipRole(long communityId, long userId);
+    Map<Long, String> findMembershipRoles(long userId, Collection<Long> communityIds);
     void updateMembershipRole(long communityId, long userId, String newRole);
     List<CommunityMembershipEntry> listMembers(long communityId);
     void setPostHidden(long postId, boolean hidden);
@@ -43,8 +44,10 @@ public interface CommunityDao {
     boolean addCommentHelpfulReaction(long commentId, long userId);
     boolean removeCommentHelpfulReaction(long commentId, long userId);
     boolean isCommentHelpfulReactionAddedByUser(long commentId, long userId);
+    Set<Long> findPostHelpfulReactionsByUser(Collection<Long> postIds, long userId);
     Set<Long> findCommentHelpfulReactionsByUser(Collection<Long> commentIds, long userId);
     Map<Long, List<CommunityTopic>> findTopicsByCommunityIds(Collection<Long> communityIds);
+    List<CommunityPost> findPostsByIds(Collection<Long> postIds);
     List<CommunityPost> findPostsByCommunityId(long communityId);
     Page<CommunityPost> findVisiblePostsByCommunityId(long communityId, String sort, int page);
     Optional<CommunityPost> findPostByCommunityIdAndSlug(long communityId, String postSlug);

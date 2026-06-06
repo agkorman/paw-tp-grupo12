@@ -7,10 +7,14 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${pageTitle}" styles="/css/community-post-common.css|/css/community-post-detail.css|/css/communities-responsive.css|/css/profile-modal.css"/>
+<pa:page-head title="${pageTitle}" styles="/css/community-post-common.css|/css/community-post-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:url var="communityDetailUrl" value="/communities/${postDetail.community.slug}"/>
+    <c:set var="communityPostsSectionUrl" value="${communityDetailUrl}#communityFeedTitle"/>
+    <c:if test="${not empty postReturnRedirect}">
+        <c:set var="communityPostsSectionUrl" value="${postReturnRedirect}"/>
+    </c:if>
     <c:url var="communityPostDetailUrl" value="/communities/${postDetail.community.slug}/posts/${postDetail.post.slug}"/>
     <c:url var="communityPostHelpfulUrl" value="/communities/${postDetail.community.slug}/posts/${postDetail.post.slug}/helpful"/>
     <c:url var="communityPostCommentCreateUrl" value="/communities/${postDetail.community.slug}/posts/${postDetail.post.slug}/comments"/>
@@ -26,7 +30,8 @@
     <main class="community-post-page">
         <section class="community-post-shell">
             <div class="community-post-header">
-                <a class="community-back-link" href="${fn:escapeXml(communityDetailUrl)}" aria-label="${fn:escapeXml(communityPostBackLabel)}">
+                <a class="community-back-link" href="${fn:escapeXml(communityDetailUrl)}" aria-label="${fn:escapeXml(communityPostBackLabel)}"
+                   onclick="if (document.referrer &amp;&amp; document.referrer.indexOf(location.origin) === 0) { history.back(); return false; }">
                     <pa:icon name="chevron-left" size="18"/>
                 </a>
                 <div class="community-post-origin">
@@ -36,31 +41,42 @@
                             <span aria-hidden="true">•</span>
                             <span><c:out value="${postView.timeText}"/></span>
                         </p>
-                        <a class="community-post-origin-author" href="${fn:escapeXml(postView.authorProfileHref)}">
+                        <c:url var="postAuthorProfileHref" value="${postView.authorProfileHref}"/>
+                        <a class="community-post-origin-author" href="${fn:escapeXml(postAuthorProfileHref)}">
                             <c:out value="${postView.author}"/>
                         </a>
                     </div>
                 </div>
-                <c:if test="${postView.deletable or postView.viewerModerator}">
+                <c:if test="${postView.deletable or postView.hideable}">
                     <spring:message var="postModMenuLabel" code="communities.post.modMenu.label"/>
                     <pa:action-menu label="${postModMenuLabel}" cssClass="community-post-mod-menu">
+                        <c:if test="${postView.editable}">
+                            <c:url var="communityPostEditUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/edit">
+                                <c:param name="redirect" value="${communityPostDetailUrl}"/>
+                            </c:url>
+                            <a href="${fn:escapeXml(communityPostEditUrl)}">
+                                <spring:message code="common.action.edit"/>
+                            </a>
+                        </c:if>
                         <c:if test="${postView.deletable}">
                             <c:url var="communityPostDeleteUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/delete"/>
                             <form method="post" action="${fn:escapeXml(communityPostDeleteUrl)}"
                                   data-confirm-modal="deletePostConfirmModal">
                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                <input type="hidden" name="redirect" value="${fn:escapeXml(communityPostsSectionUrl)}">
                                 <button type="submit" class="action-menu-danger">
                                     <spring:message code="communities.post.deleteAction"/>
                                 </button>
                             </form>
                         </c:if>
-                        <c:if test="${postView.viewerModerator and not postView.deletable}">
+                        <c:if test="${postView.hideable}">
                             <c:url var="communityPostHideUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/hide"/>
                             <button type="button"
                                     class="action-menu-danger"
                                     data-open-community-hide-modal
                                     data-community-hide-modal-target="hideCommunityPostModal"
-                                    data-community-hide-action="${fn:escapeXml(communityPostHideUrl)}">
+                                    data-community-hide-action="${fn:escapeXml(communityPostHideUrl)}"
+                                    data-community-hide-redirect="${fn:escapeXml(communityPostsSectionUrl)}">
                                 <spring:message code="communities.post.hideAction"/>
                             </button>
                         </c:if>
@@ -71,6 +87,7 @@
             <article class="community-post-detail-card">
                 <h1><c:out value="${postView.title}"/></h1>
                 <p class="community-post-detail-body"><c:out value="${postView.body}"/></p>
+                <pa:image-gallery imageUrls="${postView.imageUrls}" altKey="communities.post.image.alt"/>
 
                 <div class="community-post-detail-actions">
                     <spring:message var="postCommentCountText" code="communities.post.metric.comments" arguments="${postView.commentCount}"/>
@@ -82,40 +99,10 @@
                             disabled="${empty pageContext.request.userPrincipal}"
                             intent="community-post-helpful-${postDetail.post.id}"/>
                     <span class="community-post-detail-pill"><c:out value="${postCommentCountText}"/></span>
-                    <c:if test="${postView.deletable or postView.viewerModerator}">
-                        <spring:message var="postModMenuLabel" code="communities.post.modMenu.label"/>
-                        <pa:action-menu label="${postModMenuLabel}" cssClass="community-post-mod-menu">
-                            <c:if test="${postView.editable}">
-                                <c:url var="communityPostEditUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/edit"/>
-                                <a href="${fn:escapeXml(communityPostEditUrl)}">
-                                    <spring:message code="common.action.edit"/>
-                                </a>
-                            </c:if>
-                            <c:if test="${postView.deletable}">
-                                <c:url var="communityPostDeleteUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/delete"/>
-                                <form method="post" action="${fn:escapeXml(communityPostDeleteUrl)}"
-                                      data-confirm-modal="deletePostConfirmModal">
-                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                    <button type="submit" class="action-menu-danger">
-                                        <spring:message code="communities.post.deleteAction"/>
-                                    </button>
-                                </form>
-                            </c:if>
-                            <c:if test="${postView.viewerModerator and not postView.deletable}">
-                                <c:url var="communityPostHideUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/hide"/>
-                                <button type="button"
-                                        class="action-menu-danger"
-                                        data-open-community-hide-modal
-                                        data-community-hide-modal-target="hideCommunityPostModal"
-                                        data-community-hide-action="${fn:escapeXml(communityPostHideUrl)}">
-                                    <spring:message code="communities.post.hideAction"/>
-                                </button>
-                            </c:if>
-                        </pa:action-menu>
-                    </c:if>
                 </div>
             </article>
 
+            <div id="comments">
             <sec:authorize access="isAuthenticated()">
                 <c:choose>
                     <c:when test="${postView.viewerMember}">
@@ -155,6 +142,7 @@
                     <c:out value="${communityPostCommentLoginSuffix}"/>
                 </p>
             </sec:authorize>
+            </div>
 
             <section class="community-comments-list">
                 <spring:message var="commentModMenuLabel" code="communities.comment.modMenu.label"/>
@@ -162,9 +150,9 @@
                     <div class="community-comment-row" id="comment-${comment.commentId}">
                         <article class="community-comment">
                             <div class="community-comment-header">
-                                <span class="community-comment-avatar" aria-hidden="true"></span>
                                 <div class="community-comment-meta">
-                                    <a class="community-author-link" href="${fn:escapeXml(comment.authorProfileHref)}">
+                                    <c:url var="commentAuthorProfileHref" value="${comment.authorProfileHref}"/>
+                                    <a class="community-author-link" href="${fn:escapeXml(commentAuthorProfileHref)}">
                                         <strong><c:out value="${comment.author}"/></strong>
                                     </a>
                                     <c:if test="${comment.op}">
@@ -226,7 +214,8 @@
                                                 class="action-menu-danger"
                                                 data-open-community-hide-modal
                                                 data-community-hide-modal-target="hideCommunityCommentModal"
-                                                data-community-hide-action="${fn:escapeXml(communityCommentHideUrl)}">
+                                                data-community-hide-action="${fn:escapeXml(communityCommentHideUrl)}"
+                                                data-community-hide-redirect="${fn:escapeXml(communityPostDetailUrl)}">
                                             <spring:message code="communities.comment.hideAction"/>
                                         </button>
                                     </c:if>
@@ -250,7 +239,7 @@
                                bodyCode="communities.comment.delete.body"
                                confirmCode="communities.comment.deleteAction"
                                confirmCssClass="btn-primary"/>
-        <c:if test="${postView.viewerModerator}">
+        <c:if test="${postView.moderationAvailable}">
             <pa:community-hide-modal id="hideCommunityPostModal"
                                      titleCode="communities.post.hide.title"
                                      bodyCode="communities.post.hide.body"
@@ -267,6 +256,8 @@
         <pa:script src="/js/communities/community-comment-edit.js"/>
         <pa:script src="/js/communities/community-moderation.js"/>
     </sec:authorize>
+    <pa:image-lightbox/>
+    <pa:script src="/js/shared/image-lightbox.js" defer="true"/>
 
     <pa:footer/>
 </body>

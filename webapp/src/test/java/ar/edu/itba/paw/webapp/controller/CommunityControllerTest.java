@@ -8,6 +8,7 @@ import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
+import ar.edu.itba.paw.model.CommunityPostImage;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.Page;
@@ -17,32 +18,45 @@ import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
+import ar.edu.itba.paw.webapp.form.CommunityForm;
+import ar.edu.itba.paw.webapp.form.CommunityPostForm;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.ui.ExtendedModelMap;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.BindingResult;
 
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -80,6 +94,21 @@ class CommunityControllerTest {
 
     private static void clearSecurityContext() {
         SecurityContextHolder.clearContext();
+    }
+
+    private static void assertGlobalErrorCode(
+            final MvcResult result,
+            final String formName,
+            final String expectedCode
+    ) {
+        final Object errorsObject = result.getModelAndView()
+                .getModel()
+                .get(BindingResult.MODEL_KEY_PREFIX + formName);
+        assertTrue(errorsObject instanceof BindingResult);
+        final BindingResult errors = (BindingResult) errorsObject;
+        assertTrue(errors.getGlobalErrors()
+                .stream()
+                .anyMatch(error -> Arrays.asList(error.getCodes()).contains(expectedCode)));
     }
 
     @Test
@@ -141,21 +170,26 @@ class CommunityControllerTest {
     @Test
     void communityPostDetail_knownPost_rendersPostDetailView() throws Exception {
         // Arrange
-        when(communityService.getCommunityPostDetail(anyString(), anyString(), any()))
+        when(communityService.getCommunityPostDetail(anyString(), anyString(), any(), anyBoolean()))
                 .thenReturn(Optional.of(communityPostDetailData()));
         when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("2 hours ago");
         final MockMvc mockMvc = communityMockMvc();
 
         // Exercise
         final ResultActions resultActions =
-                mockMvc.perform(get("/communities/classics/posts/falcon-60"));
+                mockMvc.perform(get("/communities/classics/posts/falcon-60")
+                        .param("redirect", "/communities/classics?sort=commented&page=2#communityFeedTitle"));
 
         // Assertions
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(view().name("community-post-detail.jsp"))
                 .andExpect(model().attributeExists("postDetail"))
-                .andExpect(model().attributeExists("postView"));
+                .andExpect(model().attributeExists("postView"))
+                .andExpect(model().attribute(
+                        "postReturnRedirect",
+                        "/communities/classics?sort=commented&page=2#communityFeedTitle"
+                ));
     }
 
     @Test
@@ -242,6 +276,54 @@ class CommunityControllerTest {
     }
 
     @Test
+    void createCommunity_slugConflict_returnsFormWithGlobalError() throws Exception {
+        // Arrange
+        when(communityService.getAvailableTopics()).thenReturn(List.of(topic((short) 1, "classics")));
+        when(communityService.createCommunity(anyLong(), anyString(), anyString(), anyCollection()))
+                .thenThrow(new DataIntegrityViolationException("uq_communities_slug"));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities")
+                .param("name", "Classics")
+                .param("description", "Pre-1990 cars and honest restoration projects.")
+                .param("selectedTopicIds", "1"));
+
+        // Assertions
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(view().name("community-create.jsp"))
+                .andExpect(model().attributeHasErrors("communityForm"))
+                .andExpect(result -> assertGlobalErrorCode(
+                        result,
+                        "communityForm",
+                        "communities.create.error.slugConflict"))
+                .andExpect(model().attributeExists("communityTopics"));
+        clearSecurityContext();
+    }
+
+    @Test
+    void createCommunity_unrelatedIntegrityViolation_rethrowsException() {
+        // Arrange
+        final CommunityForm form = communityForm();
+        final BindingResult errors = new BeanPropertyBindingResult(form, "communityForm");
+        final DataIntegrityViolationException exception =
+                new DataIntegrityViolationException("uq_community_members_user_id_community_id");
+        when(communityService.createCommunity(anyLong(), anyString(), anyString(), anyCollection()))
+                .thenThrow(exception);
+
+        // Exercise
+        final DataIntegrityViolationException thrown = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> controller.createCommunity(form, errors, new ExtendedModelMap(), testUser(7L))
+        );
+
+        // Assertions
+        assertSame(exception, thrown);
+    }
+
+    @Test
     void joinCommunity_authenticatedUser_redirectsToDetail() throws Exception {
         // Arrange
         when(communityService.toggleMembership("classics", 7L)).thenReturn(Optional.of(true));
@@ -323,14 +405,14 @@ class CommunityControllerTest {
         createdPost.setTitle("First post");
         createdPost.setBody("This is the first real community post.");
         when(communityService.getCommunityBySlug("classics")).thenReturn(Optional.of(community()));
-        when(communityService.createCommunityPost("classics", 7L, "First post", "This is the first real community post."))
+        when(communityService.createCommunityPost("classics", 7L, "First post", "This is the first real community post.", List.of()))
                 .thenReturn(Optional.of(createdPost));
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
 
         // Exercise
         final ResultActions resultActions = mockMvc.perform(
-                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities/classics/posts")
+                multipart("/communities/classics/posts")
                         .param("title", "First post")
                         .param("body", "This is the first real community post.")
         );
@@ -351,7 +433,7 @@ class CommunityControllerTest {
 
         // Exercise
         final ResultActions resultActions = mockMvc.perform(
-                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities/classics/posts")
+                multipart("/communities/classics/posts")
                         .param("title", "   ")
                         .param("body", "This is the first real community post.")
         );
@@ -363,6 +445,119 @@ class CommunityControllerTest {
                 .andExpect(model().attributeHasFieldErrors("communityPostForm", "title"))
                 .andExpect(model().attributeExists("community"));
         clearSecurityContext();
+    }
+
+    @Test
+    void submitCommunityPost_slugConflict_returnsFormWithGlobalError() throws Exception {
+        // Arrange
+        when(communityService.getCommunityBySlug("classics")).thenReturn(Optional.of(community()));
+        when(communityService.createCommunityPost(
+                "classics",
+                7L,
+                "First post",
+                "This is the first real community post.",
+                List.of()
+        )).thenThrow(new DataIntegrityViolationException("uq_community_posts_slug"));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                multipart("/communities/classics/posts")
+                        .param("title", "First post")
+                        .param("body", "This is the first real community post.")
+        );
+
+        // Assertions
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(view().name("community-post-form.jsp"))
+                .andExpect(model().attributeHasErrors("communityPostForm"))
+                .andExpect(result -> assertGlobalErrorCode(
+                        result,
+                        "communityPostForm",
+                        "communities.postForm.error.slugConflict"))
+                .andExpect(model().attributeExists("community"));
+        clearSecurityContext();
+    }
+
+    @Test
+    void submitCommunityPost_unrelatedIntegrityViolation_rethrowsException() {
+        // Arrange
+        final CommunityPostForm form = communityPostForm();
+        final BindingResult errors = new BeanPropertyBindingResult(form, "communityPostForm");
+        final DataIntegrityViolationException exception =
+                new DataIntegrityViolationException("fk_community_post_images_post_id");
+        when(communityService.getCommunityBySlug("classics")).thenReturn(Optional.of(community()));
+        when(communityService.createCommunityPost(
+                anyString(),
+                anyLong(),
+                anyString(),
+                anyString(),
+                any()
+        )).thenThrow(exception);
+
+        // Exercise
+        final DataIntegrityViolationException thrown = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> controller.submitCommunityPost("classics", form, errors, new ExtendedModelMap(), testUser(7L))
+        );
+
+        // Assertions
+        assertSame(exception, thrown);
+    }
+
+    @Test
+    void submitCommunityPost_tooManyImages_returnsFormWithErrors() throws Exception {
+        // Arrange
+        when(communityService.getCommunityBySlug("classics")).thenReturn(Optional.of(community()));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+        final MockMultipartFile imageOne = new MockMultipartFile("files", "one.png", "image/png", new byte[]{1});
+        final MockMultipartFile imageTwo = new MockMultipartFile("files", "two.png", "image/png", new byte[]{2});
+        final MockMultipartFile imageThree = new MockMultipartFile("files", "three.png", "image/png", new byte[]{3});
+        final MockMultipartFile imageFour = new MockMultipartFile("files", "four.png", "image/png", new byte[]{4});
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                multipart("/communities/classics/posts")
+                        .file(imageOne)
+                        .file(imageTwo)
+                        .file(imageThree)
+                        .file(imageFour)
+                        .param("title", "First post")
+                        .param("body", "This is the first real community post.")
+        );
+
+        // Assertions
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(view().name("community-post-form.jsp"))
+                .andExpect(model().attributeHasFieldErrors("communityPostForm", "files"));
+        clearSecurityContext();
+    }
+
+    @Test
+    void getCommunityPostImage_existingImage_returnsBytes() throws Exception {
+        // Arrange
+        final CommunityPostDetailData detailData = communityPostDetailData();
+        final CommunityPostImage image = new CommunityPostImage();
+        image.setImageId(15L);
+        image.setContentType("image/png");
+        image.setImageData(new byte[]{1, 2, 3});
+        image.setUpdatedAt(LocalDateTime.of(2026, 6, 1, 12, 0));
+        when(communityService.getCommunityPostDetail("classics", "falcon-60", null))
+                .thenReturn(Optional.of(detailData));
+        when(communityService.getPostImageById(1L, 15L)).thenReturn(Optional.of(image));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions =
+                mockMvc.perform(get("/communities/classics/posts/falcon-60/images/15"));
+
+        // Assertions
+        resultActions
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -578,6 +773,21 @@ class CommunityControllerTest {
         user.setPreferredLocale("es");
         user.setCreatedAt(LocalDateTime.now().minusDays(100));
         return user;
+    }
+
+    private static CommunityForm communityForm() {
+        final CommunityForm form = new CommunityForm();
+        form.setName("Classics");
+        form.setDescription("Pre-1990 cars and honest restoration projects.");
+        form.setSelectedTopicIds(Set.of((short) 1));
+        return form;
+    }
+
+    private static CommunityPostForm communityPostForm() {
+        final CommunityPostForm form = new CommunityPostForm();
+        form.setTitle("First post");
+        form.setBody("This is the first real community post.");
+        return form;
     }
 
     private static AuthenticatedUser testUser(final long id) {

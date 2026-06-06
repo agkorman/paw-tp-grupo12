@@ -29,6 +29,7 @@
     <pa:stylesheet href="/css/tabs.css"/>
     <pa:stylesheet href="/css/pagination.css"/>
     <pa:stylesheet href="/css/modal.css"/>
+    <pa:stylesheet href="/css/users-search.css"/>
     <c:if test="${not empty styles}">
         <c:forEach var="styleHref" items="${fn:split(styles, '|')}">
             <c:if test="${not empty styleHref}">

@@ -6,11 +6,14 @@ import ar.edu.itba.paw.model.CommunityHubEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
+import ar.edu.itba.paw.model.CommunityPostImage;
 import ar.edu.itba.paw.model.CommunityTopic;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CommunityDao;
+import ar.edu.itba.paw.persistence.CommunityPostImageDao;
 import ar.edu.itba.paw.services.exception.CannotModerateCreatorException;
 import ar.edu.itba.paw.services.exception.CommunityContentOwnershipException;
 import ar.edu.itba.paw.services.exception.CommunityCreatorCannotLeaveException;
@@ -48,6 +51,9 @@ class CommunityServiceImplTest {
 
     @Mock
     private CommunityDao communityDao;
+
+    @Mock
+    private CommunityPostImageDao communityPostImageDao;
 
     @Mock
     private UserService userService;
@@ -270,7 +276,8 @@ class CommunityServiceImplTest {
                 .thenReturn(createdPost);
 
         // Exercise
-        final Optional<CommunityPost> result = communityService.createCommunityPost("classics", USER_ID, "First post", "Body");
+        final Optional<CommunityPost> result = communityService.createCommunityPost(
+                "classics", USER_ID, "First post", "Body", List.of());
 
         // Assertions
         assertTrue(result.isPresent());
@@ -283,7 +290,8 @@ class CommunityServiceImplTest {
         when(communityDao.findBySlug("missing")).thenReturn(Optional.empty());
 
         // Exercise
-        final Optional<CommunityPost> result = communityService.createCommunityPost("missing", USER_ID, "First post", "Body");
+        final Optional<CommunityPost> result = communityService.createCommunityPost(
+                "missing", USER_ID, "First post", "Body", List.of());
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -337,7 +345,8 @@ class CommunityServiceImplTest {
 
         // Exercise
         final Optional<CommunityPost> result =
-                communityService.updateCommunityPost("classics", "falcon-60", USER_ID, "Updated title", "Updated body");
+                communityService.updateCommunityPost(
+                        "classics", "falcon-60", USER_ID, "Updated title", "Updated body", List.of());
 
         // Assertions
         assertTrue(result.isPresent());
@@ -356,7 +365,8 @@ class CommunityServiceImplTest {
         // Exercise
         final CommunityContentOwnershipException exception = assertThrows(
                 CommunityContentOwnershipException.class,
-                () -> communityService.updateCommunityPost("classics", "falcon-60", USER_ID, "Updated title", "Updated body")
+                () -> communityService.updateCommunityPost(
+                        "classics", "falcon-60", USER_ID, "Updated title", "Updated body", List.of())
         );
 
         // Assertions
@@ -379,6 +389,53 @@ class CommunityServiceImplTest {
         // Assertions
         assertTrue(result.isPresent());
         assertEquals("Updated comment", result.get().getBody());
+    }
+
+    @Test
+    void getCommunityDetail_populatesPostImages() {
+        // Arrange
+        final Community community = community();
+        final CommunityPost post = post(community, author(7L, "mateo.classics"));
+        final CommunityPostImage image = new CommunityPostImage();
+        image.setImageId(50L);
+        image.setPost(post);
+        image.setDisplayOrder(0);
+        image.setContentType("image/png");
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findVisiblePostsByCommunityId(community.getId(), "recent", 1))
+                .thenReturn(new Page<>(List.of(post), 1, 6, 1L));
+        when(communityPostImageDao.findAllByPostIds(anyCollection())).thenReturn(List.of(image));
+        when(communityDao.countCommentsByPostIds(anyCollection())).thenReturn(Map.of());
+        when(communityDao.countHelpfulReactionsByPostIds(anyCollection())).thenReturn(Map.of());
+        when(communityDao.findTopicsByCommunityIds(anyCollection())).thenReturn(Map.of());
+        when(communityDao.countMembersByCommunityIds(anyCollection())).thenReturn(Map.of());
+        when(communityDao.countWeeklyPostsByCommunityIds(anyCollection(), any())).thenReturn(Map.of());
+
+        // Exercise
+        final Optional<CommunityDetailData> result = communityService.getCommunityDetail("classics", null, "recent");
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals(1, result.get().getPosts().get(0).getPost().getImages().size());
+        assertEquals(50L, result.get().getPosts().get(0).getPost().getImages().get(0).getImageId());
+    }
+
+    @Test
+    void collectRetainedPostImagePayloads_returnsExistingImagePayloads() {
+        // Arrange
+        final CommunityPostImage image = new CommunityPostImage();
+        image.setImageId(10L);
+        image.setContentType("image/png");
+        image.setImageData(new byte[]{1, 2, 3});
+        when(communityPostImageDao.findByPostIdAndImageId(5L, 10L)).thenReturn(Optional.of(image));
+
+        // Exercise
+        final List<ImagePayload> result = communityService.collectRetainedPostImagePayloads(5L, List.of(10L));
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals("image/png", result.get(0).getContentType());
+        assertEquals(3, result.get(0).getImageData().length);
     }
 
     @Test
@@ -561,7 +618,7 @@ class CommunityServiceImplTest {
         // Exercise
         final CommunityMembershipRequiredException exception = assertThrows(
                 CommunityMembershipRequiredException.class,
-                () -> communityService.createCommunityPost("classics", USER_ID, "Title", "Body")
+                () -> communityService.createCommunityPost("classics", USER_ID, "Title", "Body", List.of())
         );
 
         // Assertions
@@ -640,7 +697,8 @@ class CommunityServiceImplTest {
     void kickMember_byModerator_sendsEmailToTarget() {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
-        final CommunityServiceImpl service = new CommunityServiceImpl(communityDao, userService, recordingEmailService);
+        final CommunityServiceImpl service = new CommunityServiceImpl(
+                communityDao, communityPostImageDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final User target = author(42L, "target");
         when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
@@ -678,7 +736,8 @@ class CommunityServiceImplTest {
     void promoteToModerator_byModerator_sendsEmailToTarget() {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
-        final CommunityServiceImpl service = new CommunityServiceImpl(communityDao, userService, recordingEmailService);
+        final CommunityServiceImpl service = new CommunityServiceImpl(
+                communityDao, communityPostImageDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final User target = author(42L, "target");
         when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
@@ -734,7 +793,8 @@ class CommunityServiceImplTest {
     void hidePost_byModerator_sendsEmailToPostAuthor() {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
-        final CommunityServiceImpl service = new CommunityServiceImpl(communityDao, userService, recordingEmailService);
+        final CommunityServiceImpl service = new CommunityServiceImpl(
+                communityDao, communityPostImageDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final User postAuthor = author(8L, "lu.driver");
         final CommunityPost post = post(community, postAuthor);
@@ -757,7 +817,8 @@ class CommunityServiceImplTest {
     void hideComment_byModerator_sendsEmailToCommentAuthor() {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
-        final CommunityServiceImpl service = new CommunityServiceImpl(communityDao, userService, recordingEmailService);
+        final CommunityServiceImpl service = new CommunityServiceImpl(
+                communityDao, communityPostImageDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final CommunityPost post = post(community, author(8L, "lu.driver"));
         final User commentAuthor = author(10L, "commenter");
@@ -769,6 +830,31 @@ class CommunityServiceImplTest {
 
         // Exercise
         final Optional<Boolean> result = service.hideComment("classics", comment.getId(), USER_ID, "Off-topic comment.");
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertTrue(result.get());
+        assertEquals(1, recordingEmailService.communityCommentHiddenEmails.size());
+        assertEquals(commentAuthor.getEmail(), recordingEmailService.communityCommentHiddenEmails.get(0));
+    }
+
+    @Test
+    void hideComment_byPlatformAdmin_sendsEmailToCommentAuthor() {
+        // Arrange
+        final RecordingEmailService recordingEmailService = new RecordingEmailService();
+        final CommunityServiceImpl service = new CommunityServiceImpl(
+                communityDao, communityPostImageDao, userService, recordingEmailService);
+        final Community community = communityWithCreator(99L);
+        final CommunityPost post = post(community, author(8L, "lu.driver"));
+        final User commentAuthor = author(10L, "commenter");
+        final CommunityPostComment comment = comment(post, commentAuthor);
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findCommentById(comment.getId())).thenReturn(Optional.of(comment));
+        when(userService.getUserById(commentAuthor.getId())).thenReturn(Optional.of(commentAuthor));
+
+        // Exercise
+        final Optional<Boolean> result =
+                service.hideComment("classics", comment.getId(), USER_ID, "Off-topic comment.", true);
 
         // Assertions
         assertTrue(result.isPresent());
@@ -987,7 +1073,8 @@ class CommunityServiceImplTest {
     void transferOwnership_toModerator_sendsEmailToNewOwner() {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
-        final CommunityServiceImpl service = new CommunityServiceImpl(communityDao, userService, recordingEmailService);
+        final CommunityServiceImpl service = new CommunityServiceImpl(
+                communityDao, communityPostImageDao, userService, recordingEmailService);
         final long ownerId = 7L;
         final User newOwner = author(42L, "new.owner");
         final Community community = communityWithCreator(ownerId);
@@ -1147,7 +1234,7 @@ class CommunityServiceImplTest {
 
         @Override
         public void sendWeeklyModeratorDigest(final List<EmailRecipient> moderatorRecipients,
-                                              final int pendingRequestCount) {
+                                              final long pendingRequestCount) {
         }
 
         @Override

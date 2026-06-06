@@ -82,6 +82,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.GET, "/communities"),
                                 antMatcher(HttpMethod.GET, "/communities/*"),
                                 antMatcher(HttpMethod.GET, "/communities/*/posts/*"),
+                                antMatcher(HttpMethod.GET, "/communities/*/posts/*/images/*"),
                                 antMatcher(HttpMethod.GET, "/reviews/car/*"),
                                 antMatcher(HttpMethod.GET, "/car-image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/image"),
