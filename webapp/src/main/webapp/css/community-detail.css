@@ -135,6 +135,11 @@
     overflow-wrap: anywhere;
 }
 
+.community-post-body {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
 .community-sidebar-topics {
     display: flex;
     flex-wrap: wrap;

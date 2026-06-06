@@ -88,7 +88,7 @@
         }
     }
 
-    function showStep(index) {
+    function showStep(index, shouldFocus) {
         if (advanceTimer) {
             clearTimeout(advanceTimer);
             advanceTimer = null;
@@ -100,7 +100,9 @@
             step.toggleAttribute('hidden', !active);
         });
         updateProgress();
-        focusActiveStep(steps[currentIndex]);
+        if (shouldFocus !== false) {
+            focusActiveStep(steps[currentIndex]);
+        }
     }
 
     function goNext() {
@@ -265,5 +267,5 @@
         }
     });
 
-    showStep(0);
+    showStep(0, false);
 })();
