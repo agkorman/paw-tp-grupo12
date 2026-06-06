@@ -153,11 +153,23 @@
                     </form>
                 </c:if>
 
-                <div class="community-post-list">
+                <c:set var="communityPostsRedirectBase" value="/communities/${communityDetail.community.slug}"/>
+                <c:if test="${not empty currentSort}">
+                    <c:set var="communityPostsRedirectBase" value="${communityPostsRedirectBase}?sort=${currentSort}"/>
+                </c:if>
+                <c:if test="${postsCurrentPage > 1 and not empty currentSort}">
+                    <c:set var="communityPostsRedirectBase" value="${communityPostsRedirectBase}&page=${postsCurrentPage}"/>
+                </c:if>
+                <c:if test="${postsCurrentPage > 1 and empty currentSort}">
+                    <c:set var="communityPostsRedirectBase" value="${communityPostsRedirectBase}?page=${postsCurrentPage}"/>
+                </c:if>
+
+                <div id="communityPostList" class="community-post-list">
                     <c:forEach var="postCard" items="${postCards}">
                         <c:url var="postCardHref" value="${postCard.href}">
                             <c:param name="redirect" value="${communityPostsReturnUrl}"/>
                         </c:url>
+                        <c:url var="postCardHelpfulAction" value="${postCard.helpfulAction}"/>
                         <pa:community-post-card
                                 href="${postCardHref}"
                                 author="${postCard.author}"
@@ -166,7 +178,11 @@
                                 body="${postCard.body}"
                                 imageUrls="${postCard.imageUrls}"
                                 helpfulCount="${postCard.helpfulCount}"
-                                commentCount="${postCard.commentCount}"/>
+                                commentCount="${postCard.commentCount}"
+                                postId="${postCard.postId}"
+                                helpfulAction="${postCardHelpfulAction}"
+                                helpfulByCurrentUser="${postCard.helpfulByCurrentUser}"
+                                helpfulRedirect="${communityPostsRedirectBase}#post-${postCard.postId}"/>
                     </c:forEach>
                 </div>
 

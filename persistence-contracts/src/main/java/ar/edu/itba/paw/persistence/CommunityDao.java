@@ -47,8 +47,8 @@ public interface CommunityDao {
     Set<Long> findPostHelpfulReactionsByUser(Collection<Long> postIds, long userId);
     Set<Long> findCommentHelpfulReactionsByUser(Collection<Long> commentIds, long userId);
     Map<Long, List<CommunityTopic>> findTopicsByCommunityIds(Collection<Long> communityIds);
-    List<CommunityPost> findPostsByCommunityId(long communityId);
     List<CommunityPost> findPostsByIds(Collection<Long> postIds);
+    List<CommunityPost> findPostsByCommunityId(long communityId);
     Page<CommunityPost> findVisiblePostsByCommunityId(long communityId, String sort, int page);
     Optional<CommunityPost> findPostByCommunityIdAndSlug(long communityId, String postSlug);
     List<CommunityPostComment> findCommentsByPostId(long postId);
