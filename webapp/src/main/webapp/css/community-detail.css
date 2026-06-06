@@ -134,6 +134,11 @@
     overflow-wrap: anywhere;
 }
 
+.community-post-body {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
 .community-sidebar-copy {
     white-space: pre-line;
 }
@@ -143,7 +148,6 @@
     -webkit-line-clamp: 6;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    white-space: pre-line;
 }
 
 .community-sidebar-topics {
