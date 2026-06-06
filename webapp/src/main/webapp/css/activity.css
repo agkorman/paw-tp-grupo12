@@ -171,10 +171,12 @@
 
 .activity-card-body--text-only {
     -webkit-line-clamp: 6;
+    white-space: pre-line;
 }
 
 .activity-card-body--with-image {
     -webkit-line-clamp: 2;
+    white-space: pre-line;
 }
 
 .activity-card-gallery-shell {

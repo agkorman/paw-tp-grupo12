@@ -3,6 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Community;
 import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
+import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
@@ -211,15 +212,28 @@ public class CommunityJpaDao implements CommunityDao {
                                     final String slug,
                                     final String title,
                                     final String body) {
+        return createPost(communityId, authorUserId, slug, title, body, null);
+    }
+
+    @Override
+    public CommunityPost createPost(final long communityId,
+                                    final long authorUserId,
+                                    final String slug,
+                                    final String title,
+                                    final String body,
+                                    final Long linkedReviewId) {
         final CommunityPost post = new CommunityPost();
         post.setCommunity(em.getReference(Community.class, communityId));
         post.setAuthor(em.getReference(ar.edu.itba.paw.model.User.class, authorUserId));
         post.setSlug(slug);
         post.setTitle(title);
         post.setBody(body);
+        if (linkedReviewId != null) {
+            post.setLinkedReview(em.getReference(Review.class, linkedReviewId));
+        }
         em.persist(post);
-        LOGGER.info("created community post id={} communityId={} authorUserId={} slug={}",
-                post.getId(), communityId, authorUserId, slug);
+        LOGGER.info("created community post id={} communityId={} authorUserId={} slug={} linkedReviewId={}",
+                post.getId(), communityId, authorUserId, slug, linkedReviewId);
         return post;
     }
 
@@ -630,6 +644,7 @@ public class CommunityJpaDao implements CommunityDao {
                 "SELECT p FROM CommunityPost p " +
                 "LEFT JOIN FETCH p.author " +
                 "LEFT JOIN FETCH p.community " +
+                "LEFT JOIN FETCH p.linkedReview " +
                 "WHERE p.id IN :postIds " +
                 "ORDER BY p.createdAt DESC, p.id DESC",
                 CommunityPost.class
@@ -667,6 +682,7 @@ public class CommunityJpaDao implements CommunityDao {
         final List<CommunityPost> posts = em.createQuery(
                 "SELECT p FROM CommunityPost p " +
                 "LEFT JOIN FETCH p.author " +
+                "LEFT JOIN FETCH p.linkedReview " +
                 "WHERE p.id IN :ids",
                 CommunityPost.class
         )
@@ -683,6 +699,7 @@ public class CommunityJpaDao implements CommunityDao {
         final List<CommunityPost> results = em.createQuery(
                 "SELECT p FROM CommunityPost p " +
                 "LEFT JOIN FETCH p.author " +
+                "LEFT JOIN FETCH p.linkedReview " +
                 "WHERE p.community.id = :communityId AND LOWER(p.slug) = :slug",
                 CommunityPost.class
         )
@@ -769,6 +786,31 @@ public class CommunityJpaDao implements CommunityDao {
         return rawIds.stream()
                 .map(value -> ((Number) value).longValue())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<Community> findJoinedCommunities(final long userId) {
+        final List<Number> ids = em.createNativeQuery(
+                "SELECT c.community_id FROM communities c " +
+                "JOIN community_memberships cm ON c.community_id = cm.community_id " +
+                "WHERE cm.user_id = ? " +
+                "ORDER BY c.name ASC"
+        )
+                .setParameter(1, userId)
+                .getResultList();
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        final List<Long> communityIds = ids.stream()
+                .map(Number::longValue)
+                .collect(Collectors.toList());
+        return em.createQuery(
+                "SELECT c FROM Community c WHERE c.id IN :ids ORDER BY c.name ASC",
+                Community.class
+        )
+                .setParameter("ids", communityIds)
+                .getResultList();
     }
 
     @Override

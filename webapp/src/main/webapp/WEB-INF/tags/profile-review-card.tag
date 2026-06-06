@@ -18,6 +18,11 @@
 <c:url var="reviewLikeUrl" value="/reviews/${reviewCard.review.id}/like"/>
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 <spring:message var="reviewActionMenuLabel" code="review.actionMenu.open"/>
+<spring:message var="reviewRepostLabel" code="review.action.repost"/>
+<c:url var="reviewRepostUrl" value="/reviews/${reviewCard.review.id}/repost"/>
+<c:url var="reviewRepostLoginUrl" value="/login">
+    <c:param name="redirect" value="/reviews/${reviewCard.review.id}/repost"/>
+</c:url>
 <spring:message var="replyCountText" code="profile.card.metric.replies" arguments="${reviewCard.replyCount}"/>
 <spring:message var="likeCountText" code="profile.card.metric.likes" arguments="${reviewCard.likeCount}"/>
 <spring:message var="reviewMetricsAria" code="profile.card.metrics.aria"/>
@@ -50,23 +55,44 @@
                         disabled="${not authenticated}"/>
                 <span class="profile-card-metric"><c:out value="${replyCountText}"/></span>
                 <div class="profile-review-menu-slot">
-                    <c:if test="${editable}">
-                        <pa:action-menu label="${reviewActionMenuLabel}" cssClass="profile-review-menu">
-                            <a href="${reviewEditPageUrl}">
-                                <spring:message code="common.action.edit"/>
-                            </a>
-                            <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
-                                  data-confirm-modal="deleteReviewConfirmModal">
-                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                <c:if test="${not empty actionRedirect}">
-                                    <input type="hidden" name="redirect" value="${fn:escapeXml(actionRedirect)}">
+                    <c:choose>
+                        <c:when test="${editable}">
+                            <pa:action-menu label="${reviewActionMenuLabel}" cssClass="profile-review-menu">
+                                <a href="${reviewEditPageUrl}">
+                                    <spring:message code="common.action.edit"/>
+                                </a>
+                                <c:if test="${authenticated}">
+                                    <a href="${fn:escapeXml(reviewRepostUrl)}">
+                                        <c:out value="${reviewRepostLabel}"/>
+                                    </a>
                                 </c:if>
-                                <button type="submit" class="action-menu-danger">
-                                    <spring:message code="common.action.delete"/>
-                                </button>
-                            </form>
-                        </pa:action-menu>
-                    </c:if>
+                                <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
+                                      data-confirm-modal="deleteReviewConfirmModal">
+                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                    <c:if test="${not empty actionRedirect}">
+                                        <input type="hidden" name="redirect" value="${fn:escapeXml(actionRedirect)}">
+                                    </c:if>
+                                    <button type="submit" class="action-menu-danger">
+                                        <spring:message code="common.action.delete"/>
+                                    </button>
+                                </form>
+                            </pa:action-menu>
+                        </c:when>
+                        <c:when test="${authenticated}">
+                            <pa:action-menu label="${reviewActionMenuLabel}" cssClass="profile-review-menu">
+                                <a href="${fn:escapeXml(reviewRepostUrl)}">
+                                    <c:out value="${reviewRepostLabel}"/>
+                                </a>
+                            </pa:action-menu>
+                        </c:when>
+                        <c:otherwise>
+                            <pa:action-menu label="${reviewActionMenuLabel}" cssClass="profile-review-menu">
+                                <a href="${fn:escapeXml(reviewRepostLoginUrl)}">
+                                    <c:out value="${reviewRepostLabel}"/>
+                                </a>
+                            </pa:action-menu>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
             </div>
         </div>

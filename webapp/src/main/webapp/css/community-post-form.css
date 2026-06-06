@@ -87,6 +87,7 @@
     border: none;
     background: transparent;
     color: var(--on-surface);
+    font-family: var(--font-body);
     font-size: 1.15rem;
     line-height: 1.8;
     resize: vertical;
@@ -145,4 +146,103 @@
     min-height: 3.25rem;
     padding: 0 1.5rem;
     font-size: 0.8rem;
+}
+
+.community-post-form-community-picker {
+    display: grid;
+    gap: var(--spacing-3);
+    width: 100%;
+}
+
+.community-post-form-community-picker label {
+    color: var(--secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.community-post-form-community-picker select {
+    width: 100%;
+    max-width: 28rem;
+    padding: 0.625rem 0.875rem;
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+    border: 1px solid var(--outline-variant);
+    border-radius: 8px;
+    font-size: 0.9375rem;
+}
+
+.community-post-form-community-picker .form-error {
+    color: var(--error);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.community-post-form-repost-preview {
+    display: grid;
+    gap: var(--spacing-3);
+}
+
+.community-post-form-repost-label {
+    color: var(--secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.community-picker-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 28rem;
+}
+
+.community-picker-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.625rem 0.875rem;
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+    border: 1px solid var(--outline-variant);
+    border-radius: 8px;
+    font-size: 0.9375rem;
+}
+
+.community-picker-list {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0.25rem 0 0;
+    padding: 0.25rem 0;
+    list-style: none;
+    background: var(--surface-container-highest);
+    border: 1px solid var(--outline-variant);
+    border-radius: 8px;
+    max-height: 14rem;
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.community-picker-list--open {
+    display: block;
+}
+
+.community-picker-option {
+    padding: 0.5rem 0.875rem;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    color: var(--on-surface);
+}
+
+.community-picker-option:hover {
+    background: var(--surface-container-high);
+}
+
+.community-picker-option--selected {
+    color: var(--color-primary);
+    font-weight: 600;
 }
