@@ -185,9 +185,15 @@
                                     </form>
                                 </c:if>
                             </sec:authorize>
-                            <spring:message var="commentHelpfulText" code="communities.post.metric.helpful" arguments="${comment.helpfulCount}"/>
+                            <c:url var="communityCommentHelpfulUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/comments/${comment.commentId}/helpful"/>
                             <div class="community-comment-actions">
-                                <span class="community-comment-action"><c:out value="${commentHelpfulText}"/></span>
+                                <pa:review-like-button
+                                        reviewId="${comment.commentId}"
+                                        liked="${comment.helpfulByCurrentUser}"
+                                        likeCount="${comment.helpfulCount}"
+                                        action="${communityCommentHelpfulUrl}"
+                                        disabled="${empty pageContext.request.userPrincipal}"
+                                        intent="community-comment-helpful-${comment.commentId}"/>
                             </div>
                         </article>
                         <c:if test="${comment.deletable or comment.hideable}">
