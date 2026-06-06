@@ -41,7 +41,7 @@ public class CarJpaDao implements CarDao {
 
     private List<Car> loadCarsByIds(final List<Long> ids) {
         return em.createQuery(
-                "SELECT c FROM Car c JOIN FETCH c.brand JOIN FETCH c.bodyTypeEntity WHERE c.id IN :ids",
+                "SELECT c FROM Car c JOIN FETCH c.spec.brand JOIN FETCH c.spec.bodyType WHERE c.id IN :ids",
                 Car.class)
                 .setParameter("ids", ids)
                 .getResultList();
@@ -78,7 +78,7 @@ public class CarJpaDao implements CarDao {
     @Override
     public List<Car> findAll() {
         final List<Car> cars = em.createQuery(
-                "SELECT c FROM Car c JOIN FETCH c.brand JOIN FETCH c.bodyTypeEntity ORDER BY c.id",
+                "SELECT c FROM Car c JOIN FETCH c.spec.brand JOIN FETCH c.spec.bodyType ORDER BY c.id",
                 Car.class)
                 .getResultList();
         populateHasImage(cars);
@@ -88,7 +88,7 @@ public class CarJpaDao implements CarDao {
     @Override
     public Optional<Car> findById(final long id) {
         final List<Car> results = em.createQuery(
-                "SELECT c FROM Car c JOIN FETCH c.brand JOIN FETCH c.bodyTypeEntity WHERE c.id = :id",
+                "SELECT c FROM Car c JOIN FETCH c.spec.brand JOIN FETCH c.spec.bodyType WHERE c.id = :id",
                 Car.class)
                 .setParameter("id", id)
                 .getResultList();
@@ -116,8 +116,8 @@ public class CarJpaDao implements CarDao {
     @Override
     public List<Car> findByBrandIdAndBodyTypeId(final long brandId, final long bodyTypeId) {
         final List<Car> cars = em.createQuery(
-                "SELECT c FROM Car c JOIN FETCH c.brand JOIN FETCH c.bodyTypeEntity " +
-                "WHERE c.brand.id = :brandId AND c.bodyTypeEntity.id = :bodyTypeId ORDER BY c.model",
+                "SELECT c FROM Car c JOIN FETCH c.spec.brand JOIN FETCH c.spec.bodyType " +
+                "WHERE c.spec.brand.id = :brandId AND c.spec.bodyType.id = :bodyTypeId ORDER BY c.spec.model",
                 Car.class)
                 .setParameter("brandId", brandId)
                 .setParameter("bodyTypeId", bodyTypeId)
@@ -133,11 +133,11 @@ public class CarJpaDao implements CarDao {
             return List.of();
         }
         final List<Car> cars = em.createQuery(
-                "SELECT c FROM Car c JOIN FETCH c.brand JOIN FETCH c.bodyTypeEntity " +
-                "WHERE c.brand.id = :brandId " +
-                "AND c.bodyTypeEntity.id = :bodyTypeId " +
-                "AND LOWER(TRIM(c.model)) = :normalizedModel " +
-                "ORDER BY CASE WHEN c.year IS NULL THEN 1 ELSE 0 END, c.year DESC, c.id ASC",
+                "SELECT c FROM Car c JOIN FETCH c.spec.brand JOIN FETCH c.spec.bodyType " +
+                "WHERE c.spec.brand.id = :brandId " +
+                "AND c.spec.bodyType.id = :bodyTypeId " +
+                "AND LOWER(TRIM(c.spec.model)) = :normalizedModel " +
+                "ORDER BY CASE WHEN c.spec.year IS NULL THEN 1 ELSE 0 END, c.spec.year DESC, c.id ASC",
                 Car.class)
                 .setParameter("brandId", brandId)
                 .setParameter("bodyTypeId", bodyTypeId)
@@ -157,15 +157,15 @@ public class CarJpaDao implements CarDao {
         }
         final StringBuilder jpql = new StringBuilder(
                 "SELECT COUNT(c) FROM Car c " +
-                "WHERE c.brand.id = :brandId " +
-                "AND c.bodyTypeEntity.id = :bodyTypeId " +
-                "AND LOWER(TRIM(c.model)) = :normalizedModel " +
+                "WHERE c.spec.brand.id = :brandId " +
+                "AND c.spec.bodyType.id = :bodyTypeId " +
+                "AND LOWER(TRIM(c.spec.model)) = :normalizedModel " +
                 "AND c.id <> :excludedCarId "
         );
         if (year == null) {
-            jpql.append("AND c.year IS NULL");
+            jpql.append("AND c.spec.year IS NULL");
         } else {
-            jpql.append("AND c.year = :year");
+            jpql.append("AND c.spec.year = :year");
         }
         final javax.persistence.TypedQuery<Long> query = em.createQuery(jpql.toString(), Long.class)
                 .setParameter("brandId", brandId)
@@ -304,7 +304,7 @@ public class CarJpaDao implements CarDao {
     @Override
     public long countByBrandId(final long brandId) {
         return em.createQuery(
-                "SELECT COUNT(c) FROM Car c WHERE c.brand.id = :brandId", Long.class)
+                "SELECT COUNT(c) FROM Car c WHERE c.spec.brand.id = :brandId", Long.class)
                 .setParameter("brandId", brandId)
                 .getSingleResult();
     }
@@ -312,7 +312,7 @@ public class CarJpaDao implements CarDao {
     @Override
     public long countByBodyTypeId(final long bodyTypeId) {
         return em.createQuery(
-                "SELECT COUNT(c) FROM Car c WHERE c.bodyTypeEntity.id = :bodyTypeId", Long.class)
+                "SELECT COUNT(c) FROM Car c WHERE c.spec.bodyType.id = :bodyTypeId", Long.class)
                 .setParameter("bodyTypeId", bodyTypeId)
                 .getSingleResult();
     }

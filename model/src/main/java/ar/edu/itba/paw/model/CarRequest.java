@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -29,19 +30,8 @@ public class CarRequest implements Serializable {
     @Column(name = "submitter_email", nullable = true, length = 100)
     private String submitterEmail;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private Brand brand;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "body_type_id", nullable = false)
-    private BodyType bodyType;
-
-    @Column(name = "year", nullable = true)
-    private Integer year;
-
-    @Column(name = "model", nullable = false, length = 120)
-    private String model;
+    @Embedded
+    private CarSpec spec = new CarSpec();
 
     @Column(name = "description", nullable = false)
     private String description;
@@ -58,34 +48,11 @@ public class CarRequest implements Serializable {
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "fuel_type", nullable = true, length = 20)
-    private String fuelType;
-
-    @Column(name = "horsepower", nullable = true)
-    private Integer horsepower;
-
-    @Column(name = "airbag_count", nullable = true)
-    private Integer airbagCount;
-
-    @Column(name = "transmission", nullable = true, length = 20)
-    private String transmission;
-
-    @Column(name = "fuel_consumption", nullable = true, precision = 4, scale = 1)
-    private BigDecimal fuelConsumption;
-
-    @Column(name = "max_speed_kmh", nullable = true)
-    private Integer maxSpeedKmh;
-
-    @Column(name = "price_usd", nullable = true, precision = 12, scale = 2)
-    private BigDecimal priceUsd;
-
     CarRequest() {}
 
     public CarRequest(final Brand brand, final BodyType bodyType, final String model,
                       final String description, final String status) {
-        this.brand = brand;
-        this.bodyType = bodyType;
-        this.model = model;
+        this.spec = new CarSpec(brand, bodyType, model);
         this.description = description;
         this.status = status;
         this.createdAt = LocalDateTime.now();
@@ -119,44 +86,52 @@ public class CarRequest implements Serializable {
         this.submitterEmail = submitterEmail;
     }
 
+    public CarSpec getSpec() {
+        return spec;
+    }
+
+    public void setSpec(final CarSpec spec) {
+        this.spec = spec == null ? new CarSpec() : spec;
+    }
+
     public long getBrandId() {
-        return brand != null ? brand.getId() : 0;
+        return getBrand() != null ? getBrand().getId() : 0;
     }
 
     public Brand getBrand() {
-        return brand;
+        return spec.getBrand();
     }
 
     public void setBrand(final Brand brand) {
-        this.brand = brand;
+        spec.setBrand(brand);
     }
 
     public long getBodyTypeId() {
-        return bodyType != null ? bodyType.getId() : 0;
+        return getBodyType() != null ? getBodyType().getId() : 0;
     }
 
     public BodyType getBodyType() {
-        return bodyType;
+        return spec.getBodyType();
     }
 
     public void setBodyType(final BodyType bodyType) {
-        this.bodyType = bodyType;
+        spec.setBodyType(bodyType);
     }
 
     public Integer getYear() {
-        return year;
+        return spec.getYear();
     }
 
     public void setYear(final Integer year) {
-        this.year = year;
+        spec.setYear(year);
     }
 
     public String getModel() {
-        return model;
+        return spec.getModel();
     }
 
     public void setModel(final String model) {
-        this.model = model;
+        spec.setModel(model);
     }
 
     public String getDescription() {
@@ -200,59 +175,59 @@ public class CarRequest implements Serializable {
     }
 
     public String getFuelType() {
-        return fuelType;
+        return spec.getFuelType();
     }
 
     public void setFuelType(final String fuelType) {
-        this.fuelType = fuelType;
+        spec.setFuelType(fuelType);
     }
 
     public Integer getHorsepower() {
-        return horsepower;
+        return spec.getHorsepower();
     }
 
     public void setHorsepower(final Integer horsepower) {
-        this.horsepower = horsepower;
+        spec.setHorsepower(horsepower);
     }
 
     public Integer getAirbagCount() {
-        return airbagCount;
+        return spec.getAirbagCount();
     }
 
     public void setAirbagCount(final Integer airbagCount) {
-        this.airbagCount = airbagCount;
+        spec.setAirbagCount(airbagCount);
     }
 
     public String getTransmission() {
-        return transmission;
+        return spec.getTransmission();
     }
 
     public void setTransmission(final String transmission) {
-        this.transmission = transmission;
+        spec.setTransmission(transmission);
     }
 
     public BigDecimal getFuelConsumption() {
-        return fuelConsumption;
+        return spec.getFuelConsumption();
     }
 
     public void setFuelConsumption(final BigDecimal fuelConsumption) {
-        this.fuelConsumption = fuelConsumption;
+        spec.setFuelConsumption(fuelConsumption);
     }
 
     public Integer getMaxSpeedKmh() {
-        return maxSpeedKmh;
+        return spec.getMaxSpeedKmh();
     }
 
     public void setMaxSpeedKmh(final Integer maxSpeedKmh) {
-        this.maxSpeedKmh = maxSpeedKmh;
+        spec.setMaxSpeedKmh(maxSpeedKmh);
     }
 
     public BigDecimal getPriceUsd() {
-        return priceUsd;
+        return spec.getPriceUsd();
     }
 
     public void setPriceUsd(final BigDecimal priceUsd) {
-        this.priceUsd = priceUsd;
+        spec.setPriceUsd(priceUsd);
     }
 
 }
