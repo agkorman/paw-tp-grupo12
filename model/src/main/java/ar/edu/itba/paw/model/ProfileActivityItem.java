@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 public class ProfileActivityItem implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     public enum ItemType { REVIEW, POST }
 
     private final ItemType type;

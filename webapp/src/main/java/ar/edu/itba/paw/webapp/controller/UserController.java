@@ -416,16 +416,6 @@ public class UserController {
             ? "/user"
             : "/users/" + profileUser.getId();
 
-        final long activityCount = userActivityService.countAuthoredActivity(
-            profileUser.getId()
-        );
-        final long favoriteCarCount = ownProfile
-            ? carFavoriteService.countFavoriteCars(profileUser.getId())
-            : 0L;
-        final long likedCount = ownProfile
-            ? userActivityService.countLikedActivity(profileUser.getId())
-            : 0L;
-
         Page<ProfileActivityItem> activityPage = Page.empty(1, 0);
         Page<Car> favoriteCarPage = Page.empty(1, 0);
         Page<ProfileActivityItem> likesPage = Page.empty(1, 0);
@@ -461,6 +451,20 @@ public class UserController {
                 currentUserId
             );
         }
+
+        final long activityCount = activityPage.getPageSize() > 0
+            ? activityPage.getTotalItems()
+            : userActivityService.countAuthoredActivity(profileUser.getId());
+        final long favoriteCarCount = ownProfile
+            ? (favoriteCarPage.getPageSize() > 0
+                ? favoriteCarPage.getTotalItems()
+                : carFavoriteService.countFavoriteCars(profileUser.getId()))
+            : 0L;
+        final long likedCount = ownProfile
+            ? (likesPage.getPageSize() > 0
+                ? likesPage.getTotalItems()
+                : userActivityService.countLikedActivity(profileUser.getId()))
+            : 0L;
 
         final boolean followingProfile =
             currentUserId != null &&

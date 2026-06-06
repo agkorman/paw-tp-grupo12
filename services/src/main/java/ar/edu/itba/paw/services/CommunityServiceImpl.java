@@ -1176,7 +1176,6 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Set<Long> findPostHelpfulReactionsByUser(final Collection<Long> postIds, final long userId) {
         return communityDao.findPostHelpfulReactionsByUser(postIds, userId);
     }
