@@ -369,7 +369,6 @@
     <pa:script src="/js/shared/modal-utils.js"/>
     <pa:script src="/js/auth/auth-required-modal.js"/>
     <pa:script src="/js/shared/confirmation-modal.js"/>
-    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:script src="/js/profile/profile.js"/>
     <c:if test="${ownProfile}">
         <pa:script src="/js/profile/moderator-application-modal.js"/>

@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -157,5 +158,25 @@ public class RelationDaoTest extends AbstractPersistenceTest {
         assertEquals(17L, result.getTotalItems());
         assertEquals(2, result.getPageNumber());
         assertEquals(1, result.getItems().size());
+    }
+
+    @Test
+    public void shouldGroupAllFavoriteCarIdsByUser() {
+        // Arrange
+        final User firstUser = createUser("fav-all-first");
+        final User secondUser = createUser("fav-all-second");
+        final Car carA = createCar("fav-all-a");
+        final Car carB = createCar("fav-all-b");
+        final Car carC = createCar("fav-all-c");
+        jdbcTemplate.update("INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)", firstUser.getId(), carA.getId());
+        jdbcTemplate.update("INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)", firstUser.getId(), carB.getId());
+        jdbcTemplate.update("INSERT INTO car_favorites (user_id, car_id) VALUES (?, ?)", secondUser.getId(), carC.getId());
+
+        // Exercise
+        final Map<Long, List<Long>> result = carFavoriteDao.findAllFavoriteCarIdsByUser();
+
+        // Assertions
+        assertEquals(List.of(carA.getId(), carB.getId()), result.get(firstUser.getId()));
+        assertEquals(List.of(carC.getId()), result.get(secondUser.getId()));
     }
 }

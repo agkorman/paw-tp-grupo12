@@ -191,6 +191,20 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countNewLikesPerReviewSince(final LocalDateTime since) {
+        if (since == null) {
+            return Collections.emptyMap();
+        }
+        try {
+            return reviewLikeDao.countNewLikesPerReviewSince(since);
+        } catch (final DataAccessException e) {
+            LOGGER.warn("count new likes per review since failed since={}", since, e);
+            return Collections.emptyMap();
+        }
+    }
+
     private void validateReviewAndUser(final long reviewId, final long userId) {
         if (reviewDao.findById(reviewId).isEmpty()) {
             LOGGER.warn("review like rejected: review not found id={}", reviewId);

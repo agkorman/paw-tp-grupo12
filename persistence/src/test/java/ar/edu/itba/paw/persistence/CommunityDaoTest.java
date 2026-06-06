@@ -367,6 +367,38 @@ class CommunityDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    void shouldFindCommunityPostsByIdsWithAuthorAndCommunity() {
+        // Arrange
+        final User creator = insertUser("post-ids-owner", "post-ids-owner@example.com", "secret", "user");
+        final long communityId = insertCommunity("jdm-heads", "JDM Heads", "Boost noises.", creator.getId());
+        final long firstPostId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "first-post",
+                "First post",
+                "Body 1",
+                LocalDateTime.now().minusHours(2)
+        );
+        final long secondPostId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "second-post",
+                "Second post",
+                "Body 2",
+                LocalDateTime.now().minusHours(1)
+        );
+
+        // Exercise
+        final List<CommunityPost> result = communityDao.findPostsByIds(List.of(firstPostId, secondPostId));
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals("post-ids-owner", result.get(0).getAuthorUsername());
+        assertEquals("jdm-heads", result.get(0).getCommunity().getSlug());
+        assertEquals("JDM Heads", result.get(0).getCommunity().getName());
+    }
+
+    @Test
     void shouldFindVisibleCommunityPostsPaginatedByRecent() {
         // Arrange
         final User creator = insertUser("paged-posts-owner", "paged-posts-owner@example.com", "secret", "user");
@@ -459,6 +491,42 @@ class CommunityDaoTest extends AbstractPersistenceTest {
         // Assertions
         assertEquals(1, result.size());
         assertEquals(1L, result.get(postId));
+    }
+
+    @Test
+    void shouldReturnOnlyVisibleCommentsByPostId() {
+        // Arrange
+        final User creator = insertUser("visible-comments-owner", "visible-comments-owner@example.com", "secret", "user");
+        final User commenter = insertUser("visible-comments-user", "visible-comments-user@example.com", "secret", "user");
+        final long communityId = insertCommunity("visible-comments", "Visible Comments", "Desc", creator.getId());
+        final long postId = insertCommunityPost(
+                communityId,
+                creator.getId(),
+                "visible-post",
+                "Visible post",
+                "Visible body",
+                LocalDateTime.now().minusHours(2)
+        );
+        final long visibleCommentId = insertCommunityComment(
+                postId,
+                commenter.getId(),
+                "Shown comment",
+                LocalDateTime.now().minusHours(1)
+        );
+        final long hiddenCommentId = insertCommunityComment(
+                postId,
+                commenter.getId(),
+                "Hidden comment",
+                LocalDateTime.now().minusMinutes(30)
+        );
+        jdbcTemplate.update("UPDATE community_post_comments SET hidden = TRUE WHERE comment_id = ?", hiddenCommentId);
+
+        // Exercise
+        final List<ar.edu.itba.paw.model.CommunityPostComment> result = communityDao.findCommentsByPostId(postId);
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals(visibleCommentId, result.get(0).getId());
     }
 
     @Test

@@ -20,4 +20,5 @@ public interface ReviewReplyService {
 
     Map<Long, Long> countNewRepliesPerReview(long userId, LocalDateTime since);
     Map<Long, Long> countRepliesByReviewIds(Collection<Long> reviewIds);
+    Map<Long, Long> countNewRepliesPerReviewSince(LocalDateTime since);
 }

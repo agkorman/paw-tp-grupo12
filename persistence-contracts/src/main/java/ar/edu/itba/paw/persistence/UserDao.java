@@ -18,5 +18,6 @@ public interface UserDao {
     boolean updatePreferredLocale(long userId, String preferredLocale);
     List<EmailRecipient> findEmailRecipientsByRoles(Collection<String> roles);
     List<User> findAll();
+    List<User> findByIds(Collection<Long> ids);
     Page<User> searchByQuery(String query, int page, int pageSize);
 }

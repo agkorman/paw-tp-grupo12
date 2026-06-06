@@ -9,25 +9,33 @@ import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
+import ar.edu.itba.paw.model.CommunityPostImage;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
 import ar.edu.itba.paw.services.exception.InvalidCommunityTopicSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
-import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
+import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
+import ar.edu.itba.paw.webapp.util.LogSanitizer;
+import java.io.IOException;
+import java.time.Duration;
 import ar.edu.itba.paw.webapp.form.CommunityPostCommentForm;
 import ar.edu.itba.paw.webapp.form.CommunityForm;
 import ar.edu.itba.paw.webapp.form.CommunityHideForm;
 import ar.edu.itba.paw.webapp.form.CommunityPostForm;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -36,6 +44,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -46,13 +59,16 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
 public class CommunityController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommunityController.class);
+    private static final int MAX_COMMUNITY_POST_IMAGE_COUNT = 3;
 
     private final CommunityService communityService;
     private final RelativeTimeFormatter relativeTimeFormatter;
@@ -151,6 +167,15 @@ public class CommunityController {
             LOGGER.warn("create community rejected: invalid topic selection userId={} reason={}",
                     currentUser.getId(), e.getReason());
             errors.rejectValue("selectedTopicIds", resolveTopicErrorKey(e.getReason()));
+            populateCreateCommunityPageModel(model);
+            return "community-create.jsp";
+        } catch (final DataIntegrityViolationException e) {
+            if (!isConstraintViolation(e, "uq_communities_slug")) {
+                throw e;
+            }
+            LOGGER.warn("create community rejected: slug conflict (concurrent creation) userId={}",
+                    currentUser.getId());
+            errors.reject("communities.create.error.slugConflict");
             populateCreateCommunityPageModel(model);
             return "community-create.jsp";
         }
@@ -309,7 +334,8 @@ public class CommunityController {
 
         communityService.togglePostHelpfulReaction(communitySlug, postSlug, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath())
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
                 .orElse(defaultRedirect);
         return redirectTo(safeRedirect);
     }
@@ -397,6 +423,7 @@ public class CommunityController {
             .orElseThrow(() -> new ResourceNotFoundException("community not found"));
         final ModelAndView mav = new ModelAndView("community-post-form.jsp");
         populateCommunityPostFormModel(mav, community);
+        mav.addObject("existingPostImageIds", "");
         return mav;
     }
 
@@ -425,6 +452,7 @@ public class CommunityController {
         populateCommunityPostFormModel(mav, community);
         mav.addObject("editMode", true);
         mav.addObject("postSlug", postSlug);
+        mav.addObject("existingPostImageIds", postImageIdsCsv(post.getId()));
         return mav;
     }
 
@@ -453,13 +481,48 @@ public class CommunityController {
                     LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                     errors.getErrorCount());
             populateCommunityPostFormModel(model, community);
+            model.addAttribute("existingPostImageIds", "");
             return "community-post-form.jsp";
         }
 
-        final CommunityPost createdPost = communityService
-            .createCommunityPost(communitySlug, currentUser.getId(),
-                    communityPostForm.getTitle(), communityPostForm.getBody())
-            .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        final List<MultipartFile> uploadedFiles = nonEmptyFiles(communityPostForm.getFiles());
+        validateCommunityPostImageUploads(uploadedFiles, 0, errors);
+        if (errors.hasErrors()) {
+            populateCommunityPostFormModel(model, community);
+            model.addAttribute("existingPostImageIds", "");
+            return "community-post-form.jsp";
+        }
+
+        final List<ImagePayload> imagePayloads;
+        try {
+            imagePayloads = toImagePayloads(uploadedFiles);
+        } catch (final IOException e) {
+            LOGGER.error("failed to read uploaded image during community post creation communitySlug={} userId={}",
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                    currentUser.getId(),
+                    e);
+            throw new UploadedImageReadException(
+                    "creating community post in " + communitySlug + " by user " + currentUser.getId(), e);
+        }
+
+        final CommunityPost createdPost;
+        try {
+            createdPost = communityService
+                .createCommunityPost(communitySlug, currentUser.getId(),
+                        communityPostForm.getTitle(), communityPostForm.getBody(), imagePayloads)
+                .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        } catch (final DataIntegrityViolationException e) {
+            if (!isConstraintViolation(e, "uq_community_posts_slug")) {
+                throw e;
+            }
+            LOGGER.warn("create community post rejected: slug conflict (concurrent creation) userId={} communitySlug={}",
+                    currentUser.getId(),
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
+            errors.reject("communities.postForm.error.slugConflict");
+            populateCommunityPostFormModel(model, community);
+            model.addAttribute("existingPostImageIds", "");
+            return "community-post-form.jsp";
+        }
         LOGGER.info("created community post slug={} communitySlug={} userId={}",
                 LogSanitizer.forLog(createdPost.getSlug(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
@@ -498,7 +561,33 @@ public class CommunityController {
             populateCommunityPostFormModel(model, community);
             model.addAttribute("editMode", true);
             model.addAttribute("postSlug", postSlug);
+            model.addAttribute("existingPostImageIds", postImageIdsCsv(post.getId()));
             return "community-post-form.jsp";
+        }
+
+        final List<MultipartFile> uploadedFiles = nonEmptyFiles(communityPostForm.getFiles());
+        final List<ImagePayload> retainedPayloads = communityService.collectRetainedPostImagePayloads(
+                post.getId(), communityPostForm.getRetainedImageIds());
+        validateCommunityPostImageUploads(uploadedFiles, retainedPayloads.size(), errors);
+        if (errors.hasErrors()) {
+            populateCommunityPostFormModel(model, community);
+            model.addAttribute("editMode", true);
+            model.addAttribute("postSlug", postSlug);
+            model.addAttribute("existingPostImageIds", postImageIdsCsv(post.getId()));
+            return "community-post-form.jsp";
+        }
+
+        final List<ImagePayload> finalImages = new ArrayList<>(retainedPayloads);
+        try {
+            finalImages.addAll(toImagePayloads(uploadedFiles));
+        } catch (final IOException e) {
+            LOGGER.error("failed to read uploaded image during community post update communitySlug={} postSlug={} userId={}",
+                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                    LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                    currentUser.getId(),
+                    e);
+            throw new UploadedImageReadException(
+                    "updating community post " + post.getId() + " by user " + currentUser.getId(), e);
         }
 
         communityService.updateCommunityPost(
@@ -506,7 +595,8 @@ public class CommunityController {
                         postSlug,
                         currentUser.getId(),
                         communityPostForm.getTitle(),
-                        communityPostForm.getBody()
+                        communityPostForm.getBody(),
+                        finalImages
                 )
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
         LOGGER.info("updated community post slug={} communitySlug={} userId={}",
@@ -514,6 +604,45 @@ public class CommunityController {
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 currentUser.getId());
         return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+    }
+
+    @RequestMapping(
+        value = "/communities/{communitySlug}/posts/{postSlug}/images/{imageId}",
+        method = RequestMethod.GET
+    )
+    public ResponseEntity<byte[]> getCommunityPostImage(
+        @PathVariable final String communitySlug,
+        @PathVariable final String postSlug,
+        @PathVariable final long imageId,
+        @RequestHeader(value = "If-None-Match", required = false) final String ifNoneMatch
+    ) {
+        final CommunityPost post = communityService
+                .getCommunityPostDetail(communitySlug, postSlug, null)
+                .map(CommunityPostDetailData::getPost)
+                .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
+        final Optional<CommunityPostImage> image = communityService.getPostImageById(post.getId(), imageId);
+        if (image.isEmpty() || image.get().getImageData() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        final CommunityPostImage img = image.get();
+        final String updatedAtStamp = img.getUpdatedAt() == null ? "0" : img.getUpdatedAt().toString();
+        final String etag = "\"cp" + post.getId() + "-i" + imageId + "-" + updatedAtStamp + "\"";
+        if (etag.equals(ifNoneMatch)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(etag).build();
+        }
+        MediaType mediaType;
+        try {
+            mediaType = img.getContentType() == null
+                    ? MediaType.APPLICATION_OCTET_STREAM
+                    : MediaType.parseMediaType(img.getContentType());
+        } catch (final IllegalArgumentException e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+        return ResponseEntity.ok()
+                .eTag(etag)
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
+                .contentType(mediaType)
+                .body(img.getImageData());
     }
 
     @RequestMapping(value = "/communities/{communitySlug}/members", method = RequestMethod.GET)
@@ -808,6 +937,72 @@ public class CommunityController {
         return "redirect:" + path;
     }
 
+    private static boolean isConstraintViolation(
+            final DataIntegrityViolationException e,
+            final String constraintName
+    ) {
+        if (e == null || constraintName == null) {
+            return false;
+        }
+        final String normalizedConstraint = constraintName.toLowerCase(Locale.ROOT);
+        return containsConstraint(e.getMessage(), normalizedConstraint)
+                || containsConstraint(e.getMostSpecificCause().getMessage(), normalizedConstraint);
+    }
+
+    private static boolean containsConstraint(
+            final String message,
+            final String normalizedConstraint
+    ) {
+        return message != null
+                && message.toLowerCase(Locale.ROOT).contains(normalizedConstraint);
+    }
+
+    private static List<MultipartFile> nonEmptyFiles(final List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return files.stream()
+                .filter(file -> file != null && !file.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private void validateCommunityPostImageUploads(final List<MultipartFile> files,
+                                                   final int retainedCount,
+                                                   final BindingResult errors) {
+        final int total = retainedCount + files.size();
+        if (total > MAX_COMMUNITY_POST_IMAGE_COUNT) {
+            errors.rejectValue("files", "validation.communityPost.files.maxCount",
+                    new Object[]{MAX_COMMUNITY_POST_IMAGE_COUNT},
+                    "validation.communityPost.files.maxCount");
+            return;
+        }
+        for (final MultipartFile file : files) {
+            final String errorKey = ControllerUtils.validateUploadedImage(file, false);
+            if (errorKey != null) {
+                errors.rejectValue("files", errorKey, errorKey);
+                return;
+            }
+        }
+    }
+
+    private static List<ImagePayload> toImagePayloads(final List<MultipartFile> files) throws IOException {
+        final List<ImagePayload> result = new ArrayList<>();
+        for (final MultipartFile file : files) {
+            result.add(new ImagePayload(file.getContentType(), file.getBytes()));
+        }
+        return result;
+    }
+
+    private String postImageIdsCsv(final long postId) {
+        final List<CommunityPostImage> images = communityService.getPostImagesByPostId(postId);
+        if (images.isEmpty()) {
+            return "";
+        }
+        return images.stream()
+                .map(image -> Long.toString(image.getImageId()))
+                .collect(Collectors.joining(","));
+    }
+
     private List<PostCardView> toPostCards(final List<CommunityPostSummary> postSummaries,
                                            final String communitySlug,
                                            final Long currentUserId) {
@@ -828,6 +1023,7 @@ public class CommunityController {
                 relativeTimeFormatter.format(postSummary.getPost().getCreatedAt()),
                 postSummary.getPost().getTitle(),
                 postSummary.getPost().getBody(),
+                toPostImageUrls(postSummary.getPost()),
                 postSummary.getHelpfulCount(),
                 postSummary.getCommentCount(),
                 postSummary.getPost().getId(),
@@ -866,6 +1062,7 @@ public class CommunityController {
             relativeTimeFormatter.format(postDetail.getPost().getCreatedAt()),
             postDetail.getPost().getTitle(),
             postDetail.getPost().getBody(),
+            toPostImageUrls(postDetail.getPost()),
             postDetail.getHelpfulCount(),
             postDetail.getHelpfulByCurrentUser(),
             postDetail.getCommentCount(),
@@ -875,6 +1072,16 @@ public class CommunityController {
             postDetail.isViewerMember(),
             postDetail.isPostDeletableByViewer()
         );
+    }
+
+    private List<String> toPostImageUrls(final CommunityPost post) {
+        if (post == null || post.getImages() == null || post.getImages().isEmpty()) {
+            return Collections.emptyList();
+        }
+        return post.getImages().stream()
+                .map(image -> "/communities/" + post.getCommunity().getSlug()
+                        + "/posts/" + post.getSlug() + "/images/" + image.getImageId())
+                .collect(Collectors.toList());
     }
 
     public static final class MemberRowView {
@@ -1001,6 +1208,7 @@ public class CommunityController {
         private final String timeText;
         private final String title;
         private final String body;
+        private final List<String> imageUrls;
         private final long helpfulCount;
         private final long commentCount;
         private final long postId;
@@ -1010,7 +1218,7 @@ public class CommunityController {
         private PostCardView(final String href, final String authorProfileHref,
                              final String author,
                              final String timeText, final String title,
-                             final String body, final long helpfulCount,
+                             final String body, final List<String> imageUrls, final long helpfulCount,
                              final long commentCount, final long postId,
                              final String helpfulAction,
                              final boolean helpfulByCurrentUser) {
@@ -1020,6 +1228,7 @@ public class CommunityController {
             this.timeText = timeText;
             this.title = title;
             this.body = body;
+            this.imageUrls = imageUrls;
             this.helpfulCount = helpfulCount;
             this.commentCount = commentCount;
             this.postId = postId;
@@ -1049,6 +1258,10 @@ public class CommunityController {
 
         public String getBody() {
             return body;
+        }
+
+        public List<String> getImageUrls() {
+            return imageUrls;
         }
 
         public long getHelpfulCount() {
@@ -1083,6 +1296,7 @@ public class CommunityController {
         private final String timeText;
         private final String title;
         private final String body;
+        private final List<String> imageUrls;
         private final long helpfulCount;
         private final boolean helpfulByCurrentUser;
         private final long commentCount;
@@ -1097,6 +1311,7 @@ public class CommunityController {
                                final String communitySlug, final String postSlug,
                                final String authorProfileHref, final String author, final String timeText,
                                final String title, final String body,
+                               final List<String> imageUrls,
                                final long helpfulCount, final boolean helpfulByCurrentUser,
                                final long commentCount,
                                final List<CommentView> comments,
@@ -1112,6 +1327,7 @@ public class CommunityController {
             this.timeText = timeText;
             this.title = title;
             this.body = body;
+            this.imageUrls = imageUrls;
             this.helpfulCount = helpfulCount;
             this.helpfulByCurrentUser = helpfulByCurrentUser;
             this.commentCount = commentCount;
@@ -1177,6 +1393,10 @@ public class CommunityController {
 
         public String getBody() {
             return body;
+        }
+
+        public List<String> getImageUrls() {
+            return imageUrls;
         }
 
         public long getHelpfulCount() {

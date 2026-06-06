@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -142,6 +143,15 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
+    public Map<Long, Long> countNewReviewsByCarIds(final Collection<Long> carIds, final LocalDateTime since) {
+        if (carIds == null || carIds.isEmpty() || since == null) {
+            return Collections.emptyMap();
+        }
+        return reviewDao.countByCarIdsSince(carIds, since);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Map<Long, Integer> getDefaultPagesForReviewIds(final Collection<Long> reviewIds) {
         return reviewDao.findDefaultPagesByReviewIds(reviewIds);
     }
@@ -202,15 +212,19 @@ public class ReviewServiceImpl implements ReviewService {
         if (retainedImageIds == null) {
             return payloads;
         }
+        final Map<Long, ReviewImage> imagesById = new java.util.LinkedHashMap<>();
+        for (final ReviewImage image : reviewImageDao.findByReviewIdAndImageIdsWithData(reviewId, retainedImageIds)) {
+            imagesById.putIfAbsent(image.getImageId(), image);
+        }
         for (final Long imageId : retainedImageIds) {
             if (imageId == null) {
                 continue;
             }
-            final Optional<ReviewImage> image = reviewImageDao.findByReviewIdAndImageId(reviewId, imageId);
-            if (image.isEmpty() || image.get().getImageData() == null) {
+            final ReviewImage image = imagesById.get(imageId);
+            if (image == null || image.getImageData() == null) {
                 continue;
             }
-            payloads.add(new ImagePayload(image.get().getContentType(), image.get().getImageData()));
+            payloads.add(new ImagePayload(image.getContentType(), image.getImageData()));
         }
         return payloads;
     }
@@ -291,18 +305,6 @@ public class ReviewServiceImpl implements ReviewService {
             return Collections.emptyList();
         }
         return reviewDao.findStatsByCarIds(carIds);
-    }
-
-    @Override
-    public Page<Review> getActivityFeedReviews(final String feedMode, final Long userId,
-                                               final int page) {
-        if (FEED_FOLLOWING.equals(feedMode) && userId != null) {
-            return reviewDao.findByFollowedUsers(userId, page);
-        }
-        if (FEED_FAVORITES.equals(feedMode) && userId != null) {
-            return reviewDao.findByFavoriteCars(userId, page);
-        }
-        return reviewDao.findLatest(page);
     }
 
     @Override

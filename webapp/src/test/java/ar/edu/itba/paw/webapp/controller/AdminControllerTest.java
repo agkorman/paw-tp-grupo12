@@ -343,7 +343,7 @@ class AdminControllerTest {
                                 .param("transmission", CarSearchCriteria.TRANSMISSION_AUTOMATIC)
                                 .param("fuelConsumption", "8.5")
                                 .param("maxSpeedKmh", "200")
-                                .param("priceUsd", "25000")
+                                .param("priceUsd", "25000.00")
                                 .with(req -> {
                                     req.setMethod("POST");
                                     return req;
@@ -438,7 +438,7 @@ class AdminControllerTest {
                                 .param("transmission", CarSearchCriteria.TRANSMISSION_AUTOMATIC)
                                 .param("fuelConsumption", "7.5")
                                 .param("maxSpeedKmh", "205")
-                                .param("priceUsd", "31000")
+                                .param("priceUsd", "31000.00")
                                 .with(req -> {
                                     req.setMethod("POST");
                                     return req;
@@ -465,6 +465,8 @@ class AdminControllerTest {
     void brandEndpoints_acceptRejectUpdateDelete_followRedirects() throws Exception {
         // Arrange
         arrangeDashboardDefaultsSimple();
+        when(brandRequestService.approvePendingRequest(eq(9L), eq("Override"))).thenReturn(true);
+        when(brandRequestService.rejectPendingRequest(eq(9L))).thenReturn(true);
         final MockMvc mockMvc = adminMvc();
 
         // Exercise / Assertions — accept uses admin referer fallback
@@ -473,9 +475,11 @@ class AdminControllerTest {
                                 .param("name", "Override")
                                 .header("Referer", "http://localhost/admin"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin"));
+                .andExpect(redirectedUrl("/admin?catalogAccepted=1"));
 
-        mockMvc.perform(post("/admin/brand-requests/9/reject")).andExpect(status().is3xxRedirection());
+        mockMvc.perform(post("/admin/brand-requests/9/reject"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin?catalogRejected=1"));
 
         mockMvc.perform(post("/admin/brands/4").param("name", "Renamed").header("Referer", "http://localhost/cars"))
                 .andExpect(status().is3xxRedirection())
@@ -490,15 +494,19 @@ class AdminControllerTest {
     void bodyTypeEndpoints_acceptRejectUpdateDelete_followRedirects() throws Exception {
         // Arrange
         arrangeDashboardDefaultsSimple();
+        when(bodyTypeRequestService.approvePendingRequest(eq(13L), eq(null))).thenReturn(true);
+        when(bodyTypeRequestService.rejectPendingRequest(eq(13L))).thenReturn(true);
         final MockMvc mockMvc = adminMvc();
 
         mockMvc.perform(
                         post("/admin/body-type-requests/13/accept")
                                 .header("Referer", "http://localhost/admin?view=moderator"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?view=moderator"));
+                .andExpect(redirectedUrl("/admin?view=moderator&catalogAccepted=1"));
 
-        mockMvc.perform(post("/admin/body-type-requests/13/reject")).andExpect(status().is3xxRedirection());
+        mockMvc.perform(post("/admin/body-type-requests/13/reject"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin?catalogRejected=1"));
 
         mockMvc.perform(
                         post("/admin/body-types/8")
@@ -514,15 +522,42 @@ class AdminControllerTest {
     void adminRoleRequests_acceptReject_redirectAdmin() throws Exception {
         // Arrange
         arrangeDashboardDefaultsSimple();
+        when(adminRequestService.approvePendingRequest(eq(21L))).thenReturn(true);
+        when(adminRequestService.rejectPendingRequest(eq(21L))).thenReturn(true);
         final MockMvc mockMvc = adminMvc();
 
         mockMvc.perform(
                         post("/admin/admin-requests/21/accept")
                                 .header("Referer", "http://localhost/admin?tab=moderators"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?tab=moderators"));
+                .andExpect(redirectedUrl("/admin?tab=moderators&requestAccepted=1"));
 
-        mockMvc.perform(post("/admin/admin-requests/21/reject")).andExpect(status().is3xxRedirection());
+        mockMvc.perform(post("/admin/admin-requests/21/reject"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin?requestRejected=1"));
+    }
+
+    @Test
+    void catalogRequestAcceptFailure_redirectsWithErrorToastFlag() throws Exception {
+        // Arrange
+        arrangeDashboardDefaultsSimple();
+        when(brandRequestService.approvePendingRequest(eq(9L), eq("Toyota"))).thenReturn(false);
+        when(bodyTypeRequestService.approvePendingRequest(eq(13L), eq("Sedan"))).thenReturn(false);
+        final MockMvc mockMvc = adminMvc();
+
+        mockMvc.perform(
+                        post("/admin/brand-requests/9/accept")
+                                .param("name", "Toyota")
+                                .header("Referer", "http://localhost/admin?tab=brands&catalogAccepted=1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin?tab=brands&catalogAcceptError=1"));
+
+        mockMvc.perform(
+                        post("/admin/body-type-requests/13/accept")
+                                .param("name", "Sedan")
+                                .header("Referer", "http://localhost/admin?tab=body-types&catalogRejected=1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin?tab=body-types&catalogAcceptError=1"));
     }
 
     @Test

@@ -152,6 +152,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<User> getUsersByIds(final java.util.Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return userDao.findByIds(ids);
+    }
+
+    @Override
     public Page<User> searchUsers(final String query, final int page) {
         final String normalizedQuery = StringUtils.normalize(query);
         if (normalizedQuery == null) {

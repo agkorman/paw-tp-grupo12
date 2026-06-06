@@ -7,7 +7,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${pageTitle}" styles="/css/community-post-common.css|/css/community-post-detail.css|/css/communities-responsive.css|/css/profile-modal.css"/>
+<pa:page-head title="${pageTitle}" styles="/css/community-post-common.css|/css/community-post-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:url var="communityDetailUrl" value="/communities/${postDetail.community.slug}"/>
@@ -26,7 +26,8 @@
     <main class="community-post-page">
         <section class="community-post-shell">
             <div class="community-post-header">
-                <a class="community-back-link" href="${fn:escapeXml(communityDetailUrl)}" aria-label="${fn:escapeXml(communityPostBackLabel)}">
+                <a class="community-back-link" href="${fn:escapeXml(communityDetailUrl)}" aria-label="${fn:escapeXml(communityPostBackLabel)}"
+                   onclick="if (document.referrer &amp;&amp; document.referrer.indexOf(location.origin) === 0) { history.back(); return false; }">
                     <pa:icon name="chevron-left" size="18"/>
                 </a>
                 <div class="community-post-origin">
@@ -36,7 +37,8 @@
                             <span aria-hidden="true">•</span>
                             <span><c:out value="${postView.timeText}"/></span>
                         </p>
-                        <a class="community-post-origin-author" href="${fn:escapeXml(postView.authorProfileHref)}">
+                        <c:url var="postAuthorProfileHref" value="${postView.authorProfileHref}"/>
+                        <a class="community-post-origin-author" href="${fn:escapeXml(postAuthorProfileHref)}">
                             <c:out value="${postView.author}"/>
                         </a>
                     </div>
@@ -71,6 +73,7 @@
             <article class="community-post-detail-card">
                 <h1><c:out value="${postView.title}"/></h1>
                 <p class="community-post-detail-body"><c:out value="${postView.body}"/></p>
+                <pa:image-gallery imageUrls="${postView.imageUrls}" altKey="communities.post.image.alt"/>
 
                 <div class="community-post-detail-actions">
                     <spring:message var="postCommentCountText" code="communities.post.metric.comments" arguments="${postView.commentCount}"/>
@@ -162,9 +165,9 @@
                     <div class="community-comment-row" id="comment-${comment.commentId}">
                         <article class="community-comment">
                             <div class="community-comment-header">
-                                <span class="community-comment-avatar" aria-hidden="true"></span>
                                 <div class="community-comment-meta">
-                                    <a class="community-author-link" href="${fn:escapeXml(comment.authorProfileHref)}">
+                                    <c:url var="commentAuthorProfileHref" value="${comment.authorProfileHref}"/>
+                                    <a class="community-author-link" href="${fn:escapeXml(commentAuthorProfileHref)}">
                                         <strong><c:out value="${comment.author}"/></strong>
                                     </a>
                                     <c:if test="${comment.op}">
@@ -267,6 +270,8 @@
         <pa:script src="/js/communities/community-comment-edit.js"/>
         <pa:script src="/js/communities/community-moderation.js"/>
     </sec:authorize>
+    <pa:image-lightbox/>
+    <pa:script src="/js/shared/image-lightbox.js" defer="true"/>
 
     <pa:footer/>
 </body>

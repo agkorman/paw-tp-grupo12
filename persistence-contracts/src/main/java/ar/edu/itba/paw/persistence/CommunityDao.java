@@ -43,8 +43,8 @@ public interface CommunityDao {
     boolean addCommentHelpfulReaction(long commentId, long userId);
     boolean removeCommentHelpfulReaction(long commentId, long userId);
     boolean isCommentHelpfulReactionAddedByUser(long commentId, long userId);
-    Set<Long> findCommentHelpfulReactionsByUser(Collection<Long> commentIds, long userId);
     Set<Long> findPostHelpfulReactionsByUser(Collection<Long> postIds, long userId);
+    Set<Long> findCommentHelpfulReactionsByUser(Collection<Long> commentIds, long userId);
     Map<Long, List<CommunityTopic>> findTopicsByCommunityIds(Collection<Long> communityIds);
     List<CommunityPost> findPostsByIds(Collection<Long> postIds);
     List<CommunityPost> findPostsByCommunityId(long communityId);

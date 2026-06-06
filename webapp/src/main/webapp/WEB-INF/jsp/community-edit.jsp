@@ -107,7 +107,6 @@
 
     <pa:script src="/js/communities/community-topic-chips.js" defer="true"/>
     <pa:script src="/js/communities/community-create-form.js" defer="true"/>
-    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:script src="/js/shared/confirmation-modal.js"/>
     <pa:footer/>
 </body>

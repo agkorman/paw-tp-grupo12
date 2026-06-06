@@ -288,7 +288,8 @@ public class CarServiceImplTest {
         // Arrange
         when(brandDao.findByName("Toyota")).thenReturn(Optional.of(TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now())));
         when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(TestModels.bodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
-        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+        when(carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(BRAND_ID, BODY_TYPE_ID, "corolla", 2024, 0L))
+                .thenReturn(true);
 
         // Exercise
         final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "  Corolla  ", 2024, 0L);
@@ -302,7 +303,8 @@ public class CarServiceImplTest {
         // Arrange
         when(brandDao.findByName("Toyota")).thenReturn(Optional.of(TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now())));
         when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(TestModels.bodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
-        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+        when(carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(BRAND_ID, BODY_TYPE_ID, "corolla", 2024, CAR_ID))
+                .thenReturn(false);
 
         // Exercise
         final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "Corolla", 2024, CAR_ID);
@@ -316,7 +318,8 @@ public class CarServiceImplTest {
         // Arrange
         when(brandDao.findByName("Toyota")).thenReturn(Optional.of(TestModels.brand(BRAND_ID, "Toyota", LocalDateTime.now())));
         when(bodyTypeDao.findByName("sedan")).thenReturn(Optional.of(TestModels.bodyType(BODY_TYPE_ID, "sedan", LocalDateTime.now())));
-        when(carDao.findByBrandIdAndBodyTypeId(BRAND_ID, BODY_TYPE_ID)).thenReturn(List.of(car()));
+        when(carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(BRAND_ID, BODY_TYPE_ID, "corolla", 2025, 0L))
+                .thenReturn(false);
 
         // Exercise
         final boolean result = carService.existsDuplicateCar("Toyota", "sedan", "Corolla", 2025, 0L);

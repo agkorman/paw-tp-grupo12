@@ -96,7 +96,6 @@
     <pa:script src="/js/cars/cars-filters-panel.js"/>
     <pa:script src="/js/shared/modal-utils.js"/>
     <pa:script src="/js/auth/auth-required-modal.js"/>
-    <pa:script src="/js/shared/form-submit-lock.js"/>
     <pa:script src="/js/shared/toast.js"/>
 
     <pa:footer/>

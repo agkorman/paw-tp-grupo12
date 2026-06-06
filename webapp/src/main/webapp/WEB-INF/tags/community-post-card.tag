@@ -3,6 +3,7 @@
 <%@ attribute name="timeText" required="true" %>
 <%@ attribute name="title" required="true" %>
 <%@ attribute name="body" required="true" %>
+<%@ attribute name="imageUrls" required="false" type="java.util.List" %>
 <%@ attribute name="helpfulCount" required="true" type="java.lang.Long" %>
 <%@ attribute name="commentCount" required="true" type="java.lang.Long" %>
 <%@ attribute name="href" required="false" %>
@@ -47,6 +48,7 @@
             </c:if>
             <h3 class="community-post-title"><c:out value="${title}"/></h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
+            <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt"/>
         </a>
     </c:when>
     <c:otherwise>
@@ -72,6 +74,7 @@
 
             <h3 class="community-post-title"><c:out value="${title}"/></h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
+            <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt"/>
         </article>
     </c:otherwise>
 </c:choose>

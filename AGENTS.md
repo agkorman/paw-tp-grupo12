@@ -10,6 +10,11 @@ Use this file as the working guide for contributors and coding agents. Keep chan
 
 This repository is an ITBA PAW course project: a server-rendered car listing and review web application. It is a multi-module Maven project using Spring MVC, JPA/Hibernate, JSP/JSTL, PostgreSQL, and Jetty for local execution.
 
+## Code Discipline
+
+- Do not create planning, analysis, or design documents (e.g. `feature-refactor.md`, `plan.md`) and commit them to the repository. Work from the task description and conversation context. If intermediate notes are needed, keep them outside version control.
+- Do not leave dead code after a feature is removed or refactored: delete unused tag files, orphaned JS files, dead i18n keys, and unused model/view helper classes in the same change that removes the feature.
+
 ## Commands
 
 ```bash
@@ -17,6 +22,9 @@ mvn clean install        # build all modules
 mvn -pl webapp jetty:run # start dev server at http://localhost:8080/webapp
 mvn test                 # run all tests
 mvn -pl services test    # run only service tests (faster)
+mvn -pl persistence test # run only persistence tests
+mvn -pl persistence test -Dtest=UserDaoTest                              # run a single test class
+mvn -pl persistence test -Dtest=UserDaoTest#shouldCreateUserAndPersistFields # run a single test method
 mvn -pl model install && mvn -pl persistence test # required when JPA entity annotations change
 ```
 
@@ -41,13 +49,14 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 ## Transactions
 
 - In production code, `@Transactional` goes on service methods only — never on DAO methods or controllers.
-- Use `@Transactional(readOnly = true)` for read-only service methods.
+- Use `@Transactional(readOnly = true)` for read-only service methods. Inside a `readOnly` method, do not mutate managed JPA entities (calling setters on objects returned by the `EntityManager`). The mutation is a no-op at best and semantically wrong — the intent is a read.
 
 ## Controllers
 
 - Use `@RequestMapping(value="...", method=RequestMethod.GET/POST)` — not `@GetMapping`/`@PostMapping`.
 - Standard page-rendering methods return `ModelAndView` or `String` (logical view name). Image and AJAX endpoints return `ResponseEntity`.
 - Access the authenticated user via `@AuthenticationPrincipal final AuthenticatedUser currentUser`.
+- Controller methods that map a page/list into view cards must not call services once per item. Resolve related data in one batch before mapping (e.g. users by ID, image metadata, counters), then pass lookup maps into the mapper.
 - All controllers register `StringTrimmerEditor(true)` via `@InitBinder` to trim and nullify blank string inputs before they reach the service.
 - Validate input at the controller boundary, then delegate to the service. Do not put validation logic inside services or JSPs.
 - Use `GlobalExceptionHandler` for exception handling that is shared across controllers. Prefer reusable web exceptions and centralized mappings over private controller exception classes or repeated controller-local `@ExceptionHandler` methods.
@@ -58,11 +67,15 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - Services use constructor injection (`@Autowired` on constructor, `final` fields).
 - Return `Optional<T>` for single results; return empty collections (never `null`) for list results.
+- If a use case needs existence, counts, filtering, ordering, a subset by IDs, or duplicate detection, express that in a DAO query (`exists...`, `count...`, `find...By...`, `find...Ids...`) instead of loading entities and using `.size()`, `.anyMatch()`, `.filter()`, `.sorted()`, `.limit()`, or page-by-page accumulation in the service.
+- Do not call DAO or service methods inside loops/streams over entities, users, IDs, or page items. Batch with `WHERE ... IN (...)`, aggregate maps in SQL/DAO methods, and preserve input order explicitly when the UI depends on it.
+- Scheduled/bulk workflows such as digests must aggregate data across all affected users/items in a small fixed number of queries; never run per-user/per-review/per-car query loops.
 - The persistence layer uses JPA/Hibernate DAOs backed by `@PersistenceContext EntityManager`.
 - JPA migration safety is the top priority when changing persistence code, entity mappings, or schema-related behavior. Any JPA change must remain backwards-compatible with the live PostgreSQL data already present in the database. Do not introduce mapping, fetch, cascade, column, or identifier changes that can reinterpret existing rows, break startup validation, or require destructive data fixes unless explicitly authorized and accompanied by a safe migration/backfill plan.
-- JPA DAOs: use JPQL for entity queries; use `em.createNativeQuery()` only for operations involving unmapped join tables or for the ID-fetch step of paginated queries (see below). Use `GenerationType.IDENTITY` for all `@Id` fields. Prefer `fetch = LAZY` for all `@ManyToOne` and `@OneToMany`. Only annotate the owning side (the entity holding the FK column); the inverse side does not need `@OneToMany` unless that navigation is required.
+- JPA DAOs: use JPQL for entity queries; use `em.createNativeQuery()` only for operations involving unmapped join tables (e.g. `review_tag_assignments` before the owning entity is migrated) or for the ID-fetch step of paginated queries (see below). Use `GenerationType.IDENTITY` for all `@Id` fields. Prefer `fetch = LAZY` for all `@ManyToOne` and `@OneToMany`. Only annotate the owning side (the entity holding the FK column); the inverse side does not need `@OneToMany` unless that navigation is required.
 - Paginated DAO queries must use the 1+1 query pattern: (1) a native SQL `SELECT id ... LIMIT ? OFFSET ?` to get the page of IDs, then (2) a JPQL `WHERE entity.id IN :ids` to load the full entities. Never use `setFirstResult`/`setMaxResults` on an entity-returning JPQL query — Hibernate may silently paginate in memory. `CarJpaDao.findBySearchCriteria` is the canonical example.
-- `@Column(name = "...")` is the only required attribute. Do not add `length`, `nullable`, or `unique`; with `hbm2ddl.auto=validate` these attributes do not affect schema validation and have no runtime enforcement effect. Real data constraints belong in the database schema and must be introduced with idempotent, backwards-compatible migrations.
+- Queries that need image bytes must be as narrow as possible. For retained images, fetch by owner ID plus retained image IDs in one DAO query; do not fetch the whole gallery with BLOB data and filter in memory, and do not query one image per retained ID.
+- `@Column(name = "...")` is the only required attribute. Do not add `length`, `nullable`, or `unique`; with `hbm2ddl.auto=validate` these attributes do not affect schema validation (Hibernate only checks column existence and type compatibility) and have no runtime enforcement effect. Real data constraints belong in the database schema and must be introduced with idempotent, backwards-compatible migrations.
 - Model entities keep JPA no-arg constructors. Do not add raw-id constructors or setters that synthesize association stubs; set relationships through entity references/objects inside JPA DAOs.
 
 ## Views
@@ -70,7 +83,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - JSPs live under `WEB-INF/jsp/` and are resolved by the configured `InternalResourceViewResolver`. Controllers return logical names, not full paths.
 - Views must not contain business logic. Use JSTL and EL only — no raw Java scriptlets.
 - Always escape user-visible output: `<c:out value="${...}"/>` for text, `fn:escapeXml()` for values inside HTML attributes. Never print raw `${...}` where user-controlled data can appear (XSS prevention).
-- Use `<c:url>` for all application URLs. Never hardcode context paths.
+- Use `<c:url>` for all application URLs. Never hardcode context paths. This applies to JSPs, tag files, and redirects — but also means **do not build URL strings in controllers and store them in the model**. A URL computed in a controller and rendered in a tag as `href="${model.someUrl}"` bypasses `<c:url>` and breaks context path resolution. Let the view construct every link with `<c:url value="..."/>`.
 - Custom tags use the `pa:` namespace prefix and live in `WEB-INF/tags/`.
 - Reuse the existing confirmation modal component whenever a confirmation UI is needed. Do not create a second modal pattern or inline ad hoc confirmation dialogs.
 - Every JSP starts with `<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>`.
@@ -79,6 +92,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 ## JavaScript
 
 - JavaScript is for UX enhancement only: client-side validation, modal/menu behavior, tabs, carousels, previews, maps, accessibility state, and double-submit prevention.
+- The double-submit guard (`js/shared/form-submit-lock.js`) is included **globally** via `footer.tag`, so every page is covered automatically. Never add a per-page `<pa:script>` for it — a second copy installs a duplicate submit listener that sees the button already disabled and cancels the real submit. It auto-locks the submit buttons of every `method="post"` form; opt out with `data-submit-lock="false"`. Keep it non-`defer`: it self-registers on `DOMContentLoaded` so it always runs after parse-time validation handlers — if it ever loaded deferred/async it could lock a button before validation cancels the submit and strand it disabled.
 - JavaScript must not own business flow, persistence flow, authorization decisions, or source-of-truth rendering. State-changing actions must use normal form/link requests handled by Spring MVC, followed by JSP rendering.
 - Do not implement AJAX/fetch/XHR for create, update, delete, like, favorite, follow, moderation, approval, or other mutating domain actions. Do not remove, insert, or replace domain cards/items after mutating actions; let the server redirect and render the updated JSP.
 - Avoid DOM-injection patterns such as inserting server/client HTML with `innerHTML`, `insertAdjacentHTML`, or fragment replacement for mutating workflows. Use DOM writes only for local UX state such as validation messages, modal labels, selected controls, counters that are purely presentational, or map/widget setup.
@@ -88,6 +102,9 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 - All user-visible UI text belongs in the message bundles: `webapp/src/main/resources/messages.properties` and `webapp/src/main/resources/messages_en.properties`. Do not add hardcoded Spanish/English copy directly in JSPs, tag files, controllers, form validation annotations, or JavaScript when it is meant for users.
 - Use Spring messages in JSP/tag files: declare `<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>` and render with `<spring:message code="..."/>`. For HTML attributes, resolve into a variable first with `var` and escape it when needed.
+- Do not inject `MessageSource` into controllers to pre-resolve i18n strings and store them in the view model. Message resolution must happen in the view layer. If a controller injects `MessageSource` and calls `messageSource.getMessage(...)` to build display strings, that is a violation — move the `<spring:message>` call into the JSP/tag instead.
+- When removing a feature or UI section, delete all i18n keys from both `messages.properties` and `messages_en.properties` that were only used by that feature. Orphaned keys accumulate silently — they are dead code in the bundle.
+- Message keys must provide localizable content beyond bare argument pass-through. A key whose sole template is `{0}` (e.g., `my.key={0}`) is an identity function: it adds nothing and should be replaced by outputting the value directly in the template.
 - Bean Validation messages use bundle keys in braces, e.g. `@NotBlank(message = "{validation.review.body.required}")`. Spring MVC validation is wired to the app `MessageSource`; keep it that way when touching `WebConfig`.
 - Key naming standard is dot-separated and domain-first: `domain.section.element.state`. Examples: `cars.form.description`, `review.feed.empty`, `admin.catalogRequest.title`, `auth.login.error`.
 - Validation keys use `validation.entity.field.rule`, e.g. `validation.car.model.max`, `validation.review.rating.required`. Shared validation keys may use `validation.option.required` or `validation.email.invalid`.
@@ -115,6 +132,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 - All routes are protected by Spring Security (`WebAuthConfig`). When adding a new endpoint, explicitly decide whether it is public or requires authentication/role, and add the corresponding `requestMatchers` rule.
 - Password encoding uses `BCryptPasswordEncoder`. Do not use plaintext encoders.
 - Any user-supplied redirect URL must be validated through `LoginRedirectUtils.safeRedirect()` before use. Never trust raw redirect parameters — they are an open-redirect vector.
+- Controllers must not parse `AuthenticatedUser.getAuthorities()`, `GrantedAuthority`, or raw `ROLE_*` strings. Endpoint access belongs in `WebAuthConfig`; if a service method needs the current user's role context after access has already been granted, pass `request.isUserInRole("ADMIN")`.
 - To gate UI sections by role in JSPs, use the Spring Security tag: `<sec:authorize access="hasRole('ADMIN')">`. Don't rely on a model attribute for role checks in views.
 - CSRF tokens must be included in every mutating form. The hidden input pattern is: `<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">`. Spring's `<form:form>` includes it automatically; plain HTML `<form>` elements require it explicitly.
 
@@ -171,6 +189,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 `schema.sql` runs on every application startup against a live database that already has data. Every statement must be safe to run on an already-initialized database.
 
+- Keep startup `schema.sql` focused on idempotent structural evolution and lookup data required by the app. One-shot legacy backfills, demo seeds, cleanup updates, and historical data moves belong in `schema.deprecated.sql` or an explicitly-run migration script, not in startup DDL.
 - Tables: always `CREATE TABLE IF NOT EXISTS`.
 - Columns: always `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`. New columns must be nullable or have a default so that existing rows are not broken.
 - Constraints: always `DROP CONSTRAINT IF EXISTS` before `ADD CONSTRAINT`, so re-runs do not fail on already-existing constraints.

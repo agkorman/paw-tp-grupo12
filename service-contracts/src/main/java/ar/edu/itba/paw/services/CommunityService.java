@@ -9,8 +9,10 @@ import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
+import ar.edu.itba.paw.model.CommunityPostImage;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
+import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import java.util.Collection;
 import java.util.List;
@@ -27,18 +29,25 @@ public interface CommunityService {
     Optional<CommunityEditData> getCommunityForEdit(String communitySlug, long callerUserId);
     Optional<Community> editCommunity(String communitySlug, long callerUserId, String name, String description, Collection<Short> topicIds);
     Optional<Boolean> deleteCommunity(String communitySlug, long callerUserId);
-    Optional<CommunityPost> createCommunityPost(String communitySlug, long userId, String title, String body);
+    Optional<CommunityPost> createCommunityPost(String communitySlug, long userId, String title, String body,
+                                                List<ImagePayload> images);
     Optional<CommunityPost> getCommunityPostForEdit(String communitySlug, String postSlug, long callerUserId);
-    Optional<CommunityPost> updateCommunityPost(String communitySlug, String postSlug, long callerUserId, String title, String body);
+    Optional<CommunityPost> updateCommunityPost(String communitySlug, String postSlug, long callerUserId, String title,
+                                                String body, List<ImagePayload> images);
     Optional<CommunityPostComment> createCommunityPostComment(String communitySlug, String postSlug, long userId, String body);
     Optional<CommunityPostComment> updateCommunityPostComment(String communitySlug, long commentId, long callerUserId, String body);
     Optional<Boolean> toggleMembership(String slug, long userId);
+    Set<Long> getHelpfulPostIds(Collection<Long> postIds, long userId);
     Optional<Boolean> togglePostHelpfulReaction(String communitySlug, String postSlug, long userId);
     Optional<Boolean> toggleCommentHelpfulReaction(String communitySlug, String postSlug, long commentId, long userId);
     Optional<CommunityDetailData> getCommunityDetail(String slug, Long currentUserId, String sort);
     Optional<CommunityDetailData> getCommunityDetail(String slug, Long currentUserId, String sort, int page);
     Optional<Community> getCommunityBySlug(String slug);
     Optional<CommunityPostDetailData> getCommunityPostDetail(String communitySlug, String postSlug, Long currentUserId);
+    List<CommunityPostImage> getPostImagesByPostId(long postId);
+    Map<Long, List<CommunityPostImage>> getImagesByPostIds(Collection<Long> postIds);
+    Optional<CommunityPostImage> getPostImageById(long postId, long imageId);
+    List<ImagePayload> collectRetainedPostImagePayloads(long postId, List<Long> retainedImageIds);
     Optional<String> getViewerRole(String communitySlug, Long userId);
     Optional<List<CommunityMembershipEntry>> listMembers(String communitySlug, long callerUserId);
     Optional<CommunityMembersData> getCommunityMembers(String communitySlug, long callerUserId);
