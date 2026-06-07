@@ -124,13 +124,9 @@ public class ValidCarFormValidator implements ConstraintValidator<ValidCarForm, 
     }
 
     private List<Long> requestImageIds(final CarRequest request) {
-        final List<Long> imageIds = carRequestService.getCarRequestImages(request.getId()).stream()
+        return carRequestService.getCarRequestImages(request.getId()).stream()
                 .map(image -> image.getImageId())
                 .collect(Collectors.toList());
-        if (!imageIds.isEmpty() || request.getImageContentType() == null) {
-            return imageIds;
-        }
-        return Collections.singletonList(CarService.LEGACY_IMAGE_ID);
     }
 
     private List<Long> carImageIds(final Car car) {

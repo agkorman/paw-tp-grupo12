@@ -562,7 +562,7 @@ class AdminControllerTest {
     void requestCoverImage_returns404_whenRequestMissing() throws Exception {
         // Arrange
         arrangeDashboardDefaultsSimple();
-        when(carRequestService.getCarRequestById(eq(800L))).thenReturn(Optional.empty());
+        when(carRequestService.getPrimaryCarRequestImage(eq(800L))).thenReturn(Optional.empty());
         final MockMvc mockMvc = adminMvc();
 
         mockMvc.perform(get("/admin/requests/800/image")).andExpect(status().isNotFound());
@@ -573,29 +573,10 @@ class AdminControllerTest {
         // Arrange
         arrangeDashboardDefaultsSimple();
         final byte[] payload = {-1, -37, -1};
-        final CarRequest request =
-                TestModels.carRequest(
-                        700L,
-                        null,
-                        null,
-                        1L,
-                        1L,
-                        2024,
-                        "Legacy",
-                        "desc",
-                        MediaType.IMAGE_JPEG_VALUE,
-                        payload,
-                        CarRequestService.STATUS_PENDING,
-                        LocalDateTime.now(),
-                        CarSearchCriteria.FUEL_TYPE_COMBUSTION,
-                        110,
-                        6,
-                        CarSearchCriteria.TRANSMISSION_AUTOMATIC,
-                        BigDecimal.valueOf(8),
-                        200,
-                        null);
-        when(carRequestService.getCarRequestById(eq(700L))).thenReturn(Optional.of(request));
-        when(carRequestService.getCarRequestImages(eq(700L))).thenReturn(Collections.emptyList());
+        final LocalDateTime updatedAt = LocalDateTime.of(2026, 1, 15, 8, 0);
+        final StoredImagePayload image =
+                new StoredImagePayload(CarService.LEGACY_IMAGE_ID, 700L, 0, MediaType.IMAGE_JPEG_VALUE, payload, updatedAt);
+        when(carRequestService.getPrimaryCarRequestImage(eq(700L))).thenReturn(Optional.of(image));
         final MockMvc mockMvc = adminMvc();
 
         mockMvc.perform(get("/admin/requests/700/image"))

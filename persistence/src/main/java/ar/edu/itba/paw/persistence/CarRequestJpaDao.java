@@ -90,7 +90,7 @@ public class CarRequestJpaDao implements CarRequestDao {
     @Override
     public CarRequest create(final long submittedByUserId, final String submitterEmail, final long brandId,
                              final long bodyTypeId, final Integer year, final String model, final String description,
-                             final String imageContentType, final byte[] imageData, final String status,
+                             final String status,
                              final String fuelType, final Integer horsepower, final Integer airbagCount,
                              final String transmission, final BigDecimal fuelConsumption, final Integer maxSpeedKmh,
                              final BigDecimal priceUsd) {
@@ -100,8 +100,6 @@ public class CarRequestJpaDao implements CarRequestDao {
         request.setSubmittedByUser(em.getReference(User.class, submittedByUserId));
         request.setSubmitterEmail(submitterEmail);
         request.setYear(year);
-        request.setImageContentType(imageContentType);
-        request.setImageData(imageData);
         request.setFuelType(fuelType);
         request.setHorsepower(horsepower);
         request.setAirbagCount(airbagCount);
@@ -155,6 +153,35 @@ public class CarRequestJpaDao implements CarRequestDao {
         } catch (final Exception e) {
             LOGGER.error("failed to fetch image metadata for car request ids={}", ids, e);
             throw new PersistenceOperationException("fetch image metadata for car requests", e);
+        }
+    }
+
+    @Override
+    public List<ImageMetadata> findLegacyImagesByRequestIds(final Collection<Long> requestIds) {
+        if (requestIds == null) {
+            return List.of();
+        }
+        final List<Long> ids = requestIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        try {
+            return em.createQuery(
+                    "SELECT new ar.edu.itba.paw.model.ImageMetadata(" +
+                    "0L, i.id, 0, i.imageContentType, i.createdAt) " +
+                    "FROM CarRequestLegacyImage i " +
+                    "WHERE i.id IN :requestIds " +
+                    "AND i.imageContentType IS NOT NULL AND i.imageData IS NOT NULL " +
+                    "ORDER BY i.id ASC",
+                    ImageMetadata.class)
+                    .setParameter("requestIds", ids)
+                    .getResultList();
+        } catch (final Exception e) {
+            LOGGER.error("failed to fetch legacy image metadata for car request ids={}", ids, e);
+            throw new PersistenceOperationException("fetch legacy image metadata for car requests", e);
         }
     }
 
@@ -216,6 +243,26 @@ public class CarRequestJpaDao implements CarRequestDao {
         } catch (final Exception e) {
             LOGGER.error("failed to fetch image id={} for car request id={}", imageId, requestId, e);
             throw new PersistenceOperationException("fetch image " + imageId + " for car request " + requestId, e);
+        }
+    }
+
+    @Override
+    public Optional<StoredImagePayload> findLegacyImageByRequestId(final long requestId) {
+        try {
+            final List<StoredImagePayload> rows = em.createQuery(
+                    "SELECT new ar.edu.itba.paw.model.StoredImagePayload(" +
+                    "0L, i.id, 0, i.imageContentType, i.imageData, i.createdAt) " +
+                    "FROM CarRequestLegacyImage i " +
+                    "WHERE i.id = :requestId " +
+                    "AND i.imageContentType IS NOT NULL AND i.imageData IS NOT NULL",
+                    StoredImagePayload.class)
+                    .setParameter("requestId", requestId)
+                    .getResultList();
+            return rows.stream()
+                    .findFirst();
+        } catch (final Exception e) {
+            LOGGER.error("failed to fetch legacy image for car request id={}", requestId, e);
+            throw new PersistenceOperationException("fetch legacy image for car request " + requestId, e);
         }
     }
 

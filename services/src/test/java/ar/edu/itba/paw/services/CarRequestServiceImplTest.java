@@ -3,6 +3,7 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.persistence.CarDao;
@@ -62,8 +63,8 @@ public class CarRequestServiceImplTest {
         final ImagePayload image = new ImagePayload(CONTENT_TYPE, IMAGE_BYTES);
         final CarRequest created = pendingRequest();
         when(carRequestDao.create(eq(USER_ID), eq(EMAIL), eq(BRAND_ID), eq(BODY_TYPE_ID), eq(2024),
-                eq("Corolla"), eq("A nice car description."), eq(CONTENT_TYPE), any(byte[].class),
-                eq(CarRequestService.STATUS_PENDING), eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"),
+                eq("Corolla"), eq("A nice car description."), eq(CarRequestService.STATUS_PENDING),
+                eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"),
                 eq(new BigDecimal("6.5")), eq(190), eq(new BigDecimal("25000.00"))))
                 .thenReturn(created);
 
@@ -124,11 +125,29 @@ public class CarRequestServiceImplTest {
     }
 
     @Test
+    public void shouldReturnPrimaryCarRequestImagePayload() {
+        // Arrange
+        final LocalDateTime updatedAt = LocalDateTime.of(2026, 1, 15, 8, 0);
+        final ImageMetadata metadata = new ImageMetadata(55L, REQUEST_ID, 0, CONTENT_TYPE, updatedAt);
+        final StoredImagePayload payload = new StoredImagePayload(55L, REQUEST_ID, 0, CONTENT_TYPE, IMAGE_BYTES, updatedAt);
+        when(carRequestDao.findImagesByRequestId(REQUEST_ID)).thenReturn(List.of(metadata));
+        when(carRequestDao.findImageByRequestIdAndImageId(REQUEST_ID, 55L)).thenReturn(Optional.of(payload));
+
+        // Exercise
+        final Optional<StoredImagePayload> result = carRequestService.getPrimaryCarRequestImage(REQUEST_ID);
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals(55L, result.get().getImageId());
+        assertEquals(CONTENT_TYPE, result.get().getContentType());
+    }
+
+    @Test
     public void shouldWrapDaoExceptionWhenCreatingPendingRequestFails() {
         // Arrange
         final DataAccessResourceFailureException cause = new DataAccessResourceFailureException("database unavailable");
         when(carRequestDao.create(eq(USER_ID), eq(EMAIL), eq(BRAND_ID), eq(BODY_TYPE_ID), eq(2024),
-                eq("Corolla"), eq("desc"), eq(null), eq(null), eq(CarRequestService.STATUS_PENDING),
+                eq("Corolla"), eq("desc"), eq(CarRequestService.STATUS_PENDING),
                 eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"), eq(new BigDecimal("6.5")), eq(190),
                 eq(new BigDecimal("25000.00")))).thenThrow(cause);
 

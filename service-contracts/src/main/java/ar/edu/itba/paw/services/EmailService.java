@@ -6,7 +6,7 @@ import ar.edu.itba.paw.model.EmailRecipient;
 import java.util.List;
 
 public interface EmailService {
-    void sendNewCarRequestNotification(CarRequest request, String brandName, String bodyTypeName);
+    void sendNewCarRequestNotification(CarRequest request, String brandName, String bodyTypeName, boolean hasImage);
     void sendCarApprovedNotification(String recipientEmail, String brandName, String model, long carId);
     void sendCarRejectedNotification(String recipientEmail, String brandName, String model);
     void sendCatalogRequestApprovedNotification(String recipientEmail, String requestType, String requestedName);

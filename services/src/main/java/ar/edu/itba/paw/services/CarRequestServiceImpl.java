@@ -131,9 +131,6 @@ public class CarRequestServiceImpl implements CarRequestService {
         );
         final List<ImagePayload> normalizedImages =
             ImagePayloadUtils.normalizeImages(images);
-        final ImagePayload coverImage = normalizedImages.isEmpty()
-            ? null
-            : normalizedImages.get(0);
 
         try {
             final CarRequest request = carRequestDao.create(
@@ -144,8 +141,6 @@ public class CarRequestServiceImpl implements CarRequestService {
                 year,
                 normalizedModel,
                 normalizedDescription,
-                coverImage == null ? null : coverImage.getContentType(),
-                coverImage == null ? null : coverImage.getImageData(),
                 STATUS_PENDING,
                 fuelType,
                 horsepower,
@@ -169,14 +164,52 @@ public class CarRequestServiceImpl implements CarRequestService {
 
     @Override
     public List<ImageMetadata> getCarRequestImages(final long requestId) {
-        return carRequestDao.findImagesByRequestId(requestId);
+        final List<ImageMetadata> images = carRequestDao.findImagesByRequestId(
+            requestId
+        );
+        if (!images.isEmpty()) {
+            return images;
+        }
+        return carRequestDao.findLegacyImagesByRequestIds(List.of(requestId));
     }
 
     @Override
     public List<ImageMetadata> getCarRequestImagesByRequestIds(
         final Collection<Long> requestIds
     ) {
-        return carRequestDao.findImagesByRequestIds(requestIds);
+        final List<ImageMetadata> images = carRequestDao.findImagesByRequestIds(
+            requestIds
+        );
+        if (requestIds == null || requestIds.isEmpty()) {
+            return images;
+        }
+        final java.util.Set<Long> requestsWithGallery = images
+            .stream()
+            .map(ImageMetadata::getOwnerId)
+            .collect(java.util.stream.Collectors.toSet());
+        final List<Long> legacyCandidateIds = requestIds
+            .stream()
+            .filter(java.util.Objects::nonNull)
+            .distinct()
+            .filter(id -> !requestsWithGallery.contains(id))
+            .toList();
+        if (legacyCandidateIds.isEmpty()) {
+            return images;
+        }
+        final List<ImageMetadata> combined = new ArrayList<>(images);
+        combined.addAll(carRequestDao.findLegacyImagesByRequestIds(legacyCandidateIds));
+        return combined;
+    }
+
+    @Override
+    public Optional<StoredImagePayload> getPrimaryCarRequestImage(
+        final long requestId
+    ) {
+        final List<ImageMetadata> images = getCarRequestImages(requestId);
+        if (images.isEmpty()) {
+            return Optional.empty();
+        }
+        return getCarRequestImageById(requestId, images.get(0).getImageId());
     }
 
     @Override
@@ -184,6 +217,9 @@ public class CarRequestServiceImpl implements CarRequestService {
         final long requestId,
         final long imageId
     ) {
+        if (imageId == CarService.LEGACY_IMAGE_ID) {
+            return carRequestDao.findLegacyImageByRequestId(requestId);
+        }
         return carRequestDao.findImageByRequestIdAndImageId(requestId, imageId);
     }
 
@@ -408,19 +444,21 @@ public class CarRequestServiceImpl implements CarRequestService {
             .findImagesByRequestIdAndImageIdsWithData(requestId, nonLegacyIds)) {
             imagesById.putIfAbsent(image.getImageId(), image);
         }
+        final Optional<StoredImagePayload> legacyImage =
+            retainedImageIds.contains(CarService.LEGACY_IMAGE_ID)
+                ? carRequestDao.findLegacyImageByRequestId(requestId)
+                : Optional.empty();
         for (final Long imageId : retainedImageIds) {
             if (imageId == null) {
                 continue;
             }
             if (imageId == CarService.LEGACY_IMAGE_ID) {
-                if (
-                    request.getImageContentType() != null &&
-                    request.getImageData() != null
-                ) {
+                if (legacyImage.isPresent()) {
+                    final StoredImagePayload image = legacyImage.get();
                     payloads.add(
                         new ImagePayload(
-                            request.getImageContentType(),
-                            request.getImageData()
+                            image.getContentType(),
+                            image.getImageData()
                         )
                     );
                 }
@@ -476,18 +514,18 @@ public class CarRequestServiceImpl implements CarRequestService {
         if (!galleryPayloads.isEmpty()) {
             return galleryPayloads;
         }
-        if (
-            request.getImageContentType() != null &&
-            request.getImageData() != null
-        ) {
-            return List.of(
-                new ImagePayload(
-                    request.getImageContentType(),
-                    request.getImageData()
+        return carRequestDao
+            .findLegacyImageByRequestId(request.getId())
+            .filter(image -> image.getImageData() != null)
+            .map(image ->
+                List.of(
+                    new ImagePayload(
+                        image.getContentType(),
+                        image.getImageData()
+                    )
                 )
-            );
-        }
-        return List.of();
+            )
+            .orElseGet(List::of);
     }
 
     @Override

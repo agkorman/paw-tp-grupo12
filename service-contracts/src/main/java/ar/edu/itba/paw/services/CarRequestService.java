@@ -35,6 +35,8 @@ public interface CarRequestService {
 
     List<ImageMetadata> getCarRequestImagesByRequestIds(Collection<Long> requestIds);
 
+    Optional<StoredImagePayload> getPrimaryCarRequestImage(long requestId);
+
     Optional<StoredImagePayload> getCarRequestImageById(long requestId, long imageId);
 
     boolean approvePendingRequest(long id);

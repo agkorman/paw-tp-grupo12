@@ -1126,7 +1126,8 @@ class CommunityServiceImplTest {
 
         @Override
         public void sendNewCarRequestNotification(final ar.edu.itba.paw.model.CarRequest request,
-                                                  final String brandName, final String bodyTypeName) {
+                                                  final String brandName, final String bodyTypeName,
+                                                  final boolean hasImage) {
         }
 
         @Override

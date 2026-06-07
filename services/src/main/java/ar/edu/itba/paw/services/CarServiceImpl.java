@@ -240,7 +240,8 @@ public class CarServiceImpl implements CarService {
         emailService.sendNewCarRequestNotification(
             carRequest,
             brandName,
-            bodyTypeName
+            bodyTypeName,
+            !normalizedImages.isEmpty()
         );
 
         return carRequest;

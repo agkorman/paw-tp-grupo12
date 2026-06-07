@@ -36,12 +36,6 @@ public class CarRequest implements Serializable {
     @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(name = "image_content_type", nullable = true, length = 100)
-    private String imageContentType;
-
-    @Column(name = "image_data", nullable = true)
-    private byte[] imageData;
-
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
@@ -140,22 +134,6 @@ public class CarRequest implements Serializable {
 
     public void setDescription(final String description) {
         this.description = description;
-    }
-
-    public String getImageContentType() {
-        return imageContentType;
-    }
-
-    public void setImageContentType(final String imageContentType) {
-        this.imageContentType = imageContentType;
-    }
-
-    public byte[] getImageData() {
-        return imageData;
-    }
-
-    public void setImageData(final byte[] imageData) {
-        this.imageData = imageData;
     }
 
     public String getStatus() {

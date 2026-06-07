@@ -59,7 +59,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async("mailTaskExecutor")
     public void sendNewCarRequestNotification(final CarRequest request, final String brandName,
-                                              final String bodyTypeName) {
+                                              final String bodyTypeName, final boolean hasImage) {
         final List<EmailRecipient> moderators = getModeratorEmailRecipientsSafely();
         if (moderators.isEmpty()) {
             return;
@@ -70,8 +70,8 @@ public class EmailServiceImpl implements EmailService {
             final Locale locale = entry.getKey();
             sendEmail(
                     buildRequestSubject(brandName, request.getModel(), locale),
-                    buildRequestPlainTextBody(request, brandName, bodyTypeName, locale),
-                    buildRequestHtmlBody(request, brandName, bodyTypeName, locale),
+                    buildRequestPlainTextBody(request, brandName, bodyTypeName, hasImage, locale),
+                    buildRequestHtmlBody(request, brandName, bodyTypeName, hasImage, locale),
                     "Failed to send car request notification for request " + request.getId(),
                     helper -> helper.setTo(entry.getValue().toArray(new String[0]))
             );
@@ -383,7 +383,8 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String buildRequestPlainTextBody(final CarRequest request, final String brandName,
-                                             final String bodyTypeName, final Locale locale) {
+                                             final String bodyTypeName, final boolean hasImage,
+                                             final Locale locale) {
         return msg(
                 "email.request.plain",
                 locale,
@@ -392,7 +393,7 @@ public class EmailServiceImpl implements EmailService {
                 safeValue(request.getModel()),
                 request.getYear() == null ? msg("common.empty.na", locale) : request.getYear().toString(),
                 safeValue(bodyTypeName),
-                request.getImageData() != null && request.getImageData().length > 0
+                hasImage
                         ? msg("common.boolean.yes", locale)
                         : msg("common.boolean.no", locale),
                 previewDescription(request.getDescription(), locale),
@@ -401,14 +402,15 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String buildRequestHtmlBody(final CarRequest request, final String brandName,
-                                        final String bodyTypeName, final Locale locale) {
+                                        final String bodyTypeName, final boolean hasImage,
+                                        final Locale locale) {
         final String brand = safeValue(brandName);
         final String model = safeValue(request.getModel());
         final String year = request.getYear() == null ? "" : " " + request.getYear();
         final String carName = escapeHtml(brand + " " + model + year);
         final String bodyType = escapeHtml(safeValue(bodyTypeName));
         final String description = escapeHtml(previewDescription(request.getDescription(), locale)).replace("\n", "<br>");
-        final String imageStatus = hasRequestImage(request)
+        final String imageStatus = hasImage
                 ? msg("email.request.image.with", locale)
                 : msg("email.request.image.without", locale);
         final String dashboardUrl = escapeHtml(appBaseUrl + "/admin");
@@ -1164,13 +1166,6 @@ public class EmailServiceImpl implements EmailService {
     }
 
     // ── Shared helpers ────────────────────────────────────────────────────────
-
-    private boolean hasRequestImage(final CarRequest request) {
-        return request.getImageData() != null
-                && request.getImageData().length > 0
-                && request.getImageContentType() != null
-                && !request.getImageContentType().isBlank();
-    }
 
     private String buildEmailShell(final String preheader, final String title,
                                    final String intro, final String bodyHtml,

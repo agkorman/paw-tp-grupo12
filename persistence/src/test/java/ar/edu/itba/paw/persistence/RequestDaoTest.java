@@ -13,6 +13,7 @@ import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -207,23 +208,25 @@ public class RequestDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
-    public void shouldCreateCarRequestWithSpecsAndPersistImageAndFuelType() {
+    public void shouldCreateCarRequestWithSpecsWithoutPersistingLegacyImage() {
         // Arrange
         final User submitter = createUser("car-request-create");
         final Car car = createCar("car-request-create");
 
         // Exercise
         final CarRequest result = carRequestDao.create(submitter.getId(), submitter.getEmail(), car.getBrandId(),
-                car.getBodyTypeId(), 2026, "Requested Model", "Requested description", "image/png", new byte[]{1},
-                "pending", "electric", 320, 8, "automatic", new BigDecimal("0.0"), 240, new BigDecimal("61000.00"));
+                car.getBodyTypeId(), 2026, "Requested Model", "Requested description", "pending",
+                "electric", 320, 8, "automatic", new BigDecimal("0.0"), 240, new BigDecimal("61000.00"));
 
         // Assertions
         assertEquals(1, countRows("SELECT COUNT(*) FROM car_requests WHERE car_request_id = ?", result.getId()));
         assertEquals("Requested Model", jdbcTemplate.queryForObject(
                 "SELECT model FROM car_requests WHERE car_request_id = ?", String.class, result.getId()
         ));
-        assertArrayEquals(new byte[]{1}, jdbcTemplate.queryForObject(
-                "SELECT image_data FROM car_requests WHERE car_request_id = ?", byte[].class, result.getId()
+        assertEquals(0, countRows(
+                "SELECT COUNT(*) FROM car_requests WHERE car_request_id = ? "
+                        + "AND image_content_type IS NOT NULL AND image_data IS NOT NULL",
+                result.getId()
         ));
         assertEquals("electric", jdbcTemplate.queryForObject(
                 "SELECT fuel_type FROM car_requests WHERE car_request_id = ?", String.class, result.getId()
@@ -514,6 +517,64 @@ public class RequestDaoTest extends AbstractPersistenceTest {
         assertEquals("image/jpeg", result.get(1).getContentType());
         assertEquals(secondRequestId, result.get(2).getOwnerId());
         assertEquals("image/webp", result.get(2).getContentType());
+    }
+
+    @Test
+    public void shouldFindLegacyCarRequestImageMetadataWithoutData() {
+        // Arrange
+        final User user = createUser("request-legacy-metadata");
+        final Car car = createCar("request-legacy-metadata");
+        jdbcTemplate.update(
+                "INSERT INTO car_requests (submitted_by_user_id, submitter_email, brand_id, body_type_id, year, "
+                        + "model, description, image_content_type, image_data, status, fuel_type, horsepower, "
+                        + "airbag_count, transmission, fuel_consumption, max_speed_kmh, price_usd) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                user.getId(), user.getEmail(), car.getBrandId(), car.getBodyTypeId(), 2026, "Request Legacy Metadata",
+                "Description", "image/png", new byte[]{9, 8}, "pending", "combustion", 180, 6, "manual",
+                new BigDecimal("7.0"), 220, new BigDecimal("30000.00")
+        );
+        final long requestId = jdbcTemplate.queryForObject(
+                "SELECT car_request_id FROM car_requests WHERE model = ?", Long.class, "Request Legacy Metadata"
+        );
+
+        // Exercise
+        final List<ImageMetadata> result = carRequestDao.findLegacyImagesByRequestIds(List.of(requestId));
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals(0L, result.get(0).getImageId());
+        assertEquals(requestId, result.get(0).getOwnerId());
+        assertEquals(0, result.get(0).getDisplayOrder());
+        assertEquals("image/png", result.get(0).getContentType());
+    }
+
+    @Test
+    public void shouldFindLegacyCarRequestImagePayloadWithData() {
+        // Arrange
+        final User user = createUser("request-legacy-payload");
+        final Car car = createCar("request-legacy-payload");
+        jdbcTemplate.update(
+                "INSERT INTO car_requests (submitted_by_user_id, submitter_email, brand_id, body_type_id, year, "
+                        + "model, description, image_content_type, image_data, status, fuel_type, horsepower, "
+                        + "airbag_count, transmission, fuel_consumption, max_speed_kmh, price_usd) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                user.getId(), user.getEmail(), car.getBrandId(), car.getBodyTypeId(), 2026, "Request Legacy Payload",
+                "Description", "image/jpeg", new byte[]{7, 6}, "pending", "combustion", 180, 6, "manual",
+                new BigDecimal("7.0"), 220, new BigDecimal("30000.00")
+        );
+        final long requestId = jdbcTemplate.queryForObject(
+                "SELECT car_request_id FROM car_requests WHERE model = ?", Long.class, "Request Legacy Payload"
+        );
+
+        // Exercise
+        final Optional<StoredImagePayload> result = carRequestDao.findLegacyImageByRequestId(requestId);
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals(0L, result.get().getImageId());
+        assertEquals(requestId, result.get().getOwnerId());
+        assertEquals("image/jpeg", result.get().getContentType());
+        assertArrayEquals(new byte[]{7, 6}, result.get().getImageData());
     }
 
     @Test

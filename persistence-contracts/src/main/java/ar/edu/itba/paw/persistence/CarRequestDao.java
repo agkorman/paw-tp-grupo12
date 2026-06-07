@@ -21,19 +21,23 @@ public interface CarRequestDao {
     long countByStatus(String status);
 
     CarRequest create(long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId, Integer year,
-                      String model, String description, String imageContentType, byte[] imageData,
-                      String status, String fuelType, Integer horsepower, Integer airbagCount,
+                      String model, String description, String status,
+                      String fuelType, Integer horsepower, Integer airbagCount,
                       String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh, BigDecimal priceUsd);
 
     List<ImageMetadata> findImagesByRequestId(long requestId);
 
     List<ImageMetadata> findImagesByRequestIds(Collection<Long> requestIds);
 
+    List<ImageMetadata> findLegacyImagesByRequestIds(Collection<Long> requestIds);
+
     List<StoredImagePayload> findImagesByRequestIdWithData(long requestId);
 
     List<StoredImagePayload> findImagesByRequestIdAndImageIdsWithData(long requestId, Collection<Long> imageIds);
 
     Optional<StoredImagePayload> findImageByRequestIdAndImageId(long requestId, long imageId);
+
+    Optional<StoredImagePayload> findLegacyImageByRequestId(long requestId);
 
     void replaceImages(long requestId, List<ImagePayload> images);
 

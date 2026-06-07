@@ -86,8 +86,6 @@ final class TestModels {
         request.setSubmittedByUser(submittedByUserId == null ? null : user(submittedByUserId, null, submitterEmail, null, null, null));
         request.setSubmitterEmail(submitterEmail);
         request.setYear(year);
-        request.setImageContentType(imageContentType);
-        request.setImageData(imageData);
         request.setCreatedAt(createdAt);
         request.setFuelType(fuelType);
         request.setHorsepower(horsepower);
