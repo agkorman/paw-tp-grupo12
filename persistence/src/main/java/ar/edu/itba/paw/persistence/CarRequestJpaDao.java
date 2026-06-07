@@ -247,6 +247,45 @@ public class CarRequestJpaDao implements CarRequestDao {
     }
 
     @Override
+    public Optional<ImageMetadata> findImageMetadataByRequestIdAndImageId(final long requestId, final long imageId) {
+        try {
+            return em.createQuery(
+                    "SELECT new ar.edu.itba.paw.model.ImageMetadata(" +
+                    "i.imageId, i.request.id, i.displayOrder, i.contentType, i.updatedAt) " +
+                    "FROM CarRequestImage i WHERE i.request.id = :reqId AND i.imageId = :imgId",
+                    ImageMetadata.class)
+                    .setParameter("reqId", requestId)
+                    .setParameter("imgId", imageId)
+                    .getResultList()
+                    .stream()
+                    .findFirst();
+        } catch (final Exception e) {
+            LOGGER.error("failed to fetch image metadata id={} for car request id={}", imageId, requestId, e);
+            throw new PersistenceOperationException("fetch image metadata " + imageId + " for car request " + requestId, e);
+        }
+    }
+
+    @Override
+    public Optional<ImageMetadata> findFirstImageMetadataByRequestId(final long requestId) {
+        try {
+            return em.createQuery(
+                    "SELECT new ar.edu.itba.paw.model.ImageMetadata(" +
+                    "i.imageId, i.request.id, i.displayOrder, i.contentType, i.updatedAt) " +
+                    "FROM CarRequestImage i WHERE i.request.id = :requestId " +
+                    "ORDER BY i.displayOrder ASC, i.imageId ASC",
+                    ImageMetadata.class)
+                    .setParameter("requestId", requestId)
+                    .setMaxResults(1)
+                    .getResultList()
+                    .stream()
+                    .findFirst();
+        } catch (final Exception e) {
+            LOGGER.error("failed to fetch first image metadata for car request id={}", requestId, e);
+            throw new PersistenceOperationException("fetch first image metadata for car request " + requestId, e);
+        }
+    }
+
+    @Override
     public Optional<StoredImagePayload> findLegacyImageByRequestId(final long requestId) {
         try {
             final List<StoredImagePayload> rows = em.createQuery(
@@ -263,6 +302,26 @@ public class CarRequestJpaDao implements CarRequestDao {
         } catch (final Exception e) {
             LOGGER.error("failed to fetch legacy image for car request id={}", requestId, e);
             throw new PersistenceOperationException("fetch legacy image for car request " + requestId, e);
+        }
+    }
+
+    @Override
+    public Optional<ImageMetadata> findLegacyImageMetadataByRequestId(final long requestId) {
+        try {
+            return em.createQuery(
+                    "SELECT new ar.edu.itba.paw.model.ImageMetadata(" +
+                    "0L, i.id, 0, i.imageContentType, i.createdAt) " +
+                    "FROM CarRequestLegacyImage i " +
+                    "WHERE i.id = :requestId " +
+                    "AND i.imageContentType IS NOT NULL AND i.imageData IS NOT NULL",
+                    ImageMetadata.class)
+                    .setParameter("requestId", requestId)
+                    .getResultList()
+                    .stream()
+                    .findFirst();
+        } catch (final Exception e) {
+            LOGGER.error("failed to fetch legacy image metadata for car request id={}", requestId, e);
+            throw new PersistenceOperationException("fetch legacy image metadata for car request " + requestId, e);
         }
     }
 

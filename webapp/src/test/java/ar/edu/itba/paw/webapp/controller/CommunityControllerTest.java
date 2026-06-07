@@ -11,6 +11,7 @@ import ar.edu.itba.paw.model.CommunityPostDetailData;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CommunityService;
@@ -535,11 +536,14 @@ class CommunityControllerTest {
     void getCommunityPostImage_existingImage_returnsBytes() throws Exception {
         // Arrange
         final CommunityPostDetailData detailData = communityPostDetailData();
+        final LocalDateTime updatedAt = LocalDateTime.of(2026, 6, 1, 12, 0);
+        final ImageMetadata metadata =
+                new ImageMetadata(15L, 1L, 0, "image/png", updatedAt);
         final StoredImagePayload image =
-                new StoredImagePayload(15L, 1L, 0, "image/png", new byte[]{1, 2, 3},
-                        LocalDateTime.of(2026, 6, 1, 12, 0));
+                new StoredImagePayload(15L, 1L, 0, "image/png", new byte[]{1, 2, 3}, updatedAt);
         when(communityService.getCommunityPostDetail("classics", "falcon-60", null))
                 .thenReturn(Optional.of(detailData));
+        when(communityService.getPostImageMetadataById(1L, 15L)).thenReturn(Optional.of(metadata));
         when(communityService.getPostImageById(1L, 15L)).thenReturn(Optional.of(image));
         final MockMvc mockMvc = communityMockMvc();
 

@@ -44,6 +44,8 @@ public interface ReviewService {
 
     Optional<StoredImagePayload> getReviewImageById(long reviewId, long imageId);
 
+    Optional<ImageMetadata> getReviewImageMetadataById(long reviewId, long imageId);
+
     List<ImagePayload> collectRetainedReviewImagePayloads(long reviewId, List<Long> retainedImageIds);
     boolean deleteReview(long id);
     List<Review> getReviewsByCar(long carId);

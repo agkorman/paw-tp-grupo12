@@ -48,6 +48,7 @@ public interface CommunityService {
     List<ImageMetadata> getPostImagesByPostId(long postId);
     Map<Long, List<ImageMetadata>> getImagesByPostIds(Collection<Long> postIds);
     Optional<StoredImagePayload> getPostImageById(long postId, long imageId);
+    Optional<ImageMetadata> getPostImageMetadataById(long postId, long imageId);
     List<ImagePayload> collectRetainedPostImagePayloads(long postId, List<Long> retainedImageIds);
     Optional<String> getViewerRole(String communitySlug, Long userId);
     Optional<List<CommunityMembershipEntry>> listMembers(String communitySlug, long callerUserId);

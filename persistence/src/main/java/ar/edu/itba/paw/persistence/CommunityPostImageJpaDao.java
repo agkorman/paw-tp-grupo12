@@ -67,6 +67,20 @@ public class CommunityPostImageJpaDao implements CommunityPostImageDao {
     }
 
     @Override
+    public Optional<ImageMetadata> findMetadataByPostIdAndImageId(final long postId, final long imageId) {
+        return em.createQuery(
+                        "SELECT new ar.edu.itba.paw.model.ImageMetadata("
+                        + "i.imageId, i.post.id, i.displayOrder, i.contentType, i.updatedAt) "
+                        + "FROM CommunityPostImage i WHERE i.post.id = :postId AND i.imageId = :imageId",
+                        ImageMetadata.class)
+                .setParameter("postId", postId)
+                .setParameter("imageId", imageId)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    @Override
     public List<StoredImagePayload> findByPostIdAndImageIdsWithData(final long postId, final Collection<Long> imageIds) {
         if (imageIds == null) {
             return List.of();

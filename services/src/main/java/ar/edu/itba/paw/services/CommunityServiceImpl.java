@@ -712,6 +712,11 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    public Optional<ImageMetadata> getPostImageMetadataById(final long postId, final long imageId) {
+        return communityPostImageDao.findMetadataByPostIdAndImageId(postId, imageId);
+    }
+
+    @Override
     public List<ImagePayload> collectRetainedPostImagePayloads(final long postId, final List<Long> retainedImageIds) {
         final List<ImagePayload> payloads = new ArrayList<>();
         if (retainedImageIds == null) {

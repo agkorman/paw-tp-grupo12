@@ -37,7 +37,13 @@ public interface CarRequestDao {
 
     Optional<StoredImagePayload> findImageByRequestIdAndImageId(long requestId, long imageId);
 
+    Optional<ImageMetadata> findImageMetadataByRequestIdAndImageId(long requestId, long imageId);
+
+    Optional<ImageMetadata> findFirstImageMetadataByRequestId(long requestId);
+
     Optional<StoredImagePayload> findLegacyImageByRequestId(long requestId);
+
+    Optional<ImageMetadata> findLegacyImageMetadataByRequestId(long requestId);
 
     void replaceImages(long requestId, List<ImagePayload> images);
 

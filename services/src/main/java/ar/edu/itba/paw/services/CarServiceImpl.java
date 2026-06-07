@@ -117,6 +117,11 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    public Optional<ImageMetadata> getCarImageMetadataByCarId(final long carId) {
+        return carImageDao.findFirstMetadataByCarId(carId);
+    }
+
+    @Override
     public List<ImageMetadata> getCarImagesByCarId(final long carId) {
         return carImageDao.findAllByCarId(carId);
     }
@@ -127,6 +132,14 @@ public class CarServiceImpl implements CarService {
         final long imageId
     ) {
         return carImageDao.findByCarIdAndImageId(carId, imageId);
+    }
+
+    @Override
+    public Optional<ImageMetadata> getCarImageMetadataById(
+        final long carId,
+        final long imageId
+    ) {
+        return carImageDao.findMetadataByCarIdAndImageId(carId, imageId);
     }
 
     @Override
@@ -152,22 +165,7 @@ public class CarServiceImpl implements CarService {
         if (normalizedImages.isEmpty()) {
             return;
         }
-        final List<ImagePayload> existingImages = carImageDao
-            .findAllByCarIdWithData(carId)
-            .stream()
-            .filter(image -> image.getImageData() != null)
-            .map(image ->
-                new ImagePayload(
-                    image.getContentType(),
-                    image.getImageData()
-                )
-            )
-            .toList();
-        final List<ImagePayload> combinedImages = new java.util.ArrayList<>(
-            existingImages
-        );
-        combinedImages.addAll(normalizedImages);
-        carImageDao.replaceAll(carId, combinedImages);
+        carImageDao.appendAll(carId, normalizedImages);
     }
 
     @Override

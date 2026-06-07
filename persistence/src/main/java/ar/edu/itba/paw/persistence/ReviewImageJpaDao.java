@@ -87,6 +87,20 @@ public class ReviewImageJpaDao implements ReviewImageDao {
     }
 
     @Override
+    public Optional<ImageMetadata> findMetadataByReviewIdAndImageId(final long reviewId, final long imageId) {
+        return em.createQuery(
+                        "SELECT new ar.edu.itba.paw.model.ImageMetadata("
+                        + "i.imageId, i.review.id, i.displayOrder, i.contentType, i.updatedAt) "
+                        + "FROM ReviewImage i WHERE i.review.id = :reviewId AND i.imageId = :imageId",
+                        ImageMetadata.class)
+                .setParameter("reviewId", reviewId)
+                .setParameter("imageId", imageId)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    @Override
     public void replaceAll(final long reviewId, final List<ImagePayload> images) {
         em.createQuery("DELETE FROM ReviewImage i WHERE i.review.id = :reviewId")
                 .setParameter("reviewId", reviewId)

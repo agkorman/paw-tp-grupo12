@@ -16,6 +16,8 @@ public interface CommunityPostImageDao {
 
     Optional<StoredImagePayload> findByPostIdAndImageId(long postId, long imageId);
 
+    Optional<ImageMetadata> findMetadataByPostIdAndImageId(long postId, long imageId);
+
     List<StoredImagePayload> findByPostIdAndImageIdsWithData(long postId, Collection<Long> imageIds);
 
     void replaceAll(long postId, List<ImagePayload> images);

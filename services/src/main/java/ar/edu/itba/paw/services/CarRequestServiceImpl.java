@@ -213,6 +213,18 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    public Optional<ImageMetadata> getPrimaryCarRequestImageMetadata(
+        final long requestId
+    ) {
+        final Optional<ImageMetadata> gallery =
+            carRequestDao.findFirstImageMetadataByRequestId(requestId);
+        if (gallery.isPresent()) {
+            return gallery;
+        }
+        return carRequestDao.findLegacyImageMetadataByRequestId(requestId);
+    }
+
+    @Override
     public Optional<StoredImagePayload> getCarRequestImageById(
         final long requestId,
         final long imageId
@@ -221,6 +233,17 @@ public class CarRequestServiceImpl implements CarRequestService {
             return carRequestDao.findLegacyImageByRequestId(requestId);
         }
         return carRequestDao.findImageByRequestIdAndImageId(requestId, imageId);
+    }
+
+    @Override
+    public Optional<ImageMetadata> getCarRequestImageMetadataById(
+        final long requestId,
+        final long imageId
+    ) {
+        if (imageId == CarService.LEGACY_IMAGE_ID) {
+            return carRequestDao.findLegacyImageMetadataByRequestId(requestId);
+        }
+        return carRequestDao.findImageMetadataByRequestIdAndImageId(requestId, imageId);
     }
 
     @Override

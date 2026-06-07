@@ -12,6 +12,8 @@ public interface CarImageDao {
 
     Optional<StoredImagePayload> findFirstByCarIdWithData(long carId);
 
+    Optional<ImageMetadata> findFirstMetadataByCarId(long carId);
+
     List<ImageMetadata> findAllByCarId(long carId);
 
     List<StoredImagePayload> findAllByCarIdWithData(long carId);
@@ -20,7 +22,11 @@ public interface CarImageDao {
 
     Optional<StoredImagePayload> findByCarIdAndImageId(long carId, long imageId);
 
+    Optional<ImageMetadata> findMetadataByCarIdAndImageId(long carId, long imageId);
+
     void saveOrReplace(long carId, String contentType, byte[] imageData);
 
     void replaceAll(long carId, List<ImagePayload> images);
+
+    void appendAll(long carId, List<ImagePayload> images);
 }

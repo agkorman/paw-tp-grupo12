@@ -40,6 +40,20 @@ public class CarImageJpaDao implements CarImageDao {
     }
 
     @Override
+    public Optional<ImageMetadata> findFirstMetadataByCarId(final long carId) {
+        return em.createQuery(
+                        "SELECT new ar.edu.itba.paw.model.ImageMetadata("
+                        + "i.imageId, i.car.id, i.displayOrder, i.contentType, i.updatedAt) "
+                        + "FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
+                        ImageMetadata.class)
+                .setParameter("carId", carId)
+                .setMaxResults(1)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    @Override
     public List<ImageMetadata> findAllByCarId(final long carId) {
         return em.createQuery(
                         "SELECT new ar.edu.itba.paw.model.ImageMetadata("
@@ -96,6 +110,20 @@ public class CarImageJpaDao implements CarImageDao {
     }
 
     @Override
+    public Optional<ImageMetadata> findMetadataByCarIdAndImageId(final long carId, final long imageId) {
+        return em.createQuery(
+                        "SELECT new ar.edu.itba.paw.model.ImageMetadata("
+                        + "i.imageId, i.car.id, i.displayOrder, i.contentType, i.updatedAt) "
+                        + "FROM CarImage i WHERE i.car.id = :carId AND i.imageId = :imageId",
+                        ImageMetadata.class)
+                .setParameter("carId", carId)
+                .setParameter("imageId", imageId)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    @Override
     public void saveOrReplace(final long carId, final String contentType, final byte[] imageData) {
         replaceAll(carId, List.of(new ImagePayload(contentType, imageData)));
     }
@@ -112,6 +140,26 @@ public class CarImageJpaDao implements CarImageDao {
             em.persist(img);
         }
         LOGGER.info("replaced image gallery for car id={} imageCount={}", carId, images.size());
+    }
+
+    @Override
+    public void appendAll(final long carId, final List<ImagePayload> images) {
+        if (images == null || images.isEmpty()) {
+            return;
+        }
+        final Integer maxOrder = em.createQuery(
+                        "SELECT MAX(i.displayOrder) FROM CarImage i WHERE i.car.id = :carId",
+                        Integer.class)
+                .setParameter("carId", carId)
+                .getSingleResult();
+        final int startOrder = maxOrder == null ? 0 : maxOrder + 1;
+        final Car carRef = em.getReference(Car.class, carId);
+        for (int i = 0; i < images.size(); i++) {
+            final ImagePayload payload = images.get(i);
+            final CarImage img = new CarImage(carRef, startOrder + i, payload.getContentType(), payload.getImageData());
+            em.persist(img);
+        }
+        LOGGER.info("appended {} image(s) to car id={}", images.size(), carId);
     }
 
 }

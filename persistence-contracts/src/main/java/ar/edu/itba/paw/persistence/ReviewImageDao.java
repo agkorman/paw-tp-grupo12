@@ -18,5 +18,7 @@ public interface ReviewImageDao {
 
     Optional<StoredImagePayload> findByReviewIdAndImageId(long reviewId, long imageId);
 
+    Optional<ImageMetadata> findMetadataByReviewIdAndImageId(long reviewId, long imageId);
+
     void replaceAll(long reviewId, List<ImagePayload> images);
 }

@@ -568,21 +568,30 @@ public class CarReviewController {
             @PathVariable("imageId") final long imageId,
             @RequestHeader(value = "If-None-Match", required = false) final String ifNoneMatch
     ) {
+        final Optional<ImageMetadata> metadata = reviewService.getReviewImageMetadataById(reviewId, imageId);
+        if (metadata.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        final ImageMetadata meta = metadata.get();
+        final String updatedAtStamp = meta.getUpdatedAt() == null ? "0" : meta.getUpdatedAt().toString();
+        final String etag = "\"r" + reviewId + "-i" + imageId + "-" + updatedAtStamp + "\"";
+        final CacheControl cacheControl = CacheControl.maxAge(Duration.ofDays(7)).cachePublic();
+        if (etag.equals(ifNoneMatch)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                    .eTag(etag)
+                    .cacheControl(cacheControl)
+                    .build();
+        }
         final Optional<StoredImagePayload> image = reviewService.getReviewImageById(reviewId, imageId);
         if (image.isEmpty() || image.get().getImageData() == null) {
             return ResponseEntity.notFound().build();
         }
         final StoredImagePayload img = image.get();
-        final String updatedAtStamp = img.getUpdatedAt() == null ? "0" : img.getUpdatedAt().toString();
-        final String etag = "\"r" + reviewId + "-i" + imageId + "-" + updatedAtStamp + "\"";
-        if (etag.equals(ifNoneMatch)) {
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(etag).build();
-        }
         final String contentType = img.getContentType() == null
                 ? MediaType.APPLICATION_OCTET_STREAM_VALUE : img.getContentType();
         return ResponseEntity.ok()
                 .eTag(etag)
-                .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
+                .cacheControl(cacheControl)
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(img.getImageData());
     }

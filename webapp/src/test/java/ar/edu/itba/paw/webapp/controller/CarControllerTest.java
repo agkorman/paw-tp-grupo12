@@ -38,11 +38,8 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -382,7 +379,7 @@ class CarControllerTest {
     @Test
     void getCarImage_notFound_returns404() throws Exception {
         // Arrange
-        when(carService.getCarImageByCarId(eq(1L))).thenReturn(Optional.empty());
+        when(carService.getCarImageMetadataByCarId(eq(1L))).thenReturn(Optional.empty());
 
         final MockMvc mockMvc = carMockMvc();
         // Exercise
@@ -395,6 +392,7 @@ class CarControllerTest {
     void getCarImage_found_returnsImageBytes() throws Exception {
         // Arrange
         final StoredImagePayload image = aCarImagePayload(1L);
+        when(carService.getCarImageMetadataByCarId(eq(1L))).thenReturn(Optional.of(aImageMetadata(1L)));
         when(carService.getCarImageByCarId(eq(1L))).thenReturn(Optional.of(image));
 
         final MockMvc mockMvc = carMockMvc();
@@ -410,9 +408,9 @@ class CarControllerTest {
     @Test
     void getCarImage_etagMatch_returns304() throws Exception {
         // Arrange
-        final StoredImagePayload image = aCarImagePayload(1L);
-        when(carService.getCarImageByCarId(eq(1L))).thenReturn(Optional.of(image));
-        final String etag = buildImageEtag(image);
+        final ImageMetadata metadata = aImageMetadata(1L);
+        when(carService.getCarImageMetadataByCarId(eq(1L))).thenReturn(Optional.of(metadata));
+        final String etag = buildImageEtag(metadata);
 
         final MockMvc mockMvc = carMockMvc();
         // Exercise
@@ -485,12 +483,9 @@ class CarControllerTest {
         return bt;
     }
 
-    private static String buildImageEtag(final StoredImagePayload carImage) throws Exception {
-        final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        digest.update(carImage.getContentType().getBytes(StandardCharsets.UTF_8));
-        digest.update(carImage.getImageData());
-        digest.update(carImage.getUpdatedAt().toString().getBytes(StandardCharsets.UTF_8));
-        return "\"" + HexFormat.of().formatHex(digest.digest()) + "\"";
+    private static String buildImageEtag(final ImageMetadata metadata) {
+        return "\"c" + metadata.getOwnerId() + "-i" + metadata.getImageId()
+                + "-" + metadata.getUpdatedAt() + "\"";
     }
 
     private static AuthenticatedUser testUser() {

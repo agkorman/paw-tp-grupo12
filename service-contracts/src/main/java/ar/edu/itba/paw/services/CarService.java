@@ -28,9 +28,13 @@ public interface CarService {
 
     Optional<StoredImagePayload> getCarImageByCarId(long carId);
 
+    Optional<ImageMetadata> getCarImageMetadataByCarId(long carId);
+
     List<ImageMetadata> getCarImagesByCarId(long carId);
 
     Optional<StoredImagePayload> getCarImageById(long carId, long imageId);
+
+    Optional<ImageMetadata> getCarImageMetadataById(long carId, long imageId);
 
     void saveCarImages(long carId, List<ImagePayload> images);
 

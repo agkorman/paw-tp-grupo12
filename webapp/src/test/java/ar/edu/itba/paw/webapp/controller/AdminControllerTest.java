@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.BodyTypeRequestService;
@@ -562,7 +563,7 @@ class AdminControllerTest {
     void requestCoverImage_returns404_whenRequestMissing() throws Exception {
         // Arrange
         arrangeDashboardDefaultsSimple();
-        when(carRequestService.getPrimaryCarRequestImage(eq(800L))).thenReturn(Optional.empty());
+        when(carRequestService.getPrimaryCarRequestImageMetadata(eq(800L))).thenReturn(Optional.empty());
         final MockMvc mockMvc = adminMvc();
 
         mockMvc.perform(get("/admin/requests/800/image")).andExpect(status().isNotFound());
@@ -574,9 +575,13 @@ class AdminControllerTest {
         arrangeDashboardDefaultsSimple();
         final byte[] payload = {-1, -37, -1};
         final LocalDateTime updatedAt = LocalDateTime.of(2026, 1, 15, 8, 0);
+        final ImageMetadata metadata =
+                new ImageMetadata(CarService.LEGACY_IMAGE_ID, 700L, 0, MediaType.IMAGE_JPEG_VALUE, updatedAt);
         final StoredImagePayload image =
                 new StoredImagePayload(CarService.LEGACY_IMAGE_ID, 700L, 0, MediaType.IMAGE_JPEG_VALUE, payload, updatedAt);
-        when(carRequestService.getPrimaryCarRequestImage(eq(700L))).thenReturn(Optional.of(image));
+        when(carRequestService.getPrimaryCarRequestImageMetadata(eq(700L))).thenReturn(Optional.of(metadata));
+        when(carRequestService.getCarRequestImageById(eq(700L), eq(CarService.LEGACY_IMAGE_ID)))
+                .thenReturn(Optional.of(image));
         final MockMvc mockMvc = adminMvc();
 
         mockMvc.perform(get("/admin/requests/700/image"))
@@ -588,7 +593,7 @@ class AdminControllerTest {
     @Test
     void requestSpecificImage_returns404_whenMissing() throws Exception {
         arrangeDashboardDefaultsSimple();
-        when(carRequestService.getCarRequestImageById(eq(701L), eq(902L))).thenReturn(Optional.empty());
+        when(carRequestService.getCarRequestImageMetadataById(eq(701L), eq(902L))).thenReturn(Optional.empty());
         final MockMvc mockMvc = adminMvc();
         mockMvc.perform(get("/admin/requests/701/images/902")).andExpect(status().isNotFound());
     }
@@ -596,11 +601,10 @@ class AdminControllerTest {
     @Test
     void requestSpecificImage_returnsNotModified_whenEtagMatches() throws Exception {
         arrangeDashboardDefaultsSimple();
-        final byte[] payload = {-1, -37};
         final LocalDateTime updatedAt = LocalDateTime.of(2026, 1, 15, 8, 0);
-        final StoredImagePayload img = new StoredImagePayload(903L, 702L, 6, MediaType.IMAGE_JPEG_VALUE, payload, updatedAt);
-        when(carRequestService.getCarRequestImageById(eq(702L), eq(903L))).thenReturn(Optional.of(img));
-        final String eTag = "\"" + img.getImageId() + "-" + img.getImageData().length + "-" + img.getUpdatedAt() + "\"";
+        final ImageMetadata metadata = new ImageMetadata(903L, 702L, 6, MediaType.IMAGE_JPEG_VALUE, updatedAt);
+        when(carRequestService.getCarRequestImageMetadataById(eq(702L), eq(903L))).thenReturn(Optional.of(metadata));
+        final String eTag = "\"" + metadata.getImageId() + "-" + metadata.getUpdatedAt() + "\"";
         final MockMvc mockMvc = adminMvc();
 
         mockMvc.perform(get("/admin/requests/702/images/903").header("If-None-Match", eTag))

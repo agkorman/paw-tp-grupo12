@@ -207,6 +207,12 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<ImageMetadata> getReviewImageMetadataById(final long reviewId, final long imageId) {
+        return reviewImageDao.findMetadataByReviewIdAndImageId(reviewId, imageId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ImagePayload> collectRetainedReviewImagePayloads(final long reviewId,
                                                                  final List<Long> retainedImageIds) {
         final List<ImagePayload> payloads = new ArrayList<>();

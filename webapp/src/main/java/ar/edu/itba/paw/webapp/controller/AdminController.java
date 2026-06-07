@@ -801,10 +801,15 @@ public class AdminController {
             required = false
         ) final String ifNoneMatch
     ) {
-        final StoredImagePayload requestImage = carRequestService
-            .getPrimaryCarRequestImage(requestId)
+        final ImageMetadata metadata = carRequestService
+            .getPrimaryCarRequestImageMetadata(requestId)
             .orElse(null);
-        return getRequestImageResponse(requestImage, ifNoneMatch);
+        if (metadata == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return getRequestImageResponse(
+            requestId, metadata.getImageId(), metadata, ifNoneMatch
+        );
     }
 
     @RequestMapping(
@@ -819,44 +824,45 @@ public class AdminController {
             required = false
         ) final String ifNoneMatch
     ) {
-        final StoredImagePayload requestImage = carRequestService
-            .getCarRequestImageById(requestId, imageId)
+        final ImageMetadata metadata = carRequestService
+            .getCarRequestImageMetadataById(requestId, imageId)
             .orElse(null);
-        return getRequestImageResponse(requestImage, ifNoneMatch);
+        if (metadata == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return getRequestImageResponse(requestId, imageId, metadata, ifNoneMatch);
     }
 
     private ResponseEntity<byte[]> getRequestImageResponse(
-        final StoredImagePayload requestImage,
+        final long requestId,
+        final long imageId,
+        final ImageMetadata metadata,
         final String ifNoneMatch
     ) {
-        if (requestImage == null) {
-            return ResponseEntity.notFound().build();
-        }
-
         final String eTag =
-            "\"" +
-            requestImage.getImageId() +
-            "-" +
-            requestImage.getImageData().length +
-            "-" +
-            requestImage.getUpdatedAt() +
-            "\"";
+            "\"" + metadata.getImageId() + "-" + metadata.getUpdatedAt() + "\"";
         final CacheControl cacheControl = CacheControl.maxAge(1, TimeUnit.HOURS)
             .cachePrivate()
             .mustRevalidate();
+        final long lastModified = metadata
+            .getUpdatedAt()
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli();
 
         if (eTag.equals(ifNoneMatch)) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                 .eTag(eTag)
                 .cacheControl(cacheControl)
-                .lastModified(
-                    requestImage
-                        .getUpdatedAt()
-                        .atZone(ZoneId.systemDefault())
-                        .toInstant()
-                        .toEpochMilli()
-                )
+                .lastModified(lastModified)
                 .build();
+        }
+
+        final StoredImagePayload requestImage = carRequestService
+            .getCarRequestImageById(requestId, imageId)
+            .orElse(null);
+        if (requestImage == null) {
+            return ResponseEntity.notFound().build();
         }
 
         return ResponseEntity.ok()
@@ -866,13 +872,7 @@ public class AdminController {
             .contentLength(requestImage.getImageData().length)
             .eTag(eTag)
             .cacheControl(cacheControl)
-            .lastModified(
-                requestImage
-                    .getUpdatedAt()
-                    .atZone(ZoneId.systemDefault())
-                    .toInstant()
-                    .toEpochMilli()
-            )
+            .lastModified(lastModified)
             .body(requestImage.getImageData());
     }
 
