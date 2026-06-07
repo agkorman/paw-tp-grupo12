@@ -148,6 +148,7 @@
     <pa:script src="/js/reviews/review-moderation.js"/>
     <pa:script src="/js/communities/community-moderation.js"/>
     <pa:script src="/js/shared/image-lightbox.js"/>
+    <pa:script src="/js/reviews/review-anchor-highlight.js"/>
     <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:toast messageCode="${actionToastCode}"/>
     <pa:script src="/js/shared/toast.js"/>

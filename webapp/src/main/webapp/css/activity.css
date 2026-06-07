@@ -83,6 +83,13 @@
     scroll-margin-top: 72px;
 }
 
+.activity-card:target,
+.activity-card.is-anchor-highlighted {
+    background: var(--surface-container-highest);
+    border-color: rgba(255, 181, 158, 0.42);
+    box-shadow: inset 0 0 0 1px rgba(255, 181, 158, 0.42);
+}
+
 .activity-card-topline {
     min-width: 0;
     display: flex;

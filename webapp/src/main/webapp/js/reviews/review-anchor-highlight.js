@@ -1,7 +1,7 @@
 (function () {
     var HIGHLIGHT_CLASS = 'is-anchor-highlighted';
     var HIGHLIGHT_DURATION_MS = 1000;
-    var HIGHLIGHTABLE_CLASSES = ['review-item', 'review-reply', 'profile-review-card', 'community-post-card'];
+    var HIGHLIGHTABLE_CLASSES = ['review-item', 'review-reply', 'profile-review-card', 'community-post-card', 'activity-card'];
     var activeTarget = null;
     var activeTimer = null;
 
