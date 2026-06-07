@@ -68,7 +68,7 @@ public class Review implements Serializable {
     private List<ReviewTag> tags = new ArrayList<>();
 
     @Transient
-    private List<ReviewImage> images = new ArrayList<>();
+    private List<ImageMetadata> images = new ArrayList<>();
 
     Review() {}
 
@@ -132,8 +132,8 @@ public class Review implements Serializable {
     public List<ReviewTag> getTags() { return tags; }
     public void setTags(List<ReviewTag> tags) { this.tags = tags == null ? new ArrayList<>() : tags; }
 
-    public List<ReviewImage> getImages() { return images; }
-    public void setImages(List<ReviewImage> images) { this.images = images == null ? new ArrayList<>() : images; }
+    public List<ImageMetadata> getImages() { return images; }
+    public void setImages(List<ImageMetadata> images) { this.images = images == null ? new ArrayList<>() : images; }
 
     @PreUpdate
     private void touchUpdatedAt() {

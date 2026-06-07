@@ -3,11 +3,12 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarFavoriteService;
@@ -298,7 +299,7 @@ class CarControllerTest {
         // Arrange
         stubCarFormValidationPartners();
         when(carService.getCarById(eq(1L))).thenReturn(Optional.of(aCar(1L)));
-        when(carService.getCarImagesByCarId(eq(1L))).thenReturn(List.of(aCarImage(1L)));
+        when(carService.getCarImagesByCarId(eq(1L))).thenReturn(List.of(aImageMetadata(1L)));
         bindPrincipal(testUser());
         try {
             final MockMvc mockMvc = carMockMvc();
@@ -393,7 +394,7 @@ class CarControllerTest {
     @Test
     void getCarImage_found_returnsImageBytes() throws Exception {
         // Arrange
-        final CarImage image = aCarImage(1L);
+        final StoredImagePayload image = aCarImagePayload(1L);
         when(carService.getCarImageByCarId(eq(1L))).thenReturn(Optional.of(image));
 
         final MockMvc mockMvc = carMockMvc();
@@ -409,7 +410,7 @@ class CarControllerTest {
     @Test
     void getCarImage_etagMatch_returns304() throws Exception {
         // Arrange
-        final CarImage image = aCarImage(1L);
+        final StoredImagePayload image = aCarImagePayload(1L);
         when(carService.getCarImageByCarId(eq(1L))).thenReturn(Optional.of(image));
         final String etag = buildImageEtag(image);
 
@@ -461,11 +462,15 @@ class CarControllerTest {
                 200, BigDecimal.valueOf(25000));
     }
 
-    private static CarImage aCarImage(final long carId) {
+    private static ImageMetadata aImageMetadata(final long carId) {
+        return new ImageMetadata(1L, carId, 0, MediaType.IMAGE_JPEG_VALUE, LocalDateTime.of(2026, 1, 2, 12, 0));
+    }
+
+    private static StoredImagePayload aCarImagePayload(final long carId) {
         final LocalDateTime updatedAt = LocalDateTime.of(2026, 1, 2, 12, 0);
         final byte[] data =
                 new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xDA, 0x01};
-        return TestModels.carImage(1L, carId, 0, MediaType.IMAGE_JPEG_VALUE, data, updatedAt);
+        return new StoredImagePayload(1L, carId, 0, MediaType.IMAGE_JPEG_VALUE, data, updatedAt);
     }
 
     private static Brand brand(final String name, final long id) {
@@ -480,7 +485,7 @@ class CarControllerTest {
         return bt;
     }
 
-    private static String buildImageEtag(final CarImage carImage) throws Exception {
+    private static String buildImageEtag(final StoredImagePayload carImage) throws Exception {
         final MessageDigest digest = MessageDigest.getInstance("SHA-256");
         digest.update(carImage.getContentType().getBytes(StandardCharsets.UTF_8));
         digest.update(carImage.getImageData());

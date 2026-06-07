@@ -3,8 +3,8 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
 import ar.edu.itba.paw.persistence.CarRequestDao;
@@ -264,7 +264,7 @@ public class CarRequestServiceImplTest {
         final Car createdCar = TestModels.car(99L, BRAND_ID, "Toyota", "Corolla", BODY_TYPE_ID, 2024, "sedan",
                 "desc", LocalDateTime.now(), false, "GASOLINE", 130, 6, "MANUAL",
                 new BigDecimal("6.5"), 190, new BigDecimal("25000.00"));
-        final CarRequestImage payload = TestModels.carRequestImage(55L, REQUEST_ID, 0, CONTENT_TYPE, IMAGE_BYTES, LocalDateTime.now());
+        final StoredImagePayload payload = new StoredImagePayload(55L, REQUEST_ID, 0, CONTENT_TYPE, IMAGE_BYTES, LocalDateTime.now());
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
         when(carRequestDao.updateStatus(REQUEST_ID, CarRequestService.STATUS_PENDING,
                 CarRequestService.STATUS_APPROVED)).thenReturn(true);

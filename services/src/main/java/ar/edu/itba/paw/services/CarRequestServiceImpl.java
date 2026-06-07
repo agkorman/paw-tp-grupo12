@@ -3,8 +3,9 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
@@ -167,19 +168,19 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
-    public List<CarRequestImage> getCarRequestImages(final long requestId) {
+    public List<ImageMetadata> getCarRequestImages(final long requestId) {
         return carRequestDao.findImagesByRequestId(requestId);
     }
 
     @Override
-    public List<CarRequestImage> getCarRequestImagesByRequestIds(
+    public List<ImageMetadata> getCarRequestImagesByRequestIds(
         final Collection<Long> requestIds
     ) {
         return carRequestDao.findImagesByRequestIds(requestIds);
     }
 
     @Override
-    public Optional<CarRequestImage> getCarRequestImageById(
+    public Optional<StoredImagePayload> getCarRequestImageById(
         final long requestId,
         final long imageId
     ) {
@@ -401,9 +402,9 @@ public class CarRequestServiceImpl implements CarRequestService {
                 nonLegacyIds.add(imageId);
             }
         }
-        final java.util.Map<Long, CarRequestImage> imagesById =
+        final java.util.Map<Long, StoredImagePayload> imagesById =
             new java.util.LinkedHashMap<>();
-        for (final CarRequestImage image : carRequestDao
+        for (final StoredImagePayload image : carRequestDao
             .findImagesByRequestIdAndImageIdsWithData(requestId, nonLegacyIds)) {
             imagesById.putIfAbsent(image.getImageId(), image);
         }
@@ -424,7 +425,7 @@ public class CarRequestServiceImpl implements CarRequestService {
                     );
                 }
             } else {
-                final CarRequestImage image = imagesById.get(imageId);
+                final StoredImagePayload image = imagesById.get(imageId);
                 if (image != null && image.getImageData() != null) {
                     payloads.add(
                         new ImagePayload(

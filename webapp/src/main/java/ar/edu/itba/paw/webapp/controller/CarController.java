@@ -3,13 +3,13 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarFavoriteService;
@@ -510,7 +510,7 @@ public class CarController {
         final long carId,
         final String ifNoneMatch
     ) {
-        final CarImage carImage = carService
+        final StoredImagePayload carImage = carService
             .getCarImageByCarId(carId)
             .orElse(null);
         return getCarImageResponse(carImage, ifNoneMatch);
@@ -528,14 +528,14 @@ public class CarController {
             required = false
         ) final String ifNoneMatch
     ) {
-        final CarImage carImage = carService
+        final StoredImagePayload carImage = carService
             .getCarImageById(carId, imageId)
             .orElse(null);
         return getCarImageResponse(carImage, ifNoneMatch);
     }
 
     private ResponseEntity<byte[]> getCarImageResponse(
-        final CarImage carImage,
+        final StoredImagePayload carImage,
         final String ifNoneMatch
     ) {
         if (carImage == null) {
@@ -739,7 +739,7 @@ public class CarController {
         }
     }
 
-    private static String buildImageEtag(final CarImage carImage) {
+    private static String buildImageEtag(final StoredImagePayload carImage) {
         try {
             final MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(

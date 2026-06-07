@@ -59,7 +59,7 @@ public class CommunityPost implements Serializable {
     private boolean hidden;
 
     @Transient
-    private List<CommunityPostImage> images = new ArrayList<>();
+    private List<ImageMetadata> images = new ArrayList<>();
 
     public CommunityPost() {}
 
@@ -179,11 +179,11 @@ public class CommunityPost implements Serializable {
         this.hidden = hidden;
     }
 
-    public List<CommunityPostImage> getImages() {
+    public List<ImageMetadata> getImages() {
         return images;
     }
 
-    public void setImages(final List<CommunityPostImage> images) {
+    public void setImages(final List<ImageMetadata> images) {
         this.images = images == null ? new ArrayList<>() : images;
     }
 

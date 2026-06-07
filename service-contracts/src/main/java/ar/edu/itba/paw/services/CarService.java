@@ -1,12 +1,13 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.CarYearVariant;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
@@ -25,11 +26,11 @@ public interface CarService {
 
     Page<Car> searchCars(CarSearchCriteria criteria);
 
-    Optional<CarImage> getCarImageByCarId(long carId);
+    Optional<StoredImagePayload> getCarImageByCarId(long carId);
 
-    List<CarImage> getCarImagesByCarId(long carId);
+    List<ImageMetadata> getCarImagesByCarId(long carId);
 
-    Optional<CarImage> getCarImageById(long carId, long imageId);
+    Optional<StoredImagePayload> getCarImageById(long carId, long imageId);
 
     void saveCarImages(long carId, List<ImagePayload> images);
 

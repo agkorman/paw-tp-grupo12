@@ -9,12 +9,13 @@ import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
-import ar.edu.itba.paw.model.CommunityPostImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CommunityDao;
@@ -688,25 +689,25 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
-    public List<CommunityPostImage> getPostImagesByPostId(final long postId) {
+    public List<ImageMetadata> getPostImagesByPostId(final long postId) {
         return communityPostImageDao.findAllByPostId(postId);
     }
 
     @Override
-    public Map<Long, List<CommunityPostImage>> getImagesByPostIds(final Collection<Long> postIds) {
+    public Map<Long, List<ImageMetadata>> getImagesByPostIds(final Collection<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        final List<CommunityPostImage> images = communityPostImageDao.findAllByPostIds(postIds);
-        final Map<Long, List<CommunityPostImage>> result = new java.util.LinkedHashMap<>();
-        for (final CommunityPostImage image : images) {
-            result.computeIfAbsent(image.getPostId(), key -> new ArrayList<>()).add(image);
+        final List<ImageMetadata> images = communityPostImageDao.findAllByPostIds(postIds);
+        final Map<Long, List<ImageMetadata>> result = new java.util.LinkedHashMap<>();
+        for (final ImageMetadata image : images) {
+            result.computeIfAbsent(image.getOwnerId(), key -> new ArrayList<>()).add(image);
         }
         return result;
     }
 
     @Override
-    public Optional<CommunityPostImage> getPostImageById(final long postId, final long imageId) {
+    public Optional<StoredImagePayload> getPostImageById(final long postId, final long imageId) {
         return communityPostImageDao.findByPostIdAndImageId(postId, imageId);
     }
 
@@ -716,15 +717,19 @@ public class CommunityServiceImpl implements CommunityService {
         if (retainedImageIds == null) {
             return payloads;
         }
+        final Map<Long, StoredImagePayload> imagesById = new java.util.LinkedHashMap<>();
+        for (final StoredImagePayload image : communityPostImageDao.findByPostIdAndImageIdsWithData(postId, retainedImageIds)) {
+            imagesById.putIfAbsent(image.getImageId(), image);
+        }
         for (final Long imageId : retainedImageIds) {
             if (imageId == null) {
                 continue;
             }
-            final Optional<CommunityPostImage> image = communityPostImageDao.findByPostIdAndImageId(postId, imageId);
-            if (image.isEmpty() || image.get().getImageData() == null) {
+            final StoredImagePayload image = imagesById.get(imageId);
+            if (image == null || image.getImageData() == null) {
                 continue;
             }
-            payloads.add(new ImagePayload(image.get().getContentType(), image.get().getImageData()));
+            payloads.add(new ImagePayload(image.getContentType(), image.getImageData()));
         }
         return payloads;
     }
@@ -1062,7 +1067,7 @@ public class CommunityServiceImpl implements CommunityService {
             return;
         }
         final List<Long> ids = posts.stream().map(CommunityPost::getId).collect(Collectors.toList());
-        final Map<Long, List<CommunityPostImage>> imagesByPostId = getImagesByPostIds(ids);
+        final Map<Long, List<ImageMetadata>> imagesByPostId = getImagesByPostIds(ids);
         for (final CommunityPost post : posts) {
             post.setImages(imagesByPostId.getOrDefault(post.getId(), Collections.emptyList()));
         }

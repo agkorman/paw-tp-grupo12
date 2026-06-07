@@ -9,12 +9,13 @@ import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
-import ar.edu.itba.paw.model.CommunityPostImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
 import ar.edu.itba.paw.services.exception.InvalidCommunityTopicSelectionException;
@@ -620,11 +621,11 @@ public class CommunityController {
                 .getCommunityPostDetail(communitySlug, postSlug, null)
                 .map(CommunityPostDetailData::getPost)
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        final Optional<CommunityPostImage> image = communityService.getPostImageById(post.getId(), imageId);
+        final Optional<StoredImagePayload> image = communityService.getPostImageById(post.getId(), imageId);
         if (image.isEmpty() || image.get().getImageData() == null) {
             return ResponseEntity.notFound().build();
         }
-        final CommunityPostImage img = image.get();
+        final StoredImagePayload img = image.get();
         final String updatedAtStamp = img.getUpdatedAt() == null ? "0" : img.getUpdatedAt().toString();
         final String etag = "\"cp" + post.getId() + "-i" + imageId + "-" + updatedAtStamp + "\"";
         if (etag.equals(ifNoneMatch)) {
@@ -994,7 +995,7 @@ public class CommunityController {
     }
 
     private String postImageIdsCsv(final long postId) {
-        final List<CommunityPostImage> images = communityService.getPostImagesByPostId(postId);
+        final List<ImageMetadata> images = communityService.getPostImagesByPostId(postId);
         if (images.isEmpty()) {
             return "";
         }

@@ -7,7 +7,6 @@ import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
@@ -169,15 +168,4 @@ final class TestModels {
         return reply;
     }
 
-    static CarRequestImage carRequestImage(final long imageId, final long requestId, final int displayOrder,
-                                           final String contentType, final byte[] imageData,
-                                           final LocalDateTime updatedAt) {
-        final CarRequest request = new CarRequest(
-                brand(0, null, null), bodyType(0, null, null), null, null, null);
-        request.setId(requestId);
-        final CarRequestImage image = new CarRequestImage(request, displayOrder, contentType, imageData);
-        image.setImageId(imageId);
-        image.setUpdatedAt(updatedAt);
-        return image;
-    }
 }

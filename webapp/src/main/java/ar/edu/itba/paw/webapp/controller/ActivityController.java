@@ -3,7 +3,7 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.ActivityFeedCriteria;
 import ar.edu.itba.paw.model.ActivityFeedItem;
 import ar.edu.itba.paw.model.Page;
-import ar.edu.itba.paw.model.ReviewImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.services.ActivityService;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewLikeService;
@@ -178,7 +178,7 @@ public class ActivityController {
         return null;
     }
 
-    private List<String> toReviewImageUrls(final long reviewId, final List<ReviewImage> images) {
+    private List<String> toReviewImageUrls(final long reviewId, final List<ImageMetadata> images) {
         if (images == null || images.isEmpty()) {
             return Collections.emptyList();
         }

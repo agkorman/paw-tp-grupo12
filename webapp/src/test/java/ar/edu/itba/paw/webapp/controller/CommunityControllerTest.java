@@ -8,10 +8,10 @@ import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
-import ar.edu.itba.paw.model.CommunityPostImage;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
@@ -535,11 +535,9 @@ class CommunityControllerTest {
     void getCommunityPostImage_existingImage_returnsBytes() throws Exception {
         // Arrange
         final CommunityPostDetailData detailData = communityPostDetailData();
-        final CommunityPostImage image = new CommunityPostImage();
-        image.setImageId(15L);
-        image.setContentType("image/png");
-        image.setImageData(new byte[]{1, 2, 3});
-        image.setUpdatedAt(LocalDateTime.of(2026, 6, 1, 12, 0));
+        final StoredImagePayload image =
+                new StoredImagePayload(15L, 1L, 0, "image/png", new byte[]{1, 2, 3},
+                        LocalDateTime.of(2026, 6, 1, 12, 0));
         when(communityService.getCommunityPostDetail("classics", "falcon-60", null))
                 .thenReturn(Optional.of(detailData));
         when(communityService.getPostImageById(1L, 15L)).thenReturn(Optional.of(image));

@@ -2,8 +2,9 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.ImagePayload;
-import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -30,11 +31,11 @@ public interface CarRequestService {
                                     String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
                                     BigDecimal priceUsd);
 
-    List<CarRequestImage> getCarRequestImages(long requestId);
+    List<ImageMetadata> getCarRequestImages(long requestId);
 
-    List<CarRequestImage> getCarRequestImagesByRequestIds(Collection<Long> requestIds);
+    List<ImageMetadata> getCarRequestImagesByRequestIds(Collection<Long> requestIds);
 
-    Optional<CarRequestImage> getCarRequestImageById(long requestId, long imageId);
+    Optional<StoredImagePayload> getCarRequestImageById(long requestId, long imageId);
 
     boolean approvePendingRequest(long id);
 

@@ -6,11 +6,12 @@ import ar.edu.itba.paw.model.CommunityHubEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
-import ar.edu.itba.paw.model.CommunityPostImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CommunityDao;
 import ar.edu.itba.paw.persistence.CommunityPostImageDao;
@@ -396,11 +397,8 @@ class CommunityServiceImplTest {
         // Arrange
         final Community community = community();
         final CommunityPost post = post(community, author(7L, "mateo.classics"));
-        final CommunityPostImage image = new CommunityPostImage();
-        image.setImageId(50L);
-        image.setPost(post);
-        image.setDisplayOrder(0);
-        image.setContentType("image/png");
+        final ImageMetadata image =
+                new ImageMetadata(50L, post.getId(), 0, "image/png", LocalDateTime.now());
         when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
         when(communityDao.findVisiblePostsByCommunityId(community.getId(), "recent", 1))
                 .thenReturn(new Page<>(List.of(post), 1, 6, 1L));
@@ -423,11 +421,9 @@ class CommunityServiceImplTest {
     @Test
     void collectRetainedPostImagePayloads_returnsExistingImagePayloads() {
         // Arrange
-        final CommunityPostImage image = new CommunityPostImage();
-        image.setImageId(10L);
-        image.setContentType("image/png");
-        image.setImageData(new byte[]{1, 2, 3});
-        when(communityPostImageDao.findByPostIdAndImageId(5L, 10L)).thenReturn(Optional.of(image));
+        final StoredImagePayload image =
+                new StoredImagePayload(10L, 5L, 0, "image/png", new byte[]{1, 2, 3}, LocalDateTime.now());
+        when(communityPostImageDao.findByPostIdAndImageIdsWithData(5L, List.of(10L))).thenReturn(List.of(image));
 
         // Exercise
         final List<ImagePayload> result = communityService.collectRetainedPostImagePayloads(5L, List.of(10L));

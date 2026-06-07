@@ -6,12 +6,12 @@ import ar.edu.itba.paw.model.BodyTypeRequest;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.AdminRequestService;
 import ar.edu.itba.paw.services.BodyTypeRequestService;
@@ -258,7 +258,7 @@ public class AdminController {
                     requestPage.getItems(),
                     CarRequest::getSubmittedByUserId
                 );
-                final Map<Long, List<CarRequestImage>> requestImagesById =
+                final Map<Long, List<ImageMetadata>> requestImagesById =
                     fetchRequestImagesById(requestPage.getItems());
                 pendingRequests = requestPage
                     .getItems()
@@ -313,7 +313,7 @@ public class AdminController {
         ) {
             return new ModelAndView("redirect:/admin");
         }
-        final List<CarRequestImage> requestImages =
+        final List<ImageMetadata> requestImages =
             carRequestService.getCarRequestImages(request.getId());
         return carRequestFormPage(
             request,
@@ -807,10 +807,10 @@ public class AdminController {
         if (request == null) {
             return ResponseEntity.notFound().build();
         }
-        final List<CarRequestImage> requestImages =
+        final List<ImageMetadata> requestImages =
             carRequestService.getCarRequestImages(requestId);
         if (!requestImages.isEmpty()) {
-            final CarRequestImage coverImage = carRequestService
+            final StoredImagePayload coverImage = carRequestService
                 .getCarRequestImageById(
                     requestId,
                     requestImages.get(0).getImageId()
@@ -839,7 +839,7 @@ public class AdminController {
             required = false
         ) final String ifNoneMatch
     ) {
-        final CarRequestImage requestImage = carRequestService
+        final StoredImagePayload requestImage = carRequestService
             .getCarRequestImageById(requestId, imageId)
             .orElse(null);
         return getRequestImageResponse(requestImage, ifNoneMatch);
@@ -887,7 +887,7 @@ public class AdminController {
     }
 
     private ResponseEntity<byte[]> getRequestImageResponse(
-        final CarRequestImage requestImage,
+        final StoredImagePayload requestImage,
         final String ifNoneMatch
     ) {
         if (requestImage == null) {
@@ -954,7 +954,7 @@ public class AdminController {
         final CarRequest request,
         final CarForm carForm,
         final BindingResult errors,
-        final List<CarRequestImage> requestImages
+        final List<ImageMetadata> requestImages
     ) {
         prepareCarFormContext(carForm, "review-request", null, request.getId());
         final ModelAndView mav = new ModelAndView("car-form.jsp");
@@ -1045,7 +1045,7 @@ public class AdminController {
 
     private CarForm toForm(
         final CarRequest request,
-        final List<CarRequestImage> requestImages
+        final List<ImageMetadata> requestImages
     ) {
         final CarForm form = new CarForm();
         brandService
@@ -1094,13 +1094,13 @@ public class AdminController {
         final Map<Long, Brand> brandsById,
         final Map<Long, BodyType> bodyTypesById,
         final Map<Long, User> usersById,
-        final Map<Long, List<CarRequestImage>> requestImagesById
+        final Map<Long, List<ImageMetadata>> requestImagesById
     ) {
         final Brand brand = brandsById.get(request.getBrandId());
         final BodyType bodyType = bodyTypesById.get(request.getBodyTypeId());
         final String brandName = brand == null ? null : brand.getName();
         final String bodyTypeName = bodyType == null ? null : bodyType.getName();
-        final List<CarRequestImage> requestImages =
+        final List<ImageMetadata> requestImages =
             requestImagesById.getOrDefault(request.getId(), List.of());
         final List<String> imageUrls = buildRequestImageUrls(
             request,
@@ -1128,7 +1128,7 @@ public class AdminController {
         );
     }
 
-    private Map<Long, List<CarRequestImage>> fetchRequestImagesById(
+    private Map<Long, List<ImageMetadata>> fetchRequestImagesById(
         final List<CarRequest> requests
     ) {
         final List<Long> requestIds = requests
@@ -1142,12 +1142,12 @@ public class AdminController {
         return carRequestService
             .getCarRequestImagesByRequestIds(requestIds)
             .stream()
-            .collect(Collectors.groupingBy(CarRequestImage::getRequestId));
+            .collect(Collectors.groupingBy(ImageMetadata::getOwnerId));
     }
 
     private List<String> buildRequestImageUrls(
         final CarRequest request,
-        final List<CarRequestImage> requestImages,
+        final List<ImageMetadata> requestImages,
         final List<Long> imageIds
     ) {
         final Set<Long> retainedIds = new LinkedHashSet<>(imageIds);
@@ -1165,7 +1165,7 @@ public class AdminController {
                 .collect(Collectors.toList());
         }
         if (
-            request.getImageData() == null ||
+            request.getImageContentType() == null ||
             !retainedIds.contains(CarService.LEGACY_IMAGE_ID)
         ) {
             return List.of();
@@ -1182,15 +1182,15 @@ public class AdminController {
 
     private List<Long> imageIdsFrom(
         final CarRequest request,
-        final List<CarRequestImage> requestImages
+        final List<ImageMetadata> requestImages
     ) {
         if (!requestImages.isEmpty()) {
             return requestImages
                 .stream()
-                .map(CarRequestImage::getImageId)
+                .map(ImageMetadata::getImageId)
                 .collect(Collectors.toList());
         }
-        if (request.getImageData() == null) {
+        if (request.getImageContentType() == null) {
             return List.of();
         }
         return List.of(CarService.LEGACY_IMAGE_ID);
@@ -1205,7 +1205,7 @@ public class AdminController {
         final List<Long> imageIds
     ) {
         final Set<Long> retainedIds = new LinkedHashSet<>(imageIds);
-        final List<CarImage> carImages = carService.getCarImagesByCarId(
+        final List<ImageMetadata> carImages = carService.getCarImagesByCarId(
             car.getId()
         );
         if (!carImages.isEmpty()) {
@@ -1228,13 +1228,13 @@ public class AdminController {
     }
 
     private List<Long> buildCarImageIds(final Car car) {
-        final List<CarImage> carImages = carService.getCarImagesByCarId(
+        final List<ImageMetadata> carImages = carService.getCarImagesByCarId(
             car.getId()
         );
         if (!carImages.isEmpty()) {
             return carImages
                 .stream()
-                .map(CarImage::getImageId)
+                .map(ImageMetadata::getImageId)
                 .collect(Collectors.toList());
         }
         if (!car.getHasImage()) {

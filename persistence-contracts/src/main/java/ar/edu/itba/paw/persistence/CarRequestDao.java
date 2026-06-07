@@ -2,8 +2,9 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.ImagePayload;
-import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -24,15 +25,15 @@ public interface CarRequestDao {
                       String status, String fuelType, Integer horsepower, Integer airbagCount,
                       String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh, BigDecimal priceUsd);
 
-    List<CarRequestImage> findImagesByRequestId(long requestId);
+    List<ImageMetadata> findImagesByRequestId(long requestId);
 
-    List<CarRequestImage> findImagesByRequestIds(Collection<Long> requestIds);
+    List<ImageMetadata> findImagesByRequestIds(Collection<Long> requestIds);
 
-    List<CarRequestImage> findImagesByRequestIdWithData(long requestId);
+    List<StoredImagePayload> findImagesByRequestIdWithData(long requestId);
 
-    List<CarRequestImage> findImagesByRequestIdAndImageIdsWithData(long requestId, Collection<Long> imageIds);
+    List<StoredImagePayload> findImagesByRequestIdAndImageIdsWithData(long requestId, Collection<Long> imageIds);
 
-    Optional<CarRequestImage> findImageByRequestIdAndImageId(long requestId, long imageId);
+    Optional<StoredImagePayload> findImageByRequestIdAndImageId(long requestId, long imageId);
 
     void replaceImages(long requestId, List<ImagePayload> images);
 

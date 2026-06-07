@@ -12,11 +12,11 @@ public class ActivityFeedItem implements Serializable {
     private final long reviewReplyCount;
     private final Car car;
     private final int reviewPage;
-    private final List<ReviewImage> reviewImages;
+    private final List<ImageMetadata> reviewImages;
     private final CommunityPost communityPost;
     private final long helpfulCount;
     private final long commentCount;
-    private final List<CommunityPostImage> communityPostImages;
+    private final List<ImageMetadata> communityPostImages;
 
     private ActivityFeedItem(final ActivityFeedReference reference,
                              final Review review,
@@ -24,11 +24,11 @@ public class ActivityFeedItem implements Serializable {
                              final long reviewReplyCount,
                              final Car car,
                              final int reviewPage,
-                             final List<ReviewImage> reviewImages,
+                             final List<ImageMetadata> reviewImages,
                              final CommunityPost communityPost,
                              final long helpfulCount,
                              final long commentCount,
-                             final List<CommunityPostImage> communityPostImages) {
+                             final List<ImageMetadata> communityPostImages) {
         this.reference = reference;
         this.review = review;
         this.reviewLikeCount = reviewLikeCount;
@@ -47,7 +47,7 @@ public class ActivityFeedItem implements Serializable {
                                               final long reviewReplyCount,
                                               final Car car,
                                               final int reviewPage,
-                                              final List<ReviewImage> reviewImages) {
+                                              final List<ImageMetadata> reviewImages) {
         return new ActivityFeedItem(
                 new ActivityFeedReference(ActivityFeedReference.TYPE_REVIEW, review.getId()),
                 review,
@@ -66,7 +66,7 @@ public class ActivityFeedItem implements Serializable {
     public static ActivityFeedItem communityPostItem(final CommunityPost communityPost,
                                                      final long helpfulCount,
                                                      final long commentCount,
-                                                     final List<CommunityPostImage> communityPostImages) {
+                                                     final List<ImageMetadata> communityPostImages) {
         return new ActivityFeedItem(
                 new ActivityFeedReference(ActivityFeedReference.TYPE_COMMUNITY_POST, communityPost.getId()),
                 null,
@@ -91,9 +91,9 @@ public class ActivityFeedItem implements Serializable {
     public long getReviewReplyCount() { return reviewReplyCount; }
     public Car getCar() { return car; }
     public int getReviewPage() { return reviewPage; }
-    public List<ReviewImage> getReviewImages() { return reviewImages; }
+    public List<ImageMetadata> getReviewImages() { return reviewImages; }
     public CommunityPost getCommunityPost() { return communityPost; }
     public long getHelpfulCount() { return helpfulCount; }
     public long getCommentCount() { return commentCount; }
-    public List<CommunityPostImage> getCommunityPostImages() { return communityPostImages; }
+    public List<ImageMetadata> getCommunityPostImages() { return communityPostImages; }
 }

@@ -5,9 +5,10 @@ import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
@@ -414,7 +415,7 @@ public class RequestDaoTest extends AbstractPersistenceTest {
         );
 
         // Exercise
-        final List<CarRequestImage> result = carRequestDao.findImagesByRequestIdWithData(requestId);
+        final List<StoredImagePayload> result = carRequestDao.findImagesByRequestIdWithData(requestId);
 
         // Assertions
         assertEquals(2, result.size());
@@ -422,6 +423,44 @@ public class RequestDaoTest extends AbstractPersistenceTest {
         assertArrayEquals(new byte[]{1, 2}, result.get(0).getImageData());
         assertEquals("image/jpeg", result.get(1).getContentType());
         assertArrayEquals(new byte[]{3, 4}, result.get(1).getImageData());
+    }
+
+    @Test
+    public void shouldFindCarRequestImagesByRequestIdWithoutData() {
+        // Arrange
+        final User user = createUser("request-images-metadata");
+        final Car car = createCar("request-images-metadata");
+        jdbcTemplate.update(
+                "INSERT INTO car_requests (submitted_by_user_id, submitter_email, brand_id, body_type_id, year, "
+                        + "model, description, status, fuel_type, horsepower, airbag_count, transmission, "
+                        + "fuel_consumption, max_speed_kmh, price_usd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                user.getId(), user.getEmail(), car.getBrandId(), car.getBodyTypeId(), 2026, "Request Image Metadata",
+                "Description", "pending", "combustion", 180, 6, "manual", new BigDecimal("7.0"), 220,
+                new BigDecimal("30000.00")
+        );
+        final long requestId = jdbcTemplate.queryForObject(
+                "SELECT car_request_id FROM car_requests WHERE model = ?", Long.class, "Request Image Metadata"
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_request_images (car_request_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                requestId, 1, "image/jpeg", new byte[]{3, 4}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_request_images (car_request_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                requestId, 0, "image/png", new byte[]{1, 2}
+        );
+
+        // Exercise
+        final List<ImageMetadata> result = carRequestDao.findImagesByRequestId(requestId);
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals(requestId, result.get(0).getOwnerId());
+        assertEquals("image/png", result.get(0).getContentType());
+        assertEquals(0, result.get(0).getDisplayOrder());
+        assertEquals(requestId, result.get(1).getOwnerId());
+        assertEquals("image/jpeg", result.get(1).getContentType());
+        assertEquals(1, result.get(1).getDisplayOrder());
     }
 
     @Test
@@ -465,19 +504,16 @@ public class RequestDaoTest extends AbstractPersistenceTest {
         );
 
         // Exercise
-        final List<CarRequestImage> result = carRequestDao.findImagesByRequestIds(List.of(secondRequestId, firstRequestId));
+        final List<ImageMetadata> result = carRequestDao.findImagesByRequestIds(List.of(secondRequestId, firstRequestId));
 
         // Assertions
         assertEquals(3, result.size());
-        assertEquals(firstRequestId, result.get(0).getRequestId());
+        assertEquals(firstRequestId, result.get(0).getOwnerId());
         assertEquals("image/png", result.get(0).getContentType());
-        assertNull(result.get(0).getImageData());
-        assertEquals(firstRequestId, result.get(1).getRequestId());
+        assertEquals(firstRequestId, result.get(1).getOwnerId());
         assertEquals("image/jpeg", result.get(1).getContentType());
-        assertNull(result.get(1).getImageData());
-        assertEquals(secondRequestId, result.get(2).getRequestId());
+        assertEquals(secondRequestId, result.get(2).getOwnerId());
         assertEquals("image/webp", result.get(2).getContentType());
-        assertNull(result.get(2).getImageData());
     }
 
     @Test
@@ -516,7 +552,7 @@ public class RequestDaoTest extends AbstractPersistenceTest {
                 Long.class, requestId);
 
         // Exercise
-        final List<CarRequestImage> result =
+        final List<StoredImagePayload> result =
                 carRequestDao.findImagesByRequestIdAndImageIdsWithData(requestId, List.of(firstId, thirdId));
 
         // Assertions

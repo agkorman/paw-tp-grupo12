@@ -3,9 +3,7 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 
@@ -105,25 +103,4 @@ final class TestModels {
         return review;
     }
 
-    static CarImage carImage(final long imageId, final long carId, final int displayOrder,
-                             final String contentType, final byte[] imageData, final LocalDateTime updatedAt) {
-        final Car car = new Car(brand(0, null, null), null, bodyType(0, null, null));
-        car.setId(carId);
-        final CarImage image = new CarImage(car, displayOrder, contentType, imageData);
-        image.setImageId(imageId);
-        image.setUpdatedAt(updatedAt);
-        return image;
-    }
-
-    static CarRequestImage carRequestImage(final long imageId, final long requestId, final int displayOrder,
-                                           final String contentType, final byte[] imageData,
-                                           final LocalDateTime updatedAt) {
-        final CarRequest request = new CarRequest(
-                brand(0, null, null), bodyType(0, null, null), null, null, null);
-        request.setId(requestId);
-        final CarRequestImage image = new CarRequestImage(request, displayOrder, contentType, imageData);
-        image.setImageId(imageId);
-        image.setUpdatedAt(updatedAt);
-        return image;
-    }
 }

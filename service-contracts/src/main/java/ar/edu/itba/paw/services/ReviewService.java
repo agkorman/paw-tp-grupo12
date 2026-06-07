@@ -4,8 +4,9 @@ import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.ReviewImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ReviewStats;
+import ar.edu.itba.paw.model.StoredImagePayload;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -37,11 +38,11 @@ public interface ReviewService {
                                   String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                                   Collection<Short> tagIds, List<ImagePayload> finalImages);
 
-    List<ReviewImage> getReviewImagesByReviewId(long reviewId);
+    List<ImageMetadata> getReviewImagesByReviewId(long reviewId);
 
-    Map<Long, List<ReviewImage>> getImagesByReviewIds(Collection<Long> reviewIds);
+    Map<Long, List<ImageMetadata>> getImagesByReviewIds(Collection<Long> reviewIds);
 
-    Optional<ReviewImage> getReviewImageById(long reviewId, long imageId);
+    Optional<StoredImagePayload> getReviewImageById(long reviewId, long imageId);
 
     List<ImagePayload> collectRetainedReviewImagePayloads(long reviewId, List<Long> retainedImageIds);
     boolean deleteReview(long id);

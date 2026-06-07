@@ -3,12 +3,13 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.CarYearVariant;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
@@ -111,17 +112,17 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public Optional<CarImage> getCarImageByCarId(final long carId) {
-        return carImageDao.findByCarId(carId);
+    public Optional<StoredImagePayload> getCarImageByCarId(final long carId) {
+        return carImageDao.findFirstByCarIdWithData(carId);
     }
 
     @Override
-    public List<CarImage> getCarImagesByCarId(final long carId) {
+    public List<ImageMetadata> getCarImagesByCarId(final long carId) {
         return carImageDao.findAllByCarId(carId);
     }
 
     @Override
-    public Optional<CarImage> getCarImageById(
+    public Optional<StoredImagePayload> getCarImageById(
         final long carId,
         final long imageId
     ) {
@@ -381,12 +382,12 @@ public class CarServiceImpl implements CarService {
             .filter(Objects::nonNull)
             .filter(imageId -> imageId != LEGACY_IMAGE_ID)
             .collect(Collectors.toList());
-        final Map<Long, CarImage> imagesById = carImageDao
+        final Map<Long, StoredImagePayload> imagesById = carImageDao
             .findByCarIdAndImageIdsWithData(carId, nonLegacyIds)
             .stream()
             .collect(
                 Collectors.toMap(
-                    CarImage::getImageId,
+                    StoredImagePayload::getImageId,
                     carImage -> carImage,
                     (existing, duplicate) -> existing,
                     LinkedHashMap::new
@@ -396,9 +397,9 @@ public class CarServiceImpl implements CarService {
             if (imageId == null) {
                 continue;
             }
-            final CarImage image =
+            final StoredImagePayload image =
                 imageId == LEGACY_IMAGE_ID
-                    ? carImageDao.findByCarId(carId).orElse(null)
+                    ? carImageDao.findFirstByCarIdWithData(carId).orElse(null)
                     : imagesById.get(imageId);
             if (image != null && image.getImageData() != null) {
                 payloads.add(

@@ -5,11 +5,10 @@ import ar.edu.itba.paw.model.ActivityFeedItem;
 import ar.edu.itba.paw.model.ActivityFeedReference;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CommunityPost;
-import ar.edu.itba.paw.model.CommunityPostImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.ReviewImage;
 import ar.edu.itba.paw.persistence.ActivityDao;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CommunityDao;
@@ -94,8 +93,8 @@ public class ActivityServiceImpl implements ActivityService {
         final Map<Long, Integer> reviewPagesById = reviewIds.isEmpty()
                 ? Collections.emptyMap()
                 : reviewDao.findDefaultPagesByReviewIds(reviewIds);
-        final Map<Long, List<ReviewImage>> reviewImagesById = loadReviewImagesById(reviewIds);
-        final Map<Long, List<CommunityPostImage>> postImagesById = loadCommunityPostImagesById(communityPostIds);
+        final Map<Long, List<ImageMetadata>> reviewImagesById = loadReviewImagesById(reviewIds);
+        final Map<Long, List<ImageMetadata>> postImagesById = loadCommunityPostImagesById(communityPostIds);
         final Map<Long, Long> commentCountsByPostId = communityPostIds.isEmpty()
                 ? Collections.emptyMap()
                 : communityDao.countCommentsByPostIds(communityPostIds);
@@ -156,24 +155,24 @@ public class ActivityServiceImpl implements ActivityService {
                 .collect(Collectors.toMap(Car::getId, car -> car, (left, right) -> left, LinkedHashMap::new));
     }
 
-    private Map<Long, List<ReviewImage>> loadReviewImagesById(final Collection<Long> reviewIds) {
+    private Map<Long, List<ImageMetadata>> loadReviewImagesById(final Collection<Long> reviewIds) {
         if (reviewIds == null || reviewIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        final Map<Long, List<ReviewImage>> result = new LinkedHashMap<>();
-        for (final ReviewImage image : reviewImageDao.findAllByReviewIds(reviewIds)) {
-            result.computeIfAbsent(image.getReviewId(), ignored -> new ArrayList<>()).add(image);
+        final Map<Long, List<ImageMetadata>> result = new LinkedHashMap<>();
+        for (final ImageMetadata image : reviewImageDao.findAllByReviewIds(reviewIds)) {
+            result.computeIfAbsent(image.getOwnerId(), ignored -> new ArrayList<>()).add(image);
         }
         return result;
     }
 
-    private Map<Long, List<CommunityPostImage>> loadCommunityPostImagesById(final Collection<Long> postIds) {
+    private Map<Long, List<ImageMetadata>> loadCommunityPostImagesById(final Collection<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        final Map<Long, List<CommunityPostImage>> result = new LinkedHashMap<>();
-        for (final CommunityPostImage image : communityPostImageDao.findAllByPostIds(postIds)) {
-            result.computeIfAbsent(image.getPostId(), ignored -> new ArrayList<>()).add(image);
+        final Map<Long, List<ImageMetadata>> result = new LinkedHashMap<>();
+        for (final ImageMetadata image : communityPostImageDao.findAllByPostIds(postIds)) {
+            result.computeIfAbsent(image.getOwnerId(), ignored -> new ArrayList<>()).add(image);
         }
         return result;
     }

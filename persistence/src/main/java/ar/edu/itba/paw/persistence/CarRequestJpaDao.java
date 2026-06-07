@@ -5,8 +5,10 @@ import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.exception.PersistenceOperationException;
 import org.slf4j.Logger;
@@ -17,9 +19,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.math.BigDecimal;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -115,23 +115,16 @@ public class CarRequestJpaDao implements CarRequestDao {
     }
 
     @Override
-    public List<CarRequestImage> findImagesByRequestId(final long requestId) {
+    public List<ImageMetadata> findImagesByRequestId(final long requestId) {
         try {
-            final List<?> rawRows = em.createQuery(
-                    "SELECT i.imageId, i.request.id, i.displayOrder, i.contentType, i.updatedAt " +
+            return em.createQuery(
+                    "SELECT new ar.edu.itba.paw.model.ImageMetadata(" +
+                    "i.imageId, i.request.id, i.displayOrder, i.contentType, i.updatedAt) " +
                     "FROM CarRequestImage i WHERE i.request.id = :requestId " +
-                    "ORDER BY i.displayOrder ASC, i.imageId ASC")
+                    "ORDER BY i.displayOrder ASC, i.imageId ASC",
+                    ImageMetadata.class)
                     .setParameter("requestId", requestId)
                     .getResultList();
-
-            final CarRequest requestRef = em.getReference(CarRequest.class, requestId);
-            return rawRows.stream().map(element -> {
-                final Object[] r = (Object[]) element;
-                final CarRequestImage img = new CarRequestImage(requestRef, ((Number) r[2]).intValue(), (String) r[3], null);
-                img.setImageId(((Number) r[0]).longValue());
-                img.setUpdatedAt((java.time.LocalDateTime) r[4]);
-                return img;
-            }).collect(Collectors.toList());
         } catch (final Exception e) {
             LOGGER.error("failed to fetch image metadata for car request id={}", requestId, e);
             throw new PersistenceOperationException("fetch image metadata for car request " + requestId, e);
@@ -139,7 +132,7 @@ public class CarRequestJpaDao implements CarRequestDao {
     }
 
     @Override
-    public List<CarRequestImage> findImagesByRequestIds(final Collection<Long> requestIds) {
+    public List<ImageMetadata> findImagesByRequestIds(final Collection<Long> requestIds) {
         if (requestIds == null) {
             return List.of();
         }
@@ -151,30 +144,14 @@ public class CarRequestJpaDao implements CarRequestDao {
             return List.of();
         }
         try {
-            final List<?> rawRows = em.createQuery(
-                    "SELECT i.imageId, i.request.id, i.displayOrder, i.contentType, i.updatedAt " +
+            return em.createQuery(
+                    "SELECT new ar.edu.itba.paw.model.ImageMetadata(" +
+                    "i.imageId, i.request.id, i.displayOrder, i.contentType, i.updatedAt) " +
                     "FROM CarRequestImage i WHERE i.request.id IN :requestIds " +
-                    "ORDER BY i.request.id ASC, i.displayOrder ASC, i.imageId ASC")
+                    "ORDER BY i.request.id ASC, i.displayOrder ASC, i.imageId ASC",
+                    ImageMetadata.class)
                     .setParameter("requestIds", ids)
                     .getResultList();
-
-            final Map<Long, CarRequest> requestRefs = new HashMap<>();
-            return rawRows.stream().map(element -> {
-                final Object[] r = (Object[]) element;
-                final long requestId = ((Number) r[1]).longValue();
-                final CarRequestImage img = new CarRequestImage(
-                        requestRefs.computeIfAbsent(
-                                requestId,
-                                id -> em.getReference(CarRequest.class, id)
-                        ),
-                        ((Number) r[2]).intValue(),
-                        (String) r[3],
-                        null
-                );
-                img.setImageId(((Number) r[0]).longValue());
-                img.setUpdatedAt((java.time.LocalDateTime) r[4]);
-                return img;
-            }).collect(Collectors.toList());
         } catch (final Exception e) {
             LOGGER.error("failed to fetch image metadata for car request ids={}", ids, e);
             throw new PersistenceOperationException("fetch image metadata for car requests", e);
@@ -182,12 +159,14 @@ public class CarRequestJpaDao implements CarRequestDao {
     }
 
     @Override
-    public List<CarRequestImage> findImagesByRequestIdWithData(final long requestId) {
+    public List<StoredImagePayload> findImagesByRequestIdWithData(final long requestId) {
         try {
             return em.createQuery(
-                    "SELECT i FROM CarRequestImage i WHERE i.request.id = :requestId " +
+                    "SELECT new ar.edu.itba.paw.model.StoredImagePayload(" +
+                    "i.imageId, i.request.id, i.displayOrder, i.contentType, i.imageData, i.updatedAt) " +
+                    "FROM CarRequestImage i WHERE i.request.id = :requestId " +
                     "ORDER BY i.displayOrder ASC, i.imageId ASC",
-                    CarRequestImage.class)
+                    StoredImagePayload.class)
                     .setParameter("requestId", requestId)
                     .getResultList();
         } catch (final Exception e) {
@@ -197,8 +176,8 @@ public class CarRequestJpaDao implements CarRequestDao {
     }
 
     @Override
-    public List<CarRequestImage> findImagesByRequestIdAndImageIdsWithData(final long requestId,
-                                                                          final Collection<Long> imageIds) {
+    public List<StoredImagePayload> findImagesByRequestIdAndImageIdsWithData(final long requestId,
+                                                                             final Collection<Long> imageIds) {
         if (imageIds == null) {
             return List.of();
         }
@@ -208,9 +187,11 @@ public class CarRequestJpaDao implements CarRequestDao {
         }
         try {
             return em.createQuery(
-                    "SELECT i FROM CarRequestImage i WHERE i.request.id = :requestId AND i.imageId IN :imageIds " +
+                    "SELECT new ar.edu.itba.paw.model.StoredImagePayload(" +
+                    "i.imageId, i.request.id, i.displayOrder, i.contentType, i.imageData, i.updatedAt) " +
+                    "FROM CarRequestImage i WHERE i.request.id = :requestId AND i.imageId IN :imageIds " +
                     "ORDER BY i.displayOrder ASC, i.imageId ASC",
-                    CarRequestImage.class)
+                    StoredImagePayload.class)
                     .setParameter("requestId", requestId)
                     .setParameter("imageIds", ids)
                     .getResultList();
@@ -221,11 +202,13 @@ public class CarRequestJpaDao implements CarRequestDao {
     }
 
     @Override
-    public Optional<CarRequestImage> findImageByRequestIdAndImageId(final long requestId, final long imageId) {
+    public Optional<StoredImagePayload> findImageByRequestIdAndImageId(final long requestId, final long imageId) {
         try {
-            final List<CarRequestImage> results = em.createQuery(
-                    "SELECT i FROM CarRequestImage i WHERE i.request.id = :reqId AND i.imageId = :imgId",
-                    CarRequestImage.class)
+            final List<StoredImagePayload> results = em.createQuery(
+                    "SELECT new ar.edu.itba.paw.model.StoredImagePayload(" +
+                    "i.imageId, i.request.id, i.displayOrder, i.contentType, i.imageData, i.updatedAt) " +
+                    "FROM CarRequestImage i WHERE i.request.id = :reqId AND i.imageId = :imgId",
+                    StoredImagePayload.class)
                     .setParameter("reqId", requestId)
                     .setParameter("imgId", imageId)
                     .getResultList();

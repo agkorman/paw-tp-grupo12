@@ -2,8 +2,10 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Community;
 import ar.edu.itba.paw.model.CommunityPost;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.ImagePayload;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -11,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CommunityPostImageJpaDaoTest extends AbstractPersistenceTest {
@@ -80,13 +81,44 @@ public class CommunityPostImageJpaDaoTest extends AbstractPersistenceTest {
         );
 
         // Exercise
-        final List<ar.edu.itba.paw.model.CommunityPostImage> result = communityPostImageDao.findAllByPostId(post.getId());
+        final List<ImageMetadata> result = communityPostImageDao.findAllByPostId(post.getId());
 
         // Assertions
         assertEquals(2, result.size());
         assertEquals("image/png", result.get(0).getContentType());
         assertEquals(0, result.get(0).getDisplayOrder());
-        assertNull(result.get(0).getImageData());
+    }
+
+    @Test
+    public void shouldReturnMetadataWithoutBytesForFindAllByPostIds() {
+        // Arrange
+        final CommunityPost firstPost = createCommunityPost("metadata-batch-a");
+        final CommunityPost secondPost = createCommunityPost("metadata-batch-b");
+        jdbcTemplate.update(
+                "INSERT INTO community_post_images (post_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                firstPost.getId(), 1, "image/jpeg", new byte[]{2}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO community_post_images (post_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                firstPost.getId(), 0, "image/png", new byte[]{1}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO community_post_images (post_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                secondPost.getId(), 0, "image/webp", new byte[]{3}
+        );
+
+        // Exercise
+        final List<ImageMetadata> result =
+                communityPostImageDao.findAllByPostIds(List.of(secondPost.getId(), firstPost.getId()));
+
+        // Assertions
+        assertEquals(3, result.size());
+        assertEquals(firstPost.getId(), result.get(0).getOwnerId());
+        assertEquals("image/png", result.get(0).getContentType());
+        assertEquals(firstPost.getId(), result.get(1).getOwnerId());
+        assertEquals("image/jpeg", result.get(1).getContentType());
+        assertEquals(secondPost.getId(), result.get(2).getOwnerId());
+        assertEquals("image/webp", result.get(2).getContentType());
     }
 
     @Test
@@ -103,7 +135,7 @@ public class CommunityPostImageJpaDaoTest extends AbstractPersistenceTest {
         );
 
         // Exercise
-        final Optional<ar.edu.itba.paw.model.CommunityPostImage> result =
+        final Optional<StoredImagePayload> result =
                 communityPostImageDao.findByPostIdAndImageId(post.getId(), imageId);
 
         // Assertions
@@ -118,7 +150,7 @@ public class CommunityPostImageJpaDaoTest extends AbstractPersistenceTest {
         final CommunityPost post = createCommunityPost("mismatch");
 
         // Exercise
-        final Optional<ar.edu.itba.paw.model.CommunityPostImage> result =
+        final Optional<StoredImagePayload> result =
                 communityPostImageDao.findByPostIdAndImageId(post.getId(), 999999L);
 
         // Assertions
