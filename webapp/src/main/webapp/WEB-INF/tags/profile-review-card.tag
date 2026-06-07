@@ -1,6 +1,7 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="reviewCard" required="true" type="ar.edu.itba.paw.webapp.controller.UserController.ProfileReviewCard" %>
 <%@ attribute name="editable" required="true" type="java.lang.Boolean" %>
+<%@ attribute name="hideable" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="actionRedirect" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
@@ -15,6 +16,7 @@
     </c:if>
 </c:url>
 <c:url var="reviewDeleteUrl" value="/reviews/${reviewCard.review.id}/delete"/>
+<c:url var="reviewHideUrl" value="/reviews/${reviewCard.review.id}/hide"/>
 <c:url var="reviewLikeUrl" value="/reviews/${reviewCard.review.id}/like"/>
 <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 <spring:message var="reviewActionMenuLabel" code="review.actionMenu.open"/>
@@ -27,7 +29,7 @@
 <spring:message var="likeCountText" code="profile.card.metric.likes" arguments="${reviewCard.likeCount}"/>
 <spring:message var="reviewMetricsAria" code="profile.card.metrics.aria"/>
 
-<article class="profile-review-card" data-profile-card-link="${fn:escapeXml(profileReviewHref)}" role="link" tabindex="0">
+<article class="profile-review-card" id="review-${reviewCard.review.id}" data-profile-card-link="${fn:escapeXml(profileReviewHref)}" role="link" tabindex="0">
     <a class="profile-review-image" href="${profileReviewHref}">
         <c:choose>
             <c:when test="${reviewCard.hasCarImage}">
@@ -66,6 +68,16 @@
                                         <c:out value="${reviewRepostLabel}"/>
                                     </a>
                                 </c:if>
+                                <c:if test="${hideable}">
+                                    <button type="button"
+                                            class="action-menu-danger"
+                                            data-open-hide-review-modal
+                                            data-review-hide-action="${fn:escapeXml(reviewHideUrl)}"
+                                            data-review-hide-redirect="${fn:escapeXml(actionRedirect)}"
+                                            data-review-title="${fn:escapeXml(reviewCard.review.title)}">
+                                        <spring:message code="review.hide.action.aria"/>
+                                    </button>
+                                </c:if>
                                 <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
                                       data-confirm-modal="deleteReviewConfirmModal">
                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
@@ -83,6 +95,16 @@
                                 <a href="${fn:escapeXml(reviewRepostUrl)}">
                                     <c:out value="${reviewRepostLabel}"/>
                                 </a>
+                                <c:if test="${hideable}">
+                                    <button type="button"
+                                            class="action-menu-danger"
+                                            data-open-hide-review-modal
+                                            data-review-hide-action="${fn:escapeXml(reviewHideUrl)}"
+                                            data-review-hide-redirect="${fn:escapeXml(actionRedirect)}"
+                                            data-review-title="${fn:escapeXml(reviewCard.review.title)}">
+                                        <spring:message code="review.hide.action.aria"/>
+                                    </button>
+                                </c:if>
                             </pa:action-menu>
                         </c:when>
                         <c:otherwise>

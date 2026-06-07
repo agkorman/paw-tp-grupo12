@@ -65,6 +65,7 @@
                                               class="community-banner-join-form"
                                               data-confirm-modal="leaveCommunityConfirmModal">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                            <input type="hidden" name="redirect" value="${fn:escapeXml(communityPostsReturnBaseUrl)}">
                                             <button type="submit"
                                                     class="${communityJoinButtonClass}"
                                                     aria-pressed="true">
@@ -76,6 +77,7 @@
                                         <form action="${fn:escapeXml(communityJoinUrl)}" method="post"
                                               class="community-banner-join-form">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                            <input type="hidden" name="redirect" value="${fn:escapeXml(communityPostsReturnBaseUrl)}">
                                             <button type="submit"
                                                     class="${communityJoinButtonClass}"
                                                     aria-pressed="false">
@@ -248,6 +250,10 @@
     <pa:image-lightbox/>
     <pa:script src="/js/shared/image-lightbox.js" defer="true"/>
     <pa:script src="/js/communities/community-sort.js" defer="true"/>
+    <pa:script src="/js/reviews/review-anchor-highlight.js"/>
+
+    <pa:toast messageCode="${actionToastCode}"/>
+    <pa:script src="/js/shared/toast.js"/>
 
     <pa:footer/>
 </body>

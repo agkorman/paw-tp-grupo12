@@ -777,6 +777,31 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    public Set<Long> getHideablePostIds(final Collection<CommunityPost> posts, final Long viewerUserId,
+                                        final boolean viewerAdmin) {
+        if (posts == null || posts.isEmpty() || (viewerUserId == null && !viewerAdmin)) {
+            return Collections.emptySet();
+        }
+        final Set<Long> moderatedCommunityIds;
+        if (viewerAdmin || viewerUserId == null || viewerUserId <= 0) {
+            moderatedCommunityIds = Collections.emptySet();
+        } else {
+            final Set<Long> communityIds = posts.stream()
+                    .map(CommunityPost::getCommunityId)
+                    .collect(Collectors.toSet());
+            moderatedCommunityIds = communityDao.findMembershipRoles(viewerUserId, communityIds).entrySet().stream()
+                    .filter(entry -> CREATOR_ROLE.equals(entry.getValue()))
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toSet());
+        }
+        return posts.stream()
+                .filter(post -> (viewerAdmin || moderatedCommunityIds.contains(post.getCommunityId()))
+                        && (viewerUserId == null || post.getAuthorUserId() != viewerUserId))
+                .map(CommunityPost::getId)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public Optional<List<CommunityMembershipEntry>> listMembers(final String communitySlug, final long callerUserId) {
         if (callerUserId <= 0) {
             throw new InvalidServiceInputException("Caller is required.");

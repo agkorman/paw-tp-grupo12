@@ -69,12 +69,14 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class CommunityController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommunityController.class);
     private static final int MAX_COMMUNITY_POST_IMAGE_COUNT = 3;
+    private static final String ACTION_TOAST_ATTRIBUTE = "actionToastCode";
 
     private final CommunityService communityService;
     private final ReviewService reviewService;
@@ -296,15 +298,20 @@ public class CommunityController {
     @RequestMapping(value = "/communities/{communitySlug}/join", method = RequestMethod.POST)
     public String joinCommunity(
         @PathVariable final String communitySlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse("/communities/" + communitySlug);
         if (currentUser == null) {
-            return "redirect:/communities/" + communitySlug;
+            return redirectTo(safeRedirect);
         }
 
         communityService.toggleMembership(communitySlug, currentUser.getId())
             .orElseThrow(() -> new ResourceNotFoundException("community not found"));
-        return "redirect:/communities/" + communitySlug;
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -387,7 +394,8 @@ public class CommunityController {
         @PathVariable final String postSlug,
         @Valid @ModelAttribute("communityPostCommentForm") final CommunityPostCommentForm communityPostCommentForm,
         final BindingResult errors,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
@@ -424,6 +432,7 @@ public class CommunityController {
                 currentUser.getId(),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.create.toast.success");
         return new ModelAndView("redirect:/communities/" + communitySlug + "/posts/" + postSlug);
     }
 
@@ -485,7 +494,8 @@ public class CommunityController {
         @Valid @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
         final BindingResult errors,
         final Model model,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug + "/submit";
@@ -547,7 +557,8 @@ public class CommunityController {
                 LogSanitizer.forLog(createdPost.getSlug(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 currentUser.getId());
-        return "redirect:/communities/" + communitySlug + "/posts/" + createdPost.getSlug();
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.create.toast.success");
+        return "redirect:/communities/" + communitySlug + "#post-" + createdPost.getId();
     }
 
     @RequestMapping(
@@ -672,7 +683,8 @@ public class CommunityController {
         final BindingResult errors,
         final Model model,
         final HttpServletRequest request,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
@@ -740,6 +752,7 @@ public class CommunityController {
                 LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 currentUser.getId());
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.update.toast.success");
         return redirectTo(safeRedirect);
     }
 
@@ -890,7 +903,8 @@ public class CommunityController {
         @Valid @ModelAttribute("communityHideForm") final CommunityHideForm communityHideForm,
         final BindingResult errors,
         final HttpServletRequest request,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         final String safeRedirect = LoginRedirectUtils
                 .safeRedirect(redirect, request.getContextPath())
@@ -909,6 +923,7 @@ public class CommunityController {
                         request.isUserInRole("ADMIN")
                 )
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.hide.toast.success");
         return redirectTo(safeRedirect);
     }
 
@@ -924,7 +939,8 @@ public class CommunityController {
         @Valid @ModelAttribute("communityHideForm") final CommunityHideForm communityHideForm,
         final BindingResult errors,
         final HttpServletRequest request,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         final String safeRedirect = LoginRedirectUtils
                 .safeRedirect(redirect, request.getContextPath())
@@ -943,6 +959,7 @@ public class CommunityController {
                         request.isUserInRole("ADMIN")
                 )
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.hide.toast.success");
         return redirectTo(safeRedirect);
     }
 
@@ -952,7 +969,8 @@ public class CommunityController {
         @PathVariable final String postSlug,
         @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         final String safeRedirect = LoginRedirectUtils
                 .safeRedirect(redirect, request.getContextPath())
@@ -962,6 +980,7 @@ public class CommunityController {
         }
         communityService.deletePost(communitySlug, postSlug, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.delete.toast.success");
         return redirectTo(safeRedirect);
     }
 
@@ -975,7 +994,8 @@ public class CommunityController {
         @PathVariable final long commentId,
         @Valid @ModelAttribute("communityPostCommentForm") final CommunityPostCommentForm communityPostCommentForm,
         final BindingResult errors,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
@@ -993,6 +1013,7 @@ public class CommunityController {
                     LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                     LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                     currentUser.getId());
+            redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.update.toast.success");
         }
         return "redirect:/communities/" + communitySlug + "/posts/" + postSlug + "#comment-" + commentId;
     }
@@ -1005,13 +1026,15 @@ public class CommunityController {
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
         @PathVariable final long commentId,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
         }
         communityService.deleteComment(communitySlug, commentId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.delete.toast.success");
         return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
     }
 

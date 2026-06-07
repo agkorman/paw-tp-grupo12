@@ -494,6 +494,7 @@
     gap: 0.875rem;
     border-top: 1px solid rgba(229, 226, 225, 0.08);
     padding-top: 0.875rem;
+    scroll-margin-top: 30vh;
 }
 
 .review-reply-list {
@@ -508,6 +509,14 @@
     min-width: 0;
     border-left: 2px solid rgba(255, 87, 25, 0.45);
     background: rgba(255, 255, 255, 0.035);
+    scroll-margin-top: 30vh;
+    transition: box-shadow 0.2s, background 0.2s;
+}
+
+.review-reply:target,
+.review-reply.is-anchor-highlighted {
+    background: var(--surface-container-highest);
+    box-shadow: inset 0 0 0 1px rgba(255, 181, 158, 0.42);
 }
 
 .review-reply-header {
