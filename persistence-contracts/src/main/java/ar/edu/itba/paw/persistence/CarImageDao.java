@@ -1,7 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ImagePayload;
+import ar.edu.itba.paw.model.StoredImagePayload;
 
 import java.util.Collection;
 import java.util.List;
@@ -9,17 +10,23 @@ import java.util.Optional;
 
 public interface CarImageDao {
 
-    Optional<CarImage> findByCarId(long carId);
+    Optional<StoredImagePayload> findFirstByCarIdWithData(long carId);
 
-    List<CarImage> findAllByCarId(long carId);
+    Optional<ImageMetadata> findFirstMetadataByCarId(long carId);
 
-    List<CarImage> findAllByCarIdWithData(long carId);
+    List<ImageMetadata> findAllByCarId(long carId);
 
-    List<CarImage> findByCarIdAndImageIdsWithData(long carId, Collection<Long> imageIds);
+    List<StoredImagePayload> findAllByCarIdWithData(long carId);
 
-    Optional<CarImage> findByCarIdAndImageId(long carId, long imageId);
+    List<StoredImagePayload> findByCarIdAndImageIdsWithData(long carId, Collection<Long> imageIds);
+
+    Optional<StoredImagePayload> findByCarIdAndImageId(long carId, long imageId);
+
+    Optional<ImageMetadata> findMetadataByCarIdAndImageId(long carId, long imageId);
 
     void saveOrReplace(long carId, String contentType, byte[] imageData);
 
     void replaceAll(long carId, List<ImagePayload> images);
+
+    void appendAll(long carId, List<ImagePayload> images);
 }

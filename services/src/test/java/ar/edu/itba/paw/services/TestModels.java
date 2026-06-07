@@ -7,7 +7,6 @@ import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarRequestImage;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
@@ -26,29 +25,22 @@ final class TestModels {
 
     static User user(final long id, final String username, final String email, final String password,
                      final String role, final String preferredLocale, final LocalDateTime createdAt) {
-        final User user = new User();
+        final User user = new User(username, email, password, role, preferredLocale);
         user.setId(id);
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(password);
-        user.setRole(role);
-        user.setPreferredLocale(preferredLocale);
         user.setCreatedAt(createdAt);
         return user;
     }
 
     static Brand brand(final long id, final String name, final LocalDateTime createdAt) {
-        final Brand brand = new Brand();
+        final Brand brand = new Brand(name);
         brand.setId(id);
-        brand.setName(name);
         brand.setCreatedAt(createdAt);
         return brand;
     }
 
     static BodyType bodyType(final long id, final String name, final LocalDateTime createdAt) {
-        final BodyType bodyType = new BodyType();
+        final BodyType bodyType = new BodyType(name);
         bodyType.setId(id);
-        bodyType.setName(name);
         bodyType.setCreatedAt(createdAt);
         return bodyType;
     }
@@ -65,11 +57,8 @@ final class TestModels {
                    final LocalDateTime createdAt, final boolean hasImage, final String fuelType,
                    final Integer horsepower, final Integer airbagCount, final String transmission,
                    final BigDecimal fuelConsumption, final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-        final Car car = new Car();
+        final Car car = new Car(brand(brandId, brandName, null), model, bodyType(bodyTypeId, bodyType, null));
         car.setId(id);
-        car.setBrand(brand(brandId, brandName, null));
-        car.setModel(model);
-        car.setBodyTypeEntity(bodyType(bodyTypeId, bodyType, null));
         car.setYear(year);
         car.setDescription(description);
         car.setCreatedAt(createdAt);
@@ -91,18 +80,12 @@ final class TestModels {
                                  final String fuelType, final Integer horsepower, final Integer airbagCount,
                                  final String transmission, final BigDecimal fuelConsumption,
                                  final Integer maxSpeedKmh, final BigDecimal priceUsd) {
-        final CarRequest request = new CarRequest();
+        final CarRequest request = new CarRequest(
+                brand(brandId, null, null), bodyType(bodyTypeId, null, null), model, description, status);
         request.setId(id);
         request.setSubmittedByUser(submittedByUserId == null ? null : user(submittedByUserId, null, submitterEmail, null, null, null));
         request.setSubmitterEmail(submitterEmail);
-        request.setBrand(brand(brandId, null, null));
-        request.setBodyType(bodyType(bodyTypeId, null, null));
         request.setYear(year);
-        request.setModel(model);
-        request.setDescription(description);
-        request.setImageContentType(imageContentType);
-        request.setImageData(imageData);
-        request.setStatus(status);
         request.setCreatedAt(createdAt);
         request.setFuelType(fuelType);
         request.setHorsepower(horsepower);
@@ -117,13 +100,11 @@ final class TestModels {
     static BrandRequest brandRequest(final long id, final Long submittedByUserId, final String submitterEmail,
                                      final String name, final String comments, final String status,
                                      final LocalDateTime createdAt) {
-        final BrandRequest request = new BrandRequest();
+        final BrandRequest request = new BrandRequest(name, status);
         request.setId(id);
         request.setSubmittedByUser(submittedByUserId == null ? null : user(submittedByUserId, null, submitterEmail, null, null, null));
         request.setSubmitterEmail(submitterEmail);
-        request.setName(name);
         request.setComments(comments);
-        request.setStatus(status);
         request.setCreatedAt(createdAt);
         return request;
     }
@@ -131,13 +112,11 @@ final class TestModels {
     static BodyTypeRequest bodyTypeRequest(final long id, final Long submittedByUserId, final String submitterEmail,
                                            final String name, final String comments, final String status,
                                            final LocalDateTime createdAt) {
-        final BodyTypeRequest request = new BodyTypeRequest();
+        final BodyTypeRequest request = new BodyTypeRequest(name, status);
         request.setId(id);
         request.setSubmittedByUser(submittedByUserId == null ? null : user(submittedByUserId, null, submitterEmail, null, null, null));
         request.setSubmitterEmail(submitterEmail);
-        request.setName(name);
         request.setComments(comments);
-        request.setStatus(status);
         request.setCreatedAt(createdAt);
         return request;
     }
@@ -145,14 +124,11 @@ final class TestModels {
     static AdminRequest adminRequest(final long id, final long submittedByUserId, final String submitterEmail,
                                      final String motivation, final String bio, final String justification,
                                      final String status, final LocalDateTime createdAt) {
-        final AdminRequest request = new AdminRequest();
+        final AdminRequest request = new AdminRequest(
+                user(submittedByUserId, null, submitterEmail, null, null, null),
+                motivation, bio, justification, status);
         request.setId(id);
-        request.setSubmittedByUser(user(submittedByUserId, null, submitterEmail, null, null, null));
         request.setSubmitterEmail(submitterEmail);
-        request.setMotivation(motivation);
-        request.setBio(bio);
-        request.setJustification(justification);
-        request.setStatus(status);
         request.setCreatedAt(createdAt);
         return request;
     }
@@ -162,16 +138,12 @@ final class TestModels {
                          final String ownershipStatus, final Integer modelYear, final Integer mileageKm,
                          final Boolean wouldRecommend, final LocalDateTime createdAt,
                          final LocalDateTime updatedAt) {
-        final Review review = new Review();
+        final Car car = new Car(brand(0, null, null), null, bodyType(0, null, null));
+        car.setId(carId);
+        final Review review = new Review(car, rating, title, body);
         review.setId(id);
         review.setUser(userId == null ? null : user(userId, null, reviewerEmail, null, null, null));
         review.setReviewerEmail(reviewerEmail);
-        final Car car = new Car();
-        car.setId(carId);
-        review.setCar(car);
-        review.setRating(rating);
-        review.setTitle(title);
-        review.setBody(body);
         review.setOwnershipStatus(ownershipStatus);
         review.setModelYear(modelYear);
         review.setMileageKm(mileageKm);
@@ -184,30 +156,14 @@ final class TestModels {
     static ReviewReply reviewReply(final long id, final long reviewId, final long userId,
                                    final String authorUsername, final String body,
                                    final LocalDateTime createdAt, final LocalDateTime updatedAt) {
-        final ReviewReply reply = new ReviewReply();
-        reply.setId(id);
-        final Review review = new Review();
+        final Review review = new Review(
+                new Car(brand(0, null, null), null, bodyType(0, null, null)), null, null, null);
         review.setId(reviewId);
-        reply.setReview(review);
-        reply.setUser(user(userId, authorUsername, null, null, null, null));
-        reply.setBody(body);
+        final ReviewReply reply = new ReviewReply(review, user(userId, authorUsername, null, null, null, null), body);
+        reply.setId(id);
         reply.setCreatedAt(createdAt);
         reply.setUpdatedAt(updatedAt);
         return reply;
     }
 
-    static CarRequestImage carRequestImage(final long imageId, final long requestId, final int displayOrder,
-                                           final String contentType, final byte[] imageData,
-                                           final LocalDateTime updatedAt) {
-        final CarRequestImage image = new CarRequestImage();
-        image.setImageId(imageId);
-        final CarRequest request = new CarRequest();
-        request.setId(requestId);
-        image.setRequest(request);
-        image.setDisplayOrder(displayOrder);
-        image.setContentType(contentType);
-        image.setImageData(imageData);
-        image.setUpdatedAt(updatedAt);
-        return image;
-    }
 }

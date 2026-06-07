@@ -15,19 +15,25 @@ public class CommunityTopic implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "topic_id")
+    @Column(name = "topic_id", nullable = false)
     private short id;
 
-    @Column(name = "code")
+    @Column(name = "code", nullable = false, length = 40)
     private String code;
 
-    @Column(name = "active")
+    @Column(name = "active", nullable = false)
     private boolean active;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public CommunityTopic() {}
+    CommunityTopic() {}
+
+    public CommunityTopic(final String code, final boolean active) {
+        this.code = code;
+        this.active = active;
+        this.createdAt = LocalDateTime.now();
+    }
 
     public short getId() {
         return id;

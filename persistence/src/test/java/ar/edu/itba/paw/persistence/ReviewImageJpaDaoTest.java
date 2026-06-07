@@ -2,7 +2,8 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.ReviewImage;
+import ar.edu.itba.paw.model.ImageMetadata;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -11,7 +12,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ReviewImageJpaDaoTest extends AbstractPersistenceTest {
@@ -109,16 +109,46 @@ public class ReviewImageJpaDaoTest extends AbstractPersistenceTest {
         );
 
         // Exercise
-        final List<ReviewImage> result = reviewImageDao.findAllByReviewId(review.getId());
+        final List<ImageMetadata> result = reviewImageDao.findAllByReviewId(review.getId());
 
         // Assertions
         assertEquals(2, result.size());
         assertEquals("image/png", result.get(0).getContentType());
         assertEquals(0, result.get(0).getDisplayOrder());
-        assertNull(result.get(0).getImageData());
         assertEquals("image/jpeg", result.get(1).getContentType());
         assertEquals(1, result.get(1).getDisplayOrder());
-        assertNull(result.get(1).getImageData());
+    }
+
+    @Test
+    public void shouldReturnMetadataWithoutBytesForFindAllByReviewIds() {
+        // Arrange
+        final Review firstReview = createReview("metadata-batch-a");
+        final Review secondReview = createReview("metadata-batch-b");
+        jdbcTemplate.update(
+                "INSERT INTO review_images (review_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                firstReview.getId(), 1, "image/jpeg", new byte[]{2}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO review_images (review_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                firstReview.getId(), 0, "image/png", new byte[]{1}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO review_images (review_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                secondReview.getId(), 0, "image/webp", new byte[]{3}
+        );
+
+        // Exercise
+        final List<ImageMetadata> result =
+                reviewImageDao.findAllByReviewIds(List.of(secondReview.getId(), firstReview.getId()));
+
+        // Assertions
+        assertEquals(3, result.size());
+        assertEquals(firstReview.getId(), result.get(0).getOwnerId());
+        assertEquals("image/png", result.get(0).getContentType());
+        assertEquals(firstReview.getId(), result.get(1).getOwnerId());
+        assertEquals("image/jpeg", result.get(1).getContentType());
+        assertEquals(secondReview.getId(), result.get(2).getOwnerId());
+        assertEquals("image/webp", result.get(2).getContentType());
     }
 
     @Test
@@ -135,7 +165,7 @@ public class ReviewImageJpaDaoTest extends AbstractPersistenceTest {
         );
 
         // Exercise
-        final Optional<ReviewImage> result = reviewImageDao.findByReviewIdAndImageId(review.getId(), imageId);
+        final Optional<StoredImagePayload> result = reviewImageDao.findByReviewIdAndImageId(review.getId(), imageId);
 
         // Assertions
         assertTrue(result.isPresent());
@@ -166,7 +196,7 @@ public class ReviewImageJpaDaoTest extends AbstractPersistenceTest {
                 "SELECT image_id FROM review_images WHERE review_id = ? AND display_order = 2", Long.class, review.getId());
 
         // Exercise
-        final List<ReviewImage> result =
+        final List<StoredImagePayload> result =
                 reviewImageDao.findByReviewIdAndImageIdsWithData(review.getId(), List.of(firstId, thirdId));
 
         // Assertions
@@ -195,7 +225,7 @@ public class ReviewImageJpaDaoTest extends AbstractPersistenceTest {
                 Long.class, otherReview.getId());
 
         // Exercise
-        final List<ReviewImage> result =
+        final List<StoredImagePayload> result =
                 reviewImageDao.findByReviewIdAndImageIdsWithData(review.getId(), List.of(otherImageId));
 
         // Assertions
@@ -213,7 +243,7 @@ public class ReviewImageJpaDaoTest extends AbstractPersistenceTest {
         final long wrongImageId = 999999L;
 
         // Exercise
-        final Optional<ReviewImage> result = reviewImageDao.findByReviewIdAndImageId(review.getId(), wrongImageId);
+        final Optional<StoredImagePayload> result = reviewImageDao.findByReviewIdAndImageId(review.getId(), wrongImageId);
 
         // Assertions
         assertFalse(result.isPresent());

@@ -15,7 +15,7 @@ public class User implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private long id;
 
     @Column(name = "username", nullable = false, unique = true, length = 50)
@@ -36,7 +36,17 @@ public class User implements Serializable {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public User() {}
+    User() {}
+
+    public User(final String username, final String email, final String password, final String role,
+                final String preferredLocale) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.preferredLocale = preferredLocale;
+        this.createdAt = LocalDateTime.now();
+    }
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }

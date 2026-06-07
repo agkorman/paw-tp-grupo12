@@ -6,11 +6,12 @@ import ar.edu.itba.paw.model.CommunityHubEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
-import ar.edu.itba.paw.model.CommunityPostImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CommunityDao;
 import ar.edu.itba.paw.persistence.CommunityPostImageDao;
@@ -400,11 +401,8 @@ class CommunityServiceImplTest {
         // Arrange
         final Community community = community();
         final CommunityPost post = post(community, author(7L, "mateo.classics"));
-        final CommunityPostImage image = new CommunityPostImage();
-        image.setImageId(50L);
-        image.setPost(post);
-        image.setDisplayOrder(0);
-        image.setContentType("image/png");
+        final ImageMetadata image =
+                new ImageMetadata(50L, post.getId(), 0, "image/png", LocalDateTime.now());
         when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
         when(communityDao.findVisiblePostsByCommunityId(community.getId(), "recent", 1))
                 .thenReturn(new Page<>(List.of(post), 1, 6, 1L));
@@ -427,11 +425,9 @@ class CommunityServiceImplTest {
     @Test
     void collectRetainedPostImagePayloads_returnsExistingImagePayloads() {
         // Arrange
-        final CommunityPostImage image = new CommunityPostImage();
-        image.setImageId(10L);
-        image.setContentType("image/png");
-        image.setImageData(new byte[]{1, 2, 3});
-        when(communityPostImageDao.findByPostIdAndImageId(5L, 10L)).thenReturn(Optional.of(image));
+        final StoredImagePayload image =
+                new StoredImagePayload(10L, 5L, 0, "image/png", new byte[]{1, 2, 3}, LocalDateTime.now());
+        when(communityPostImageDao.findByPostIdAndImageIdsWithData(5L, List.of(10L))).thenReturn(List.of(image));
 
         // Exercise
         final List<ImagePayload> result = communityService.collectRetainedPostImagePayloads(5L, List.of(10L));
@@ -1146,10 +1142,8 @@ class CommunityServiceImplTest {
     }
 
     private static Community communityWithId(final long id, final String slug) {
-        final Community community = new Community();
+        final Community community = new Community(slug, slug, null);
         community.setId(id);
-        community.setSlug(slug);
-        community.setName(slug);
         community.setCreatedAt(LocalDateTime.now().minusDays(10));
         return community;
     }
@@ -1174,11 +1168,9 @@ class CommunityServiceImplTest {
     }
 
     private static Community community() {
-        final Community community = new Community();
+        final Community community = new Community(
+                "classics", "Classics", "Pre-1990 cars and honest restoration projects.");
         community.setId(1L);
-        community.setSlug("classics");
-        community.setName("Classics");
-        community.setDescription("Pre-1990 cars and honest restoration projects.");
         community.setCreatedAt(LocalDateTime.now().minusDays(10));
         return community;
     }
@@ -1186,20 +1178,16 @@ class CommunityServiceImplTest {
     private static final long USER_ID = 7L;
 
     private static CommunityTopic topic(final short id, final String code) {
-        final CommunityTopic topic = new CommunityTopic();
+        final CommunityTopic topic = new CommunityTopic(code, true);
         topic.setId(id);
-        topic.setCode(code);
         topic.setCreatedAt(LocalDateTime.now().minusDays(20));
         return topic;
     }
 
     private static CommunityPost post(final Community community, final User author) {
-        final CommunityPost post = new CommunityPost();
+        final CommunityPost post = new CommunityPost(
+                community, author, "falcon-60", "My grandfather's Falcon turned 60 today", false);
         post.setId(3L);
-        post.setCommunity(community);
-        post.setAuthor(author);
-        post.setSlug("falcon-60");
-        post.setTitle("My grandfather's Falcon turned 60 today");
         post.setBody("Still runs beautifully.");
         post.setCreatedAt(LocalDateTime.now().minusHours(2));
         post.setUpdatedAt(LocalDateTime.now().minusHours(2));
@@ -1207,11 +1195,9 @@ class CommunityServiceImplTest {
     }
 
     private static CommunityPostComment comment(final CommunityPost post, final User author) {
-        final CommunityPostComment comment = new CommunityPostComment();
+        final CommunityPostComment comment = new CommunityPostComment(
+                post, author, "That paint looks original.", false);
         comment.setId(5L);
-        comment.setPost(post);
-        comment.setUser(author);
-        comment.setBody("That paint looks original.");
         comment.setCreatedAt(LocalDateTime.now().minusHours(1));
         comment.setUpdatedAt(LocalDateTime.now().minusHours(1));
         return comment;
@@ -1238,7 +1224,8 @@ class CommunityServiceImplTest {
 
         @Override
         public void sendNewCarRequestNotification(final ar.edu.itba.paw.model.CarRequest request,
-                                                  final String brandName, final String bodyTypeName) {
+                                                  final String brandName, final String bodyTypeName,
+                                                  final boolean hasImage) {
         }
 
         @Override

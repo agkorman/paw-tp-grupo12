@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;

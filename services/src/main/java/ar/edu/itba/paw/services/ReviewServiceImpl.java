@@ -4,8 +4,9 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.ReviewImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ReviewStats;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewImageDao;
@@ -180,28 +181,34 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReviewImage> getReviewImagesByReviewId(final long reviewId) {
+    public List<ImageMetadata> getReviewImagesByReviewId(final long reviewId) {
         return reviewImageDao.findAllByReviewId(reviewId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Map<Long, List<ReviewImage>> getImagesByReviewIds(final Collection<Long> reviewIds) {
+    public Map<Long, List<ImageMetadata>> getImagesByReviewIds(final Collection<Long> reviewIds) {
         if (reviewIds == null || reviewIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        final List<ReviewImage> images = reviewImageDao.findAllByReviewIds(reviewIds);
-        final Map<Long, List<ReviewImage>> result = new java.util.LinkedHashMap<>();
-        for (final ReviewImage img : images) {
-            result.computeIfAbsent(img.getReviewId(), k -> new ArrayList<>()).add(img);
+        final List<ImageMetadata> images = reviewImageDao.findAllByReviewIds(reviewIds);
+        final Map<Long, List<ImageMetadata>> result = new java.util.LinkedHashMap<>();
+        for (final ImageMetadata img : images) {
+            result.computeIfAbsent(img.getOwnerId(), k -> new ArrayList<>()).add(img);
         }
         return result;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<ReviewImage> getReviewImageById(final long reviewId, final long imageId) {
+    public Optional<StoredImagePayload> getReviewImageById(final long reviewId, final long imageId) {
         return reviewImageDao.findByReviewIdAndImageId(reviewId, imageId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ImageMetadata> getReviewImageMetadataById(final long reviewId, final long imageId) {
+        return reviewImageDao.findMetadataByReviewIdAndImageId(reviewId, imageId);
     }
 
     @Override
@@ -212,15 +219,15 @@ public class ReviewServiceImpl implements ReviewService {
         if (retainedImageIds == null) {
             return payloads;
         }
-        final Map<Long, ReviewImage> imagesById = new java.util.LinkedHashMap<>();
-        for (final ReviewImage image : reviewImageDao.findByReviewIdAndImageIdsWithData(reviewId, retainedImageIds)) {
+        final Map<Long, StoredImagePayload> imagesById = new java.util.LinkedHashMap<>();
+        for (final StoredImagePayload image : reviewImageDao.findByReviewIdAndImageIdsWithData(reviewId, retainedImageIds)) {
             imagesById.putIfAbsent(image.getImageId(), image);
         }
         for (final Long imageId : retainedImageIds) {
             if (imageId == null) {
                 continue;
             }
-            final ReviewImage image = imagesById.get(imageId);
+            final StoredImagePayload image = imagesById.get(imageId);
             if (image == null || image.getImageData() == null) {
                 continue;
             }

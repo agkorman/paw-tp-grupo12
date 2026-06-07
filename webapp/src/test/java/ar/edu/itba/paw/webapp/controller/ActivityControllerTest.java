@@ -148,10 +148,8 @@ class ActivityControllerTest {
     }
 
     private static CommunityPost post(final LocalDateTime createdAt) {
-        final Community community = new Community();
+        final Community community = new Community("classics", "Classics", "Community description");
         community.setId(7L);
-        community.setSlug("classics");
-        community.setName("Classics");
 
         final CommunityPost post = new CommunityPost();
         post.setId(15L);

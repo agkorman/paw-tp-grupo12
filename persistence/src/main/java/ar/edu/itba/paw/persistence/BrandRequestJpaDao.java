@@ -80,14 +80,12 @@ public class BrandRequestJpaDao implements BrandRequestDao {
     @Override
     public BrandRequest create(final Long submittedByUserId, final String submitterEmail,
                                final String name, final String comments, final String status) {
-        final BrandRequest request = new BrandRequest();
+        final BrandRequest request = new BrandRequest(name, status);
         if (submittedByUserId != null) {
             request.setSubmittedByUser(em.getReference(User.class, submittedByUserId));
         }
         request.setSubmitterEmail(submitterEmail);
-        request.setName(name);
         request.setComments(comments);
-        request.setStatus(status);
         em.persist(request);
         LOGGER.info("created brand request id={} userId={} name={} status={}", request.getId(), submittedByUserId, name, status);
         return request;

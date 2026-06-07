@@ -18,34 +18,32 @@ public class ReviewTag implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "tag_id")
+    @Column(name = "tag_id", nullable = false)
     private short id;
 
-    @Column(name = "code")
+    @Column(name = "code", nullable = false, unique = true, length = 40)
     private String code;
 
-    @Column(name = "label_es")
+    @Column(name = "label_es", nullable = false, length = 80)
     private String labelEs;
 
-    @Column(name = "sentiment")
+    @Column(name = "sentiment", nullable = false, length = 10)
     private String sentiment;
 
-    @Column(name = "dimension")
+    @Column(name = "dimension", nullable = false, length = 40)
     private String dimension;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public ReviewTag() {}
+    ReviewTag() {}
 
-    public ReviewTag(final short id, final String code, final String labelEs, final String sentiment,
-                     final String dimension, final LocalDateTime createdAt) {
-        this.id = id;
+    public ReviewTag(final String code, final String labelEs, final String sentiment, final String dimension) {
         this.code = code;
         this.labelEs = labelEs;
         this.sentiment = sentiment;
         this.dimension = dimension;
-        this.createdAt = createdAt;
+        this.createdAt = LocalDateTime.now();
     }
 
     public short getId() {

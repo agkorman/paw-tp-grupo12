@@ -4,13 +4,11 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -23,54 +21,27 @@ public class Car implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "car_id")
+    @Column(name = "car_id", nullable = false)
     private long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "brand_id")
-    private Brand brand;
+    @Embedded
+    private CarSpec spec = new CarSpec();
 
-    @Column(name = "model")
-    private String model;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "body_type_id")
-    private BodyType bodyTypeEntity;
-
-    @Column(name = "year")
-    private Integer year;
-
-    @Column(name = "description")
+    @Column(name = "description", nullable = true)
     private String description;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Transient
     private boolean hasImage;
 
-    @Column(name = "fuel_type")
-    private String fuelType;
+    Car() {}
 
-    @Column(name = "horsepower")
-    private Integer horsepower;
-
-    @Column(name = "airbag_count")
-    private Integer airbagCount;
-
-    @Column(name = "transmission")
-    private String transmission;
-
-    @Column(name = "fuel_consumption")
-    private BigDecimal fuelConsumption;
-
-    @Column(name = "max_speed_kmh")
-    private Integer maxSpeedKmh;
-
-    @Column(name = "price_usd")
-    private BigDecimal priceUsd;
-
-    public Car() {}
+    public Car(final Brand brand, final String model, final BodyType bodyTypeEntity) {
+        this.spec = new CarSpec(brand, bodyTypeEntity, model);
+        this.createdAt = LocalDateTime.now();
+    }
 
     public long getId() {
         return id;
@@ -80,52 +51,60 @@ public class Car implements Serializable {
         this.id = id;
     }
 
+    public CarSpec getSpec() {
+        return spec;
+    }
+
+    public void setSpec(final CarSpec spec) {
+        this.spec = spec == null ? new CarSpec() : spec;
+    }
+
     public Brand getBrand() {
-        return brand;
+        return spec.getBrand();
     }
 
     public void setBrand(final Brand brand) {
-        this.brand = brand;
+        spec.setBrand(brand);
     }
 
     public long getBrandId() {
-        return brand != null ? brand.getId() : 0;
+        return getBrand() != null ? getBrand().getId() : 0;
     }
 
     public String getBrandName() {
-        return brand != null ? brand.getName() : null;
+        return getBrand() != null ? getBrand().getName() : null;
     }
 
     public String getModel() {
-        return model;
+        return spec.getModel();
     }
 
     public void setModel(final String model) {
-        this.model = model;
+        spec.setModel(model);
     }
 
     public BodyType getBodyTypeEntity() {
-        return bodyTypeEntity;
+        return spec.getBodyType();
     }
 
     public void setBodyTypeEntity(final BodyType bodyTypeEntity) {
-        this.bodyTypeEntity = bodyTypeEntity;
+        spec.setBodyType(bodyTypeEntity);
     }
 
     public long getBodyTypeId() {
-        return bodyTypeEntity != null ? bodyTypeEntity.getId() : 0;
+        return getBodyTypeEntity() != null ? getBodyTypeEntity().getId() : 0;
     }
 
     public Integer getYear() {
-        return year;
+        return spec.getYear();
     }
 
     public void setYear(final Integer year) {
-        this.year = year;
+        spec.setYear(year);
     }
 
     public String getBodyType() {
-        return bodyTypeEntity != null ? bodyTypeEntity.getName() : null;
+        return getBodyTypeEntity() != null ? getBodyTypeEntity().getName() : null;
     }
 
     public String getDescription() {
@@ -153,59 +132,59 @@ public class Car implements Serializable {
     }
 
     public String getFuelType() {
-        return fuelType;
+        return spec.getFuelType();
     }
 
     public void setFuelType(final String fuelType) {
-        this.fuelType = fuelType;
+        spec.setFuelType(fuelType);
     }
 
     public Integer getHorsepower() {
-        return horsepower;
+        return spec.getHorsepower();
     }
 
     public void setHorsepower(final Integer horsepower) {
-        this.horsepower = horsepower;
+        spec.setHorsepower(horsepower);
     }
 
     public Integer getAirbagCount() {
-        return airbagCount;
+        return spec.getAirbagCount();
     }
 
     public void setAirbagCount(final Integer airbagCount) {
-        this.airbagCount = airbagCount;
+        spec.setAirbagCount(airbagCount);
     }
 
     public String getTransmission() {
-        return transmission;
+        return spec.getTransmission();
     }
 
     public void setTransmission(final String transmission) {
-        this.transmission = transmission;
+        spec.setTransmission(transmission);
     }
 
     public BigDecimal getFuelConsumption() {
-        return fuelConsumption;
+        return spec.getFuelConsumption();
     }
 
     public void setFuelConsumption(final BigDecimal fuelConsumption) {
-        this.fuelConsumption = fuelConsumption;
+        spec.setFuelConsumption(fuelConsumption);
     }
 
     public Integer getMaxSpeedKmh() {
-        return maxSpeedKmh;
+        return spec.getMaxSpeedKmh();
     }
 
     public void setMaxSpeedKmh(final Integer maxSpeedKmh) {
-        this.maxSpeedKmh = maxSpeedKmh;
+        spec.setMaxSpeedKmh(maxSpeedKmh);
     }
 
     public BigDecimal getPriceUsd() {
-        return priceUsd;
+        return spec.getPriceUsd();
     }
 
     public void setPriceUsd(final BigDecimal priceUsd) {
-        this.priceUsd = priceUsd;
+        spec.setPriceUsd(priceUsd);
     }
 
 }

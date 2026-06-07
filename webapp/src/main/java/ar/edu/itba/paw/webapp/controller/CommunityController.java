@@ -9,7 +9,7 @@ import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
-import ar.edu.itba.paw.model.CommunityPostImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
@@ -18,6 +18,7 @@ import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewTag;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewService;
@@ -770,16 +771,25 @@ public class CommunityController {
                 .getCommunityPostDetail(communitySlug, postSlug, null)
                 .map(CommunityPostDetailData::getPost)
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        final Optional<CommunityPostImage> image = communityService.getPostImageById(post.getId(), imageId);
+        final Optional<ImageMetadata> metadata = communityService.getPostImageMetadataById(post.getId(), imageId);
+        if (metadata.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        final ImageMetadata meta = metadata.get();
+        final String updatedAtStamp = meta.getUpdatedAt() == null ? "0" : meta.getUpdatedAt().toString();
+        final String etag = "\"cp" + post.getId() + "-i" + imageId + "-" + updatedAtStamp + "\"";
+        final CacheControl cacheControl = CacheControl.maxAge(Duration.ofDays(7)).cachePublic();
+        if (etag.equals(ifNoneMatch)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                    .eTag(etag)
+                    .cacheControl(cacheControl)
+                    .build();
+        }
+        final Optional<StoredImagePayload> image = communityService.getPostImageById(post.getId(), imageId);
         if (image.isEmpty() || image.get().getImageData() == null) {
             return ResponseEntity.notFound().build();
         }
-        final CommunityPostImage img = image.get();
-        final String updatedAtStamp = img.getUpdatedAt() == null ? "0" : img.getUpdatedAt().toString();
-        final String etag = "\"cp" + post.getId() + "-i" + imageId + "-" + updatedAtStamp + "\"";
-        if (etag.equals(ifNoneMatch)) {
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(etag).build();
-        }
+        final StoredImagePayload img = image.get();
         MediaType mediaType;
         try {
             mediaType = img.getContentType() == null
@@ -790,7 +800,7 @@ public class CommunityController {
         }
         return ResponseEntity.ok()
                 .eTag(etag)
-                .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
+                .cacheControl(cacheControl)
                 .contentType(mediaType)
                 .body(img.getImageData());
     }
@@ -1202,7 +1212,7 @@ public class CommunityController {
     }
 
     private String postImageIdsCsv(final long postId) {
-        final List<CommunityPostImage> images = communityService.getPostImagesByPostId(postId);
+        final List<ImageMetadata> images = communityService.getPostImagesByPostId(postId);
         if (images.isEmpty()) {
             return "";
         }

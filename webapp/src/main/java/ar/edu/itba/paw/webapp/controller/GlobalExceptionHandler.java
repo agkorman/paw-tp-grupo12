@@ -19,7 +19,6 @@ import ar.edu.itba.paw.services.exception.PendingAdminRequestExistsException;
 import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import ar.edu.itba.paw.services.exception.UserNotFoundException;
 import ar.edu.itba.paw.persistence.exception.PersistenceOperationException;
-import ar.edu.itba.paw.webapp.exception.ETagGenerationException;
 import ar.edu.itba.paw.webapp.exception.ForbiddenException;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
@@ -114,7 +113,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             ServiceOperationException.class,
             PersistenceOperationException.class,
-            ETagGenerationException.class,
             UploadedImageReadException.class
     })
     public ModelAndView handleServiceOperationFailure(final RuntimeException e,

@@ -2,8 +2,9 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.ImagePayload;
-import ar.edu.itba.paw.model.CarRequestImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -20,19 +21,29 @@ public interface CarRequestDao {
     long countByStatus(String status);
 
     CarRequest create(long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId, Integer year,
-                      String model, String description, String imageContentType, byte[] imageData,
-                      String status, String fuelType, Integer horsepower, Integer airbagCount,
+                      String model, String description, String status,
+                      String fuelType, Integer horsepower, Integer airbagCount,
                       String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh, BigDecimal priceUsd);
 
-    List<CarRequestImage> findImagesByRequestId(long requestId);
+    List<ImageMetadata> findImagesByRequestId(long requestId);
 
-    List<CarRequestImage> findImagesByRequestIds(Collection<Long> requestIds);
+    List<ImageMetadata> findImagesByRequestIds(Collection<Long> requestIds);
 
-    List<CarRequestImage> findImagesByRequestIdWithData(long requestId);
+    List<ImageMetadata> findLegacyImagesByRequestIds(Collection<Long> requestIds);
 
-    List<CarRequestImage> findImagesByRequestIdAndImageIdsWithData(long requestId, Collection<Long> imageIds);
+    List<StoredImagePayload> findImagesByRequestIdWithData(long requestId);
 
-    Optional<CarRequestImage> findImageByRequestIdAndImageId(long requestId, long imageId);
+    List<StoredImagePayload> findImagesByRequestIdAndImageIdsWithData(long requestId, Collection<Long> imageIds);
+
+    Optional<StoredImagePayload> findImageByRequestIdAndImageId(long requestId, long imageId);
+
+    Optional<ImageMetadata> findImageMetadataByRequestIdAndImageId(long requestId, long imageId);
+
+    Optional<ImageMetadata> findFirstImageMetadataByRequestId(long requestId);
+
+    Optional<StoredImagePayload> findLegacyImageByRequestId(long requestId);
+
+    Optional<ImageMetadata> findLegacyImageMetadataByRequestId(long requestId);
 
     void replaceImages(long requestId, List<ImagePayload> images);
 

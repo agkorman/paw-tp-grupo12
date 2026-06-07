@@ -15,16 +15,21 @@ public class Brand implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "brand_id")
+    @Column(name = "brand_id", nullable = false)
     private long id;
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false, unique = true, length = 80)
     private String name;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public Brand() {}
+    Brand() {}
+
+    public Brand(final String name) {
+        this.name = name;
+        this.createdAt = LocalDateTime.now();
+    }
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }

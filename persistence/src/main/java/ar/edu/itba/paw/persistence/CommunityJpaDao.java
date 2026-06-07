@@ -163,11 +163,8 @@ public class CommunityJpaDao implements CommunityDao {
                             final String slug,
                             final String name,
                             final String description) {
-        final Community community = new Community();
+        final Community community = new Community(slug, name, description);
         community.setCreatedBy(em.getReference(ar.edu.itba.paw.model.User.class, createdByUserId));
-        community.setSlug(slug);
-        community.setName(name);
-        community.setDescription(description);
         em.persist(community);
         LOGGER.info("created community id={} slug={} createdByUserId={}",
                 community.getId(), slug, createdByUserId);
@@ -222,11 +219,10 @@ public class CommunityJpaDao implements CommunityDao {
                                     final String title,
                                     final String body,
                                     final Long linkedReviewId) {
-        final CommunityPost post = new CommunityPost();
-        post.setCommunity(em.getReference(Community.class, communityId));
-        post.setAuthor(em.getReference(ar.edu.itba.paw.model.User.class, authorUserId));
-        post.setSlug(slug);
-        post.setTitle(title);
+        final CommunityPost post = new CommunityPost(
+                em.getReference(Community.class, communityId),
+                em.getReference(ar.edu.itba.paw.model.User.class, authorUserId),
+                slug, title, false);
         post.setBody(body);
         if (linkedReviewId != null) {
             post.setLinkedReview(em.getReference(Review.class, linkedReviewId));
@@ -239,10 +235,10 @@ public class CommunityJpaDao implements CommunityDao {
 
     @Override
     public CommunityPostComment createComment(final long postId, final long userId, final String body) {
-        final CommunityPostComment comment = new CommunityPostComment();
-        comment.setPost(em.getReference(CommunityPost.class, postId));
-        comment.setUser(em.getReference(ar.edu.itba.paw.model.User.class, userId));
-        comment.setBody(body);
+        final CommunityPostComment comment = new CommunityPostComment(
+                em.getReference(CommunityPost.class, postId),
+                em.getReference(ar.edu.itba.paw.model.User.class, userId),
+                body, false);
         em.persist(comment);
         LOGGER.info("created community post comment id={} postId={} userId={}",
                 comment.getId(), postId, userId);

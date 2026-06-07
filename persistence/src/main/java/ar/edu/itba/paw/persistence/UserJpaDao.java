@@ -10,7 +10,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -51,13 +50,7 @@ public class UserJpaDao implements UserDao {
 
     @Override
     public User create(String username, String email, String password, String role) {
-        final User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(password);
-        user.setRole(role);
-        user.setPreferredLocale("es");
-        user.setCreatedAt(LocalDateTime.now());
+        final User user = new User(username, email, password, role, "es");
         em.persist(user);
         LOGGER.info("created user id={} email={} role={}", user.getId(), email, role);
         return user;

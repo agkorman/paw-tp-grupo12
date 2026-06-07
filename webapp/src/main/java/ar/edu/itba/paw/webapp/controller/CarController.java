@@ -3,13 +3,14 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarFavoriteService;
@@ -17,19 +18,15 @@ import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.exception.DuplicateCarException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
-import ar.edu.itba.paw.webapp.exception.ETagGenerationException;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import ar.edu.itba.paw.webapp.util.ImageValidationService;
 import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import java.io.IOException;
 import java.net.URI;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -510,10 +507,17 @@ public class CarController {
         final long carId,
         final String ifNoneMatch
     ) {
-        final CarImage carImage = carService
-            .getCarImageByCarId(carId)
+        final ImageMetadata metadata = carService
+            .getCarImageMetadataByCarId(carId)
             .orElse(null);
-        return getCarImageResponse(carImage, ifNoneMatch);
+        if (metadata == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return respondWithCachedImage(
+            metadata,
+            ifNoneMatch,
+            () -> carService.getCarImageByCarId(carId).orElse(null)
+        );
     }
 
     @RequestMapping(
@@ -528,37 +532,41 @@ public class CarController {
             required = false
         ) final String ifNoneMatch
     ) {
-        final CarImage carImage = carService
-            .getCarImageById(carId, imageId)
+        final ImageMetadata metadata = carService
+            .getCarImageMetadataById(carId, imageId)
             .orElse(null);
-        return getCarImageResponse(carImage, ifNoneMatch);
-    }
-
-    private ResponseEntity<byte[]> getCarImageResponse(
-        final CarImage carImage,
-        final String ifNoneMatch
-    ) {
-        if (carImage == null) {
+        if (metadata == null) {
             return ResponseEntity.notFound().build();
         }
+        return respondWithCachedImage(
+            metadata,
+            ifNoneMatch,
+            () -> carService.getCarImageById(carId, imageId).orElse(null)
+        );
+    }
 
-        final String eTag = buildImageEtag(carImage);
+    private ResponseEntity<byte[]> respondWithCachedImage(
+        final ImageMetadata metadata,
+        final String ifNoneMatch,
+        final java.util.function.Supplier<StoredImagePayload> imageSupplier
+    ) {
+        final String eTag = buildImageEtag(metadata);
         final CacheControl cacheControl = CacheControl.maxAge(1, TimeUnit.HOURS)
             .cachePublic()
             .mustRevalidate();
+        final long lastModified = imageLastModified(metadata);
 
         if (eTag.equals(ifNoneMatch)) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                 .eTag(eTag)
                 .cacheControl(cacheControl)
-                .lastModified(
-                    carImage
-                        .getUpdatedAt()
-                        .atZone(ZoneId.systemDefault())
-                        .toInstant()
-                        .toEpochMilli()
-                )
+                .lastModified(lastModified)
                 .build();
+        }
+
+        final StoredImagePayload carImage = imageSupplier.get();
+        if (carImage == null) {
+            return ResponseEntity.notFound().build();
         }
 
         MediaType carImageMediaType;
@@ -574,13 +582,7 @@ public class CarController {
             .contentLength(carImage.getImageData().length)
             .cacheControl(cacheControl)
             .eTag(eTag)
-            .lastModified(
-                carImage
-                    .getUpdatedAt()
-                    .atZone(ZoneId.systemDefault())
-                    .toInstant()
-                    .toEpochMilli()
-            )
+            .lastModified(lastModified)
             .body(carImage.getImageData());
     }
 
@@ -739,29 +741,20 @@ public class CarController {
         }
     }
 
-    private static String buildImageEtag(final CarImage carImage) {
-        try {
-            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            digest.update(
-                carImage
-                    .getContentType()
-                    .getBytes(java.nio.charset.StandardCharsets.UTF_8)
-            );
-            digest.update(carImage.getImageData());
-            digest.update(
-                carImage
-                    .getUpdatedAt()
-                    .toString()
-                    .getBytes(java.nio.charset.StandardCharsets.UTF_8)
-            );
-            return "\"" + HexFormat.of().formatHex(digest.digest()) + "\"";
-        } catch (final NoSuchAlgorithmException e) {
-            throw new ETagGenerationException(
-                "car image",
-                carImage.getImageId(),
-                e
-            );
+    private static String buildImageEtag(final ImageMetadata metadata) {
+        final Object stamp = metadata.getUpdatedAt() == null ? "0" : metadata.getUpdatedAt();
+        return "\"c" + metadata.getOwnerId() + "-i" + metadata.getImageId()
+                + "-" + stamp + "\"";
+    }
+
+    private static long imageLastModified(final ImageMetadata metadata) {
+        if (metadata.getUpdatedAt() == null) {
+            return 0L;
         }
+        return metadata.getUpdatedAt()
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli();
     }
 
     private static final class CarCatalogData {

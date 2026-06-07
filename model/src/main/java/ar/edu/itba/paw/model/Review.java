@@ -23,54 +23,63 @@ public class Review implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "review_id")
+    @Column(name = "review_id", nullable = false)
     private long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
-    @Column(name = "reviewer_email")
+    @Column(name = "reviewer_email", nullable = true, length = 100)
     private String reviewerEmail;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "car_id")
+    @JoinColumn(name = "car_id", nullable = false)
     private Car car;
 
-    @Column(name = "rating")
+    @Column(name = "rating", nullable = false, precision = 3, scale = 1)
     private BigDecimal rating;
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false, length = 200)
     private String title;
 
-    @Column(name = "body")
+    @Column(name = "body", nullable = false)
     private String body;
 
-    @Column(name = "ownership_status")
+    @Column(name = "ownership_status", nullable = true, length = 20)
     private String ownershipStatus;
 
-    @Column(name = "model_year")
+    @Column(name = "model_year", nullable = true)
     private Integer modelYear;
 
-    @Column(name = "mileage_km")
+    @Column(name = "mileage_km", nullable = true)
     private Integer mileageKm;
 
-    @Column(name = "would_recommend")
+    @Column(name = "would_recommend", nullable = true)
     private Boolean wouldRecommend;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false)
+    @Column(name = "updated_at", nullable = false, insertable = false)
     private LocalDateTime updatedAt;
 
     @Transient
     private List<ReviewTag> tags = new ArrayList<>();
 
     @Transient
-    private List<ReviewImage> images = new ArrayList<>();
+    private List<ImageMetadata> images = new ArrayList<>();
 
-    public Review() {}
+    Review() {}
+
+    public Review(final Car car, final BigDecimal rating, final String title, final String body) {
+        this.car = car;
+        this.rating = rating;
+        this.title = title;
+        this.body = body;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
@@ -123,8 +132,8 @@ public class Review implements Serializable {
     public List<ReviewTag> getTags() { return tags; }
     public void setTags(List<ReviewTag> tags) { this.tags = tags == null ? new ArrayList<>() : tags; }
 
-    public List<ReviewImage> getImages() { return images; }
-    public void setImages(List<ReviewImage> images) { this.images = images == null ? new ArrayList<>() : images; }
+    public List<ImageMetadata> getImages() { return images; }
+    public void setImages(List<ImageMetadata> images) { this.images = images == null ? new ArrayList<>() : images; }
 
     @PreUpdate
     private void touchUpdatedAt() {

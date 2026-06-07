@@ -1,14 +1,14 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.CarYearVariant;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.ReviewImage;
 import ar.edu.itba.paw.model.ReviewReply;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewLikeService;
@@ -385,7 +385,7 @@ public class CarReviewController {
             .getReviewStatsByCar(selectedCar.getId())
             .map(stats -> stats.getAverageRating())
             .orElse(null);
-        final List<CarImage> carImages = carService.getCarImagesByCarId(
+        final List<ImageMetadata> carImages = carService.getCarImagesByCarId(
             selectedCar.getId()
         );
         final List<ReviewThread> reviewThreads = buildReviewThreads(
@@ -496,7 +496,7 @@ public class CarReviewController {
             return;
         }
         final List<Long> ids = reviews.stream().map(Review::getId).collect(Collectors.toList());
-        final java.util.Map<Long, List<ReviewImage>> byId = reviewService.getImagesByReviewIds(ids);
+        final java.util.Map<Long, List<ImageMetadata>> byId = reviewService.getImagesByReviewIds(ids);
         for (final Review r : reviews) {
             r.setImages(byId.getOrDefault(r.getId(), Collections.emptyList()));
         }
@@ -546,7 +546,7 @@ public class CarReviewController {
     }
 
     private String reviewImageUrlsCsv(final HttpServletRequest request, final long reviewId) {
-        final List<ReviewImage> images = reviewService.getReviewImagesByReviewId(reviewId);
+        final List<ImageMetadata> images = reviewService.getReviewImagesByReviewId(reviewId);
         if (images.isEmpty()) {
             return "";
         }
@@ -557,7 +557,7 @@ public class CarReviewController {
     }
 
     private String reviewImageIdsCsv(final long reviewId) {
-        final List<ReviewImage> images = reviewService.getReviewImagesByReviewId(reviewId);
+        final List<ImageMetadata> images = reviewService.getReviewImagesByReviewId(reviewId);
         if (images.isEmpty()) {
             return "";
         }
@@ -572,21 +572,30 @@ public class CarReviewController {
             @PathVariable("imageId") final long imageId,
             @RequestHeader(value = "If-None-Match", required = false) final String ifNoneMatch
     ) {
-        final Optional<ReviewImage> image = reviewService.getReviewImageById(reviewId, imageId);
+        final Optional<ImageMetadata> metadata = reviewService.getReviewImageMetadataById(reviewId, imageId);
+        if (metadata.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        final ImageMetadata meta = metadata.get();
+        final String updatedAtStamp = meta.getUpdatedAt() == null ? "0" : meta.getUpdatedAt().toString();
+        final String etag = "\"r" + reviewId + "-i" + imageId + "-" + updatedAtStamp + "\"";
+        final CacheControl cacheControl = CacheControl.maxAge(Duration.ofDays(7)).cachePublic();
+        if (etag.equals(ifNoneMatch)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                    .eTag(etag)
+                    .cacheControl(cacheControl)
+                    .build();
+        }
+        final Optional<StoredImagePayload> image = reviewService.getReviewImageById(reviewId, imageId);
         if (image.isEmpty() || image.get().getImageData() == null) {
             return ResponseEntity.notFound().build();
         }
-        final ReviewImage img = image.get();
-        final String updatedAtStamp = img.getUpdatedAt() == null ? "0" : img.getUpdatedAt().toString();
-        final String etag = "\"r" + reviewId + "-i" + imageId + "-" + updatedAtStamp + "\"";
-        if (etag.equals(ifNoneMatch)) {
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(etag).build();
-        }
+        final StoredImagePayload img = image.get();
         final String contentType = img.getContentType() == null
                 ? MediaType.APPLICATION_OCTET_STREAM_VALUE : img.getContentType();
         return ResponseEntity.ok()
                 .eTag(etag)
-                .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
+                .cacheControl(cacheControl)
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(img.getImageData());
     }
@@ -1074,7 +1083,7 @@ public class CarReviewController {
         private final List<Review> reviews;
         private final List<ReviewThread> reviewThreads;
         private final String currentSort;
-        private final List<CarImage> carImages;
+        private final List<ImageMetadata> carImages;
         private final int currentPage;
         private final int totalPages;
         private final long totalItems;
@@ -1085,7 +1094,7 @@ public class CarReviewController {
             final List<Review> reviews,
             final List<ReviewThread> reviewThreads,
             final String currentSort,
-            final List<CarImage> carImages,
+            final List<ImageMetadata> carImages,
             final int currentPage,
             final int totalPages,
             final long totalItems,

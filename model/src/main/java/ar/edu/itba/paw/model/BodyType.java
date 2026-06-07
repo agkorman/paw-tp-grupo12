@@ -15,16 +15,21 @@ public class BodyType implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "body_type_id")
+    @Column(name = "body_type_id", nullable = false)
     private long id;
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false, unique = true, length = 50)
     private String name;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public BodyType() {}
+    BodyType() {}
+
+    public BodyType(final String name) {
+        this.name = name;
+        this.createdAt = LocalDateTime.now();
+    }
 
     public long getId() {
         return id;

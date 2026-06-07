@@ -22,46 +22,58 @@ public class CommunityPost implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "post_id")
+    @Column(name = "post_id", nullable = false)
     private long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "community_id")
+    @JoinColumn(name = "community_id", nullable = false)
     private Community community;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "author_user_id")
+    @JoinColumn(name = "author_user_id", nullable = false)
     private User author;
 
-    @Column(name = "slug")
+    @Column(name = "slug", nullable = false, length = 80)
     private String slug;
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false, length = 120)
     private String title;
 
-    @Column(name = "body")
+    @Column(name = "body", nullable = true)
     private String body;
 
-    @Column(name = "external_url")
+    @Column(name = "external_url", nullable = true, length = 2048)
     private String externalUrl;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "linked_review_id")
+    @JoinColumn(name = "linked_review_id", nullable = true)
     private Review linkedReview;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false)
+    @Column(name = "updated_at", nullable = false, insertable = false)
     private LocalDateTime updatedAt;
 
-    @Column(name = "hidden")
+    @Column(name = "hidden", nullable = false)
     private boolean hidden;
 
     @Transient
-    private List<CommunityPostImage> images = new ArrayList<>();
+    private List<ImageMetadata> images = new ArrayList<>();
 
     public CommunityPost() {}
+
+    public CommunityPost(final Community community, final User author, final String slug,
+                         final String title, final boolean hidden) {
+        this();
+        this.community = community;
+        this.author = author;
+        this.slug = slug;
+        this.title = title;
+        this.hidden = hidden;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 
     public long getId() {
         return id;
@@ -167,11 +179,11 @@ public class CommunityPost implements Serializable {
         this.hidden = hidden;
     }
 
-    public List<CommunityPostImage> getImages() {
+    public List<ImageMetadata> getImages() {
         return images;
     }
 
-    public void setImages(final List<CommunityPostImage> images) {
+    public void setImages(final List<ImageMetadata> images) {
         this.images = images == null ? new ArrayList<>() : images;
     }
 

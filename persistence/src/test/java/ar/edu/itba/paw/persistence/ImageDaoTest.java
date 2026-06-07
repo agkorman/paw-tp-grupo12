@@ -1,8 +1,9 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
-import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ImagePayload;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +29,7 @@ public class ImageDaoTest extends AbstractPersistenceTest {
         );
 
         // Exercise
-        final Optional<CarImage> result = carImageDao.findByCarId(car.getId());
+        final Optional<StoredImagePayload> result = carImageDao.findFirstByCarIdWithData(car.getId());
 
         // Assertions
         assertTrue(result.isPresent());
@@ -96,7 +97,7 @@ public class ImageDaoTest extends AbstractPersistenceTest {
         final Car car = createCar("no-images");
 
         // Exercise
-        final Optional<CarImage> result = carImageDao.findByCarId(car.getId());
+        final Optional<StoredImagePayload> result = carImageDao.findFirstByCarIdWithData(car.getId());
 
         // Assertions
         assertFalse(result.isPresent());
@@ -113,7 +114,7 @@ public class ImageDaoTest extends AbstractPersistenceTest {
         final long wrongImageId = 9999L;
 
         // Exercise
-        final Optional<CarImage> result = carImageDao.findByCarIdAndImageId(car.getId(), wrongImageId);
+        final Optional<StoredImagePayload> result = carImageDao.findByCarIdAndImageId(car.getId(), wrongImageId);
 
         // Assertions
         assertFalse(result.isPresent());
@@ -141,7 +142,7 @@ public class ImageDaoTest extends AbstractPersistenceTest {
                 "SELECT image_id FROM car_images WHERE car_id = ? AND display_order = 2", Long.class, car.getId());
 
         // Exercise
-        final List<CarImage> result = carImageDao.findByCarIdAndImageIdsWithData(car.getId(), List.of(firstId, thirdId));
+        final List<StoredImagePayload> result = carImageDao.findByCarIdAndImageIdsWithData(car.getId(), List.of(firstId, thirdId));
 
         // Assertions
         assertEquals(2, result.size());
@@ -168,7 +169,7 @@ public class ImageDaoTest extends AbstractPersistenceTest {
                 "SELECT image_id FROM car_images WHERE car_id = ? AND display_order = 0", Long.class, otherCar.getId());
 
         // Exercise
-        final List<CarImage> result = carImageDao.findByCarIdAndImageIdsWithData(car.getId(), List.of(otherImageId));
+        final List<StoredImagePayload> result = carImageDao.findByCarIdAndImageIdsWithData(car.getId(), List.of(otherImageId));
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -185,7 +186,7 @@ public class ImageDaoTest extends AbstractPersistenceTest {
         final List<Long> requestedIds = List.of();
 
         // Exercise
-        final List<CarImage> result = carImageDao.findByCarIdAndImageIdsWithData(car.getId(), requestedIds);
+        final List<StoredImagePayload> result = carImageDao.findByCarIdAndImageIdsWithData(car.getId(), requestedIds);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -205,11 +206,37 @@ public class ImageDaoTest extends AbstractPersistenceTest {
         );
 
         // Exercise
-        final Optional<CarImage> result = carImageDao.findByCarIdAndImageId(car.getId(), imageId);
+        final Optional<StoredImagePayload> result = carImageDao.findByCarIdAndImageId(car.getId(), imageId);
 
         // Assertions
         assertTrue(result.isPresent());
         assertEquals(imageId, result.get().getImageId());
         assertArrayEquals(new byte[]{7, 8}, result.get().getImageData());
+    }
+
+    @Test
+    public void shouldReturnMetadataWithoutBytesForFindAllByCarId() {
+        // Arrange
+        final Car car = createCar("metadata");
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 1, "image/jpeg", new byte[]{2}
+        );
+        jdbcTemplate.update(
+                "INSERT INTO car_images (car_id, display_order, content_type, image_data) VALUES (?, ?, ?, ?)",
+                car.getId(), 0, "image/png", new byte[]{1}
+        );
+
+        // Exercise
+        final List<ImageMetadata> result = carImageDao.findAllByCarId(car.getId());
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals(car.getId(), result.get(0).getOwnerId());
+        assertEquals("image/png", result.get(0).getContentType());
+        assertEquals(0, result.get(0).getDisplayOrder());
+        assertEquals(car.getId(), result.get(1).getOwnerId());
+        assertEquals("image/jpeg", result.get(1).getContentType());
+        assertEquals(1, result.get(1).getDisplayOrder());
     }
 }

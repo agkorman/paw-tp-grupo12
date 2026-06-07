@@ -396,14 +396,10 @@ public class ReviewJpaDao implements ReviewDao {
     public Review create(final long userId, final long carId, final BigDecimal rating, final String title,
                          final String body, final String ownershipStatus, final Integer modelYear,
                          final Integer mileageKm, final Boolean wouldRecommend) {
-        final Review review = new Review();
+        final Review review = new Review(em.getReference(Car.class, carId), rating, title, body);
         if (userId > 0) {
             review.setUser(em.getReference(User.class, userId));
         }
-        review.setCar(em.getReference(Car.class, carId));
-        review.setRating(rating);
-        review.setTitle(title);
-        review.setBody(body);
         review.setOwnershipStatus(ownershipStatus);
         review.setModelYear(modelYear);
         review.setMileageKm(mileageKm);

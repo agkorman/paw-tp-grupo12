@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,9 +39,7 @@ public class BodyTypeJpaDao implements BodyTypeDao {
 
     @Override
     public BodyType create(final String name) {
-        final BodyType bodyType = new BodyType();
-        bodyType.setName(name);
-        bodyType.setCreatedAt(LocalDateTime.now());
+        final BodyType bodyType = new BodyType(name);
         em.persist(bodyType);
         LOGGER.info("created body type id={} name={}", bodyType.getId(), name);
         return bodyType;

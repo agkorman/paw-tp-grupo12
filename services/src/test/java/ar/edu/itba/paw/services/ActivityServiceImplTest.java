@@ -7,11 +7,10 @@ import ar.edu.itba.paw.model.ActivityFeedReference;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Community;
 import ar.edu.itba.paw.model.CommunityPost;
-import ar.edu.itba.paw.model.CommunityPostImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.ReviewImage;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ActivityDao;
 import ar.edu.itba.paw.persistence.CarDao;
@@ -82,11 +81,11 @@ public class ActivityServiceImplTest {
         final Car car = TestModels.car(10L, 3L, "Ford", "Focus", 4L, 2021, "Sedan", "desc",
                 now.minusYears(1), false, null, null, null, null, null, null, null);
         car.setId(10L);
-        final ReviewImage reviewImage = reviewImage(review.getId(), 300L);
+        final ImageMetadata reviewImage = reviewImage(review.getId(), 300L);
 
         final Community community = community(20L, "classics", "Classics");
         final CommunityPost post = post(community, now.minusMinutes(2));
-        final CommunityPostImage postImage = communityPostImage(post.getId(), 400L);
+        final ImageMetadata postImage = communityPostImage(post.getId(), 400L);
 
         when(activityDao.findFeed(any(ActivityFeedCriteria.class))).thenReturn(new Page<>(
                 List.of(
@@ -265,10 +264,8 @@ public class ActivityServiceImplTest {
     }
 
     private static Community community(final long id, final String slug, final String name) {
-        final Community community = new Community();
+        final Community community = new Community(slug, name, "Community description");
         community.setId(id);
-        community.setSlug(slug);
-        community.setName(name);
         return community;
     }
 
@@ -284,21 +281,11 @@ public class ActivityServiceImplTest {
         return post;
     }
 
-    private static ReviewImage reviewImage(final long reviewId, final long imageId) {
-        final ReviewImage image = new ReviewImage();
-        final Review review = new Review();
-        review.setId(reviewId);
-        image.setReview(review);
-        image.setImageId(imageId);
-        return image;
+    private static ImageMetadata reviewImage(final long reviewId, final long imageId) {
+        return new ImageMetadata(imageId, reviewId, 0, "image/png", LocalDateTime.now());
     }
 
-    private static CommunityPostImage communityPostImage(final long postId, final long imageId) {
-        final CommunityPostImage image = new CommunityPostImage();
-        final CommunityPost post = new CommunityPost();
-        post.setId(postId);
-        image.setPost(post);
-        image.setImageId(imageId);
-        return image;
+    private static ImageMetadata communityPostImage(final long postId, final long imageId) {
+        return new ImageMetadata(imageId, postId, 0, "image/png", LocalDateTime.now());
     }
 }

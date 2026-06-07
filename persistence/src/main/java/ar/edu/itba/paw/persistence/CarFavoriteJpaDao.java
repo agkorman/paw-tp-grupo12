@@ -158,7 +158,7 @@ public class CarFavoriteJpaDao implements CarFavoriteDao {
 
     private List<Car> loadCarsByIds(final List<Long> ids) {
         return em.createQuery(
-                "SELECT c FROM Car c JOIN FETCH c.brand JOIN FETCH c.bodyTypeEntity WHERE c.id IN :ids",
+                "SELECT c FROM Car c JOIN FETCH c.spec.brand JOIN FETCH c.spec.bodyType WHERE c.id IN :ids",
                 Car.class)
                 .setParameter("ids", ids)
                 .getResultList();

@@ -2,14 +2,15 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CarImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ImagePayload;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -25,50 +26,57 @@ public class CarImageJpaDao implements CarImageDao {
     private EntityManager em;
 
     @Override
-    public Optional<CarImage> findByCarId(final long carId) {
+    public Optional<StoredImagePayload> findFirstByCarIdWithData(final long carId) {
         return em.createQuery(
-                        "SELECT i FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
-                        CarImage.class)
+                        "SELECT new ar.edu.itba.paw.model.StoredImagePayload("
+                        + "i.imageId, i.car.id, i.displayOrder, i.contentType, i.imageData, i.updatedAt) "
+                        + "FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
+                        StoredImagePayload.class)
                 .setParameter("carId", carId)
                 .setMaxResults(1)
                 .getResultList()
-                .stream().findFirst();
+                .stream()
+                .findFirst();
     }
 
     @Override
-    public List<CarImage> findAllByCarId(final long carId) {
-        final List<?> rawRows = em.createQuery(
-                        "SELECT i.imageId, i.car.id, i.displayOrder, i.contentType, i.updatedAt "
-                        + "FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC")
-                .setParameter("carId", carId)
-                .getResultList();
-        final Car carRef = em.getReference(Car.class, carId);
-        final List<CarImage> result = new ArrayList<>();
-        for (final Object element : rawRows) {
-            final Object[] row = (Object[]) element;
-            final CarImage image = new CarImage();
-            image.setImageId(((Number) row[0]).longValue());
-            image.setCar(carRef);
-            image.setDisplayOrder(((Number) row[2]).intValue());
-            image.setContentType((String) row[3]);
-            image.setImageData(null);
-            image.setUpdatedAt((java.time.LocalDateTime) row[4]);
-            result.add(image);
-        }
-        return result;
-    }
-
-    @Override
-    public List<CarImage> findAllByCarIdWithData(final long carId) {
+    public Optional<ImageMetadata> findFirstMetadataByCarId(final long carId) {
         return em.createQuery(
-                        "SELECT i FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
-                        CarImage.class)
+                        "SELECT new ar.edu.itba.paw.model.ImageMetadata("
+                        + "i.imageId, i.car.id, i.displayOrder, i.contentType, i.updatedAt) "
+                        + "FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
+                        ImageMetadata.class)
+                .setParameter("carId", carId)
+                .setMaxResults(1)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    @Override
+    public List<ImageMetadata> findAllByCarId(final long carId) {
+        return em.createQuery(
+                        "SELECT new ar.edu.itba.paw.model.ImageMetadata("
+                        + "i.imageId, i.car.id, i.displayOrder, i.contentType, i.updatedAt) "
+                        + "FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
+                        ImageMetadata.class)
                 .setParameter("carId", carId)
                 .getResultList();
     }
 
     @Override
-    public List<CarImage> findByCarIdAndImageIdsWithData(final long carId, final Collection<Long> imageIds) {
+    public List<StoredImagePayload> findAllByCarIdWithData(final long carId) {
+        return em.createQuery(
+                        "SELECT new ar.edu.itba.paw.model.StoredImagePayload("
+                        + "i.imageId, i.car.id, i.displayOrder, i.contentType, i.imageData, i.updatedAt) "
+                        + "FROM CarImage i WHERE i.car.id = :carId ORDER BY i.displayOrder ASC, i.imageId ASC",
+                        StoredImagePayload.class)
+                .setParameter("carId", carId)
+                .getResultList();
+    }
+
+    @Override
+    public List<StoredImagePayload> findByCarIdAndImageIdsWithData(final long carId, final Collection<Long> imageIds) {
         if (imageIds == null) {
             return List.of();
         }
@@ -77,23 +85,42 @@ public class CarImageJpaDao implements CarImageDao {
             return List.of();
         }
         return em.createQuery(
-                        "SELECT i FROM CarImage i WHERE i.car.id = :carId AND i.imageId IN :imageIds "
+                        "SELECT new ar.edu.itba.paw.model.StoredImagePayload("
+                        + "i.imageId, i.car.id, i.displayOrder, i.contentType, i.imageData, i.updatedAt) "
+                        + "FROM CarImage i WHERE i.car.id = :carId AND i.imageId IN :imageIds "
                         + "ORDER BY i.displayOrder ASC, i.imageId ASC",
-                        CarImage.class)
+                        StoredImagePayload.class)
                 .setParameter("carId", carId)
                 .setParameter("imageIds", ids)
                 .getResultList();
     }
 
     @Override
-    public Optional<CarImage> findByCarIdAndImageId(final long carId, final long imageId) {
+    public Optional<StoredImagePayload> findByCarIdAndImageId(final long carId, final long imageId) {
         return em.createQuery(
-                        "SELECT i FROM CarImage i WHERE i.car.id = :carId AND i.imageId = :imageId",
-                        CarImage.class)
+                        "SELECT new ar.edu.itba.paw.model.StoredImagePayload("
+                        + "i.imageId, i.car.id, i.displayOrder, i.contentType, i.imageData, i.updatedAt) "
+                        + "FROM CarImage i WHERE i.car.id = :carId AND i.imageId = :imageId",
+                        StoredImagePayload.class)
                 .setParameter("carId", carId)
                 .setParameter("imageId", imageId)
                 .getResultList()
-                .stream().findFirst();
+                .stream()
+                .findFirst();
+    }
+
+    @Override
+    public Optional<ImageMetadata> findMetadataByCarIdAndImageId(final long carId, final long imageId) {
+        return em.createQuery(
+                        "SELECT new ar.edu.itba.paw.model.ImageMetadata("
+                        + "i.imageId, i.car.id, i.displayOrder, i.contentType, i.updatedAt) "
+                        + "FROM CarImage i WHERE i.car.id = :carId AND i.imageId = :imageId",
+                        ImageMetadata.class)
+                .setParameter("carId", carId)
+                .setParameter("imageId", imageId)
+                .getResultList()
+                .stream()
+                .findFirst();
     }
 
     @Override
@@ -109,13 +136,30 @@ public class CarImageJpaDao implements CarImageDao {
         final Car carRef = em.getReference(Car.class, carId);
         for (int i = 0; i < images.size(); i++) {
             final ImagePayload payload = images.get(i);
-            final CarImage img = new CarImage();
-            img.setCar(carRef);
-            img.setDisplayOrder(i);
-            img.setContentType(payload.getContentType());
-            img.setImageData(payload.getImageData());
+            final CarImage img = new CarImage(carRef, i, payload.getContentType(), payload.getImageData());
             em.persist(img);
         }
         LOGGER.info("replaced image gallery for car id={} imageCount={}", carId, images.size());
     }
+
+    @Override
+    public void appendAll(final long carId, final List<ImagePayload> images) {
+        if (images == null || images.isEmpty()) {
+            return;
+        }
+        final Integer maxOrder = em.createQuery(
+                        "SELECT MAX(i.displayOrder) FROM CarImage i WHERE i.car.id = :carId",
+                        Integer.class)
+                .setParameter("carId", carId)
+                .getSingleResult();
+        final int startOrder = maxOrder == null ? 0 : maxOrder + 1;
+        final Car carRef = em.getReference(Car.class, carId);
+        for (int i = 0; i < images.size(); i++) {
+            final ImagePayload payload = images.get(i);
+            final CarImage img = new CarImage(carRef, startOrder + i, payload.getContentType(), payload.getImageData());
+            em.persist(img);
+        }
+        LOGGER.info("appended {} image(s) to car id={}", images.size(), carId);
+    }
+
 }

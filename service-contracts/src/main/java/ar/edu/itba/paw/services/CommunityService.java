@@ -9,11 +9,12 @@ import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
-import ar.edu.itba.paw.model.CommunityPostImage;
+import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.StoredImagePayload;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -48,9 +49,10 @@ public interface CommunityService {
     Optional<CommunityPostDetailData> getCommunityPostDetail(String communitySlug, String postSlug, Long currentUserId);
     Optional<CommunityPostDetailData> getCommunityPostDetail(String communitySlug, String postSlug, Long currentUserId,
                                                              boolean viewerAdmin);
-    List<CommunityPostImage> getPostImagesByPostId(long postId);
-    Map<Long, List<CommunityPostImage>> getImagesByPostIds(Collection<Long> postIds);
-    Optional<CommunityPostImage> getPostImageById(long postId, long imageId);
+    List<ImageMetadata> getPostImagesByPostId(long postId);
+    Map<Long, List<ImageMetadata>> getImagesByPostIds(Collection<Long> postIds);
+    Optional<StoredImagePayload> getPostImageById(long postId, long imageId);
+    Optional<ImageMetadata> getPostImageMetadataById(long postId, long imageId);
     List<ImagePayload> collectRetainedPostImagePayloads(long postId, List<Long> retainedImageIds);
     Optional<String> getViewerRole(String communitySlug, Long userId);
     Set<Long> getHideablePostIds(Collection<CommunityPost> posts, Long viewerUserId, boolean viewerAdmin);
