@@ -14,6 +14,7 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CommunityDao;
 import ar.edu.itba.paw.persistence.CommunityPostImageDao;
+import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.services.exception.CannotModerateCreatorException;
 import ar.edu.itba.paw.services.exception.CommunityContentOwnershipException;
 import ar.edu.itba.paw.services.exception.CommunityCreatorCannotLeaveException;
@@ -54,6 +55,9 @@ class CommunityServiceImplTest {
 
     @Mock
     private CommunityPostImageDao communityPostImageDao;
+
+    @Mock
+    private ReviewDao reviewDao;
 
     @Mock
     private UserService userService;
@@ -272,12 +276,12 @@ class CommunityServiceImplTest {
         when(communityDao.findMembershipRole(community.getId(), USER_ID)).thenReturn(Optional.of("member"));
         when(communityDao.findPostByCommunityIdAndSlug(community.getId(), "first-post")).thenReturn(Optional.of(existingPost));
         when(communityDao.findPostByCommunityIdAndSlug(community.getId(), "first-post-2")).thenReturn(Optional.empty());
-        when(communityDao.createPost(community.getId(), USER_ID, "first-post-2", "First post", "Body"))
+        when(communityDao.createPost(community.getId(), USER_ID, "first-post-2", "First post", "Body", null))
                 .thenReturn(createdPost);
 
         // Exercise
         final Optional<CommunityPost> result = communityService.createCommunityPost(
-                "classics", USER_ID, "First post", "Body", List.of());
+                "classics", USER_ID, "First post", "Body", List.of(), null);
 
         // Assertions
         assertTrue(result.isPresent());
@@ -698,7 +702,7 @@ class CommunityServiceImplTest {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
         final CommunityServiceImpl service = new CommunityServiceImpl(
-                communityDao, communityPostImageDao, userService, recordingEmailService);
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final User target = author(42L, "target");
         when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
@@ -737,7 +741,7 @@ class CommunityServiceImplTest {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
         final CommunityServiceImpl service = new CommunityServiceImpl(
-                communityDao, communityPostImageDao, userService, recordingEmailService);
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final User target = author(42L, "target");
         when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
@@ -794,7 +798,7 @@ class CommunityServiceImplTest {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
         final CommunityServiceImpl service = new CommunityServiceImpl(
-                communityDao, communityPostImageDao, userService, recordingEmailService);
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final User postAuthor = author(8L, "lu.driver");
         final CommunityPost post = post(community, postAuthor);
@@ -818,7 +822,7 @@ class CommunityServiceImplTest {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
         final CommunityServiceImpl service = new CommunityServiceImpl(
-                communityDao, communityPostImageDao, userService, recordingEmailService);
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final CommunityPost post = post(community, author(8L, "lu.driver"));
         final User commentAuthor = author(10L, "commenter");
@@ -843,7 +847,7 @@ class CommunityServiceImplTest {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
         final CommunityServiceImpl service = new CommunityServiceImpl(
-                communityDao, communityPostImageDao, userService, recordingEmailService);
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final CommunityPost post = post(community, author(8L, "lu.driver"));
         final User commentAuthor = author(10L, "commenter");
@@ -1074,7 +1078,7 @@ class CommunityServiceImplTest {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
         final CommunityServiceImpl service = new CommunityServiceImpl(
-                communityDao, communityPostImageDao, userService, recordingEmailService);
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
         final long ownerId = 7L;
         final User newOwner = author(42L, "new.owner");
         final Community community = communityWithCreator(ownerId);

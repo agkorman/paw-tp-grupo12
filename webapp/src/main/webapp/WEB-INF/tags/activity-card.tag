@@ -7,6 +7,7 @@
 
 <spring:message var="activityMetricsAria" code="activity.card.metrics.aria"/>
 <spring:message var="activityActionMenuLabel" code="activity.card.actionMenu.label"/>
+<spring:message var="activityRepostLabel" code="review.action.repost"/>
 
 <c:set var="activityCurrentPath" value="${requestScope['javax.servlet.forward.servlet_path']}"/>
 <c:if test="${empty activityCurrentPath}">
@@ -111,6 +112,12 @@
         </div>
         <c:if test="${activityCard.actionMenuVisible}">
             <pa:action-menu label="${activityActionMenuLabel}" cssClass="activity-card-menu">
+                <c:if test="${not empty activityCard.repostHref}">
+                    <c:url var="activityCardRepostUrl" value="${activityCard.repostHref}"/>
+                    <a href="${fn:escapeXml(activityCardRepostUrl)}">
+                        <c:out value="${activityRepostLabel}"/>
+                    </a>
+                </c:if>
                 <c:if test="${activityCard.editable}">
                     <c:url var="activityCardEditUrl" value="${activityCard.editHref}">
                         <c:param name="redirect" value="${activityCardRedirectPath}"/>
@@ -118,24 +125,6 @@
                     <a href="${fn:escapeXml(activityCardEditUrl)}">
                         <spring:message code="common.action.edit"/>
                     </a>
-                </c:if>
-                <c:if test="${activityCard.deletable}">
-                    <c:url var="activityCardDeleteUrl" value="${activityCard.deleteAction}"/>
-                    <form method="post" action="${fn:escapeXml(activityCardDeleteUrl)}"
-                          data-confirm-modal="${activityCard.review ? 'deleteReviewConfirmModal' : 'deletePostConfirmModal'}">
-                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                        <input type="hidden" name="redirect" value="${fn:escapeXml(activityCurrentPath)}">
-                        <button type="submit" class="action-menu-danger">
-                            <c:choose>
-                                <c:when test="${activityCard.review}">
-                                    <spring:message code="common.action.delete"/>
-                                </c:when>
-                                <c:otherwise>
-                                    <spring:message code="communities.post.deleteAction"/>
-                                </c:otherwise>
-                            </c:choose>
-                        </button>
-                    </form>
                 </c:if>
                 <c:if test="${activityCard.hideable}">
                     <c:url var="activityCardHideUrl" value="${activityCard.hideAction}"/>
@@ -161,6 +150,24 @@
                             </button>
                         </c:otherwise>
                     </c:choose>
+                </c:if>
+                <c:if test="${activityCard.deletable}">
+                    <c:url var="activityCardDeleteUrl" value="${activityCard.deleteAction}"/>
+                    <form method="post" action="${fn:escapeXml(activityCardDeleteUrl)}"
+                          data-confirm-modal="${activityCard.review ? 'deleteReviewConfirmModal' : 'deletePostConfirmModal'}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                        <input type="hidden" name="redirect" value="${fn:escapeXml(activityCurrentPath)}">
+                        <button type="submit" class="action-menu-danger">
+                            <c:choose>
+                                <c:when test="${activityCard.review}">
+                                    <spring:message code="common.action.delete"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <spring:message code="communities.post.deleteAction"/>
+                                </c:otherwise>
+                            </c:choose>
+                        </button>
+                    </form>
                 </c:if>
             </pa:action-menu>
         </c:if>

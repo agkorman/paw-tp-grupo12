@@ -11,11 +11,16 @@ import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
 import ar.edu.itba.paw.model.CommunityPostImage;
 import ar.edu.itba.paw.model.CommunityPostSummary;
+import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewTag;
+import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.CommunityService;
+import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
 import ar.edu.itba.paw.services.exception.InvalidCommunityTopicSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
@@ -30,6 +35,7 @@ import ar.edu.itba.paw.webapp.form.CommunityPostCommentForm;
 import ar.edu.itba.paw.webapp.form.CommunityForm;
 import ar.edu.itba.paw.webapp.form.CommunityHideForm;
 import ar.edu.itba.paw.webapp.form.CommunityPostForm;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -71,12 +77,18 @@ public class CommunityController {
     private static final int MAX_COMMUNITY_POST_IMAGE_COUNT = 3;
 
     private final CommunityService communityService;
+    private final ReviewService reviewService;
+    private final CarService carService;
     private final RelativeTimeFormatter relativeTimeFormatter;
 
     @Autowired
     public CommunityController(final CommunityService communityService,
+                               final ReviewService reviewService,
+                               final CarService carService,
                                final RelativeTimeFormatter relativeTimeFormatter) {
         this.communityService = communityService;
+        this.reviewService = reviewService;
+        this.carService = carService;
         this.relativeTimeFormatter = relativeTimeFormatter;
     }
 
@@ -539,6 +551,116 @@ public class CommunityController {
     }
 
     @RequestMapping(
+        value = "/reviews/{reviewId}/repost",
+        method = RequestMethod.GET
+    )
+    public ModelAndView repostReviewForm(
+        @PathVariable final long reviewId,
+        @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        final Review review = reviewService.getReviewById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("review not found"));
+        final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
+
+        communityPostForm.setLinkedReviewId(reviewId);
+
+        final ModelAndView mav = new ModelAndView("community-post-form.jsp");
+        mav.addObject("repostMode", true);
+        mav.addObject("joinedCommunities", joinedCommunities);
+        mav.addObject("repostReview", buildRepostReviewView(review));
+        mav.addObject("existingPostImageIds", "");
+        return mav;
+    }
+
+    @RequestMapping(
+        value = "/reviews/{reviewId}/repost",
+        method = RequestMethod.POST
+    )
+    public String submitRepost(
+        @PathVariable final long reviewId,
+        @Valid @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
+        final BindingResult errors,
+        final Model model,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        final Review review = reviewService.getReviewById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("review not found"));
+
+        if (communityPostForm.getLinkedReviewId() == null || communityPostForm.getLinkedReviewId() != reviewId) {
+            throw new ResourceNotFoundException("linked review id mismatch");
+        }
+
+        final String communitySlug = communityPostForm.getCommunitySlug();
+        if (communitySlug == null || communitySlug.trim().isEmpty()) {
+            errors.rejectValue("communitySlug", "validation.communityPost.communitySlug.required");
+        }
+
+        if (errors.hasErrors()) {
+            final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
+            model.addAttribute("repostMode", true);
+            model.addAttribute("joinedCommunities", joinedCommunities);
+            model.addAttribute("repostReview", buildRepostReviewView(review));
+            model.addAttribute("existingPostImageIds", "");
+            return "community-post-form.jsp";
+        }
+
+        final List<MultipartFile> uploadedFiles = nonEmptyFiles(communityPostForm.getFiles());
+        validateCommunityPostImageUploads(uploadedFiles, 0, errors);
+        if (errors.hasErrors()) {
+            final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
+            model.addAttribute("repostMode", true);
+            model.addAttribute("joinedCommunities", joinedCommunities);
+            model.addAttribute("repostReview", buildRepostReviewView(review));
+            model.addAttribute("existingPostImageIds", "");
+            return "community-post-form.jsp";
+        }
+
+        final List<ImagePayload> imagePayloads;
+        try {
+            imagePayloads = toImagePayloads(uploadedFiles);
+        } catch (final IOException e) {
+            LOGGER.error("failed to read uploaded image during repost reviewId={} userId={}",
+                    reviewId, currentUser.getId(), e);
+            throw new UploadedImageReadException("reposting review " + reviewId + " by user " + currentUser.getId(), e);
+        }
+
+        final CommunityPost createdPost;
+        try {
+            createdPost = communityService
+                .createCommunityPost(communitySlug, currentUser.getId(),
+                        communityPostForm.getTitle(), communityPostForm.getBody(), imagePayloads, reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        } catch (final CommunityMembershipRequiredException e) {
+            errors.reject("communities.postForm.error.notMember");
+            final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
+            model.addAttribute("repostMode", true);
+            model.addAttribute("joinedCommunities", joinedCommunities);
+            model.addAttribute("repostReview", buildRepostReviewView(review));
+            model.addAttribute("existingPostImageIds", "");
+            return "community-post-form.jsp";
+        } catch (final DataIntegrityViolationException e) {
+            if (!isConstraintViolation(e, "uq_community_posts_slug")) {
+                throw e;
+            }
+            LOGGER.warn("repost rejected: slug conflict reviewId={} userId={}", reviewId, currentUser.getId());
+            errors.reject("communities.postForm.error.slugConflict");
+            final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
+            model.addAttribute("repostMode", true);
+            model.addAttribute("joinedCommunities", joinedCommunities);
+            model.addAttribute("repostReview", buildRepostReviewView(review));
+            model.addAttribute("existingPostImageIds", "");
+            return "community-post-form.jsp";
+        }
+        LOGGER.info("reposted review reviewId={} as post slug={} communitySlug={} userId={}",
+                reviewId,
+                LogSanitizer.forLog(createdPost.getSlug(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                currentUser.getId());
+        return "redirect:/communities/" + communitySlug + "/posts/" + createdPost.getSlug();
+    }
+
+    @RequestMapping(
         value = "/communities/{communitySlug}/posts/{postSlug}/edit",
         method = RequestMethod.POST
     )
@@ -960,6 +1082,27 @@ public class CommunityController {
         model.addAttribute("community", community);
     }
 
+    private RepostReviewView buildRepostReviewView(final Review review) {
+        final String carName;
+        if (review.getCar() != null) {
+            carName = review.getCar().getBrandName() + " " + review.getCar().getModel();
+        } else {
+            final Car car = carService.getCarById(review.getCarId()).orElse(null);
+            carName = car != null ? car.getBrandName() + " " + car.getModel() : null;
+        }
+        final String authorName = review.getUser() != null ? review.getUser().getUsername() : null;
+        return new RepostReviewView(
+                review.getId(),
+                review.getTitle(),
+                review.getBody(),
+                review.getRating(),
+                carName,
+                review.getCarId(),
+                authorName,
+                review.getTags()
+        );
+    }
+
     private String redirectToLoginIfAnonymous(final HttpServletRequest request,
                                               final AuthenticatedUser currentUser,
                                               final String defaultRedirect) {
@@ -1058,6 +1201,10 @@ public class CommunityController {
         final List<PostCardView> cards = new ArrayList<>();
         for (final CommunityPostSummary postSummary : postSummaries) {
             final String postSlug = postSummary.getPost().getSlug();
+            final Review linkedReview = postSummary.getPost().getLinkedReview();
+            final RepostReviewView repostReview = linkedReview != null
+                    ? buildRepostReviewView(linkedReview)
+                    : null;
             cards.add(new PostCardView(
                 "/communities/" + communitySlug + "/posts/" + postSlug,
                 "/users/" + postSummary.getPost().getAuthorUserId(),
@@ -1070,7 +1217,8 @@ public class CommunityController {
                 postSummary.getCommentCount(),
                 postSummary.getPost().getId(),
                 "/communities/" + communitySlug + "/posts/" + postSlug + "/helpful",
-                helpfulByUser.contains(postSummary.getPost().getId())
+                helpfulByUser.contains(postSummary.getPost().getId()),
+                repostReview
             ));
         }
         return cards;
@@ -1096,9 +1244,14 @@ public class CommunityController {
         }
         final boolean moderationAvailable = postHideable || comments.stream().anyMatch(CommentView::getHideable);
 
+        final Review linkedReview = postDetail.getPost().getLinkedReview();
+        final RepostReviewView repostReview = linkedReview != null
+                ? buildRepostReviewView(linkedReview)
+                : null;
+
         return new PostDetailView(
             postDetail.getCommunity().getName(),
-            "c/" + postDetail.getCommunity().getSlug(),
+            postDetail.getCommunity().getName(),
             postDetail.getCommunity().getSlug(),
             postDetail.getPost().getSlug(),
             "/users/" + postDetail.getPost().getAuthorUserId(),
@@ -1116,7 +1269,8 @@ public class CommunityController {
             postDetail.isPostDeletableByViewer(),
             postDetail.isPostEditableByViewer(),
             postHideable,
-            moderationAvailable
+            moderationAvailable,
+            repostReview
         );
     }
 
@@ -1260,6 +1414,7 @@ public class CommunityController {
         private final long postId;
         private final String helpfulAction;
         private final boolean helpfulByCurrentUser;
+        private final RepostReviewView repostReview;
 
         private PostCardView(final String href, final String authorProfileHref,
                              final String author,
@@ -1267,7 +1422,8 @@ public class CommunityController {
                              final String body, final List<String> imageUrls, final long helpfulCount,
                              final long commentCount, final long postId,
                              final String helpfulAction,
-                             final boolean helpfulByCurrentUser) {
+                             final boolean helpfulByCurrentUser,
+                             final RepostReviewView repostReview) {
             this.href = href;
             this.authorProfileHref = authorProfileHref;
             this.author = author;
@@ -1280,6 +1436,7 @@ public class CommunityController {
             this.postId = postId;
             this.helpfulAction = helpfulAction;
             this.helpfulByCurrentUser = helpfulByCurrentUser;
+            this.repostReview = repostReview;
         }
 
         public String getHref() {
@@ -1329,6 +1486,10 @@ public class CommunityController {
         public boolean getHelpfulByCurrentUser() {
             return helpfulByCurrentUser;
         }
+
+        public RepostReviewView getRepostReview() {
+            return repostReview;
+        }
     }
 
     public static final class PostDetailView {
@@ -1353,6 +1514,7 @@ public class CommunityController {
         private final boolean editable;
         private final boolean hideable;
         private final boolean moderationAvailable;
+        private final RepostReviewView repostReview;
 
         private PostDetailView(final String communityName, final String communityHandle,
                                final String communitySlug, final String postSlug,
@@ -1365,7 +1527,8 @@ public class CommunityController {
                                final String viewerRole,
                                final boolean viewerMember,
                                final boolean deletable, final boolean editable, final boolean hideable,
-                               final boolean moderationAvailable) {
+                               final boolean moderationAvailable,
+                               final RepostReviewView repostReview) {
             this.communityName = communityName;
             this.communityHandle = communityHandle;
             this.communitySlug = communitySlug;
@@ -1386,6 +1549,11 @@ public class CommunityController {
             this.editable = editable;
             this.hideable = hideable;
             this.moderationAvailable = moderationAvailable;
+            this.repostReview = repostReview;
+        }
+
+        public RepostReviewView getRepostReview() {
+            return repostReview;
         }
 
         public String getCommunitySlug() {
@@ -1545,5 +1713,40 @@ public class CommunityController {
         public boolean getOp() {
             return op;
         }
+    }
+
+    public static final class RepostReviewView {
+
+        private final long reviewId;
+        private final String title;
+        private final String body;
+        private final BigDecimal rating;
+        private final String carName;
+        private final long carId;
+        private final String authorName;
+        private final List<ReviewTag> tags;
+
+        private RepostReviewView(final long reviewId, final String title, final String body,
+                                 final BigDecimal rating, final String carName, final long carId,
+                                 final String authorName, final List<ReviewTag> tags) {
+            this.reviewId = reviewId;
+            this.title = title;
+            this.body = body;
+            this.rating = rating;
+            this.carName = carName;
+            this.carId = carId;
+            this.authorName = authorName;
+            this.tags = tags != null ? tags : Collections.emptyList();
+        }
+
+        public long getReviewId() { return reviewId; }
+        public String getTitle() { return title; }
+        public String getBody() { return body; }
+        public BigDecimal getRating() { return rating; }
+        public String getCarName() { return carName; }
+        public long getCarId() { return carId; }
+        public String getAuthorName() { return authorName; }
+        public List<ReviewTag> getTags() { return tags; }
+        public String getReviewHref() { return "/reviews/car/" + carId + "#review-" + reviewId; }
     }
 }

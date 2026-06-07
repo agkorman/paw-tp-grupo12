@@ -19,6 +19,7 @@ import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CommunityDao;
 import ar.edu.itba.paw.persistence.CommunityPostImageDao;
+import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.services.exception.CannotModerateCreatorException;
 import ar.edu.itba.paw.services.exception.CommunityContentOwnershipException;
 import ar.edu.itba.paw.services.exception.CommunityCreatorCannotLeaveException;
@@ -65,15 +66,18 @@ public class CommunityServiceImpl implements CommunityService {
     private static final String DEFAULT_POST_SLUG = "post";
     private final CommunityDao communityDao;
     private final CommunityPostImageDao communityPostImageDao;
+    private final ReviewDao reviewDao;
     private final UserService userService;
     private final EmailService emailService;
 
     @Autowired
     public CommunityServiceImpl(final CommunityDao communityDao, final CommunityPostImageDao communityPostImageDao,
+                                final ReviewDao reviewDao,
                                 final UserService userService,
                                 final EmailService emailService) {
         this.communityDao = communityDao;
         this.communityPostImageDao = communityPostImageDao;
+        this.reviewDao = reviewDao;
         this.userService = userService;
         this.emailService = emailService;
     }
@@ -246,6 +250,17 @@ public class CommunityServiceImpl implements CommunityService {
                                                        final String title,
                                                        final String body,
                                                        final List<ImagePayload> images) {
+        return createCommunityPost(communitySlug, userId, title, body, images, null);
+    }
+
+    @Override
+    @Transactional
+    public Optional<CommunityPost> createCommunityPost(final String communitySlug,
+                                                       final long userId,
+                                                       final String title,
+                                                       final String body,
+                                                       final List<ImagePayload> images,
+                                                       final Long linkedReviewId) {
         if (userId <= 0) {
             throw new InvalidServiceInputException("Community post author is required.");
         }
@@ -256,6 +271,11 @@ public class CommunityServiceImpl implements CommunityService {
         );
         final String normalizedTitle = StringUtils.normalizeRequired(title, "Community post title is required.");
         final String normalizedBody = StringUtils.normalizeRequired(body, "Community post body is required.");
+
+        if (linkedReviewId != null && reviewDao.findById(linkedReviewId).isEmpty()) {
+            LOGGER.warn("repost denied: review not found linkedReviewId={}", linkedReviewId);
+            return Optional.empty();
+        }
 
         final Optional<Community> communityOptional = communityDao.findBySlug(normalizedCommunitySlug);
         if (communityOptional.isEmpty()) {
@@ -273,14 +293,15 @@ public class CommunityServiceImpl implements CommunityService {
                 userId,
                 slug,
                 normalizedTitle,
-                normalizedBody
+                normalizedBody,
+                linkedReviewId
         );
         final List<ImagePayload> normalizedImages = ImagePayloadUtils.normalizeImages(images);
         if (!normalizedImages.isEmpty()) {
             communityPostImageDao.replaceAll(post.getId(), normalizedImages);
         }
-        LOGGER.info("created community post id={} communityId={} userId={} slug={}",
-                post.getId(), community.getId(), userId, slug);
+        LOGGER.info("created community post id={} communityId={} userId={} slug={} linkedReviewId={}",
+                post.getId(), community.getId(), userId, slug, linkedReviewId);
         return Optional.of(post);
     }
 
@@ -1263,6 +1284,15 @@ public class CommunityServiceImpl implements CommunityService {
             return slug;
         }
         return slug.substring(0, maxLength);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<Community> getJoinedCommunities(final long userId) {
+        if (userId <= 0) {
+            return List.of();
+        }
+        return communityDao.findJoinedCommunities(userId);
     }
 
     @Override

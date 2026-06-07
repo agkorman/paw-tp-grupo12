@@ -12,6 +12,7 @@
 <%@ attribute name="helpfulAction" required="false" %>
 <%@ attribute name="helpfulByCurrentUser" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="helpfulRedirect" required="false" %>
+<%@ attribute name="repostReview" required="false" type="ar.edu.itba.paw.webapp.controller.CommunityController.RepostReviewView" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
@@ -49,6 +50,9 @@
             <h3 class="community-post-title"><c:out value="${title}"/></h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
             <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt"/>
+            <c:if test="${not empty repostReview}">
+                <pa:reposted-review-card repostReview="${repostReview}" linked="${false}"/>
+            </c:if>
         </a>
     </c:when>
     <c:otherwise>
@@ -75,6 +79,9 @@
             <h3 class="community-post-title"><c:out value="${title}"/></h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
             <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt"/>
+            <c:if test="${not empty repostReview}">
+                <pa:reposted-review-card repostReview="${repostReview}"/>
+            </c:if>
         </article>
     </c:otherwise>
 </c:choose>

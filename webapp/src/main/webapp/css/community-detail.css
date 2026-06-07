@@ -131,13 +131,23 @@
     margin: 0;
     color: var(--on-surface-variant);
     line-height: 1.65;
-    white-space: pre-line;
     overflow-wrap: anywhere;
 }
 
 .community-post-body {
     white-space: pre-wrap;
     overflow-wrap: break-word;
+}
+
+.community-sidebar-copy {
+    white-space: pre-line;
+}
+
+.community-post-card .community-post-body {
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .community-sidebar-topics {
@@ -293,6 +303,7 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    white-space: pre-line;
 }
 
 .community-post-metrics,
@@ -328,6 +339,7 @@
     line-height: 1.65;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    white-space: pre-line;
     -webkit-box-orient: vertical;
     overflow: hidden;
     margin: 0;
