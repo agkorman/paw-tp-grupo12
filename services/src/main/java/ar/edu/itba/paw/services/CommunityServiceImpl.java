@@ -756,13 +756,27 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
-    public Set<Long> getModeratedCommunityIds(final Long userId, final Collection<Long> communityIds) {
-        if (userId == null || userId <= 0 || communityIds == null || communityIds.isEmpty()) {
+    public Set<Long> getHideablePostIds(final Collection<CommunityPost> posts, final Long viewerUserId,
+                                        final boolean viewerAdmin) {
+        if (posts == null || posts.isEmpty() || (viewerUserId == null && !viewerAdmin)) {
             return Collections.emptySet();
         }
-        return communityDao.findMembershipRoles(userId, communityIds).entrySet().stream()
-                .filter(entry -> CREATOR_ROLE.equals(entry.getValue()))
-                .map(Map.Entry::getKey)
+        final Set<Long> moderatedCommunityIds;
+        if (viewerAdmin || viewerUserId == null || viewerUserId <= 0) {
+            moderatedCommunityIds = Collections.emptySet();
+        } else {
+            final Set<Long> communityIds = posts.stream()
+                    .map(CommunityPost::getCommunityId)
+                    .collect(Collectors.toSet());
+            moderatedCommunityIds = communityDao.findMembershipRoles(viewerUserId, communityIds).entrySet().stream()
+                    .filter(entry -> CREATOR_ROLE.equals(entry.getValue()))
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toSet());
+        }
+        return posts.stream()
+                .filter(post -> (viewerAdmin || moderatedCommunityIds.contains(post.getCommunityId()))
+                        && (viewerUserId == null || post.getAuthorUserId() != viewerUserId))
+                .map(CommunityPost::getId)
                 .collect(Collectors.toSet());
     }
 

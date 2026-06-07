@@ -565,14 +565,8 @@ public class UserController {
         final Set<Long> helpfulByCurrentUser = currentUserId == null
             ? Set.of()
             : communityService.findPostHelpfulReactionsByUser(postIds, currentUserId);
-        final Set<Long> moderatedCommunityIds = viewerAdmin || currentUserId == null
-            ? Set.of()
-            : communityService.getModeratedCommunityIds(
-                currentUserId,
-                postsById.values().stream()
-                    .map(CommunityPost::getCommunityId)
-                    .collect(Collectors.toSet())
-            );
+        final Set<Long> hideablePostIds = communityService.getHideablePostIds(
+            postsById.values(), currentUserId, viewerAdmin);
 
         final List<ProfileActivityEntry> entries = new ArrayList<>(items.size());
         for (final ProfileActivityItem item : items) {
@@ -601,9 +595,7 @@ public class UserController {
                 }
                 final boolean postOwnedByCurrentUser =
                     isPostOwnedByCurrentUser(post, currentUserId);
-                final boolean postHideable =
-                    (viewerAdmin || moderatedCommunityIds.contains(post.getCommunityId()))
-                        && !postOwnedByCurrentUser;
+                final boolean postHideable = hideablePostIds.contains(post.getId());
                 entries.add(ProfileActivityEntry.post(
                     new ProfilePostCard(
                         post.getId(),

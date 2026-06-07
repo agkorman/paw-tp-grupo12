@@ -68,7 +68,7 @@
                     <c:choose>
                         <c:when test="${editable}">
                             <pa:action-menu label="${postActionMenuLabel}" cssClass="community-post-menu">
-                                <a href="${postEditUrl}">
+                                <a href="${fn:escapeXml(postEditUrl)}">
                                     <spring:message code="common.action.edit"/>
                                 </a>
                                 <form method="post" action="${fn:escapeXml(postDeleteUrl)}"

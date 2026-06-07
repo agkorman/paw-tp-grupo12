@@ -1092,6 +1092,77 @@ class CommunityServiceImplTest {
         assertEquals(newOwner.getEmail(), recordingEmailService.communityOwnershipEmails.get(0));
     }
 
+    @Test
+    void getHideablePostIds_adminCanHideOnlyPostsNotOwnedByViewer() {
+        // Arrange
+        final long adminId = 99L;
+        final Community community = community();
+        final CommunityPost ownPost = postIn(10L, community, author(adminId, "admin"));
+        final CommunityPost othersPost = postIn(11L, community, author(7L, "mateo.classics"));
+        final List<CommunityPost> posts = List.of(ownPost, othersPost);
+
+        // Exercise
+        final Set<Long> result = communityService.getHideablePostIds(posts, adminId, true);
+
+        // Assertions
+        assertEquals(Set.of(11L), result);
+    }
+
+    @Test
+    void getHideablePostIds_moderatorCanHideNonOwnedPostsOnlyInModeratedCommunities() {
+        // Arrange
+        final long viewerId = 7L;
+        final Community moderated = communityWithId(1L, "classics");
+        final Community other = communityWithId(2L, "modern");
+        final CommunityPost hideable = postIn(20L, moderated, author(8L, "lu.driver"));
+        final CommunityPost ownInModerated = postIn(21L, moderated, author(viewerId, "viewer"));
+        final CommunityPost notModerated = postIn(22L, other, author(8L, "lu.driver"));
+        final List<CommunityPost> posts = List.of(hideable, ownInModerated, notModerated);
+        when(communityDao.findMembershipRoles(eq(viewerId), anyCollection()))
+                .thenReturn(Map.of(1L, "moderator", 2L, "member"));
+
+        // Exercise
+        final Set<Long> result = communityService.getHideablePostIds(posts, viewerId, false);
+
+        // Assertions
+        assertEquals(Set.of(20L), result);
+    }
+
+    @Test
+    void getHideablePostIds_anonymousViewer_returnsEmptySet() {
+        // Arrange
+        final Community community = community();
+        final List<CommunityPost> posts = List.of(postIn(30L, community, author(7L, "mateo.classics")));
+
+        // Exercise
+        final Set<Long> result = communityService.getHideablePostIds(posts, null, false);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    private static Community communityWithId(final long id, final String slug) {
+        final Community community = new Community();
+        community.setId(id);
+        community.setSlug(slug);
+        community.setName(slug);
+        community.setCreatedAt(LocalDateTime.now().minusDays(10));
+        return community;
+    }
+
+    private static CommunityPost postIn(final long id, final Community community, final User author) {
+        final CommunityPost post = new CommunityPost();
+        post.setId(id);
+        post.setCommunity(community);
+        post.setAuthor(author);
+        post.setSlug("post-" + id);
+        post.setTitle("Post " + id);
+        post.setBody("Body " + id);
+        post.setCreatedAt(LocalDateTime.now().minusHours(2));
+        post.setUpdatedAt(LocalDateTime.now().minusHours(2));
+        return post;
+    }
+
     private static Community communityWithCreator(final long creatorId) {
         final Community community = community();
         community.setCreatedBy(author(creatorId, "creator"));
