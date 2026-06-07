@@ -12,6 +12,7 @@
 <%@ attribute name="helpfulAction" required="false" %>
 <%@ attribute name="helpfulByCurrentUser" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="helpfulRedirect" required="false" %>
+<%@ attribute name="repostReview" required="false" type="ar.edu.itba.paw.webapp.controller.CommunityController.RepostReviewView" %>
 <%@ attribute name="editable" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="hideable" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="communitySlug" required="false" %>
@@ -65,12 +66,24 @@
                                 intent="community-post-helpful-${postId}"/>
                         <span class="profile-card-metric"><c:out value="${replyCountText}"/></span>
                     </div>
-                    <c:choose>
-                        <c:when test="${editable}">
-                            <pa:action-menu label="${postActionMenuLabel}" cssClass="community-post-menu">
+                    <c:if test="${showActionMenu}">
+                        <pa:action-menu label="${postActionMenuLabel}" cssClass="community-post-menu">
+                            <c:if test="${editable}">
                                 <a href="${fn:escapeXml(postEditUrl)}">
                                     <spring:message code="common.action.edit"/>
                                 </a>
+                            </c:if>
+                            <c:if test="${hideable}">
+                                <button type="button"
+                                        class="action-menu-danger"
+                                        data-open-community-hide-modal
+                                        data-community-hide-modal-target="hideCommunityPostModal"
+                                        data-community-hide-action="${fn:escapeXml(postHideUrl)}"
+                                        data-community-hide-redirect="${fn:escapeXml(actionRedirect)}">
+                                    <c:out value="${postHideLabel}"/>
+                                </button>
+                            </c:if>
+                            <c:if test="${editable}">
                                 <form method="post" action="${fn:escapeXml(postDeleteUrl)}"
                                       data-confirm-modal="deletePostConfirmModal">
                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
@@ -81,21 +94,9 @@
                                         <spring:message code="communities.post.deleteAction"/>
                                     </button>
                                 </form>
-                            </pa:action-menu>
-                        </c:when>
-                        <c:when test="${hideable}">
-                            <button type="button"
-                                    class="action-menu-hide-button"
-                                    aria-label="${fn:escapeXml(postHideLabel)}"
-                                    title="${fn:escapeXml(postHideLabel)}"
-                                    data-open-community-hide-modal
-                                    data-community-hide-modal-target="hideCommunityPostModal"
-                                    data-community-hide-action="${fn:escapeXml(postHideUrl)}"
-                                    data-community-hide-redirect="${fn:escapeXml(actionRedirect)}">
-                                <pa:icon name="visibility-off" size="18"/>
-                            </button>
-                        </c:when>
-                    </c:choose>
+                            </c:if>
+                        </pa:action-menu>
+                    </c:if>
                 </div>
             </div>
 
@@ -136,6 +137,9 @@
             <h3 class="community-post-title"><c:out value="${title}"/></h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
             <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt"/>
+            <c:if test="${not empty repostReview}">
+                <pa:reposted-review-card repostReview="${repostReview}" linked="${false}"/>
+            </c:if>
         </a>
     </c:when>
     <c:otherwise>
@@ -162,6 +166,9 @@
             <h3 class="community-post-title"><c:out value="${title}"/></h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
             <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt"/>
+            <c:if test="${not empty repostReview}">
+                <pa:reposted-review-card repostReview="${repostReview}"/>
+            </c:if>
         </article>
     </c:otherwise>
 </c:choose>

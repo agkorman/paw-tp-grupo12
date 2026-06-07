@@ -31,6 +31,8 @@ public interface CommunityService {
     Optional<Boolean> deleteCommunity(String communitySlug, long callerUserId);
     Optional<CommunityPost> createCommunityPost(String communitySlug, long userId, String title, String body,
                                                 List<ImagePayload> images);
+    Optional<CommunityPost> createCommunityPost(String communitySlug, long userId, String title, String body,
+                                                List<ImagePayload> images, Long linkedReviewId);
     Optional<CommunityPost> getCommunityPostForEdit(String communitySlug, String postSlug, long callerUserId);
     Optional<CommunityPost> updateCommunityPost(String communitySlug, String postSlug, long callerUserId, String title,
                                                 String body, List<ImagePayload> images);
@@ -63,6 +65,7 @@ public interface CommunityService {
     Optional<Boolean> kickMember(String communitySlug, long targetUserId, long callerUserId);
     Optional<Boolean> promoteToModerator(String communitySlug, long targetUserId, long callerUserId);
     Optional<Boolean> transferOwnership(String communitySlug, long newOwnerUserId, long callerUserId);
+    List<Community> getJoinedCommunities(long userId);
     List<CommunityPost> getPostsByIds(Collection<Long> postIds);
     Map<Long, Long> countHelpfulReactionsByPostIds(Collection<Long> postIds);
     Set<Long> findPostHelpfulReactionsByUser(Collection<Long> postIds, long userId);

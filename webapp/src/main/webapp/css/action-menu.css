@@ -71,28 +71,3 @@
 .action-menu-panel .action-menu-danger {
     color: var(--error-dim);
 }
-
-/* Standalone hide (eye) button shown when hiding is the only available action,
-   instead of opening a single-item action menu. Mirrors .review-hide-button. */
-.action-menu-hide-button {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 2rem;
-    height: 2rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--outline-variant);
-    border-radius: var(--radius-md);
-    background: var(--surface-container-high);
-    color: var(--secondary);
-    cursor: pointer;
-    transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
-}
-
-.action-menu-hide-button:hover,
-.action-menu-hide-button:focus-visible {
-    border-color: rgba(255, 159, 146, 0.48);
-    background: var(--surface-container-highest);
-    color: var(--error-dim);
-}

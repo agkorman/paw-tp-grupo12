@@ -166,6 +166,10 @@
         <c:set var="s" value="${empty size ? 18 : size}"/>
         <svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><path d="M12 21s-6.8-4.2-9.5-8.4C0.6 9.5 2.4 5 6.2 5c2 0 3.5 1 4.4 2.3C11.5 6 13 5 15 5c3.8 0 5.6 4.5 3.7 7.6C16.8 16.8 12 21 12 21z"/></svg>
     </c:when>
+    <c:when test="${name eq 'repeat'}">
+        <c:set var="s" value="${empty size ? 18 : size}"/>
+        <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="${fn:escapeXml(cssClass)}"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+    </c:when>
 
     <c:otherwise><!-- icon: unknown name "${fn:escapeXml(name)}" --></c:otherwise>
 

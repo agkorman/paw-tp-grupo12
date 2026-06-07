@@ -26,6 +26,7 @@ public interface CommunityDao {
     void updateCreatedBy(long communityId, long newOwnerUserId);
     boolean delete(long communityId);
     CommunityPost createPost(long communityId, long authorUserId, String slug, String title, String body);
+    CommunityPost createPost(long communityId, long authorUserId, String slug, String title, String body, Long linkedReviewId);
     CommunityPostComment createComment(long postId, long userId, String body);
     void updatePost(long postId, String title, String body);
     void updateComment(long commentId, String body);
@@ -57,6 +58,7 @@ public interface CommunityDao {
     boolean deleteComment(long commentId);
     Map<Long, Long> countMembersByCommunityIds(Collection<Long> communityIds);
     Set<Long> findJoinedCommunityIds(long userId, Collection<Long> communityIds);
+    List<Community> findJoinedCommunities(long userId);
     Map<Long, Long> countWeeklyPostsByCommunityIds(Collection<Long> communityIds, LocalDateTime since);
     Map<Long, Long> countCommentsByPostIds(Collection<Long> postIds);
     Map<Long, Long> countHelpfulReactionsByPostIds(Collection<Long> postIds);

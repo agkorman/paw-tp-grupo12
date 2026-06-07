@@ -152,7 +152,8 @@ public class ActivityController {
                     "/reviews/" + reviewId + "/delete",
                     "/reviews/" + reviewId + "/hide",
                     null,
-                    reviewCommentsHref(item)
+                    reviewCommentsHref(item),
+                    authenticated ? "/reviews/" + reviewId + "/repost" : null
             );
         }
 
@@ -187,7 +188,8 @@ public class ActivityController {
                 "/communities/" + communitySlug + "/posts/" + postSlug + "/delete",
                 "/communities/" + communitySlug + "/posts/" + postSlug + "/hide",
                 "hideCommunityPostModal",
-                "/communities/" + communitySlug + "/posts/" + postSlug + "#comments"
+                "/communities/" + communitySlug + "/posts/" + postSlug + "#comments",
+                null
         );
     }
 
@@ -273,6 +275,7 @@ public class ActivityController {
         private final String hideAction;
         private final String hideModalTarget;
         private final String commentsHref;
+        private final String repostHref;
 
         private ActivityCardView(final boolean review,
                                  final String href,
@@ -301,7 +304,8 @@ public class ActivityController {
                                  final String deleteAction,
                                  final String hideAction,
                                  final String hideModalTarget,
-                                 final String commentsHref) {
+                                 final String commentsHref,
+                                 final String repostHref) {
             this.review = review;
             this.href = href;
             this.authorHref = authorHref;
@@ -330,6 +334,7 @@ public class ActivityController {
             this.hideAction = hideAction;
             this.hideModalTarget = hideModalTarget;
             this.commentsHref = commentsHref;
+            this.repostHref = repostHref;
         }
 
         public boolean isReview() { return review; }
@@ -356,6 +361,8 @@ public class ActivityController {
         public boolean isEditable() { return editable; }
         public boolean isDeletable() { return deletable; }
         public boolean isHideable() { return hideable; }
+        public boolean isActionMenuVisible() { return editable || deletable || hideable || repostHref != null; }
+        public String getRepostHref() { return repostHref; }
         public String getEditHref() { return editHref; }
         public String getDeleteAction() { return deleteAction; }
         public String getHideAction() { return hideAction; }

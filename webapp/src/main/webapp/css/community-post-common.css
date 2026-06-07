@@ -39,8 +39,7 @@
     min-width: 0;
 }
 
-.community-post-header .community-post-mod-menu,
-.community-post-header .action-menu-hide-button {
+.community-post-header .community-post-mod-menu {
     margin-left: auto;
 }
 

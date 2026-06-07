@@ -5,7 +5,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css"/>
+<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css|/css/reposted-review-card.css|/css/review-tags.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -184,7 +184,8 @@
                                 postId="${postCard.postId}"
                                 helpfulAction="${postCardHelpfulAction}"
                                 helpfulByCurrentUser="${postCard.helpfulByCurrentUser}"
-                                helpfulRedirect="${communityPostsRedirectBase}#post-${postCard.postId}"/>
+                                helpfulRedirect="${communityPostsRedirectBase}#post-${postCard.postId}"
+                                repostReview="${postCard.repostReview}"/>
                     </c:forEach>
                 </div>
 
