@@ -554,11 +554,7 @@ public class CarController {
         final CacheControl cacheControl = CacheControl.maxAge(1, TimeUnit.HOURS)
             .cachePublic()
             .mustRevalidate();
-        final long lastModified = metadata
-            .getUpdatedAt()
-            .atZone(ZoneId.systemDefault())
-            .toInstant()
-            .toEpochMilli();
+        final long lastModified = imageLastModified(metadata);
 
         if (eTag.equals(ifNoneMatch)) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
@@ -746,8 +742,19 @@ public class CarController {
     }
 
     private static String buildImageEtag(final ImageMetadata metadata) {
+        final Object stamp = metadata.getUpdatedAt() == null ? "0" : metadata.getUpdatedAt();
         return "\"c" + metadata.getOwnerId() + "-i" + metadata.getImageId()
-                + "-" + metadata.getUpdatedAt() + "\"";
+                + "-" + stamp + "\"";
+    }
+
+    private static long imageLastModified(final ImageMetadata metadata) {
+        if (metadata.getUpdatedAt() == null) {
+            return 0L;
+        }
+        return metadata.getUpdatedAt()
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli();
     }
 
     private static final class CarCatalogData {

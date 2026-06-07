@@ -839,16 +839,18 @@ public class AdminController {
         final ImageMetadata metadata,
         final String ifNoneMatch
     ) {
+        final Object eTagStamp = metadata.getUpdatedAt() == null ? "0" : metadata.getUpdatedAt();
         final String eTag =
-            "\"" + metadata.getImageId() + "-" + metadata.getUpdatedAt() + "\"";
+            "\"" + metadata.getImageId() + "-" + eTagStamp + "\"";
         final CacheControl cacheControl = CacheControl.maxAge(1, TimeUnit.HOURS)
             .cachePrivate()
             .mustRevalidate();
-        final long lastModified = metadata
-            .getUpdatedAt()
-            .atZone(ZoneId.systemDefault())
-            .toInstant()
-            .toEpochMilli();
+        final long lastModified = metadata.getUpdatedAt() == null
+            ? 0L
+            : metadata.getUpdatedAt()
+                .atZone(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();
 
         if (eTag.equals(ifNoneMatch)) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
