@@ -23,7 +23,7 @@
             <span class="car-info-value">
                 <c:choose>
                     <c:when test="${not empty selectedCar.year}"><c:out value="${selectedCar.year}"/></c:when>
-                    <c:otherwise>N/A</c:otherwise>
+                    <c:otherwise><spring:message code="common.empty.na"/></c:otherwise>
                 </c:choose>
             </span>
         </div>
@@ -32,7 +32,7 @@
             <span class="car-info-value">
                 <c:choose>
                     <c:when test="${not empty selectedCar.brandName}"><c:out value="${selectedCar.brandName}"/></c:when>
-                    <c:otherwise>N/A</c:otherwise>
+                    <c:otherwise><spring:message code="common.empty.na"/></c:otherwise>
                 </c:choose>
             </span>
         </div>
@@ -41,7 +41,7 @@
             <span class="car-info-value">
                 <c:choose>
                     <c:when test="${not empty selectedCar.bodyType}"><c:out value="${selectedCar.bodyType}"/></c:when>
-                    <c:otherwise>N/A</c:otherwise>
+                    <c:otherwise><spring:message code="common.empty.na"/></c:otherwise>
                 </c:choose>
             </span>
         </div>
@@ -53,7 +53,7 @@
                     <c:when test="${selectedCar.fuelType eq 'hybrid'}"><spring:message code="domain.fuel.hybrid"/></c:when>
                     <c:when test="${selectedCar.fuelType eq 'electric'}"><spring:message code="domain.fuel.electric"/></c:when>
                     <c:when test="${not empty selectedCar.fuelType}"><c:out value="${selectedCar.fuelType}"/></c:when>
-                    <c:otherwise>N/A</c:otherwise>
+                    <c:otherwise><spring:message code="common.empty.na"/></c:otherwise>
                 </c:choose>
             </span>
         </div>
@@ -64,7 +64,7 @@
                     <c:when test="${selectedCar.transmission eq 'manual'}"><spring:message code="domain.transmission.manual"/></c:when>
                     <c:when test="${selectedCar.transmission eq 'automatic'}"><spring:message code="domain.transmission.automatic"/></c:when>
                     <c:when test="${not empty selectedCar.transmission}"><c:out value="${selectedCar.transmission}"/></c:when>
-                    <c:otherwise>N/A</c:otherwise>
+                    <c:otherwise><spring:message code="common.empty.na"/></c:otherwise>
                 </c:choose>
             </span>
         </div>
@@ -73,7 +73,7 @@
             <span class="car-info-value">
                 <c:choose>
                     <c:when test="${not empty selectedCar.horsepower}"><c:out value="${selectedCar.horsepower}"/> HP</c:when>
-                    <c:otherwise>N/A</c:otherwise>
+                    <c:otherwise><spring:message code="common.empty.na"/></c:otherwise>
                 </c:choose>
             </span>
         </div>
@@ -82,7 +82,7 @@
             <span class="car-info-value">
                 <c:choose>
                     <c:when test="${not empty selectedCar.airbagCount}"><c:out value="${selectedCar.airbagCount}"/></c:when>
-                    <c:otherwise>N/A</c:otherwise>
+                    <c:otherwise><spring:message code="common.empty.na"/></c:otherwise>
                 </c:choose>
             </span>
         </div>
@@ -92,7 +92,7 @@
                 <span class="car-info-value">
                     <c:choose>
                         <c:when test="${not empty selectedCar.fuelConsumption}"><c:out value="${selectedCar.fuelConsumption}"/> L/100 km</c:when>
-                        <c:otherwise>N/A</c:otherwise>
+                        <c:otherwise><spring:message code="common.empty.na"/></c:otherwise>
                     </c:choose>
                 </span>
             </div>
@@ -102,7 +102,7 @@
             <span class="car-info-value">
                 <c:choose>
                     <c:when test="${not empty selectedCar.maxSpeedKmh}"><c:out value="${selectedCar.maxSpeedKmh}"/> km/h</c:when>
-                    <c:otherwise>N/A</c:otherwise>
+                    <c:otherwise><spring:message code="common.empty.na"/></c:otherwise>
                 </c:choose>
             </span>
         </div>

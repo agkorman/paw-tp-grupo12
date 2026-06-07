@@ -22,7 +22,6 @@ import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport
 import ar.edu.itba.paw.webapp.util.ImageValidationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -94,11 +93,19 @@ class AdminControllerTest {
     @Mock
     private ImageValidationService imageValidationService;
 
-    @InjectMocks
-    private AdminController controller;
-
     private MockMvc adminMvc() throws Exception {
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenAnswer(inv -> inv.getArgument(0));
+        final AdminController controller = new AdminController(
+                carRequestService,
+                carService,
+                brandService,
+                bodyTypeService,
+                brandRequestService,
+                bodyTypeRequestService,
+                adminRequestService,
+                userService,
+                messageSource,
+                imageValidationService);
         return MockMvcBuilders.standaloneSetup(controller)
                 .setValidator(
                         ControllerTestValidationSupport.carFormSpringValidator(
@@ -534,6 +541,23 @@ class AdminControllerTest {
         mockMvc.perform(post("/admin/admin-requests/21/reject"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin?requestRejected=1"));
+    }
+
+    @Test
+    void adminRoleRequests_acceptFailure_redirectsWithError() throws Exception {
+        // Arrange
+        arrangeDashboardDefaultsSimple();
+        when(adminRequestService.approvePendingRequest(eq(21L))).thenReturn(false);
+        final MockMvc mockMvc = adminMvc();
+
+        // Exercise
+        final ResultActions resultActions =
+                mockMvc.perform(post("/admin/admin-requests/21/accept"));
+
+        // Assertions
+        resultActions
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin?requestError=1"));
     }
 
     @Test

@@ -11,12 +11,17 @@ import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
 import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.CommunityPostSummary;
+import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewTag;
 import ar.edu.itba.paw.model.StoredImagePayload;
+import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.CommunityService;
+import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
 import ar.edu.itba.paw.services.exception.InvalidCommunityTopicSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
@@ -31,6 +36,7 @@ import ar.edu.itba.paw.webapp.form.CommunityPostCommentForm;
 import ar.edu.itba.paw.webapp.form.CommunityForm;
 import ar.edu.itba.paw.webapp.form.CommunityHideForm;
 import ar.edu.itba.paw.webapp.form.CommunityPostForm;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -64,20 +70,28 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class CommunityController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommunityController.class);
     private static final int MAX_COMMUNITY_POST_IMAGE_COUNT = 3;
+    private static final String ACTION_TOAST_ATTRIBUTE = "actionToastCode";
 
     private final CommunityService communityService;
+    private final ReviewService reviewService;
+    private final CarService carService;
     private final RelativeTimeFormatter relativeTimeFormatter;
 
     @Autowired
     public CommunityController(final CommunityService communityService,
+                               final ReviewService reviewService,
+                               final CarService carService,
                                final RelativeTimeFormatter relativeTimeFormatter) {
         this.communityService = communityService;
+        this.reviewService = reviewService;
+        this.carService = carService;
         this.relativeTimeFormatter = relativeTimeFormatter;
     }
 
@@ -285,15 +299,20 @@ public class CommunityController {
     @RequestMapping(value = "/communities/{communitySlug}/join", method = RequestMethod.POST)
     public String joinCommunity(
         @PathVariable final String communitySlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse("/communities/" + communitySlug);
         if (currentUser == null) {
-            return "redirect:/communities/" + communitySlug;
+            return redirectTo(safeRedirect);
         }
 
         communityService.toggleMembership(communitySlug, currentUser.getId())
             .orElseThrow(() -> new ResourceNotFoundException("community not found"));
-        return "redirect:/communities/" + communitySlug;
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -303,16 +322,20 @@ public class CommunityController {
     public ModelAndView communityPostDetail(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         final CommunityPostDetailData postDetail = communityService
-            .getCommunityPostDetail(communitySlug, postSlug, currentUserId(currentUser))
+            .getCommunityPostDetail(communitySlug, postSlug, currentUserId(currentUser), request.isUserInRole("ADMIN"))
             .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
 
         final ModelAndView mav = new ModelAndView("community-post-detail.jsp");
         mav.addObject("pageTitle", postDetail.getPost().getTitle() + " | La Posta Autos");
         mav.addObject("postDetail", postDetail);
         mav.addObject("postView", toPostView(postDetail));
+        LoginRedirectUtils.safeRedirect(redirect, request.getContextPath())
+                .ifPresent(r -> mav.addObject("postReturnRedirect", r));
         return mav;
     }
 
@@ -372,7 +395,8 @@ public class CommunityController {
         @PathVariable final String postSlug,
         @Valid @ModelAttribute("communityPostCommentForm") final CommunityPostCommentForm communityPostCommentForm,
         final BindingResult errors,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
@@ -409,6 +433,7 @@ public class CommunityController {
                 currentUser.getId(),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.create.toast.success");
         return new ModelAndView("redirect:/communities/" + communitySlug + "/posts/" + postSlug);
     }
 
@@ -435,6 +460,8 @@ public class CommunityController {
     public ModelAndView editCommunityPost(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
@@ -454,6 +481,8 @@ public class CommunityController {
         mav.addObject("editMode", true);
         mav.addObject("postSlug", postSlug);
         mav.addObject("existingPostImageIds", postImageIdsCsv(post.getId()));
+        LoginRedirectUtils.safeRedirect(redirect, request.getContextPath())
+                .ifPresent(r -> mav.addObject("editRedirect", r));
         return mav;
     }
 
@@ -466,7 +495,8 @@ public class CommunityController {
         @Valid @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
         final BindingResult errors,
         final Model model,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug + "/submit";
@@ -528,6 +558,117 @@ public class CommunityController {
                 LogSanitizer.forLog(createdPost.getSlug(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 currentUser.getId());
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.create.toast.success");
+        return "redirect:/communities/" + communitySlug + "#post-" + createdPost.getId();
+    }
+
+    @RequestMapping(
+        value = "/reviews/{reviewId}/repost",
+        method = RequestMethod.GET
+    )
+    public ModelAndView repostReviewForm(
+        @PathVariable final long reviewId,
+        @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        final Review review = reviewService.getReviewById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("review not found"));
+        final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
+
+        communityPostForm.setLinkedReviewId(reviewId);
+
+        final ModelAndView mav = new ModelAndView("community-post-form.jsp");
+        mav.addObject("repostMode", true);
+        mav.addObject("joinedCommunities", joinedCommunities);
+        mav.addObject("repostReview", buildRepostReviewView(review));
+        mav.addObject("existingPostImageIds", "");
+        return mav;
+    }
+
+    @RequestMapping(
+        value = "/reviews/{reviewId}/repost",
+        method = RequestMethod.POST
+    )
+    public String submitRepost(
+        @PathVariable final long reviewId,
+        @Valid @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
+        final BindingResult errors,
+        final Model model,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        final Review review = reviewService.getReviewById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("review not found"));
+
+        if (communityPostForm.getLinkedReviewId() == null || communityPostForm.getLinkedReviewId() != reviewId) {
+            throw new ResourceNotFoundException("linked review id mismatch");
+        }
+
+        final String communitySlug = communityPostForm.getCommunitySlug();
+        if (communitySlug == null || communitySlug.trim().isEmpty()) {
+            errors.rejectValue("communitySlug", "validation.communityPost.communitySlug.required");
+        }
+
+        if (errors.hasErrors()) {
+            final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
+            model.addAttribute("repostMode", true);
+            model.addAttribute("joinedCommunities", joinedCommunities);
+            model.addAttribute("repostReview", buildRepostReviewView(review));
+            model.addAttribute("existingPostImageIds", "");
+            return "community-post-form.jsp";
+        }
+
+        final List<MultipartFile> uploadedFiles = nonEmptyFiles(communityPostForm.getFiles());
+        validateCommunityPostImageUploads(uploadedFiles, 0, errors);
+        if (errors.hasErrors()) {
+            final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
+            model.addAttribute("repostMode", true);
+            model.addAttribute("joinedCommunities", joinedCommunities);
+            model.addAttribute("repostReview", buildRepostReviewView(review));
+            model.addAttribute("existingPostImageIds", "");
+            return "community-post-form.jsp";
+        }
+
+        final List<ImagePayload> imagePayloads;
+        try {
+            imagePayloads = toImagePayloads(uploadedFiles);
+        } catch (final IOException e) {
+            LOGGER.error("failed to read uploaded image during repost reviewId={} userId={}",
+                    reviewId, currentUser.getId(), e);
+            throw new UploadedImageReadException("reposting review " + reviewId + " by user " + currentUser.getId(), e);
+        }
+
+        final CommunityPost createdPost;
+        try {
+            createdPost = communityService
+                .createCommunityPost(communitySlug, currentUser.getId(),
+                        communityPostForm.getTitle(), communityPostForm.getBody(), imagePayloads, reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        } catch (final CommunityMembershipRequiredException e) {
+            errors.reject("communities.postForm.error.notMember");
+            final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
+            model.addAttribute("repostMode", true);
+            model.addAttribute("joinedCommunities", joinedCommunities);
+            model.addAttribute("repostReview", buildRepostReviewView(review));
+            model.addAttribute("existingPostImageIds", "");
+            return "community-post-form.jsp";
+        } catch (final DataIntegrityViolationException e) {
+            if (!isConstraintViolation(e, "uq_community_posts_slug")) {
+                throw e;
+            }
+            LOGGER.warn("repost rejected: slug conflict reviewId={} userId={}", reviewId, currentUser.getId());
+            errors.reject("communities.postForm.error.slugConflict");
+            final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
+            model.addAttribute("repostMode", true);
+            model.addAttribute("joinedCommunities", joinedCommunities);
+            model.addAttribute("repostReview", buildRepostReviewView(review));
+            model.addAttribute("existingPostImageIds", "");
+            return "community-post-form.jsp";
+        }
+        LOGGER.info("reposted review reviewId={} as post slug={} communitySlug={} userId={}",
+                reviewId,
+                LogSanitizer.forLog(createdPost.getSlug(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
+                currentUser.getId());
         return "redirect:/communities/" + communitySlug + "/posts/" + createdPost.getSlug();
     }
 
@@ -538,10 +679,13 @@ public class CommunityController {
     public String updateCommunityPost(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @Valid @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
         final BindingResult errors,
         final Model model,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        final HttpServletRequest request,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
@@ -553,6 +697,9 @@ public class CommunityController {
         final Community community = communityService
                 .getCommunityBySlug(communitySlug)
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse(communityPostDetailPath(communitySlug, postSlug));
         if (errors.hasErrors()) {
             LOGGER.warn("edit community post rejected: validation errors userId={} communitySlug={} postSlug={} errorCount={}",
                     currentUser.getId(),
@@ -563,6 +710,7 @@ public class CommunityController {
             model.addAttribute("editMode", true);
             model.addAttribute("postSlug", postSlug);
             model.addAttribute("existingPostImageIds", postImageIdsCsv(post.getId()));
+            model.addAttribute("editRedirect", safeRedirect);
             return "community-post-form.jsp";
         }
 
@@ -575,6 +723,7 @@ public class CommunityController {
             model.addAttribute("editMode", true);
             model.addAttribute("postSlug", postSlug);
             model.addAttribute("existingPostImageIds", postImageIdsCsv(post.getId()));
+            model.addAttribute("editRedirect", safeRedirect);
             return "community-post-form.jsp";
         }
 
@@ -604,7 +753,8 @@ public class CommunityController {
                 LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 currentUser.getId());
-        return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.update.toast.success");
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -759,19 +909,32 @@ public class CommunityController {
     public String hidePost(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @Valid @ModelAttribute("communityHideForm") final CommunityHideForm communityHideForm,
         final BindingResult errors,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        final HttpServletRequest request,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse(communityPostDetailPath(communitySlug, postSlug));
         if (currentUser == null) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
         if (errors.hasErrors()) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
-        communityService.hidePost(communitySlug, postSlug, currentUser.getId(), communityHideForm.getReason())
+        communityService.hidePost(
+                        communitySlug,
+                        postSlug,
+                        currentUser.getId(),
+                        communityHideForm.getReason(),
+                        request.isUserInRole("ADMIN")
+                )
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        return "redirect:/communities/" + communitySlug;
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.hide.toast.success");
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -782,33 +945,53 @@ public class CommunityController {
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
         @PathVariable final long commentId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @Valid @ModelAttribute("communityHideForm") final CommunityHideForm communityHideForm,
         final BindingResult errors,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        final HttpServletRequest request,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse(communityPostDetailPath(communitySlug, postSlug));
         if (currentUser == null) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
         if (errors.hasErrors()) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
-        communityService.hideComment(communitySlug, commentId, currentUser.getId(), communityHideForm.getReason())
+        communityService.hideComment(
+                        communitySlug,
+                        commentId,
+                        currentUser.getId(),
+                        communityHideForm.getReason(),
+                        request.isUserInRole("ADMIN")
+                )
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
-        return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.hide.toast.success");
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(value = "/communities/{communitySlug}/posts/{postSlug}/delete", method = RequestMethod.POST)
     public String deletePost(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse("/communities/" + communitySlug);
         if (currentUser == null) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
         communityService.deletePost(communitySlug, postSlug, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        return "redirect:/communities/" + communitySlug;
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.delete.toast.success");
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -821,7 +1004,8 @@ public class CommunityController {
         @PathVariable final long commentId,
         @Valid @ModelAttribute("communityPostCommentForm") final CommunityPostCommentForm communityPostCommentForm,
         final BindingResult errors,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
@@ -839,6 +1023,7 @@ public class CommunityController {
                     LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                     LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                     currentUser.getId());
+            redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.update.toast.success");
         }
         return "redirect:/communities/" + communitySlug + "/posts/" + postSlug + "#comment-" + commentId;
     }
@@ -851,13 +1036,15 @@ public class CommunityController {
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
         @PathVariable final long commentId,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
         }
         communityService.deleteComment(communitySlug, commentId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.delete.toast.success");
         return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
     }
 
@@ -926,6 +1113,27 @@ public class CommunityController {
 
     private void populateCommunityPostFormModel(final Model model, final Community community) {
         model.addAttribute("community", community);
+    }
+
+    private RepostReviewView buildRepostReviewView(final Review review) {
+        final String carName;
+        if (review.getCar() != null) {
+            carName = review.getCar().getBrandName() + " " + review.getCar().getModel();
+        } else {
+            final Car car = carService.getCarById(review.getCarId()).orElse(null);
+            carName = car != null ? car.getBrandName() + " " + car.getModel() : null;
+        }
+        final String authorName = review.getUser() != null ? review.getUser().getUsername() : null;
+        return new RepostReviewView(
+                review.getId(),
+                review.getTitle(),
+                review.getBody(),
+                review.getRating(),
+                carName,
+                review.getCarId(),
+                authorName,
+                review.getTags()
+        );
     }
 
     private String redirectToLoginIfAnonymous(final HttpServletRequest request,
@@ -1026,6 +1234,10 @@ public class CommunityController {
         final List<PostCardView> cards = new ArrayList<>();
         for (final CommunityPostSummary postSummary : postSummaries) {
             final String postSlug = postSummary.getPost().getSlug();
+            final Review linkedReview = postSummary.getPost().getLinkedReview();
+            final RepostReviewView repostReview = linkedReview != null
+                    ? buildRepostReviewView(linkedReview)
+                    : null;
             cards.add(new PostCardView(
                 "/communities/" + communitySlug + "/posts/" + postSlug,
                 "/users/" + postSummary.getPost().getAuthorUserId(),
@@ -1038,14 +1250,15 @@ public class CommunityController {
                 postSummary.getCommentCount(),
                 postSummary.getPost().getId(),
                 "/communities/" + communitySlug + "/posts/" + postSlug + "/helpful",
-                helpfulByUser.contains(postSummary.getPost().getId())
+                helpfulByUser.contains(postSummary.getPost().getId()),
+                repostReview
             ));
         }
         return cards;
     }
 
     private PostDetailView toPostView(final CommunityPostDetailData postDetail) {
-        final boolean viewerModerator = postDetail.isViewerModerator();
+        final boolean postHideable = postDetail.isPostHideableByViewer();
         final List<CommentView> comments = new ArrayList<>();
         for (final CommunityPostComment comment : postDetail.getComments()) {
             comments.add(new CommentView(
@@ -1058,13 +1271,20 @@ public class CommunityController {
                 postDetail.isHelpfulByCurrentUserForComment(comment.getId()),
                 comment.getUserId() == postDetail.getPost().getAuthorUserId(),
                 postDetail.isCommentDeletableByViewer(comment),
-                viewerModerator
+                postDetail.isCommentEditableByViewer(comment),
+                postDetail.isCommentHideableByViewer(comment)
             ));
         }
+        final boolean moderationAvailable = postHideable || comments.stream().anyMatch(CommentView::getHideable);
+
+        final Review linkedReview = postDetail.getPost().getLinkedReview();
+        final RepostReviewView repostReview = linkedReview != null
+                ? buildRepostReviewView(linkedReview)
+                : null;
 
         return new PostDetailView(
             postDetail.getCommunity().getName(),
-            "c/" + postDetail.getCommunity().getSlug(),
+            postDetail.getCommunity().getName(),
             postDetail.getCommunity().getSlug(),
             postDetail.getPost().getSlug(),
             "/users/" + postDetail.getPost().getAuthorUserId(),
@@ -1078,9 +1298,12 @@ public class CommunityController {
             postDetail.getCommentCount(),
             comments,
             postDetail.getViewerRole(),
-            viewerModerator,
             postDetail.isViewerMember(),
-            postDetail.isPostDeletableByViewer()
+            postDetail.isPostDeletableByViewer(),
+            postDetail.isPostEditableByViewer(),
+            postHideable,
+            moderationAvailable,
+            repostReview
         );
     }
 
@@ -1224,6 +1447,7 @@ public class CommunityController {
         private final long postId;
         private final String helpfulAction;
         private final boolean helpfulByCurrentUser;
+        private final RepostReviewView repostReview;
 
         private PostCardView(final String href, final String authorProfileHref,
                              final String author,
@@ -1231,7 +1455,8 @@ public class CommunityController {
                              final String body, final List<String> imageUrls, final long helpfulCount,
                              final long commentCount, final long postId,
                              final String helpfulAction,
-                             final boolean helpfulByCurrentUser) {
+                             final boolean helpfulByCurrentUser,
+                             final RepostReviewView repostReview) {
             this.href = href;
             this.authorProfileHref = authorProfileHref;
             this.author = author;
@@ -1244,6 +1469,7 @@ public class CommunityController {
             this.postId = postId;
             this.helpfulAction = helpfulAction;
             this.helpfulByCurrentUser = helpfulByCurrentUser;
+            this.repostReview = repostReview;
         }
 
         public String getHref() {
@@ -1293,6 +1519,10 @@ public class CommunityController {
         public boolean getHelpfulByCurrentUser() {
             return helpfulByCurrentUser;
         }
+
+        public RepostReviewView getRepostReview() {
+            return repostReview;
+        }
     }
 
     public static final class PostDetailView {
@@ -1312,10 +1542,12 @@ public class CommunityController {
         private final long commentCount;
         private final List<CommentView> comments;
         private final String viewerRole;
-        private final boolean viewerModerator;
         private final boolean viewerMember;
         private final boolean deletable;
         private final boolean editable;
+        private final boolean hideable;
+        private final boolean moderationAvailable;
+        private final RepostReviewView repostReview;
 
         private PostDetailView(final String communityName, final String communityHandle,
                                final String communitySlug, final String postSlug,
@@ -1326,8 +1558,10 @@ public class CommunityController {
                                final long commentCount,
                                final List<CommentView> comments,
                                final String viewerRole,
-                               final boolean viewerModerator, final boolean viewerMember,
-                               final boolean deletable) {
+                               final boolean viewerMember,
+                               final boolean deletable, final boolean editable, final boolean hideable,
+                               final boolean moderationAvailable,
+                               final RepostReviewView repostReview) {
             this.communityName = communityName;
             this.communityHandle = communityHandle;
             this.communitySlug = communitySlug;
@@ -1343,10 +1577,16 @@ public class CommunityController {
             this.commentCount = commentCount;
             this.comments = comments;
             this.viewerRole = viewerRole;
-            this.viewerModerator = viewerModerator;
             this.viewerMember = viewerMember;
             this.deletable = deletable;
-            this.editable = deletable;
+            this.editable = editable;
+            this.hideable = hideable;
+            this.moderationAvailable = moderationAvailable;
+            this.repostReview = repostReview;
+        }
+
+        public RepostReviewView getRepostReview() {
+            return repostReview;
         }
 
         public String getCommunitySlug() {
@@ -1361,10 +1601,6 @@ public class CommunityController {
             return viewerRole;
         }
 
-        public boolean getViewerModerator() {
-            return viewerModerator;
-        }
-
         public boolean getViewerMember() {
             return viewerMember;
         }
@@ -1375,6 +1611,14 @@ public class CommunityController {
 
         public boolean getEditable() {
             return editable;
+        }
+
+        public boolean getHideable() {
+            return hideable;
+        }
+
+        public boolean getModerationAvailable() {
+            return moderationAvailable;
         }
 
         public String getCommunityName() {
@@ -1444,7 +1688,8 @@ public class CommunityController {
                             final String authorProfileHref, final String author, final String timeText,
                             final String body, final long helpfulCount,
                             final boolean helpfulByCurrentUser,
-                            final boolean op, final boolean deletable, final boolean hideable) {
+                            final boolean op, final boolean deletable, final boolean editable,
+                            final boolean hideable) {
             this.commentId = commentId;
             this.authorProfileHref = authorProfileHref;
             this.author = author;
@@ -1455,7 +1700,7 @@ public class CommunityController {
             this.op = op;
             this.deletable = deletable;
             this.hideable = hideable;
-            this.editable = deletable;
+            this.editable = editable;
         }
 
         public long getCommentId() {
@@ -1501,5 +1746,40 @@ public class CommunityController {
         public boolean getOp() {
             return op;
         }
+    }
+
+    public static final class RepostReviewView {
+
+        private final long reviewId;
+        private final String title;
+        private final String body;
+        private final BigDecimal rating;
+        private final String carName;
+        private final long carId;
+        private final String authorName;
+        private final List<ReviewTag> tags;
+
+        private RepostReviewView(final long reviewId, final String title, final String body,
+                                 final BigDecimal rating, final String carName, final long carId,
+                                 final String authorName, final List<ReviewTag> tags) {
+            this.reviewId = reviewId;
+            this.title = title;
+            this.body = body;
+            this.rating = rating;
+            this.carName = carName;
+            this.carId = carId;
+            this.authorName = authorName;
+            this.tags = tags != null ? tags : Collections.emptyList();
+        }
+
+        public long getReviewId() { return reviewId; }
+        public String getTitle() { return title; }
+        public String getBody() { return body; }
+        public BigDecimal getRating() { return rating; }
+        public String getCarName() { return carName; }
+        public long getCarId() { return carId; }
+        public String getAuthorName() { return authorName; }
+        public List<ReviewTag> getTags() { return tags; }
+        public String getReviewHref() { return "/reviews/car/" + carId + "#review-" + reviewId; }
     }
 }

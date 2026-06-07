@@ -30,18 +30,21 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     private final CarRequestService carRequestService;
     private final BrandRequestService brandRequestService;
     private final BodyTypeRequestService bodyTypeRequestService;
+    private final AuthenticatedSessionService authenticatedSessionService;
 
     @Autowired
     public AdminRequestServiceImpl(final AdminRequestDao adminRequestDao, final UserService userService,
                                    final EmailService emailService, final CarRequestService carRequestService,
                                    final BrandRequestService brandRequestService,
-                                   final BodyTypeRequestService bodyTypeRequestService) {
+                                   final BodyTypeRequestService bodyTypeRequestService,
+                                   final AuthenticatedSessionService authenticatedSessionService) {
         this.adminRequestDao = adminRequestDao;
         this.userService = userService;
         this.emailService = emailService;
         this.carRequestService = carRequestService;
         this.brandRequestService = brandRequestService;
         this.bodyTypeRequestService = bodyTypeRequestService;
+        this.authenticatedSessionService = authenticatedSessionService;
     }
 
     @Override
@@ -160,12 +163,14 @@ public class AdminRequestServiceImpl implements AdminRequestService {
             return false;
         }
 
-        userService.updateRole(request.getSubmittedByUserId(), GRANTED_ROLE);
+        final long promotedUserId = request.getSubmittedByUserId();
+        userService.updateRole(promotedUserId, GRANTED_ROLE);
         sendRequestApprovedNotification(request);
+        authenticatedSessionService.promoteUserToAdmin(promotedUserId);
         LOGGER.info(
             "approved admin request id={} userId={} grantedRole={}",
             id,
-            request.getSubmittedByUserId(),
+            promotedUserId,
             GRANTED_ROLE
         );
         return true;

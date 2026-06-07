@@ -28,7 +28,7 @@
 }
 
 /* ── NAV ── */
-nav {
+body > nav {
     position: sticky;
     top: 0;
     z-index: 100;
@@ -293,7 +293,7 @@ footer {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
-    nav, footer {
+    body > nav, footer {
         padding-left: 1.5rem;
         padding-right: 1.5rem;
     }
@@ -307,7 +307,7 @@ footer {
     .footer-brand { align-items: center; }
     .footer-copy { align-items: center; text-align: center; }
 
-    nav {
+    body > nav {
         display: flex;
         gap: 1rem;
         flex-wrap: wrap;

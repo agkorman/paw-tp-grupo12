@@ -59,6 +59,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class CarReviewController {
@@ -66,6 +67,8 @@ public class CarReviewController {
     private static final Logger LOGGER = LoggerFactory.getLogger(
         CarReviewController.class
     );
+
+    private static final String ACTION_TOAST_ATTRIBUTE = "actionToastCode";
 
     private static final String SORT_RATING_ASC = "rating_asc";
     private static final String SORT_RATING_DESC = "rating_desc";
@@ -250,8 +253,9 @@ public class CarReviewController {
             throw new UploadedImageReadException(
                 "creating review for car " + car.getId() + " by user " + currentUser.getId(), e);
         }
+        final Review createdReview;
         try {
-            reviewService.createReview(
+            createdReview = reviewService.createReview(
                 currentUser.getId(),
                 car.getId(),
                 reviewForm.getRating(),
@@ -280,7 +284,7 @@ public class CarReviewController {
             return "review-form.jsp";
         }
 
-        return "redirect:/reviews/car/" + car.getId() + "?reviewCreated=1";
+        return "redirect:/reviews/car/" + car.getId() + "?reviewCreated=1#review-" + createdReview.getId();
     }
 
     private ModelAndView carReviewPageWithReplyError(
@@ -604,7 +608,8 @@ public class CarReviewController {
         final Model model,
         @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         final Review existingReview = reviewService.getReviewAndCheckAccess(
             reviewId,
@@ -684,6 +689,7 @@ public class CarReviewController {
             model.addAttribute("editRedirect", safeRedirect);
             return "review-form.jsp";
         }
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.update.toast.success");
         return "redirect:" + safeRedirect;
     }
 
@@ -695,7 +701,8 @@ public class CarReviewController {
         @PathVariable("reviewId") final long reviewId,
         @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         final Review existingReview = reviewService.getReviewAndCheckAccess(
             reviewId,
@@ -711,6 +718,7 @@ public class CarReviewController {
         final String defaultRedirect =
             "/reviews/car/" + existingReview.getCarId() + "#reviewsFeed";
         final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath()).orElse(defaultRedirect);
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.delete.toast.success");
         return new ModelAndView("redirect:" + safeRedirect);
     }
 
@@ -723,7 +731,8 @@ public class CarReviewController {
         @RequestParam(value = "reason", required = false) final String reason,
         @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
@@ -755,6 +764,7 @@ public class CarReviewController {
             currentUser.getId(),
             reviewId
         );
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.hide.toast.success");
         return new ModelAndView(feedRedirect);
     }
 
@@ -767,7 +777,8 @@ public class CarReviewController {
         @RequestParam(value = "body", required = false) final String body,
         @RequestParam(value = "page", required = false) final Integer page,
         @RequestParam(value = "sort", required = false) final String sort,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
@@ -793,7 +804,7 @@ public class CarReviewController {
             );
         }
 
-        reviewReplyService.createReply(reviewId, currentUser.getId(), body);
+        final ReviewReply createdReply = reviewReplyService.createReply(reviewId, currentUser.getId(), body);
         LOGGER.info(
             "user id={} replied to review id={}",
             currentUser.getId(),
@@ -809,7 +820,8 @@ public class CarReviewController {
         if (sort != null && !sort.isBlank()) {
             target.append(hasQuery ? "&" : "?").append("sort=").append(sort);
         }
-        target.append("#review-").append(reviewId);
+        target.append("#reply-").append(createdReply.getId());
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.reply.create.toast.success");
         return new ModelAndView(target.toString());
     }
 
@@ -822,7 +834,8 @@ public class CarReviewController {
         @RequestParam(value = "body", required = false) final String body,
         @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
@@ -846,6 +859,7 @@ public class CarReviewController {
 
         reviewReplyService.updateReply(replyId, currentUser.getId(), body);
         LOGGER.info("user id={} updated reply id={}", currentUser.getId(), replyId);
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.reply.update.toast.success");
         return new ModelAndView(feedRedirect);
     }
 
@@ -857,7 +871,8 @@ public class CarReviewController {
         @PathVariable("replyId") final long replyId,
         @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
@@ -876,6 +891,7 @@ public class CarReviewController {
 
         reviewReplyService.deleteReply(replyId, currentUser.getId());
         LOGGER.info("user id={} deleted reply id={}", currentUser.getId(), replyId);
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.reply.delete.toast.success");
         return new ModelAndView("redirect:" + safeRedirect);
     }
 
@@ -888,7 +904,8 @@ public class CarReviewController {
         @RequestParam(value = "reason", required = false) final String reason,
         @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
@@ -916,6 +933,7 @@ public class CarReviewController {
             return new ModelAndView(feedRedirect);
         }
         LOGGER.info("admin id={} hid reply id={}", currentUser.getId(), replyId);
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.reply.hide.toast.success");
         return new ModelAndView(feedRedirect);
     }
 

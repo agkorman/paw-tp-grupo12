@@ -15,6 +15,7 @@ import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CommunityDao;
 import ar.edu.itba.paw.persistence.CommunityPostImageDao;
+import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.services.exception.CannotModerateCreatorException;
 import ar.edu.itba.paw.services.exception.CommunityContentOwnershipException;
 import ar.edu.itba.paw.services.exception.CommunityCreatorCannotLeaveException;
@@ -55,6 +56,9 @@ class CommunityServiceImplTest {
 
     @Mock
     private CommunityPostImageDao communityPostImageDao;
+
+    @Mock
+    private ReviewDao reviewDao;
 
     @Mock
     private UserService userService;
@@ -273,12 +277,12 @@ class CommunityServiceImplTest {
         when(communityDao.findMembershipRole(community.getId(), USER_ID)).thenReturn(Optional.of("member"));
         when(communityDao.findPostByCommunityIdAndSlug(community.getId(), "first-post")).thenReturn(Optional.of(existingPost));
         when(communityDao.findPostByCommunityIdAndSlug(community.getId(), "first-post-2")).thenReturn(Optional.empty());
-        when(communityDao.createPost(community.getId(), USER_ID, "first-post-2", "First post", "Body"))
+        when(communityDao.createPost(community.getId(), USER_ID, "first-post-2", "First post", "Body", null))
                 .thenReturn(createdPost);
 
         // Exercise
         final Optional<CommunityPost> result = communityService.createCommunityPost(
-                "classics", USER_ID, "First post", "Body", List.of());
+                "classics", USER_ID, "First post", "Body", List.of(), null);
 
         // Assertions
         assertTrue(result.isPresent());
@@ -694,7 +698,7 @@ class CommunityServiceImplTest {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
         final CommunityServiceImpl service = new CommunityServiceImpl(
-                communityDao, communityPostImageDao, userService, recordingEmailService);
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final User target = author(42L, "target");
         when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
@@ -733,7 +737,7 @@ class CommunityServiceImplTest {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
         final CommunityServiceImpl service = new CommunityServiceImpl(
-                communityDao, communityPostImageDao, userService, recordingEmailService);
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final User target = author(42L, "target");
         when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
@@ -790,7 +794,7 @@ class CommunityServiceImplTest {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
         final CommunityServiceImpl service = new CommunityServiceImpl(
-                communityDao, communityPostImageDao, userService, recordingEmailService);
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final User postAuthor = author(8L, "lu.driver");
         final CommunityPost post = post(community, postAuthor);
@@ -814,7 +818,7 @@ class CommunityServiceImplTest {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
         final CommunityServiceImpl service = new CommunityServiceImpl(
-                communityDao, communityPostImageDao, userService, recordingEmailService);
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
         final Community community = communityWithCreator(99L);
         final CommunityPost post = post(community, author(8L, "lu.driver"));
         final User commentAuthor = author(10L, "commenter");
@@ -826,6 +830,31 @@ class CommunityServiceImplTest {
 
         // Exercise
         final Optional<Boolean> result = service.hideComment("classics", comment.getId(), USER_ID, "Off-topic comment.");
+
+        // Assertions
+        assertTrue(result.isPresent());
+        assertTrue(result.get());
+        assertEquals(1, recordingEmailService.communityCommentHiddenEmails.size());
+        assertEquals(commentAuthor.getEmail(), recordingEmailService.communityCommentHiddenEmails.get(0));
+    }
+
+    @Test
+    void hideComment_byPlatformAdmin_sendsEmailToCommentAuthor() {
+        // Arrange
+        final RecordingEmailService recordingEmailService = new RecordingEmailService();
+        final CommunityServiceImpl service = new CommunityServiceImpl(
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
+        final Community community = communityWithCreator(99L);
+        final CommunityPost post = post(community, author(8L, "lu.driver"));
+        final User commentAuthor = author(10L, "commenter");
+        final CommunityPostComment comment = comment(post, commentAuthor);
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findCommentById(comment.getId())).thenReturn(Optional.of(comment));
+        when(userService.getUserById(commentAuthor.getId())).thenReturn(Optional.of(commentAuthor));
+
+        // Exercise
+        final Optional<Boolean> result =
+                service.hideComment("classics", comment.getId(), USER_ID, "Off-topic comment.", true);
 
         // Assertions
         assertTrue(result.isPresent());
@@ -1045,7 +1074,7 @@ class CommunityServiceImplTest {
         // Arrange
         final RecordingEmailService recordingEmailService = new RecordingEmailService();
         final CommunityServiceImpl service = new CommunityServiceImpl(
-                communityDao, communityPostImageDao, userService, recordingEmailService);
+                communityDao, communityPostImageDao, reviewDao, userService, recordingEmailService);
         final long ownerId = 7L;
         final User newOwner = author(42L, "new.owner");
         final Community community = communityWithCreator(ownerId);
@@ -1061,6 +1090,75 @@ class CommunityServiceImplTest {
         assertTrue(result.get());
         assertEquals(1, recordingEmailService.communityOwnershipEmails.size());
         assertEquals(newOwner.getEmail(), recordingEmailService.communityOwnershipEmails.get(0));
+    }
+
+    @Test
+    void getHideablePostIds_adminCanHideOnlyPostsNotOwnedByViewer() {
+        // Arrange
+        final long adminId = 99L;
+        final Community community = community();
+        final CommunityPost ownPost = postIn(10L, community, author(adminId, "admin"));
+        final CommunityPost othersPost = postIn(11L, community, author(7L, "mateo.classics"));
+        final List<CommunityPost> posts = List.of(ownPost, othersPost);
+
+        // Exercise
+        final Set<Long> result = communityService.getHideablePostIds(posts, adminId, true);
+
+        // Assertions
+        assertEquals(Set.of(11L), result);
+    }
+
+    @Test
+    void getHideablePostIds_moderatorCanHideNonOwnedPostsOnlyInModeratedCommunities() {
+        // Arrange
+        final long viewerId = 7L;
+        final Community moderated = communityWithId(1L, "classics");
+        final Community other = communityWithId(2L, "modern");
+        final CommunityPost hideable = postIn(20L, moderated, author(8L, "lu.driver"));
+        final CommunityPost ownInModerated = postIn(21L, moderated, author(viewerId, "viewer"));
+        final CommunityPost notModerated = postIn(22L, other, author(8L, "lu.driver"));
+        final List<CommunityPost> posts = List.of(hideable, ownInModerated, notModerated);
+        when(communityDao.findMembershipRoles(eq(viewerId), anyCollection()))
+                .thenReturn(Map.of(1L, "moderator", 2L, "member"));
+
+        // Exercise
+        final Set<Long> result = communityService.getHideablePostIds(posts, viewerId, false);
+
+        // Assertions
+        assertEquals(Set.of(20L), result);
+    }
+
+    @Test
+    void getHideablePostIds_anonymousViewer_returnsEmptySet() {
+        // Arrange
+        final Community community = community();
+        final List<CommunityPost> posts = List.of(postIn(30L, community, author(7L, "mateo.classics")));
+
+        // Exercise
+        final Set<Long> result = communityService.getHideablePostIds(posts, null, false);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    private static Community communityWithId(final long id, final String slug) {
+        final Community community = new Community(slug, slug, null);
+        community.setId(id);
+        community.setCreatedAt(LocalDateTime.now().minusDays(10));
+        return community;
+    }
+
+    private static CommunityPost postIn(final long id, final Community community, final User author) {
+        final CommunityPost post = new CommunityPost();
+        post.setId(id);
+        post.setCommunity(community);
+        post.setAuthor(author);
+        post.setSlug("post-" + id);
+        post.setTitle("Post " + id);
+        post.setBody("Body " + id);
+        post.setCreatedAt(LocalDateTime.now().minusHours(2));
+        post.setUpdatedAt(LocalDateTime.now().minusHours(2));
+        return post;
     }
 
     private static Community communityWithCreator(final long creatorId) {

@@ -6,8 +6,25 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
 <spring:message var="activityMetricsAria" code="activity.card.metrics.aria"/>
+<spring:message var="activityActionMenuLabel" code="activity.card.actionMenu.label"/>
+<spring:message var="activityRepostLabel" code="review.action.repost"/>
+
+<c:set var="activityCurrentPath" value="${requestScope['javax.servlet.forward.servlet_path']}"/>
+<c:if test="${empty activityCurrentPath}">
+    <c:set var="activityCurrentPath" value="/"/>
+</c:if>
+<c:set var="activityLikeQueryStr" value="${requestScope['javax.servlet.forward.query_string']}"/>
+<c:if test="${not empty activityLikeQueryStr}">
+    <c:set var="activityCurrentPath" value="${activityCurrentPath}?${activityLikeQueryStr}"/>
+</c:if>
+<c:set var="activityCardRedirectPath" value="${activityCurrentPath}#${activityCard.cardAnchorId}"/>
 
 <c:choose>
+    <c:when test="${activityCard.communityPost}">
+        <c:url var="resolvedCardHref" value="${activityCard.href}">
+            <c:param name="redirect" value="${activityCurrentPath}"/>
+        </c:url>
+    </c:when>
     <c:when test="${fn:contains(activityCard.href, '#')}">
         <c:url var="resolvedCardHref" value="${fn:substringBefore(activityCard.href, '#')}"/>
         <c:set var="resolvedCardHref" value="${resolvedCardHref}#${fn:substringAfter(activityCard.href, '#')}"/>
@@ -41,18 +58,26 @@
 </c:if>
 
 <c:url var="resolvedLikeAction" value="${activityCard.likeAction}"/>
-<c:set var="activityLikeRedirectPath" value="${requestScope['javax.servlet.forward.servlet_path']}"/>
-<c:if test="${empty activityLikeRedirectPath}">
-    <c:set var="activityLikeRedirectPath" value="/"/>
+
+<c:if test="${not empty activityCard.commentsHref}">
+    <c:set var="commentsBase" value="${fn:substringBefore(activityCard.commentsHref, '#')}"/>
+    <c:set var="commentsFragment" value="${fn:substringAfter(activityCard.commentsHref, '#')}"/>
+    <c:choose>
+        <c:when test="${activityCard.communityPost}">
+            <c:url var="resolvedCommentsHref" value="${commentsBase}">
+                <c:param name="redirect" value="${activityCurrentPath}"/>
+            </c:url>
+        </c:when>
+        <c:otherwise>
+            <c:url var="resolvedCommentsHref" value="${commentsBase}"/>
+        </c:otherwise>
+    </c:choose>
+    <c:set var="resolvedCommentsHref" value="${resolvedCommentsHref}#${commentsFragment}"/>
 </c:if>
-<c:set var="activityLikeQueryStr" value="${requestScope['javax.servlet.forward.query_string']}"/>
-<c:if test="${not empty activityLikeQueryStr}">
-    <c:set var="activityLikeRedirectPath" value="${activityLikeRedirectPath}?${activityLikeQueryStr}"/>
-</c:if>
-<c:set var="activityLikeRedirectPath" value="${activityLikeRedirectPath}#${activityCard.cardAnchorId}"/>
 
 <article class="activity-card" id="${fn:escapeXml(activityCard.cardAnchorId)}">
     <div class="activity-card-topline">
+        <div class="activity-card-topline-content">
             <p class="activity-card-meta">
                 <c:choose>
                     <c:when test="${not empty activityCard.authorHref}">
@@ -84,6 +109,68 @@
                     </c:choose>
                 </c:if>
             </p>
+        </div>
+        <c:if test="${activityCard.actionMenuVisible}">
+            <pa:action-menu label="${activityActionMenuLabel}" cssClass="activity-card-menu">
+                <c:if test="${not empty activityCard.repostHref}">
+                    <c:url var="activityCardRepostUrl" value="${activityCard.repostHref}"/>
+                    <a href="${fn:escapeXml(activityCardRepostUrl)}">
+                        <c:out value="${activityRepostLabel}"/>
+                    </a>
+                </c:if>
+                <c:if test="${activityCard.editable}">
+                    <c:url var="activityCardEditUrl" value="${activityCard.editHref}">
+                        <c:param name="redirect" value="${activityCardRedirectPath}"/>
+                    </c:url>
+                    <a href="${fn:escapeXml(activityCardEditUrl)}">
+                        <spring:message code="common.action.edit"/>
+                    </a>
+                </c:if>
+                <c:if test="${activityCard.hideable}">
+                    <c:url var="activityCardHideUrl" value="${activityCard.hideAction}"/>
+                    <c:choose>
+                        <c:when test="${activityCard.review}">
+                            <button type="button"
+                                    class="action-menu-danger"
+                                    data-open-hide-review-modal
+                                    data-review-hide-action="${fn:escapeXml(activityCardHideUrl)}"
+                                    data-review-hide-redirect="${fn:escapeXml(activityCurrentPath)}"
+                                    data-review-title="${fn:escapeXml(activityCard.title)}">
+                                <spring:message code="review.hide.action.aria"/>
+                            </button>
+                        </c:when>
+                        <c:otherwise>
+                            <button type="button"
+                                    class="action-menu-danger"
+                                    data-open-community-hide-modal
+                                    data-community-hide-modal-target="${fn:escapeXml(activityCard.hideModalTarget)}"
+                                    data-community-hide-action="${fn:escapeXml(activityCardHideUrl)}"
+                                    data-community-hide-redirect="${fn:escapeXml(activityCurrentPath)}">
+                                <spring:message code="communities.post.hideAction"/>
+                            </button>
+                        </c:otherwise>
+                    </c:choose>
+                </c:if>
+                <c:if test="${activityCard.deletable}">
+                    <c:url var="activityCardDeleteUrl" value="${activityCard.deleteAction}"/>
+                    <form method="post" action="${fn:escapeXml(activityCardDeleteUrl)}"
+                          data-confirm-modal="${activityCard.review ? 'deleteReviewConfirmModal' : 'deletePostConfirmModal'}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                        <input type="hidden" name="redirect" value="${fn:escapeXml(activityCurrentPath)}">
+                        <button type="submit" class="action-menu-danger">
+                            <c:choose>
+                                <c:when test="${activityCard.review}">
+                                    <spring:message code="common.action.delete"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <spring:message code="communities.post.deleteAction"/>
+                                </c:otherwise>
+                            </c:choose>
+                        </button>
+                    </form>
+                </c:if>
+            </pa:action-menu>
+        </c:if>
     </div>
 
     <h2 class="activity-card-title">
@@ -110,13 +197,20 @@
         <pa:review-like-button
                 reviewId="${activityCard.likeEntityId}"
                 action="${resolvedLikeAction}"
-                redirect="${activityLikeRedirectPath}"
+                redirect="${activityCardRedirectPath}"
                 liked="${activityCard.liked}"
                 likeCount="${activityCard.likeCount}"
                 disabled="${not activityCard.authenticated}"
                 intent="${activityCard.cardAnchorId}"/>
         <c:if test="${not empty secondaryMetricText}">
-            <span class="activity-card-metric"><c:out value="${secondaryMetricText}"/></span>
+            <c:choose>
+                <c:when test="${not empty resolvedCommentsHref}">
+                    <a class="activity-card-metric activity-card-metric-link" href="${fn:escapeXml(resolvedCommentsHref)}"><c:out value="${secondaryMetricText}"/></a>
+                </c:when>
+                <c:otherwise>
+                    <span class="activity-card-metric"><c:out value="${secondaryMetricText}"/></span>
+                </c:otherwise>
+            </c:choose>
         </c:if>
     </div>
 </article>

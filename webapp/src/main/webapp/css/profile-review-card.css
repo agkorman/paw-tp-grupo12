@@ -13,6 +13,14 @@
     background: var(--surface-container-low);
     border: 1px solid rgba(229, 226, 225, 0.08);
     box-shadow: var(--shadow-float);
+    scroll-margin-top: 72px;
+}
+
+.profile-review-card:target,
+.profile-review-card.is-anchor-highlighted {
+    background: var(--surface-container-highest);
+    border-color: rgba(255, 181, 158, 0.42);
+    box-shadow: inset 0 0 0 1px rgba(255, 181, 158, 0.42);
 }
 
 .profile-review-card[data-profile-card-link] {

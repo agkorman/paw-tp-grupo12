@@ -3,6 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Community;
 import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
+import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
 import ar.edu.itba.paw.model.CommunityTopic;
@@ -208,14 +209,27 @@ public class CommunityJpaDao implements CommunityDao {
                                     final String slug,
                                     final String title,
                                     final String body) {
+        return createPost(communityId, authorUserId, slug, title, body, null);
+    }
+
+    @Override
+    public CommunityPost createPost(final long communityId,
+                                    final long authorUserId,
+                                    final String slug,
+                                    final String title,
+                                    final String body,
+                                    final Long linkedReviewId) {
         final CommunityPost post = new CommunityPost(
                 em.getReference(Community.class, communityId),
                 em.getReference(ar.edu.itba.paw.model.User.class, authorUserId),
                 slug, title, false);
         post.setBody(body);
+        if (linkedReviewId != null) {
+            post.setLinkedReview(em.getReference(Review.class, linkedReviewId));
+        }
         em.persist(post);
-        LOGGER.info("created community post id={} communityId={} authorUserId={} slug={}",
-                post.getId(), communityId, authorUserId, slug);
+        LOGGER.info("created community post id={} communityId={} authorUserId={} slug={} linkedReviewId={}",
+                post.getId(), communityId, authorUserId, slug, linkedReviewId);
         return post;
     }
 
@@ -318,6 +332,33 @@ public class CommunityJpaDao implements CommunityDao {
             return Optional.empty();
         }
         return Optional.ofNullable((String) rows.get(0));
+    }
+
+    @Override
+    public Map<Long, String> findMembershipRoles(final long userId, final Collection<Long> communityIds) {
+        if (communityIds == null || communityIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        final List<Long> normalizedIds = communityIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (normalizedIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        final List<?> rows = em.createNativeQuery(
+                "SELECT community_id, role FROM community_memberships "
+                        + "WHERE user_id = :userId AND community_id IN (:communityIds)"
+        )
+                .setParameter("userId", userId)
+                .setParameter("communityIds", normalizedIds)
+                .getResultList();
+        final Map<Long, String> rolesByCommunityId = new LinkedHashMap<>();
+        for (final Object row : rows) {
+            final Object[] values = (Object[]) row;
+            rolesByCommunityId.put(((Number) values[0]).longValue(), (String) values[1]);
+        }
+        return rolesByCommunityId;
     }
 
     @Override
@@ -599,6 +640,9 @@ public class CommunityJpaDao implements CommunityDao {
                 "SELECT p FROM CommunityPost p " +
                 "LEFT JOIN FETCH p.author " +
                 "LEFT JOIN FETCH p.community " +
+                "LEFT JOIN FETCH p.linkedReview lr " +
+                "LEFT JOIN FETCH lr.car " +
+                "LEFT JOIN FETCH lr.user " +
                 "WHERE p.id IN :postIds " +
                 "ORDER BY p.createdAt DESC, p.id DESC",
                 CommunityPost.class
@@ -636,6 +680,9 @@ public class CommunityJpaDao implements CommunityDao {
         final List<CommunityPost> posts = em.createQuery(
                 "SELECT p FROM CommunityPost p " +
                 "LEFT JOIN FETCH p.author " +
+                "LEFT JOIN FETCH p.linkedReview lr " +
+                "LEFT JOIN FETCH lr.car " +
+                "LEFT JOIN FETCH lr.user " +
                 "WHERE p.id IN :ids",
                 CommunityPost.class
         )
@@ -652,6 +699,9 @@ public class CommunityJpaDao implements CommunityDao {
         final List<CommunityPost> results = em.createQuery(
                 "SELECT p FROM CommunityPost p " +
                 "LEFT JOIN FETCH p.author " +
+                "LEFT JOIN FETCH p.linkedReview lr " +
+                "LEFT JOIN FETCH lr.car " +
+                "LEFT JOIN FETCH lr.user " +
                 "WHERE p.community.id = :communityId AND LOWER(p.slug) = :slug",
                 CommunityPost.class
         )
@@ -738,6 +788,31 @@ public class CommunityJpaDao implements CommunityDao {
         return rawIds.stream()
                 .map(value -> ((Number) value).longValue())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<Community> findJoinedCommunities(final long userId) {
+        final List<Number> ids = em.createNativeQuery(
+                "SELECT c.community_id FROM communities c " +
+                "JOIN community_memberships cm ON c.community_id = cm.community_id " +
+                "WHERE cm.user_id = ? " +
+                "ORDER BY c.name ASC"
+        )
+                .setParameter(1, userId)
+                .getResultList();
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        final List<Long> communityIds = ids.stream()
+                .map(Number::longValue)
+                .collect(Collectors.toList());
+        return em.createQuery(
+                "SELECT c FROM Community c WHERE c.id IN :ids ORDER BY c.name ASC",
+                Community.class
+        )
+                .setParameter("ids", communityIds)
+                .getResultList();
     }
 
     @Override

@@ -22,6 +22,10 @@ public class CommunityPostForm {
 
     private List<Long> retainedImageIds = new ArrayList<>();
 
+    private Long linkedReviewId;
+
+    private String communitySlug;
+
     public String getTitle() {
         return title;
     }
@@ -52,5 +56,21 @@ public class CommunityPostForm {
 
     public void setRetainedImageIds(final List<Long> retainedImageIds) {
         this.retainedImageIds = retainedImageIds == null ? new ArrayList<>() : retainedImageIds;
+    }
+
+    public Long getLinkedReviewId() {
+        return linkedReviewId;
+    }
+
+    public void setLinkedReviewId(final Long linkedReviewId) {
+        this.linkedReviewId = linkedReviewId;
+    }
+
+    public String getCommunitySlug() {
+        return communitySlug;
+    }
+
+    public void setCommunitySlug(final String communitySlug) {
+        this.communitySlug = communitySlug;
     }
 }

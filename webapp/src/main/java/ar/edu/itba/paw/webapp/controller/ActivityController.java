@@ -2,6 +2,8 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.ActivityFeedCriteria;
 import ar.edu.itba.paw.model.ActivityFeedItem;
+import ar.edu.itba.paw.model.ActivityFeedPermissions;
+import ar.edu.itba.paw.model.ActivityFeedReference;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.services.ActivityService;
@@ -22,8 +24,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -56,6 +60,7 @@ public class ActivityController {
     @RequestMapping(value = "/activity", method = RequestMethod.GET)
     public ModelAndView activity(
                                  @ModelAttribute("activityCriteria") final ActivityFeedCriteria criteria,
+                                 final HttpServletRequest request,
                                  @AuthenticationPrincipal final AuthenticatedUser currentUser) {
         if (!criteria.isValid()) {
             LOGGER.warn("activity feed received unrecognized filter values; applying defaults");
@@ -84,8 +89,21 @@ public class ActivityController {
         }
 
         final boolean authenticated = currentUser != null;
+        final Long currentUserId = currentUser == null ? null : currentUser.getId();
+        final boolean admin = request.isUserInRole("ADMIN");
+        final Map<ActivityFeedReference, ActivityFeedPermissions> permissionsByReference =
+                activityService.getActivityFeedPermissions(items, currentUserId, admin);
         final List<ActivityCardView> cards = items.stream()
-                .map(item -> toActivityCard(item, likedReviewIds, helpfulPostIds, authenticated))
+                .map(item -> toActivityCard(
+                        item,
+                        likedReviewIds,
+                        helpfulPostIds,
+                        authenticated,
+                        permissionsByReference.getOrDefault(
+                                item.getReference(),
+                                ActivityFeedPermissions.none(item.getReference())
+                        )
+                ))
                 .collect(Collectors.toList());
 
         final ModelAndView mav = new ModelAndView("activity.jsp");
@@ -99,13 +117,15 @@ public class ActivityController {
     private ActivityCardView toActivityCard(final ActivityFeedItem item,
                                             final Set<Long> likedReviewIds,
                                             final Set<Long> helpfulPostIds,
-                                            final boolean authenticated) {
+                                            final boolean authenticated,
+                                            final ActivityFeedPermissions permissions) {
         if (item.isReview()) {
             final String carName = item.getCar() != null
                     ? item.getCar().getBrandName() + " " + item.getCar().getModel()
                     : null;
             final long reviewId = item.getReview().getId();
             return new ActivityCardView(
+                    true,
                     reviewHref(item),
                     userHref(item.getReview().getUserId()),
                     resolveReviewAuthorName(item),
@@ -122,9 +142,18 @@ public class ActivityController {
                     item.getReviewLikeCount(),
                     reviewId,
                     authenticated,
-                    "activity-review-" + reviewId,
-                    "activity.card.metric.comments",
-                    Long.toString(item.getReviewReplyCount())
+                    "review-" + reviewId,
+                    "activity.card.metric.replies",
+                    Long.toString(item.getReviewReplyCount()),
+                    permissions.isEditable(),
+                    permissions.isDeletable(),
+                    permissions.isHideable(),
+                    "/reviews/" + reviewId + "/edit",
+                    "/reviews/" + reviewId + "/delete",
+                    "/reviews/" + reviewId + "/hide",
+                    null,
+                    reviewCommentsHref(item),
+                    authenticated ? "/reviews/" + reviewId + "/repost" : null
             );
         }
 
@@ -132,6 +161,7 @@ public class ActivityController {
         final String communitySlug = item.getCommunityPost().getCommunity().getSlug();
         final String postSlug = item.getCommunityPost().getSlug();
         return new ActivityCardView(
+                false,
                 "/communities/" + communitySlug + "/posts/" + postSlug,
                 userHref(item.getCommunityPost().getAuthorUserId()),
                 item.getCommunityPost().getAuthorUsername(),
@@ -148,9 +178,18 @@ public class ActivityController {
                 item.getHelpfulCount(),
                 postId,
                 authenticated,
-                "activity-post-" + postId,
-                "activity.card.metric.comments",
-                Long.toString(item.getCommentCount())
+                "post-" + postId,
+                "activity.card.metric.replies",
+                Long.toString(item.getCommentCount()),
+                permissions.isEditable(),
+                permissions.isDeletable(),
+                permissions.isHideable(),
+                "/communities/" + communitySlug + "/posts/" + postSlug + "/edit",
+                "/communities/" + communitySlug + "/posts/" + postSlug + "/delete",
+                "/communities/" + communitySlug + "/posts/" + postSlug + "/hide",
+                "hideCommunityPostModal",
+                "/communities/" + communitySlug + "/posts/" + postSlug + "#comments",
+                null
         );
     }
 
@@ -161,6 +200,16 @@ public class ActivityController {
             builder.append("?page=").append(item.getReviewPage());
         }
         builder.append("#review-").append(item.getReview().getId());
+        return builder.toString();
+    }
+
+    private String reviewCommentsHref(final ActivityFeedItem item) {
+        final StringBuilder builder = new StringBuilder("/reviews/car/")
+                .append(item.getReview().getCarId());
+        if (item.getReviewPage() > 1) {
+            builder.append("?page=").append(item.getReviewPage());
+        }
+        builder.append("#review-").append(item.getReview().getId()).append("-replies");
         return builder.toString();
     }
 
@@ -198,6 +247,7 @@ public class ActivityController {
     }
 
     public static final class ActivityCardView {
+        private final boolean review;
         private final String href;
         private final String authorHref;
         private final String authorName;
@@ -217,8 +267,18 @@ public class ActivityController {
         private final String cardAnchorId;
         private final String secondaryMetricKey;
         private final String secondaryMetricValue;
+        private final boolean editable;
+        private final boolean deletable;
+        private final boolean hideable;
+        private final String editHref;
+        private final String deleteAction;
+        private final String hideAction;
+        private final String hideModalTarget;
+        private final String commentsHref;
+        private final String repostHref;
 
-        private ActivityCardView(final String href,
+        private ActivityCardView(final boolean review,
+                                 final String href,
                                  final String authorHref,
                                  final String authorName,
                                  final String timeText,
@@ -236,7 +296,17 @@ public class ActivityController {
                                  final boolean authenticated,
                                  final String cardAnchorId,
                                  final String secondaryMetricKey,
-                                 final String secondaryMetricValue) {
+                                 final String secondaryMetricValue,
+                                 final boolean editable,
+                                 final boolean deletable,
+                                 final boolean hideable,
+                                 final String editHref,
+                                 final String deleteAction,
+                                 final String hideAction,
+                                 final String hideModalTarget,
+                                 final String commentsHref,
+                                 final String repostHref) {
+            this.review = review;
             this.href = href;
             this.authorHref = authorHref;
             this.authorName = authorName;
@@ -256,8 +326,19 @@ public class ActivityController {
             this.cardAnchorId = cardAnchorId;
             this.secondaryMetricKey = secondaryMetricKey;
             this.secondaryMetricValue = secondaryMetricValue;
+            this.editable = editable;
+            this.deletable = deletable;
+            this.hideable = hideable;
+            this.editHref = editHref;
+            this.deleteAction = deleteAction;
+            this.hideAction = hideAction;
+            this.hideModalTarget = hideModalTarget;
+            this.commentsHref = commentsHref;
+            this.repostHref = repostHref;
         }
 
+        public boolean isReview() { return review; }
+        public boolean isCommunityPost() { return !review; }
         public String getHref() { return href; }
         public String getAuthorHref() { return authorHref; }
         public String getAuthorName() { return authorName; }
@@ -277,5 +358,15 @@ public class ActivityController {
         public String getCardAnchorId() { return cardAnchorId; }
         public String getSecondaryMetricKey() { return secondaryMetricKey; }
         public String getSecondaryMetricValue() { return secondaryMetricValue; }
+        public boolean isEditable() { return editable; }
+        public boolean isDeletable() { return deletable; }
+        public boolean isHideable() { return hideable; }
+        public boolean isActionMenuVisible() { return editable || deletable || hideable || repostHref != null; }
+        public String getRepostHref() { return repostHref; }
+        public String getEditHref() { return editHref; }
+        public String getDeleteAction() { return deleteAction; }
+        public String getHideAction() { return hideAction; }
+        public String getHideModalTarget() { return hideModalTarget; }
+        public String getCommentsHref() { return commentsHref; }
     }
 }

@@ -9,6 +9,7 @@ import ar.edu.itba.paw.services.CarFavoriteService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.EmailService;
 import ar.edu.itba.paw.services.ReviewLikeService;
+import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.services.ReviewReplyService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.ReviewTagService;
@@ -268,6 +269,8 @@ class CarReviewControllerTest {
         // Arrange
         arrangeStandardReviewCollaboratorsAndI18n();
         when(carService.getCarById(eq(1L))).thenReturn(Optional.of(aCar(1L)));
+        when(reviewService.createReview(anyLong(), eq(1L), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(reviewOwnedBy(99L, 1L));
         bindPrincipal(testUser(1L));
 
         try {
@@ -284,7 +287,7 @@ class CarReviewControllerTest {
                                     .param("mileageKm", "15000"));
             // Assertions
             resultActions.andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/reviews/car/1?reviewCreated=1"));
+                    .andExpect(redirectedUrl("/reviews/car/1?reviewCreated=1#review-99"));
         } finally {
             clearSecurityContext();
         }
@@ -434,6 +437,30 @@ class CarReviewControllerTest {
     }
 
     @Test
+    void hideReview_withFeedRedirect_preservesFiltersPageAndFeedAnchor() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        final Review existing = reviewOwnedBy(1L, 42L);
+        when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(existing));
+        when(reviewService.hideReview(eq(1L), eq("Duplicated review."))).thenReturn(true);
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(
+                    post("/reviews/1/hide")
+                            .param("reason", "Duplicated review.")
+                            .param("redirect", "/reviews/car/42?page=2&sort=rating_desc#reviewsFeed"));
+            // Assertions
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/reviews/car/42?page=2&sort=rating_desc#reviewsFeed"));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
     void deleteReview_notOwner_throwsForbidden() throws Exception {
         // Arrange
         arrangeStandardReviewCollaboratorsAndI18n();
@@ -489,6 +516,7 @@ class CarReviewControllerTest {
         arrangeStandardReviewCollaboratorsAndI18n();
         final Review review = reviewOwnedBy(1L, 7L);
         when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(review));
+        when(reviewReplyService.createReply(eq(1L), anyLong(), anyString())).thenReturn(aReply(55L));
         bindPrincipal(testUser(1L));
 
         try {
@@ -499,7 +527,7 @@ class CarReviewControllerTest {
             // Assertions
             resultActions
                     .andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/reviews/car/7#review-1"));
+                    .andExpect(redirectedUrl("/reviews/car/7#reply-55"));
         } finally {
             clearSecurityContext();
         }
@@ -515,6 +543,12 @@ class CarReviewControllerTest {
                 ar.edu.itba.paw.model.CarSearchCriteria.FUEL_TYPE_COMBUSTION, 140,
                 6, ar.edu.itba.paw.model.CarSearchCriteria.TRANSMISSION_AUTOMATIC,
                 BigDecimal.valueOf(8.0), 200, BigDecimal.valueOf(20000));
+    }
+
+    private static ReviewReply aReply(final long replyId) {
+        final ReviewReply reply = new ReviewReply(null, null, null);
+        reply.setId(replyId);
+        return reply;
     }
 
     private static Review reviewOwnedBy(final long reviewId, final long carId) {

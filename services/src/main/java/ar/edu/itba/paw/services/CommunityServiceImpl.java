@@ -20,6 +20,7 @@ import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CommunityDao;
 import ar.edu.itba.paw.persistence.CommunityPostImageDao;
+import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.services.exception.CannotModerateCreatorException;
 import ar.edu.itba.paw.services.exception.CommunityContentOwnershipException;
 import ar.edu.itba.paw.services.exception.CommunityCreatorCannotLeaveException;
@@ -66,15 +67,18 @@ public class CommunityServiceImpl implements CommunityService {
     private static final String DEFAULT_POST_SLUG = "post";
     private final CommunityDao communityDao;
     private final CommunityPostImageDao communityPostImageDao;
+    private final ReviewDao reviewDao;
     private final UserService userService;
     private final EmailService emailService;
 
     @Autowired
     public CommunityServiceImpl(final CommunityDao communityDao, final CommunityPostImageDao communityPostImageDao,
+                                final ReviewDao reviewDao,
                                 final UserService userService,
                                 final EmailService emailService) {
         this.communityDao = communityDao;
         this.communityPostImageDao = communityPostImageDao;
+        this.reviewDao = reviewDao;
         this.userService = userService;
         this.emailService = emailService;
     }
@@ -247,6 +251,17 @@ public class CommunityServiceImpl implements CommunityService {
                                                        final String title,
                                                        final String body,
                                                        final List<ImagePayload> images) {
+        return createCommunityPost(communitySlug, userId, title, body, images, null);
+    }
+
+    @Override
+    @Transactional
+    public Optional<CommunityPost> createCommunityPost(final String communitySlug,
+                                                       final long userId,
+                                                       final String title,
+                                                       final String body,
+                                                       final List<ImagePayload> images,
+                                                       final Long linkedReviewId) {
         if (userId <= 0) {
             throw new InvalidServiceInputException("Community post author is required.");
         }
@@ -257,6 +272,11 @@ public class CommunityServiceImpl implements CommunityService {
         );
         final String normalizedTitle = StringUtils.normalizeRequired(title, "Community post title is required.");
         final String normalizedBody = StringUtils.normalizeRequired(body, "Community post body is required.");
+
+        if (linkedReviewId != null && reviewDao.findById(linkedReviewId).isEmpty()) {
+            LOGGER.warn("repost denied: review not found linkedReviewId={}", linkedReviewId);
+            return Optional.empty();
+        }
 
         final Optional<Community> communityOptional = communityDao.findBySlug(normalizedCommunitySlug);
         if (communityOptional.isEmpty()) {
@@ -274,14 +294,15 @@ public class CommunityServiceImpl implements CommunityService {
                 userId,
                 slug,
                 normalizedTitle,
-                normalizedBody
+                normalizedBody,
+                linkedReviewId
         );
         final List<ImagePayload> normalizedImages = ImagePayloadUtils.normalizeImages(images);
         if (!normalizedImages.isEmpty()) {
             communityPostImageDao.replaceAll(post.getId(), normalizedImages);
         }
-        LOGGER.info("created community post id={} communityId={} userId={} slug={}",
-                post.getId(), community.getId(), userId, slug);
+        LOGGER.info("created community post id={} communityId={} userId={} slug={} linkedReviewId={}",
+                post.getId(), community.getId(), userId, slug, linkedReviewId);
         return Optional.of(post);
     }
 
@@ -629,6 +650,14 @@ public class CommunityServiceImpl implements CommunityService {
     public Optional<CommunityPostDetailData> getCommunityPostDetail(final String communitySlug,
                                                                     final String postSlug,
                                                                     final Long currentUserId) {
+        return getCommunityPostDetail(communitySlug, postSlug, currentUserId, false);
+    }
+
+    @Override
+    public Optional<CommunityPostDetailData> getCommunityPostDetail(final String communitySlug,
+                                                                    final String postSlug,
+                                                                    final Long currentUserId,
+                                                                    final boolean viewerAdmin) {
         try {
             final Optional<Community> communityOptional = communityDao.findBySlug(communitySlug);
             if (communityOptional.isEmpty()) {
@@ -680,7 +709,8 @@ public class CommunityServiceImpl implements CommunityService {
                     commentHelpfulCounts,
                     commentHelpfulByCurrentUser,
                     viewerRole,
-                    currentUserId
+                    currentUserId,
+                    viewerAdmin
             ));
         } catch (final DataAccessException e) {
             LOGGER.warn("failed to load post detail for communitySlug={} postSlug={}", communitySlug, postSlug, e);
@@ -757,6 +787,31 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    public Set<Long> getHideablePostIds(final Collection<CommunityPost> posts, final Long viewerUserId,
+                                        final boolean viewerAdmin) {
+        if (posts == null || posts.isEmpty() || (viewerUserId == null && !viewerAdmin)) {
+            return Collections.emptySet();
+        }
+        final Set<Long> moderatedCommunityIds;
+        if (viewerAdmin || viewerUserId == null || viewerUserId <= 0) {
+            moderatedCommunityIds = Collections.emptySet();
+        } else {
+            final Set<Long> communityIds = posts.stream()
+                    .map(CommunityPost::getCommunityId)
+                    .collect(Collectors.toSet());
+            moderatedCommunityIds = communityDao.findMembershipRoles(viewerUserId, communityIds).entrySet().stream()
+                    .filter(entry -> CREATOR_ROLE.equals(entry.getValue()))
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toSet());
+        }
+        return posts.stream()
+                .filter(post -> (viewerAdmin || moderatedCommunityIds.contains(post.getCommunityId()))
+                        && (viewerUserId == null || post.getAuthorUserId() != viewerUserId))
+                .map(CommunityPost::getId)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public Optional<List<CommunityMembershipEntry>> listMembers(final String communitySlug, final long callerUserId) {
         if (callerUserId <= 0) {
             throw new InvalidServiceInputException("Caller is required.");
@@ -822,7 +877,18 @@ public class CommunityServiceImpl implements CommunityService {
     @Transactional
     public Optional<Boolean> hidePost(final String communitySlug, final String postSlug,
                                       final long callerUserId, final String reason) {
-        final Community community = requireModerator(communitySlug, callerUserId);
+        return hidePost(communitySlug, postSlug, callerUserId, reason, false);
+    }
+
+    @Override
+    @Transactional
+    public Optional<Boolean> hidePost(final String communitySlug, final String postSlug,
+                                      final long callerUserId, final String reason,
+                                      final boolean callerAdmin) {
+        final Community community = callerAdmin
+                ? communityDao.findBySlug(StringUtils.normalizeRequired(communitySlug, "Community slug is required."))
+                        .orElse(null)
+                : requireModerator(communitySlug, callerUserId);
         if (community == null) {
             return Optional.empty();
         }
@@ -834,7 +900,7 @@ public class CommunityServiceImpl implements CommunityService {
         final CommunityPost post = postOptional.get();
         final String recipientEmail = resolveUserEmail(post.getAuthorUserId());
         communityDao.setPostHidden(post.getId(), true);
-        LOGGER.info("moderator userId={} hid communityId={} postId={}",
+        LOGGER.info("moderator/admin userId={} hid communityId={} postId={}",
                 callerUserId, community.getId(), post.getId());
         if (recipientEmail != null) {
             emailService.sendCommunityPostHiddenNotification(
@@ -852,7 +918,18 @@ public class CommunityServiceImpl implements CommunityService {
     @Transactional
     public Optional<Boolean> hideComment(final String communitySlug, final long commentId,
                                          final long callerUserId, final String reason) {
-        final Community community = requireModerator(communitySlug, callerUserId);
+        return hideComment(communitySlug, commentId, callerUserId, reason, false);
+    }
+
+    @Override
+    @Transactional
+    public Optional<Boolean> hideComment(final String communitySlug, final long commentId,
+                                         final long callerUserId, final String reason,
+                                         final boolean callerAdmin) {
+        final Community community = callerAdmin
+                ? communityDao.findBySlug(StringUtils.normalizeRequired(communitySlug, "Community slug is required."))
+                        .orElse(null)
+                : requireModerator(communitySlug, callerUserId);
         if (community == null) {
             return Optional.empty();
         }
@@ -865,7 +942,7 @@ public class CommunityServiceImpl implements CommunityService {
         final CommunityPost post = comment.getPost();
         final String recipientEmail = resolveUserEmail(comment.getUserId());
         communityDao.setCommentHidden(commentId, true);
-        LOGGER.info("moderator userId={} hid communityId={} commentId={}",
+        LOGGER.info("moderator/admin userId={} hid communityId={} commentId={}",
                 callerUserId, community.getId(), commentId);
         if (recipientEmail != null) {
             emailService.sendCommunityCommentHiddenNotification(
@@ -1242,6 +1319,15 @@ public class CommunityServiceImpl implements CommunityService {
             return slug;
         }
         return slug.substring(0, maxLength);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<Community> getJoinedCommunities(final long userId) {
+        if (userId <= 0) {
+            return List.of();
+        }
+        return communityDao.findJoinedCommunities(userId);
     }
 
     @Override

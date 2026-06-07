@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.model;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class ActivityFeedReference implements Serializable {
 
@@ -29,5 +30,22 @@ public class ActivityFeedReference implements Serializable {
 
     public boolean isCommunityPost() {
         return TYPE_COMMUNITY_POST.equals(type);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ActivityFeedReference)) {
+            return false;
+        }
+        final ActivityFeedReference that = (ActivityFeedReference) o;
+        return itemId == that.itemId && Objects.equals(type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, itemId);
     }
 }

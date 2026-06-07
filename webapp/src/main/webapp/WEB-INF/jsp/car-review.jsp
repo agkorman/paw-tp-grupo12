@@ -129,14 +129,9 @@
     </main>
 
     <pa:auth-required-modal/>
-    <c:choose>
-        <c:when test="${not empty param.reviewCreated}">
-            <pa:toast messageCode="review.create.toast.success"/>
-        </c:when>
-        <c:otherwise>
-            <pa:toast/>
-        </c:otherwise>
-    </c:choose>
+    <c:set var="carReviewToastCode"
+           value="${not empty actionToastCode ? actionToastCode : (not empty param.reviewCreated ? 'review.create.toast.success' : '')}"/>
+    <pa:toast messageCode="${carReviewToastCode}"/>
     <sec:authorize access="isAuthenticated()">
         <pa:confirmation-modal id="deleteReviewConfirmModal"
                                titleCode="review.delete.title"
@@ -152,7 +147,9 @@
     <pa:script src="/js/shared/action-menu.js"/>
     <pa:script src="/js/cars/car-image-carousel.js"/>
     <pa:script src="/js/reviews/review-anchor-highlight.js"/>
+    <pa:script src="/js/reviews/review-sort.js" defer="true"/>
     <pa:script src="/js/reviews/reply-validation.js"/>
+    <pa:script src="/js/reviews/reply-disclosure.js"/>
     <pa:script src="/js/reviews/review-tag-chips.js" defer="true"/>
     <pa:script src="/js/shared/modal-utils.js"/>
     <pa:script src="/js/auth/auth-required-modal.js"/>

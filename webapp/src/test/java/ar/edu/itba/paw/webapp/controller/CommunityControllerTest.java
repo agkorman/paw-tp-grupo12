@@ -39,6 +39,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.ui.ExtendedModelMap;
+import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -50,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -170,21 +172,26 @@ class CommunityControllerTest {
     @Test
     void communityPostDetail_knownPost_rendersPostDetailView() throws Exception {
         // Arrange
-        when(communityService.getCommunityPostDetail(anyString(), anyString(), any()))
+        when(communityService.getCommunityPostDetail(anyString(), anyString(), any(), anyBoolean()))
                 .thenReturn(Optional.of(communityPostDetailData()));
         when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("2 hours ago");
         final MockMvc mockMvc = communityMockMvc();
 
         // Exercise
         final ResultActions resultActions =
-                mockMvc.perform(get("/communities/classics/posts/falcon-60"));
+                mockMvc.perform(get("/communities/classics/posts/falcon-60")
+                        .param("redirect", "/communities/classics?sort=commented&page=2#communityFeedTitle"));
 
         // Assertions
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(view().name("community-post-detail.jsp"))
                 .andExpect(model().attributeExists("postDetail"))
-                .andExpect(model().attributeExists("postView"));
+                .andExpect(model().attributeExists("postView"))
+                .andExpect(model().attribute(
+                        "postReturnRedirect",
+                        "/communities/classics?sort=commented&page=2#communityFeedTitle"
+                ));
     }
 
     @Test
@@ -338,6 +345,27 @@ class CommunityControllerTest {
     }
 
     @Test
+    void joinCommunity_withSafeRedirect_redirectsBackToPost() throws Exception {
+        // Arrange
+        final String redirect = "/communities/classics/posts/falcon-60#comments";
+        when(communityService.toggleMembership("classics", 7L)).thenReturn(Optional.of(true));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities/classics/join")
+                        .param("redirect", redirect)
+        );
+
+        // Assertions
+        resultActions
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(redirect));
+        clearSecurityContext();
+    }
+
+    @Test
     void kickCommunityMemberGet_redirectsToMembersPage() throws Exception {
         // Arrange
         final String communitySlug = "classics";
@@ -393,7 +421,7 @@ class CommunityControllerTest {
     }
 
     @Test
-    void submitCommunityPost_validForm_redirectsToPostDetail() throws Exception {
+    void submitCommunityPost_validForm_redirectsToCommunityFeedAnchor() throws Exception {
         // Arrange
         final CommunityPost createdPost = post();
         createdPost.setSlug("first-post");
@@ -415,7 +443,7 @@ class CommunityControllerTest {
         // Assertions
         resultActions
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/communities/classics/posts/first-post"));
+                .andExpect(redirectedUrl("/communities/classics#post-" + createdPost.getId()));
         clearSecurityContext();
     }
 
@@ -495,7 +523,8 @@ class CommunityControllerTest {
         // Exercise
         final DataIntegrityViolationException thrown = assertThrows(
                 DataIntegrityViolationException.class,
-                () -> controller.submitCommunityPost("classics", form, errors, new ExtendedModelMap(), testUser(7L))
+                () -> controller.submitCommunityPost("classics", form, errors, new ExtendedModelMap(), testUser(7L),
+                        new RedirectAttributesModelMap())
         );
 
         // Assertions

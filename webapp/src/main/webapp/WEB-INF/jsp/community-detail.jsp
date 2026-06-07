@@ -5,7 +5,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css"/>
+<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css|/css/reposted-review-card.css|/css/review-tags.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -17,6 +17,13 @@
     <c:url var="communityJoinUrl" value="/communities/${communityDetail.community.slug}/join"/>
     <c:url var="communityMembersUrl" value="/communities/${communityDetail.community.slug}/members"/>
     <c:url var="communityDetailUrl" value="/communities/${communityDetail.community.slug}"/>
+    <c:url var="communityPostsReturnBaseUrl" value="/communities/${communityDetail.community.slug}">
+        <c:if test="${not empty currentSort}">
+            <c:param name="sort" value="${currentSort}"/>
+        </c:if>
+        <c:param name="page" value="${postsCurrentPage}"/>
+    </c:url>
+    <c:set var="communityPostsReturnUrl" value="${communityPostsReturnBaseUrl}#communityFeedTitle"/>
     <c:set var="viewerIsMember" value="${communityDetail.viewerMember}"/>
     <c:set var="viewerIsModerator" value="${communityDetail.viewerModerator}"/>
     <c:set var="viewerIsCreator" value="${communityDetail.viewerCreator}"/>
@@ -58,6 +65,7 @@
                                               class="community-banner-join-form"
                                               data-confirm-modal="leaveCommunityConfirmModal">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                            <input type="hidden" name="redirect" value="${fn:escapeXml(communityPostsReturnBaseUrl)}">
                                             <button type="submit"
                                                     class="${communityJoinButtonClass}"
                                                     aria-pressed="true">
@@ -69,6 +77,7 @@
                                         <form action="${fn:escapeXml(communityJoinUrl)}" method="post"
                                               class="community-banner-join-form">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                            <input type="hidden" name="redirect" value="${fn:escapeXml(communityPostsReturnBaseUrl)}">
                                             <button type="submit"
                                                     class="${communityJoinButtonClass}"
                                                     aria-pressed="false">
@@ -127,7 +136,7 @@
                         <label class="community-sort-label" for="communitySortSelect">
                             <spring:message code="communities.feed.sort"/>
                         </label>
-                        <select id="communitySortSelect" name="sort" class="community-sort-select">
+                        <select id="communitySortSelect" name="sort" class="community-sort-select" data-auto-submit="true">
                             <option value="recent" ${currentSort eq 'recent' ? 'selected' : ''}>
                                 <spring:message code="communities.feed.sort.recent"/>
                             </option>
@@ -138,9 +147,11 @@
                                 <spring:message code="communities.feed.sort.commented"/>
                             </option>
                         </select>
-                        <button type="submit" class="btn-secondary community-sort-submit">
-                            <spring:message code="common.action.apply"/>
-                        </button>
+                        <noscript>
+                            <button type="submit" class="btn-secondary community-sort-submit">
+                                <spring:message code="common.action.apply"/>
+                            </button>
+                        </noscript>
                     </form>
                 </c:if>
 
@@ -157,7 +168,9 @@
 
                 <div id="communityPostList" class="community-post-list">
                     <c:forEach var="postCard" items="${postCards}">
-                        <c:url var="postCardHref" value="${postCard.href}"/>
+                        <c:url var="postCardHref" value="${postCard.href}">
+                            <c:param name="redirect" value="${communityPostsReturnUrl}"/>
+                        </c:url>
                         <c:url var="postCardHelpfulAction" value="${postCard.helpfulAction}"/>
                         <pa:community-post-card
                                 href="${postCardHref}"
@@ -171,7 +184,8 @@
                                 postId="${postCard.postId}"
                                 helpfulAction="${postCardHelpfulAction}"
                                 helpfulByCurrentUser="${postCard.helpfulByCurrentUser}"
-                                helpfulRedirect="${communityPostsRedirectBase}#post-${postCard.postId}"/>
+                                helpfulRedirect="${communityPostsRedirectBase}#post-${postCard.postId}"
+                                repostReview="${postCard.repostReview}"/>
                     </c:forEach>
                 </div>
 
@@ -235,6 +249,11 @@
     </c:if>
     <pa:image-lightbox/>
     <pa:script src="/js/shared/image-lightbox.js" defer="true"/>
+    <pa:script src="/js/communities/community-sort.js" defer="true"/>
+    <pa:script src="/js/reviews/review-anchor-highlight.js"/>
+
+    <pa:toast messageCode="${actionToastCode}"/>
+    <pa:script src="/js/shared/toast.js"/>
 
     <pa:footer/>
 </body>

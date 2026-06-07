@@ -2,6 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.ActivityFeedCriteria;
 import ar.edu.itba.paw.model.ActivityFeedItem;
+import ar.edu.itba.paw.model.ActivityFeedPermissions;
 import ar.edu.itba.paw.model.ActivityFeedReference;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Community;
@@ -31,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -150,6 +152,106 @@ public class ActivityServiceImplTest {
         assertEquals(1, result.getItems().size());
         assertTrue(result.getItems().get(0).isReview());
         assertTrue(result.getItems().get(0).getReviewImages().isEmpty());
+    }
+
+    @Test
+    public void shouldAllowOwnerToEditAndDeleteOwnReview() {
+        // Arrange
+        final Review review = review(LocalDateTime.now());
+        final ActivityFeedItem item = ActivityFeedItem.reviewItem(
+                review,
+                0L,
+                0L,
+                null,
+                Pagination.DEFAULT_PAGE,
+                Collections.emptyList()
+        );
+
+        // Exercise
+        final Map<ActivityFeedReference, ActivityFeedPermissions> result =
+                activityService.getActivityFeedPermissions(List.of(item), review.getUserId(), false);
+
+        // Assertions
+        final ActivityFeedPermissions permissions = result.get(item.getReference());
+        assertTrue(permissions.isEditable());
+        assertTrue(permissions.isDeletable());
+        assertFalse(permissions.isHideable());
+    }
+
+    @Test
+    public void shouldAllowAdminToHideReviewOwnedByAnotherUser() {
+        // Arrange
+        final Review review = review(LocalDateTime.now());
+        final long adminUserId = 99L;
+        final ActivityFeedItem item = ActivityFeedItem.reviewItem(
+                review,
+                0L,
+                0L,
+                null,
+                Pagination.DEFAULT_PAGE,
+                Collections.emptyList()
+        );
+
+        // Exercise
+        final Map<ActivityFeedReference, ActivityFeedPermissions> result =
+                activityService.getActivityFeedPermissions(List.of(item), adminUserId, true);
+
+        // Assertions
+        final ActivityFeedPermissions permissions = result.get(item.getReference());
+        assertFalse(permissions.isEditable());
+        assertFalse(permissions.isDeletable());
+        assertTrue(permissions.isHideable());
+    }
+
+    @Test
+    public void shouldAllowOwnerToEditAndDeleteOwnCommunityPost() {
+        // Arrange
+        final Community community = community(20L, "classics", "Classics");
+        final CommunityPost post = post(community, LocalDateTime.now());
+        final ActivityFeedItem item = ActivityFeedItem.communityPostItem(
+                post,
+                0L,
+                0L,
+                Collections.emptyList()
+        );
+        when(communityDao.findMembershipRoles(post.getAuthorUserId(), List.of(community.getId())))
+                .thenReturn(Collections.emptyMap());
+
+        // Exercise
+        final Map<ActivityFeedReference, ActivityFeedPermissions> result =
+                activityService.getActivityFeedPermissions(List.of(item), post.getAuthorUserId(), false);
+
+        // Assertions
+        final ActivityFeedPermissions permissions = result.get(item.getReference());
+        assertTrue(permissions.isEditable());
+        assertTrue(permissions.isDeletable());
+        assertFalse(permissions.isHideable());
+    }
+
+    @Test
+    public void shouldAllowCommunityModeratorToHidePostOwnedByAnotherUser() {
+        // Arrange
+        final Community community = community(20L, "classics", "Classics");
+        final CommunityPost post = post(community, LocalDateTime.now());
+        final long moderatorUserId = 77L;
+        final ActivityFeedItem item = ActivityFeedItem.communityPostItem(
+                post,
+                0L,
+                0L,
+                Collections.emptyList()
+        );
+        when(communityDao.findMembershipRoles(moderatorUserId, List.of(community.getId())))
+                .thenReturn(Map.of(community.getId(), "moderator"));
+
+        // Exercise
+        final Map<ActivityFeedReference, ActivityFeedPermissions> result =
+                activityService.getActivityFeedPermissions(List.of(item), moderatorUserId, false);
+
+        // Assertions
+        final ActivityFeedPermissions permissions = result.get(item.getReference());
+        assertFalse(permissions.isEditable());
+        assertFalse(permissions.isDeletable());
+        assertTrue(permissions.isHideable());
     }
 
     private static Review review(final LocalDateTime createdAt) {
