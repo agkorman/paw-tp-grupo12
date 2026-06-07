@@ -273,8 +273,9 @@
         tabsRoot.setAttribute('data-tabs-ready', 'true');
 
         if (window.location.hash) {
-            var hashPanel = document.getElementById(window.location.hash.substring(1));
-            if (hashPanel && hasClass(hashPanel, 'profile-tab-panel')) {
+            var hashTarget = document.getElementById(window.location.hash.substring(1));
+            var hashPanel = hashTarget ? closestByClass(hashTarget, 'profile-tab-panel') : null;
+            if (hashPanel) {
                 initialPanelId = hashPanel.id;
             }
         }

@@ -149,6 +149,8 @@
     <pa:script src="/js/communities/community-moderation.js"/>
     <pa:script src="/js/shared/image-lightbox.js"/>
     <pa:script src="/js/cars/cars-toolbar.js"/>
+    <pa:toast messageCode="${actionToastCode}"/>
+    <pa:script src="/js/shared/toast.js"/>
     <pa:footer/>
 </body>
 </html>

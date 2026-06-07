@@ -137,17 +137,18 @@ public class UserController {
         ) final String submitted,
         @RequestParam(value = "modal", required = false) final String connectionsModal,
         @RequestParam(value = "followersPage", defaultValue = "1") final int followersPage,
-        @RequestParam(value = "followingPage", defaultValue = "1") final int followingPage
+        @RequestParam(value = "followingPage", defaultValue = "1") final int followingPage,
+        final HttpServletRequest request
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
         return profile(currentUser.getId(), currentUser, tab, page, submitted,
-                connectionsModal, followersPage, followingPage);
+                connectionsModal, followersPage, followingPage, request);
     }
 
     ModelAndView ownProfile(final AuthenticatedUser currentUser) {
-        return ownProfile(currentUser, null, 1, null, null, 1, 1);
+        return ownProfile(currentUser, null, 1, null, null, 1, 1, null);
     }
 
     @RequestMapping(value = "/users/{userId}", method = RequestMethod.GET)
@@ -162,17 +163,18 @@ public class UserController {
         ) final String submitted,
         @RequestParam(value = "modal", required = false) final String connectionsModal,
         @RequestParam(value = "followersPage", defaultValue = "1") final int followersPage,
-        @RequestParam(value = "followingPage", defaultValue = "1") final int followingPage
+        @RequestParam(value = "followingPage", defaultValue = "1") final int followingPage,
+        final HttpServletRequest request
     ) {
         return profile(userId, currentUser, tab, page, submitted,
-                connectionsModal, followersPage, followingPage);
+                connectionsModal, followersPage, followingPage, request);
     }
 
     ModelAndView publicProfile(
         final long userId,
         final AuthenticatedUser currentUser
     ) {
-        return publicProfile(userId, currentUser, null, 1, null, null, 1, 1);
+        return publicProfile(userId, currentUser, null, 1, null, null, 1, 1, null);
     }
 
     @RequestMapping(value = "/user", method = RequestMethod.POST)
@@ -358,7 +360,8 @@ public class UserController {
         final String submitted,
         final String connectionsModal,
         final int followersPage,
-        final int followingPage
+        final int followingPage,
+        final HttpServletRequest request
     ) {
         final User profileUser = userService
             .getUserById(profileUserId)
@@ -367,6 +370,8 @@ public class UserController {
             );
         final Long currentUserId =
             currentUser == null ? null : currentUser.getId();
+        final boolean viewerAdmin =
+            request != null && request.isUserInRole("ADMIN");
         final boolean ownProfile =
             currentUserId != null && currentUserId == profileUser.getId();
         final String activeTab = ownProfile
@@ -399,7 +404,8 @@ public class UserController {
             );
             likesEntries = buildActivityEntries(
                 likesPage.getItems(),
-                currentUserId
+                currentUserId,
+                viewerAdmin
             );
         } else {
             activityPage = userActivityService.getAuthoredActivity(
@@ -408,7 +414,8 @@ public class UserController {
             );
             activityEntries = buildActivityEntries(
                 activityPage.getItems(),
-                currentUserId
+                currentUserId,
+                viewerAdmin
             );
         }
 
@@ -528,7 +535,8 @@ public class UserController {
 
     private List<ProfileActivityEntry> buildActivityEntries(
         final List<ProfileActivityItem> items,
-        final Long currentUserId
+        final Long currentUserId,
+        final boolean viewerAdmin
     ) {
         final List<Long> reviewIds = items.stream()
             .filter(i -> i.getType() == ItemType.REVIEW)
@@ -557,6 +565,14 @@ public class UserController {
         final Set<Long> helpfulByCurrentUser = currentUserId == null
             ? Set.of()
             : communityService.findPostHelpfulReactionsByUser(postIds, currentUserId);
+        final Set<Long> moderatedCommunityIds = viewerAdmin || currentUserId == null
+            ? Set.of()
+            : communityService.getModeratedCommunityIds(
+                currentUserId,
+                postsById.values().stream()
+                    .map(CommunityPost::getCommunityId)
+                    .collect(Collectors.toSet())
+            );
 
         final List<ProfileActivityEntry> entries = new ArrayList<>(items.size());
         for (final ProfileActivityItem item : items) {
@@ -565,14 +581,17 @@ public class UserController {
                 if (review == null) {
                     continue;
                 }
+                final boolean reviewOwnedByCurrentUser =
+                    isOwnedByCurrentUser(review, currentUserId);
                 entries.add(ProfileActivityEntry.review(
                     new ProfileReviewCard(
                         review,
                         carsById.get(review.getCarId()),
                         likedByCurrentUser.contains(review.getId()),
                         reviewLikeCounts.getOrDefault(review.getId(), 0L),
-                        isOwnedByCurrentUser(review, currentUserId),
-                        reviewReplyCounts.getOrDefault(review.getId(), 0L)
+                        reviewOwnedByCurrentUser,
+                        reviewReplyCounts.getOrDefault(review.getId(), 0L),
+                        viewerAdmin && !reviewOwnedByCurrentUser
                     )
                 ));
             } else {
@@ -580,6 +599,11 @@ public class UserController {
                 if (post == null) {
                     continue;
                 }
+                final boolean postOwnedByCurrentUser =
+                    isPostOwnedByCurrentUser(post, currentUserId);
+                final boolean postHideable =
+                    (viewerAdmin || moderatedCommunityIds.contains(post.getCommunityId()))
+                        && !postOwnedByCurrentUser;
                 entries.add(ProfileActivityEntry.post(
                     new ProfilePostCard(
                         post.getId(),
@@ -592,7 +616,9 @@ public class UserController {
                         post.getCreatedAt(),
                         helpfulCounts.getOrDefault(post.getId(), 0L),
                         commentCounts.getOrDefault(post.getId(), 0L),
-                        helpfulByCurrentUser.contains(post.getId())
+                        helpfulByCurrentUser.contains(post.getId()),
+                        postOwnedByCurrentUser,
+                        postHideable
                     )
                 ));
             }
@@ -711,6 +737,16 @@ public class UserController {
             currentUserId != null &&
             review.getUserId() != null &&
             review.getUserId().equals(currentUserId)
+        );
+    }
+
+    private boolean isPostOwnedByCurrentUser(
+        final CommunityPost post,
+        final Long currentUserId
+    ) {
+        return (
+            currentUserId != null &&
+            currentUserId == post.getAuthorUserId()
         );
     }
 
@@ -838,6 +874,7 @@ public class UserController {
         private final long likeCount;
         private final boolean ownedByCurrentUser;
         private final long replyCount;
+        private final boolean hideable;
 
         private ProfileReviewCard(
             final Review review,
@@ -845,7 +882,8 @@ public class UserController {
             final boolean liked,
             final long likeCount,
             final boolean ownedByCurrentUser,
-            final long replyCount
+            final long replyCount,
+            final boolean hideable
         ) {
             this.review = review;
             this.car = car;
@@ -853,6 +891,7 @@ public class UserController {
             this.likeCount = likeCount;
             this.ownedByCurrentUser = ownedByCurrentUser;
             this.replyCount = replyCount;
+            this.hideable = hideable;
         }
 
         public Review getReview() {
@@ -888,6 +927,10 @@ public class UserController {
 
         public long getReplyCount() {
             return replyCount;
+        }
+
+        public boolean getHideable() {
+            return hideable;
         }
     }
 
@@ -949,6 +992,8 @@ public class UserController {
         private final long helpfulCount;
         private final long commentCount;
         private final boolean helpfulByCurrentUser;
+        private final boolean ownedByCurrentUser;
+        private final boolean hideable;
 
         private ProfilePostCard(
             final long postId,
@@ -961,7 +1006,9 @@ public class UserController {
             final LocalDateTime createdAt,
             final long helpfulCount,
             final long commentCount,
-            final boolean helpfulByCurrentUser
+            final boolean helpfulByCurrentUser,
+            final boolean ownedByCurrentUser,
+            final boolean hideable
         ) {
             this.postId = postId;
             this.authorName = authorName;
@@ -974,6 +1021,8 @@ public class UserController {
             this.helpfulCount = helpfulCount;
             this.commentCount = commentCount;
             this.helpfulByCurrentUser = helpfulByCurrentUser;
+            this.ownedByCurrentUser = ownedByCurrentUser;
+            this.hideable = hideable;
         }
 
         public long getPostId() {
@@ -1018,6 +1067,14 @@ public class UserController {
 
         public boolean getHelpfulByCurrentUser() {
             return helpfulByCurrentUser;
+        }
+
+        public boolean getOwnedByCurrentUser() {
+            return ownedByCurrentUser;
+        }
+
+        public boolean getHideable() {
+            return hideable;
         }
     }
 

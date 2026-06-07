@@ -51,6 +51,7 @@ public interface CommunityService {
     Optional<CommunityPostImage> getPostImageById(long postId, long imageId);
     List<ImagePayload> collectRetainedPostImagePayloads(long postId, List<Long> retainedImageIds);
     Optional<String> getViewerRole(String communitySlug, Long userId);
+    Set<Long> getModeratedCommunityIds(Long userId, Collection<Long> communityIds);
     Optional<List<CommunityMembershipEntry>> listMembers(String communitySlug, long callerUserId);
     Optional<CommunityMembersData> getCommunityMembers(String communitySlug, long callerUserId);
     Optional<Boolean> hidePost(String communitySlug, String postSlug, long callerUserId, String reason);

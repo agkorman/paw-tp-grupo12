@@ -129,14 +129,9 @@
     </main>
 
     <pa:auth-required-modal/>
-    <c:choose>
-        <c:when test="${not empty param.reviewCreated}">
-            <pa:toast messageCode="review.create.toast.success"/>
-        </c:when>
-        <c:otherwise>
-            <pa:toast/>
-        </c:otherwise>
-    </c:choose>
+    <c:set var="carReviewToastCode"
+           value="${not empty actionToastCode ? actionToastCode : (not empty param.reviewCreated ? 'review.create.toast.success' : '')}"/>
+    <pa:toast messageCode="${carReviewToastCode}"/>
     <sec:authorize access="isAuthenticated()">
         <pa:confirmation-modal id="deleteReviewConfirmModal"
                                titleCode="review.delete.title"

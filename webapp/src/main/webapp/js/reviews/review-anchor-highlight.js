@@ -1,18 +1,28 @@
 (function () {
     var HIGHLIGHT_CLASS = 'is-anchor-highlighted';
     var HIGHLIGHT_DURATION_MS = 1000;
+    var HIGHLIGHTABLE_CLASSES = ['review-item', 'review-reply', 'profile-review-card', 'community-post-card'];
     var activeTarget = null;
     var activeTimer = null;
 
-    function highlightedReviewFromHash() {
-        var id;
-
-        if (!window.location.hash || window.location.hash.indexOf('#review-') !== 0) {
+    function anchorTargetFromHash() {
+        if (!window.location.hash || window.location.hash.length < 2) {
             return null;
         }
+        return document.getElementById(window.location.hash.substring(1));
+    }
 
-        id = window.location.hash.substring(1);
-        return document.getElementById(id);
+    function isHighlightable(element) {
+        if (!element) {
+            return false;
+        }
+        var className = ' ' + element.className + ' ';
+        for (var i = 0; i < HIGHLIGHTABLE_CLASSES.length; i += 1) {
+            if (className.indexOf(' ' + HIGHLIGHTABLE_CLASSES[i] + ' ') >= 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function clearHighlight() {
@@ -28,11 +38,11 @@
     }
 
     function applyAnchorHighlight() {
-        var target = highlightedReviewFromHash();
+        var target = anchorTargetFromHash();
 
         clearHighlight();
 
-        if (!target || target.className.indexOf('review-item') < 0) {
+        if (!isHighlightable(target)) {
             return;
         }
 

@@ -7,6 +7,8 @@
 
 <spring:message var="activityMetricsAria" code="activity.card.metrics.aria"/>
 <spring:message var="activityActionMenuLabel" code="activity.card.actionMenu.label"/>
+<spring:message var="reviewHideLabel" code="review.hide.action.aria"/>
+<spring:message var="postHideLabel" code="communities.post.hideAction"/>
 
 <c:set var="activityCurrentPath" value="${requestScope['javax.servlet.forward.servlet_path']}"/>
 <c:if test="${empty activityCurrentPath}">
@@ -109,61 +111,67 @@
                 </c:if>
             </p>
         </div>
-        <c:if test="${activityCard.actionMenuVisible}">
-            <pa:action-menu label="${activityActionMenuLabel}" cssClass="activity-card-menu">
-                <c:if test="${activityCard.editable}">
-                    <c:url var="activityCardEditUrl" value="${activityCard.editHref}">
-                        <c:param name="redirect" value="${activityCardRedirectPath}"/>
-                    </c:url>
-                    <a href="${fn:escapeXml(activityCardEditUrl)}">
-                        <spring:message code="common.action.edit"/>
-                    </a>
-                </c:if>
-                <c:if test="${activityCard.deletable}">
-                    <c:url var="activityCardDeleteUrl" value="${activityCard.deleteAction}"/>
-                    <form method="post" action="${fn:escapeXml(activityCardDeleteUrl)}"
-                          data-confirm-modal="${activityCard.review ? 'deleteReviewConfirmModal' : 'deletePostConfirmModal'}">
-                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                        <input type="hidden" name="redirect" value="${fn:escapeXml(activityCurrentPath)}">
-                        <button type="submit" class="action-menu-danger">
-                            <c:choose>
-                                <c:when test="${activityCard.review}">
-                                    <spring:message code="common.action.delete"/>
-                                </c:when>
-                                <c:otherwise>
-                                    <spring:message code="communities.post.deleteAction"/>
-                                </c:otherwise>
-                            </c:choose>
+        <c:choose>
+            <c:when test="${activityCard.editable or activityCard.deletable}">
+                <pa:action-menu label="${activityActionMenuLabel}" cssClass="activity-card-menu">
+                    <c:if test="${activityCard.editable}">
+                        <c:url var="activityCardEditUrl" value="${activityCard.editHref}">
+                            <c:param name="redirect" value="${activityCardRedirectPath}"/>
+                        </c:url>
+                        <a href="${fn:escapeXml(activityCardEditUrl)}">
+                            <spring:message code="common.action.edit"/>
+                        </a>
+                    </c:if>
+                    <c:if test="${activityCard.deletable}">
+                        <c:url var="activityCardDeleteUrl" value="${activityCard.deleteAction}"/>
+                        <form method="post" action="${fn:escapeXml(activityCardDeleteUrl)}"
+                              data-confirm-modal="${activityCard.review ? 'deleteReviewConfirmModal' : 'deletePostConfirmModal'}">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                            <input type="hidden" name="redirect" value="${fn:escapeXml(activityCurrentPath)}">
+                            <button type="submit" class="action-menu-danger">
+                                <c:choose>
+                                    <c:when test="${activityCard.review}">
+                                        <spring:message code="common.action.delete"/>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <spring:message code="communities.post.deleteAction"/>
+                                    </c:otherwise>
+                                </c:choose>
+                            </button>
+                        </form>
+                    </c:if>
+                </pa:action-menu>
+            </c:when>
+            <c:when test="${activityCard.hideable}">
+                <c:url var="activityCardHideUrl" value="${activityCard.hideAction}"/>
+                <c:choose>
+                    <c:when test="${activityCard.review}">
+                        <button type="button"
+                                class="action-menu-hide-button"
+                                aria-label="${fn:escapeXml(reviewHideLabel)}"
+                                title="${fn:escapeXml(reviewHideLabel)}"
+                                data-open-hide-review-modal
+                                data-review-hide-action="${fn:escapeXml(activityCardHideUrl)}"
+                                data-review-hide-redirect="${fn:escapeXml(activityCurrentPath)}"
+                                data-review-title="${fn:escapeXml(activityCard.title)}">
+                            <pa:icon name="visibility-off" size="18"/>
                         </button>
-                    </form>
-                </c:if>
-                <c:if test="${activityCard.hideable}">
-                    <c:url var="activityCardHideUrl" value="${activityCard.hideAction}"/>
-                    <c:choose>
-                        <c:when test="${activityCard.review}">
-                            <button type="button"
-                                    class="action-menu-danger"
-                                    data-open-hide-review-modal
-                                    data-review-hide-action="${fn:escapeXml(activityCardHideUrl)}"
-                                    data-review-hide-redirect="${fn:escapeXml(activityCurrentPath)}"
-                                    data-review-title="${fn:escapeXml(activityCard.title)}">
-                                <spring:message code="review.hide.action.aria"/>
-                            </button>
-                        </c:when>
-                        <c:otherwise>
-                            <button type="button"
-                                    class="action-menu-danger"
-                                    data-open-community-hide-modal
-                                    data-community-hide-modal-target="${fn:escapeXml(activityCard.hideModalTarget)}"
-                                    data-community-hide-action="${fn:escapeXml(activityCardHideUrl)}"
-                                    data-community-hide-redirect="${fn:escapeXml(activityCurrentPath)}">
-                                <spring:message code="communities.post.hideAction"/>
-                            </button>
-                        </c:otherwise>
-                    </c:choose>
-                </c:if>
-            </pa:action-menu>
-        </c:if>
+                    </c:when>
+                    <c:otherwise>
+                        <button type="button"
+                                class="action-menu-hide-button"
+                                aria-label="${fn:escapeXml(postHideLabel)}"
+                                title="${fn:escapeXml(postHideLabel)}"
+                                data-open-community-hide-modal
+                                data-community-hide-modal-target="${fn:escapeXml(activityCard.hideModalTarget)}"
+                                data-community-hide-action="${fn:escapeXml(activityCardHideUrl)}"
+                                data-community-hide-redirect="${fn:escapeXml(activityCurrentPath)}">
+                            <pa:icon name="visibility-off" size="18"/>
+                        </button>
+                    </c:otherwise>
+                </c:choose>
+            </c:when>
+        </c:choose>
     </div>
 
     <h2 class="activity-card-title">

@@ -254,6 +254,44 @@
     flex-wrap: nowrap;
 }
 
+.community-post-card:target,
+.community-post-card.is-anchor-highlighted {
+    background: var(--surface-container-highest);
+    border-color: rgba(255, 181, 158, 0.42);
+    box-shadow: inset 0 0 0 1px rgba(255, 181, 158, 0.42);
+}
+
+.community-post-card-linkable {
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.community-post-card-linkable:hover,
+.community-post-card-linkable:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(255, 181, 158, 0.4);
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+    outline: none;
+}
+
+.community-post-card-linkable .community-post-title a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.community-post-card-linkable .community-post-title a:hover,
+.community-post-card-linkable .community-post-title a:focus-visible {
+    color: var(--primary);
+    outline: none;
+}
+
+.community-post-topline-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: nowrap;
+}
+
 .community-post-meta {
     margin: 0;
     color: var(--secondary);

@@ -143,7 +143,7 @@ public class ActivityController {
                     reviewId,
                     authenticated,
                     "activity-review-" + reviewId,
-                    "activity.card.metric.comments",
+                    "activity.card.metric.replies",
                     Long.toString(item.getReviewReplyCount()),
                     permissions.isEditable(),
                     permissions.isDeletable(),
@@ -178,7 +178,7 @@ public class ActivityController {
                 postId,
                 authenticated,
                 "activity-post-" + postId,
-                "activity.card.metric.comments",
+                "activity.card.metric.replies",
                 Long.toString(item.getCommentCount()),
                 permissions.isEditable(),
                 permissions.isDeletable(),
@@ -356,7 +356,6 @@ public class ActivityController {
         public boolean isEditable() { return editable; }
         public boolean isDeletable() { return deletable; }
         public boolean isHideable() { return hideable; }
-        public boolean isActionMenuVisible() { return editable || deletable || hideable; }
         public String getEditHref() { return editHref; }
         public String getDeleteAction() { return deleteAction; }
         public String getHideAction() { return hideAction; }

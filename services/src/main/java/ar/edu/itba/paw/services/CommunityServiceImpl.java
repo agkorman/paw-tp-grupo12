@@ -756,6 +756,17 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    public Set<Long> getModeratedCommunityIds(final Long userId, final Collection<Long> communityIds) {
+        if (userId == null || userId <= 0 || communityIds == null || communityIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return communityDao.findMembershipRoles(userId, communityIds).entrySet().stream()
+                .filter(entry -> CREATOR_ROLE.equals(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public Optional<List<CommunityMembershipEntry>> listMembers(final String communitySlug, final long callerUserId) {
         if (callerUserId <= 0) {
             throw new InvalidServiceInputException("Caller is required.");

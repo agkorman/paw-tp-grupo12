@@ -232,7 +232,6 @@
                                 <c:if test="${not empty likesCurrentPage and likesCurrentPage > 1}">
                                     <c:set var="likesActionRedirectBase" value="${likesActionRedirectBase}&page=${likesCurrentPage}"/>
                                 </c:if>
-                                <c:set var="likesActionRedirect" value="${likesActionRedirectBase}#profileLikesPanel"/>
                                 <div class="profile-activity-list">
                                     <c:forEach var="entry" items="${likesEntries}">
                                         <c:choose>
@@ -240,10 +239,13 @@
                                                 <pa:profile-review-card
                                                         reviewCard="${entry.reviewCard}"
                                                         editable="${entry.reviewCard.ownedByCurrentUser}"
-                                                        actionRedirect="${likesActionRedirect}"/>
+                                                        hideable="${entry.reviewCard.hideable}"
+                                                        actionRedirect="${likesActionRedirectBase}#review-${entry.reviewCard.review.id}"/>
                                             </c:when>
                                             <c:when test="${entry.isPost}">
-                                                <c:url var="likedPostHref" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}"/>
+                                                <c:url var="likedPostHref" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}">
+                                                    <c:param name="redirect" value="${likesActionRedirectBase}#post-${entry.postCard.postId}"/>
+                                                </c:url>
                                                 <c:url var="likedPostHelpfulAction" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}/helpful"/>
                                                 <pa:community-post-card
                                                         author="${entry.postCard.authorName}"
@@ -257,7 +259,12 @@
                                                         postId="${entry.postCard.postId}"
                                                         helpfulAction="${likedPostHelpfulAction}"
                                                         helpfulByCurrentUser="${entry.postCard.helpfulByCurrentUser}"
-                                                        helpfulRedirect="${likesActionRedirectBase}#post-${entry.postCard.postId}"/>
+                                                        helpfulRedirect="${likesActionRedirectBase}#post-${entry.postCard.postId}"
+                                                        editable="${entry.postCard.ownedByCurrentUser}"
+                                                        hideable="${entry.postCard.hideable}"
+                                                        communitySlug="${entry.postCard.communitySlug}"
+                                                        postSlug="${entry.postCard.postSlug}"
+                                                        actionRedirect="${likesActionRedirectBase}#post-${entry.postCard.postId}"/>
                                             </c:when>
                                         </c:choose>
                                     </c:forEach>
@@ -293,7 +300,6 @@
                                 <c:if test="${not empty activityCurrentPage and activityCurrentPage > 1}">
                                     <c:set var="activityActionRedirectBase" value="${activityActionRedirectBase}&page=${activityCurrentPage}"/>
                                 </c:if>
-                                <c:set var="activityActionRedirect" value="${activityActionRedirectBase}#profileActivityPanel"/>
                                 <div class="profile-activity-list">
                                     <c:forEach var="entry" items="${activityEntries}">
                                         <c:choose>
@@ -301,10 +307,13 @@
                                                 <pa:profile-review-card
                                                         reviewCard="${entry.reviewCard}"
                                                         editable="${entry.reviewCard.ownedByCurrentUser}"
-                                                        actionRedirect="${activityActionRedirect}"/>
+                                                        hideable="${entry.reviewCard.hideable}"
+                                                        actionRedirect="${activityActionRedirectBase}#review-${entry.reviewCard.review.id}"/>
                                             </c:when>
                                             <c:when test="${entry.isPost}">
-                                                <c:url var="activityPostHref" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}"/>
+                                                <c:url var="activityPostHref" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}">
+                                                    <c:param name="redirect" value="${activityActionRedirectBase}#post-${entry.postCard.postId}"/>
+                                                </c:url>
                                                 <c:url var="activityPostHelpfulAction" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}/helpful"/>
                                                 <pa:community-post-card
                                                         author="${entry.postCard.authorName}"
@@ -318,7 +327,12 @@
                                                         postId="${entry.postCard.postId}"
                                                         helpfulAction="${activityPostHelpfulAction}"
                                                         helpfulByCurrentUser="${entry.postCard.helpfulByCurrentUser}"
-                                                        helpfulRedirect="${activityActionRedirectBase}#post-${entry.postCard.postId}"/>
+                                                        helpfulRedirect="${activityActionRedirectBase}#post-${entry.postCard.postId}"
+                                                        editable="${entry.postCard.ownedByCurrentUser}"
+                                                        hideable="${entry.postCard.hideable}"
+                                                        communitySlug="${entry.postCard.communitySlug}"
+                                                        postSlug="${entry.postCard.postSlug}"
+                                                        actionRedirect="${activityActionRedirectBase}#post-${entry.postCard.postId}"/>
                                             </c:when>
                                         </c:choose>
                                     </c:forEach>
@@ -347,6 +361,17 @@
                            bodyCode="review.delete.body"
                            confirmCode="common.action.delete"
                            confirmCssClass="btn-primary"/>
+    <pa:confirmation-modal id="deletePostConfirmModal"
+                           titleCode="communities.post.delete.title"
+                           bodyCode="communities.post.delete.body"
+                           confirmCode="communities.post.deleteAction"
+                           confirmCssClass="btn-primary"/>
+    <pa:community-hide-modal id="hideCommunityPostModal"
+                             titleCode="communities.post.hide.title"
+                             bodyCode="communities.post.hide.body"
+                             confirmCode="communities.post.hideAction"
+                             placeholderCode="communities.post.hide.reason.placeholder"/>
+    <pa:review-hide-modal/>
     <pa:edit-profile-modal profile="${profile}"/>
     <pa:profile-connections-modal followingUsers="${followingUsers}"
                                   followerUsers="${followerUsers}"
@@ -363,13 +388,16 @@
     <c:if test="${ownProfile}">
         <pa:moderator-application-modal/>
     </c:if>
-    <c:set var="profileToastCode" value="${not empty profileLanguageSuccessCode ? profileLanguageSuccessCode : submittedToastMessageCode}"/>
+    <c:set var="profileToastCode" value="${not empty actionToastCode ? actionToastCode : (not empty profileLanguageSuccessCode ? profileLanguageSuccessCode : submittedToastMessageCode)}"/>
     <pa:toast messageCode="${profileToastCode}"/>
     <pa:script src="/js/shared/action-menu.js"/>
     <pa:script src="/js/shared/modal-utils.js"/>
     <pa:script src="/js/auth/auth-required-modal.js"/>
     <pa:script src="/js/shared/confirmation-modal.js"/>
     <pa:script src="/js/profile/profile.js"/>
+    <pa:script src="/js/communities/community-moderation.js"/>
+    <pa:script src="/js/reviews/review-moderation.js"/>
+    <pa:script src="/js/reviews/review-anchor-highlight.js"/>
     <c:if test="${ownProfile}">
         <pa:script src="/js/profile/moderator-application-modal.js"/>
     </c:if>
