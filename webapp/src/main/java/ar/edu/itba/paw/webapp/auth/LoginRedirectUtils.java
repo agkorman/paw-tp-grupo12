@@ -54,6 +54,37 @@ public final class LoginRedirectUtils {
                 .flatMap(LoginRedirectUtils::safeRedirect);
     }
 
+    /**
+     * Resolves a {@code Referer} header (an absolute or relative URL) into a safe,
+     * well-formed, context-relative redirect path. Only the path and query are kept —
+     * scheme, host, and port are discarded — and the result is validated through
+     * {@link #safeRedirect(String, String)}, so the value can never become an open
+     * redirect. Returns empty when the referer is blank, malformed, or has no path.
+     */
+    public static Optional<String> safeRefererPath(final String referer, final String contextPath) {
+        if (referer == null) {
+            return Optional.empty();
+        }
+        final String trimmed = referer.trim();
+        if (trimmed.isEmpty()) {
+            return Optional.empty();
+        }
+        final URI uri;
+        try {
+            uri = URI.create(trimmed);
+        } catch (final IllegalArgumentException e) {
+            LOGGER.warn("rejected unsafe referer target reason={}", "malformed");
+            return Optional.empty();
+        }
+        final String path = uri.getRawPath();
+        if (path == null || path.isEmpty()) {
+            return Optional.empty();
+        }
+        final String query = uri.getRawQuery();
+        final String localTarget = query == null ? path : path + "?" + query;
+        return safeRedirect(localTarget, contextPath);
+    }
+
     public static Optional<String> safeIntent(final String value) {
         if (value == null) {
             return Optional.empty();

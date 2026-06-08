@@ -47,6 +47,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -319,7 +320,9 @@ class AdminControllerTest {
         final ResultActions resultActions =
                 mockMvc.perform(post("/admin/requests/41/reject"));
         // Assertions
-        resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/admin?carRejected=1"));
+        resultActions.andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin"))
+                .andExpect(flash().attribute("actionToastCode", "admin.carRequest.reject.toast.success"));
     }
 
     @Test
@@ -359,7 +362,8 @@ class AdminControllerTest {
         // Assertions
         resultActions
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?carAccepted=1"));
+                .andExpect(redirectedUrl("/admin"))
+                .andExpect(flash().attribute("actionToastCode", "admin.carRequest.accept.toast.success"));
     }
 
     @Test
@@ -481,11 +485,13 @@ class AdminControllerTest {
                                 .param("name", "Override")
                                 .header("Referer", "http://localhost/admin"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?catalogAccepted=1"));
+                .andExpect(redirectedUrl("/admin"))
+                .andExpect(flash().attribute("actionToastCode", "admin.catalogRequest.accept.toast.success"));
 
         mockMvc.perform(post("/admin/brand-requests/9/reject"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?catalogRejected=1"));
+                .andExpect(redirectedUrl("/admin"))
+                .andExpect(flash().attribute("actionToastCode", "admin.catalogRequest.reject.toast.success"));
 
         mockMvc.perform(post("/admin/brands/4").param("name", "Renamed").header("Referer", "http://localhost/cars"))
                 .andExpect(status().is3xxRedirection())
@@ -508,11 +514,13 @@ class AdminControllerTest {
                         post("/admin/body-type-requests/13/accept")
                                 .header("Referer", "http://localhost/admin?view=moderator"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?view=moderator&catalogAccepted=1"));
+                .andExpect(redirectedUrl("/admin?view=moderator"))
+                .andExpect(flash().attribute("actionToastCode", "admin.catalogRequest.accept.toast.success"));
 
         mockMvc.perform(post("/admin/body-type-requests/13/reject"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?catalogRejected=1"));
+                .andExpect(redirectedUrl("/admin"))
+                .andExpect(flash().attribute("actionToastCode", "admin.catalogRequest.reject.toast.success"));
 
         mockMvc.perform(
                         post("/admin/body-types/8")
@@ -536,11 +544,13 @@ class AdminControllerTest {
                         post("/admin/admin-requests/21/accept")
                                 .header("Referer", "http://localhost/admin?tab=moderators"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?tab=moderators&requestAccepted=1"));
+                .andExpect(redirectedUrl("/admin?tab=moderators"))
+                .andExpect(flash().attribute("actionToastCode", "admin.request.accept.toast.success"));
 
         mockMvc.perform(post("/admin/admin-requests/21/reject"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?requestRejected=1"));
+                .andExpect(redirectedUrl("/admin"))
+                .andExpect(flash().attribute("actionToastCode", "admin.request.reject.toast.success"));
     }
 
     @Test
@@ -557,7 +567,9 @@ class AdminControllerTest {
         // Assertions
         resultActions
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?requestError=1"));
+                .andExpect(redirectedUrl("/admin"))
+                .andExpect(flash().attribute("actionToastCode", "admin.request.toast.error"))
+                .andExpect(flash().attribute("actionToastType", "error"));
     }
 
     @Test
@@ -571,16 +583,20 @@ class AdminControllerTest {
         mockMvc.perform(
                         post("/admin/brand-requests/9/accept")
                                 .param("name", "Toyota")
-                                .header("Referer", "http://localhost/admin?tab=brands&catalogAccepted=1"))
+                                .header("Referer", "http://localhost/admin?tab=brands"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?tab=brands&catalogAcceptError=1"));
+                .andExpect(redirectedUrl("/admin?tab=brands"))
+                .andExpect(flash().attribute("actionToastCode", "admin.catalogRequest.accept.toast.error"))
+                .andExpect(flash().attribute("actionToastType", "error"));
 
         mockMvc.perform(
                         post("/admin/body-type-requests/13/accept")
                                 .param("name", "Sedan")
-                                .header("Referer", "http://localhost/admin?tab=body-types&catalogRejected=1"))
+                                .header("Referer", "http://localhost/admin?tab=body-types"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin?tab=body-types&catalogAcceptError=1"));
+                .andExpect(redirectedUrl("/admin?tab=body-types"))
+                .andExpect(flash().attribute("actionToastCode", "admin.catalogRequest.accept.toast.error"))
+                .andExpect(flash().attribute("actionToastType", "error"));
     }
 
     @Test

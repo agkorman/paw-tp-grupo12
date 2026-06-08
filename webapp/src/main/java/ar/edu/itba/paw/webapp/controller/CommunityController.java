@@ -593,6 +593,7 @@ public class CommunityController {
         @Valid @ModelAttribute("communityPostForm") final CommunityPostForm communityPostForm,
         final BindingResult errors,
         final Model model,
+        final RedirectAttributes redirectAttributes,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         final Review review = reviewService.getReviewById(reviewId)
@@ -668,6 +669,7 @@ public class CommunityController {
                 LogSanitizer.forLog(createdPost.getSlug(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 currentUser.getId());
+        redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.repost.toast.success");
         return "redirect:/communities/" + communitySlug + "/posts/" + createdPost.getSlug();
     }
 

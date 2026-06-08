@@ -218,12 +218,13 @@
     gap: 0.75rem;
     align-items: center;
     flex-shrink: 0;
-    margin-top: 0;
+    margin-top: auto;
     padding-top: 1.35rem;
 }
 
-/* Match the Next button's sizing to the Back (btn-secondary) button. */
-.wizard-actions .wizard-next {
+/* Match the Next/submit button's sizing to the Back (btn-secondary) button. */
+.wizard-actions .wizard-next,
+.wizard-actions button[type="submit"] {
     font-size: 0.75rem;
     letter-spacing: 0.12em;
     padding: 0.75rem 2rem;

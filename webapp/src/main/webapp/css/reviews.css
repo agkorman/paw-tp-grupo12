@@ -73,7 +73,7 @@
 }
 
 .review-description-bar .add-review-btn {
-    align-self: center;
+    align-self: flex-end;
     flex-shrink: 0;
 }
 
@@ -634,6 +634,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
+    margin-left: auto;
 }
 
 .review-reply-menu .action-menu-toggle {
