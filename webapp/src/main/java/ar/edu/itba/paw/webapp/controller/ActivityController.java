@@ -212,8 +212,7 @@ public class ActivityController {
                 review.getRating(),
                 carName,
                 review.getCarId(),
-                authorName,
-                review.getTags()
+                authorName
         );
     }
 
