@@ -39,8 +39,7 @@
     <main class="community-post-page">
         <section class="community-post-shell">
             <div class="community-post-header">
-                <a class="community-back-link" href="${fn:escapeXml(communityDetailUrl)}" aria-label="${fn:escapeXml(communityPostBackLabel)}"
-                   onclick="if (document.referrer &amp;&amp; document.referrer.indexOf(location.origin) === 0) { history.back(); return false; }">
+                <a class="community-back-link" href="${fn:escapeXml(communityDetailUrl)}#post-${postDetail.post.id}" aria-label="${fn:escapeXml(communityPostBackLabel)}">
                     <pa:icon name="chevron-left" size="18"/>
                 </a>
                 <div class="community-post-origin">

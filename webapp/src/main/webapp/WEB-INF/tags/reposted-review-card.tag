@@ -53,7 +53,6 @@
             <c:if test="${not empty repostReview.authorName}">
                 <span class="reposted-review-author"><c:out value="${repostReview.authorName}"/></span>
             </c:if>
-            <pa:review-tag-chips mode="display-flat" tags="${repostReview.tags}"/>
         </div>
     </div>
     <c:choose>

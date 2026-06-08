@@ -222,8 +222,8 @@
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">
                                                     <c:out value="${empty reply.authorUsername ? reviewAuthorFallback : reply.authorUsername}"/>
                                                 </a>
+                                                <span class="review-reply-time"><c:out value="${relativeTimeFormatter.format(reply.createdAt)}"/></span>
                                                 <div class="review-reply-header-actions">
-                                                    <span><c:out value="${relativeTimeFormatter.format(reply.createdAt)}"/></span>
                                                     <sec:authorize access="hasRole('ADMIN')">
                                                         <c:if test="${empty currentUserId or reply.userId != currentUserId}">
                                                             <button type="button"

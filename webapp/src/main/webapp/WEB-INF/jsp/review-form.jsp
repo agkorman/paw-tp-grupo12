@@ -196,7 +196,6 @@
                         inputName="files"
                         required="false"
                         mode="${editMode ? 'edit' : 'create'}"
-                        maxImageCount="3"
                         existingImageUrlsJoined="${reviewExistingImageUrls}"
                         existingImageIdsJoined="${reviewExistingImageIds}"
                         labelKey="review.form.images"

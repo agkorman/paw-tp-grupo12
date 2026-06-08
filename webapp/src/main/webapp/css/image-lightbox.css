@@ -22,6 +22,26 @@
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
+.image-gallery-overflow-button {
+    padding: 0;
+    border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
+    border-radius: 10px;
+    background: var(--surface-container-high, rgba(255, 255, 255, 0.06));
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 192px;
+    height: 192px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.image-gallery-overflow-count {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
 .image-lightbox {
     position: fixed;
     inset: 0;
@@ -57,6 +77,8 @@
 .image-lightbox-img {
     max-width: 92vw;
     max-height: 88vh;
+    min-width: 300px;
+    min-height: 300px;
     width: auto;
     height: auto;
     object-fit: contain;
@@ -126,6 +148,11 @@ body.image-lightbox-open {
 
 @media (max-width: 768px) {
     .image-gallery-thumb {
+        width: 140px;
+        height: 140px;
+    }
+
+    .image-gallery-overflow-button {
         width: 140px;
         height: 140px;
     }

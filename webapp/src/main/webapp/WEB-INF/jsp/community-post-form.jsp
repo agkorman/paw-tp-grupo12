@@ -96,7 +96,6 @@
                     inputName="files"
                     required="false"
                     mode="${editMode ? 'edit' : 'create'}"
-                    maxImageCount="3"
                     existingImageUrlsJoined="${communityPostExistingImageUrls}"
                     existingImageIdsJoined="${communityPostExistingImageIds}"
                     labelKey="communities.postForm.images"

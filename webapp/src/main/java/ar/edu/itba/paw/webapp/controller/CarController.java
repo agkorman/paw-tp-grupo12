@@ -18,12 +18,11 @@ import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.exception.DuplicateCarException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import ar.edu.itba.paw.webapp.util.ImageValidationService;
-import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import java.io.IOException;
-import java.net.URI;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -448,37 +447,19 @@ public class CarController {
     }
 
     private String safeRedirectPath(final String referer) {
-        if (referer == null || referer.isBlank()) {
-            return "/cars";
-        }
-        try {
-            final URI uri = URI.create(referer);
-            final String path = ControllerUtils.stripCurrentContextPath(uri.getRawPath());
-            if (path == null || path.isBlank()) {
-                return "/cars";
-            }
-            if (
-                "/".equals(path) ||
-                "/cars".equals(path) ||
-                path.matches("/reviews/car/\\d+") ||
-                "/user".equals(path) ||
-                path.matches("/users/\\d+")
-            ) {
-                final String query = uri.getRawQuery();
-                return path + (query == null ? "" : "?" + query);
-            }
-        } catch (final IllegalArgumentException e) {
-            LOGGER.warn(
-                "invalid referer URI for redirect, falling back to /cars referer={}",
-                LogSanitizer.forLog(
-                    referer,
-                    LogSanitizer.MAX_LOG_URL_CODE_POINTS
-                ),
-                e
-            );
-            return "/cars";
-        }
-        return "/cars";
+        return LoginRedirectUtils
+            .safeRefererPath(referer, ControllerUtils.currentContextPath())
+            .filter(CarController::isAllowedFavoriteReturnPath)
+            .orElse("/cars");
+    }
+
+    private static boolean isAllowedFavoriteReturnPath(final String target) {
+        final String path = ControllerUtils.pathWithoutQuery(target);
+        return "/".equals(path)
+            || "/cars".equals(path)
+            || path.matches("/reviews/car/\\d+")
+            || "/user".equals(path)
+            || path.matches("/users/\\d+");
     }
 
     @RequestMapping(value = "/cars/{carId}/image", method = RequestMethod.GET)

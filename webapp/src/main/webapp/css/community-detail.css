@@ -44,7 +44,8 @@
     gap: var(--spacing-3);
 }
 
-.community-banner-edit-btn {
+.community-banner-edit-btn,
+.community-banner-leave-btn {
     height: 3.25rem;
     padding: 0 1.25rem;
     white-space: nowrap;
