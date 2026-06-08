@@ -48,7 +48,10 @@
 
         activeTarget = target;
         activeTarget.classList.add(HIGHLIGHT_CLASS);
-        activeTimer = window.setTimeout(clearHighlight, HIGHLIGHT_DURATION_MS);
+        activeTimer = window.setTimeout(function () {
+            clearHighlight();
+            history.replaceState(null, '', location.pathname + location.search);
+        }, HIGHLIGHT_DURATION_MS);
     }
 
     applyAnchorHighlight();

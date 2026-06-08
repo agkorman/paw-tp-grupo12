@@ -17,7 +17,6 @@ import ar.edu.itba.paw.model.CommunityTopic;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.ReviewTag;
 import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.CommunityService;
@@ -76,7 +75,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class CommunityController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommunityController.class);
-    private static final int MAX_COMMUNITY_POST_IMAGE_COUNT = 3;
+    private static final int MAX_COMMUNITY_POST_IMAGE_COUNT = 5;
     private static final String ACTION_TOAST_ATTRIBUTE = "actionToastCode";
 
     private final CommunityService communityService;
@@ -1133,8 +1132,7 @@ public class CommunityController {
                 review.getRating(),
                 carName,
                 review.getCarId(),
-                authorName,
-                review.getTags()
+                authorName
         );
     }
 
@@ -1759,11 +1757,10 @@ public class CommunityController {
         private final String carName;
         private final long carId;
         private final String authorName;
-        private final List<ReviewTag> tags;
 
-        private RepostReviewView(final long reviewId, final String title, final String body,
-                                 final BigDecimal rating, final String carName, final long carId,
-                                 final String authorName, final List<ReviewTag> tags) {
+        RepostReviewView(final long reviewId, final String title, final String body,
+                         final BigDecimal rating, final String carName, final long carId,
+                         final String authorName) {
             this.reviewId = reviewId;
             this.title = title;
             this.body = body;
@@ -1771,7 +1768,6 @@ public class CommunityController {
             this.carName = carName;
             this.carId = carId;
             this.authorName = authorName;
-            this.tags = tags != null ? tags : Collections.emptyList();
         }
 
         public long getReviewId() { return reviewId; }
@@ -1781,7 +1777,6 @@ public class CommunityController {
         public String getCarName() { return carName; }
         public long getCarId() { return carId; }
         public String getAuthorName() { return authorName; }
-        public List<ReviewTag> getTags() { return tags; }
         public String getReviewHref() { return "/reviews/car/" + carId + "#review-" + reviewId; }
     }
 }

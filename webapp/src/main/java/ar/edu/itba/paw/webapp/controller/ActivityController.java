@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.ActivityFeedItem;
 import ar.edu.itba.paw.model.ActivityFeedPermissions;
 import ar.edu.itba.paw.model.ActivityFeedReference;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.services.ActivityService;
 import ar.edu.itba.paw.services.CommunityService;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -153,13 +155,17 @@ public class ActivityController {
                     "/reviews/" + reviewId + "/hide",
                     null,
                     reviewCommentsHref(item),
-                    authenticated ? "/reviews/" + reviewId + "/repost" : null
+                    authenticated ? "/reviews/" + reviewId + "/repost" : null,
+                    null
             );
         }
 
         final long postId = item.getCommunityPost().getId();
         final String communitySlug = item.getCommunityPost().getCommunity().getSlug();
         final String postSlug = item.getCommunityPost().getSlug();
+        final Review linkedReview = item.getCommunityPost().getLinkedReview();
+        final CommunityController.RepostReviewView repostReview = linkedReview != null
+                ? buildRepostReviewView(linkedReview) : null;
         return new ActivityCardView(
                 false,
                 "/communities/" + communitySlug + "/posts/" + postSlug,
@@ -189,7 +195,24 @@ public class ActivityController {
                 "/communities/" + communitySlug + "/posts/" + postSlug + "/hide",
                 "hideCommunityPostModal",
                 "/communities/" + communitySlug + "/posts/" + postSlug + "#comments",
-                null
+                null,
+                repostReview
+        );
+    }
+
+    private CommunityController.RepostReviewView buildRepostReviewView(final Review review) {
+        final String carName = review.getCar() != null
+                ? review.getCar().getBrandName() + " " + review.getCar().getModel()
+                : null;
+        final String authorName = review.getUser() != null ? review.getUser().getUsername() : null;
+        return new CommunityController.RepostReviewView(
+                review.getId(),
+                review.getTitle(),
+                review.getBody(),
+                review.getRating(),
+                carName,
+                review.getCarId(),
+                authorName
         );
     }
 
@@ -276,6 +299,7 @@ public class ActivityController {
         private final String hideModalTarget;
         private final String commentsHref;
         private final String repostHref;
+        private final CommunityController.RepostReviewView repostReview;
 
         private ActivityCardView(final boolean review,
                                  final String href,
@@ -305,7 +329,8 @@ public class ActivityController {
                                  final String hideAction,
                                  final String hideModalTarget,
                                  final String commentsHref,
-                                 final String repostHref) {
+                                 final String repostHref,
+                                 final CommunityController.RepostReviewView repostReview) {
             this.review = review;
             this.href = href;
             this.authorHref = authorHref;
@@ -335,6 +360,7 @@ public class ActivityController {
             this.hideModalTarget = hideModalTarget;
             this.commentsHref = commentsHref;
             this.repostHref = repostHref;
+            this.repostReview = repostReview;
         }
 
         public boolean isReview() { return review; }
@@ -368,5 +394,6 @@ public class ActivityController {
         public String getHideAction() { return hideAction; }
         public String getHideModalTarget() { return hideModalTarget; }
         public String getCommentsHref() { return commentsHref; }
+        public CommunityController.RepostReviewView getRepostReview() { return repostReview; }
     }
 }
