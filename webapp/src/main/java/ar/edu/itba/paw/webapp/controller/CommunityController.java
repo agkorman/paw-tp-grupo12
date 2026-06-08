@@ -1759,9 +1759,9 @@ public class CommunityController {
         private final String authorName;
         private final List<ReviewTag> tags;
 
-        private RepostReviewView(final long reviewId, final String title, final String body,
-                                 final BigDecimal rating, final String carName, final long carId,
-                                 final String authorName, final List<ReviewTag> tags) {
+        RepostReviewView(final long reviewId, final String title, final String body,
+                         final BigDecimal rating, final String carName, final long carId,
+                         final String authorName, final List<ReviewTag> tags) {
             this.reviewId = reviewId;
             this.title = title;
             this.body = body;

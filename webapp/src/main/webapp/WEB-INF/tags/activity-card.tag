@@ -178,19 +178,10 @@
     </h2>
     <p class="activity-card-body ${not empty activityCard.imageUrls ? 'activity-card-body--with-image' : 'activity-card-body--text-only'}"><c:out value="${activityCard.body}"/></p>
     <c:if test="${not empty activityCard.imageUrls}">
-        <c:set var="resolvedImageUrlsJoined" value=""/>
-        <c:forEach var="rawImageUrl" items="${activityCard.imageUrls}" varStatus="status">
-            <c:url var="oneResolvedUrl" value="${rawImageUrl}"/>
-            <c:set var="resolvedImageUrlsJoined" value="${resolvedImageUrlsJoined}${status.first ? '' : '|'}${oneResolvedUrl}"/>
-        </c:forEach>
-        <div class="activity-card-gallery-shell">
-            <pa:image-gallery imageUrlsJoined="${resolvedImageUrlsJoined}"
-                              altKey="${activityCard.imageAltKey}"
-                              cssClass="activity-card-gallery"/>
-            <span class="activity-card-gallery-count">
-                1 / <c:out value="${fn:length(activityCard.imageUrls)}"/>
-            </span>
-        </div>
+        <pa:image-gallery imageUrls="${activityCard.imageUrls}" altKey="${activityCard.imageAltKey}"/>
+    </c:if>
+    <c:if test="${not empty activityCard.repostReview}">
+        <pa:reposted-review-card repostReview="${activityCard.repostReview}"/>
     </c:if>
 
     <div class="activity-card-metrics" aria-label="${fn:escapeXml(activityMetricsAria)}">
