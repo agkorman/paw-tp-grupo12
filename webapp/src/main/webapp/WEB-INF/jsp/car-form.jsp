@@ -123,6 +123,9 @@
                 <form:hidden path="formMode"/>
                 <form:hidden path="carId"/>
                 <form:hidden path="requestId"/>
+                <c:if test="${not empty adminRedirect}">
+                    <input type="hidden" name="redirect" value="${fn:escapeXml(adminRedirect)}">
+                </c:if>
 
                 <p id="carFormSubtitle" class="car-modal-subtitle"><c:out value="${resolvedFormSubtitle}"/></p>
 
@@ -326,6 +329,9 @@
             <c:if test="${not empty resolvedRejectAction}">
                 <form id="rejectCarRequestForm" method="post" action="${resolvedRejectAction}">
                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                    <c:if test="${not empty adminRedirect}">
+                        <input type="hidden" name="redirect" value="${fn:escapeXml(adminRedirect)}">
+                    </c:if>
                 </form>
             </c:if>
         </section>

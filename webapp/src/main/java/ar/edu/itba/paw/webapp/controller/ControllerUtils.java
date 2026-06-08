@@ -38,28 +38,23 @@ final class ControllerUtils {
         return normalized == null ? null : normalized.toLowerCase(Locale.ROOT);
     }
 
-    static String stripCurrentContextPath(final String path) {
-        return stripContextPath(path, currentContextPath());
+    static String pathWithoutQuery(final String target) {
+        if (target == null) {
+            return null;
+        }
+        final int queryIndex = target.indexOf('?');
+        return queryIndex >= 0 ? target.substring(0, queryIndex) : target;
     }
 
-    static String stripContextPath(final String path, final String contextPath) {
-        if (path == null || contextPath == null || contextPath.isBlank() || "/".equals(contextPath)) {
-            return path;
+    static String queryOf(final String target) {
+        if (target == null) {
+            return null;
         }
-        final String normalizedContextPath = contextPath.trim();
-        if (!normalizedContextPath.startsWith("/")) {
-            return path;
-        }
-        if (path.equals(normalizedContextPath)) {
-            return "/";
-        }
-        if (path.startsWith(normalizedContextPath + "/")) {
-            return path.substring(normalizedContextPath.length());
-        }
-        return path;
+        final int queryIndex = target.indexOf('?');
+        return queryIndex >= 0 ? target.substring(queryIndex + 1) : null;
     }
 
-    private static String currentContextPath() {
+    static String currentContextPath() {
         final org.springframework.web.context.request.RequestAttributes requestAttributes =
                 RequestContextHolder.getRequestAttributes();
         if (!(requestAttributes instanceof ServletRequestAttributes)) {
