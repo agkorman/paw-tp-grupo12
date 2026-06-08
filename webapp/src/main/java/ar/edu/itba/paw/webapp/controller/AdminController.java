@@ -22,13 +22,14 @@ import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.services.exception.DuplicateCarException;
+import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import ar.edu.itba.paw.webapp.util.ImageValidationService;
 import ar.edu.itba.paw.webapp.util.LogSanitizer;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.URI;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -302,24 +303,30 @@ public class AdminController {
         method = RequestMethod.GET
     )
     public ModelAndView reviewCarRequest(
-        @PathVariable("requestId") final long requestId
+        @PathVariable("requestId") final long requestId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request
     ) {
-        final CarRequest request = carRequestService
+        final CarRequest carRequest = carRequestService
             .getCarRequestById(requestId)
             .orElse(null);
         if (
-            request == null ||
-            !CarRequestService.STATUS_PENDING.equals(request.getStatus())
+            carRequest == null ||
+            !CarRequestService.STATUS_PENDING.equals(carRequest.getStatus())
         ) {
             return new ModelAndView("redirect:/admin");
         }
+        final String adminRedirect = LoginRedirectUtils
+            .safeRedirect(redirect, request.getContextPath())
+            .orElse(null);
         final List<ImageMetadata> requestImages =
-            carRequestService.getCarRequestImages(request.getId());
+            carRequestService.getCarRequestImages(carRequest.getId());
         return carRequestFormPage(
-            request,
-            toForm(request, requestImages),
+            carRequest,
+            toForm(carRequest, requestImages),
             null,
-            requestImages
+            requestImages,
+            adminRedirect
         );
     }
 
@@ -344,7 +351,8 @@ public class AdminController {
         @PathVariable("requestId") final long requestId,
         @Valid @ModelAttribute("carForm") final CarForm carForm,
         final BindingResult errors,
-        @RequestHeader(value = "Referer", required = false) final String referer
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request
     ) {
         final CarRequest pendingRequest = carRequestService
             .getCarRequestById(requestId)
@@ -355,6 +363,9 @@ public class AdminController {
         ) {
             return new ModelAndView("redirect:/admin");
         }
+        final String adminRedirect = LoginRedirectUtils
+            .safeRedirect(redirect, request.getContextPath())
+            .orElse(null);
 
         rejectInvalidSpecFields(errors, carForm);
         final List<MultipartFile> files = selectedImageFiles(
@@ -408,7 +419,7 @@ public class AdminController {
                 requestId,
                 errors.getErrorCount()
             );
-            return carRequestFormPage(pendingRequest, carForm, errors);
+            return carRequestFormPage(pendingRequest, carForm, errors, adminRedirect);
         }
 
         final List<ImagePayload> imagePayloads;
@@ -462,10 +473,13 @@ public class AdminController {
                 "car request approval rejected: duplicate car requestId={}",
                 requestId
             );
-            return carRequestFormPage(pendingRequest, carForm, errors);
+            return carRequestFormPage(pendingRequest, carForm, errors, adminRedirect);
         }
 
-        return new ModelAndView("redirect:/admin?carAccepted=1");
+        final String successRedirect = adminRedirect != null
+            ? LoginRedirectUtils.appendQueryParam(adminRedirect, "carAccepted", "1")
+            : "/admin?carAccepted=1";
+        return new ModelAndView("redirect:" + successRedirect);
     }
 
     @RequestMapping(
@@ -604,11 +618,19 @@ public class AdminController {
         method = RequestMethod.POST
     )
     public ModelAndView rejectRequest(
-        @PathVariable("requestId") final long requestId
+        @PathVariable("requestId") final long requestId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request
     ) {
         LOGGER.info("admin reject car request id={}", requestId);
         carRequestService.rejectPendingRequest(requestId);
-        return new ModelAndView("redirect:/admin?carRejected=1");
+        final String adminRedirect = LoginRedirectUtils
+            .safeRedirect(redirect, request.getContextPath())
+            .orElse(null);
+        final String successRedirect = adminRedirect != null
+            ? LoginRedirectUtils.appendQueryParam(adminRedirect, "carRejected", "1")
+            : "/admin?carRejected=1";
+        return new ModelAndView("redirect:" + successRedirect);
     }
 
     @RequestMapping(
@@ -881,13 +903,15 @@ public class AdminController {
     private ModelAndView carRequestFormPage(
         final CarRequest request,
         final CarForm carForm,
-        final BindingResult errors
+        final BindingResult errors,
+        final String adminRedirect
     ) {
         return carRequestFormPage(
             request,
             carForm,
             errors,
-            carRequestService.getCarRequestImages(request.getId())
+            carRequestService.getCarRequestImages(request.getId()),
+            adminRedirect
         );
     }
 
@@ -895,7 +919,8 @@ public class AdminController {
         final CarRequest request,
         final CarForm carForm,
         final BindingResult errors,
-        final List<ImageMetadata> requestImages
+        final List<ImageMetadata> requestImages,
+        final String adminRedirect
     ) {
         prepareCarFormContext(carForm, "review-request", null, request.getId());
         final ModelAndView mav = new ModelAndView("car-form.jsp");
@@ -919,6 +944,9 @@ public class AdminController {
         );
         mav.addObject("rejectLabel", "Rechazar");
         mav.addObject("showCatalogRequestLinks", false);
+        if (adminRedirect != null) {
+            mav.addObject("adminRedirect", adminRedirect);
+        }
         final List<Long> retainedImageIds = retainedImageIds(
             carForm.getRetainedImageIds(),
             imageIdsFrom(requestImages)
@@ -1460,36 +1488,21 @@ public class AdminController {
         final String notificationParam
     ) {
         final String fallback = adminRedirectView(null, notificationParam);
-        if (referer == null || referer.isBlank()) {
+        final String target = LoginRedirectUtils
+            .safeRefererPath(referer, ControllerUtils.currentContextPath())
+            .orElse(null);
+        if (target == null
+            || !"/admin".equals(ControllerUtils.pathWithoutQuery(target))) {
             return new ModelAndView(fallback);
         }
-        try {
-            final URI uri = URI.create(referer);
-            if (
-                !"/admin".equals(
-                    ControllerUtils.stripCurrentContextPath(uri.getRawPath())
-                )
-            ) {
-                return new ModelAndView(fallback);
-            }
-            final String query = uri.getRawQuery();
-            return new ModelAndView(
-                adminRedirectView(
-                    stripAdminNotificationParams(query),
-                    notificationParam
-                )
-            );
-        } catch (final IllegalArgumentException e) {
-            LOGGER.warn(
-                "invalid referer URI for admin redirect, falling back referer={}",
-                LogSanitizer.forLog(
-                    referer,
-                    LogSanitizer.MAX_LOG_URL_CODE_POINTS
-                ),
-                e
-            );
-            return new ModelAndView(fallback);
-        }
+        final int queryIndex = target.indexOf('?');
+        final String query = queryIndex >= 0 ? target.substring(queryIndex + 1) : null;
+        return new ModelAndView(
+            adminRedirectView(
+                stripAdminNotificationParams(query),
+                notificationParam
+            )
+        );
     }
 
     private String adminRedirectView(
@@ -1532,35 +1545,19 @@ public class AdminController {
         final boolean allowReviewsPage
     ) {
         final String fallback = "redirect:/cars";
-        if (referer == null || referer.isBlank()) {
+        final String target = LoginRedirectUtils
+            .safeRefererPath(referer, ControllerUtils.currentContextPath())
+            .orElse(null);
+        if (target == null) {
             return new ModelAndView(fallback);
         }
-        try {
-            final URI uri = URI.create(referer);
-            final String path = ControllerUtils.stripCurrentContextPath(uri.getRawPath());
-            if (path == null || path.isBlank()) {
-                return new ModelAndView(fallback);
-            }
-            if (
-                "/".equals(path) ||
-                "/cars".equals(path) ||
-                (allowReviewsPage && path.matches("/reviews/car/\\d+"))
-            ) {
-                final String query = uri.getRawQuery();
-                return new ModelAndView(
-                    "redirect:" + path + (query == null ? "" : "?" + query)
-                );
-            }
-        } catch (final IllegalArgumentException e) {
-            LOGGER.warn(
-                "invalid referer URI for catalog redirect, falling back referer={}",
-                LogSanitizer.forLog(
-                    referer,
-                    LogSanitizer.MAX_LOG_URL_CODE_POINTS
-                ),
-                e
-            );
-            return new ModelAndView(fallback);
+        final String path = ControllerUtils.pathWithoutQuery(target);
+        if (
+            "/".equals(path) ||
+            "/cars".equals(path) ||
+            (allowReviewsPage && path.matches("/reviews/car/\\d+"))
+        ) {
+            return new ModelAndView("redirect:" + target);
         }
         return new ModelAndView(fallback);
     }

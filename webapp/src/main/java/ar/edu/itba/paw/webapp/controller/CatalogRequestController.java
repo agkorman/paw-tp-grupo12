@@ -5,6 +5,7 @@ import ar.edu.itba.paw.services.BodyTypeRequestService;
 import ar.edu.itba.paw.services.BrandRequestService;
 import ar.edu.itba.paw.services.exception.PendingAdminRequestExistsException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.form.AdminRoleRequestForm;
 import ar.edu.itba.paw.webapp.form.CatalogNameRequestForm;
 import org.slf4j.Logger;
@@ -24,7 +25,6 @@ import org.springframework.web.servlet.ModelAndView;
 import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 import javax.validation.Valid;
-import java.net.URI;
 
 @Controller
 public class CatalogRequestController {
@@ -119,21 +119,17 @@ public class CatalogRequestController {
 
     private ModelAndView redirectBack(final String referer, final String submitted) {
         final String fallback = "redirect:/cars";
-        if (referer == null || referer.isBlank()) {
+        final String target = LoginRedirectUtils
+                .safeRefererPath(referer, ControllerUtils.currentContextPath())
+                .orElse(null);
+        if (target == null) {
             return new ModelAndView(withSubmittedRedirect(fallback, submitted));
         }
-        try {
-            final URI uri = URI.create(referer);
-            final String path = ControllerUtils.stripCurrentContextPath(uri.getRawPath());
-            if (path == null || path.isBlank() || path.startsWith("//")) {
-                return new ModelAndView(withSubmittedRedirect(fallback, submitted));
-            }
-            final String query = withSubmitted(uri.getRawQuery(), submitted);
-            return new ModelAndView("redirect:" + path + (query == null ? "" : "?" + query));
-        } catch (final IllegalArgumentException e) {
-            LOGGER.warn("invalid referer URI for redirect, falling back referer={}", LogSanitizer.forLog(referer, LogSanitizer.MAX_LOG_URL_CODE_POINTS), e);
-            return new ModelAndView(withSubmittedRedirect(fallback, submitted));
-        }
+        final String path = ControllerUtils.pathWithoutQuery(target);
+        final int queryIndex = target.indexOf('?');
+        final String rawQuery = queryIndex >= 0 ? target.substring(queryIndex + 1) : null;
+        final String query = withSubmitted(rawQuery, submitted);
+        return new ModelAndView("redirect:" + path + (query == null ? "" : "?" + query));
     }
 
     private String withSubmitted(final String rawQuery, final String submitted) {

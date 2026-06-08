@@ -54,4 +54,96 @@ class LoginRedirectUtilsTest {
         // Assertions
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void safeRefererPath_absoluteUrlWithQuery_keepsPathAndQuery() {
+        // Arrange
+        final String referer = "http://localhost/cars?sort=popular";
+        final String contextPath = "";
+        // Exercise
+        final Optional<String> result = LoginRedirectUtils.safeRefererPath(referer, contextPath);
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals("/cars?sort=popular", result.get());
+    }
+
+    @Test
+    void safeRefererPath_contextPrefixedPath_stripsContextPath() {
+        // Arrange
+        final String referer = "http://localhost/paw-2026a-12/admin?page=6";
+        final String contextPath = "/paw-2026a-12";
+        // Exercise
+        final Optional<String> result = LoginRedirectUtils.safeRefererPath(referer, contextPath);
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals("/admin?page=6", result.get());
+    }
+
+    @Test
+    void safeRefererPath_contextRootReferer_returnsRootPath() {
+        // Arrange
+        final String referer = "http://localhost/paw-2026a-12";
+        final String contextPath = "/paw-2026a-12";
+        // Exercise
+        final Optional<String> result = LoginRedirectUtils.safeRefererPath(referer, contextPath);
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals("/", result.get());
+    }
+
+    @Test
+    void safeRefererPath_externalHost_discardsHostAndKeepsLocalPath() {
+        // Arrange
+        final String referer = "https://evil.com/cars?x=1";
+        final String contextPath = "";
+        // Exercise
+        final Optional<String> result = LoginRedirectUtils.safeRefererPath(referer, contextPath);
+        // Assertions
+        assertTrue(result.isPresent());
+        assertEquals("/cars?x=1", result.get());
+    }
+
+    @Test
+    void safeRefererPath_contextStripCreatesProtocolRelative_rejectsRedirect() {
+        // Arrange
+        final String referer = "http://localhost/paw-2026a-12//evil.com";
+        final String contextPath = "/paw-2026a-12";
+        // Exercise
+        final Optional<String> result = LoginRedirectUtils.safeRefererPath(referer, contextPath);
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void safeRefererPath_blankReferer_returnsEmpty() {
+        // Arrange
+        final String referer = "   ";
+        final String contextPath = "/paw-2026a-12";
+        // Exercise
+        final Optional<String> result = LoginRedirectUtils.safeRefererPath(referer, contextPath);
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void safeRefererPath_nullReferer_returnsEmpty() {
+        // Arrange
+        final String referer = null;
+        final String contextPath = "/paw-2026a-12";
+        // Exercise
+        final Optional<String> result = LoginRedirectUtils.safeRefererPath(referer, contextPath);
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void safeRefererPath_hostOnlyNoPath_returnsEmpty() {
+        // Arrange
+        final String referer = "http://localhost";
+        final String contextPath = "";
+        // Exercise
+        final Optional<String> result = LoginRedirectUtils.safeRefererPath(referer, contextPath);
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
 }

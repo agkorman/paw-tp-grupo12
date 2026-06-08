@@ -166,7 +166,9 @@
                         <c:otherwise>
                             <div class="admin-requests-grid">
                                 <c:forEach var="request" items="${pendingRequests}">
-                                    <c:url var="requestReviewUrl" value="/admin/requests/${request.id}/review"/>
+                                    <c:url var="requestReviewUrl" value="/admin/requests/${request.id}/review">
+                                        <c:param name="redirect" value="/admin?tab=${activeTab}&amp;page=${currentPage}"/>
+                                    </c:url>
                                     <pa:car-card
                                             model="${request.brandName} ${request.model}"
                                             year="${request.year}"
