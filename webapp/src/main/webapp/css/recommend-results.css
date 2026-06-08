@@ -47,16 +47,18 @@
 
 .recommend-results-page .recommend-results-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
     gap: 1.8rem 1.5rem;
-    align-items: start;
+    align-items: stretch;
 }
 
 .recommend-results-page .recommend-result {
     position: relative;
     display: grid;
     grid-template-columns: minmax(8rem, 9.5rem) minmax(0, 1fr);
+    grid-template-rows: 1fr;
     gap: 0.35rem;
-    align-items: start;
+    align-items: stretch;
     padding: 0.9rem 0.9rem 0.9rem 0.75rem;
     border: 1px solid rgba(229, 226, 225, 0.06);
     border-radius: 1.15rem;
@@ -99,10 +101,26 @@
 .recommend-results-page .car-card-shell {
     min-width: 0;
     z-index: 2;
+    display: flex;
+    flex-direction: column;
+}
+
+.recommend-results-page .car-card-link {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Keep the reason rail column reserved even when a recommendation has no tags,
+   so the car card stays the same size/position as tagged cards and the empty
+   rail space simply remains blank. */
+.recommend-results-page .recommend-result > .car-card-shell {
+    grid-column: 2;
 }
 
 .recommend-results-page .car-card {
     position: relative;
+    flex: 1;
     min-height: 100%;
     border: 1px solid rgba(229, 226, 225, 0.08);
     border-radius: 1rem;
@@ -138,8 +156,13 @@
 }
 
 .recommend-results-page .card-body {
+    flex: 1;
     gap: 0.85rem;
     padding: 1.15rem 1.2rem 1.3rem;
+}
+
+.recommend-results-page .card-rating-row {
+    margin-top: auto;
 }
 
 .recommend-results-page .card-category {

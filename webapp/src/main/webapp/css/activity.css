@@ -101,7 +101,7 @@
 .activity-card-topline-content {
     min-width: 0;
     display: grid;
-    gap: 0.2rem;
+    gap: 0.5rem;
 }
 
 .activity-card-menu {
@@ -111,6 +111,7 @@
 .activity-card-meta {
     margin: 0;
     color: var(--secondary);
+    font-size: 0.8rem;
     display: flex;
     align-items: center;
     gap: 0.45rem;
@@ -151,13 +152,22 @@
 
 .activity-card-context-label {
     color: var(--secondary);
-    font-size: 0.76rem;
+    font-size: 0.95rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
 .activity-card-context-value,
+.activity-card-context-link {
+    margin: 0;
+    color: var(--on-surface);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
 .activity-card-body {
     margin: 0;
     color: var(--on-surface-variant);
