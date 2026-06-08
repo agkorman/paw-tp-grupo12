@@ -10,6 +10,7 @@ import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
 import ar.edu.itba.paw.model.ImageMetadata;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
@@ -322,17 +323,22 @@ public class CommunityController {
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
         @RequestParam(value = "redirect", required = false) final String redirect,
+        @RequestParam(value = "repliesPage", required = false) final Integer repliesPage,
         final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
+        final int normalizedRepliesPage = Pagination.normalizePage(repliesPage);
         final CommunityPostDetailData postDetail = communityService
-            .getCommunityPostDetail(communitySlug, postSlug, currentUserId(currentUser), request.isUserInRole("ADMIN"))
+            .getCommunityPostDetail(communitySlug, postSlug, currentUserId(currentUser),
+                    request.isUserInRole("ADMIN"), normalizedRepliesPage)
             .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
 
         final ModelAndView mav = new ModelAndView("community-post-detail.jsp");
         mav.addObject("pageTitle", postDetail.getPost().getTitle() + " | La Posta Autos");
         mav.addObject("postDetail", postDetail);
         mav.addObject("postView", toPostView(postDetail));
+        mav.addObject("repliesCurrentPage", postDetail.getCommentsPage().getPageNumber());
+        mav.addObject("repliesTotalPages", postDetail.getCommentsPage().getTotalPages());
         LoginRedirectUtils.safeRedirect(redirect, request.getContextPath())
                 .ifPresent(r -> mav.addObject("postReturnRedirect", r));
         return mav;
@@ -433,7 +439,15 @@ public class CommunityController {
                 LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.create.toast.success");
-        return new ModelAndView("redirect:/communities/" + communitySlug + "/posts/" + postSlug);
+        final long totalComments = postDetail.getCommentCount() + 1L;
+        final int lastPage = Math.max(1, Pagination.totalPages(totalComments, Pagination.REPLIES_PAGE_SIZE));
+        final StringBuilder target = new StringBuilder("redirect:/communities/")
+                .append(communitySlug).append("/posts/").append(postSlug);
+        if (lastPage > 1) {
+            target.append("?repliesPage=").append(lastPage);
+        }
+        target.append("#comments");
+        return new ModelAndView(target.toString());
     }
 
     @RequestMapping(

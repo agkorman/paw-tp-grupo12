@@ -232,7 +232,7 @@ public class ActivityController {
         if (item.getReviewPage() > 1) {
             builder.append("?page=").append(item.getReviewPage());
         }
-        builder.append("#review-").append(item.getReview().getId()).append("-replies");
+        builder.append("#replies-").append(item.getReview().getId());
         return builder.toString();
     }
 

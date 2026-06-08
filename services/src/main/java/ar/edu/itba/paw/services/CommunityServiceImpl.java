@@ -650,7 +650,7 @@ public class CommunityServiceImpl implements CommunityService {
     public Optional<CommunityPostDetailData> getCommunityPostDetail(final String communitySlug,
                                                                     final String postSlug,
                                                                     final Long currentUserId) {
-        return getCommunityPostDetail(communitySlug, postSlug, currentUserId, false);
+        return getCommunityPostDetail(communitySlug, postSlug, currentUserId, false, Pagination.DEFAULT_PAGE);
     }
 
     @Override
@@ -658,6 +658,15 @@ public class CommunityServiceImpl implements CommunityService {
                                                                     final String postSlug,
                                                                     final Long currentUserId,
                                                                     final boolean viewerAdmin) {
+        return getCommunityPostDetail(communitySlug, postSlug, currentUserId, viewerAdmin, Pagination.DEFAULT_PAGE);
+    }
+
+    @Override
+    public Optional<CommunityPostDetailData> getCommunityPostDetail(final String communitySlug,
+                                                                    final String postSlug,
+                                                                    final Long currentUserId,
+                                                                    final boolean viewerAdmin,
+                                                                    final int repliesPage) {
         try {
             final Optional<Community> communityOptional = communityDao.findBySlug(communitySlug);
             if (communityOptional.isEmpty()) {
@@ -679,16 +688,14 @@ public class CommunityServiceImpl implements CommunityService {
             final String viewerRole = currentUserId == null
                     ? null
                     : communityDao.findMembershipRole(community.getId(), currentUserId).orElse(null);
-            final List<CommunityPostComment> comments = communityDao.findCommentsByPostId(post.getId());
-            final List<Long> commentIds = comments.stream()
+            final Page<CommunityPostComment> commentsPage = communityDao.findCommentsByPostId(post.getId(), repliesPage);
+            final List<Long> commentIds = commentsPage.getItems().stream()
                     .map(CommunityPostComment::getId)
                     .collect(Collectors.toList());
             final long helpfulCount = communityDao.countHelpfulReactionsByPostIds(List.of(post.getId()))
                     .getOrDefault(post.getId(), 0L);
             final boolean helpfulByCurrentUser = currentUserId != null
                     && communityDao.isHelpfulReactionAddedByUser(post.getId(), currentUserId);
-            final long commentCount = communityDao.countCommentsByPostIds(List.of(post.getId()))
-                    .getOrDefault(post.getId(), 0L);
             final java.util.Map<Long, Long> commentHelpfulCounts =
                     communityDao.countHelpfulReactionsByCommentIds(commentIds);
             final java.util.Map<Long, Boolean> commentHelpfulByCurrentUser = new java.util.LinkedHashMap<>();
@@ -702,10 +709,9 @@ public class CommunityServiceImpl implements CommunityService {
             return Optional.of(new CommunityPostDetailData(
                     community,
                     post,
-                    comments,
+                    commentsPage,
                     helpfulCount,
                     helpfulByCurrentUser,
-                    commentCount,
                     commentHelpfulCounts,
                     commentHelpfulByCurrentUser,
                     viewerRole,

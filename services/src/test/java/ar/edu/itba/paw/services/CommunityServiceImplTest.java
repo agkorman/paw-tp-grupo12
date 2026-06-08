@@ -170,10 +170,11 @@ class CommunityServiceImplTest {
         when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
         when(communityDao.findPostByCommunityIdAndSlug(community.getId(), "falcon-60"))
                 .thenReturn(Optional.of(post));
-        when(communityDao.findCommentsByPostId(post.getId())).thenReturn(List.of(comment));
+        final ar.edu.itba.paw.model.Page<CommunityPostComment> commentsPage = new ar.edu.itba.paw.model.Page<>(
+                List.of(comment), 1, 10, 1L);
+        when(communityDao.findCommentsByPostId(post.getId(), 1)).thenReturn(commentsPage);
         when(communityDao.countHelpfulReactionsByPostIds(anyCollection())).thenReturn(Map.of(post.getId(), 4L));
         when(communityDao.isHelpfulReactionAddedByUser(post.getId(), USER_ID)).thenReturn(true);
-        when(communityDao.countCommentsByPostIds(anyCollection())).thenReturn(Map.of(post.getId(), 1L));
         when(communityDao.countHelpfulReactionsByCommentIds(anyCollection())).thenReturn(Map.of(comment.getId(), 2L));
         when(communityDao.findCommentHelpfulReactionsByUser(anyCollection(), eq(USER_ID))).thenReturn(Set.of(comment.getId()));
 

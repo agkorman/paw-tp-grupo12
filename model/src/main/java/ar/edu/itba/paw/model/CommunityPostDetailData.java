@@ -11,10 +11,9 @@ public class CommunityPostDetailData implements Serializable {
 
     private final Community community;
     private final CommunityPost post;
-    private final List<CommunityPostComment> comments;
+    private final Page<CommunityPostComment> commentsPage;
     private final long helpfulCount;
     private final boolean helpfulByCurrentUser;
-    private final long commentCount;
     private final String viewerRole;
     private final Long viewerUserId;
     private final boolean viewerAdmin;
@@ -22,23 +21,9 @@ public class CommunityPostDetailData implements Serializable {
     private final Map<Long, Boolean> commentHelpfulByCurrentUser;
 
     public CommunityPostDetailData(final Community community, final CommunityPost post,
-                                   final List<CommunityPostComment> comments,
+                                   final Page<CommunityPostComment> commentsPage,
                                    final long helpfulCount,
                                    final boolean helpfulByCurrentUser,
-                                   final long commentCount,
-                                   final Map<Long, Long> commentHelpfulCounts,
-                                   final Map<Long, Boolean> commentHelpfulByCurrentUser,
-                                   final String viewerRole,
-                                   final Long viewerUserId) {
-        this(community, post, comments, helpfulCount, helpfulByCurrentUser, commentCount,
-                commentHelpfulCounts, commentHelpfulByCurrentUser, viewerRole, viewerUserId, false);
-    }
-
-    public CommunityPostDetailData(final Community community, final CommunityPost post,
-                                   final List<CommunityPostComment> comments,
-                                   final long helpfulCount,
-                                   final boolean helpfulByCurrentUser,
-                                   final long commentCount,
                                    final Map<Long, Long> commentHelpfulCounts,
                                    final Map<Long, Boolean> commentHelpfulByCurrentUser,
                                    final String viewerRole,
@@ -46,10 +31,11 @@ public class CommunityPostDetailData implements Serializable {
                                    final boolean viewerAdmin) {
         this.community = community;
         this.post = post;
-        this.comments = comments == null ? new ArrayList<>() : new ArrayList<>(comments);
+        this.commentsPage = commentsPage == null
+                ? Page.empty(Pagination.DEFAULT_PAGE, Pagination.REPLIES_PAGE_SIZE)
+                : commentsPage;
         this.helpfulCount = helpfulCount;
         this.helpfulByCurrentUser = helpfulByCurrentUser;
-        this.commentCount = commentCount;
         this.commentHelpfulCounts = commentHelpfulCounts == null
                 ? Collections.emptyMap()
                 : Collections.unmodifiableMap(new LinkedHashMap<>(commentHelpfulCounts));
@@ -70,7 +56,11 @@ public class CommunityPostDetailData implements Serializable {
     }
 
     public List<CommunityPostComment> getComments() {
-        return new ArrayList<>(comments);
+        return new ArrayList<>(commentsPage.getItems());
+    }
+
+    public Page<CommunityPostComment> getCommentsPage() {
+        return commentsPage;
     }
 
     public long getHelpfulCount() {
@@ -86,7 +76,7 @@ public class CommunityPostDetailData implements Serializable {
     }
 
     public long getCommentCount() {
-        return commentCount;
+        return commentsPage.getTotalItems();
     }
 
     public long getHelpfulCountForComment(final long commentId) {

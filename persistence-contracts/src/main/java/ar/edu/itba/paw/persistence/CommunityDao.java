@@ -52,7 +52,7 @@ public interface CommunityDao {
     List<CommunityPost> findPostsByCommunityId(long communityId);
     Page<CommunityPost> findVisiblePostsByCommunityId(long communityId, String sort, int page);
     Optional<CommunityPost> findPostByCommunityIdAndSlug(long communityId, String postSlug);
-    List<CommunityPostComment> findCommentsByPostId(long postId);
+    Page<CommunityPostComment> findCommentsByPostId(long postId, int page);
     Optional<CommunityPostComment> findCommentById(long commentId);
     boolean deletePost(long postId);
     boolean deleteComment(long commentId);

@@ -172,7 +172,7 @@ class CommunityControllerTest {
     @Test
     void communityPostDetail_knownPost_rendersPostDetailView() throws Exception {
         // Arrange
-        when(communityService.getCommunityPostDetail(anyString(), anyString(), any(), anyBoolean()))
+        when(communityService.getCommunityPostDetail(anyString(), anyString(), any(), anyBoolean(), anyInt()))
                 .thenReturn(Optional.of(communityPostDetailData()));
         when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("2 hours ago");
         final MockMvc mockMvc = communityMockMvc();
@@ -645,7 +645,7 @@ class CommunityControllerTest {
         // Assertions
         resultActions
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/communities/classics/posts/falcon-60"));
+                .andExpect(redirectedUrl("/communities/classics/posts/falcon-60#comments"));
         clearSecurityContext();
     }
 
@@ -723,14 +723,14 @@ class CommunityControllerTest {
         return new CommunityPostDetailData(
                 community(),
                 post(),
-                List.of(comment()),
+                new ar.edu.itba.paw.model.Page<>(List.of(comment()), 1, 10, 1L),
                 4L,
                 true,
-                1L,
                 java.util.Map.of(10L, 2L),
                 java.util.Map.of(10L, true),
                 "member",
-                7L
+                7L,
+                false
         );
     }
 

@@ -359,6 +359,21 @@
     z-index: 30;
 }
 
+.review-detail-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+    min-width: 0;
+}
+
+.review-detail-heading h1 {
+    margin-top: 0;
+}
+
+.review-detail-back-link {
+    flex-shrink: 0;
+}
+
 .hero-stars-row {
     display: flex;
     align-items: center;
@@ -500,6 +515,29 @@
 .review-reply-list {
     display: grid;
     gap: 0.75rem;
+}
+
+.review-replies-count {
+    margin: 0;
+    color: var(--secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.review-replies-view-all {
+    margin: 0;
+}
+
+.review-replies-view-all-link {
+    color: var(--secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.review-replies-view-all-link:hover,
+.review-replies-view-all-link:focus-visible {
+    text-decoration: underline;
 }
 
 .review-reply {
