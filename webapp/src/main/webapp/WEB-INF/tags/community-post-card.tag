@@ -107,7 +107,7 @@
                 <a href="${fn:escapeXml(href)}"><c:out value="${title}"/></a>
             </h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
-            <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt"/>
+            <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt" maxVisible="${3}"/>
         </article>
     </c:when>
     <c:when test="${not empty href}">
@@ -136,7 +136,7 @@
             </c:if>
             <h3 class="community-post-title"><c:out value="${title}"/></h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
-            <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt"/>
+            <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt" maxVisible="${3}"/>
             <c:if test="${not empty repostReview}">
                 <pa:reposted-review-card repostReview="${repostReview}" linked="${false}"/>
             </c:if>
@@ -165,7 +165,7 @@
 
             <h3 class="community-post-title"><c:out value="${title}"/></h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
-            <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt"/>
+            <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt" maxVisible="${3}"/>
             <c:if test="${not empty repostReview}">
                 <pa:reposted-review-card repostReview="${repostReview}"/>
             </c:if>

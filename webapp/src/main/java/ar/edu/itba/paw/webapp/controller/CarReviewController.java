@@ -75,7 +75,7 @@ public class CarReviewController {
     private static final int MAX_REPLY_BODY_LENGTH = 1000;
     private static final int REVIEW_HIDE_REASON_MIN_LENGTH = 10;
     private static final int REVIEW_HIDE_REASON_MAX_LENGTH = 600;
-    private static final int MAX_REVIEW_IMAGE_COUNT = 3;
+    private static final int MAX_REVIEW_IMAGE_COUNT = 5;
 
     private final CarService carService;
     private final CarFavoriteService carFavoriteService;

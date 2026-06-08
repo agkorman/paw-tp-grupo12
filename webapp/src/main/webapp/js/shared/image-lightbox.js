@@ -65,7 +65,7 @@
     }
 
     document.addEventListener('click', function (event) {
-        var thumb = event.target.closest('.image-gallery-thumb-button');
+        var thumb = event.target.closest('.image-gallery-thumb-button') || event.target.closest('.image-gallery-overflow-button');
         if (thumb) {
             var gallery = thumb.closest('[data-image-gallery]');
             if (!gallery) {

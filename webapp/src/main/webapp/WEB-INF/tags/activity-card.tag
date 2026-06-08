@@ -94,7 +94,7 @@
             </p>
 
             <p class="activity-card-context">
-                <span class="activity-card-context-label"><spring:message code="${activityCard.contextLabelKey}"/></span>
+                <span class="activity-card-context-label ${activityCard.review ? 'activity-card-context-label--review' : 'activity-card-context-label--community'}"><spring:message code="${activityCard.contextLabelKey}"/></span>
                 <c:if test="${not empty activityCard.contextValue}">
                     <c:choose>
                         <c:when test="${not empty activityCard.contextHref}">
@@ -178,7 +178,7 @@
     </h2>
     <p class="activity-card-body ${not empty activityCard.imageUrls ? 'activity-card-body--with-image' : 'activity-card-body--text-only'}"><c:out value="${activityCard.body}"/></p>
     <c:if test="${not empty activityCard.imageUrls}">
-        <pa:image-gallery imageUrls="${activityCard.imageUrls}" altKey="${activityCard.imageAltKey}"/>
+        <pa:image-gallery imageUrls="${activityCard.imageUrls}" altKey="${activityCard.imageAltKey}" maxVisible="${3}" cssClass="activity-card-gallery"/>
     </c:if>
     <c:if test="${not empty activityCard.repostReview}">
         <pa:reposted-review-card repostReview="${activityCard.repostReview}"/>

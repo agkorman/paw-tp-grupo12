@@ -76,7 +76,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class CommunityController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommunityController.class);
-    private static final int MAX_COMMUNITY_POST_IMAGE_COUNT = 3;
+    private static final int MAX_COMMUNITY_POST_IMAGE_COUNT = 5;
     private static final String ACTION_TOAST_ATTRIBUTE = "actionToastCode";
 
     private final CommunityService communityService;
