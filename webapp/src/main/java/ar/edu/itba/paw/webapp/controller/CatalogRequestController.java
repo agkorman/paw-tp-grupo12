@@ -126,9 +126,7 @@ public class CatalogRequestController {
             return new ModelAndView(withSubmittedRedirect(fallback, submitted));
         }
         final String path = ControllerUtils.pathWithoutQuery(target);
-        final int queryIndex = target.indexOf('?');
-        final String rawQuery = queryIndex >= 0 ? target.substring(queryIndex + 1) : null;
-        final String query = withSubmitted(rawQuery, submitted);
+        final String query = withSubmitted(ControllerUtils.queryOf(target), submitted);
         return new ModelAndView("redirect:" + path + (query == null ? "" : "?" + query));
     }
 

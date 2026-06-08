@@ -46,6 +46,14 @@ final class ControllerUtils {
         return queryIndex >= 0 ? target.substring(0, queryIndex) : target;
     }
 
+    static String queryOf(final String target) {
+        if (target == null) {
+            return null;
+        }
+        final int queryIndex = target.indexOf('?');
+        return queryIndex >= 0 ? target.substring(queryIndex + 1) : null;
+    }
+
     static String currentContextPath() {
         final org.springframework.web.context.request.RequestAttributes requestAttributes =
                 RequestContextHolder.getRequestAttributes();
