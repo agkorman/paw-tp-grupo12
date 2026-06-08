@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
@@ -33,6 +35,51 @@ public class ReviewInteractionDaoTest extends AbstractPersistenceTest {
         assertEquals("Reply body", jdbcTemplate.queryForObject(
                 "SELECT body FROM review_replies WHERE reply_id = ?", String.class, result.getId()
         ));
+    }
+
+    @Test
+    public void shouldPaginateRepliesByReviewIdInChronologicalAscOrder() {
+        // Arrange
+        final Review review = createReview("paginate-replies");
+        final User author = createUser("paginate-replies-author");
+        final int total = Pagination.REPLIES_PAGE_SIZE + 3;
+        final long[] insertedIds = new long[total];
+        for (int i = 0; i < total; i++) {
+            insertedIds[i] = insertReviewReply(review.getId(), author.getId(), author.getUsername(),
+                    "reply-" + i).getId();
+        }
+
+        // Exercise
+        final Page<ReviewReply> result = reviewReplyDao.findByReviewId(review.getId(), 2);
+
+        // Assertions
+        assertEquals(total, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(Pagination.REPLIES_PAGE_SIZE, result.getPageSize());
+        assertEquals(total - Pagination.REPLIES_PAGE_SIZE, result.getItems().size());
+        assertEquals(insertedIds[Pagination.REPLIES_PAGE_SIZE], result.getItems().get(0).getId());
+    }
+
+    @Test
+    public void shouldReturnFirstNRepliesPerReviewIdAsTeaser() {
+        // Arrange
+        final Review review = createReview("teaser");
+        final User author = createUser("teaser-author");
+        final long firstId = insertReviewReply(review.getId(), author.getId(), author.getUsername(), "r1").getId();
+        final long secondId = insertReviewReply(review.getId(), author.getId(), author.getUsername(), "r2").getId();
+        final long thirdId = insertReviewReply(review.getId(), author.getId(), author.getUsername(), "r3").getId();
+        insertReviewReply(review.getId(), author.getId(), author.getUsername(), "r4");
+        insertReviewReply(review.getId(), author.getId(), author.getUsername(), "r5");
+
+        // Exercise
+        final Map<Long, List<ReviewReply>> result = reviewReplyDao.findFirstNByReviewIds(List.of(review.getId()), 3);
+
+        // Assertions
+        final List<ReviewReply> firstThree = result.get(review.getId());
+        assertEquals(3, firstThree.size());
+        assertEquals(firstId, firstThree.get(0).getId());
+        assertEquals(secondId, firstThree.get(1).getId());
+        assertEquals(thirdId, firstThree.get(2).getId());
     }
 
     @Test

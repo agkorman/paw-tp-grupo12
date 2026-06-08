@@ -49,6 +49,8 @@ public interface CommunityService {
     Optional<CommunityPostDetailData> getCommunityPostDetail(String communitySlug, String postSlug, Long currentUserId);
     Optional<CommunityPostDetailData> getCommunityPostDetail(String communitySlug, String postSlug, Long currentUserId,
                                                              boolean viewerAdmin);
+    Optional<CommunityPostDetailData> getCommunityPostDetail(String communitySlug, String postSlug, Long currentUserId,
+                                                             boolean viewerAdmin, int repliesPage);
     List<ImageMetadata> getPostImagesByPostId(long postId);
     Map<Long, List<ImageMetadata>> getImagesByPostIds(Collection<Long> postIds);
     Optional<StoredImagePayload> getPostImageById(long postId, long imageId);

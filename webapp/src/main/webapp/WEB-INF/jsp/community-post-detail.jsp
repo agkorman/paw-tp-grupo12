@@ -243,6 +243,16 @@
                         </c:if>
                     </div>
                 </c:forEach>
+                <c:if test="${not empty repliesTotalPages and repliesTotalPages > 1}">
+                    <c:url var="communityPostRepliesBaseUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}"/>
+                    <spring:message var="communityRepliesPaginationAria" code="communities.postDetail.replies.pagination.aria"/>
+                    <pa:pagination currentPage="${repliesCurrentPage}"
+                                   totalPages="${repliesTotalPages}"
+                                   baseUrl="${communityPostRepliesBaseUrl}"
+                                   pageParam="repliesPage"
+                                   fragment="comments"
+                                   ariaLabel="${communityRepliesPaginationAria}"/>
+                </c:if>
             </section>
         </section>
     </main>

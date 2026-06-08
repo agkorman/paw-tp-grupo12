@@ -76,6 +76,7 @@ public class CarReviewController {
     private static final int REVIEW_HIDE_REASON_MIN_LENGTH = 10;
     private static final int REVIEW_HIDE_REASON_MAX_LENGTH = 600;
     private static final int MAX_REVIEW_IMAGE_COUNT = 3;
+    private static final int TEASER_REPLIES_LIMIT = 3;
 
     private final CarService carService;
     private final CarFavoriteService carFavoriteService;
@@ -418,7 +419,9 @@ public class CarReviewController {
             .map(Review::getId)
             .toList();
         final Map<Long, List<ReviewReply>> repliesByReviewId =
-            reviewReplyService.getRepliesByReviewIds(reviewIds);
+            reviewReplyService.getFirstNRepliesByReviewIds(reviewIds, TEASER_REPLIES_LIMIT);
+        final Map<Long, Long> replyCountsByReviewId =
+            reviewReplyService.countRepliesByReviewIds(reviewIds);
         final Map<Long, Long> reviewLikeCounts =
             reviewLikeService.countReviewLikesByReviewIds(reviewIds);
         final Set<Long> likedReviewIds =
@@ -458,7 +461,8 @@ public class CarReviewController {
                                     currentUserId.equals(reply.getUserId())
                             )
                         )
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                    replyCountsByReviewId.getOrDefault(review.getId(), 0L)
                 )
             )
             .collect(Collectors.toList());
@@ -564,6 +568,66 @@ public class CarReviewController {
         return images.stream()
                 .map(img -> Long.toString(img.getImageId()))
                 .collect(Collectors.joining(","));
+    }
+
+    @RequestMapping(value = "/reviews/{reviewId}", method = RequestMethod.GET)
+    public ModelAndView reviewDetail(
+        @PathVariable("reviewId") final long reviewId,
+        @RequestParam(value = "repliesPage", required = false) final Integer repliesPage,
+        @AuthenticationPrincipal final AuthenticatedUser currentUser
+    ) {
+        final Review review = reviewService
+            .getReviewById(reviewId)
+            .orElseThrow(() -> new ResourceNotFoundException("Review", reviewId));
+        final Car car = carService
+            .getCarById(review.getCarId())
+            .orElseThrow(() -> new ResourceNotFoundException("Car", review.getCarId()));
+        populateReviewImages(List.of(review));
+
+        final Long currentUserId = currentUserId(currentUser);
+        final int normalizedRepliesPage = Pagination.normalizePage(repliesPage);
+        final Page<ReviewReply> repliesPageResult =
+            reviewReplyService.getRepliesByReview(reviewId, normalizedRepliesPage);
+        final ReviewThread thread = buildReviewDetailThread(review, repliesPageResult, currentUserId);
+
+        final ModelAndView mav = new ModelAndView("review-detail.jsp");
+        mav.addObject("selectedCar", car);
+        mav.addObject("reviewThread", thread);
+        mav.addObject("reviews", List.of(review));
+        mav.addObject("reviewThreads", List.of(thread));
+        mav.addObject("repliesCurrentPage", repliesPageResult.getPageNumber());
+        mav.addObject("repliesTotalPages", repliesPageResult.getTotalPages());
+        mav.addObject("repliesTotalItems", repliesPageResult.getTotalItems());
+        mav.addObject("currentUserId", currentUserId);
+        return mav;
+    }
+
+    private ReviewThread buildReviewDetailThread(
+        final Review review,
+        final Page<ReviewReply> repliesPage,
+        final Long currentUserId
+    ) {
+        final List<ReviewReply> replies = repliesPage.getItems();
+        final long reviewLikeCount = reviewLikeService.countReviewLikesByReviewIds(List.of(review.getId()))
+            .getOrDefault(review.getId(), 0L);
+        final boolean likedReview = currentUserId != null &&
+            reviewLikeService.getLikedReviewIds(List.of(review.getId()), currentUserId).contains(review.getId());
+        final List<Long> replyIds = replies.stream().map(ReviewReply::getId).toList();
+        final Map<Long, Long> replyLikeCounts = reviewLikeService.countReplyLikesByReplyIds(replyIds);
+        final Set<Long> likedReplyIds = currentUserId == null
+            ? Collections.emptySet()
+            : reviewLikeService.getLikedReplyIds(replyIds, currentUserId);
+
+        final List<ReviewReplyCard> cards = replies.stream()
+            .map(reply -> new ReviewReplyCard(
+                reply,
+                replyLikeCounts.getOrDefault(reply.getId(), 0L),
+                likedReplyIds.contains(reply.getId()),
+                currentUserId != null && currentUserId.equals(reply.getUserId())
+            ))
+            .collect(Collectors.toList());
+
+        return new ReviewThread(review, reviewLikeCount, likedReview, cards, repliesPage.getTotalItems());
     }
 
     @RequestMapping(value = "/reviews/{reviewId}/images/{imageId}", method = RequestMethod.GET)
@@ -810,15 +874,12 @@ public class CarReviewController {
             currentUser.getId(),
             reviewId
         );
-        final StringBuilder target = new StringBuilder("redirect:/reviews/car/")
-            .append(review.getCarId());
-        boolean hasQuery = false;
-        if (page != null && page > 1) {
-            target.append("?page=").append(page);
-            hasQuery = true;
-        }
-        if (sort != null && !sort.isBlank()) {
-            target.append(hasQuery ? "&" : "?").append("sort=").append(sort);
+        final long totalReplies = reviewReplyService.countRepliesByReviewIds(List.of(reviewId))
+            .getOrDefault(reviewId, 0L);
+        final int lastPage = Math.max(1, Pagination.totalPages(totalReplies, Pagination.REPLIES_PAGE_SIZE));
+        final StringBuilder target = new StringBuilder("redirect:/reviews/").append(reviewId);
+        if (lastPage > 1) {
+            target.append("?repliesPage=").append(lastPage);
         }
         target.append("#reply-").append(createdReply.getId());
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.reply.create.toast.success");
@@ -1118,17 +1179,20 @@ public class CarReviewController {
         private final long likeCount;
         private final boolean liked;
         private final List<ReviewReplyCard> replies;
+        private final long totalReplyCount;
 
         private ReviewThread(
             final Review review,
             final long likeCount,
             final boolean liked,
-            final List<ReviewReplyCard> replies
+            final List<ReviewReplyCard> replies,
+            final long totalReplyCount
         ) {
             this.review = review;
             this.likeCount = likeCount;
             this.liked = liked;
             this.replies = replies;
+            this.totalReplyCount = totalReplyCount;
         }
 
         public Review getReview() {
@@ -1145,6 +1209,14 @@ public class CarReviewController {
 
         public List<ReviewReplyCard> getReplies() {
             return replies;
+        }
+
+        public long getTotalReplyCount() {
+            return totalReplyCount;
+        }
+
+        public boolean getHasMoreReplies() {
+            return totalReplyCount > replies.size();
         }
     }
 

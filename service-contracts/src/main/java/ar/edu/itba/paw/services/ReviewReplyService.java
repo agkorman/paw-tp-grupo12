@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.services;
 
+import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.ReviewReply;
 
 import java.time.LocalDateTime;
@@ -11,8 +12,8 @@ import java.util.Optional;
 public interface ReviewReplyService {
     Optional<ReviewReply> getReplyById(long id);
     List<ReviewReply> getRepliesByIds(Collection<Long> ids);
-    List<ReviewReply> getRepliesByReview(long reviewId);
-    Map<Long, List<ReviewReply>> getRepliesByReviewIds(Collection<Long> reviewIds);
+    Page<ReviewReply> getRepliesByReview(long reviewId, int page);
+    Map<Long, List<ReviewReply>> getFirstNRepliesByReviewIds(Collection<Long> reviewIds, int n);
     ReviewReply createReply(long reviewId, long userId, String body);
     boolean updateReply(long id, long userId, String body);
     boolean deleteReply(long id, long userId);

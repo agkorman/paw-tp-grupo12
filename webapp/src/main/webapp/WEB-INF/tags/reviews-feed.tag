@@ -7,6 +7,11 @@
 <%@ attribute name="totalPages" required="false" type="java.lang.Integer" %>
 <%@ attribute name="totalItems" required="false" type="java.lang.Long" %>
 <%@ attribute name="currentUserId" required="false" type="java.lang.Long" %>
+<%@ attribute name="hideFeedHeader" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="repliesPaginated" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="repliesCurrentPage" required="false" type="java.lang.Integer" %>
+<%@ attribute name="repliesTotalPages" required="false" type="java.lang.Integer" %>
+<%@ attribute name="contextRedirectBase" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -29,29 +34,31 @@
 
 <section id="reviewsFeed" class="reviews-feed">
     <c:set var="reviewTotalCount" value="${empty totalItems ? fn:length(reviews) : totalItems}"/>
-    <div class="feed-header">
-        <h2><spring:message code="review.feed.title"/> <span class="review-count-label">
-            <c:choose>
-                <c:when test="${reviewTotalCount >= 1000}">${reviewTotalCount / 1000}k</c:when>
-                <c:otherwise>${reviewTotalCount}</c:otherwise>
-            </c:choose>
-        </span></h2>
-        <div class="feed-header-actions">
-            <form method="get" action="<c:url value='/reviews/car/${carId}'/>#reviewsFeed" class="review-sort-form">
-                <label class="review-sort-label" for="reviewSortSelect"><spring:message code="review.feed.sort"/></label>
-                <select id="reviewSortSelect" name="sort" class="review-sort-select" data-auto-submit="true">
-                    <option value="" ${empty currentSort ? 'selected' : ''}><spring:message code="review.feed.sort.recent"/></option>
-                    <option value="rating_desc" ${currentSort eq 'rating_desc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingDesc"/></option>
-                    <option value="rating_asc" ${currentSort eq 'rating_asc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingAsc"/></option>
-                </select>
-                <noscript>
-                    <button type="submit" class="btn-secondary review-sort-submit">
-                        <spring:message code="common.action.apply"/>
-                    </button>
-                </noscript>
-            </form>
+    <c:if test="${not (hideFeedHeader eq true)}">
+        <div class="feed-header">
+            <h2><spring:message code="review.feed.title"/> <span class="review-count-label">
+                <c:choose>
+                    <c:when test="${reviewTotalCount >= 1000}">${reviewTotalCount / 1000}k</c:when>
+                    <c:otherwise>${reviewTotalCount}</c:otherwise>
+                </c:choose>
+            </span></h2>
+            <div class="feed-header-actions">
+                <form method="get" action="<c:url value='/reviews/car/${carId}'/>#reviewsFeed" class="review-sort-form">
+                    <label class="review-sort-label" for="reviewSortSelect"><spring:message code="review.feed.sort"/></label>
+                    <select id="reviewSortSelect" name="sort" class="review-sort-select" data-auto-submit="true">
+                        <option value="" ${empty currentSort ? 'selected' : ''}><spring:message code="review.feed.sort.recent"/></option>
+                        <option value="rating_desc" ${currentSort eq 'rating_desc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingDesc"/></option>
+                        <option value="rating_asc" ${currentSort eq 'rating_asc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingAsc"/></option>
+                    </select>
+                    <noscript>
+                        <button type="submit" class="btn-secondary review-sort-submit">
+                            <spring:message code="common.action.apply"/>
+                        </button>
+                    </noscript>
+                </form>
+            </div>
         </div>
-    </div>
+    </c:if>
     <c:choose>
         <c:when test="${empty reviewThreads}">
             <div class="empty-state">
@@ -64,15 +71,23 @@
                     <c:set var="review" value="${thread.review}"/>
                     <c:url var="reviewLikeUrl" value="/reviews/${review.id}/like"/>
                     <c:url var="replyCreateUrl" value="/reviews/${review.id}/replies"/>
-                    <c:set var="reviewsContextRedirect" value="/reviews/car/${carId}"/>
-                    <c:set var="reviewsContextHasQuery" value="${false}"/>
-                    <c:if test="${not empty currentPage and currentPage > 1}">
-                        <c:set var="reviewsContextRedirect" value="${reviewsContextRedirect}?page=${currentPage}"/>
-                        <c:set var="reviewsContextHasQuery" value="${true}"/>
-                    </c:if>
-                    <c:if test="${not empty currentSort}">
-                        <c:set var="reviewsContextRedirect" value="${reviewsContextRedirect}${reviewsContextHasQuery ? '&' : '?'}sort=${currentSort}"/>
-                    </c:if>
+                    <c:choose>
+                        <c:when test="${not empty contextRedirectBase}">
+                            <c:set var="reviewsContextRedirect" value="${contextRedirectBase}"/>
+                            <c:set var="reviewsContextHasQuery" value="${fn:contains(contextRedirectBase, '?')}"/>
+                        </c:when>
+                        <c:otherwise>
+                            <c:set var="reviewsContextRedirect" value="/reviews/car/${carId}"/>
+                            <c:set var="reviewsContextHasQuery" value="${false}"/>
+                            <c:if test="${not empty currentPage and currentPage > 1}">
+                                <c:set var="reviewsContextRedirect" value="${reviewsContextRedirect}?page=${currentPage}"/>
+                                <c:set var="reviewsContextHasQuery" value="${true}"/>
+                            </c:if>
+                            <c:if test="${not empty currentSort}">
+                                <c:set var="reviewsContextRedirect" value="${reviewsContextRedirect}${reviewsContextHasQuery ? '&' : '?'}sort=${currentSort}"/>
+                            </c:if>
+                        </c:otherwise>
+                    </c:choose>
                     <c:set var="reviewItemRedirect" value="${reviewsContextRedirect}#review-${review.id}"/>
                     <c:set var="reviewFeedRedirect" value="${reviewsContextRedirect}#reviewsFeed"/>
                     <c:url var="reviewEditPageUrl" value="/reviews/${review.id}/edit">
@@ -187,6 +202,11 @@
                                     disabled="${not authenticated}"/>
                         </div>
                         <div class="review-replies" id="review-${review.id}-replies" aria-label="${reviewRepliesLabel}">
+                            <c:if test="${repliesPaginated eq true and thread.totalReplyCount > 0}">
+                                <p class="review-replies-count">
+                                    <spring:message code="review.replies.count" arguments="${thread.totalReplyCount}"/>
+                                </p>
+                            </c:if>
                             <c:if test="${not empty thread.replies}">
                                 <div class="review-reply-list">
                                     <c:forEach var="replyCard" items="${thread.replies}">
@@ -275,6 +295,24 @@
                                     </c:forEach>
                                 </div>
                             </c:if>
+                            <c:if test="${repliesPaginated eq true and not empty repliesTotalPages and repliesTotalPages > 1}">
+                                <c:url var="reviewDetailBaseUrl" value="/reviews/${review.id}"/>
+                                <spring:message var="repliesPaginationAria" code="review.replies.pagination.aria"/>
+                                <pa:pagination currentPage="${repliesCurrentPage}"
+                                               totalPages="${repliesTotalPages}"
+                                               baseUrl="${reviewDetailBaseUrl}"
+                                               pageParam="repliesPage"
+                                               fragment="review-${review.id}-replies"
+                                               ariaLabel="${repliesPaginationAria}"/>
+                            </c:if>
+                            <c:if test="${not (repliesPaginated eq true) and thread.hasMoreReplies}">
+                                <c:url var="reviewDetailViewUrl" value="/reviews/${review.id}"/>
+                                <p class="review-replies-view-all">
+                                    <a href="${reviewDetailViewUrl}#review-${review.id}-replies" class="review-replies-view-all-link">
+                                        <spring:message code="review.replies.viewAll" arguments="${thread.totalReplyCount}"/>
+                                    </a>
+                                </p>
+                            </c:if>
                             <c:choose>
                                 <c:when test="${authenticated}">
                                     <c:set var="replyHasError" value="${not empty replyErrorReviewId and replyErrorReviewId eq review.id}"/>
@@ -324,7 +362,7 @@
                     </article>
                 </c:forEach>
             </div>
-            <c:if test="${not empty totalPages and not empty currentPage and totalPages > 1}">
+            <c:if test="${not (hideFeedHeader eq true) and not empty totalPages and not empty currentPage and totalPages > 1}">
                 <c:set var="reviewsBaseUrl" value="/reviews/car/${carId}"/>
                 <jsp:useBean id="reviewsPaginationParams" class="java.util.LinkedHashMap"/>
                 <c:if test="${not empty currentSort}">

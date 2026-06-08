@@ -1,5 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
@@ -9,13 +11,17 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public class ReviewReplyJpaDao implements ReviewReplyDao {
@@ -48,26 +54,92 @@ public class ReviewReplyJpaDao implements ReviewReplyDao {
     }
 
     @Override
-    public List<ReviewReply> findByReviewId(final long reviewId) {
-        return em.createQuery(
-                        "SELECT rr FROM ReviewReply rr JOIN FETCH rr.user WHERE rr.review.id = :reviewId "
-                        + "ORDER BY rr.createdAt ASC, rr.id ASC",
-                        ReviewReply.class)
-                .setParameter("reviewId", reviewId)
+    public Page<ReviewReply> findByReviewId(final long reviewId, final int page) {
+        final int pageSize = Pagination.REPLIES_PAGE_SIZE;
+
+        final Number total = (Number) em.createNativeQuery(
+                        "SELECT COUNT(*) FROM review_replies WHERE review_id = ?")
+                .setParameter(1, reviewId)
+                .getSingleResult();
+        final long totalItems = total == null ? 0L : total.longValue();
+        if (totalItems == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+
+        final int clampedPage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
+        final long offset = Pagination.offsetFor(clampedPage, pageSize);
+
+        @SuppressWarnings("unchecked")
+        final List<Number> rawIds = em.createNativeQuery(
+                        "SELECT reply_id FROM review_replies WHERE review_id = ? "
+                        + "ORDER BY created_at ASC, reply_id ASC LIMIT ? OFFSET ?")
+                .setParameter(1, reviewId)
+                .setParameter(2, pageSize)
+                .setParameter(3, offset)
                 .getResultList();
+        if (rawIds.isEmpty()) {
+            return Page.empty(clampedPage, pageSize);
+        }
+
+        final List<Long> ids = rawIds.stream().map(Number::longValue).collect(Collectors.toList());
+        final List<ReviewReply> replies = em.createQuery(
+                        "SELECT rr FROM ReviewReply rr JOIN FETCH rr.user "
+                        + "WHERE rr.id IN :ids ORDER BY rr.createdAt ASC, rr.id ASC",
+                        ReviewReply.class)
+                .setParameter("ids", ids)
+                .getResultList();
+        return new Page<>(replies, clampedPage, pageSize, totalItems);
     }
 
     @Override
-    public List<ReviewReply> findByReviewIds(final Collection<Long> reviewIds) {
-        if (reviewIds == null || reviewIds.isEmpty()) {
-            return List.of();
+    public Map<Long, List<ReviewReply>> findFirstNByReviewIds(final Collection<Long> reviewIds, final int n) {
+        if (reviewIds == null || reviewIds.isEmpty() || n <= 0) {
+            return Collections.emptyMap();
         }
-        return em.createQuery(
-                        "SELECT rr FROM ReviewReply rr JOIN FETCH rr.user WHERE rr.review.id IN :reviewIds "
+        final List<Long> distinctIds = reviewIds.stream().distinct().collect(Collectors.toList());
+        final String placeholders = distinctIds.stream().map(id -> "?").collect(Collectors.joining(","));
+
+        final Query idsQuery = em.createNativeQuery(
+                "SELECT r1.reply_id FROM review_replies r1 "
+                + "WHERE r1.review_id IN (" + placeholders + ") "
+                + "AND ("
+                + "  SELECT COUNT(*) FROM review_replies r2 "
+                + "  WHERE r2.review_id = r1.review_id "
+                + "    AND (r2.created_at < r1.created_at "
+                + "      OR (r2.created_at = r1.created_at AND r2.reply_id < r1.reply_id))"
+                + ") < ?");
+        for (int i = 0; i < distinctIds.size(); i++) {
+            idsQuery.setParameter(i + 1, distinctIds.get(i));
+        }
+        idsQuery.setParameter(distinctIds.size() + 1, n);
+
+        @SuppressWarnings("unchecked")
+        final List<Number> rawIds = idsQuery.getResultList();
+        if (rawIds.isEmpty()) {
+            final Map<Long, List<ReviewReply>> empty = new LinkedHashMap<>();
+            for (final Long id : distinctIds) {
+                empty.put(id, Collections.emptyList());
+            }
+            return empty;
+        }
+        final List<Long> ids = rawIds.stream().map(Number::longValue).collect(Collectors.toList());
+
+        final List<ReviewReply> replies = em.createQuery(
+                        "SELECT rr FROM ReviewReply rr JOIN FETCH rr.user "
+                        + "WHERE rr.id IN :ids "
                         + "ORDER BY rr.review.id ASC, rr.createdAt ASC, rr.id ASC",
                         ReviewReply.class)
-                .setParameter("reviewIds", reviewIds)
+                .setParameter("ids", ids)
                 .getResultList();
+
+        final Map<Long, List<ReviewReply>> grouped = new LinkedHashMap<>();
+        for (final Long reviewId : distinctIds) {
+            grouped.put(reviewId, new ArrayList<>());
+        }
+        for (final ReviewReply reply : replies) {
+            grouped.computeIfAbsent(reply.getReviewId(), k -> new ArrayList<>()).add(reply);
+        }
+        return grouped;
     }
 
     @Override

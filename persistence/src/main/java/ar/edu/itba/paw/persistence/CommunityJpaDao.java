@@ -739,16 +739,47 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
-    public List<CommunityPostComment> findCommentsByPostId(final long postId) {
-        return em.createQuery(
+    public Page<CommunityPostComment> findCommentsByPostId(final long postId, final int page) {
+        final int pageSize = Pagination.REPLIES_PAGE_SIZE;
+
+        final Number total = (Number) em.createNativeQuery(
+                "SELECT COUNT(*) FROM community_post_comments WHERE post_id = ? AND hidden = false"
+        )
+                .setParameter(1, postId)
+                .getSingleResult();
+        final long totalItems = total == null ? 0L : total.longValue();
+        if (totalItems == 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+
+        final int clampedPage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
+        final long offset = Pagination.offsetFor(clampedPage, pageSize);
+
+        @SuppressWarnings("unchecked")
+        final List<Number> rawIds = em.createNativeQuery(
+                "SELECT comment_id FROM community_post_comments " +
+                "WHERE post_id = ? AND hidden = false " +
+                "ORDER BY created_at ASC, comment_id ASC LIMIT ? OFFSET ?"
+        )
+                .setParameter(1, postId)
+                .setParameter(2, pageSize)
+                .setParameter(3, offset)
+                .getResultList();
+        if (rawIds.isEmpty()) {
+            return Page.empty(clampedPage, pageSize);
+        }
+        final List<Long> ids = rawIds.stream().map(Number::longValue).collect(Collectors.toList());
+
+        final List<CommunityPostComment> comments = em.createQuery(
                 "SELECT c FROM CommunityPostComment c " +
                 "LEFT JOIN FETCH c.user " +
-                "WHERE c.post.id = :postId AND c.hidden = false " +
+                "WHERE c.id IN :ids " +
                 "ORDER BY c.createdAt ASC, c.id ASC",
                 CommunityPostComment.class
         )
-                .setParameter("postId", postId)
+                .setParameter("ids", ids)
                 .getResultList();
+        return new Page<>(comments, clampedPage, pageSize, totalItems);
     }
 
     public Map<Long, Long> countMembersByCommunityIds(final Collection<Long> communityIds) {

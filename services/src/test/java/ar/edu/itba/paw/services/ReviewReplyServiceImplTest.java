@@ -207,10 +207,10 @@ public class ReviewReplyServiceImplTest {
     @Test
     public void shouldReturnEmptyGroupedRepliesWhenDaoThrows() {
         // Arrange
-        when(reviewReplyDao.findByReviewIds(List.of(REVIEW_ID))).thenThrow(new DataAccessResourceFailureException("db"));
+        when(reviewReplyDao.findFirstNByReviewIds(List.of(REVIEW_ID), 3)).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
-        final Map<Long, List<ReviewReply>> result = reviewReplyService.getRepliesByReviewIds(List.of(REVIEW_ID));
+        final Map<Long, List<ReviewReply>> result = reviewReplyService.getFirstNRepliesByReviewIds(List.of(REVIEW_ID), 3);
 
         // Assertions
         assertTrue(result.isEmpty());
@@ -253,15 +253,16 @@ public class ReviewReplyServiceImplTest {
     }
 
     @Test
-    public void shouldReturnEmptyListWhenDaoThrowsForGetRepliesByReview() {
+    public void shouldReturnEmptyPageWhenDaoThrowsForGetRepliesByReview() {
         // Arrange
-        when(reviewReplyDao.findByReviewId(REVIEW_ID)).thenThrow(new DataAccessResourceFailureException("db"));
+        when(reviewReplyDao.findByReviewId(REVIEW_ID, 1)).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
-        final List<ReviewReply> result = reviewReplyService.getRepliesByReview(REVIEW_ID);
+        final ar.edu.itba.paw.model.Page<ReviewReply> result = reviewReplyService.getRepliesByReview(REVIEW_ID, 1);
 
         // Assertions
-        assertTrue(result.isEmpty());
+        assertTrue(result.getItems().isEmpty());
+        assertEquals(0L, result.getTotalItems());
     }
 
     @Test

@@ -11,6 +11,7 @@ public final class Pagination {
     public static final int COMMUNITY_POSTS_PAGE_SIZE = 6;
     public static final int PROFILE_ACTIVITY_PAGE_SIZE = 6;
     public static final int ACTIVITY_PAGE_SIZE = 6;
+    public static final int REPLIES_PAGE_SIZE = 10;
     public static final int DEFAULT_PAGE = 1;
 
     private Pagination() {}

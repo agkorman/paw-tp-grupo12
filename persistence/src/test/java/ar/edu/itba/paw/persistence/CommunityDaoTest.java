@@ -522,11 +522,13 @@ class CommunityDaoTest extends AbstractPersistenceTest {
         jdbcTemplate.update("UPDATE community_post_comments SET hidden = TRUE WHERE comment_id = ?", hiddenCommentId);
 
         // Exercise
-        final List<ar.edu.itba.paw.model.CommunityPostComment> result = communityDao.findCommentsByPostId(postId);
+        final ar.edu.itba.paw.model.Page<ar.edu.itba.paw.model.CommunityPostComment> result =
+                communityDao.findCommentsByPostId(postId, 1);
 
         // Assertions
-        assertEquals(1, result.size());
-        assertEquals(visibleCommentId, result.get(0).getId());
+        assertEquals(1, result.getItems().size());
+        assertEquals(visibleCommentId, result.getItems().get(0).getId());
+        assertEquals(1L, result.getTotalItems());
     }
 
     @Test

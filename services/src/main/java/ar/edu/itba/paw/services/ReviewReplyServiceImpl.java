@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
@@ -27,7 +29,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ReviewReplyServiceImpl implements ReviewReplyService {
@@ -80,27 +81,25 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReviewReply> getRepliesByReview(final long reviewId) {
+    public Page<ReviewReply> getRepliesByReview(final long reviewId, final int page) {
         try {
-            return reviewReplyDao.findByReviewId(reviewId);
+            return reviewReplyDao.findByReviewId(reviewId, page);
         } catch (final DataAccessException e) {
             LOGGER.warn("get replies by review failed reviewId={}", reviewId, e);
-            return Collections.emptyList();
+            return Page.empty(Pagination.DEFAULT_PAGE, Pagination.REPLIES_PAGE_SIZE);
         }
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Map<Long, List<ReviewReply>> getRepliesByReviewIds(final Collection<Long> reviewIds) {
-        if (reviewIds == null || reviewIds.isEmpty()) {
+    public Map<Long, List<ReviewReply>> getFirstNRepliesByReviewIds(final Collection<Long> reviewIds, final int n) {
+        if (reviewIds == null || reviewIds.isEmpty() || n <= 0) {
             return Collections.emptyMap();
         }
         try {
-            return reviewReplyDao.findByReviewIds(reviewIds)
-                    .stream()
-                    .collect(Collectors.groupingBy(ReviewReply::getReviewId));
+            return reviewReplyDao.findFirstNByReviewIds(reviewIds, n);
         } catch (final DataAccessException e) {
-            LOGGER.warn("get replies by review ids failed count={}", reviewIds.size(), e);
+            LOGGER.warn("get first {} replies by review ids failed count={}", n, reviewIds.size(), e);
             return Collections.emptyMap();
         }
     }

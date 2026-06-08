@@ -127,7 +127,8 @@ class CarReviewControllerTest {
         when(reviewService.getReviewStatsByCar(anyLong())).thenReturn(Optional.empty());
         when(reviewService.getLatestReviewByCar(anyLong())).thenReturn(Optional.empty());
         when(carService.getCarImagesByCarId(anyLong())).thenReturn(Collections.emptyList());
-        when(reviewReplyService.getRepliesByReviewIds(any())).thenReturn(Collections.emptyMap());
+        when(reviewReplyService.getFirstNRepliesByReviewIds(any(), anyInt())).thenReturn(Collections.emptyMap());
+        when(reviewReplyService.countRepliesByReviewIds(any())).thenReturn(Collections.emptyMap());
         when(reviewLikeService.countReviewLikesByReviewIds(any())).thenReturn(Collections.emptyMap());
         when(reviewLikeService.getLikedReviewIds(any(), anyLong())).thenReturn(Collections.emptySet());
         when(reviewLikeService.countReplyLikesByReplyIds(any())).thenReturn(Collections.emptyMap());
@@ -511,12 +512,14 @@ class CarReviewControllerTest {
     }
 
     @Test
-    void createReply_valid_redirectsToReviews() throws Exception {
+    void createReply_valid_redirectsToReviewDetail() throws Exception {
         // Arrange
         arrangeStandardReviewCollaboratorsAndI18n();
         final Review review = reviewOwnedBy(1L, 7L);
         when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(review));
         when(reviewReplyService.createReply(eq(1L), anyLong(), anyString())).thenReturn(aReply(55L));
+        when(reviewReplyService.countRepliesByReviewIds(eq(java.util.List.of(1L))))
+                .thenReturn(java.util.Map.of(1L, 1L));
         bindPrincipal(testUser(1L));
 
         try {
@@ -527,7 +530,7 @@ class CarReviewControllerTest {
             // Assertions
             resultActions
                     .andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/reviews/car/7#reply-55"));
+                    .andExpect(redirectedUrl("/reviews/1#reply-55"));
         } finally {
             clearSecurityContext();
         }
