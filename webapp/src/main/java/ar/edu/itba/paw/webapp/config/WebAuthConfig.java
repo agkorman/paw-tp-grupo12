@@ -71,7 +71,8 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.POST, "/communities/*/posts/*/hide"),
                                 antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments/*/hide"),
                                 antMatcher(HttpMethod.POST, "/communities/*/posts/*/delete"),
-                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments/*/delete"))
+                                antMatcher(HttpMethod.POST, "/communities/*/posts/*/comments/*/delete"),
+                                antMatcher(HttpMethod.GET, "/reviews/new"))
                             .authenticated()
                         .requestMatchers(
                                 antMatcher(HttpMethod.GET, "/"),
@@ -84,6 +85,7 @@ public class WebAuthConfig {
                                 antMatcher(HttpMethod.GET, "/communities/*/posts/*"),
                                 antMatcher(HttpMethod.GET, "/communities/*/posts/*/images/*"),
                                 antMatcher(HttpMethod.GET, "/reviews/car/*"),
+                                antMatcher(HttpMethod.GET, "/reviews/*"),
                                 antMatcher(HttpMethod.GET, "/car-image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/image"),
                                 antMatcher(HttpMethod.GET, "/cars/*/images/*"),

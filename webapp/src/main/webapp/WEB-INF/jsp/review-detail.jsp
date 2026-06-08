@@ -6,24 +6,27 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="review.detail.title" styles="/css/reviews.css|/css/review-tags.css|/css/profile-modal.css|/css/image-lightbox.css"/>
+<pa:page-head titleCode="review.detail.title" styles="/css/community-post-common.css|/css/reviews.css|/css/review-tags.css|/css/profile-modal.css|/css/image-lightbox.css"/>
 <body>
     <pa:nav activePage="reviews"/>
 
     <main class="reviews-page review-detail-page">
         <section class="review-hero">
             <div class="review-hero-inner">
-                <div>
+                <c:url var="backToCarUrl" value="/reviews/car/${selectedCar.id}"/>
+                <spring:message var="backToCarLabel" code="review.detail.backToCar"/>
+                <div class="review-detail-heading">
+                    <a href="${backToCarUrl}#review-${reviewThread.review.id}"
+                       class="community-back-link review-detail-back-link"
+                       aria-label="${fn:escapeXml(backToCarLabel)}">
+                        <pa:icon name="chevron-left" size="18"/>
+                    </a>
+                    <div>
                     <h1>
                         <c:out value="${selectedCar.brandName}"/> <c:out value="${selectedCar.model}"/>
                     </h1>
                     <p class="subtitle"><spring:message code="review.detail.subtitle"/></p>
-                </div>
-                <div class="review-hero-actions">
-                    <c:url var="backToCarUrl" value="/reviews/car/${selectedCar.id}"/>
-                    <a href="${backToCarUrl}" class="btn-secondary">
-                        <spring:message code="review.detail.backToCar"/>
-                    </a>
+                    </div>
                 </div>
             </div>
         </section>

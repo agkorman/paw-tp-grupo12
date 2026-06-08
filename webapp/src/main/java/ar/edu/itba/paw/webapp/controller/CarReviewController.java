@@ -1039,6 +1039,8 @@ public class CarReviewController {
     )
     public ModelAndView toggleReplyLike(
         @PathVariable("replyId") final long replyId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
@@ -1064,12 +1066,12 @@ public class CarReviewController {
             replyId,
             liked
         );
-        return new ModelAndView(
-            "redirect:/reviews/car/" +
-                review.getCarId() +
-                "#review-" +
-                review.getId()
-        );
+        final String defaultRedirect =
+            "/reviews/car/" + review.getCarId() + "#review-" + review.getId();
+        final String safeRedirect = LoginRedirectUtils
+            .safeRedirect(redirect, request.getContextPath())
+            .orElse(defaultRedirect);
+        return new ModelAndView("redirect:" + safeRedirect);
     }
 
     private String validateReviewHideReason(final String reason) {

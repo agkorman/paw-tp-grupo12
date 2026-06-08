@@ -201,7 +201,7 @@
                                     likeCount="${thread.likeCount}"
                                     disabled="${not authenticated}"/>
                         </div>
-                        <div class="review-replies" id="review-${review.id}-replies" aria-label="${reviewRepliesLabel}">
+                        <div class="review-replies" id="replies-${review.id}" aria-label="${reviewRepliesLabel}">
                             <c:if test="${repliesPaginated eq true and thread.totalReplyCount > 0}">
                                 <p class="review-replies-count">
                                     <spring:message code="review.replies.count" arguments="${thread.totalReplyCount}"/>
@@ -290,28 +290,11 @@
                                                     liked="${replyCard.liked}"
                                                     likeCount="${replyCard.likeCount}"
                                                     disabled="${not authenticated}"
+                                                    redirect="${reviewsContextRedirect}#reply-${reply.id}"
                                                     label="${likeLabel}"/>
                                         </article>
                                     </c:forEach>
                                 </div>
-                            </c:if>
-                            <c:if test="${repliesPaginated eq true and not empty repliesTotalPages and repliesTotalPages > 1}">
-                                <c:url var="reviewDetailBaseUrl" value="/reviews/${review.id}"/>
-                                <spring:message var="repliesPaginationAria" code="review.replies.pagination.aria"/>
-                                <pa:pagination currentPage="${repliesCurrentPage}"
-                                               totalPages="${repliesTotalPages}"
-                                               baseUrl="${reviewDetailBaseUrl}"
-                                               pageParam="repliesPage"
-                                               fragment="review-${review.id}-replies"
-                                               ariaLabel="${repliesPaginationAria}"/>
-                            </c:if>
-                            <c:if test="${not (repliesPaginated eq true) and thread.hasMoreReplies}">
-                                <c:url var="reviewDetailViewUrl" value="/reviews/${review.id}"/>
-                                <p class="review-replies-view-all">
-                                    <a href="${reviewDetailViewUrl}#review-${review.id}-replies" class="review-replies-view-all-link">
-                                        <spring:message code="review.replies.viewAll" arguments="${thread.totalReplyCount}"/>
-                                    </a>
-                                </p>
                             </c:if>
                             <c:choose>
                                 <c:when test="${authenticated}">
@@ -358,6 +341,24 @@
                                     </p>
                                 </c:otherwise>
                             </c:choose>
+                            <c:if test="${repliesPaginated eq true and not empty repliesTotalPages and repliesTotalPages > 1}">
+                                <c:url var="reviewDetailBaseUrl" value="/reviews/${review.id}"/>
+                                <spring:message var="repliesPaginationAria" code="review.replies.pagination.aria"/>
+                                <pa:pagination currentPage="${repliesCurrentPage}"
+                                               totalPages="${repliesTotalPages}"
+                                               baseUrl="${reviewDetailBaseUrl}"
+                                               pageParam="repliesPage"
+                                               fragment="replies-${review.id}"
+                                               ariaLabel="${repliesPaginationAria}"/>
+                            </c:if>
+                            <c:if test="${not (repliesPaginated eq true) and thread.hasMoreReplies}">
+                                <c:url var="reviewDetailViewUrl" value="/reviews/${review.id}"/>
+                                <p class="review-replies-view-all">
+                                    <a href="${reviewDetailViewUrl}#replies-${review.id}" class="review-replies-view-all-link">
+                                        <spring:message code="review.replies.viewAll" arguments="${thread.totalReplyCount}"/>
+                                    </a>
+                                </p>
+                            </c:if>
                         </div>
                     </article>
                 </c:forEach>

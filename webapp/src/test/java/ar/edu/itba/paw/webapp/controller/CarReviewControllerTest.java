@@ -536,6 +536,32 @@ class CarReviewControllerTest {
         }
     }
 
+    @Test
+    void toggleReplyLike_withSafeRedirect_preservesReviewDetailPage() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        final Review review = reviewOwnedBy(1L, 7L);
+        final ReviewReply reply = new ReviewReply(review, review.getUser(), "Thanks.");
+        reply.setId(55L);
+        when(reviewReplyService.getReplyById(eq(55L))).thenReturn(Optional.of(reply));
+        when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(review));
+        when(reviewLikeService.toggleReplyLike(eq(55L), anyLong())).thenReturn(true);
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(post("/reviews/replies/55/like")
+                    .param("redirect", "/reviews/1?repliesPage=2#reply-55"));
+            // Assertions
+            resultActions
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/reviews/1?repliesPage=2#reply-55"));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
     private static AuthenticatedUser testUser(final long id) {
         return new AuthenticatedUser(id, "u" + id, "user" + id + "@test.com", "pass", Collections.emptyList());
     }
