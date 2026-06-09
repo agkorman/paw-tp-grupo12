@@ -104,14 +104,20 @@ public class UserServiceImpl implements UserService {
                     passwordEncoder.encode(rawPassword),
                     DEFAULT_ROLE
             );
-            reviewDao.bindReviewsToUserByEmail(user.getId(), normalizedEmail);
-            carRequestDao.bindRequestsToUserByEmail(user.getId(), normalizedEmail);
         } catch (final DataIntegrityViolationException e) {
             LOGGER.warn("create user rejected: integrity violation username={}", normalizedUsername);
             throw new DuplicateUserException(e);
         } catch (final DataAccessException e) {
             LOGGER.error("create user failed: persistence error username={}", normalizedUsername, e);
             throw new ServiceOperationException("Failed to create user " + normalizedUsername, e);
+        }
+        try {
+            reviewDao.bindReviewsToUserByEmail(user.getId(), normalizedEmail);
+            carRequestDao.bindRequestsToUserByEmail(user.getId(), normalizedEmail);
+        } catch (final DataAccessException e) {
+            LOGGER.error("bind pre-existing content to new user failed: persistence error userId={} username={}",
+                    user.getId(), normalizedUsername, e);
+            throw new ServiceOperationException("Failed to bind existing content to user " + normalizedUsername, e);
         }
         LOGGER.info("Created user id={} username={} role={}", user.getId(), normalizedUsername, DEFAULT_ROLE);
         return user;
