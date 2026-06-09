@@ -22,6 +22,8 @@ import ar.edu.itba.paw.services.exception.CommunityCreatorCannotLeaveException;
 import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
 import ar.edu.itba.paw.services.exception.CommunityModeratorRequiredException;
 import ar.edu.itba.paw.services.exception.CommunityOwnerRequiredException;
+import ar.edu.itba.paw.services.exception.CommunityPostSlugConflictException;
+import ar.edu.itba.paw.services.exception.CommunitySlugConflictException;
 import ar.edu.itba.paw.services.exception.InvalidCommunityTopicSelectionException;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import java.time.LocalDateTime;
@@ -33,12 +35,14 @@ import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -234,6 +238,49 @@ class CommunityServiceImplTest {
     }
 
     @Test
+    void createCommunity_slugConflict_translatesToDomainException() {
+        // Arrange
+        final CommunityTopic selectedTopic = topic((short) 1, "classics");
+        final DataIntegrityViolationException dbException =
+                new DataIntegrityViolationException("uq_communities_slug");
+        when(communityDao.findTopicsByIds(anyCollection())).thenReturn(List.of(selectedTopic));
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.empty());
+        when(communityDao.create(eq(USER_ID), eq("classics"), anyString(), anyString()))
+                .thenThrow(dbException);
+
+        // Exercise
+        final CommunitySlugConflictException thrown = assertThrows(
+                CommunitySlugConflictException.class,
+                () -> communityService.createCommunity(USER_ID, "Classics", "Desc", List.of((short) 1))
+        );
+
+        // Assertions
+        assertEquals("classics", thrown.getSlug());
+        assertSame(dbException, thrown.getCause());
+    }
+
+    @Test
+    void createCommunity_unrelatedIntegrityViolation_rethrows() {
+        // Arrange
+        final CommunityTopic selectedTopic = topic((short) 1, "classics");
+        final DataIntegrityViolationException dbException =
+                new DataIntegrityViolationException("uq_community_members_user_id_community_id");
+        when(communityDao.findTopicsByIds(anyCollection())).thenReturn(List.of(selectedTopic));
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.empty());
+        when(communityDao.create(eq(USER_ID), eq("classics"), anyString(), anyString()))
+                .thenThrow(dbException);
+
+        // Exercise
+        final DataIntegrityViolationException thrown = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> communityService.createCommunity(USER_ID, "Classics", "Desc", List.of((short) 1))
+        );
+
+        // Assertions
+        assertSame(dbException, thrown);
+    }
+
+    @Test
     void createCommunity_withoutTopics_rejectsSelection() {
         // Arrange
         final Collection<Short> topicIds = List.of();
@@ -287,6 +334,51 @@ class CommunityServiceImplTest {
         // Assertions
         assertTrue(result.isPresent());
         assertEquals("first-post-2", result.get().getSlug());
+    }
+
+    @Test
+    void createCommunityPost_slugConflict_translatesToDomainException() {
+        // Arrange
+        final Community community = community();
+        final DataIntegrityViolationException dbException =
+                new DataIntegrityViolationException("uq_community_posts_slug");
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findMembershipRole(community.getId(), USER_ID)).thenReturn(Optional.of("member"));
+        when(communityDao.findPostByCommunityIdAndSlug(community.getId(), "first-post")).thenReturn(Optional.empty());
+        when(communityDao.createPost(community.getId(), USER_ID, "first-post", "First post", "Body", null))
+                .thenThrow(dbException);
+
+        // Exercise
+        final CommunityPostSlugConflictException thrown = assertThrows(
+                CommunityPostSlugConflictException.class,
+                () -> communityService.createCommunityPost("classics", USER_ID, "First post", "Body", List.of(), null)
+        );
+
+        // Assertions
+        assertEquals("classics", thrown.getCommunitySlug());
+        assertSame(dbException, thrown.getCause());
+    }
+
+    @Test
+    void createCommunityPost_unrelatedIntegrityViolation_rethrows() {
+        // Arrange
+        final Community community = community();
+        final DataIntegrityViolationException dbException =
+                new DataIntegrityViolationException("fk_community_post_images_post_id");
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findMembershipRole(community.getId(), USER_ID)).thenReturn(Optional.of("member"));
+        when(communityDao.findPostByCommunityIdAndSlug(community.getId(), "first-post")).thenReturn(Optional.empty());
+        when(communityDao.createPost(community.getId(), USER_ID, "first-post", "First post", "Body", null))
+                .thenThrow(dbException);
+
+        // Exercise
+        final DataIntegrityViolationException thrown = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> communityService.createCommunityPost("classics", USER_ID, "First post", "Body", List.of(), null)
+        );
+
+        // Assertions
+        assertSame(dbException, thrown);
     }
 
     @Test

@@ -27,6 +27,8 @@ import ar.edu.itba.paw.services.exception.CommunityCreatorCannotLeaveException;
 import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
 import ar.edu.itba.paw.services.exception.CommunityModeratorRequiredException;
 import ar.edu.itba.paw.services.exception.CommunityOwnerRequiredException;
+import ar.edu.itba.paw.services.exception.CommunityPostSlugConflictException;
+import ar.edu.itba.paw.services.exception.CommunitySlugConflictException;
 import ar.edu.itba.paw.services.exception.InvalidCommunityTopicSelectionException;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import java.text.Normalizer;
@@ -36,6 +38,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -45,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -176,7 +180,17 @@ public class CommunityServiceImpl implements CommunityService {
         final List<CommunityTopic> selectedTopics = validateTopicSelection(topicIds);
         final String slug = nextAvailableSlug(normalizedName);
 
-        final Community community = communityDao.create(userId, slug, normalizedName, normalizedDescription);
+        final Community community;
+        try {
+            community = communityDao.create(userId, slug, normalizedName, normalizedDescription);
+        } catch (final DataIntegrityViolationException e) {
+            if (!isConstraintViolation(e, "uq_communities_slug")) {
+                throw e;
+            }
+            LOGGER.warn("create community rejected: slug conflict (concurrent creation) slug={} userId={}",
+                    slug, userId);
+            throw new CommunitySlugConflictException(slug, e);
+        }
         communityDao.replaceTopicAssignments(
                 community.getId(),
                 selectedTopics.stream().map(CommunityTopic::getId).collect(Collectors.toList())
@@ -289,14 +303,24 @@ public class CommunityServiceImpl implements CommunityService {
             throw new CommunityMembershipRequiredException(normalizedCommunitySlug);
         }
         final String slug = nextAvailablePostSlug(community.getId(), normalizedTitle);
-        final CommunityPost post = communityDao.createPost(
-                community.getId(),
-                userId,
-                slug,
-                normalizedTitle,
-                normalizedBody,
-                linkedReviewId
-        );
+        final CommunityPost post;
+        try {
+            post = communityDao.createPost(
+                    community.getId(),
+                    userId,
+                    slug,
+                    normalizedTitle,
+                    normalizedBody,
+                    linkedReviewId
+            );
+        } catch (final DataIntegrityViolationException e) {
+            if (!isConstraintViolation(e, "uq_community_posts_slug")) {
+                throw e;
+            }
+            LOGGER.warn("create community post rejected: slug conflict (concurrent creation) communitySlug={} userId={}",
+                    normalizedCommunitySlug, userId);
+            throw new CommunityPostSlugConflictException(normalizedCommunitySlug, e);
+        }
         final List<ImagePayload> normalizedImages = ImagePayloadUtils.normalizeImages(images);
         if (!normalizedImages.isEmpty()) {
             communityPostImageDao.replaceAll(post.getId(), normalizedImages);
@@ -1270,6 +1294,21 @@ public class CommunityServiceImpl implements CommunityService {
             candidate = appendPostSlugSuffix(baseSlug, suffix++);
         }
         return candidate;
+    }
+
+    private static boolean isConstraintViolation(final DataIntegrityViolationException e,
+                                                 final String constraintName) {
+        if (e == null || constraintName == null) {
+            return false;
+        }
+        final String normalizedConstraint = constraintName.toLowerCase(Locale.ROOT);
+        return containsConstraint(e.getMessage(), normalizedConstraint)
+                || containsConstraint(e.getMostSpecificCause().getMessage(), normalizedConstraint);
+    }
+
+    private static boolean containsConstraint(final String message, final String normalizedConstraint) {
+        return message != null
+                && message.toLowerCase(Locale.ROOT).contains(normalizedConstraint);
     }
 
     private String slugBase(final String name) {

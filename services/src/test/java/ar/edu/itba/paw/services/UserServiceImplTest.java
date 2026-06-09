@@ -5,8 +5,12 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import ar.edu.itba.paw.services.exception.DuplicateUserException;
+import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import ar.edu.itba.paw.services.exception.UserNotFoundException;
 import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.QueryTimeoutException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -215,6 +219,41 @@ public class UserServiceImplTest {
     }
 
     @Test
+    public void shouldTranslateIntegrityViolationToDuplicateUserOnCreate() {
+        // Arrange
+        final DataIntegrityViolationException dbException =
+                new DataIntegrityViolationException("uq_users_email");
+        when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
+        when(userDao.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(userDao.create(NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user")).thenThrow(dbException);
+
+        // Exercise
+        final DuplicateUserException ex = assertThrows(DuplicateUserException.class,
+                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD));
+
+        // Assertions
+        assertSame(dbException, ex.getCause());
+    }
+
+    @Test
+    public void shouldTranslatePersistenceFailureToServiceOperationOnCreate() {
+        // Arrange
+        final QueryTimeoutException dbException = new QueryTimeoutException("statement timed out");
+        when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
+        when(userDao.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(userDao.create(NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user")).thenThrow(dbException);
+
+        // Exercise
+        final ServiceOperationException ex = assertThrows(ServiceOperationException.class,
+                () -> userService.createUser(RAW_USERNAME, RAW_EMAIL, RAW_PASSWORD));
+
+        // Assertions
+        assertSame(dbException, ex.getCause());
+    }
+
+    @Test
     public void shouldUpdateUsernameWithNormalizedValue() {
         // Arrange
         final User updated = TestModels.user(USER_ID, NORMALIZED_USERNAME, NORMALIZED_EMAIL, ENCODED_PASSWORD, "user",
@@ -270,6 +309,51 @@ public class UserServiceImplTest {
 
         // Assertions
         assertEquals("User not found: " + USER_ID, ex.getMessage());
+    }
+
+    @Test
+    public void shouldTranslateIntegrityViolationToUsernameExistsOnUpdate() {
+        // Arrange
+        final DataIntegrityViolationException dbException =
+                new DataIntegrityViolationException("uq_users_username");
+        when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
+        when(userDao.updateUsername(USER_ID, NORMALIZED_USERNAME)).thenThrow(dbException);
+
+        // Exercise
+        final UsernameAlreadyExistsException ex = assertThrows(UsernameAlreadyExistsException.class,
+                () -> userService.updateUsername(USER_ID, RAW_USERNAME));
+
+        // Assertions
+        assertEquals("Username is already registered: " + NORMALIZED_USERNAME, ex.getMessage());
+    }
+
+    @Test
+    public void shouldTranslatePersistenceFailureToServiceOperationOnUpdateUsername() {
+        // Arrange
+        final QueryTimeoutException dbException = new QueryTimeoutException("statement timed out");
+        when(userDao.findByUsername(NORMALIZED_USERNAME)).thenReturn(Optional.empty());
+        when(userDao.updateUsername(USER_ID, NORMALIZED_USERNAME)).thenThrow(dbException);
+
+        // Exercise
+        final ServiceOperationException ex = assertThrows(ServiceOperationException.class,
+                () -> userService.updateUsername(USER_ID, RAW_USERNAME));
+
+        // Assertions
+        assertSame(dbException, ex.getCause());
+    }
+
+    @Test
+    public void shouldTranslatePersistenceFailureToServiceOperationOnUpdateLocale() {
+        // Arrange
+        final QueryTimeoutException dbException = new QueryTimeoutException("statement timed out");
+        when(userDao.updatePreferredLocale(USER_ID, "en")).thenThrow(dbException);
+
+        // Exercise
+        final ServiceOperationException ex = assertThrows(ServiceOperationException.class,
+                () -> userService.updatePreferredLocale(USER_ID, "  en-US "));
+
+        // Assertions
+        assertSame(dbException, ex.getCause());
     }
 
     @Test
