@@ -106,7 +106,9 @@
                 </c:if>
 
                 <div class="community-post-detail-actions">
-                    <spring:message var="postReplyCountText" code="communities.post.metric.replies" arguments="${postView.commentCount}"/>
+                    <spring:message var="postReplyCountText"
+                                    code="${postView.commentCount eq 1 ? 'communities.post.metric.replies.one' : 'communities.post.metric.replies.many'}"
+                                    arguments="${postView.commentCount}"/>
                     <pa:review-like-button
                             reviewId="${postDetail.post.id}"
                             liked="${postView.helpfulByCurrentUser}"

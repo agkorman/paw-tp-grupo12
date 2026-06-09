@@ -25,8 +25,12 @@
 <c:url var="reviewRepostLoginUrl" value="/login">
     <c:param name="redirect" value="/reviews/${reviewCard.review.id}/repost"/>
 </c:url>
-<spring:message var="replyCountText" code="profile.card.metric.replies" arguments="${reviewCard.replyCount}"/>
-<spring:message var="likeCountText" code="profile.card.metric.likes" arguments="${reviewCard.likeCount}"/>
+<spring:message var="replyCountText"
+                code="${reviewCard.replyCount eq 1 ? 'profile.card.metric.replies.one' : 'profile.card.metric.replies.many'}"
+                arguments="${reviewCard.replyCount}"/>
+<spring:message var="likeCountText"
+                code="${reviewCard.likeCount eq 1 ? 'profile.card.metric.likes.one' : 'profile.card.metric.likes.many'}"
+                arguments="${reviewCard.likeCount}"/>
 <spring:message var="reviewMetricsAria" code="profile.card.metrics.aria"/>
 
 <article class="profile-review-card" id="review-${reviewCard.review.id}" data-profile-card-link="${fn:escapeXml(profileReviewHref)}" role="link" tabindex="0">

@@ -58,12 +58,12 @@ public class ReviewDaoTest extends AbstractPersistenceTest {
                 "High", "Body", "owner", 2025, 500, true);
 
         // Exercise
-        final List<Review> result = reviewDao.findByCarIdOrderByRatingDesc(car.getId());
+        final Page<Review> result = reviewDao.findByCarIdOrderByRatingDesc(car.getId(), 1);
 
         // Assertions
-        assertEquals(2, result.size());
-        assertEquals(high.getId(), result.get(0).getId());
-        assertEquals(new BigDecimal("5.0"), result.get(0).getRating());
+        assertEquals(2, result.getItems().size());
+        assertEquals(high.getId(), result.getItems().get(0).getId());
+        assertEquals(new BigDecimal("5.0"), result.getItems().get(0).getRating());
     }
 
     @Test

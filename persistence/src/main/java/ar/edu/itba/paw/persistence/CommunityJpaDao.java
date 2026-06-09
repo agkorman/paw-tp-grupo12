@@ -41,14 +41,6 @@ public class CommunityJpaDao implements CommunityDao {
     private EntityManager em;
 
     @Override
-    public List<Community> findAll() {
-        return em.createQuery(
-                "SELECT c FROM Community c ORDER BY c.id ASC",
-                Community.class
-        ).getResultList();
-    }
-
-    @Override
     public Page<Community> findAll(final int page) {
         final int pageSize = Pagination.COMMUNITIES_PAGE_SIZE;
         final Number count = (Number) em.createNativeQuery("SELECT COUNT(*) FROM communities").getSingleResult();
@@ -614,19 +606,6 @@ public class CommunityJpaDao implements CommunityDao {
             topicsByCommunity.put(entry.getKey(), communityTopics);
         }
         return topicsByCommunity;
-    }
-
-    @Override
-    public List<CommunityPost> findPostsByCommunityId(final long communityId) {
-        return em.createQuery(
-                "SELECT p FROM CommunityPost p " +
-                "LEFT JOIN FETCH p.author " +
-                "WHERE p.community.id = :communityId " +
-                "ORDER BY p.createdAt DESC, p.id DESC",
-                CommunityPost.class
-        )
-                .setParameter("communityId", communityId)
-                .getResultList();
     }
 
     @Override

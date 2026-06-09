@@ -48,8 +48,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -115,7 +113,6 @@ public class AdminController {
     private final BodyTypeRequestService bodyTypeRequestService;
     private final AdminRequestService adminRequestService;
     private final UserService userService;
-    private final MessageSource messageSource;
     private final ImageValidationService imageValidationService;
 
     @Autowired
@@ -128,7 +125,6 @@ public class AdminController {
         final BodyTypeRequestService bodyTypeRequestService,
         final AdminRequestService adminRequestService,
         final UserService userService,
-        final MessageSource messageSource,
         final ImageValidationService imageValidationService
     ) {
         this.carRequestService = carRequestService;
@@ -139,16 +135,7 @@ public class AdminController {
         this.bodyTypeRequestService = bodyTypeRequestService;
         this.adminRequestService = adminRequestService;
         this.userService = userService;
-        this.messageSource = messageSource;
         this.imageValidationService = imageValidationService;
-    }
-
-    private String message(final String code, final Object... args) {
-        return messageSource.getMessage(
-            code,
-            args,
-            LocaleContextHolder.getLocale()
-        );
     }
 
     @InitBinder
@@ -398,7 +385,12 @@ public class AdminController {
             retainedImageIds.size()
         );
         if (imageError != null) {
-            errors.rejectValue("files", "image.invalid", imageError);
+            errors.rejectValue(
+                "files",
+                imageError,
+                new Object[] { MAX_IMAGE_COUNT },
+                null
+            );
         }
 
         Brand resolvedBrand = null;
@@ -409,8 +401,7 @@ public class AdminController {
             if (resolvedBrand == null) {
                 errors.rejectValue(
                     "brand",
-                    "validation.car.brand.invalid",
-                    message("validation.car.brand.invalid")
+                    "validation.car.brand.invalid"
                 );
             }
         }
@@ -423,8 +414,7 @@ public class AdminController {
             if (resolvedBodyType == null) {
                 errors.rejectValue(
                     "bodyType",
-                    "validation.car.bodyType.invalid",
-                    message("validation.car.bodyType.invalid")
+                    "validation.car.bodyType.invalid"
                 );
             }
         }
@@ -481,10 +471,7 @@ public class AdminController {
                 carForm.getPriceUsd()
             );
         } catch (final DuplicateCarException e) {
-            errors.reject(
-                "validation.car.duplicate",
-                message("validation.car.duplicate")
-            );
+            errors.reject("validation.car.duplicate");
             LOGGER.warn(
                 "car request approval rejected: duplicate car requestId={}",
                 requestId
@@ -527,7 +514,12 @@ public class AdminController {
             retainedImageIds.size()
         );
         if (imageError != null) {
-            errors.rejectValue("files", "image.invalid", imageError);
+            errors.rejectValue(
+                "files",
+                imageError,
+                new Object[] { MAX_IMAGE_COUNT },
+                null
+            );
         }
 
         Brand resolvedBrand = null;
@@ -538,8 +530,7 @@ public class AdminController {
             if (resolvedBrand == null) {
                 errors.rejectValue(
                     "brand",
-                    "validation.car.brand.invalid",
-                    message("validation.car.brand.invalid")
+                    "validation.car.brand.invalid"
                 );
             }
         }
@@ -552,8 +543,7 @@ public class AdminController {
             if (resolvedBodyType == null) {
                 errors.rejectValue(
                     "bodyType",
-                    "validation.car.bodyType.invalid",
-                    message("validation.car.bodyType.invalid")
+                    "validation.car.bodyType.invalid"
                 );
             }
         }
@@ -592,8 +582,7 @@ public class AdminController {
                 resolvedBodyType.getId(),
                 carForm.getYear(),
                 carForm.getDescription(),
-                Optional.empty(),
-                Optional.empty(),
+                imagePayloads,
                 ControllerUtils.normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),
                 carForm.getAirbagCount(),
@@ -603,15 +592,11 @@ public class AdminController {
                 carForm.getPriceUsd()
             );
         } catch (final DuplicateCarException e) {
-            errors.reject(
-                "validation.car.duplicate",
-                message("validation.car.duplicate")
-            );
+            errors.reject("validation.car.duplicate");
             LOGGER.warn("car update rejected: duplicate car carId={}", carId);
             return carEditFormPage(existingCar, carForm, errors);
         }
         if (updated.isPresent()) {
-            carService.saveCarImages(carId, imagePayloads);
             LOGGER.info("admin updated car id={}", carId);
         }
         return new ModelAndView("redirect:/reviews/car/" + carId);
@@ -1238,14 +1223,6 @@ public class AdminController {
         );
     }
 
-    private String validateUploadedImage(
-        final MultipartFile file,
-        final boolean required
-    ) {
-        final String key = imageValidationService.validateUploadedImage(file, required);
-        return key == null ? null : message(key);
-    }
-
     private String validateUploadedImages(
         final List<MultipartFile> files,
         final boolean required,
@@ -1253,13 +1230,14 @@ public class AdminController {
     ) {
         final int totalImageCount = existingImageCount + files.size();
         if (totalImageCount == 0) {
-            return required ? message("validation.car.image.required") : null;
+            return required ? "validation.car.image.required" : null;
         }
         if (totalImageCount > MAX_IMAGE_COUNT) {
-            return message("validation.car.files.maxCount", MAX_IMAGE_COUNT);
+            return "validation.car.files.maxCount";
         }
         for (final MultipartFile file : files) {
-            final String imageError = validateUploadedImage(file, true);
+            final String imageError =
+                imageValidationService.validateUploadedImage(file, true);
             if (imageError != null) {
                 return imageError;
             }
@@ -1319,8 +1297,7 @@ public class AdminController {
         if (hasUnknownRetainedImageIds(submittedImageIds, availableImageIds)) {
             errors.rejectValue(
                 "files",
-                "validation.car.image.preloaded.invalid",
-                message("validation.car.image.preloaded.invalid")
+                "validation.car.image.preloaded.invalid"
             );
         }
         return retainedImageIds;
@@ -1388,8 +1365,7 @@ public class AdminController {
         ) {
             errors.rejectValue(
                 "fuelType",
-                "validation.car.fuelType.invalid",
-                message("validation.car.fuelType.invalid")
+                "validation.car.fuelType.invalid"
             );
         }
         if (
@@ -1400,8 +1376,7 @@ public class AdminController {
         ) {
             errors.rejectValue(
                 "transmission",
-                "validation.car.transmission.invalid",
-                message("validation.car.transmission.invalid")
+                "validation.car.transmission.invalid"
             );
         }
     }

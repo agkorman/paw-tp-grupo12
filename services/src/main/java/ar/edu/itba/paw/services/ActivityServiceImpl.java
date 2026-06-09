@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.ActivityFeedPermissions;
 import ar.edu.itba.paw.model.ActivityFeedReference;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.CommunityPost;
+import ar.edu.itba.paw.model.CommunityRole;
 import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
@@ -36,8 +37,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class ActivityServiceImpl implements ActivityService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityServiceImpl.class);
-    private static final String COMMUNITY_MODERATOR_ROLE = "moderator";
-
     private final ActivityDao activityDao;
     private final ReviewDao reviewDao;
     private final ReviewImageDao reviewImageDao;
@@ -197,7 +196,7 @@ public class ActivityServiceImpl implements ActivityService {
                                                              final Map<Long, String> communityRolesById) {
         final long communityId = item.getCommunityPost().getCommunityId();
         final boolean ownedByViewer = viewerUserId != null && item.getCommunityPost().getAuthorUserId() == viewerUserId;
-        final boolean viewerCommunityModerator = COMMUNITY_MODERATOR_ROLE.equals(communityRolesById.get(communityId));
+        final boolean viewerCommunityModerator = CommunityRole.MODERATOR.equals(communityRolesById.get(communityId));
         return new ActivityFeedPermissions(
                 item.getReference(),
                 ownedByViewer,

@@ -89,11 +89,12 @@ public class BrandRequestServiceImpl implements BrandRequestService {
     @Override
     @Transactional
     public boolean approvePendingRequest(final long id, final String overrideName) {
-        final BrandRequest request = brandRequestDao.findById(id).orElse(null);
-        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+        final Optional<BrandRequest> requestOptional = brandRequestDao.findById(id);
+        if (requestOptional.isEmpty() || !STATUS_PENDING.equals(requestOptional.get().getStatus())) {
             LOGGER.warn("approve brand request rejected: not found or not pending id={}", id);
             return false;
         }
+        final BrandRequest request = requestOptional.get();
 
         final String resolvedName = StringUtils.normalize(overrideName);
         final String nameToCreate = resolvedName != null ? resolvedName : request.getName();
@@ -121,11 +122,12 @@ public class BrandRequestServiceImpl implements BrandRequestService {
     @Override
     @Transactional
     public boolean rejectPendingRequest(final long id) {
-        final BrandRequest request = brandRequestDao.findById(id).orElse(null);
-        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+        final Optional<BrandRequest> requestOptional = brandRequestDao.findById(id);
+        if (requestOptional.isEmpty() || !STATUS_PENDING.equals(requestOptional.get().getStatus())) {
             LOGGER.warn("reject brand request rejected: not found or not pending id={}", id);
             return false;
         }
+        final BrandRequest request = requestOptional.get();
 
         final boolean statusUpdated = brandRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
         if (statusUpdated) {
@@ -138,14 +140,14 @@ public class BrandRequestServiceImpl implements BrandRequestService {
     private void sendRequestApprovedNotification(final BrandRequest request, final String approvedName) {
         final String recipientEmail = resolveSubmitterEmail(request);
         if (recipientEmail != null) {
-            emailService.sendCatalogRequestApprovedNotification(recipientEmail, "marca", approvedName);
+            emailService.sendBrandRequestApprovedNotification(recipientEmail, approvedName);
         }
     }
 
     private void sendRequestRejectedNotification(final BrandRequest request) {
         final String recipientEmail = resolveSubmitterEmail(request);
         if (recipientEmail != null) {
-            emailService.sendCatalogRequestRejectedNotification(recipientEmail, "marca", request.getName());
+            emailService.sendBrandRequestRejectedNotification(recipientEmail, request.getName());
         }
     }
 

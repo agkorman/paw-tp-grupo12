@@ -202,14 +202,16 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     @Transactional
     public boolean hideReply(final long replyId, final String reason) {
         try {
-            final ReviewReply reply = reviewReplyDao.findById(replyId).orElse(null);
-            if (reply == null) {
+            final Optional<ReviewReply> replyOptional = reviewReplyDao.findById(replyId);
+            if (replyOptional.isEmpty()) {
                 return false;
             }
-            final Review review = reviewDao.findById(reply.getReviewId()).orElse(null);
-            if (review == null) {
+            final ReviewReply reply = replyOptional.get();
+            final Optional<Review> reviewOptional = reviewDao.findById(reply.getReviewId());
+            if (reviewOptional.isEmpty()) {
                 return false;
             }
+            final Review review = reviewOptional.get();
             final String carName = resolveCarDisplayName(review.getCarId());
             final String recipientEmail = userDao.findById(reply.getUserId())
                     .map(User::getEmail)

@@ -10,7 +10,13 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
-<spring:message var="communityCardMetaText" code="communities.card.meta" arguments="${memberCount},${weeklyPostCount}"/>
+<spring:message var="communityMemberCountText"
+                code="${memberCount eq 1 ? 'communities.card.members.one' : 'communities.card.members.many'}"
+                arguments="${memberCount}"/>
+<spring:message var="communityWeeklyPostCountText"
+                code="${weeklyPostCount eq 1 ? 'communities.card.weeklyPosts.one' : 'communities.card.weeklyPosts.many'}"
+                arguments="${weeklyPostCount}"/>
+<spring:message var="communityCardMetaText" code="communities.card.meta" arguments="${communityMemberCountText},${communityWeeklyPostCountText}"/>
 
 <a class="community-card" href="${fn:escapeXml(href)}">
     <div class="community-card-body">

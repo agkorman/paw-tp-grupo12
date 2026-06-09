@@ -3,6 +3,7 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.UserRole;
 import ar.edu.itba.paw.persistence.AdminRequestDao;
 import ar.edu.itba.paw.services.exception.PendingAdminRequestExistsException;
 import java.util.Collections;
@@ -89,12 +90,12 @@ public class AdminRequestServiceImpl implements AdminRequestService {
 
     @Override
     public boolean isEligibleForModeratorRequest(final long userId) {
-        final User user = userService.getUserById(userId).orElse(null);
-        if (user == null) {
+        final Optional<User> userOptional = userService.getUserById(userId);
+        if (userOptional.isEmpty()) {
             return false;
         }
-        final String role = user.getRole();
-        if (role != null && !"user".equalsIgnoreCase(role.trim())) {
+        final String role = userOptional.get().getRole();
+        if (role != null && !UserRole.USER.equalsIgnoreCase(role.trim())) {
             return false;
         }
         return !adminRequestDao.existsPendingByUser(userId);
@@ -145,14 +146,15 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     @Override
     @Transactional
     public boolean approvePendingRequest(final long id) {
-        final AdminRequest request = adminRequestDao.findById(id).orElse(null);
-        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+        final Optional<AdminRequest> requestOptional = adminRequestDao.findById(id);
+        if (requestOptional.isEmpty() || !STATUS_PENDING.equals(requestOptional.get().getStatus())) {
             LOGGER.warn(
                 "approve admin request rejected: not found or not pending id={}",
                 id
             );
             return false;
         }
+        final AdminRequest request = requestOptional.get();
 
         final boolean statusUpdated = adminRequestDao.updateStatus(
             id,
@@ -179,14 +181,15 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     @Override
     @Transactional
     public boolean rejectPendingRequest(final long id) {
-        final AdminRequest request = adminRequestDao.findById(id).orElse(null);
-        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+        final Optional<AdminRequest> requestOptional = adminRequestDao.findById(id);
+        if (requestOptional.isEmpty() || !STATUS_PENDING.equals(requestOptional.get().getStatus())) {
             LOGGER.warn(
                 "reject admin request rejected: not found or not pending id={}",
                 id
             );
             return false;
         }
+        final AdminRequest request = requestOptional.get();
 
         final boolean statusUpdated = adminRequestDao.updateStatus(
             id,

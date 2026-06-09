@@ -46,7 +46,7 @@ public interface CarRequestService {
     boolean approvePendingRequest(long id);
 
     boolean approvePendingRequest(long id, long brandId, String model, long bodyTypeId, Integer year, String description,
-                                  Optional<String> imageContentType, Optional<byte[]> imageData,
+                                  String imageContentType, byte[] imageData,
                                   String fuelType, Integer horsepower, Integer airbagCount,
                                   String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
                                   BigDecimal priceUsd);

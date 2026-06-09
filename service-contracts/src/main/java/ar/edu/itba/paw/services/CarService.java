@@ -16,8 +16,6 @@ import java.util.Optional;
 public interface CarService {
     long LEGACY_IMAGE_ID = 0L;
 
-    List<Car> getAllCars();
-
     Optional<Car> getCarById(long id);
 
     List<Car> getCarsByIds(Collection<Long> ids);
@@ -47,7 +45,7 @@ public interface CarService {
         Integer year,
         long submittedByUserId,
         String submitterEmail,
-        Optional<String> description,
+        String description,
         List<ImagePayload> images,
         String fuelType,
         Integer horsepower,
@@ -65,8 +63,7 @@ public interface CarService {
         long bodyTypeId,
         Integer year,
         String description,
-        Optional<String> imageContentType,
-        Optional<byte[]> imageData,
+        List<ImagePayload> images,
         String fuelType,
         Integer horsepower,
         Integer airbagCount,

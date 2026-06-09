@@ -81,11 +81,6 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<Review> getAllReviews() {
-        return reviewDao.findAll();
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public long countAllReviews() {
         return reviewDao.countAll();
@@ -149,12 +144,6 @@ public class ReviewServiceImpl implements ReviewService {
             return Collections.emptyMap();
         }
         return reviewDao.countByCarIdsSince(carIds, since);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Map<Long, Integer> getDefaultPagesForReviewIds(final Collection<Long> reviewIds) {
-        return reviewDao.findDefaultPagesByReviewIds(reviewIds);
     }
 
     @Override
@@ -247,11 +236,6 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<Review> getReviewsByCar(long carId) {
-        return reviewDao.findByCarId(carId);
-    }
-
-    @Override
     public Page<Review> getReviewsByCar(final long carId, final int page) {
         return reviewDao.findByCarId(carId, page);
     }
@@ -267,28 +251,13 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<Review> getReviewsByCarOrderByRatingAsc(final long carId) {
-        return reviewDao.findByCarIdOrderByRatingAsc(carId);
-    }
-
-    @Override
     public Page<Review> getReviewsByCarOrderByRatingAsc(final long carId, final int page) {
         return reviewDao.findByCarIdOrderByRatingAsc(carId, page);
     }
 
     @Override
-    public List<Review> getReviewsByCarOrderByRatingDesc(final long carId) {
-        return reviewDao.findByCarIdOrderByRatingDesc(carId);
-    }
-
-    @Override
     public Page<Review> getReviewsByCarOrderByRatingDesc(final long carId, final int page) {
         return reviewDao.findByCarIdOrderByRatingDesc(carId, page);
-    }
-
-    @Override
-    public List<Review> getReviewsByUser(final long userId) {
-        return reviewDao.findByUserId(userId);
     }
 
     @Override
@@ -329,10 +298,11 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional
     public boolean hideReview(final long reviewId, final String reason) {
-        final Review review = reviewDao.findById(reviewId).orElse(null);
-        if (review == null) {
+        final Optional<Review> reviewOptional = reviewDao.findById(reviewId);
+        if (reviewOptional.isEmpty()) {
             return false;
         }
+        final Review review = reviewOptional.get();
         final String carName = resolveCarDisplayName(review.getCarId());
         final String recipientEmail = resolveRecipientEmail(review);
         final boolean deleted = reviewDao.delete(reviewId);

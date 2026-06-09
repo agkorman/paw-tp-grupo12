@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Community;
+import ar.edu.itba.paw.model.CommunityActionResult;
 import ar.edu.itba.paw.model.CommunityDetailData;
 import ar.edu.itba.paw.model.CommunityEditData;
 import ar.edu.itba.paw.model.CommunityHubEntry;
@@ -9,6 +10,7 @@ import ar.edu.itba.paw.model.CommunityMembershipEntry;
 import ar.edu.itba.paw.model.CommunityPost;
 import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
+import ar.edu.itba.paw.model.CommunityRole;
 import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.CommunitySearchCriteria;
@@ -60,8 +62,8 @@ public class CommunityServiceImpl implements CommunityService {
 
     private static final int WEEKLY_WINDOW_DAYS = 7;
     private static final int MAX_TOPICS_PER_COMMUNITY = 4;
-    private static final String CREATOR_ROLE = "moderator";
-    private static final String MEMBER_ROLE = "member";
+    private static final String CREATOR_ROLE = CommunityRole.MODERATOR;
+    private static final String MEMBER_ROLE = CommunityRole.MEMBER;
     static final String POST_SORT_RECENT = "recent";
     static final String POST_SORT_HELPFUL = "helpful";
     static final String POST_SORT_COMMENTED = "commented";
@@ -242,10 +244,10 @@ public class CommunityServiceImpl implements CommunityService {
 
     @Override
     @Transactional
-    public Optional<Boolean> deleteCommunity(final String communitySlug, final long callerUserId) {
+    public CommunityActionResult deleteCommunity(final String communitySlug, final long callerUserId) {
         final Community community = requireModerator(communitySlug, callerUserId);
         if (community == null) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         if (!isCreator(community, callerUserId)) {
             LOGGER.warn("community delete denied: caller userId={} is not owner of communityId={}",
@@ -255,7 +257,7 @@ public class CommunityServiceImpl implements CommunityService {
         communityDao.delete(community.getId());
         LOGGER.info("deleted community id={} slug={} callerUserId={}",
                 community.getId(), community.getSlug(), callerUserId);
-        return Optional.of(true);
+        return CommunityActionResult.performed(true);
     }
 
     @Override
@@ -357,11 +359,11 @@ public class CommunityServiceImpl implements CommunityService {
                                                        final String title,
                                                        final String body,
                                                        final List<ImagePayload> images) {
-        final CommunityPost post = getCommunityPostForEdit(communitySlug, postSlug, callerUserId)
-                .orElse(null);
-        if (post == null) {
+        final Optional<CommunityPost> postOptional = getCommunityPostForEdit(communitySlug, postSlug, callerUserId);
+        if (postOptional.isEmpty()) {
             return Optional.empty();
         }
+        final CommunityPost post = postOptional.get();
         final String normalizedTitle = StringUtils.normalizeRequired(title, "Community post title is required.");
         final String normalizedBody = StringUtils.normalizeRequired(body, "Community post body is required.");
         communityDao.updatePost(post.getId(), normalizedTitle, normalizedBody);
@@ -452,7 +454,7 @@ public class CommunityServiceImpl implements CommunityService {
 
     @Override
     @Transactional
-    public Optional<Boolean> toggleMembership(final String slug, final long userId) {
+    public CommunityActionResult toggleMembership(final String slug, final long userId) {
         if (userId <= 0) {
             throw new InvalidServiceInputException("Community member is required.");
         }
@@ -460,7 +462,7 @@ public class CommunityServiceImpl implements CommunityService {
         final String normalizedSlug = StringUtils.normalizeRequired(slug, "Community slug is required.");
         final Optional<Community> communityOptional = communityDao.findBySlug(normalizedSlug);
         if (communityOptional.isEmpty()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
 
         final Community community = communityOptional.get();
@@ -474,14 +476,14 @@ public class CommunityServiceImpl implements CommunityService {
             }
             communityDao.deleteMembership(communityId, userId);
             LOGGER.info("left community id={} slug={} userId={}", communityId, community.getSlug(), userId);
-            return Optional.of(false);
+            return CommunityActionResult.performed(false);
         }
 
         if (!wasJoined) {
             communityDao.createMembership(communityId, userId, MEMBER_ROLE);
             LOGGER.info("joined community id={} slug={} userId={}", communityId, community.getSlug(), userId);
         }
-        return Optional.of(true);
+        return CommunityActionResult.performed(true);
     }
 
     @Override
@@ -492,9 +494,9 @@ public class CommunityServiceImpl implements CommunityService {
 
     @Override
     @Transactional
-    public Optional<Boolean> togglePostHelpfulReaction(final String communitySlug,
-                                                       final String postSlug,
-                                                       final long userId) {
+    public CommunityActionResult togglePostHelpfulReaction(final String communitySlug,
+                                                           final String postSlug,
+                                                           final long userId) {
         if (userId <= 0) {
             throw new InvalidServiceInputException("Community post helpful reaction user is required.");
         }
@@ -509,14 +511,14 @@ public class CommunityServiceImpl implements CommunityService {
         );
         final Optional<Community> communityOptional = communityDao.findBySlug(normalizedCommunitySlug);
         if (communityOptional.isEmpty()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
 
         final Community community = communityOptional.get();
         final Optional<CommunityPost> postOptional =
                 communityDao.findPostByCommunityIdAndSlug(community.getId(), normalizedPostSlug);
         if (postOptional.isEmpty()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
 
         final CommunityPost post = postOptional.get();
@@ -524,21 +526,21 @@ public class CommunityServiceImpl implements CommunityService {
             communityDao.removeHelpfulReaction(post.getId(), userId);
             LOGGER.info("removed helpful reaction communityPostId={} communitySlug={} userId={}",
                     post.getId(), community.getSlug(), userId);
-            return Optional.of(false);
+            return CommunityActionResult.performed(false);
         }
 
         communityDao.addHelpfulReaction(post.getId(), userId);
         LOGGER.info("added helpful reaction communityPostId={} communitySlug={} userId={}",
                 post.getId(), community.getSlug(), userId);
-        return Optional.of(true);
+        return CommunityActionResult.performed(true);
     }
 
     @Override
     @Transactional
-    public Optional<Boolean> toggleCommentHelpfulReaction(final String communitySlug,
-                                                          final String postSlug,
-                                                          final long commentId,
-                                                          final long userId) {
+    public CommunityActionResult toggleCommentHelpfulReaction(final String communitySlug,
+                                                              final String postSlug,
+                                                              final long commentId,
+                                                              final long userId) {
         if (userId <= 0) {
             throw new InvalidServiceInputException("Community comment helpful reaction user is required.");
         }
@@ -556,12 +558,12 @@ public class CommunityServiceImpl implements CommunityService {
         );
         final Optional<Community> communityOptional = communityDao.findBySlug(normalizedCommunitySlug);
         if (communityOptional.isEmpty()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
 
         final Optional<CommunityPostComment> commentOptional = communityDao.findCommentById(commentId);
         if (commentOptional.isEmpty()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
 
         final CommunityPostComment comment = commentOptional.get();
@@ -572,20 +574,20 @@ public class CommunityServiceImpl implements CommunityService {
                 || !normalizedPostSlug.equals(post.getSlug())
                 || comment.isHidden()
                 || post.isHidden()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
 
         if (communityDao.isCommentHelpfulReactionAddedByUser(commentId, userId)) {
             communityDao.removeCommentHelpfulReaction(commentId, userId);
             LOGGER.info("removed helpful reaction communityCommentId={} communitySlug={} userId={}",
                     commentId, communityOptional.get().getSlug(), userId);
-            return Optional.of(false);
+            return CommunityActionResult.performed(false);
         }
 
         communityDao.addCommentHelpfulReaction(commentId, userId);
         LOGGER.info("added helpful reaction communityCommentId={} communitySlug={} userId={}",
                 commentId, communityOptional.get().getSlug(), userId);
-        return Optional.of(true);
+        return CommunityActionResult.performed(true);
     }
 
     @Override
@@ -842,14 +844,14 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
-    public Optional<List<CommunityMembershipEntry>> listMembers(final String communitySlug, final long callerUserId) {
+    public List<CommunityMembershipEntry> listMembers(final String communitySlug, final long callerUserId) {
         if (callerUserId <= 0) {
             throw new InvalidServiceInputException("Caller is required.");
         }
         final String normalizedSlug = StringUtils.normalizeRequired(communitySlug, "Community slug is required.");
         final Optional<Community> communityOptional = communityDao.findBySlug(normalizedSlug);
         if (communityOptional.isEmpty()) {
-            return Optional.empty();
+            return Collections.emptyList();
         }
         final Community community = communityOptional.get();
         if (communityDao.findMembershipRole(community.getId(), callerUserId).isEmpty()) {
@@ -868,7 +870,7 @@ public class CommunityServiceImpl implements CommunityService {
                     isCreator
             ));
         }
-        return Optional.of(entries);
+        return entries;
     }
 
     @Override
@@ -905,27 +907,35 @@ public class CommunityServiceImpl implements CommunityService {
 
     @Override
     @Transactional
-    public Optional<Boolean> hidePost(final String communitySlug, final String postSlug,
-                                      final long callerUserId, final String reason) {
+    public CommunityActionResult hidePost(final String communitySlug, final String postSlug,
+                                          final long callerUserId, final String reason) {
         return hidePost(communitySlug, postSlug, callerUserId, reason, false);
     }
 
     @Override
     @Transactional
-    public Optional<Boolean> hidePost(final String communitySlug, final String postSlug,
-                                      final long callerUserId, final String reason,
-                                      final boolean callerAdmin) {
-        final Community community = callerAdmin
-                ? communityDao.findBySlug(StringUtils.normalizeRequired(communitySlug, "Community slug is required."))
-                        .orElse(null)
-                : requireModerator(communitySlug, callerUserId);
+    public CommunityActionResult hidePost(final String communitySlug, final String postSlug,
+                                          final long callerUserId, final String reason,
+                                          final boolean callerAdmin) {
+        final Community community;
+        if (callerAdmin) {
+            final Optional<Community> communityOptional = communityDao.findBySlug(
+                    StringUtils.normalizeRequired(communitySlug, "Community slug is required.")
+            );
+            if (communityOptional.isEmpty()) {
+                return CommunityActionResult.notFound();
+            }
+            community = communityOptional.get();
+        } else {
+            community = requireModerator(communitySlug, callerUserId);
+        }
         if (community == null) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         final Optional<CommunityPost> postOptional =
                 communityDao.findPostByCommunityIdAndSlug(community.getId(), postSlug);
         if (postOptional.isEmpty()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         final CommunityPost post = postOptional.get();
         final String recipientEmail = resolveUserEmail(post.getAuthorUserId());
@@ -941,32 +951,40 @@ public class CommunityServiceImpl implements CommunityService {
                     communityPostPath(community, post)
             );
         }
-        return Optional.of(true);
+        return CommunityActionResult.performed(true);
     }
 
     @Override
     @Transactional
-    public Optional<Boolean> hideComment(final String communitySlug, final long commentId,
-                                         final long callerUserId, final String reason) {
+    public CommunityActionResult hideComment(final String communitySlug, final long commentId,
+                                             final long callerUserId, final String reason) {
         return hideComment(communitySlug, commentId, callerUserId, reason, false);
     }
 
     @Override
     @Transactional
-    public Optional<Boolean> hideComment(final String communitySlug, final long commentId,
-                                         final long callerUserId, final String reason,
-                                         final boolean callerAdmin) {
-        final Community community = callerAdmin
-                ? communityDao.findBySlug(StringUtils.normalizeRequired(communitySlug, "Community slug is required."))
-                        .orElse(null)
-                : requireModerator(communitySlug, callerUserId);
+    public CommunityActionResult hideComment(final String communitySlug, final long commentId,
+                                             final long callerUserId, final String reason,
+                                             final boolean callerAdmin) {
+        final Community community;
+        if (callerAdmin) {
+            final Optional<Community> communityOptional = communityDao.findBySlug(
+                    StringUtils.normalizeRequired(communitySlug, "Community slug is required.")
+            );
+            if (communityOptional.isEmpty()) {
+                return CommunityActionResult.notFound();
+            }
+            community = communityOptional.get();
+        } else {
+            community = requireModerator(communitySlug, callerUserId);
+        }
         if (community == null) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         final Optional<CommunityPostComment> commentOptional = communityDao.findCommentById(commentId);
         if (commentOptional.isEmpty()
                 || commentOptional.get().getPost().getCommunity().getId() != community.getId()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         final CommunityPostComment comment = commentOptional.get();
         final CommunityPost post = comment.getPost();
@@ -984,25 +1002,25 @@ public class CommunityServiceImpl implements CommunityService {
                     post == null ? communityPath(community) : communityPostPath(community, post)
             );
         }
-        return Optional.of(true);
+        return CommunityActionResult.performed(true);
     }
 
     @Override
     @Transactional
-    public Optional<Boolean> deletePost(final String communitySlug, final String postSlug,
-                                        final long callerUserId) {
+    public CommunityActionResult deletePost(final String communitySlug, final String postSlug,
+                                            final long callerUserId) {
         if (callerUserId <= 0) {
             throw new InvalidServiceInputException("Caller is required.");
         }
         final String normalizedSlug = StringUtils.normalizeRequired(communitySlug, "Community slug is required.");
         final Optional<Community> communityOptional = communityDao.findBySlug(normalizedSlug);
         if (communityOptional.isEmpty()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         final Optional<CommunityPost> postOptional =
                 communityDao.findPostByCommunityIdAndSlug(communityOptional.get().getId(), postSlug);
         if (postOptional.isEmpty()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         final CommunityPost post = postOptional.get();
         if (post.getAuthorUserId() != callerUserId) {
@@ -1012,25 +1030,25 @@ public class CommunityServiceImpl implements CommunityService {
         communityDao.deletePost(post.getId());
         LOGGER.info("author userId={} deleted communityId={} postId={}",
                 callerUserId, communityOptional.get().getId(), post.getId());
-        return Optional.of(true);
+        return CommunityActionResult.performed(true);
     }
 
     @Override
     @Transactional
-    public Optional<Boolean> deleteComment(final String communitySlug, final long commentId,
-                                           final long callerUserId) {
+    public CommunityActionResult deleteComment(final String communitySlug, final long commentId,
+                                               final long callerUserId) {
         if (callerUserId <= 0) {
             throw new InvalidServiceInputException("Caller is required.");
         }
         final String normalizedSlug = StringUtils.normalizeRequired(communitySlug, "Community slug is required.");
         final Optional<Community> communityOptional = communityDao.findBySlug(normalizedSlug);
         if (communityOptional.isEmpty()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         final Optional<CommunityPostComment> commentOptional = communityDao.findCommentById(commentId);
         if (commentOptional.isEmpty()
                 || commentOptional.get().getPost().getCommunity().getId() != communityOptional.get().getId()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         final CommunityPostComment comment = commentOptional.get();
         if (comment.getUserId() != callerUserId) {
@@ -1040,16 +1058,16 @@ public class CommunityServiceImpl implements CommunityService {
         communityDao.deleteComment(commentId);
         LOGGER.info("author userId={} deleted communityId={} commentId={}",
                 callerUserId, communityOptional.get().getId(), commentId);
-        return Optional.of(true);
+        return CommunityActionResult.performed(true);
     }
 
     @Override
     @Transactional
-    public Optional<Boolean> kickMember(final String communitySlug, final long targetUserId,
-                                        final long callerUserId) {
+    public CommunityActionResult kickMember(final String communitySlug, final long targetUserId,
+                                            final long callerUserId) {
         final Community community = requireModerator(communitySlug, callerUserId);
         if (community == null) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         if (targetUserId <= 0 || targetUserId == callerUserId) {
             throw new InvalidServiceInputException("Target user is required and cannot be self.");
@@ -1060,7 +1078,7 @@ public class CommunityServiceImpl implements CommunityService {
             throw new CannotModerateCreatorException(communitySlug);
         }
         if (communityDao.findMembershipRole(community.getId(), targetUserId).isEmpty()) {
-            return Optional.of(false);
+            return CommunityActionResult.performed(false);
         }
         final String recipientEmail = resolveUserEmail(targetUserId);
         communityDao.deleteMembership(community.getId(), targetUserId);
@@ -1073,26 +1091,26 @@ public class CommunityServiceImpl implements CommunityService {
                     communityPath(community)
             );
         }
-        return Optional.of(true);
+        return CommunityActionResult.performed(true);
     }
 
     @Override
     @Transactional
-    public Optional<Boolean> promoteToModerator(final String communitySlug, final long targetUserId,
-                                                final long callerUserId) {
+    public CommunityActionResult promoteToModerator(final String communitySlug, final long targetUserId,
+                                                    final long callerUserId) {
         final Community community = requireModerator(communitySlug, callerUserId);
         if (community == null) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         if (targetUserId <= 0) {
             throw new InvalidServiceInputException("Target user is required.");
         }
         final Optional<String> currentRole = communityDao.findMembershipRole(community.getId(), targetUserId);
         if (currentRole.isEmpty()) {
-            return Optional.of(false);
+            return CommunityActionResult.performed(false);
         }
         if (CREATOR_ROLE.equals(currentRole.get())) {
-            return Optional.of(false);
+            return CommunityActionResult.performed(false);
         }
         final String recipientEmail = resolveUserEmail(targetUserId);
         communityDao.updateMembershipRole(community.getId(), targetUserId, CREATOR_ROLE);
@@ -1105,20 +1123,20 @@ public class CommunityServiceImpl implements CommunityService {
                     communityMembersPath(community)
             );
         }
-        return Optional.of(true);
+        return CommunityActionResult.performed(true);
     }
 
     @Override
     @Transactional
-    public Optional<Boolean> transferOwnership(final String communitySlug, final long newOwnerUserId,
-                                               final long callerUserId) {
+    public CommunityActionResult transferOwnership(final String communitySlug, final long newOwnerUserId,
+                                                   final long callerUserId) {
         if (callerUserId <= 0) {
             throw new InvalidServiceInputException("Caller is required.");
         }
         final String normalizedSlug = StringUtils.normalizeRequired(communitySlug, "Community slug is required.");
         final Optional<Community> communityOptional = communityDao.findBySlug(normalizedSlug);
         if (communityOptional.isEmpty()) {
-            return Optional.empty();
+            return CommunityActionResult.notFound();
         }
         final Community community = communityOptional.get();
         if (!isCreator(community, callerUserId)) {
@@ -1144,7 +1162,7 @@ public class CommunityServiceImpl implements CommunityService {
                     communityMembersPath(community)
             );
         }
-        return Optional.of(true);
+        return CommunityActionResult.performed(true);
     }
 
     private String resolveUserEmail(final long userId) {

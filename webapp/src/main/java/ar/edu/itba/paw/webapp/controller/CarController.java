@@ -204,8 +204,6 @@ public class CarController {
                 null
             );
         }
-        rejectInvalidSpecFields(errors, carForm);
-
         Brand resolvedBrand = null;
         if (!errors.hasFieldErrors("brand")) {
             resolvedBrand = brandService
@@ -252,9 +250,7 @@ public class CarController {
                 carForm.getYear(),
                 currentUser.getId(),
                 currentUser.getEmail(),
-                Optional.ofNullable(carForm.getDescription()).filter(value ->
-                    !value.isEmpty()
-                ),
+                carForm.getDescription(),
                 imagePayloads,
                 ControllerUtils.normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),
@@ -680,19 +676,6 @@ public class CarController {
             .collect(
                 Collectors.toMap(ReviewStats::getCarId, Function.identity())
             );
-    }
-
-    private void rejectInvalidSpecFields(final BindingResult errors, final CarForm carForm) {
-        if (!errors.hasFieldErrors("fuelType")
-                && !CarSearchCriteria.ALLOWED_FUEL_TYPES.contains(
-                        ControllerUtils.normalizeSpecValue(carForm.getFuelType()))) {
-            errors.rejectValue("fuelType", "validation.car.fuelType.invalid");
-        }
-        if (!errors.hasFieldErrors("transmission")
-                && !CarSearchCriteria.ALLOWED_TRANSMISSIONS.contains(
-                        ControllerUtils.normalizeSpecValue(carForm.getTransmission()))) {
-            errors.rejectValue("transmission", "validation.car.transmission.invalid");
-        }
     }
 
     private static String buildImageEtag(final ImageMetadata metadata) {

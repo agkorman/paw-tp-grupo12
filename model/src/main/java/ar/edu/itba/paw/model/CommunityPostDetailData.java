@@ -92,11 +92,11 @@ public class CommunityPostDetailData implements Serializable {
     }
 
     public boolean isViewerModerator() {
-        return "moderator".equals(viewerRole);
+        return CommunityRole.MODERATOR.equals(viewerRole);
     }
 
     public boolean isViewerMember() {
-        return "member".equals(viewerRole) || "moderator".equals(viewerRole);
+        return CommunityRole.MEMBER.equals(viewerRole) || CommunityRole.MODERATOR.equals(viewerRole);
     }
 
     public boolean isViewerAdmin() {

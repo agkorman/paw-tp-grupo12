@@ -323,7 +323,7 @@
                                                           class="${replyHasError ? 'is-invalid' : ''}"><c:if test="${replyHasError}"><c:out value="${replyErrorBody}"/></c:if></textarea>
                                                 <button type="submit" class="btn-secondary"><spring:message code="review.feed.reply"/></button>
                                             </div>
-                                            <span class="client-form-error" data-reply-error <c:if test="${not replyHasError}">hidden</c:if>><c:if test="${replyHasError}"><spring:message code="${replyError}" arguments="${replyErrorArg}"/></c:if></span>
+                                            <span class="client-form-error" data-reply-error <c:if test="${not replyHasError}">hidden</c:if>><c:if test="${replyHasError}"><c:out value="${replyError}"/></c:if></span>
                                         </div>
                                     </form>
                                 </c:when>
@@ -355,7 +355,8 @@
                                 <c:url var="reviewDetailViewUrl" value="/reviews/${review.id}"/>
                                 <p class="review-replies-view-all">
                                     <a href="${reviewDetailViewUrl}#replies-${review.id}" class="review-replies-view-all-link">
-                                        <spring:message code="review.replies.viewAll" arguments="${thread.totalReplyCount}"/>
+                                        <spring:message code="${thread.totalReplyCount eq 1 ? 'review.replies.viewAll.one' : 'review.replies.viewAll.many'}"
+                                                        arguments="${thread.totalReplyCount}"/>
                                     </a>
                                 </p>
                             </c:if>

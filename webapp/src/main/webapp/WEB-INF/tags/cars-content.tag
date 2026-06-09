@@ -22,7 +22,9 @@
 <c:set var="showCarRequestCard" value="${empty totalPages or totalPages <= 1 or currentPage >= totalPages}"/>
 <spring:message var="addCarAuthAction" code="cars.authRequired.addAction"/>
 <spring:message var="carsPaginationAria" code="cars.pagination.aria"/>
-<spring:message var="carsToolbarCountTemplate" code="cars.toolbar.count"/>
+<spring:message var="carsToolbarCountTemplate"
+                code="${resultCount eq 1 ? 'cars.toolbar.count.one' : 'cars.toolbar.count.many'}"
+                arguments="${resultCount}"/>
 
 <div id="carsCatalogContent"
      class="catalog-content"

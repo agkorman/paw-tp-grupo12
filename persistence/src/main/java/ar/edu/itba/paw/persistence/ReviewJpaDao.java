@@ -106,16 +106,6 @@ public class ReviewJpaDao implements ReviewDao {
     }
 
     @Override
-    public List<Review> findAll() {
-        final List<Review> reviews = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user ORDER BY " + DEFAULT_ORDER,
-                Review.class)
-                .getResultList();
-        attachTags(reviews);
-        return reviews;
-    }
-
-    @Override
     public Page<Review> findLatest(final int page) {
         return findPaginatedByNativeIds(
                 "SELECT COUNT(*) FROM reviews",
@@ -262,11 +252,6 @@ public class ReviewJpaDao implements ReviewDao {
     }
 
     @Override
-    public List<Review> findByCarId(final long carId) {
-        return findByCarIdOrdered(carId, DEFAULT_ORDER);
-    }
-
-    @Override
     public Page<Review> findByCarId(final long carId, final int page) {
         return findByCarIdPaginated(carId, DEFAULT_ORDER_NATIVE, DEFAULT_ORDER, page);
     }
@@ -298,18 +283,8 @@ public class ReviewJpaDao implements ReviewDao {
     }
 
     @Override
-    public List<Review> findByCarIdOrderByRatingAsc(final long carId) {
-        return findByCarIdOrdered(carId, RATING_ASC_ORDER);
-    }
-
-    @Override
     public Page<Review> findByCarIdOrderByRatingAsc(final long carId, final int page) {
         return findByCarIdPaginated(carId, RATING_ASC_ORDER_NATIVE, RATING_ASC_ORDER, page);
-    }
-
-    @Override
-    public List<Review> findByCarIdOrderByRatingDesc(final long carId) {
-        return findByCarIdOrdered(carId, RATING_DESC_ORDER);
     }
 
     @Override
@@ -323,17 +298,6 @@ public class ReviewJpaDao implements ReviewDao {
                 "SELECT COUNT(r) FROM Review r WHERE r.car.id = :carId", Long.class)
                 .setParameter("carId", carId)
                 .getSingleResult();
-    }
-
-    @Override
-    public List<Review> findByUserId(final long userId) {
-        final List<Review> reviews = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.user.id = :userId ORDER BY r.createdAt DESC",
-                Review.class)
-                .setParameter("userId", userId)
-                .getResultList();
-        attachTags(reviews);
-        return reviews;
     }
 
     @Override
@@ -455,16 +419,6 @@ public class ReviewJpaDao implements ReviewDao {
         em.remove(review);
         LOGGER.info("deleted review id={}", id);
         return true;
-    }
-
-    private List<Review> findByCarIdOrdered(final long carId, final String jpqlOrder) {
-        final List<Review> reviews = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.car.id = :carId ORDER BY " + jpqlOrder,
-                Review.class)
-                .setParameter("carId", carId)
-                .getResultList();
-        attachTags(reviews);
-        return reviews;
     }
 
     private Page<Review> findByCarIdPaginated(final long carId, final String nativeOrder,

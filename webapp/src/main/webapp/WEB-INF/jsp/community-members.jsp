@@ -22,7 +22,9 @@
                 <p class="community-section-kicker"><spring:message code="communities.members.kicker"/></p>
                 <h1 class="community-section-title"><spring:message code="communities.members.title"/></h1>
                 <p class="community-members-count">
-                    <spring:message code="communities.members.count" arguments="${fn:length(memberRows)}"/>
+                    <c:set var="memberCount" value="${fn:length(memberRows)}"/>
+                    <spring:message code="${memberCount eq 1 ? 'communities.members.count.one' : 'communities.members.count.many'}"
+                                    arguments="${memberCount}"/>
                 </p>
             </header>
 

@@ -76,11 +76,16 @@ public class UserDaoTest extends AbstractPersistenceTest {
 
         // Exercise
         final boolean result = userDao.updateUsername(created.getId(), "new-name");
+        flushAndClear();
 
         // Assertions
         assertTrue(result);
-        assertEquals("new-name", userDao.findById(created.getId()).orElseThrow().getUsername());
-        assertEquals("rename@example.com", userDao.findById(created.getId()).orElseThrow().getEmail());
+        assertEquals("new-name", jdbcTemplate.queryForObject(
+                "SELECT username FROM users WHERE user_id = ?", String.class, created.getId()
+        ));
+        assertEquals("rename@example.com", jdbcTemplate.queryForObject(
+                "SELECT email FROM users WHERE user_id = ?", String.class, created.getId()
+        ));
     }
 
     @Test

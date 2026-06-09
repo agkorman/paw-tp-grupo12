@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface ReviewDao {
-    List<Review> findAll();
     Page<Review> findLatest(int page);
     long countAll();
     Page<Review> findByFollowedUsers(long followerId, int page);
@@ -24,16 +23,12 @@ public interface ReviewDao {
     List<Review> findByIds(Collection<Long> ids);
     List<Review> findByCarIds(Collection<Long> carIds);
     Map<Long, Long> countByCarIdsSince(Collection<Long> carIds, LocalDateTime since);
-    List<Review> findByCarId(long carId);
     Page<Review> findByCarId(long carId, int page);
     Optional<Review> findLatestByCarId(long carId);
     Optional<Review> findTopRatedLatestByCarId(long carId);
-    List<Review> findByCarIdOrderByRatingAsc(long carId);
     Page<Review> findByCarIdOrderByRatingAsc(long carId, int page);
-    List<Review> findByCarIdOrderByRatingDesc(long carId);
     Page<Review> findByCarIdOrderByRatingDesc(long carId, int page);
     long countByCarId(long carId);
-    List<Review> findByUserId(long userId);
     Page<Review> findByUserId(long userId, int page);
     long countByUserId(long userId);
     Optional<ReviewStats> findStatsByCarId(long carId);

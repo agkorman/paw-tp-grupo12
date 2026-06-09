@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.Map;
 
 public interface CommunityDao {
-    List<Community> findAll();
     Page<Community> findAll(int page);
     Page<Community> findByCriteria(CommunitySearchCriteria criteria, Long currentUserId);
     Optional<Community> findBySlug(String slug);
@@ -49,7 +48,6 @@ public interface CommunityDao {
     Set<Long> findCommentHelpfulReactionsByUser(Collection<Long> commentIds, long userId);
     Map<Long, List<CommunityTopic>> findTopicsByCommunityIds(Collection<Long> communityIds);
     List<CommunityPost> findPostsByIds(Collection<Long> postIds);
-    List<CommunityPost> findPostsByCommunityId(long communityId);
     Page<CommunityPost> findVisiblePostsByCommunityId(long communityId, String sort, int page);
     Optional<CommunityPost> findPostByCommunityIdAndSlug(long communityId, String postSlug);
     Page<CommunityPostComment> findCommentsByPostId(long postId, int page);

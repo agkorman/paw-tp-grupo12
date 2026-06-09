@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.validation;
 
+import ar.edu.itba.paw.model.ReviewOwnershipStatus;
 import ar.edu.itba.paw.services.ReviewTagService;
 import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
@@ -8,14 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.math.BigDecimal;
-import java.util.Set;
 
 public class ValidReviewFormValidator implements ConstraintValidator<ValidReviewForm, ReviewForm> {
 
     private static final BigDecimal RATING_STEP_DOUBLED = BigDecimal.valueOf(2);
-    private static final Set<String> ALLOWED_OWNERSHIP_STATUSES =
-            Set.of("", "Propietario actual", "Ex propietario");
-
     private final ReviewTagService reviewTagService;
 
     @Autowired
@@ -36,7 +33,7 @@ public class ValidReviewFormValidator implements ConstraintValidator<ValidReview
             valid = violation(context, "rating", "{rating.step}");
         }
         final String ownership = form.getOwnershipStatus() == null ? "" : form.getOwnershipStatus();
-        if (!ALLOWED_OWNERSHIP_STATUSES.contains(ownership)) {
+        if (!ReviewOwnershipStatus.isValid(ownership)) {
             valid = violation(context, "ownershipStatus", "{ownership.invalid}");
         }
         try {

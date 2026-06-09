@@ -16,9 +16,11 @@ import javax.mail.Multipart;
 import javax.mail.Part;
 import javax.mail.Session;
 import javax.mail.internet.MimeMessage;
+import java.time.LocalDateTime;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -126,6 +128,27 @@ public class EmailServiceImplTest {
         assertEquals("member@example.com", recipients[0].toString());
         assertEquals("[La Posta Autos] Ahora sos moderador en Classics", message.getSubject());
         assertTrue(extractText(message).contains(APP_BASE_URL + "/communities/classics/members"));
+    }
+
+    @Test
+    public void shouldSendBrandRequestDecisionUsingRecipientLocale() throws Exception {
+        // Arrange
+        final String recipientEmail = "owner@example.com";
+        final RecordingMailSender mailSender = new RecordingMailSender();
+        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
+        when(userService.findByEmail(recipientEmail))
+                .thenReturn(Optional.of(TestModels.user(1L, "owner", recipientEmail, "p", "user", "en", LocalDateTime.now())));
+
+        // Exercise
+        emailService.sendBrandRequestApprovedNotification(recipientEmail, "Lancia");
+
+        // Assertions
+        assertEquals(1, mailSender.sentMessages.size());
+        final MimeMessage message = mailSender.sentMessages.get(0);
+        assertEquals("[La Posta Autos] Your brand request was approved: Lancia", message.getSubject());
+        final String text = extractText(message);
+        assertTrue(text.contains("Your brand request was approved."));
+        assertTrue(text.contains(APP_BASE_URL + "/cars/new"));
     }
 
     @Test

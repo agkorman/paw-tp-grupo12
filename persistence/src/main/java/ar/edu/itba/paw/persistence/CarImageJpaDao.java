@@ -124,11 +124,6 @@ public class CarImageJpaDao implements CarImageDao {
     }
 
     @Override
-    public void saveOrReplace(final long carId, final String contentType, final byte[] imageData) {
-        replaceAll(carId, List.of(new ImagePayload(contentType, imageData)));
-    }
-
-    @Override
     public void replaceAll(final long carId, final List<ImagePayload> images) {
         em.createQuery("DELETE FROM CarImage i WHERE i.car.id = :carId")
                 .setParameter("carId", carId)

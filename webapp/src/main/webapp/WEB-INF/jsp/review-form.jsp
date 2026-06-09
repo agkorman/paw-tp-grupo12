@@ -125,11 +125,11 @@
                                 <span><spring:message code="common.value.none"/></span>
                             </label>
                             <label class="toggle-option">
-                                <form:radiobutton path="ownershipStatus" value="Propietario actual"/>
+                                <form:radiobutton path="ownershipStatus" value="current_owner"/>
                                 <span><spring:message code="review.form.ownership.current"/></span>
                             </label>
                             <label class="toggle-option">
-                                <form:radiobutton path="ownershipStatus" value="Ex propietario"/>
+                                <form:radiobutton path="ownershipStatus" value="previous_owner"/>
                                 <span><spring:message code="review.form.ownership.previous"/></span>
                             </label>
                         </div>

@@ -31,7 +31,7 @@ public class CommunityMembershipEntry implements Serializable {
     }
 
     public boolean isModerator() {
-        return "moderator".equals(role);
+        return CommunityRole.MODERATOR.equals(role);
     }
 
     public long getUserId() {
