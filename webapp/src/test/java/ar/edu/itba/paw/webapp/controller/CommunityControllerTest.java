@@ -23,7 +23,6 @@ import ar.edu.itba.paw.services.exception.CommunityPostSlugConflictException;
 import ar.edu.itba.paw.services.exception.CommunitySlugConflictException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport;
-import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import ar.edu.itba.paw.webapp.form.CommunityForm;
 import ar.edu.itba.paw.webapp.form.CommunityPostForm;
 import java.math.BigDecimal;
@@ -77,9 +76,6 @@ class CommunityControllerTest {
 
     @Mock
     private CommunityService communityService;
-
-    @Mock
-    private RelativeTimeFormatter relativeTimeFormatter;
 
     @Mock
     private CarService carService;
@@ -164,7 +160,6 @@ class CommunityControllerTest {
         // Arrange
         when(communityService.getCommunityDetail(anyString(), any(), any(), anyInt()))
                 .thenReturn(Optional.of(communityDetailData()));
-        when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("2 hours ago");
         final MockMvc mockMvc = communityMockMvc();
 
         // Exercise
@@ -189,7 +184,6 @@ class CommunityControllerTest {
                 new AssertionError("eagerly-loaded review car must not trigger a batch car lookup"));
         when(communityService.getCommunityDetail(anyString(), any(), any(), anyInt()))
                 .thenReturn(Optional.of(communityDetailDataWithRepost()));
-        when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("2 hours ago");
         final MockMvc mockMvc = communityMockMvc();
 
         // Exercise
@@ -212,7 +206,6 @@ class CommunityControllerTest {
         // Arrange
         when(communityService.getCommunityPostDetail(anyString(), anyString(), any(), anyBoolean(), anyInt()))
                 .thenReturn(Optional.of(communityPostDetailData()));
-        when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("2 hours ago");
         final MockMvc mockMvc = communityMockMvc();
 
         // Exercise
@@ -441,15 +434,16 @@ class CommunityControllerTest {
     }
 
     @Test
-    void kickCommunityMember_selfRedirectsToMembersPage() throws Exception {
+    void kickCommunityMember_redirectsToMembersPage() throws Exception {
         // Arrange
         final String communitySlug = "classics";
+        when(communityService.kickMember("classics", 6L, 7L)).thenReturn(Optional.of(true));
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
 
         // Exercise
         final ResultActions resultActions = mockMvc.perform(
-                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities/classics/members/7/kick")
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities/classics/members/6/kick")
         );
 
         // Assertions
@@ -694,7 +688,6 @@ class CommunityControllerTest {
         // Arrange
         when(communityService.getCommunityPostDetail("classics", "falcon-60", 7L))
                 .thenReturn(Optional.of(communityPostDetailData()));
-        when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("2 hours ago");
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
 

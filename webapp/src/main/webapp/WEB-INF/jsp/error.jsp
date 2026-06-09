@@ -14,8 +14,8 @@
     <main class="error-page">
         <section class="error-hero">
             <span class="error-status"><c:out value="${statusCode}"/></span>
-            <h1 class="error-title"><c:out value="${title}"/></h1>
-            <p class="error-text"><c:out value="${description}"/></p>
+            <h1 class="error-title"><spring:message code="${titleCode}"/></h1>
+            <p class="error-text"><spring:message code="${descriptionCode}"/></p>
             <div class="error-actions">
                 <a class="btn-primary" href="<c:url value='/'/>"><spring:message code="error.home"/></a>
                 <a class="btn-secondary" href="<c:url value='/cars'/>"><spring:message code="error.catalog"/></a>

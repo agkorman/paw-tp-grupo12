@@ -10,7 +10,6 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.services.ActivityService;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewLikeService;
-import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,9 +42,6 @@ class ActivityControllerTest {
 
     @Mock
     private CommunityService communityService;
-
-    @Mock
-    private RelativeTimeFormatter relativeTimeFormatter;
 
     @InjectMocks
     private ActivityController controller;
@@ -119,7 +115,6 @@ class ActivityControllerTest {
     void activity_mapsReviewAndCommunityPostIntoGenericCards() throws Exception {
         // Arrange
         final LocalDateTime now = LocalDateTime.now();
-        when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("now");
         when(activityService.getActivityFeed(any(ActivityFeedCriteria.class))).thenReturn(new Page<>(
                 List.of(
                         ActivityFeedItem.reviewItem(review(now.minusMinutes(3)), 0L, 0L, null, 2, List.of()),

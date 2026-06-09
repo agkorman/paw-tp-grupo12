@@ -364,9 +364,6 @@ public class UserController {
         final String activeTab = ownProfile
             ? normalizeProfileTab(tab)
             : TAB_ACTIVITY;
-        final String profileBasePath = ownProfile
-            ? "/user"
-            : "/users/" + profileUser.getId();
 
         Page<ProfileActivityItem> activityPage = Page.empty(1, 0);
         Page<Car> favoriteCarPage = Page.empty(1, 0);
@@ -427,7 +424,7 @@ public class UserController {
 
         final ModelAndView mav = new ModelAndView("profile.jsp");
         mav.addObject("profile", toProfileData(profileUser, activityCount));
-        mav.addObject("profileBasePath", profileBasePath);
+        mav.addObject("profileUserId", profileUser.getId());
         mav.addObject("activeTab", activeTab);
         mav.addObject("activityCount", activityCount);
         mav.addObject("favoriteCarCount", favoriteCarCount);

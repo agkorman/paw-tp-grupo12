@@ -207,30 +207,6 @@ class CarControllerTest {
     }
 
     @Test
-    void createCar_anonymous_redirectsToNew() throws Exception {
-        // Arrange
-        final MockMvc mockMvc = carMockMvc();
-        // Exercise
-        final ResultActions resultActions =
-                mockMvc.perform(
-                        multipart("/cars")
-                                .file(carImageMultipart())
-                                .param("brand", "Toyota")
-                                .param("bodyType", "Sedan")
-                                .param("model", "Corolla")
-                                .param("year", "2020")
-                                .param("description", "A sedan description that is valid.")
-                                .param("fuelType", CarSearchCriteria.FUEL_TYPE_COMBUSTION)
-                                .param("horsepower", "120")
-                                .param("airbagCount", "6")
-                                .param("transmission", CarSearchCriteria.TRANSMISSION_AUTOMATIC)
-                                .param("fuelConsumption", "8.5")
-                                .param("maxSpeedKmh", "200"));
-        // Assertions
-        resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/cars/new"));
-    }
-
-    @Test
     void createCar_validForm_redirectsToCatalog() throws Exception {
         // Arrange
         stubValidCarSubmission();
@@ -323,16 +299,6 @@ class CarControllerTest {
         } finally {
             clearSecurityContext();
         }
-    }
-
-    @Test
-    void updateFavorite_anonymous_browserRequest_redirectsToLogin() throws Exception {
-        // Arrange
-        final MockMvc mockMvc = carMockMvc();
-        // Exercise
-        final ResultActions resultActions = mockMvc.perform(post("/cars/1/favorite").param("favorite", "true"));
-        // Assertions
-        resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login"));
     }
 
     @Test

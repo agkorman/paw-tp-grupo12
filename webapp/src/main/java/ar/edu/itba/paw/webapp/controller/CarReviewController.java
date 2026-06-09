@@ -38,8 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -82,7 +80,6 @@ public class CarReviewController {
     private final ReviewService reviewService;
     private final ReviewReplyService reviewReplyService;
     private final ReviewLikeService reviewLikeService;
-    private final MessageSource messageSource;
     private final ReviewFormValidator reviewFormValidator;
 
     @Autowired
@@ -92,7 +89,6 @@ public class CarReviewController {
         final ReviewService reviewService,
         final ReviewReplyService reviewReplyService,
         final ReviewLikeService reviewLikeService,
-        final MessageSource messageSource,
         final ReviewFormValidator reviewFormValidator
     ) {
         this.carService = carService;
@@ -100,7 +96,6 @@ public class CarReviewController {
         this.reviewService = reviewService;
         this.reviewReplyService = reviewReplyService;
         this.reviewLikeService = reviewLikeService;
-        this.messageSource = messageSource;
         this.reviewFormValidator = reviewFormValidator;
     }
 
@@ -312,6 +307,7 @@ public class CarReviewController {
         reviewForm.setCarId(carId);
         mav.addObject("reviewForm", reviewForm);
         mav.addObject("replyError", replyError);
+        mav.addObject("replyErrorArg", MAX_REPLY_BODY_LENGTH);
         mav.addObject("replyErrorReviewId", replyErrorReviewId);
         mav.addObject("replyErrorBody", replyErrorBody);
         return mav;
@@ -527,14 +523,13 @@ public class CarReviewController {
         final int total = retainedCount + files.size();
         if (total > MAX_REVIEW_IMAGE_COUNT) {
             errors.rejectValue("files", "validation.review.files.maxCount",
-                    new Object[]{MAX_REVIEW_IMAGE_COUNT},
-                    message("validation.review.files.maxCount", MAX_REVIEW_IMAGE_COUNT));
+                    new Object[]{MAX_REVIEW_IMAGE_COUNT}, null);
             return;
         }
         for (final MultipartFile file : files) {
             final String errorKey = ControllerUtils.validateUploadedImage(file, false);
             if (errorKey != null) {
-                errors.rejectValue("files", errorKey, errorKey);
+                errors.rejectValue("files", errorKey);
                 return;
             }
         }
@@ -546,17 +541,6 @@ public class CarReviewController {
             result.add(new ImagePayload(file.getContentType(), file.getBytes()));
         }
         return result;
-    }
-
-    private String reviewImageUrlsCsv(final HttpServletRequest request, final long reviewId) {
-        final List<ImageMetadata> images = reviewService.getReviewImagesByReviewId(reviewId);
-        if (images.isEmpty()) {
-            return "";
-        }
-        final String contextPath = request.getContextPath();
-        return images.stream()
-                .map(img -> contextPath + "/reviews/" + reviewId + "/images/" + img.getImageId())
-                .collect(Collectors.joining(","));
     }
 
     private String reviewImageIdsCsv(final long reviewId) {
@@ -701,7 +685,6 @@ public class CarReviewController {
             model.addAttribute("editMode", true);
             model.addAttribute("reviewId", reviewId);
             model.addAttribute("editRedirect", safeRedirect);
-            model.addAttribute("existingReviewImageUrls", reviewImageUrlsCsv(request, reviewId));
             model.addAttribute("existingReviewImageIds", reviewImageIdsCsv(reviewId));
             return "review-form.jsp";
         }
@@ -1075,37 +1058,23 @@ public class CarReviewController {
 
     private String validateReviewHideReason(final String reason) {
         if (reason == null) {
-            return message("review.hide.reason.required");
+            return "review.hide.reason.required";
         }
         if (reason.length() < REVIEW_HIDE_REASON_MIN_LENGTH) {
-            return message(
-                "review.hide.reason.min",
-                REVIEW_HIDE_REASON_MIN_LENGTH
-            );
+            return "review.hide.reason.min";
         }
         if (reason.length() > REVIEW_HIDE_REASON_MAX_LENGTH) {
-            return message(
-                "review.hide.reason.max",
-                REVIEW_HIDE_REASON_MAX_LENGTH
-            );
+            return "review.hide.reason.max";
         }
         return null;
     }
 
-    private String message(final String code, final Object... args) {
-        return messageSource.getMessage(
-            code,
-            args,
-            LocaleContextHolder.getLocale()
-        );
-    }
-
     private String validateReplyInput(final String body) {
         if (body == null || body.trim().isEmpty()) {
-            return message("review.reply.body.required");
+            return "review.reply.body.required";
         }
         if (body.trim().length() > MAX_REPLY_BODY_LENGTH) {
-            return message("review.reply.body.max", MAX_REPLY_BODY_LENGTH);
+            return "review.reply.body.max";
         }
         return null;
     }

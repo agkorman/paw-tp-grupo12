@@ -11,6 +11,7 @@ import ar.edu.itba.paw.webapp.form.RegistrationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +24,8 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -50,11 +53,16 @@ public class AuthController {
         this.authenticationManager = authenticationManager;
     }
 
+    @InitBinder
+    public void initBinder(final WebDataBinder binder) {
+        binder.registerCustomEditor(
+                String.class,
+                new StringTrimmerEditor(true)
+        );
+    }
+
     @RequestMapping(value = "/login", method = RequestMethod.GET)
-    public ModelAndView login(@RequestParam(value = "error", required = false) final String error,
-                              @RequestParam(value = "logout", required = false) final String logout,
-                              @RequestParam(value = "registered", required = false) final String registered,
-                              @RequestParam(value = LoginRedirectUtils.REDIRECT_PARAM, required = false) final String redirect,
+    public ModelAndView login(@RequestParam(value = LoginRedirectUtils.REDIRECT_PARAM, required = false) final String redirect,
                               @RequestParam(value = LoginRedirectUtils.INTENT_PARAM, required = false) final String intent,
                               final Authentication authentication,
                               final HttpServletRequest request) {
@@ -70,13 +78,15 @@ public class AuthController {
         final ModelAndView mav = new ModelAndView("login.jsp");
         mav.addObject("loginRedirect", safeRedirect);
         mav.addObject("loginIntent", safeIntent);
-        if (error != null) {
+        // These are presence flags (e.g. /login?error); read them from the raw request so the
+        // StringTrimmerEditor registered in @InitBinder does not nullify their empty values.
+        if (request.getParameter("error") != null) {
             mav.addObject("loginErrorCode", "auth.login.error");
         }
-        if (logout != null) {
+        if (request.getParameter("logout") != null) {
             mav.addObject("loginMessageCode", "auth.login.logout");
         }
-        if (registered != null) {
+        if (request.getParameter("registered") != null) {
             mav.addObject("loginMessageCode", "auth.login.registered");
         }
         return mav;
@@ -100,8 +110,8 @@ public class AuthController {
             return new ModelAndView("redirect:/");
         }
 
-        final String normalizedUsername = ControllerUtils.normalize(registrationForm.getUsername());
-        final String normalizedEmail = ControllerUtils.normalizeEmail(registrationForm.getEmail());
+        final String normalizedUsername = registrationForm.getUsername();
+        final String normalizedEmail = registrationForm.getEmail();
 
         try {
             if (errors.hasErrors()) {

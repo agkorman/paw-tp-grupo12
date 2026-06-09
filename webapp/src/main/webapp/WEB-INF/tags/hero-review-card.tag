@@ -58,6 +58,6 @@
                 <c:otherwise>anon</c:otherwise>
             </c:choose>
         </span>
-        <span><c:out value="${relativeTimeFormatter.format(heroReview.createdAt)}"/></span>
+        <span><pa:relative-time value="${heroReview.createdAt}"/></span>
     </p>
 </a>

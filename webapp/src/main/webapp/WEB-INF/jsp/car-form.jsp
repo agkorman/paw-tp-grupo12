@@ -7,34 +7,54 @@
 <c:set var="resolvedCarFormMode" value="${empty carFormMode ? 'create' : carFormMode}"/>
 <c:set var="adminCarFormMode" value="${resolvedCarFormMode ne 'create'}"/>
 <c:set var="catalogRequestLinksEnabled" value="${empty showCatalogRequestLinks ? not adminCarFormMode : showCatalogRequestLinks}"/>
-<spring:message var="defaultFormKicker" code="cars.add.kicker"/>
-<spring:message var="defaultFormTitle" code="cars.add.heading"/>
-<spring:message var="defaultFormSubtitle" code="cars.add.subtitle"/>
-<spring:message var="defaultSubmitLabel" code="cars.form.confirm"/>
-<spring:message var="defaultRejectLabel" code="common.action.reject"/>
-<c:set var="resolvedFormKicker" value="${empty formKicker ? defaultFormKicker : formKicker}"/>
-<c:set var="resolvedFormTitle" value="${empty formTitle ? defaultFormTitle : formTitle}"/>
-<c:set var="resolvedFormSubtitle" value="${empty formSubtitle ? defaultFormSubtitle : formSubtitle}"/>
-<c:set var="resolvedSubmitLabel" value="${empty submitLabel ? defaultSubmitLabel : submitLabel}"/>
-<c:set var="resolvedRejectLabel" value="${empty rejectLabel ? defaultRejectLabel : rejectLabel}"/>
-<c:set var="carFormPageTitle" value="${resolvedFormTitle} | La Posta Autos"/>
-<c:url var="resolvedFormAction" value="${empty formAction ? '/cars' : formAction}"/>
-<c:url var="resolvedCancelUrl" value="${empty cancelUrl ? '/cars' : cancelUrl}"/>
-<c:if test="${not empty rejectAction}">
-    <c:url var="resolvedRejectAction" value="${rejectAction}"/>
-</c:if>
+<c:choose>
+    <c:when test="${resolvedCarFormMode eq 'review-request'}">
+        <spring:message var="resolvedFormKicker" code="cars.form.mode.review.kicker"/>
+        <spring:message var="resolvedFormTitle" code="cars.form.mode.review.title"/>
+        <spring:message var="resolvedFormSubtitle" code="cars.form.mode.review.editSubtitle"/>
+        <spring:message var="resolvedSubmitLabel" code="cars.form.confirm"/>
+        <spring:message var="resolvedRejectLabel" code="common.action.reject"/>
+        <c:url var="resolvedFormAction" value="/admin/requests/${carForm.requestId}/accept"/>
+        <c:url var="resolvedCancelUrl" value="/admin?tab=cars"/>
+        <c:url var="resolvedRejectAction" value="/admin/requests/${carForm.requestId}/reject"/>
+    </c:when>
+    <c:when test="${resolvedCarFormMode eq 'edit-car'}">
+        <spring:message var="resolvedFormKicker" code="cars.form.mode.edit.kicker"/>
+        <spring:message var="resolvedFormTitle" code="cars.form.mode.edit.title"/>
+        <spring:message var="resolvedFormSubtitle" code="cars.form.mode.edit.subtitle"/>
+        <spring:message var="resolvedSubmitLabel" code="cars.form.save"/>
+        <c:url var="resolvedFormAction" value="/admin/cars/${carForm.carId}"/>
+        <c:url var="resolvedCancelUrl" value="/reviews/car/${carForm.carId}"/>
+    </c:when>
+    <c:otherwise>
+        <spring:message var="resolvedFormKicker" code="cars.add.kicker"/>
+        <spring:message var="resolvedFormTitle" code="cars.add.heading"/>
+        <spring:message var="resolvedFormSubtitle" code="cars.add.subtitle"/>
+        <spring:message var="resolvedSubmitLabel" code="cars.form.confirm"/>
+        <c:url var="resolvedFormAction" value="/cars"/>
+        <c:url var="resolvedCancelUrl" value="/cars"/>
+    </c:otherwise>
+</c:choose>
+<spring:message var="carFormPageTitle" code="common.pageTitle.suffix" arguments="${resolvedFormTitle}"/>
 <c:set var="resolvedExistingImageUrls" value=""/>
 <c:set var="resolvedExistingImageIds" value=""/>
-<c:if test="${not empty existingImageUrls}">
-    <c:forEach var="existingImageUrl" items="${existingImageUrls}">
-        <c:if test="${not empty existingImageUrl}">
-            <c:url var="resolvedExistingImageUrl" value="${existingImageUrl}"/>
-            <c:set var="resolvedExistingImageUrls" value="${resolvedExistingImageUrls}${empty resolvedExistingImageUrls ? '' : '|'}${resolvedExistingImageUrl}"/>
-        </c:if>
-    </c:forEach>
-</c:if>
 <c:if test="${not empty existingImageIds}">
     <c:forEach var="existingImageId" items="${existingImageIds}">
+        <c:choose>
+            <c:when test="${resolvedCarFormMode eq 'review-request' and existingImageId eq 0}">
+                <c:url var="resolvedExistingImageUrl" value="/admin/requests/${carForm.requestId}/image"/>
+            </c:when>
+            <c:when test="${resolvedCarFormMode eq 'review-request'}">
+                <c:url var="resolvedExistingImageUrl" value="/admin/requests/${carForm.requestId}/images/${existingImageId}"/>
+            </c:when>
+            <c:when test="${existingImageId eq 0}">
+                <c:url var="resolvedExistingImageUrl" value="/cars/${carForm.carId}/image"/>
+            </c:when>
+            <c:otherwise>
+                <c:url var="resolvedExistingImageUrl" value="/cars/${carForm.carId}/images/${existingImageId}"/>
+            </c:otherwise>
+        </c:choose>
+        <c:set var="resolvedExistingImageUrls" value="${resolvedExistingImageUrls}${empty resolvedExistingImageUrls ? '' : '|'}${resolvedExistingImageUrl}"/>
         <c:set var="resolvedExistingImageIds" value="${resolvedExistingImageIds}${empty resolvedExistingImageIds ? '' : '|'}${existingImageId}"/>
     </c:forEach>
 </c:if>
