@@ -23,6 +23,8 @@ import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
+import ar.edu.itba.paw.services.exception.CommunityPostSlugConflictException;
+import ar.edu.itba.paw.services.exception.CommunitySlugConflictException;
 import ar.edu.itba.paw.services.exception.InvalidCommunityTopicSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
@@ -38,10 +40,12 @@ import ar.edu.itba.paw.webapp.form.CommunityHideForm;
 import ar.edu.itba.paw.webapp.form.CommunityPostForm;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,7 +55,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -184,10 +187,7 @@ public class CommunityController {
             errors.rejectValue("selectedTopicIds", resolveTopicErrorKey(e.getReason()));
             populateCreateCommunityPageModel(model);
             return "community-create.jsp";
-        } catch (final DataIntegrityViolationException e) {
-            if (!isConstraintViolation(e, "uq_communities_slug")) {
-                throw e;
-            }
+        } catch (final CommunitySlugConflictException e) {
             LOGGER.warn("create community rejected: slug conflict (concurrent creation) userId={}",
                     currentUser.getId());
             errors.reject("communities.create.error.slugConflict");
@@ -555,10 +555,7 @@ public class CommunityController {
                 .createCommunityPost(communitySlug, currentUser.getId(),
                         communityPostForm.getTitle(), communityPostForm.getBody(), imagePayloads)
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
-        } catch (final DataIntegrityViolationException e) {
-            if (!isConstraintViolation(e, "uq_community_posts_slug")) {
-                throw e;
-            }
+        } catch (final CommunityPostSlugConflictException e) {
             LOGGER.warn("create community post rejected: slug conflict (concurrent creation) userId={} communitySlug={}",
                     currentUser.getId(),
                     LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
@@ -665,10 +662,7 @@ public class CommunityController {
             model.addAttribute("repostReview", buildRepostReviewView(review));
             model.addAttribute("existingPostImageIds", "");
             return "community-post-form.jsp";
-        } catch (final DataIntegrityViolationException e) {
-            if (!isConstraintViolation(e, "uq_community_posts_slug")) {
-                throw e;
-            }
+        } catch (final CommunityPostSlugConflictException e) {
             LOGGER.warn("repost rejected: slug conflict reviewId={} userId={}", reviewId, currentUser.getId());
             errors.reject("communities.postForm.error.slugConflict");
             final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
@@ -1131,13 +1125,14 @@ public class CommunityController {
     }
 
     private RepostReviewView buildRepostReviewView(final Review review) {
-        final String carName;
-        if (review.getCar() != null) {
-            carName = review.getCar().getBrandName() + " " + review.getCar().getModel();
-        } else {
-            final Car car = carService.getCarById(review.getCarId()).orElse(null);
-            carName = car != null ? car.getBrandName() + " " + car.getModel() : null;
-        }
+        final Car car = review.getCar() != null
+                ? review.getCar()
+                : carService.getCarById(review.getCarId()).orElse(null);
+        return buildRepostReviewView(review, car);
+    }
+
+    private RepostReviewView buildRepostReviewView(final Review review, final Car car) {
+        final String carName = car != null ? car.getBrandName() + " " + car.getModel() : null;
         final String authorName = review.getUser() != null ? review.getUser().getUsername() : null;
         return new RepostReviewView(
                 review.getId(),
@@ -1148,6 +1143,29 @@ public class CommunityController {
                 review.getCarId(),
                 authorName
         );
+    }
+
+    /**
+     * Batch-resolves the cars referenced by the given linked reviews in a single service call,
+     * so that mapping a page of post cards never triggers a per-item car lookup.
+     */
+    private Map<Long, Car> carsForLinkedReviews(final Collection<Review> linkedReviews) {
+        final List<Long> carIds = linkedReviews.stream()
+                .filter(Objects::nonNull)
+                .filter(r -> r.getCar() == null)
+                .map(Review::getCarId)
+                .filter(id -> id > 0)
+                .distinct()
+                .collect(Collectors.toList());
+        if (carIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return carService.getCarsByIds(carIds).stream()
+                .collect(Collectors.toMap(Car::getId, car -> car));
+    }
+
+    private Car resolveLinkedReviewCar(final Review review, final Map<Long, Car> carsById) {
+        return review.getCar() != null ? review.getCar() : carsById.get(review.getCarId());
     }
 
     private String redirectToLoginIfAnonymous(final HttpServletRequest request,
@@ -1167,26 +1185,6 @@ public class CommunityController {
 
     private String redirectTo(final String path) {
         return "redirect:" + path;
-    }
-
-    private static boolean isConstraintViolation(
-            final DataIntegrityViolationException e,
-            final String constraintName
-    ) {
-        if (e == null || constraintName == null) {
-            return false;
-        }
-        final String normalizedConstraint = constraintName.toLowerCase(Locale.ROOT);
-        return containsConstraint(e.getMessage(), normalizedConstraint)
-                || containsConstraint(e.getMostSpecificCause().getMessage(), normalizedConstraint);
-    }
-
-    private static boolean containsConstraint(
-            final String message,
-            final String normalizedConstraint
-    ) {
-        return message != null
-                && message.toLowerCase(Locale.ROOT).contains(normalizedConstraint);
     }
 
     private static List<MultipartFile> nonEmptyFiles(final List<MultipartFile> files) {
@@ -1245,12 +1243,16 @@ public class CommunityController {
             ? Set.of()
             : communityService.findPostHelpfulReactionsByUser(postIds, currentUserId);
 
+        final Map<Long, Car> carsByLinkedReview = carsForLinkedReviews(postSummaries.stream()
+                .map(s -> s.getPost().getLinkedReview())
+                .collect(Collectors.toList()));
+
         final List<PostCardView> cards = new ArrayList<>();
         for (final CommunityPostSummary postSummary : postSummaries) {
             final String postSlug = postSummary.getPost().getSlug();
             final Review linkedReview = postSummary.getPost().getLinkedReview();
             final RepostReviewView repostReview = linkedReview != null
-                    ? buildRepostReviewView(linkedReview)
+                    ? buildRepostReviewView(linkedReview, resolveLinkedReviewCar(linkedReview, carsByLinkedReview))
                     : null;
             cards.add(new PostCardView(
                 "/communities/" + communitySlug + "/posts/" + postSlug,

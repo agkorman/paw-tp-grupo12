@@ -10,17 +10,23 @@ import ar.edu.itba.paw.model.CommunityPostComment;
 import ar.edu.itba.paw.model.CommunityPostDetailData;
 import ar.edu.itba.paw.model.CommunityPostSummary;
 import ar.edu.itba.paw.model.CommunityTopic;
+import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.ImageMetadata;
+import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
+import ar.edu.itba.paw.services.exception.CommunityPostSlugConflictException;
+import ar.edu.itba.paw.services.exception.CommunitySlugConflictException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport;
 import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import ar.edu.itba.paw.webapp.form.CommunityForm;
 import ar.edu.itba.paw.webapp.form.CommunityPostForm;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -47,6 +53,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -56,6 +63,7 @@ import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -72,6 +80,9 @@ class CommunityControllerTest {
 
     @Mock
     private RelativeTimeFormatter relativeTimeFormatter;
+
+    @Mock
+    private CarService carService;
 
     @InjectMocks
     private CommunityController controller;
@@ -167,6 +178,33 @@ class CommunityControllerTest {
                 .andExpect(model().attributeExists("postCards"))
                 .andExpect(model().attribute("postsCurrentPage", 1))
                 .andExpect(model().attribute("postsTotalPages", 1));
+    }
+
+    @Test
+    void communityDetail_repostedPost_resolvesCarNameWithoutPerItemLookup() throws Exception {
+        // Arrange
+        lenient().when(carService.getCarById(anyLong())).thenThrow(
+                new AssertionError("per-item car lookup must not happen while mapping post cards"));
+        lenient().when(carService.getCarsByIds(anyCollection())).thenThrow(
+                new AssertionError("eagerly-loaded review car must not trigger a batch car lookup"));
+        when(communityService.getCommunityDetail(anyString(), any(), any(), anyInt()))
+                .thenReturn(Optional.of(communityDetailDataWithRepost()));
+        when(relativeTimeFormatter.format(any(LocalDateTime.class))).thenReturn("2 hours ago");
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(get("/communities/classics"));
+
+        // Assertions
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(view().name("community-detail.jsp"))
+                .andExpect(result -> {
+                    final List<?> cards = (List<?>) result.getModelAndView().getModel().get("postCards");
+                    final CommunityController.PostCardView card =
+                            (CommunityController.PostCardView) cards.get(0);
+                    assertEquals("Ford Falcon", card.getRepostReview().getCarName());
+                });
     }
 
     @Test
@@ -282,7 +320,8 @@ class CommunityControllerTest {
         // Arrange
         when(communityService.getAvailableTopics()).thenReturn(List.of(topic((short) 1, "classics")));
         when(communityService.createCommunity(anyLong(), anyString(), anyString(), anyCollection()))
-                .thenThrow(new DataIntegrityViolationException("uq_communities_slug"));
+                .thenThrow(new CommunitySlugConflictException("classics",
+                        new DataIntegrityViolationException("uq_communities_slug")));
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
 
@@ -480,7 +519,8 @@ class CommunityControllerTest {
                 "First post",
                 "This is the first real community post.",
                 List.of()
-        )).thenThrow(new DataIntegrityViolationException("uq_community_posts_slug"));
+        )).thenThrow(new CommunityPostSlugConflictException("classics",
+                new DataIntegrityViolationException("uq_community_posts_slug")));
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
 
@@ -710,6 +750,28 @@ class CommunityControllerTest {
                 community(),
                 List.of(topic((short) 1, "classics")),
                 List.of(new CommunityPostSummary(post(), 4L, 2L)),
+                12L,
+                3L,
+                true,
+                "member",
+                "recent",
+                false
+        );
+    }
+
+    private static CommunityDetailData communityDetailDataWithRepost() {
+        final Car car = TestModels.car(50L, 2L, "Ford", "Falcon", 3L, 1965, "Sedan", "desc",
+                LocalDateTime.now(), false, "nafta", 100, 2, "manual",
+                new BigDecimal("9.0"), 160, new BigDecimal("15000"));
+        final Review linkedReview = new Review(car, new BigDecimal("4.5"), "Great Falcon", "Body text");
+        linkedReview.setId(99L);
+        linkedReview.setUser(author(7L, "mateo.classics"));
+        final CommunityPost repost = post();
+        repost.setLinkedReview(linkedReview);
+        return new CommunityDetailData(
+                community(),
+                List.of(topic((short) 1, "classics")),
+                List.of(new CommunityPostSummary(repost, 4L, 2L)),
                 12L,
                 3L,
                 true,

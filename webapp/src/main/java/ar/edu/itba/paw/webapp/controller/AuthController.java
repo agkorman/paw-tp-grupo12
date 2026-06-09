@@ -1,16 +1,16 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.exception.DuplicateUserException;
 import ar.edu.itba.paw.services.exception.EmailAlreadyExistsException;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
+import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.form.RegistrationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -122,10 +122,10 @@ public class AuthController {
                     LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS),
                     e.getClass().getSimpleName());
             return registerFormWithError("auth.register.error.unavailable", normalizedUsername, normalizedEmail);
-        } catch (final DataIntegrityViolationException e) {
-            LOGGER.warn("registration rejected: integrity violation email={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS));
+        } catch (final DuplicateUserException e) {
+            LOGGER.warn("registration rejected: duplicate user email={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS));
             return registerFormWithError("auth.register.error.duplicate", normalizedUsername, normalizedEmail);
-        } catch (final DataAccessException e) {
+        } catch (final ServiceOperationException e) {
             LOGGER.error("Database error while creating user {}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), e);
             return registerFormWithError("auth.register.error.unavailable", normalizedUsername, normalizedEmail);
         }
