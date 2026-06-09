@@ -6,7 +6,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <spring:message var="pageTitle" code="common.pageTitle.suffix" arguments="${pageTitleValue}"/>
-<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css|/css/reposted-review-card.css|/css/review-tags.css"/>
+<pa:page-head title="${pageTitle}" styles="/css/cars.css|/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css|/css/reposted-review-card.css|/css/review-tags.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>

@@ -411,6 +411,10 @@
     margin-bottom: var(--spacing-4);
 }
 
+.community-sort-form .cars-toolbar-field {
+    padding: 0.5rem 1rem;
+}
+
 .community-sort-label {
     color: var(--secondary);
     font-size: 0.875rem;
