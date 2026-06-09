@@ -200,8 +200,7 @@
                         <c:if test="${not empty review.images}">
                             <c:set var="reviewImageUrlsCsv" value=""/>
                             <c:forEach var="urlImg" items="${review.images}" varStatus="urlStatus">
-                                <c:url var="oneUrl" value="/reviews/${review.id}/images/${urlImg.imageId}"/>
-                                <c:set var="reviewImageUrlsCsv" value="${reviewImageUrlsCsv}${urlStatus.first ? '' : '|'}${oneUrl}"/>
+                                <c:set var="reviewImageUrlsCsv" value="${reviewImageUrlsCsv}${urlStatus.first ? '' : '|'}/reviews/${review.id}/images/${urlImg.imageId}"/>
                             </c:forEach>
                             <pa:image-gallery imageUrlsJoined="${reviewImageUrlsCsv}" altKey="review.image.alt"/>
                         </c:if>
