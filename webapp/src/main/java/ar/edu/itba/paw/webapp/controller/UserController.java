@@ -21,6 +21,7 @@ import ar.edu.itba.paw.services.UserFollowService;
 import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import ar.edu.itba.paw.services.exception.SelfFollowException;
+import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
@@ -44,8 +45,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -206,25 +205,13 @@ public class UserController {
             );
             refreshAuthenticatedUser(currentUser, updatedUser);
             return new ModelAndView("redirect:/user");
-        } catch (final DataIntegrityViolationException e) {
-            return profileEditError(
-                "profile.edit.error.username.exists",
-                normalizedUsername,
-                redirectAttributes
-            );
         } catch (final UsernameAlreadyExistsException e) {
             return profileEditError(
                 "profile.edit.error.username.exists",
                 normalizedUsername,
                 redirectAttributes
             );
-        } catch (final InvalidServiceInputException e) {
-            return profileEditError(
-                "profile.edit.error.generic",
-                normalizedUsername,
-                redirectAttributes
-            );
-        } catch (final DataAccessException e) {
+        } catch (final InvalidServiceInputException | ServiceOperationException e) {
             return profileEditError(
                 "profile.edit.error.generic",
                 normalizedUsername,
@@ -260,7 +247,7 @@ public class UserController {
                 "profileLanguageSuccessCode",
                 "profile.language.toast.success"
             );
-        } catch (final InvalidServiceInputException | DataAccessException e) {
+        } catch (final InvalidServiceInputException | ServiceOperationException e) {
             redirectAttributes.addFlashAttribute(
                 "profileLanguageErrorCode",
                 "profile.language.error"
@@ -377,9 +364,6 @@ public class UserController {
         final String activeTab = ownProfile
             ? normalizeProfileTab(tab)
             : TAB_ACTIVITY;
-        final String profileBasePath = ownProfile
-            ? "/user"
-            : "/users/" + profileUser.getId();
 
         Page<ProfileActivityItem> activityPage = Page.empty(1, 0);
         Page<Car> favoriteCarPage = Page.empty(1, 0);
@@ -440,7 +424,7 @@ public class UserController {
 
         final ModelAndView mav = new ModelAndView("profile.jsp");
         mav.addObject("profile", toProfileData(profileUser, activityCount));
-        mav.addObject("profileBasePath", profileBasePath);
+        mav.addObject("profileUserId", profileUser.getId());
         mav.addObject("activeTab", activeTab);
         mav.addObject("activityCount", activityCount);
         mav.addObject("favoriteCarCount", favoriteCarCount);

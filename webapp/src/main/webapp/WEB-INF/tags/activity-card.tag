@@ -19,22 +19,52 @@
 </c:if>
 <c:set var="activityCardRedirectPath" value="${activityCurrentPath}#${activityCard.cardAnchorId}"/>
 
+<c:set var="activityCardImageUrls" value=""/>
 <c:choose>
-    <c:when test="${activityCard.communityPost}">
-        <c:url var="resolvedCardHref" value="${activityCard.href}">
-            <c:param name="redirect" value="${activityCurrentPath}"/>
+    <c:when test="${activityCard.review}">
+        <c:url var="activityReviewBase" value="/reviews/car/${activityCard.carId}">
+            <c:if test="${activityCard.reviewPage > 1}"><c:param name="page" value="${activityCard.reviewPage}"/></c:if>
         </c:url>
-    </c:when>
-    <c:when test="${fn:contains(activityCard.href, '#')}">
-        <c:url var="resolvedCardHref" value="${fn:substringBefore(activityCard.href, '#')}"/>
-        <c:set var="resolvedCardHref" value="${resolvedCardHref}#${fn:substringAfter(activityCard.href, '#')}"/>
+        <c:set var="resolvedCardHref" value="${activityReviewBase}#review-${activityCard.likeEntityId}"/>
+        <c:set var="resolvedCommentsHref" value="${activityReviewBase}#replies-${activityCard.likeEntityId}"/>
+        <c:url var="resolvedLikeAction" value="/reviews/${activityCard.likeEntityId}/like"/>
+        <c:url var="activityCardEditUrl" value="/reviews/${activityCard.likeEntityId}/edit">
+            <c:param name="redirect" value="${activityCardRedirectPath}"/>
+        </c:url>
+        <c:url var="activityCardDeleteUrl" value="/reviews/${activityCard.likeEntityId}/delete"/>
+        <c:url var="activityCardHideUrl" value="/reviews/${activityCard.likeEntityId}/hide"/>
+        <c:if test="${activityCard.repostable}">
+            <c:url var="activityCardRepostUrl" value="/reviews/${activityCard.likeEntityId}/repost"/>
+        </c:if>
+        <c:if test="${not empty activityCard.carId}">
+            <c:url var="resolvedContextHref" value="/reviews/car/${activityCard.carId}"/>
+        </c:if>
+        <c:forEach var="activityImageId" items="${activityCard.imageIds}">
+            <c:set var="activityCardImageUrls" value="${activityCardImageUrls}${empty activityCardImageUrls ? '' : '|'}/reviews/${activityCard.likeEntityId}/images/${activityImageId}"/>
+        </c:forEach>
     </c:when>
     <c:otherwise>
-        <c:url var="resolvedCardHref" value="${activityCard.href}"/>
+        <c:url var="resolvedCardHref" value="/communities/${activityCard.communitySlug}/posts/${activityCard.postSlug}">
+            <c:param name="redirect" value="${activityCurrentPath}"/>
+        </c:url>
+        <c:url var="activityCommentsBase" value="/communities/${activityCard.communitySlug}/posts/${activityCard.postSlug}">
+            <c:param name="redirect" value="${activityCurrentPath}"/>
+        </c:url>
+        <c:set var="resolvedCommentsHref" value="${activityCommentsBase}#comments"/>
+        <c:url var="resolvedLikeAction" value="/communities/${activityCard.communitySlug}/posts/${activityCard.postSlug}/helpful"/>
+        <c:url var="activityCardEditUrl" value="/communities/${activityCard.communitySlug}/posts/${activityCard.postSlug}/edit">
+            <c:param name="redirect" value="${activityCardRedirectPath}"/>
+        </c:url>
+        <c:url var="activityCardDeleteUrl" value="/communities/${activityCard.communitySlug}/posts/${activityCard.postSlug}/delete"/>
+        <c:url var="activityCardHideUrl" value="/communities/${activityCard.communitySlug}/posts/${activityCard.postSlug}/hide"/>
+        <c:url var="resolvedContextHref" value="/communities/${activityCard.communitySlug}"/>
+        <c:forEach var="activityImageId" items="${activityCard.imageIds}">
+            <c:set var="activityCardImageUrls" value="${activityCardImageUrls}${empty activityCardImageUrls ? '' : '|'}/communities/${activityCard.communitySlug}/posts/${activityCard.postSlug}/images/${activityImageId}"/>
+        </c:forEach>
     </c:otherwise>
 </c:choose>
-<c:if test="${not empty activityCard.authorHref}">
-    <c:url var="resolvedAuthorHref" value="${activityCard.authorHref}"/>
+<c:if test="${not empty activityCard.authorUserId}">
+    <c:url var="resolvedAuthorHref" value="/users/${activityCard.authorUserId}"/>
 </c:if>
 
 <c:choose>
@@ -57,30 +87,12 @@
     </c:choose>
 </c:if>
 
-<c:url var="resolvedLikeAction" value="${activityCard.likeAction}"/>
-
-<c:if test="${not empty activityCard.commentsHref}">
-    <c:set var="commentsBase" value="${fn:substringBefore(activityCard.commentsHref, '#')}"/>
-    <c:set var="commentsFragment" value="${fn:substringAfter(activityCard.commentsHref, '#')}"/>
-    <c:choose>
-        <c:when test="${activityCard.communityPost}">
-            <c:url var="resolvedCommentsHref" value="${commentsBase}">
-                <c:param name="redirect" value="${activityCurrentPath}"/>
-            </c:url>
-        </c:when>
-        <c:otherwise>
-            <c:url var="resolvedCommentsHref" value="${commentsBase}"/>
-        </c:otherwise>
-    </c:choose>
-    <c:set var="resolvedCommentsHref" value="${resolvedCommentsHref}#${commentsFragment}"/>
-</c:if>
-
 <article class="activity-card" id="${fn:escapeXml(activityCard.cardAnchorId)}">
     <div class="activity-card-topline">
         <div class="activity-card-topline-content">
             <p class="activity-card-meta">
                 <c:choose>
-                    <c:when test="${not empty activityCard.authorHref}">
+                    <c:when test="${not empty resolvedAuthorHref}">
                         <a class="activity-card-author-link" href="${fn:escapeXml(resolvedAuthorHref)}">
                             <strong><c:out value="${resolvedAuthorName}"/></strong>
                         </a>
@@ -90,15 +102,14 @@
                     </c:otherwise>
                 </c:choose>
                 <span aria-hidden="true">•</span>
-                <span><c:out value="${activityCard.timeText}"/></span>
+                <span><pa:relative-time value="${activityCard.createdAt}"/></span>
             </p>
 
             <p class="activity-card-context">
                 <span class="activity-card-context-label ${activityCard.review ? 'activity-card-context-label--review' : 'activity-card-context-label--community'}"><spring:message code="${activityCard.contextLabelKey}"/></span>
                 <c:if test="${not empty activityCard.contextValue}">
                     <c:choose>
-                        <c:when test="${not empty activityCard.contextHref}">
-                            <c:url var="resolvedContextHref" value="${activityCard.contextHref}"/>
+                        <c:when test="${not empty resolvedContextHref}">
                             <a class="activity-card-context-link" href="${fn:escapeXml(resolvedContextHref)}">
                                 <c:out value="${activityCard.contextValue}"/>
                             </a>
@@ -112,22 +123,17 @@
         </div>
         <c:if test="${activityCard.actionMenuVisible}">
             <pa:action-menu label="${activityActionMenuLabel}" cssClass="activity-card-menu">
-                <c:if test="${not empty activityCard.repostHref}">
-                    <c:url var="activityCardRepostUrl" value="${activityCard.repostHref}"/>
+                <c:if test="${activityCard.repostable}">
                     <a href="${fn:escapeXml(activityCardRepostUrl)}">
                         <c:out value="${activityRepostLabel}"/>
                     </a>
                 </c:if>
                 <c:if test="${activityCard.editable}">
-                    <c:url var="activityCardEditUrl" value="${activityCard.editHref}">
-                        <c:param name="redirect" value="${activityCardRedirectPath}"/>
-                    </c:url>
                     <a href="${fn:escapeXml(activityCardEditUrl)}">
                         <spring:message code="common.action.edit"/>
                     </a>
                 </c:if>
                 <c:if test="${activityCard.hideable}">
-                    <c:url var="activityCardHideUrl" value="${activityCard.hideAction}"/>
                     <c:choose>
                         <c:when test="${activityCard.review}">
                             <button type="button"
@@ -152,7 +158,6 @@
                     </c:choose>
                 </c:if>
                 <c:if test="${activityCard.deletable}">
-                    <c:url var="activityCardDeleteUrl" value="${activityCard.deleteAction}"/>
                     <form method="post" action="${fn:escapeXml(activityCardDeleteUrl)}"
                           data-confirm-modal="${activityCard.review ? 'deleteReviewConfirmModal' : 'deletePostConfirmModal'}">
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
@@ -176,9 +181,9 @@
     <h2 class="activity-card-title">
         <a href="${fn:escapeXml(resolvedCardHref)}"><c:out value="${activityCard.title}"/></a>
     </h2>
-    <p class="activity-card-body ${not empty activityCard.imageUrls ? 'activity-card-body--with-image' : 'activity-card-body--text-only'}"><c:out value="${activityCard.body}"/></p>
-    <c:if test="${not empty activityCard.imageUrls}">
-        <pa:image-gallery imageUrls="${activityCard.imageUrls}" altKey="${activityCard.imageAltKey}" maxVisible="${3}" cssClass="activity-card-gallery"/>
+    <p class="activity-card-body ${not empty activityCard.imageIds ? 'activity-card-body--with-image' : 'activity-card-body--text-only'}"><c:out value="${activityCard.body}"/></p>
+    <c:if test="${not empty activityCard.imageIds}">
+        <pa:image-gallery imageUrlsJoined="${activityCardImageUrls}" altKey="${activityCard.imageAltKey}" maxVisible="${3}" cssClass="activity-card-gallery"/>
     </c:if>
     <c:if test="${not empty activityCard.repostReview}">
         <pa:reposted-review-card repostReview="${activityCard.repostReview}"/>

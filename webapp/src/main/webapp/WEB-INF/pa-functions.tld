@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<taglib xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-jsptaglibrary_2_1.xsd"
+        version="2.1">
+    <tlib-version>1.0</tlib-version>
+    <short-name>paf</short-name>
+    <uri>http://lapostaautos.com/jsp/functions</uri>
+
+    <function>
+        <description>Compute the relative-time message code and quantity for a timestamp.</description>
+        <name>timeAgo</name>
+        <function-class>ar.edu.itba.paw.webapp.view.RelativeTimeFunctions</function-class>
+        <function-signature>ar.edu.itba.paw.webapp.view.RelativeTime timeAgo(java.time.LocalDateTime)</function-signature>
+    </function>
+</taglib>

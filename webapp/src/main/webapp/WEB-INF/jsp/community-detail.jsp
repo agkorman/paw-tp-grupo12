@@ -5,7 +5,8 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/cars.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css|/css/reposted-review-card.css|/css/review-tags.css"/>
+<spring:message var="pageTitle" code="common.pageTitle.suffix" arguments="${pageTitleValue}"/>
+<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css|/css/reposted-review-card.css|/css/review-tags.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -184,17 +185,21 @@
 
                 <div id="communityPostList" class="community-post-list">
                     <c:forEach var="postCard" items="${postCards}">
-                        <c:url var="postCardHref" value="${postCard.href}">
+                        <c:url var="postCardHref" value="/communities/${postCard.communitySlug}/posts/${postCard.postSlug}">
                             <c:param name="redirect" value="${communityPostsReturnUrl}"/>
                         </c:url>
-                        <c:url var="postCardHelpfulAction" value="${postCard.helpfulAction}"/>
+                        <c:url var="postCardHelpfulAction" value="/communities/${postCard.communitySlug}/posts/${postCard.postSlug}/helpful"/>
+                        <c:set var="postCardImageUrls" value=""/>
+                        <c:forEach var="postCardImageId" items="${postCard.imageIds}">
+                            <c:set var="postCardImageUrls" value="${postCardImageUrls}${empty postCardImageUrls ? '' : '|'}/communities/${postCard.communitySlug}/posts/${postCard.postSlug}/images/${postCardImageId}"/>
+                        </c:forEach>
                         <pa:community-post-card
                                 href="${postCardHref}"
                                 author="${postCard.author}"
-                                timeText="${postCard.timeText}"
+                                createdAt="${postCard.createdAt}"
                                 title="${postCard.title}"
                                 body="${postCard.body}"
-                                imageUrls="${postCard.imageUrls}"
+                                imageUrlsJoined="${postCardImageUrls}"
                                 helpfulCount="${postCard.helpfulCount}"
                                 commentCount="${postCard.commentCount}"
                                 postId="${postCard.postId}"

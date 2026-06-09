@@ -1,40 +1,20 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-import org.springframework.context.MessageSource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.Locale;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
-@ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 class ErrorPageControllerTest {
 
-    @Mock
-    private MessageSource messageSource;
-
-    @InjectMocks
-    private ErrorPageController controller;
+    private final ErrorPageController controller = new ErrorPageController();
 
     private MockMvc mockMvc() {
-        when(messageSource.getMessage(any(String.class), any(), any(Locale.class)))
-                .thenAnswer(inv -> "msg." + inv.getArgument(0));
         return MockMvcBuilders.standaloneSetup(controller).build();
     }
 
@@ -49,8 +29,8 @@ class ErrorPageControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(view().name("error.jsp"))
                 .andExpect(model().attribute("statusCode", 400))
-                .andExpect(model().attribute("title", "msg.error.page.400.title"))
-                .andExpect(model().attribute("description", "msg.error.page.400.description"));
+                .andExpect(model().attribute("titleCode", "error.page.400.title"))
+                .andExpect(model().attribute("descriptionCode", "error.page.400.description"));
     }
 
     @Test
@@ -134,10 +114,6 @@ class ErrorPageControllerTest {
     @Test
     void error404_prefersServletErrorAttributeOverFallback() throws Exception {
         // Arrange
-        when(messageSource.getMessage(eq("error.page.404.title"), any(), any(Locale.class)))
-                .thenReturn("t");
-        when(messageSource.getMessage(eq("error.page.404.description"), any(), any(Locale.class)))
-                .thenReturn("d");
         final MockMvc mockMvc =
                 MockMvcBuilders.standaloneSetup(controller).build();
         // Exercise
@@ -148,7 +124,7 @@ class ErrorPageControllerTest {
                 .andExpect(status().isBadGateway())
                 .andExpect(view().name("error.jsp"))
                 .andExpect(model().attribute("statusCode", 502))
-                .andExpect(model().attribute("title", "t"))
-                .andExpect(model().attribute("description", "d"));
+                .andExpect(model().attribute("titleCode", "error.page.404.title"))
+                .andExpect(model().attribute("descriptionCode", "error.page.404.description"));
     }
 }

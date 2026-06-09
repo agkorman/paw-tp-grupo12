@@ -236,7 +236,7 @@
                         </c:if>
                         <div class="review-meta">
                             <pa:review-author-link review="${review}"/>
-                            <span><c:out value="${relativeTimeFormatter.format(review.createdAt)}"/></span>
+                            <span><pa:relative-time value="${review.createdAt}"/></span>
                             <pa:review-like-button
                                     reviewId="${review.id}"
                                     action="${reviewLikeUrl}"
@@ -266,7 +266,7 @@
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">
                                                     <c:out value="${empty reply.authorUsername ? reviewAuthorFallback : reply.authorUsername}"/>
                                                 </a>
-                                                <span class="review-reply-time"><c:out value="${relativeTimeFormatter.format(reply.createdAt)}"/></span>
+                                                <span class="review-reply-time"><pa:relative-time value="${reply.createdAt}"/></span>
                                                 <div class="review-reply-header-actions">
                                                     <sec:authorize access="hasRole('ADMIN')">
                                                         <c:if test="${empty currentUserId or reply.userId != currentUserId}">
@@ -367,7 +367,7 @@
                                                           class="${replyHasError ? 'is-invalid' : ''}"><c:if test="${replyHasError}"><c:out value="${replyErrorBody}"/></c:if></textarea>
                                                 <button type="submit" class="btn-secondary"><spring:message code="review.feed.reply"/></button>
                                             </div>
-                                            <span class="client-form-error" data-reply-error <c:if test="${not replyHasError}">hidden</c:if>><c:if test="${replyHasError}"><c:out value="${replyError}"/></c:if></span>
+                                            <span class="client-form-error" data-reply-error <c:if test="${not replyHasError}">hidden</c:if>><c:if test="${replyHasError}"><spring:message code="${replyError}" arguments="${replyErrorArg}"/></c:if></span>
                                         </div>
                                     </form>
                                 </c:when>

@@ -7,13 +7,17 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
+import ar.edu.itba.paw.services.exception.DuplicateUserException;
 import ar.edu.itba.paw.services.exception.EmailAlreadyExistsException;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
+import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import ar.edu.itba.paw.services.exception.UserNotFoundException;
 import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,14 +96,29 @@ public class UserServiceImpl implements UserService {
             throw new EmailAlreadyExistsException(normalizedEmail);
         }
 
-        final User user = userDao.create(
-                normalizedUsername,
-                normalizedEmail,
-                passwordEncoder.encode(rawPassword),
-                DEFAULT_ROLE
-        );
-        reviewDao.bindReviewsToUserByEmail(user.getId(), normalizedEmail);
-        carRequestDao.bindRequestsToUserByEmail(user.getId(), normalizedEmail);
+        final User user;
+        try {
+            user = userDao.create(
+                    normalizedUsername,
+                    normalizedEmail,
+                    passwordEncoder.encode(rawPassword),
+                    DEFAULT_ROLE
+            );
+        } catch (final DataIntegrityViolationException e) {
+            LOGGER.warn("create user rejected: integrity violation username={}", normalizedUsername);
+            throw new DuplicateUserException(e);
+        } catch (final DataAccessException e) {
+            LOGGER.error("create user failed: persistence error username={}", normalizedUsername, e);
+            throw new ServiceOperationException("Failed to create user " + normalizedUsername, e);
+        }
+        try {
+            reviewDao.bindReviewsToUserByEmail(user.getId(), normalizedEmail);
+            carRequestDao.bindRequestsToUserByEmail(user.getId(), normalizedEmail);
+        } catch (final DataAccessException e) {
+            LOGGER.error("bind pre-existing content to new user failed: persistence error userId={} username={}",
+                    user.getId(), normalizedUsername, e);
+            throw new ServiceOperationException("Failed to bind existing content to user " + normalizedUsername, e);
+        }
         LOGGER.info("Created user id={} username={} role={}", user.getId(), normalizedUsername, DEFAULT_ROLE);
         return user;
     }
@@ -108,7 +127,14 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User updatePreferredLocale(final long userId, final String preferredLocale) {
         final String normalizedLocale = normalizePreferredLocale(preferredLocale);
-        if (!userDao.updatePreferredLocale(userId, normalizedLocale)) {
+        final boolean updated;
+        try {
+            updated = userDao.updatePreferredLocale(userId, normalizedLocale);
+        } catch (final DataAccessException e) {
+            LOGGER.error("update preferred locale failed: persistence error userId={}", userId, e);
+            throw new ServiceOperationException("Failed to update preferred locale for userId=" + userId, e);
+        }
+        if (!updated) {
             throw new UserNotFoundException(userId);
         }
         return userDao.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
@@ -125,7 +151,17 @@ public class UserServiceImpl implements UserService {
         if (existing.isPresent() && existing.get().getId() != userId) {
             throw new UsernameAlreadyExistsException(normalizedUsername);
         }
-        if (!userDao.updateUsername(userId, normalizedUsername)) {
+        final boolean updated;
+        try {
+            updated = userDao.updateUsername(userId, normalizedUsername);
+        } catch (final DataIntegrityViolationException e) {
+            LOGGER.warn("update username rejected: integrity violation userId={}", userId);
+            throw new UsernameAlreadyExistsException(normalizedUsername);
+        } catch (final DataAccessException e) {
+            LOGGER.error("update username failed: persistence error userId={}", userId, e);
+            throw new ServiceOperationException("Failed to update username for userId=" + userId, e);
+        }
+        if (!updated) {
             throw new UserNotFoundException(userId);
         }
         return userDao.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));

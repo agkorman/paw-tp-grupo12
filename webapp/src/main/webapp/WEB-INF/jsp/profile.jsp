@@ -9,6 +9,10 @@
 <body>
     <pa:nav activePage="profile"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
+    <c:choose>
+        <c:when test="${ownProfile}"><c:set var="profileBasePath" value="/user"/></c:when>
+        <c:otherwise><c:set var="profileBasePath" value="/users/${profileUserId}"/></c:otherwise>
+    </c:choose>
     <spring:message var="profileStatsAria" code="profile.stats.aria"/>
     <spring:message var="profileContentAria" code="profile.content.aria"/>
     <spring:message var="profileTabsAria" code="profile.tabs.aria"/>
@@ -264,7 +268,7 @@
                                                 <c:url var="likedPostHelpfulAction" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}/helpful"/>
                                                 <pa:community-post-card
                                                         author="${entry.postCard.authorName}"
-                                                        timeText="${relativeTimeFormatter.format(entry.postCard.createdAt)}"
+                                                        createdAt="${entry.postCard.createdAt}"
                                                         title="${entry.postCard.title}"
                                                         body="${entry.postCard.body}"
                                                         helpfulCount="${entry.postCard.helpfulCount}"
@@ -332,7 +336,7 @@
                                                 <c:url var="activityPostHelpfulAction" value="/communities/${entry.postCard.communitySlug}/posts/${entry.postCard.postSlug}/helpful"/>
                                                 <pa:community-post-card
                                                         author="${entry.postCard.authorName}"
-                                                        timeText="${relativeTimeFormatter.format(entry.postCard.createdAt)}"
+                                                        createdAt="${entry.postCard.createdAt}"
                                                         title="${entry.postCard.title}"
                                                         body="${entry.postCard.body}"
                                                         helpfulCount="${entry.postCard.helpfulCount}"

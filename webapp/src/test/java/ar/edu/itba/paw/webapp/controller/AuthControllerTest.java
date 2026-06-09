@@ -1,7 +1,9 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.exception.DuplicateUserException;
 import ar.edu.itba.paw.services.exception.EmailAlreadyExistsException;
+import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import org.junit.jupiter.api.Test;
@@ -209,6 +211,44 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("register.jsp"))
                 .andExpect(model().attribute("registrationErrorCode", "auth.register.error.email.exists"));
+    }
+
+    @Test
+    void createAccount_duplicateUserRace_showsFormWithDuplicateError() throws Exception {
+        // Arrange
+        doThrow(new DuplicateUserException(new RuntimeException("uq_users_email")))
+                .when(userService).createUser(any(), any(), any());
+        final MockMvc mockMvc = authMvc();
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(post("/register")
+                .param("username", "validuser")
+                .param("email", "valid@test.com")
+                .param("password", "securepass")
+                .param("confirmPassword", "securepass"));
+        // Assertions
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(view().name("register.jsp"))
+                .andExpect(model().attribute("registrationErrorCode", "auth.register.error.duplicate"));
+    }
+
+    @Test
+    void createAccount_persistenceFailure_showsFormWithUnavailableError() throws Exception {
+        // Arrange
+        doThrow(new ServiceOperationException("db down", new RuntimeException()))
+                .when(userService).createUser(any(), any(), any());
+        final MockMvc mockMvc = authMvc();
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(post("/register")
+                .param("username", "validuser")
+                .param("email", "valid@test.com")
+                .param("password", "securepass")
+                .param("confirmPassword", "securepass"));
+        // Assertions
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(view().name("register.jsp"))
+                .andExpect(model().attribute("registrationErrorCode", "auth.register.error.unavailable"));
     }
 
     @Test
