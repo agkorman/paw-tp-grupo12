@@ -206,6 +206,35 @@
                             <pa:image-gallery imageUrlsJoined="${reviewImageUrlsCsv}" altKey="review.image.alt"/>
                         </c:if>
                         <pa:review-tag-chips mode="display" tags="${review.tags}"/>
+                        <c:if test="${not empty review.ownershipStatus or not empty review.mileageKm or review.wouldRecommend ne null}">
+                            <dl class="review-details">
+                                <c:if test="${not empty review.ownershipStatus}">
+                                    <div class="review-details-item">
+                                        <dt><spring:message code="review.form.ownership"/></dt>
+                                        <dd><c:choose>
+                                            <c:when test="${review.ownershipStatus eq 'Propietario actual'}"><spring:message code="review.form.ownership.current"/></c:when>
+                                            <c:when test="${review.ownershipStatus eq 'Ex propietario'}"><spring:message code="review.form.ownership.previous"/></c:when>
+                                            <c:otherwise><c:out value="${review.ownershipStatus}"/></c:otherwise>
+                                        </c:choose></dd>
+                                    </div>
+                                </c:if>
+                                <c:if test="${not empty review.mileageKm}">
+                                    <div class="review-details-item">
+                                        <dt><spring:message code="review.card.mileage"/></dt>
+                                        <dd><c:out value="${review.mileageKm}"/> km</dd>
+                                    </div>
+                                </c:if>
+                                <c:if test="${review.wouldRecommend ne null}">
+                                    <div class="review-details-item">
+                                        <dt><spring:message code="review.form.recommend"/></dt>
+                                        <dd><c:choose>
+                                            <c:when test="${review.wouldRecommend}"><spring:message code="common.boolean.yes"/></c:when>
+                                            <c:otherwise><spring:message code="common.boolean.no"/></c:otherwise>
+                                        </c:choose></dd>
+                                    </div>
+                                </c:if>
+                            </dl>
+                        </c:if>
                         <div class="review-meta">
                             <pa:review-author-link review="${review}"/>
                             <span><c:out value="${relativeTimeFormatter.format(review.createdAt)}"/></span>
