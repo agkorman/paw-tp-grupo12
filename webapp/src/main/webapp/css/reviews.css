@@ -497,7 +497,7 @@
 
 .review-author-link:hover,
 .review-author-link:focus-visible {
-    color: var(--primary);
+    color: inherit;
 }
 
 .empty-state {

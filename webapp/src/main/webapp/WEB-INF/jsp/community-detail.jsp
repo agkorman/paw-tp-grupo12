@@ -3,6 +3,7 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <spring:message var="pageTitle" code="common.pageTitle.suffix" arguments="${pageTitleValue}"/>
@@ -206,7 +207,12 @@
                                 helpfulAction="${postCardHelpfulAction}"
                                 helpfulByCurrentUser="${postCard.helpfulByCurrentUser}"
                                 helpfulRedirect="${communityPostsRedirectBase}#post-${postCard.postId}"
-                                repostReview="${postCard.repostReview}"/>
+                                repostReview="${postCard.repostReview}"
+                                editable="${postCard.editable}"
+                                hideable="${postCard.hideable}"
+                                communitySlug="${postCard.communitySlug}"
+                                postSlug="${postCard.postSlug}"
+                                actionRedirect="${communityPostsRedirectBase}#post-${postCard.postId}"/>
                     </c:forEach>
                 </div>
 
@@ -268,6 +274,20 @@
                                confirmCssClass="btn-primary"/>
         <pa:script src="/js/shared/confirmation-modal.js"/>
     </c:if>
+    <sec:authorize access="isAuthenticated()">
+        <pa:confirmation-modal id="deletePostConfirmModal"
+                               titleCode="communities.post.delete.title"
+                               bodyCode="communities.post.delete.body"
+                               confirmCode="communities.post.deleteAction"
+                               confirmCssClass="btn-primary"/>
+        <pa:community-hide-modal id="hideCommunityPostModal"
+                                 titleCode="communities.post.hide.title"
+                                 bodyCode="communities.post.hide.body"
+                                 confirmCode="communities.post.hideAction"
+                                 placeholderCode="communities.post.hide.reason.placeholder"/>
+        <pa:script src="/js/shared/action-menu.js"/>
+        <pa:script src="/js/communities/community-moderation.js"/>
+    </sec:authorize>
     <pa:image-lightbox/>
     <pa:script src="/js/shared/image-lightbox.js" defer="true"/>
     <pa:script src="/js/cars/cars-toolbar.js"/>

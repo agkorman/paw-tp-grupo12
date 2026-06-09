@@ -273,7 +273,6 @@
 
 .community-post-card-linkable .community-post-title a:hover,
 .community-post-card-linkable .community-post-title a:focus-visible {
-    color: var(--primary);
     outline: none;
 }
 
