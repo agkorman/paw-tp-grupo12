@@ -390,21 +390,11 @@
     text-transform: uppercase;
 }
 
-.recommend-select-field select {
-    width: 100%;
+.recommend-select-field .cars-toolbar-field {
     min-height: 3rem;
-    padding: 0 0.9rem;
-    border: 1px solid rgba(229, 226, 225, 0.12);
-    border-radius: var(--radius-md);
-    background: rgba(37, 37, 37, 0.88);
-    color: var(--on-surface);
-    font: inherit;
 }
 
-.recommend-select-field option {
-    background: var(--surface-container-high);
-    color: var(--on-surface);
-}
+
 
 .recommend-field-error {
     margin: 0.55rem 0 0;

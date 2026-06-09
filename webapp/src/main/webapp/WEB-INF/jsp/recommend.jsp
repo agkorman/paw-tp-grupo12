@@ -70,27 +70,59 @@
                         <h2 class="wizard-question"><spring:message code="recommend.filters.title"/></h2>
                         <p class="wizard-help"><spring:message code="recommend.filters.help"/></p>
                         <div class="wizard-filters">
-                            <label class="recommend-select-field">
+                            <div class="recommend-select-field">
                                 <span><spring:message code="recommend.filters.bodyType"/></span>
-                                <form:select path="bodyType">
-                                    <form:option value=""><spring:message code="recommend.filters.any"/></form:option>
-                                    <c:forEach var="bodyType" items="${bodyTypes}">
-                                        <form:option value="${bodyType.name}"><c:out value="${bodyType.name}"/></form:option>
-                                    </c:forEach>
-                                </form:select>
+                                <div class="cars-toolbar-field">
+                                    <span class="cars-toolbar-field-ui" aria-hidden="true">
+                                        <span class="cars-toolbar-field-copy">
+                                            <span class="cars-toolbar-value" data-toolbar-select-value="bodyType">
+                                                <c:choose>
+                                                    <c:when test="${not empty recommendForm.bodyType}"><c:out value="${recommendForm.bodyType}"/></c:when>
+                                                    <c:otherwise><spring:message code="recommend.filters.any"/></c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </span>
+                                        <span class="cars-toolbar-chevron">
+                                            <pa:icon name="chevron-down" size="12"/>
+                                        </span>
+                                    </span>
+                                    <form:select path="bodyType" cssClass="cars-toolbar-select cars-toolbar-select-overlay">
+                                        <form:option value=""><spring:message code="recommend.filters.any"/></form:option>
+                                        <c:forEach var="bodyType" items="${bodyTypes}">
+                                            <form:option value="${bodyType.name}"><c:out value="${bodyType.name}"/></form:option>
+                                        </c:forEach>
+                                    </form:select>
+                                </div>
                                 <form:errors path="bodyType" cssClass="recommend-field-error" element="p"/>
-                            </label>
+                            </div>
 
-                            <label class="recommend-select-field">
+                            <div class="recommend-select-field">
                                 <span><spring:message code="recommend.filters.fuelType"/></span>
-                                <form:select path="fuelType">
-                                    <form:option value=""><spring:message code="recommend.filters.any"/></form:option>
-                                    <form:option value="combustion"><spring:message code="recommend.filters.fuel.combustion"/></form:option>
-                                    <form:option value="hybrid"><spring:message code="recommend.filters.fuel.hybrid"/></form:option>
-                                    <form:option value="electric"><spring:message code="recommend.filters.fuel.electric"/></form:option>
-                                </form:select>
+                                <div class="cars-toolbar-field">
+                                    <span class="cars-toolbar-field-ui" aria-hidden="true">
+                                        <span class="cars-toolbar-field-copy">
+                                            <span class="cars-toolbar-value" data-toolbar-select-value="fuelType">
+                                                <c:choose>
+                                                    <c:when test="${recommendForm.fuelType eq 'combustion'}"><spring:message code="recommend.filters.fuel.combustion"/></c:when>
+                                                    <c:when test="${recommendForm.fuelType eq 'hybrid'}"><spring:message code="recommend.filters.fuel.hybrid"/></c:when>
+                                                    <c:when test="${recommendForm.fuelType eq 'electric'}"><spring:message code="recommend.filters.fuel.electric"/></c:when>
+                                                    <c:otherwise><spring:message code="recommend.filters.any"/></c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </span>
+                                        <span class="cars-toolbar-chevron">
+                                            <pa:icon name="chevron-down" size="12"/>
+                                        </span>
+                                    </span>
+                                    <form:select path="fuelType" cssClass="cars-toolbar-select cars-toolbar-select-overlay">
+                                        <form:option value=""><spring:message code="recommend.filters.any"/></form:option>
+                                        <form:option value="combustion"><spring:message code="recommend.filters.fuel.combustion"/></form:option>
+                                        <form:option value="hybrid"><spring:message code="recommend.filters.fuel.hybrid"/></form:option>
+                                        <form:option value="electric"><spring:message code="recommend.filters.fuel.electric"/></form:option>
+                                    </form:select>
+                                </div>
                                 <form:errors path="fuelType" cssClass="recommend-field-error" element="p"/>
-                            </label>
+                            </div>
                         </div>
                     </div>
                     <div class="wizard-actions">
@@ -107,6 +139,7 @@
         </form:form>
     </main>
 
+    <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:script src="/js/recommendations/recommend-wizard.js"/>
     <pa:footer/>
 </body>

@@ -76,14 +76,29 @@
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <label for="profileLanguage"><c:out value="${profileLanguageLabel}"/></label>
                             <div class="profile-language-control">
-                                <select id="profileLanguage" name="lang" aria-label="${fn:escapeXml(profileLanguageLabel)}">
-                                    <option value="es" ${profile.preferredLocale eq 'es' ? 'selected' : ''}>
-                                        <spring:message code="profile.language.es"/>
-                                    </option>
-                                    <option value="en" ${profile.preferredLocale eq 'en' ? 'selected' : ''}>
-                                        <spring:message code="profile.language.en"/>
-                                    </option>
-                                </select>
+                                <div class="cars-toolbar-field">
+                                    <span class="cars-toolbar-field-ui" aria-hidden="true">
+                                        <span class="cars-toolbar-field-copy">
+                                            <span class="cars-toolbar-value" data-toolbar-select-value="lang">
+                                                <c:choose>
+                                                    <c:when test="${profile.preferredLocale eq 'en'}"><spring:message code="profile.language.en"/></c:when>
+                                                    <c:otherwise><spring:message code="profile.language.es"/></c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </span>
+                                        <span class="cars-toolbar-chevron">
+                                            <pa:icon name="chevron-down" size="12"/>
+                                        </span>
+                                    </span>
+                                    <select class="cars-toolbar-select cars-toolbar-select-overlay" id="profileLanguage" name="lang" aria-label="${fn:escapeXml(profileLanguageLabel)}">
+                                        <option value="es" ${profile.preferredLocale eq 'es' ? 'selected' : ''}>
+                                            <spring:message code="profile.language.es"/>
+                                        </option>
+                                        <option value="en" ${profile.preferredLocale eq 'en' ? 'selected' : ''}>
+                                            <spring:message code="profile.language.en"/>
+                                        </option>
+                                    </select>
+                                </div>
                                 <button type="submit" class="btn-secondary profile-language-button">
                                     <spring:message code="profile.language.save"/>
                                 </button>
@@ -394,6 +409,7 @@
     <pa:script src="/js/shared/modal-utils.js"/>
     <pa:script src="/js/auth/auth-required-modal.js"/>
     <pa:script src="/js/shared/confirmation-modal.js"/>
+    <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:script src="/js/profile/profile.js"/>
     <pa:script src="/js/communities/community-moderation.js"/>
     <pa:script src="/js/reviews/review-moderation.js"/>

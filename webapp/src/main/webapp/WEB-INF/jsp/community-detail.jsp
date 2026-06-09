@@ -5,7 +5,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css|/css/reposted-review-card.css|/css/review-tags.css"/>
+<pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/cars.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css|/css/reposted-review-card.css|/css/review-tags.css"/>
 <body>
     <pa:nav activePage="communities"/>
     <c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
@@ -136,17 +136,33 @@
                         <label class="community-sort-label" for="communitySortSelect">
                             <spring:message code="communities.feed.sort"/>
                         </label>
-                        <select id="communitySortSelect" name="sort" class="community-sort-select" data-auto-submit="true">
-                            <option value="recent" ${currentSort eq 'recent' ? 'selected' : ''}>
-                                <spring:message code="communities.feed.sort.recent"/>
-                            </option>
-                            <option value="helpful" ${currentSort eq 'helpful' ? 'selected' : ''}>
-                                <spring:message code="communities.feed.sort.helpful"/>
-                            </option>
-                            <option value="commented" ${currentSort eq 'commented' ? 'selected' : ''}>
-                                <spring:message code="communities.feed.sort.commented"/>
-                            </option>
-                        </select>
+                        <div class="cars-toolbar-field">
+                            <span class="cars-toolbar-field-ui" aria-hidden="true">
+                                <span class="cars-toolbar-field-copy">
+                                    <span class="cars-toolbar-value" data-toolbar-select-value="sort">
+                                        <c:choose>
+                                            <c:when test="${currentSort eq 'helpful'}"><spring:message code="communities.feed.sort.helpful"/></c:when>
+                                            <c:when test="${currentSort eq 'commented'}"><spring:message code="communities.feed.sort.commented"/></c:when>
+                                            <c:otherwise><spring:message code="communities.feed.sort.recent"/></c:otherwise>
+                                        </c:choose>
+                                    </span>
+                                </span>
+                                <span class="cars-toolbar-chevron">
+                                    <pa:icon name="chevron-down" size="12"/>
+                                </span>
+                            </span>
+                            <select id="communitySortSelect" name="sort" class="cars-toolbar-select cars-toolbar-select-overlay" data-auto-submit="true">
+                                <option value="recent" ${currentSort eq 'recent' ? 'selected' : ''}>
+                                    <spring:message code="communities.feed.sort.recent"/>
+                                </option>
+                                <option value="helpful" ${currentSort eq 'helpful' ? 'selected' : ''}>
+                                    <spring:message code="communities.feed.sort.helpful"/>
+                                </option>
+                                <option value="commented" ${currentSort eq 'commented' ? 'selected' : ''}>
+                                    <spring:message code="communities.feed.sort.commented"/>
+                                </option>
+                            </select>
+                        </div>
                         <noscript>
                             <button type="submit" class="btn-secondary community-sort-submit">
                                 <spring:message code="common.action.apply"/>
@@ -249,6 +265,7 @@
     </c:if>
     <pa:image-lightbox/>
     <pa:script src="/js/shared/image-lightbox.js" defer="true"/>
+    <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:script src="/js/communities/community-sort.js" defer="true"/>
     <pa:script src="/js/reviews/review-anchor-highlight.js"/>
 

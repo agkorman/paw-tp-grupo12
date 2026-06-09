@@ -45,11 +45,27 @@
             <div class="feed-header-actions">
                 <form method="get" action="<c:url value='/reviews/car/${carId}'/>#reviewsFeed" class="review-sort-form">
                     <label class="review-sort-label" for="reviewSortSelect"><spring:message code="review.feed.sort"/></label>
-                    <select id="reviewSortSelect" name="sort" class="review-sort-select" data-auto-submit="true">
-                        <option value="" ${empty currentSort ? 'selected' : ''}><spring:message code="review.feed.sort.recent"/></option>
-                        <option value="rating_desc" ${currentSort eq 'rating_desc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingDesc"/></option>
-                        <option value="rating_asc" ${currentSort eq 'rating_asc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingAsc"/></option>
-                    </select>
+                    <div class="cars-toolbar-field">
+                        <span class="cars-toolbar-field-ui" aria-hidden="true">
+                            <span class="cars-toolbar-field-copy">
+                                <span class="cars-toolbar-value" data-toolbar-select-value="sort">
+                                    <c:choose>
+                                        <c:when test="${currentSort eq 'rating_desc'}"><spring:message code="review.feed.sort.ratingDesc"/></c:when>
+                                        <c:when test="${currentSort eq 'rating_asc'}"><spring:message code="review.feed.sort.ratingAsc"/></c:when>
+                                        <c:otherwise><spring:message code="review.feed.sort.recent"/></c:otherwise>
+                                    </c:choose>
+                                </span>
+                            </span>
+                            <span class="cars-toolbar-chevron">
+                                <pa:icon name="chevron-down" size="12"/>
+                            </span>
+                        </span>
+                        <select id="reviewSortSelect" name="sort" class="cars-toolbar-select cars-toolbar-select-overlay" data-auto-submit="true">
+                            <option value="" ${empty currentSort ? 'selected' : ''}><spring:message code="review.feed.sort.recent"/></option>
+                            <option value="rating_desc" ${currentSort eq 'rating_desc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingDesc"/></option>
+                            <option value="rating_asc" ${currentSort eq 'rating_asc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingAsc"/></option>
+                        </select>
+                    </div>
                     <noscript>
                         <button type="submit" class="btn-secondary review-sort-submit">
                             <spring:message code="common.action.apply"/>

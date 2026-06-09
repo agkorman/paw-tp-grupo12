@@ -80,7 +80,7 @@
 <c:set var="carFormMaxImageCount" value="${empty carFormMaxImageCount ? 5 : carFormMaxImageCount}"/>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head title="${carFormPageTitle}" styles="/css/reviews.css|/css/car-image-upload.css|/css/catalog-request-modal.css|/css/form-pages.css"/>
+<pa:page-head title="${carFormPageTitle}" styles="/css/reviews.css|/css/cars.css|/css/car-image-upload.css|/css/catalog-request-modal.css|/css/form-pages.css"/>
 <body>
     <pa:nav activePage="reviews"/>
 
@@ -134,12 +134,27 @@
                         <div class="car-modal-inline-fields">
                             <div class="modal-field">
                                 <label for="modalCarBrand"><spring:message code="cars.form.brand"/></label>
-                                <form:select id="modalCarBrand" path="brand" required="required">
-                                    <form:option value="" label="${brandSelectLabel}"/>
-                                    <c:forEach items="${brands}" var="brand">
-                                        <form:option value="${brand.name}" label="${brand.name}"/>
-                                    </c:forEach>
-                                </form:select>
+                                <div class="cars-toolbar-field">
+                                    <span class="cars-toolbar-field-ui" aria-hidden="true">
+                                        <span class="cars-toolbar-field-copy">
+                                            <span class="cars-toolbar-value" data-toolbar-select-value="brand">
+                                                <c:choose>
+                                                    <c:when test="${not empty carForm.brand}"><c:out value="${carForm.brand}"/></c:when>
+                                                    <c:otherwise><c:out value="${brandSelectLabel}"/></c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </span>
+                                        <span class="cars-toolbar-chevron">
+                                            <pa:icon name="chevron-down" size="12"/>
+                                        </span>
+                                    </span>
+                                    <form:select id="modalCarBrand" path="brand" required="required" cssClass="cars-toolbar-select cars-toolbar-select-overlay">
+                                        <form:option value="" label="${brandSelectLabel}"/>
+                                        <c:forEach items="${brands}" var="brand">
+                                            <form:option value="${brand.name}" label="${brand.name}"/>
+                                        </c:forEach>
+                                    </form:select>
+                                </div>
                                 <form:errors path="brand" cssClass="form-error" element="span"/>
                                 <c:if test="${catalogRequestLinksEnabled}">
                                     <button type="button" class="catalog-request-link"
@@ -151,12 +166,27 @@
 
                             <div class="modal-field">
                                 <label for="modalCarBodyType"><spring:message code="cars.form.bodyType"/></label>
-                                <form:select id="modalCarBodyType" path="bodyType" required="required">
-                                    <form:option value="" label="${bodyTypeSelectLabel}"/>
-                                    <c:forEach items="${bodyTypes}" var="bodyType">
-                                        <form:option value="${bodyType.name}" label="${bodyType.name}"/>
-                                    </c:forEach>
-                                </form:select>
+                                <div class="cars-toolbar-field">
+                                    <span class="cars-toolbar-field-ui" aria-hidden="true">
+                                        <span class="cars-toolbar-field-copy">
+                                            <span class="cars-toolbar-value" data-toolbar-select-value="bodyType">
+                                                <c:choose>
+                                                    <c:when test="${not empty carForm.bodyType}"><c:out value="${carForm.bodyType}"/></c:when>
+                                                    <c:otherwise><c:out value="${bodyTypeSelectLabel}"/></c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </span>
+                                        <span class="cars-toolbar-chevron">
+                                            <pa:icon name="chevron-down" size="12"/>
+                                        </span>
+                                    </span>
+                                    <form:select id="modalCarBodyType" path="bodyType" required="required" cssClass="cars-toolbar-select cars-toolbar-select-overlay">
+                                        <form:option value="" label="${bodyTypeSelectLabel}"/>
+                                        <c:forEach items="${bodyTypes}" var="bodyType">
+                                            <form:option value="${bodyType.name}" label="${bodyType.name}"/>
+                                        </c:forEach>
+                                    </form:select>
+                                </div>
                                 <form:errors path="bodyType" cssClass="form-error" element="span"/>
                                 <c:if test="${catalogRequestLinksEnabled}">
                                     <button type="button" class="catalog-request-link"
@@ -344,6 +374,7 @@
     <pa:toast messageCode="${submittedToastMessageCode}"/>
 
     <pa:script src="/js/shared/image-upload-picker.js"/>
+    <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:script src="/js/cars/car-form.js"/>
     <c:if test="${catalogRequestLinksEnabled}">
         <pa:script src="/js/shared/modal-utils.js"/>
