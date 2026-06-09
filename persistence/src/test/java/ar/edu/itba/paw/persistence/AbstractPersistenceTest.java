@@ -9,6 +9,8 @@ import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -18,63 +20,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = TestConfiguration.class)
 @Transactional
 @Rollback
 abstract class AbstractPersistenceTest {
-
-    @Autowired
-    protected BrandDao brandDao;
-
-    @Autowired
-    protected BodyTypeDao bodyTypeDao;
-
-    @Autowired
-    protected UserDao userDao;
-
-    @Autowired
-    protected CarDao carDao;
-
-    @Autowired
-    protected CarImageDao carImageDao;
-
-    @Autowired
-    protected ReviewImageDao reviewImageDao;
-
-    @Autowired
-    protected CommunityPostImageDao communityPostImageDao;
-
-    @Autowired
-    protected CarFavoriteDao carFavoriteDao;
-
-    @Autowired
-    protected UserFollowDao userFollowDao;
-
-    @Autowired
-    protected AdminRequestDao adminRequestDao;
-
-    @Autowired
-    protected BrandRequestDao brandRequestDao;
-
-    @Autowired
-    protected BodyTypeRequestDao bodyTypeRequestDao;
-
-    @Autowired
-    protected CarRequestDao carRequestDao;
-
-    @Autowired
-    protected ReviewDao reviewDao;
-
-    @Autowired
-    protected ReviewReplyDao reviewReplyDao;
-
-    @Autowired
-    protected ReviewLikeDao reviewLikeDao;
-
-    @Autowired
-    protected ReviewTagDao reviewTagDao;
 
     @Autowired
     protected JdbcTemplate jdbcTemplate;
@@ -170,12 +122,25 @@ abstract class AbstractPersistenceTest {
                                   final BigDecimal rating, final String title, final String body,
                                   final String ownershipStatus, final Integer modelYear,
                                   final Integer mileageKm, final Boolean wouldRecommend) {
-        jdbcTemplate.update(
-                "INSERT INTO reviews (user_id, car_id, rating, title, body, ownership_status, model_year, "
-                        + "mileage_km, would_recommend) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                userId, carId, rating, title, body, ownershipStatus, modelYear, mileageKm, wouldRecommend
-        );
-        final long id = jdbcTemplate.queryForObject("SELECT review_id FROM reviews WHERE title = ?", Long.class, title);
+        // Titles are not unique, so the generated id must come from the insert itself.
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            final PreparedStatement ps = connection.prepareStatement(
+                    "INSERT INTO reviews (user_id, car_id, rating, title, body, ownership_status, model_year, "
+                            + "mileage_km, would_recommend) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    new String[]{"review_id"});
+            ps.setObject(1, userId);
+            ps.setObject(2, carId);
+            ps.setObject(3, rating);
+            ps.setObject(4, title);
+            ps.setObject(5, body);
+            ps.setObject(6, ownershipStatus);
+            ps.setObject(7, modelYear);
+            ps.setObject(8, mileageKm);
+            ps.setObject(9, wouldRecommend);
+            return ps;
+        }, keyHolder);
+        final long id = keyHolder.getKey().longValue();
         final Review review = new Review(entityCar(carId), rating, title, body);
         review.setId(id);
         review.setUser(entityUser(userId, reviewerUsername));

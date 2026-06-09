@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CommunityDaoTest extends AbstractPersistenceTest {
@@ -885,6 +886,28 @@ class CommunityDaoTest extends AbstractPersistenceTest {
                 "SELECT COUNT(*) FROM community_posts WHERE community_id = ?", Integer.class, communityId));
         assertEquals(0, jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM community_post_comments WHERE post_id = ?", Integer.class, postId));
+    }
+
+    @Test
+    void shouldCountOnlyRecentPostsGroupedByCommunity() {
+        // Arrange
+        final User creator = insertUser("weekly-owner", "weekly-owner@example.com", "secret", "user");
+        final long activeCommunityId = insertCommunity("weekly-active", "Weekly Active", "Busy place.", creator.getId());
+        final long quietCommunityId = insertCommunity("weekly-quiet", "Weekly Quiet", "Sleepy place.", creator.getId());
+        insertCommunityPost(activeCommunityId, creator.getId(), "recent-1", "Recent 1", "Body", LocalDateTime.now().minusDays(1));
+        insertCommunityPost(activeCommunityId, creator.getId(), "recent-2", "Recent 2", "Body", LocalDateTime.now().minusDays(2));
+        insertCommunityPost(activeCommunityId, creator.getId(), "old-post", "Old", "Body", LocalDateTime.now().minusDays(9));
+        insertCommunityPost(quietCommunityId, creator.getId(), "stale-post", "Stale", "Body", LocalDateTime.now().minusDays(10));
+        final LocalDateTime since = LocalDateTime.now().minusDays(7);
+
+        // Exercise
+        final Map<Long, Long> result = communityDao.countWeeklyPostsByCommunityIds(
+                List.of(activeCommunityId, quietCommunityId), since);
+
+        // Assertions
+        assertEquals(1, result.size());
+        assertEquals(2L, result.get(activeCommunityId));
+        assertFalse(result.containsKey(quietCommunityId));
     }
 
     private long insertCommunity(final String slug, final String name, final String description, final long createdByUserId) {

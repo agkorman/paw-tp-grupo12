@@ -201,7 +201,7 @@ public class UserServiceImpl implements UserService {
         if (normalizedQuery == null) {
             return Page.empty(Pagination.DEFAULT_PAGE, Pagination.USERS_PAGE_SIZE);
         }
-        return userDao.searchByQuery(normalizedQuery, Pagination.normalizePage(page), Pagination.USERS_PAGE_SIZE);
+        return userDao.searchByQuery(normalizedQuery, Pagination.normalizePage(page));
     }
 
     private String normalizeEmail(final String value) {

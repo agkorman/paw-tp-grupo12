@@ -108,15 +108,6 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
     }
 
     @Override
-    public List<Long> findLikedReviewIdsByUserId(final long userId) {
-        final List<?> ids = em.createNativeQuery(
-                "SELECT review_id FROM review_likes WHERE user_id = ? ORDER BY created_at DESC, review_id DESC")
-                .setParameter(1, userId)
-                .getResultList();
-        return ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
-    }
-
-    @Override
     public Page<Long> findLikedReviewIdsByUserId(final long userId, final int page) {
         final int normalizedPage = Pagination.normalizePage(page);
         final int pageSize = Pagination.REVIEWS_PAGE_SIZE;
@@ -196,15 +187,6 @@ public class ReviewLikeJpaDao implements ReviewLikeDao {
     @Override
     public Set<Long> findLikedReplyIds(final Collection<Long> replyIds, final long userId) {
         return findLikedIds("review_reply_likes", "reply_id", replyIds, userId);
-    }
-
-    @Override
-    public List<Long> findLikedReplyIdsByUserId(final long userId) {
-        final List<?> ids = em.createNativeQuery(
-                "SELECT reply_id FROM review_reply_likes WHERE user_id = ? ORDER BY created_at DESC, reply_id DESC")
-                .setParameter(1, userId)
-                .getResultList();
-        return ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
     }
 
     private Map<Long, Long> countLikesByIds(final String table, final String idCol, final Collection<Long> ids) {

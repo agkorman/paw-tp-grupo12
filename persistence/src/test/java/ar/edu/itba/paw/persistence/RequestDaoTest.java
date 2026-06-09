@@ -20,8 +20,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class RequestDaoTest extends AbstractPersistenceTest {
+
+    @Autowired
+    private AdminRequestDao adminRequestDao;
+
+    @Autowired
+    private BrandRequestDao brandRequestDao;
+
+    @Autowired
+    private BodyTypeRequestDao bodyTypeRequestDao;
+
+    @Autowired
+    private CarRequestDao carRequestDao;
 
     @Test
     public void shouldCreateAdminRequestAndFindPendingRequestByUser() {

@@ -92,7 +92,7 @@ public class CommunityPost implements Serializable {
     }
 
     public long getCommunityId() {
-        return community != null ? community.getId() : 0L;
+        return community.getId();
     }
 
     public User getAuthor() {

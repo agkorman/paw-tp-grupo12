@@ -31,8 +31,6 @@ public class BodyTypeRequestServiceImplTest {
     @Mock
     private BodyTypeDao bodyTypeDao;
     @Mock
-    private UserService userService;
-    @Mock
     private EmailService emailService;
 
     @InjectMocks

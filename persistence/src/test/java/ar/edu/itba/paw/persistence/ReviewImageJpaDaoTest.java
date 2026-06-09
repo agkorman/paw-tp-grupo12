@@ -13,8 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class ReviewImageJpaDaoTest extends AbstractPersistenceTest {
+
+    @Autowired
+    private ReviewImageDao reviewImageDao;
 
     @Test
     public void shouldInsertReviewImagesInOrderWhenNoExisting() {
