@@ -293,21 +293,22 @@
 
     function validateNumerics() {
         var ok = true;
-        clearInlineError(mileageInput);
 
         if (mileageInput) {
             var mileage = mileageInput.value.trim();
             mileageInput.value = mileage;
-            if (mileage.length > 0) {
-                if (!isInt(mileage)) {
-                    setInlineError(mileageInput, message('mileage-numeric'));
+            if (mileage.length === 0) {
+                return ok;
+            }
+            clearInlineError(mileageInput);
+            if (!isInt(mileage)) {
+                setInlineError(mileageInput, message('mileage-numeric'));
+                ok = false;
+            } else {
+                var parsedMileage = Number(mileage);
+                if (parsedMileage < 0 || parsedMileage > 2000000) {
+                    setInlineError(mileageInput, message('mileage-range'));
                     ok = false;
-                } else {
-                    var parsedMileage = Number(mileage);
-                    if (parsedMileage < 0 || parsedMileage > 2000000) {
-                        setInlineError(mileageInput, message('mileage-range'));
-                        ok = false;
-                    }
                 }
             }
         }

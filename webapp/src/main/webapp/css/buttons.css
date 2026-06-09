@@ -45,3 +45,25 @@
     background: var(--surface-container-high);
     border-color: rgba(229, 226, 225, 0.30);
 }
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--destructive-dark), var(--destructive-light));
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 0.5rem 1.125rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.btn-danger:hover { opacity: 0.85; }

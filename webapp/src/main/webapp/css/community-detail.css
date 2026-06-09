@@ -54,30 +54,6 @@
     justify-content: center;
 }
 
-.community-edit-danger {
-    margin-top: var(--spacing-6);
-    padding: var(--spacing-5);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-4);
-    flex-wrap: wrap;
-    border: 1px solid rgba(255, 107, 53, 0.35);
-    background: rgba(255, 107, 53, 0.06);
-}
-
-.community-edit-danger-copy h2 {
-    margin: 0 0 0.35rem;
-    font-size: 1.1rem;
-    color: var(--on-surface);
-}
-
-.community-edit-danger-copy p {
-    margin: 0;
-    color: var(--on-surface-variant);
-    font-size: 0.9rem;
-}
-
 .community-banner-join-form {
     margin: 0;
 }
@@ -122,7 +98,7 @@
 }
 
 .community-banner-title {
-    font-size: clamp(2.7rem, 5vw, 4.6rem);
+    font-size: clamp(2rem, 4vw, 3.2rem);
     line-height: 0.95;
     max-width: 12ch;
 }

@@ -102,7 +102,7 @@
                                titleCode="communities.edit.danger.confirm.title"
                                bodyCode="communities.edit.danger.confirm.body"
                                confirmCode="communities.edit.danger.delete"
-                               confirmCssClass="btn-primary"/>
+                               confirmCssClass="btn-danger"/>
     </c:if>
 
     <pa:script src="/js/communities/community-topic-chips.js" defer="true"/>
