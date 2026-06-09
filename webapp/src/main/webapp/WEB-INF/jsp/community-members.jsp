@@ -5,6 +5,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
+<spring:message var="pageTitle" code="common.pageTitle.suffix" arguments="${pageTitleValue}"/>
 <pa:page-head title="${pageTitle}" styles="/css/community-detail.css|/css/community-members.css|/css/communities-responsive.css|/css/profile-modal.css"/>
 <body>
     <pa:nav activePage="communities"/>

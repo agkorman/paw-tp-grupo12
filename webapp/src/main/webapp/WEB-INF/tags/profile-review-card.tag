@@ -46,7 +46,7 @@
 
     <div class="profile-review-content">
         <div class="profile-review-meta-row">
-            <span class="profile-review-date"><c:out value="${relativeTimeFormatter.format(reviewCard.review.createdAt)}"/></span>
+            <span class="profile-review-date"><pa:relative-time value="${reviewCard.review.createdAt}"/></span>
             <div class="profile-review-actions">
                 <pa:review-like-button
                         reviewId="${reviewCard.review.id}"

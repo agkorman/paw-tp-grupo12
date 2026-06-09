@@ -33,11 +33,6 @@ final class ControllerUtils {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    static String normalizeEmail(final String value) {
-        final String normalized = normalize(value);
-        return normalized == null ? null : normalized.toLowerCase(Locale.ROOT);
-    }
-
     static String pathWithoutQuery(final String target) {
         if (target == null) {
             return null;

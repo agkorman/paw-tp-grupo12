@@ -1,9 +1,10 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="author" required="true" %>
-<%@ attribute name="timeText" required="true" %>
+<%@ attribute name="createdAt" required="true" type="java.time.LocalDateTime" %>
 <%@ attribute name="title" required="true" %>
 <%@ attribute name="body" required="true" %>
 <%@ attribute name="imageUrls" required="false" type="java.util.List" %>
+<%@ attribute name="imageUrlsJoined" required="false" %>
 <%@ attribute name="helpfulCount" required="true" type="java.lang.Long" %>
 <%@ attribute name="commentCount" required="true" type="java.lang.Long" %>
 <%@ attribute name="href" required="false" %>
@@ -52,7 +53,7 @@
                 <p class="community-post-meta">
                     <strong><c:out value="${author}"/></strong>
                     <span aria-hidden="true">•</span>
-                    <span><c:out value="${timeText}"/></span>
+                    <span><pa:relative-time value="${createdAt}"/></span>
                 </p>
                 <div class="community-post-topline-actions">
                     <div class="community-post-card-actions" aria-label="${fn:escapeXml(postMetricsAria)}">
@@ -107,7 +108,7 @@
                 <a href="${fn:escapeXml(href)}"><c:out value="${title}"/></a>
             </h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
-            <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt" maxVisible="${3}"/>
+            <pa:image-gallery imageUrls="${imageUrls}" imageUrlsJoined="${imageUrlsJoined}" altKey="communities.post.image.alt" maxVisible="${3}"/>
         </article>
     </c:when>
     <c:when test="${not empty href}">
@@ -116,7 +117,7 @@
                 <p class="community-post-meta">
                     <strong><c:out value="${author}"/></strong>
                     <span aria-hidden="true">•</span>
-                    <span><c:out value="${timeText}"/></span>
+                    <span><pa:relative-time value="${createdAt}"/></span>
                 </p>
                 <div class="community-post-card-actions" aria-label="${fn:escapeXml(postMetricsAria)}">
                     <pa:review-like-button
@@ -136,7 +137,7 @@
             </c:if>
             <h3 class="community-post-title"><c:out value="${title}"/></h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
-            <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt" maxVisible="${3}"/>
+            <pa:image-gallery imageUrls="${imageUrls}" imageUrlsJoined="${imageUrlsJoined}" altKey="communities.post.image.alt" maxVisible="${3}"/>
             <c:if test="${not empty repostReview}">
                 <pa:reposted-review-card repostReview="${repostReview}" linked="${false}"/>
             </c:if>
@@ -148,7 +149,7 @@
                 <p class="community-post-meta">
                     <strong><c:out value="${author}"/></strong>
                     <span aria-hidden="true">•</span>
-                    <span><c:out value="${timeText}"/></span>
+                    <span><pa:relative-time value="${createdAt}"/></span>
                 </p>
                 <div class="community-post-card-actions" aria-label="${fn:escapeXml(postMetricsAria)}">
                     <pa:review-like-button
@@ -165,7 +166,7 @@
 
             <h3 class="community-post-title"><c:out value="${title}"/></h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
-            <pa:image-gallery imageUrls="${imageUrls}" altKey="communities.post.image.alt" maxVisible="${3}"/>
+            <pa:image-gallery imageUrls="${imageUrls}" imageUrlsJoined="${imageUrlsJoined}" altKey="communities.post.image.alt" maxVisible="${3}"/>
             <c:if test="${not empty repostReview}">
                 <pa:reposted-review-card repostReview="${repostReview}"/>
             </c:if>
