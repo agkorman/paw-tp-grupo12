@@ -81,8 +81,6 @@
             currentPage="${currentPage}"
             totalPages="${totalPages}"
             criteria="${criteria}"/>
-    <pa:auth-required-modal/>
-
     <c:choose>
         <c:when test="${showSubmittedToast}">
             <pa:toast messageCode="${submittedToastMessageCode}"/>
@@ -95,7 +93,6 @@
     <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:script src="/js/cars/cars-filters-panel.js"/>
     <pa:script src="/js/shared/modal-utils.js"/>
-    <pa:script src="/js/auth/auth-required-modal.js"/>
     <pa:script src="/js/shared/toast.js"/>
 
     <pa:footer/>

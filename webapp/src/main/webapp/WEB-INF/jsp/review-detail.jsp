@@ -47,7 +47,6 @@
                          contextRedirectBase="${repliesBaseRedirect}"/>
     </main>
 
-    <pa:auth-required-modal/>
     <pa:toast messageCode="${actionToastCode}"/>
     <sec:authorize access="isAuthenticated()">
         <pa:confirmation-modal id="deleteReviewConfirmModal"
@@ -66,7 +65,6 @@
     <pa:script src="/js/reviews/reply-disclosure.js"/>
     <pa:script src="/js/reviews/review-tag-chips.js" defer="true"/>
     <pa:script src="/js/shared/modal-utils.js"/>
-    <pa:script src="/js/auth/auth-required-modal.js"/>
     <pa:script src="/js/shared/toast.js"/>
     <sec:authorize access="isAuthenticated()">
         <pa:script src="/js/shared/confirmation-modal.js"/>

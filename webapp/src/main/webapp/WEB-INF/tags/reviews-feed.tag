@@ -23,7 +23,6 @@
 <spring:message var="replyPlaceholder" code="review.feed.reply.placeholder"/>
 <spring:message var="replyRequiredMessage" code="review.reply.body.required"/>
 <spring:message var="replyMaxMessage" code="review.reply.body.max" arguments="1000"/>
-<spring:message var="replyAuthAction" code="review.authRequired.replyAction"/>
 <spring:message var="likeLabel" code="review.like.label"/>
 <spring:message var="reviewActionMenuLabel" code="review.actionMenu.open"/>
 <spring:message var="reviewRepostLabel" code="review.action.repost"/>
@@ -344,7 +343,6 @@
                                 <c:when test="${authenticated}">
                                     <c:set var="replyHasError" value="${not empty replyErrorReviewId and replyErrorReviewId eq review.id}"/>
                                     <form method="post" action="${replyCreateUrl}" class="review-reply-form"
-                                          data-auth-resume-intent="reply-${review.id}"
                                           data-reply-intent="reply-${review.id}"
                                           data-reply-has-error="${replyHasError}"
                                           data-reply-required-message="${fn:escapeXml(replyRequiredMessage)}"

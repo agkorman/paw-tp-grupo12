@@ -273,6 +273,7 @@
     <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:script src="/js/communities/community-sort.js" defer="true"/>
     <pa:script src="/js/reviews/review-anchor-highlight.js"/>
+    <pa:script src="/js/shared/card-link.js"/>
 
     <pa:toast messageCode="${actionToastCode}"/>
     <pa:script src="/js/shared/toast.js"/>

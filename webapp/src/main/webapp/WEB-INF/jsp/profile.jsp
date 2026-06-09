@@ -16,7 +16,6 @@
     <spring:message var="profileStatsAria" code="profile.stats.aria"/>
     <spring:message var="profileContentAria" code="profile.content.aria"/>
     <spring:message var="profileTabsAria" code="profile.tabs.aria"/>
-    <spring:message var="followUserAction" code="profile.authRequired.followAction"/>
 
     <main class="profile-page" data-profile-user-id="${profile.id}">
         <section class="profile-hero" aria-labelledby="profileName">
@@ -130,8 +129,7 @@
                         <c:when test="${authenticated}">
                             <form class="profile-action-form profile-follow-form"
                                   method="post"
-                                  action="${profileFollowUrl}"
-                                  data-auth-resume-intent="follow-profile-${profile.id}">
+                                  action="${profileFollowUrl}">
                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <button
                                         type="submit"
@@ -150,11 +148,7 @@
                                 <c:param name="intent" value="follow-profile-${profile.id}"/>
                             </c:url>
                             <a href="${profileFollowLoginUrl}"
-                               class="btn-primary profile-action-button profile-follow-button"
-                               data-auth-resume-intent="follow-profile-${profile.id}"
-                               data-auth-required="true"
-                               data-auth-required-action="${followUserAction}"
-                               data-auth-required-intent="follow-profile-${profile.id}">
+                               class="btn-primary profile-action-button profile-follow-button">
                                 <spring:message code="common.label.follow"/>
                             </a>
                         </c:otherwise>
@@ -403,7 +397,7 @@
                            bodyCode="profile.logout.confirm.body"
                            confirmCode="profile.edit.logout"
                            confirmCssClass="btn-primary"/>
-    <pa:auth-required-modal/>
+
     <c:if test="${ownProfile}">
         <pa:moderator-application-modal/>
     </c:if>
@@ -411,7 +405,7 @@
     <pa:toast messageCode="${profileToastCode}"/>
     <pa:script src="/js/shared/action-menu.js"/>
     <pa:script src="/js/shared/modal-utils.js"/>
-    <pa:script src="/js/auth/auth-required-modal.js"/>
+
     <pa:script src="/js/shared/confirmation-modal.js"/>
     <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:script src="/js/profile/profile.js"/>

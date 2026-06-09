@@ -189,9 +189,7 @@
             </c:choose>
         </section>
     </main>
-    <pa:auth-required-modal/>
     <pa:script src="/js/shared/modal-utils.js"/>
-    <pa:script src="/js/auth/auth-required-modal.js"/>
     <pa:footer/>
 </body>
 </html>

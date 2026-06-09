@@ -23,7 +23,6 @@
     <pa:stylesheet href="/css/buttons.css"/>
     <pa:stylesheet href="/css/toast.css"/>
     <pa:stylesheet href="/css/controls.css"/>
-    <pa:stylesheet href="/css/auth-required-modal.css"/>
     <pa:stylesheet href="/css/action-menu.css"/>
     <pa:stylesheet href="/css/reactions.css"/>
     <pa:stylesheet href="/css/tabs.css"/>

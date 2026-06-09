@@ -63,8 +63,7 @@
                                 redirect="${helpfulRedirect}"
                                 liked="${helpfulByCurrentUser}"
                                 likeCount="${helpfulCount}"
-                                disabled="${not authenticated}"
-                                intent="community-post-helpful-${postId}"/>
+                                disabled="${not authenticated}"/>
                         <span class="profile-card-metric"><c:out value="${replyCountText}"/></span>
                     </div>
                     <c:if test="${showActionMenu}">
@@ -130,7 +129,7 @@
                             liked="${helpfulByCurrentUser}"
                             likeCount="${helpfulCount}"
                             disabled="${not authenticated}"
-                            intent="community-post-helpful-${postId}"/>
+                            />
                     <span class="profile-card-metric"><c:out value="${replyCountText}"/></span>
                 </div>
             </div>
@@ -164,7 +163,7 @@
                             liked="${helpfulByCurrentUser}"
                             likeCount="${helpfulCount}"
                             disabled="${not authenticated}"
-                            intent="community-post-helpful-${postId}"/>
+                            />
                     <span class="profile-card-metric"><c:out value="${replyCountText}"/></span>
                 </div>
             </div>
