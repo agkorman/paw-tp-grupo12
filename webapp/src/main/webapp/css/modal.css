@@ -192,7 +192,8 @@ body.modal-open {
     background: var(--surface-container);
 }
 
-.modal-field .form-error {
+.modal-field .form-error,
+.modal-field .client-form-error {
     color: var(--error);
     font-size: 0.78rem;
     font-weight: 700;

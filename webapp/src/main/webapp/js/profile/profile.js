@@ -76,6 +76,9 @@
         }
         modal.hidden = true;
         setClass(document.body, 'profile-modal-open', false);
+        if (window.location.hash) {
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
     }
 
     function closeOpenModal() {
