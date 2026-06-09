@@ -28,12 +28,12 @@ import ar.edu.itba.paw.services.exception.CommunitySlugConflictException;
 import ar.edu.itba.paw.services.exception.InvalidCommunityTopicSelectionException;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
-import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import ar.edu.itba.paw.webapp.form.CommunityPostCommentForm;
 import ar.edu.itba.paw.webapp.form.CommunityForm;
 import ar.edu.itba.paw.webapp.form.CommunityHideForm;
@@ -85,17 +85,14 @@ public class CommunityController {
     private final CommunityService communityService;
     private final ReviewService reviewService;
     private final CarService carService;
-    private final RelativeTimeFormatter relativeTimeFormatter;
 
     @Autowired
     public CommunityController(final CommunityService communityService,
                                final ReviewService reviewService,
-                               final CarService carService,
-                               final RelativeTimeFormatter relativeTimeFormatter) {
+                               final CarService carService) {
         this.communityService = communityService;
         this.reviewService = reviewService;
         this.carService = carService;
-        this.relativeTimeFormatter = relativeTimeFormatter;
     }
 
     @InitBinder
@@ -287,7 +284,7 @@ public class CommunityController {
             .orElseThrow(() -> new ResourceNotFoundException("community not found"));
 
         final ModelAndView mav = new ModelAndView("community-detail.jsp");
-        mav.addObject("pageTitle", communityDetail.getCommunity().getName() + " | La Posta Autos");
+        mav.addObject("pageTitleValue", communityDetail.getCommunity().getName());
         mav.addObject("communityDetail", communityDetail);
         mav.addObject("currentSort", communityDetail.getCurrentSort());
         mav.addObject("postCards", toPostCards(communityDetail.getPosts(), communityDetail.getCommunity().getSlug(), currentUserId(currentUser)));
@@ -334,7 +331,7 @@ public class CommunityController {
             .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
 
         final ModelAndView mav = new ModelAndView("community-post-detail.jsp");
-        mav.addObject("pageTitle", postDetail.getPost().getTitle() + " | La Posta Autos");
+        mav.addObject("pageTitleValue", postDetail.getPost().getTitle());
         mav.addObject("postDetail", postDetail);
         mav.addObject("postView", toPostView(postDetail));
         mav.addObject("repliesCurrentPage", postDetail.getCommentsPage().getPageNumber());
@@ -837,7 +834,7 @@ public class CommunityController {
             ));
         }
         final ModelAndView mav = new ModelAndView("community-members.jsp");
-        mav.addObject("pageTitle", membersData.getCommunity().getName() + " | La Posta Autos");
+        mav.addObject("pageTitleValue", membersData.getCommunity().getName());
         mav.addObject("community", membersData.getCommunity());
         mav.addObject("memberRows", rows);
         mav.addObject("viewerIsModerator", membersData.isViewerModerator());
@@ -851,15 +848,6 @@ public class CommunityController {
         @PathVariable final long userId,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
-        if (currentUser == null) {
-            return "redirect:/communities/" + communitySlug;
-        }
-        if (userId == currentUser.getId()) {
-            LOGGER.warn("kick community member rejected: self kick userId={} communitySlug={}",
-                    currentUser.getId(),
-                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
-            return "redirect:/communities/" + communitySlug + "/members";
-        }
         communityService.kickMember(communitySlug, userId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
         return "redirect:/communities/" + communitySlug + "/members";
@@ -1071,7 +1059,7 @@ public class CommunityController {
 
     private ModelAndView communityPostPageWithCommentError(final CommunityPostDetailData postDetail) {
         final ModelAndView mav = new ModelAndView("community-post-detail.jsp");
-        mav.addObject("pageTitle", postDetail.getPost().getTitle() + " | La Posta Autos");
+        mav.addObject("pageTitleValue", postDetail.getPost().getTitle());
         mav.addObject("postDetail", postDetail);
         mav.addObject("postView", toPostView(postDetail));
         return mav;
@@ -1082,7 +1070,7 @@ public class CommunityController {
         for (final CommunityHubEntry entry : entries) {
             final Community community = entry.getCommunity();
             cards.add(new CommunityCardView(
-                "/communities/" + community.getSlug(),
+                community.getSlug(),
                 community.getName(),
                 community.getDescription(),
                 entry.getMemberCount(),
@@ -1255,17 +1243,16 @@ public class CommunityController {
                     ? buildRepostReviewView(linkedReview, resolveLinkedReviewCar(linkedReview, carsByLinkedReview))
                     : null;
             cards.add(new PostCardView(
-                "/communities/" + communitySlug + "/posts/" + postSlug,
-                "/users/" + postSummary.getPost().getAuthorUserId(),
+                communitySlug,
+                postSlug,
                 postSummary.getPost().getAuthorUsername(),
-                relativeTimeFormatter.format(postSummary.getPost().getCreatedAt()),
+                postSummary.getPost().getCreatedAt(),
                 postSummary.getPost().getTitle(),
                 postSummary.getPost().getBody(),
-                toPostImageUrls(postSummary.getPost()),
+                toPostImageIds(postSummary.getPost()),
                 postSummary.getHelpfulCount(),
                 postSummary.getCommentCount(),
                 postSummary.getPost().getId(),
-                "/communities/" + communitySlug + "/posts/" + postSlug + "/helpful",
                 helpfulByUser.contains(postSummary.getPost().getId()),
                 repostReview
             ));
@@ -1279,9 +1266,9 @@ public class CommunityController {
         for (final CommunityPostComment comment : postDetail.getComments()) {
             comments.add(new CommentView(
                 comment.getId(),
-                "/users/" + comment.getUserId(),
+                comment.getUserId(),
                 comment.getAuthorUsername(),
-                relativeTimeFormatter.format(comment.getCreatedAt()),
+                comment.getCreatedAt(),
                 comment.getBody(),
                 postDetail.getHelpfulCountForComment(comment.getId()),
                 postDetail.isHelpfulByCurrentUserForComment(comment.getId()),
@@ -1303,12 +1290,12 @@ public class CommunityController {
             postDetail.getCommunity().getName(),
             postDetail.getCommunity().getSlug(),
             postDetail.getPost().getSlug(),
-            "/users/" + postDetail.getPost().getAuthorUserId(),
+            postDetail.getPost().getAuthorUserId(),
             postDetail.getPost().getAuthorUsername(),
-            relativeTimeFormatter.format(postDetail.getPost().getCreatedAt()),
+            postDetail.getPost().getCreatedAt(),
             postDetail.getPost().getTitle(),
             postDetail.getPost().getBody(),
-            toPostImageUrls(postDetail.getPost()),
+            toPostImageIds(postDetail.getPost()),
             postDetail.getHelpfulCount(),
             postDetail.getHelpfulByCurrentUser(),
             postDetail.getCommentCount(),
@@ -1323,13 +1310,12 @@ public class CommunityController {
         );
     }
 
-    private List<String> toPostImageUrls(final CommunityPost post) {
+    private List<Long> toPostImageIds(final CommunityPost post) {
         if (post == null || post.getImages() == null || post.getImages().isEmpty()) {
             return Collections.emptyList();
         }
         return post.getImages().stream()
-                .map(image -> "/communities/" + post.getCommunity().getSlug()
-                        + "/posts/" + post.getSlug() + "/images/" + image.getImageId())
+                .map(ImageMetadata::getImageId)
                 .collect(Collectors.toList());
     }
 
@@ -1405,18 +1391,18 @@ public class CommunityController {
 
     public static final class CommunityCardView {
 
-        private final String href;
+        private final String slug;
         private final String title;
         private final String description;
         private final long memberCount;
         private final long weeklyPostCount;
         private final boolean joined;
 
-        private CommunityCardView(final String href, final String title,
+        private CommunityCardView(final String slug, final String title,
                                   final String description,
                                   final long memberCount, final long weeklyPostCount,
                                   final boolean joined) {
-            this.href = href;
+            this.slug = slug;
             this.title = title;
             this.description = description;
             this.memberCount = memberCount;
@@ -1424,8 +1410,8 @@ public class CommunityController {
             this.joined = joined;
         }
 
-        public String getHref() {
-            return href;
+        public String getSlug() {
+            return slug;
         }
 
         public String getTitle() {
@@ -1451,57 +1437,54 @@ public class CommunityController {
 
     public static final class PostCardView {
 
-        private final String href;
-        private final String authorProfileHref;
+        private final String communitySlug;
+        private final String postSlug;
         private final String author;
-        private final String timeText;
+        private final LocalDateTime createdAt;
         private final String title;
         private final String body;
-        private final List<String> imageUrls;
+        private final List<Long> imageIds;
         private final long helpfulCount;
         private final long commentCount;
         private final long postId;
-        private final String helpfulAction;
         private final boolean helpfulByCurrentUser;
         private final RepostReviewView repostReview;
 
-        private PostCardView(final String href, final String authorProfileHref,
+        private PostCardView(final String communitySlug, final String postSlug,
                              final String author,
-                             final String timeText, final String title,
-                             final String body, final List<String> imageUrls, final long helpfulCount,
+                             final LocalDateTime createdAt, final String title,
+                             final String body, final List<Long> imageIds, final long helpfulCount,
                              final long commentCount, final long postId,
-                             final String helpfulAction,
                              final boolean helpfulByCurrentUser,
                              final RepostReviewView repostReview) {
-            this.href = href;
-            this.authorProfileHref = authorProfileHref;
+            this.communitySlug = communitySlug;
+            this.postSlug = postSlug;
             this.author = author;
-            this.timeText = timeText;
+            this.createdAt = createdAt;
             this.title = title;
             this.body = body;
-            this.imageUrls = imageUrls;
+            this.imageIds = imageIds;
             this.helpfulCount = helpfulCount;
             this.commentCount = commentCount;
             this.postId = postId;
-            this.helpfulAction = helpfulAction;
             this.helpfulByCurrentUser = helpfulByCurrentUser;
             this.repostReview = repostReview;
         }
 
-        public String getHref() {
-            return href;
+        public String getCommunitySlug() {
+            return communitySlug;
         }
 
-        public String getAuthorProfileHref() {
-            return authorProfileHref;
+        public String getPostSlug() {
+            return postSlug;
         }
 
         public String getAuthor() {
             return author;
         }
 
-        public String getTimeText() {
-            return timeText;
+        public LocalDateTime getCreatedAt() {
+            return createdAt;
         }
 
         public String getTitle() {
@@ -1512,8 +1495,8 @@ public class CommunityController {
             return body;
         }
 
-        public List<String> getImageUrls() {
-            return imageUrls;
+        public List<Long> getImageIds() {
+            return imageIds;
         }
 
         public long getHelpfulCount() {
@@ -1526,10 +1509,6 @@ public class CommunityController {
 
         public long getPostId() {
             return postId;
-        }
-
-        public String getHelpfulAction() {
-            return helpfulAction;
         }
 
         public boolean getHelpfulByCurrentUser() {
@@ -1547,12 +1526,12 @@ public class CommunityController {
         private final String communityHandle;
         private final String communitySlug;
         private final String postSlug;
-        private final String authorProfileHref;
+        private final Long authorUserId;
         private final String author;
-        private final String timeText;
+        private final LocalDateTime createdAt;
         private final String title;
         private final String body;
-        private final List<String> imageUrls;
+        private final List<Long> imageIds;
         private final long helpfulCount;
         private final boolean helpfulByCurrentUser;
         private final long commentCount;
@@ -1567,9 +1546,9 @@ public class CommunityController {
 
         private PostDetailView(final String communityName, final String communityHandle,
                                final String communitySlug, final String postSlug,
-                               final String authorProfileHref, final String author, final String timeText,
+                               final Long authorUserId, final String author, final LocalDateTime createdAt,
                                final String title, final String body,
-                               final List<String> imageUrls,
+                               final List<Long> imageIds,
                                final long helpfulCount, final boolean helpfulByCurrentUser,
                                final long commentCount,
                                final List<CommentView> comments,
@@ -1582,12 +1561,12 @@ public class CommunityController {
             this.communityHandle = communityHandle;
             this.communitySlug = communitySlug;
             this.postSlug = postSlug;
-            this.authorProfileHref = authorProfileHref;
+            this.authorUserId = authorUserId;
             this.author = author;
-            this.timeText = timeText;
+            this.createdAt = createdAt;
             this.title = title;
             this.body = body;
-            this.imageUrls = imageUrls;
+            this.imageIds = imageIds;
             this.helpfulCount = helpfulCount;
             this.helpfulByCurrentUser = helpfulByCurrentUser;
             this.commentCount = commentCount;
@@ -1645,16 +1624,16 @@ public class CommunityController {
             return communityHandle;
         }
 
-        public String getAuthorProfileHref() {
-            return authorProfileHref;
+        public Long getAuthorUserId() {
+            return authorUserId;
         }
 
         public String getAuthor() {
             return author;
         }
 
-        public String getTimeText() {
-            return timeText;
+        public LocalDateTime getCreatedAt() {
+            return createdAt;
         }
 
         public String getTitle() {
@@ -1665,8 +1644,8 @@ public class CommunityController {
             return body;
         }
 
-        public List<String> getImageUrls() {
-            return imageUrls;
+        public List<Long> getImageIds() {
+            return imageIds;
         }
 
         public long getHelpfulCount() {
@@ -1689,9 +1668,9 @@ public class CommunityController {
     public static final class CommentView {
 
         private final long commentId;
-        private final String authorProfileHref;
+        private final long authorUserId;
         private final String author;
-        private final String timeText;
+        private final LocalDateTime createdAt;
         private final String body;
         private final long helpfulCount;
         private final boolean helpfulByCurrentUser;
@@ -1701,15 +1680,15 @@ public class CommunityController {
         private final boolean editable;
 
         private CommentView(final long commentId,
-                            final String authorProfileHref, final String author, final String timeText,
+                            final long authorUserId, final String author, final LocalDateTime createdAt,
                             final String body, final long helpfulCount,
                             final boolean helpfulByCurrentUser,
                             final boolean op, final boolean deletable, final boolean editable,
                             final boolean hideable) {
             this.commentId = commentId;
-            this.authorProfileHref = authorProfileHref;
+            this.authorUserId = authorUserId;
             this.author = author;
-            this.timeText = timeText;
+            this.createdAt = createdAt;
             this.body = body;
             this.helpfulCount = helpfulCount;
             this.helpfulByCurrentUser = helpfulByCurrentUser;
@@ -1735,16 +1714,16 @@ public class CommunityController {
             return editable;
         }
 
-        public String getAuthorProfileHref() {
-            return authorProfileHref;
+        public long getAuthorUserId() {
+            return authorUserId;
         }
 
         public String getAuthor() {
             return author;
         }
 
-        public String getTimeText() {
-            return timeText;
+        public LocalDateTime getCreatedAt() {
+            return createdAt;
         }
 
         public String getBody() {

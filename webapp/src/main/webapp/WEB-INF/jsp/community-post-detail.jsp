@@ -7,6 +7,7 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="es">
+<spring:message var="pageTitle" code="common.pageTitle.suffix" arguments="${pageTitleValue}"/>
 <pa:page-head title="${pageTitle}" styles="/css/community-post-common.css|/css/community-post-detail.css|/css/communities-responsive.css|/css/profile-modal.css|/css/image-lightbox.css|/css/reposted-review-card.css|/css/review-tags.css"/>
 <body>
     <pa:nav activePage="communities"/>
@@ -47,9 +48,9 @@
                         <p class="community-post-origin-line">
                             <strong><c:out value="${postView.communityHandle}"/></strong>
                             <span aria-hidden="true">•</span>
-                            <span><c:out value="${postView.timeText}"/></span>
+                            <span><pa:relative-time value="${postView.createdAt}"/></span>
                         </p>
-                        <c:url var="postAuthorProfileHref" value="${postView.authorProfileHref}"/>
+                        <c:url var="postAuthorProfileHref" value="/users/${postView.authorUserId}"/>
                         <a class="community-post-origin-author" href="${fn:escapeXml(postAuthorProfileHref)}">
                             <c:out value="${postView.author}"/>
                         </a>
@@ -95,7 +96,11 @@
             <article class="community-post-detail-card">
                 <h1><c:out value="${postView.title}"/></h1>
                 <p class="community-post-detail-body"><c:out value="${postView.body}"/></p>
-                <pa:image-gallery imageUrls="${postView.imageUrls}" altKey="communities.post.image.alt"/>
+                <c:set var="postDetailImageUrls" value=""/>
+                <c:forEach var="postDetailImageId" items="${postView.imageIds}">
+                    <c:set var="postDetailImageUrls" value="${postDetailImageUrls}${empty postDetailImageUrls ? '' : '|'}/communities/${postView.communitySlug}/posts/${postView.postSlug}/images/${postDetailImageId}"/>
+                </c:forEach>
+                <pa:image-gallery imageUrlsJoined="${postDetailImageUrls}" altKey="communities.post.image.alt"/>
                 <c:if test="${not empty postView.repostReview}">
                     <pa:reposted-review-card repostReview="${postView.repostReview}"/>
                 </c:if>
@@ -163,7 +168,7 @@
                         <article class="community-comment">
                             <div class="community-comment-header">
                                 <div class="community-comment-meta">
-                                    <c:url var="commentAuthorProfileHref" value="${comment.authorProfileHref}"/>
+                                    <c:url var="commentAuthorProfileHref" value="/users/${comment.authorUserId}"/>
                                     <a class="community-author-link" href="${fn:escapeXml(commentAuthorProfileHref)}">
                                         <strong><c:out value="${comment.author}"/></strong>
                                     </a>
@@ -171,7 +176,7 @@
                                         <span class="community-comment-badge"><spring:message code="communities.postDetail.comment.op"/></span>
                                     </c:if>
                                     <span aria-hidden="true">•</span>
-                                    <span><c:out value="${comment.timeText}"/></span>
+                                    <span><pa:relative-time value="${comment.createdAt}"/></span>
                                 </div>
                             </div>
                             <p class="community-comment-body" data-community-comment-body><c:out value="${comment.body}"/></p>

@@ -37,8 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -72,7 +70,6 @@ public class CarController {
     private final BrandService brandService;
     private final BodyTypeService bodyTypeService;
     private final ReviewService reviewService;
-    private final MessageSource messageSource;
     private final ImageValidationService imageValidationService;
 
     @Autowired
@@ -82,7 +79,6 @@ public class CarController {
         final BrandService brandService,
         final BodyTypeService bodyTypeService,
         final ReviewService reviewService,
-        final MessageSource messageSource,
         final ImageValidationService imageValidationService
     ) {
         this.carService = carService;
@@ -90,16 +86,7 @@ public class CarController {
         this.brandService = brandService;
         this.bodyTypeService = bodyTypeService;
         this.reviewService = reviewService;
-        this.messageSource = messageSource;
         this.imageValidationService = imageValidationService;
-    }
-
-    private String message(final String code, final Object... args) {
-        return messageSource.getMessage(
-            code,
-            args,
-            LocaleContextHolder.getLocale()
-        );
     }
 
     @InitBinder
@@ -203,10 +190,6 @@ public class CarController {
         final Model model,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
-        if (currentUser == null) {
-            return "redirect:/cars/new";
-        }
-
         final List<MultipartFile> files = selectedImageFiles(carForm.getFiles());
         carForm.setFormMode("create");
         carForm.setCarId(null);
@@ -214,7 +197,12 @@ public class CarController {
         carForm.setRetainedImageIds(Collections.emptyList());
         final String imageError = validateUploadedImages(files, true);
         if (imageError != null) {
-            errors.rejectValue("files", "image.invalid", imageError);
+            errors.rejectValue(
+                "files",
+                imageError,
+                new Object[] { MAX_IMAGE_COUNT },
+                null
+            );
         }
         rejectInvalidSpecFields(errors, carForm);
 
@@ -224,11 +212,7 @@ public class CarController {
                 .findByName(carForm.getBrand())
                 .orElse(null);
             if (resolvedBrand == null) {
-                errors.rejectValue(
-                    "brand",
-                    "validation.car.brand.invalid",
-                    message("validation.car.brand.invalid")
-                );
+                errors.rejectValue("brand", "validation.car.brand.invalid");
             }
         }
 
@@ -238,11 +222,7 @@ public class CarController {
                 .findByName(carForm.getBodyType())
                 .orElse(null);
             if (resolvedBodyType == null) {
-                errors.rejectValue(
-                    "bodyType",
-                    "validation.car.bodyType.invalid",
-                    message("validation.car.bodyType.invalid")
-                );
+                errors.rejectValue("bodyType", "validation.car.bodyType.invalid");
             }
         }
 
@@ -285,10 +265,7 @@ public class CarController {
                 carForm.getPriceUsd()
             );
         } catch (final DuplicateCarException e) {
-            errors.reject(
-                "validation.car.duplicate",
-                message("validation.car.duplicate")
-            );
+            errors.reject("validation.car.duplicate");
             LOGGER.warn(
                 "car request submission rejected: duplicate car userId={}",
                 currentUser.getId()
@@ -334,9 +311,6 @@ public class CarController {
         ) final String referer,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
-        if (currentUser == null) {
-            return new ModelAndView("redirect:/login");
-        }
         if (carService.getCarById(carId).isEmpty()) {
             return new ModelAndView("redirect:/cars");
         }
@@ -597,7 +571,7 @@ public class CarController {
     ) {
         if (carService.getCarById(carId).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                message("error.car.notFound")
+                "error.car.notFound"
             );
         }
         final List<MultipartFile> selectedFiles = selectedImageFiles(files);
@@ -619,10 +593,10 @@ public class CarController {
 
     private String validateUploadedImages(final List<MultipartFile> files, final boolean required) {
         if (files.isEmpty()) {
-            return required ? message("validation.car.image.required") : null;
+            return required ? "validation.car.image.required" : null;
         }
         if (files.size() > MAX_IMAGE_COUNT) {
-            return message("validation.car.files.maxCount", MAX_IMAGE_COUNT);
+            return "validation.car.files.maxCount";
         }
         for (final MultipartFile file : files) {
             final String imageError = validateUploadedImage(file, true);
@@ -634,8 +608,7 @@ public class CarController {
     }
 
     private String validateUploadedImage(final MultipartFile file, final boolean required) {
-        final String key = imageValidationService.validateUploadedImage(file, required);
-        return key == null ? null : message(key);
+        return imageValidationService.validateUploadedImage(file, required);
     }
 
     private String resolveImageContentType(final MultipartFile file) {
@@ -713,12 +686,12 @@ public class CarController {
         if (!errors.hasFieldErrors("fuelType")
                 && !CarSearchCriteria.ALLOWED_FUEL_TYPES.contains(
                         ControllerUtils.normalizeSpecValue(carForm.getFuelType()))) {
-            errors.rejectValue("fuelType", "validation.car.fuelType.invalid", message("validation.car.fuelType.invalid"));
+            errors.rejectValue("fuelType", "validation.car.fuelType.invalid");
         }
         if (!errors.hasFieldErrors("transmission")
                 && !CarSearchCriteria.ALLOWED_TRANSMISSIONS.contains(
                         ControllerUtils.normalizeSpecValue(carForm.getTransmission()))) {
-            errors.rejectValue("transmission", "validation.car.transmission.invalid", message("validation.car.transmission.invalid"));
+            errors.rejectValue("transmission", "validation.car.transmission.invalid");
         }
     }
 

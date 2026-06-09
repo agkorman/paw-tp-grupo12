@@ -169,13 +169,24 @@
                                     <c:url var="requestReviewUrl" value="/admin/requests/${request.id}/review">
                                         <c:param name="redirect" value="/admin?tab=${activeTab}&page=${currentPage}"/>
                                     </c:url>
+                                    <c:set var="requestBrandLabel" value="${request.brandName}"/>
+                                    <c:if test="${empty request.brandName}"><spring:message var="requestBrandLabel" code="admin.carRequests.placeholderBrand"/></c:if>
+                                    <c:set var="requestBodyTypeLabel" value="${request.bodyTypeName}"/>
+                                    <c:if test="${empty request.bodyTypeName}"><spring:message var="requestBodyTypeLabel" code="admin.carRequests.placeholderBodyType"/></c:if>
+                                    <c:set var="requestHeroImagePath" value=""/>
+                                    <c:if test="${request.hasImage}">
+                                        <c:choose>
+                                            <c:when test="${request.heroImageId eq 0}"><c:set var="requestHeroImagePath" value="/admin/requests/${request.id}/image"/></c:when>
+                                            <c:otherwise><c:set var="requestHeroImagePath" value="/admin/requests/${request.id}/images/${request.heroImageId}"/></c:otherwise>
+                                        </c:choose>
+                                    </c:if>
                                     <pa:car-card
-                                            model="${request.brandName} ${request.model}"
+                                            model="${requestBrandLabel} ${request.model}"
                                             year="${request.year}"
-                                            bodyType="${request.bodyTypeName}"
+                                            bodyType="${requestBodyTypeLabel}"
                                             carId="${request.id}"
                                             hasImage="${request.hasImage}"
-                                            imageUrl="${request.imageUrl}"
+                                            imageUrl="${requestHeroImagePath}"
                                             href="${requestReviewUrl}"
                                             submitter="${request.submitter}"
                                             footerText="${pendingStatusLabel}"

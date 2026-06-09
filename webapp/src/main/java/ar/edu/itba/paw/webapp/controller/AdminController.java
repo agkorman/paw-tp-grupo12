@@ -951,23 +951,6 @@ public class AdminController {
         final ModelAndView mav = new ModelAndView("car-form.jsp");
         addCarFormBinding(mav, carForm, errors);
         mav.addObject("carFormMode", "review-request");
-        mav.addObject("formKicker", "Solicitud pendiente");
-        mav.addObject("formTitle", "Revisar formulario");
-        mav.addObject(
-            "formSubtitle",
-            "Corregí los datos que haga falta antes de aprobar o rechazar la solicitud."
-        );
-        mav.addObject(
-            "formAction",
-            "/admin/requests/" + request.getId() + "/accept"
-        );
-        mav.addObject("cancelUrl", "/admin?tab=cars");
-        mav.addObject("submitLabel", "Confirmar auto");
-        mav.addObject(
-            "rejectAction",
-            "/admin/requests/" + request.getId() + "/reject"
-        );
-        mav.addObject("rejectLabel", "Rechazar");
         mav.addObject("showCatalogRequestLinks", false);
         if (adminRedirect != null) {
             mav.addObject("adminRedirect", adminRedirect);
@@ -976,12 +959,6 @@ public class AdminController {
             carForm.getRetainedImageIds(),
             imageIdsFrom(requestImages)
         );
-        final List<String> imageUrls = buildRequestImageUrls(
-            request,
-            requestImages,
-            retainedImageIds
-        );
-        mav.addObject("existingImageUrls", imageUrls);
         mav.addObject("existingImageIds", retainedImageIds);
         return mav;
     }
@@ -995,22 +972,11 @@ public class AdminController {
         final ModelAndView mav = new ModelAndView("car-form.jsp");
         addCarFormBinding(mav, carForm, errors);
         mav.addObject("carFormMode", "edit-car");
-        mav.addObject("formKicker", "Catálogo");
-        mav.addObject("formTitle", "Editar auto");
-        mav.addObject(
-            "formSubtitle",
-            "Modificá los datos del auto publicado y ajustá su galería de imágenes."
-        );
-        mav.addObject("formAction", "/admin/cars/" + car.getId());
-        mav.addObject("cancelUrl", "/reviews/car/" + car.getId());
-        mav.addObject("submitLabel", "Guardar cambios");
         mav.addObject("showCatalogRequestLinks", false);
         final List<Long> retainedImageIds = retainedImageIds(
             carForm.getRetainedImageIds(),
             buildCarImageIds(car)
         );
-        final List<String> imageUrls = buildCarImageUrls(car, retainedImageIds);
-        mav.addObject("existingImageUrls", imageUrls);
         mav.addObject("existingImageIds", retainedImageIds);
         return mav;
     }
@@ -1096,22 +1062,17 @@ public class AdminController {
         final String bodyTypeName = bodyType == null ? null : bodyType.getName();
         final List<ImageMetadata> requestImages =
             requestImagesById.getOrDefault(request.getId(), List.of());
-        final List<String> imageUrls = buildRequestImageUrls(
-            request,
-            requestImages,
-            imageIdsFrom(requestImages)
-        );
+        final List<Long> imageIds = imageIdsFrom(requestImages);
         return new AdminCarRequestCard(
                 request.getId(),
-                valueOrFallback(brandName, "Marca pendiente"),
+                brandName,
                 request.getModel(),
                 request.getYear(),
-                valueOrFallback(bodyTypeName, "Carrocería pendiente"),
+                bodyTypeName,
                 request.getDescription(),
                 submitterLabel(request, usersById),
-                !imageUrls.isEmpty(),
-                imageUrls.isEmpty() ? null : imageUrls.get(0),
-                String.join("|", imageUrls),
+                !imageIds.isEmpty(),
+                imageIds.isEmpty() ? null : imageIds.get(0),
                 request.getFuelType(),
                 request.getHorsepower(),
                 request.getAirbagCount(),
@@ -1139,19 +1100,6 @@ public class AdminController {
             .collect(Collectors.groupingBy(ImageMetadata::getOwnerId));
     }
 
-    private List<String> buildRequestImageUrls(
-        final CarRequest request,
-        final List<ImageMetadata> requestImages,
-        final List<Long> imageIds
-    ) {
-        final Set<Long> retainedIds = new LinkedHashSet<>(imageIds);
-        return requestImages
-            .stream()
-            .filter(image -> retainedIds.contains(image.getImageId()))
-            .map(image -> requestImageUrl(request.getId(), image.getImageId()))
-            .collect(Collectors.toList());
-    }
-
     private List<Long> buildRequestImageIds(final CarRequest request) {
         return imageIdsFrom(
             carRequestService.getCarRequestImages(request.getId())
@@ -1166,44 +1114,6 @@ public class AdminController {
             .stream()
             .map(ImageMetadata::getImageId)
             .collect(Collectors.toList());
-    }
-
-    private String requestImageUrl(final long requestId, final long imageId) {
-        if (imageId == CarService.LEGACY_IMAGE_ID) {
-            return "/admin/requests/" + requestId + "/image";
-        }
-        return "/admin/requests/" + requestId + "/images/" + imageId;
-    }
-
-    private List<String> buildCarImageUrls(final Car car) {
-        return buildCarImageUrls(car, buildCarImageIds(car));
-    }
-
-    private List<String> buildCarImageUrls(
-        final Car car,
-        final List<Long> imageIds
-    ) {
-        final Set<Long> retainedIds = new LinkedHashSet<>(imageIds);
-        final List<ImageMetadata> carImages = carService.getCarImagesByCarId(
-            car.getId()
-        );
-        if (!carImages.isEmpty()) {
-            return carImages
-                .stream()
-                .filter(image -> retainedIds.contains(image.getImageId()))
-                .map(
-                    image ->
-                        "/cars/" + car.getId() + "/images/" + image.getImageId()
-                )
-                .collect(Collectors.toList());
-        }
-        if (
-            !car.getHasImage() ||
-            !retainedIds.contains(CarService.LEGACY_IMAGE_ID)
-        ) {
-            return List.of();
-        }
-        return List.of("/cars/" + car.getId() + "/image");
     }
 
     private List<Long> buildCarImageIds(final Car car) {
@@ -1550,10 +1460,6 @@ public class AdminController {
         return new ModelAndView(fallback);
     }
 
-    private String valueOrFallback(final String value, final String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
-    }
-
     private String normalizeAdminTab(final String tab) {
         if (tab == null || tab.isBlank()) {
             return TAB_CARS;
@@ -1585,8 +1491,7 @@ public class AdminController {
         private final String description;
         private final String submitter;
         private final boolean hasImage;
-        private final String imageUrl;
-        private final String imageUrls;
+        private final Long heroImageId;
         private final String fuelType;
         private final Integer horsepower;
         private final Integer airbagCount;
@@ -1604,8 +1509,7 @@ public class AdminController {
             final String description,
             final String submitter,
             final boolean hasImage,
-            final String imageUrl,
-            final String imageUrls,
+            final Long heroImageId,
             final String fuelType,
             final Integer horsepower,
             final Integer airbagCount,
@@ -1622,8 +1526,7 @@ public class AdminController {
             this.description = description;
             this.submitter = submitter;
             this.hasImage = hasImage;
-            this.imageUrl = imageUrl;
-            this.imageUrls = imageUrls;
+            this.heroImageId = heroImageId;
             this.fuelType = fuelType;
             this.horsepower = horsepower;
             this.airbagCount = airbagCount;
@@ -1665,12 +1568,8 @@ public class AdminController {
             return hasImage;
         }
 
-        public String getImageUrl() {
-            return imageUrl;
-        }
-
-        public String getImageUrls() {
-            return imageUrls;
+        public Long getHeroImageId() {
+            return heroImageId;
         }
 
         public String getFuelType() {

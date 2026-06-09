@@ -11,7 +11,6 @@ import ar.edu.itba.paw.services.ActivityService;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
-import ar.edu.itba.paw.webapp.controller.support.RelativeTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +26,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,17 +41,14 @@ public class ActivityController {
     private final ActivityService activityService;
     private final ReviewLikeService reviewLikeService;
     private final CommunityService communityService;
-    private final RelativeTimeFormatter relativeTimeFormatter;
 
     @Autowired
     public ActivityController(final ActivityService activityService,
                               final ReviewLikeService reviewLikeService,
-                              final CommunityService communityService,
-                              final RelativeTimeFormatter relativeTimeFormatter) {
+                              final CommunityService communityService) {
         this.activityService = activityService;
         this.reviewLikeService = reviewLikeService;
         this.communityService = communityService;
-        this.relativeTimeFormatter = relativeTimeFormatter;
     }
 
     @InitBinder
@@ -128,18 +125,19 @@ public class ActivityController {
             final long reviewId = item.getReview().getId();
             return new ActivityCardView(
                     true,
-                    reviewHref(item),
-                    userHref(item.getReview().getUserId()),
+                    item.getReview().getUserId(),
                     resolveReviewAuthorName(item),
-                    relativeTimeFormatter.format(item.getReview().getCreatedAt()),
+                    item.getReview().getCreatedAt(),
                     item.getReview().getTitle(),
                     item.getReview().getBody(),
-                    toReviewImageUrls(reviewId, item.getReviewImages()),
+                    imageIds(item.getReviewImages()),
                     "review.image.alt",
                     "activity.card.context.review",
                     carName,
-                    item.getCar() != null ? "/reviews/car/" + item.getCar().getId() : null,
-                    "/reviews/" + reviewId + "/like",
+                    item.getCar() != null ? item.getCar().getId() : null,
+                    item.getReviewPage(),
+                    null,
+                    null,
                     likedReviewIds.contains(reviewId),
                     item.getReviewLikeCount(),
                     reviewId,
@@ -150,12 +148,8 @@ public class ActivityController {
                     permissions.isEditable(),
                     permissions.isDeletable(),
                     permissions.isHideable(),
-                    "/reviews/" + reviewId + "/edit",
-                    "/reviews/" + reviewId + "/delete",
-                    "/reviews/" + reviewId + "/hide",
+                    authenticated,
                     null,
-                    reviewCommentsHref(item),
-                    authenticated ? "/reviews/" + reviewId + "/repost" : null,
                     null
             );
         }
@@ -168,18 +162,19 @@ public class ActivityController {
                 ? buildRepostReviewView(linkedReview) : null;
         return new ActivityCardView(
                 false,
-                "/communities/" + communitySlug + "/posts/" + postSlug,
-                userHref(item.getCommunityPost().getAuthorUserId()),
+                item.getCommunityPost().getAuthorUserId(),
                 item.getCommunityPost().getAuthorUsername(),
-                relativeTimeFormatter.format(item.getCommunityPost().getCreatedAt()),
+                item.getCommunityPost().getCreatedAt(),
                 item.getCommunityPost().getTitle(),
                 item.getCommunityPost().getBody(),
-                toCommunityPostImageUrls(item),
+                imageIds(item.getCommunityPostImages()),
                 "communities.post.image.alt",
                 "activity.card.context.community",
                 item.getCommunityPost().getCommunity().getName(),
-                "/communities/" + communitySlug,
-                "/communities/" + communitySlug + "/posts/" + postSlug + "/helpful",
+                null,
+                0,
+                communitySlug,
+                postSlug,
                 helpfulPostIds.contains(postId),
                 item.getHelpfulCount(),
                 postId,
@@ -190,12 +185,8 @@ public class ActivityController {
                 permissions.isEditable(),
                 permissions.isDeletable(),
                 permissions.isHideable(),
-                "/communities/" + communitySlug + "/posts/" + postSlug + "/edit",
-                "/communities/" + communitySlug + "/posts/" + postSlug + "/delete",
-                "/communities/" + communitySlug + "/posts/" + postSlug + "/hide",
+                false,
                 "hideCommunityPostModal",
-                "/communities/" + communitySlug + "/posts/" + postSlug + "#comments",
-                null,
                 repostReview
         );
     }
@@ -216,30 +207,6 @@ public class ActivityController {
         );
     }
 
-    private String reviewHref(final ActivityFeedItem item) {
-        final StringBuilder builder = new StringBuilder("/reviews/car/")
-                .append(item.getReview().getCarId());
-        if (item.getReviewPage() > 1) {
-            builder.append("?page=").append(item.getReviewPage());
-        }
-        builder.append("#review-").append(item.getReview().getId());
-        return builder.toString();
-    }
-
-    private String reviewCommentsHref(final ActivityFeedItem item) {
-        final StringBuilder builder = new StringBuilder("/reviews/car/")
-                .append(item.getReview().getCarId());
-        if (item.getReviewPage() > 1) {
-            builder.append("?page=").append(item.getReviewPage());
-        }
-        builder.append("#replies-").append(item.getReview().getId());
-        return builder.toString();
-    }
-
-    private String userHref(final Long userId) {
-        return userId == null ? null : "/users/" + userId;
-    }
-
     private String resolveReviewAuthorName(final ActivityFeedItem item) {
         if (item.getReview().getReviewerUsername() != null && !item.getReview().getReviewerUsername().trim().isEmpty()) {
             return item.getReview().getReviewerUsername().trim();
@@ -250,39 +217,30 @@ public class ActivityController {
         return null;
     }
 
-    private List<String> toReviewImageUrls(final long reviewId, final List<ImageMetadata> images) {
+    private List<Long> imageIds(final List<ImageMetadata> images) {
         if (images == null || images.isEmpty()) {
             return Collections.emptyList();
         }
         return images.stream()
-                .map(image -> "/reviews/" + reviewId + "/images/" + image.getImageId())
-                .collect(Collectors.toList());
-    }
-
-    private List<String> toCommunityPostImageUrls(final ActivityFeedItem item) {
-        if (item.getCommunityPostImages() == null || item.getCommunityPostImages().isEmpty()) {
-            return Collections.emptyList();
-        }
-        return item.getCommunityPostImages().stream()
-                .map(image -> "/communities/" + item.getCommunityPost().getCommunity().getSlug()
-                        + "/posts/" + item.getCommunityPost().getSlug() + "/images/" + image.getImageId())
+                .map(ImageMetadata::getImageId)
                 .collect(Collectors.toList());
     }
 
     public static final class ActivityCardView {
         private final boolean review;
-        private final String href;
-        private final String authorHref;
+        private final Long authorUserId;
         private final String authorName;
-        private final String timeText;
+        private final LocalDateTime createdAt;
         private final String title;
         private final String body;
-        private final List<String> imageUrls;
+        private final List<Long> imageIds;
         private final String imageAltKey;
         private final String contextLabelKey;
         private final String contextValue;
-        private final String contextHref;
-        private final String likeAction;
+        private final Long carId;
+        private final int reviewPage;
+        private final String communitySlug;
+        private final String postSlug;
         private final boolean liked;
         private final long likeCount;
         private final long likeEntityId;
@@ -293,27 +251,24 @@ public class ActivityController {
         private final boolean editable;
         private final boolean deletable;
         private final boolean hideable;
-        private final String editHref;
-        private final String deleteAction;
-        private final String hideAction;
+        private final boolean repostable;
         private final String hideModalTarget;
-        private final String commentsHref;
-        private final String repostHref;
         private final CommunityController.RepostReviewView repostReview;
 
         private ActivityCardView(final boolean review,
-                                 final String href,
-                                 final String authorHref,
+                                 final Long authorUserId,
                                  final String authorName,
-                                 final String timeText,
+                                 final LocalDateTime createdAt,
                                  final String title,
                                  final String body,
-                                 final List<String> imageUrls,
+                                 final List<Long> imageIds,
                                  final String imageAltKey,
                                  final String contextLabelKey,
                                  final String contextValue,
-                                 final String contextHref,
-                                 final String likeAction,
+                                 final Long carId,
+                                 final int reviewPage,
+                                 final String communitySlug,
+                                 final String postSlug,
                                  final boolean liked,
                                  final long likeCount,
                                  final long likeEntityId,
@@ -324,26 +279,23 @@ public class ActivityController {
                                  final boolean editable,
                                  final boolean deletable,
                                  final boolean hideable,
-                                 final String editHref,
-                                 final String deleteAction,
-                                 final String hideAction,
+                                 final boolean repostable,
                                  final String hideModalTarget,
-                                 final String commentsHref,
-                                 final String repostHref,
                                  final CommunityController.RepostReviewView repostReview) {
             this.review = review;
-            this.href = href;
-            this.authorHref = authorHref;
+            this.authorUserId = authorUserId;
             this.authorName = authorName;
-            this.timeText = timeText;
+            this.createdAt = createdAt;
             this.title = title;
             this.body = body;
-            this.imageUrls = imageUrls;
+            this.imageIds = imageIds;
             this.imageAltKey = imageAltKey;
             this.contextLabelKey = contextLabelKey;
             this.contextValue = contextValue;
-            this.contextHref = contextHref;
-            this.likeAction = likeAction;
+            this.carId = carId;
+            this.reviewPage = reviewPage;
+            this.communitySlug = communitySlug;
+            this.postSlug = postSlug;
             this.liked = liked;
             this.likeCount = likeCount;
             this.likeEntityId = likeEntityId;
@@ -354,29 +306,26 @@ public class ActivityController {
             this.editable = editable;
             this.deletable = deletable;
             this.hideable = hideable;
-            this.editHref = editHref;
-            this.deleteAction = deleteAction;
-            this.hideAction = hideAction;
+            this.repostable = repostable;
             this.hideModalTarget = hideModalTarget;
-            this.commentsHref = commentsHref;
-            this.repostHref = repostHref;
             this.repostReview = repostReview;
         }
 
         public boolean isReview() { return review; }
         public boolean isCommunityPost() { return !review; }
-        public String getHref() { return href; }
-        public String getAuthorHref() { return authorHref; }
+        public Long getAuthorUserId() { return authorUserId; }
         public String getAuthorName() { return authorName; }
-        public String getTimeText() { return timeText; }
+        public LocalDateTime getCreatedAt() { return createdAt; }
         public String getTitle() { return title; }
         public String getBody() { return body; }
-        public List<String> getImageUrls() { return imageUrls; }
+        public List<Long> getImageIds() { return imageIds; }
         public String getImageAltKey() { return imageAltKey; }
         public String getContextLabelKey() { return contextLabelKey; }
         public String getContextValue() { return contextValue; }
-        public String getContextHref() { return contextHref; }
-        public String getLikeAction() { return likeAction; }
+        public Long getCarId() { return carId; }
+        public int getReviewPage() { return reviewPage; }
+        public String getCommunitySlug() { return communitySlug; }
+        public String getPostSlug() { return postSlug; }
         public boolean isLiked() { return liked; }
         public long getLikeCount() { return likeCount; }
         public long getLikeEntityId() { return likeEntityId; }
@@ -387,13 +336,9 @@ public class ActivityController {
         public boolean isEditable() { return editable; }
         public boolean isDeletable() { return deletable; }
         public boolean isHideable() { return hideable; }
-        public boolean isActionMenuVisible() { return editable || deletable || hideable || repostHref != null; }
-        public String getRepostHref() { return repostHref; }
-        public String getEditHref() { return editHref; }
-        public String getDeleteAction() { return deleteAction; }
-        public String getHideAction() { return hideAction; }
+        public boolean isRepostable() { return repostable; }
+        public boolean isActionMenuVisible() { return editable || deletable || hideable || repostable; }
         public String getHideModalTarget() { return hideModalTarget; }
-        public String getCommentsHref() { return commentsHref; }
         public CommunityController.RepostReviewView getRepostReview() { return repostReview; }
     }
 }

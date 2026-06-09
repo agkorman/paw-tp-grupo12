@@ -42,6 +42,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -768,6 +769,23 @@ class CommunityServiceImplTest {
 
         // Assertions
         assertEquals("classics", exception.getCommunitySlug());
+    }
+
+    @Test
+    void kickMember_self_throws() {
+        // Arrange
+        final Community community = communityWithCreator(99L);
+        when(communityDao.findBySlug("classics")).thenReturn(Optional.of(community));
+        when(communityDao.findMembershipRole(community.getId(), USER_ID)).thenReturn(Optional.of("moderator"));
+
+        // Exercise
+        final InvalidServiceInputException exception = assertThrows(
+                InvalidServiceInputException.class,
+                () -> communityService.kickMember("classics", USER_ID, USER_ID)
+        );
+
+        // Assertions
+        assertNotNull(exception.getMessage());
     }
 
     @Test
