@@ -55,12 +55,12 @@ public class ReviewReply implements Serializable {
     public Review getReview() { return review; }
     public void setReview(final Review review) { this.review = review; }
 
-    public long getReviewId() { return review != null ? review.getId() : 0; }
+    public long getReviewId() { return review.getId(); }
 
     public User getUser() { return user; }
     public void setUser(final User user) { this.user = user; }
 
-    public long getUserId() { return user != null ? user.getId() : 0; }
+    public long getUserId() { return user.getId(); }
 
     public String getAuthorUsername() {
         return user != null ? user.getUsername() : null;

@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -107,17 +106,6 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Long> getLikedReviewIdsByUser(final long userId) {
-        try {
-            return reviewLikeDao.findLikedReviewIdsByUserId(userId);
-        } catch (final DataAccessException e) {
-            LOGGER.warn("get liked review ids by user failed userId={}", userId, e);
-            return Collections.emptyList();
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<Long> getLikedReviewIdsByUser(final long userId, final int page) {
         try {
             return reviewLikeDao.findLikedReviewIdsByUserId(userId, page);
@@ -163,17 +151,6 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         } catch (final DataAccessException e) {
             LOGGER.warn("get liked reply ids failed userId={}", userId, e);
             return Collections.emptySet();
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Long> getLikedReplyIdsByUser(final long userId) {
-        try {
-            return reviewLikeDao.findLikedReplyIdsByUserId(userId);
-        } catch (final DataAccessException e) {
-            LOGGER.warn("get liked reply ids by user failed userId={}", userId, e);
-            return Collections.emptyList();
         }
     }
 

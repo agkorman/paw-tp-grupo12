@@ -97,7 +97,7 @@ public class Review implements Serializable {
         return user != null ? user.getUsername() : null;
     }
 
-    public long getCarId() { return car != null ? car.getId() : 0; }
+    public long getCarId() { return car.getId(); }
 
     public Car getCar() { return car; }
     public void setCar(Car car) { this.car = car; }

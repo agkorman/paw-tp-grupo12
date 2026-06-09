@@ -14,13 +14,11 @@ import java.util.Optional;
 public interface CarRequestDao {
     Optional<CarRequest> findById(long id);
 
-    List<CarRequest> findByStatus(String status);
-
     Page<CarRequest> findByStatus(String status, int page);
 
     long countByStatus(String status);
 
-    CarRequest create(long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId, Integer year,
+    CarRequest create(Long submittedByUserId, String submitterEmail, long brandId, long bodyTypeId, Integer year,
                       String model, String description, String status,
                       String fuelType, Integer horsepower, Integer airbagCount,
                       String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh, BigDecimal priceUsd);

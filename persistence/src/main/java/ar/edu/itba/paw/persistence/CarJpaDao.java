@@ -76,16 +76,6 @@ public class CarJpaDao implements CarDao {
     }
 
     @Override
-    public List<Car> findAll() {
-        final List<Car> cars = em.createQuery(
-                "SELECT c FROM Car c JOIN FETCH c.spec.brand JOIN FETCH c.spec.bodyType ORDER BY c.id",
-                Car.class)
-                .getResultList();
-        populateHasImage(cars);
-        return cars;
-    }
-
-    @Override
     public Optional<Car> findById(final long id) {
         final List<Car> results = em.createQuery(
                 "SELECT c FROM Car c JOIN FETCH c.spec.brand JOIN FETCH c.spec.bodyType WHERE c.id = :id",

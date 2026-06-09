@@ -41,14 +41,6 @@ public class CommunityJpaDao implements CommunityDao {
     private EntityManager em;
 
     @Override
-    public List<Community> findAll() {
-        return em.createQuery(
-                "SELECT c FROM Community c ORDER BY c.id ASC",
-                Community.class
-        ).getResultList();
-    }
-
-    @Override
     public Page<Community> findAll(final int page) {
         final int pageSize = Pagination.COMMUNITIES_PAGE_SIZE;
         final Number count = (Number) em.createNativeQuery("SELECT COUNT(*) FROM communities").getSingleResult();
@@ -172,24 +164,29 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
-    public void updateDetails(final long communityId, final String name, final String description) {
+    public boolean updateDetails(final long communityId, final String name, final String description) {
         final Community community = em.find(Community.class, communityId);
         if (community == null) {
-            return;
+            LOGGER.warn("community details update affected 0 rows id={}", communityId);
+            return false;
         }
         community.setName(name);
         community.setDescription(description);
         LOGGER.info("updated community details id={}", communityId);
+        return true;
     }
 
     @Override
-    public void updateCreatedBy(final long communityId, final long newOwnerUserId) {
+    public boolean updateCreatedBy(final long communityId, final long newOwnerUserId) {
         final Community community = em.find(Community.class, communityId);
         if (community == null) {
-            return;
+            LOGGER.warn("community ownership transfer affected 0 rows id={} newOwnerUserId={}",
+                    communityId, newOwnerUserId);
+            return false;
         }
         community.setCreatedBy(em.getReference(ar.edu.itba.paw.model.User.class, newOwnerUserId));
         LOGGER.info("transferred community ownership id={} newOwnerUserId={}", communityId, newOwnerUserId);
+        return true;
     }
 
     @Override
@@ -246,24 +243,28 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
-    public void updatePost(final long postId, final String title, final String body) {
+    public boolean updatePost(final long postId, final String title, final String body) {
         final CommunityPost post = em.find(CommunityPost.class, postId);
         if (post == null) {
-            return;
+            LOGGER.warn("community post update affected 0 rows id={}", postId);
+            return false;
         }
         post.setTitle(title);
         post.setBody(body);
         LOGGER.info("updated community post id={}", postId);
+        return true;
     }
 
     @Override
-    public void updateComment(final long commentId, final String body) {
+    public boolean updateComment(final long commentId, final String body) {
         final CommunityPostComment comment = em.find(CommunityPostComment.class, commentId);
         if (comment == null) {
-            return;
+            LOGGER.warn("community comment update affected 0 rows id={}", commentId);
+            return false;
         }
         comment.setBody(body);
         LOGGER.info("updated community post comment id={}", commentId);
+        return true;
     }
 
     @Override
@@ -617,19 +618,6 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
-    public List<CommunityPost> findPostsByCommunityId(final long communityId) {
-        return em.createQuery(
-                "SELECT p FROM CommunityPost p " +
-                "LEFT JOIN FETCH p.author " +
-                "WHERE p.community.id = :communityId " +
-                "ORDER BY p.createdAt DESC, p.id DESC",
-                CommunityPost.class
-        )
-                .setParameter("communityId", communityId)
-                .getResultList();
-    }
-
-    @Override
     public List<CommunityPost> findPostsByIds(final Collection<Long> postIds) {
         final List<Long> normalizedIds = normalizeIds(postIds);
         if (normalizedIds.isEmpty()) {
@@ -641,7 +629,9 @@ public class CommunityJpaDao implements CommunityDao {
                 "LEFT JOIN FETCH p.author " +
                 "LEFT JOIN FETCH p.community " +
                 "LEFT JOIN FETCH p.linkedReview lr " +
-                "LEFT JOIN FETCH lr.car " +
+                "LEFT JOIN FETCH lr.car c " +
+                "LEFT JOIN FETCH c.spec.brand " +
+                "LEFT JOIN FETCH c.spec.bodyType " +
                 "LEFT JOIN FETCH lr.user " +
                 "WHERE p.id IN :postIds " +
                 "ORDER BY p.createdAt DESC, p.id DESC",
@@ -681,7 +671,9 @@ public class CommunityJpaDao implements CommunityDao {
                 "SELECT p FROM CommunityPost p " +
                 "LEFT JOIN FETCH p.author " +
                 "LEFT JOIN FETCH p.linkedReview lr " +
-                "LEFT JOIN FETCH lr.car " +
+                "LEFT JOIN FETCH lr.car c " +
+                "LEFT JOIN FETCH c.spec.brand " +
+                "LEFT JOIN FETCH c.spec.bodyType " +
                 "LEFT JOIN FETCH lr.user " +
                 "WHERE p.id IN :ids",
                 CommunityPost.class
@@ -700,7 +692,9 @@ public class CommunityJpaDao implements CommunityDao {
                 "SELECT p FROM CommunityPost p " +
                 "LEFT JOIN FETCH p.author " +
                 "LEFT JOIN FETCH p.linkedReview lr " +
-                "LEFT JOIN FETCH lr.car " +
+                "LEFT JOIN FETCH lr.car c " +
+                "LEFT JOIN FETCH c.spec.brand " +
+                "LEFT JOIN FETCH c.spec.bodyType " +
                 "LEFT JOIN FETCH lr.user " +
                 "WHERE p.community.id = :communityId AND LOWER(p.slug) = :slug",
                 CommunityPost.class

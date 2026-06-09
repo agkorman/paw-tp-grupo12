@@ -186,11 +186,7 @@ public class CarReviewController {
             request.isUserInRole("ADMIN")
         );
 
-        final Car car = carService
-            .getCarById(review.getCarId())
-            .orElseThrow(() ->
-                new ResourceNotFoundException("El auto referenciado no existe.")
-            );
+        final Car car = review.getCar();
 
         final ModelAndView mav = new ModelAndView("review-form.jsp");
         mav.addObject("selectedCar", car);
@@ -578,9 +574,7 @@ public class CarReviewController {
         final Review review = reviewService
             .getReviewById(reviewId)
             .orElseThrow(() -> new ResourceNotFoundException("Review", reviewId));
-        final Car car = carService
-            .getCarById(review.getCarId())
-            .orElseThrow(() -> new ResourceNotFoundException("Car", review.getCarId()));
+        final Car car = review.getCar();
         populateReviewImages(List.of(review));
 
         final Long currentUserId = currentUserId(currentUser);
@@ -680,11 +674,7 @@ public class CarReviewController {
             request.isUserInRole("ADMIN")
         );
 
-        final Car car = carService
-            .getCarById(existingReview.getCarId())
-            .orElseThrow(() ->
-                new ResourceNotFoundException("El auto referenciado no existe.")
-            );
+        final Car car = existingReview.getCar();
         reviewForm.setCarId(existingReview.getCarId());
 
         final String defaultRedirect =
