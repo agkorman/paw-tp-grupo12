@@ -84,6 +84,15 @@
     display: none;
 }
 
+.wizard-intro-actions {
+    margin-top: 0.5rem;
+}
+
+.wizard-intro-actions .btn-primary {
+    font-size: 0.85rem;
+    padding: 0.85rem 2.25rem;
+}
+
 .wizard-step {
     flex-direction: column;
     gap: 0;

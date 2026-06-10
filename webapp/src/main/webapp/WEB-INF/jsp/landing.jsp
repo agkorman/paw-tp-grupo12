@@ -75,7 +75,8 @@
                 </form>
 
                 <c:if test="${not empty heroCar}">
-                    <div class="hero-spotlight">
+                    <c:url var="spotlightReviewUrl" value="/reviews/car/${heroCar.id}"/>
+                    <a class="hero-spotlight" href="${spotlightReviewUrl}">
                         <div class="hero-spotlight-header">
                             <span class="hero-spotlight-label"><spring:message code="landing.spotlight.label"/></span>
                         </div>
@@ -93,7 +94,7 @@
                                 </c:otherwise>
                             </c:choose>
                         </p>
-                    </div>
+                    </a>
                 </c:if>
             </div>
 

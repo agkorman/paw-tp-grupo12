@@ -33,9 +33,9 @@
                         <p class="wizard-kicker"><spring:message code="recommend.intro.kicker"/></p>
                         <h1 class="wizard-question"><spring:message code="recommend.intro.heading"/></h1>
                         <p class="wizard-help"><spring:message code="recommend.intro.help"/></p>
-                    </div>
-                    <div class="wizard-actions">
-                        <button type="button" class="btn-primary wizard-start" data-wizard-action="next"><spring:message code="recommend.intro.start"/></button>
+                        <div class="wizard-intro-actions">
+                            <button type="button" class="btn-primary wizard-start" data-wizard-action="next"><spring:message code="recommend.intro.start"/></button>
+                        </div>
                     </div>
                 </section>
 

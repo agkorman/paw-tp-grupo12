@@ -81,7 +81,13 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(final InterceptorRegistry registry) {
+        registry.addInterceptor(userLocaleInterceptor());
         registry.addInterceptor(localeChangeInterceptor());
+    }
+
+    @Bean
+    public UserLocaleInterceptor userLocaleInterceptor() {
+        return new UserLocaleInterceptor(localeResolver());
     }
 
     @Bean
