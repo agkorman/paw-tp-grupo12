@@ -1209,10 +1209,6 @@ public class CommunityController {
         final Set<Long> hideablePostIds = communityService.getHideablePostIds(
             posts, currentUserId, viewerAdmin);
 
-        final Map<Long, Car> carsByLinkedReview = carsForLinkedReviews(postSummaries.stream()
-                .map(s -> s.getPost().getLinkedReview())
-                .collect(Collectors.toList()));
-
         final List<PostCardView> cards = new ArrayList<>();
         for (final CommunityPostSummary postSummary : postSummaries) {
             final CommunityPost post = postSummary.getPost();
