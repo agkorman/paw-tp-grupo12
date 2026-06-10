@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Community;
+import ar.edu.itba.paw.model.CommunityActionResult;
 import ar.edu.itba.paw.model.CommunityDetailData;
 import ar.edu.itba.paw.model.CommunityHubEntry;
 import ar.edu.itba.paw.model.CommunityMembersData;
@@ -360,7 +361,7 @@ class CommunityControllerTest {
     @Test
     void joinCommunity_authenticatedUser_redirectsToDetail() throws Exception {
         // Arrange
-        when(communityService.toggleMembership("classics", 7L)).thenReturn(Optional.of(true));
+        when(communityService.toggleMembership("classics", 7L)).thenReturn(CommunityActionResult.performed(true));
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
 
@@ -380,7 +381,7 @@ class CommunityControllerTest {
     void joinCommunity_withSafeRedirect_redirectsBackToPost() throws Exception {
         // Arrange
         final String redirect = "/communities/classics/posts/falcon-60#comments";
-        when(communityService.toggleMembership("classics", 7L)).thenReturn(Optional.of(true));
+        when(communityService.toggleMembership("classics", 7L)).thenReturn(CommunityActionResult.performed(true));
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
 
@@ -437,7 +438,7 @@ class CommunityControllerTest {
     void kickCommunityMember_redirectsToMembersPage() throws Exception {
         // Arrange
         final String communitySlug = "classics";
-        when(communityService.kickMember("classics", 6L, 7L)).thenReturn(Optional.of(true));
+        when(communityService.kickMember("classics", 6L, 7L)).thenReturn(CommunityActionResult.performed(true));
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
 
@@ -622,7 +623,7 @@ class CommunityControllerTest {
     @Test
     void togglePostHelpful_authenticatedUser_redirectsToPostDetail() throws Exception {
         // Arrange
-        when(communityService.togglePostHelpfulReaction("classics", "falcon-60", 7L)).thenReturn(Optional.of(true));
+        when(communityService.togglePostHelpfulReaction("classics", "falcon-60", 7L)).thenReturn(CommunityActionResult.performed(true));
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
 
@@ -642,7 +643,7 @@ class CommunityControllerTest {
     void toggleCommentHelpful_authenticatedUser_redirectsToPostDetail() throws Exception {
         // Arrange
         when(communityService.toggleCommentHelpfulReaction("classics", "falcon-60", 10L, 7L))
-                .thenReturn(Optional.of(true));
+                .thenReturn(CommunityActionResult.performed(true));
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
 

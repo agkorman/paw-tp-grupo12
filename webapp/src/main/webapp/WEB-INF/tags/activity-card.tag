@@ -79,7 +79,9 @@
 <c:if test="${not empty activityCard.secondaryMetricKey or not empty activityCard.secondaryMetricValue}">
     <c:choose>
         <c:when test="${not empty activityCard.secondaryMetricKey}">
-            <spring:message var="secondaryMetricText" code="${activityCard.secondaryMetricKey}" arguments="${activityCard.secondaryMetricValue}"/>
+            <spring:message var="secondaryMetricText"
+                            code="${activityCard.secondaryMetricValue eq '1' ? activityCard.secondaryMetricKey.concat('.one') : activityCard.secondaryMetricKey.concat('.many')}"
+                            arguments="${activityCard.secondaryMetricValue}"/>
         </c:when>
         <c:otherwise>
             <c:set var="secondaryMetricText" value="${activityCard.secondaryMetricValue}"/>

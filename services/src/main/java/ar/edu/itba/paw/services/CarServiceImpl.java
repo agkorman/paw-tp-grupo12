@@ -172,7 +172,7 @@ public class CarServiceImpl implements CarService {
         final Integer year,
         final long submittedByUserId,
         final String submitterEmail,
-        final Optional<String> description,
+        final String description,
         final List<ImagePayload> images,
         final String fuelType,
         final Integer horsepower,
@@ -182,14 +182,10 @@ public class CarServiceImpl implements CarService {
         final Integer maxSpeedKmh,
         final BigDecimal priceUsd
     ) {
-        final String normalizedDescription = description
-            .map(String::trim)
-            .filter(value -> !value.isEmpty())
-            .orElseThrow(() ->
-                new InvalidServiceInputException(
-                    "Description is required for car creation."
-                )
-            );
+        final String normalizedDescription = StringUtils.normalizeRequired(
+            description,
+            "Description is required for car creation."
+        );
         final List<ImagePayload> normalizedImages =
             ImagePayloadUtils.normalizeImages(images);
         if (normalizedImages.isEmpty()) {
@@ -249,8 +245,7 @@ public class CarServiceImpl implements CarService {
         final long bodyTypeId,
         final Integer year,
         final String description,
-        final Optional<String> imageContentType,
-        final Optional<byte[]> imageData,
+        final List<ImagePayload> images,
         final String fuelType,
         final Integer horsepower,
         final Integer airbagCount,
@@ -267,7 +262,6 @@ public class CarServiceImpl implements CarService {
             description,
             "Description is required for car update."
         );
-        validateImagePair(imageContentType, imageData);
         validateYear(year);
 
         if (
@@ -297,11 +291,10 @@ public class CarServiceImpl implements CarService {
             maxSpeedKmh,
             priceUsd
         );
-        if (updated.isPresent() && imageContentType.isPresent() && imageData.isPresent()) {
-            carImageDao.saveOrReplace(
+        if (updated.isPresent() && images != null) {
+            carImageDao.replaceAll(
                 id,
-                imageContentType.get(),
-                imageData.get()
+                ImagePayloadUtils.normalizeImages(images)
             );
         }
         if (updated.isPresent()) {
@@ -441,19 +434,6 @@ public class CarServiceImpl implements CarService {
         );
     }
 
-    private void validateImagePair(
-        final Optional<String> imageContentType,
-        final Optional<byte[]> imageData
-    ) {
-        final boolean hasImageContentType = imageContentType.isPresent();
-        final boolean hasImageData = imageData.isPresent();
-        if (hasImageContentType != hasImageData) {
-            throw new InvalidImagePayloadException(
-                "Image metadata and payload must be provided together."
-            );
-        }
-    }
-
     private void validateYear(final Integer year) {
         if (year == null) {
             return;
@@ -468,10 +448,11 @@ public class CarServiceImpl implements CarService {
     @Override
     @Transactional(readOnly = true)
     public List<CarYearVariant> getYearVariants(final long carId) {
-        final Car selectedCar = carDao.findById(carId).orElse(null);
-        if (selectedCar == null || selectedCar.getModel() == null) {
+        final Optional<Car> selectedCarOptional = carDao.findById(carId);
+        if (selectedCarOptional.isEmpty() || selectedCarOptional.get().getModel() == null) {
             return Collections.emptyList();
         }
+        final Car selectedCar = selectedCarOptional.get();
         final String selectedModel = selectedCar.getModel().trim().toLowerCase(Locale.ROOT);
         return carDao.findByBrandIdAndBodyTypeIdAndModel(
             selectedCar.getBrandId(),

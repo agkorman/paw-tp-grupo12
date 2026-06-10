@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.ReviewOwnershipStatus;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.services.CarFavoriteService;
@@ -20,6 +21,8 @@ import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.exception.ResourceNotFoundException;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
+import ar.edu.itba.paw.webapp.form.ReviewHideForm;
+import ar.edu.itba.paw.webapp.form.ReviewReplyForm;
 import ar.edu.itba.paw.webapp.validation.ReviewFormValidator;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -42,6 +45,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -69,9 +73,6 @@ public class CarReviewController {
 
     private static final String SORT_RATING_ASC = "rating_asc";
     private static final String SORT_RATING_DESC = "rating_desc";
-    private static final int MAX_REPLY_BODY_LENGTH = 1000;
-    private static final int REVIEW_HIDE_REASON_MIN_LENGTH = 10;
-    private static final int REVIEW_HIDE_REASON_MAX_LENGTH = 600;
     private static final int MAX_REVIEW_IMAGE_COUNT = 5;
     private static final int TEASER_REPLIES_LIMIT = 3;
 
@@ -270,7 +271,7 @@ public class CarReviewController {
                 car.getId(),
                 currentUser.getId()
             );
-            errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
+            errors.rejectValue("tagIds", "tagIds.invalid");
             model.addAttribute("selectedCar", car);
             return "review-form.jsp";
         }
@@ -303,7 +304,6 @@ public class CarReviewController {
         reviewForm.setCarId(carId);
         mav.addObject("reviewForm", reviewForm);
         mav.addObject("replyError", replyError);
-        mav.addObject("replyErrorArg", MAX_REPLY_BODY_LENGTH);
         mav.addObject("replyErrorReviewId", replyErrorReviewId);
         mav.addObject("replyErrorBody", replyErrorBody);
         return mav;
@@ -718,7 +718,7 @@ public class CarReviewController {
                 reviewId,
                 currentUser.getId()
             );
-            errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
+            errors.rejectValue("tagIds", "tagIds.invalid");
             model.addAttribute("selectedCar", car);
             model.addAttribute("editMode", true);
             model.addAttribute("reviewId", reviewId);
@@ -764,7 +764,8 @@ public class CarReviewController {
     )
     public ModelAndView hideReview(
         @PathVariable("reviewId") final long reviewId,
-        @RequestParam(value = "reason", required = false) final String reason,
+        @Valid @ModelAttribute("reviewHideForm") final ReviewHideForm reviewHideForm,
+        final BindingResult errors,
         @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
@@ -786,12 +787,11 @@ public class CarReviewController {
             .orElse(defaultRedirect);
         final String feedRedirect = "redirect:" + safeRedirect;
 
-        final String normalizedReason = ControllerUtils.normalize(reason);
-        if (validateReviewHideReason(normalizedReason) != null) {
+        if (errors.hasErrors()) {
             return new ModelAndView(feedRedirect);
         }
 
-        if (!reviewService.hideReview(reviewId, normalizedReason)) {
+        if (!reviewService.hideReview(reviewId, reviewHideForm.getReason())) {
             LOGGER.warn("hide review failed reviewId={}", reviewId);
             return new ModelAndView(feedRedirect);
         }
@@ -810,7 +810,8 @@ public class CarReviewController {
     )
     public ModelAndView createReply(
         @PathVariable("reviewId") final long reviewId,
-        @RequestParam(value = "body", required = false) final String body,
+        @Valid @ModelAttribute("reviewReplyForm") final ReviewReplyForm reviewReplyForm,
+        final BindingResult errors,
         @RequestParam(value = "page", required = false) final Integer page,
         @RequestParam(value = "sort", required = false) final String sort,
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
@@ -827,20 +828,20 @@ public class CarReviewController {
             throw new ResourceNotFoundException("Review", reviewId);
         }
 
-        final String validationError = validateReplyInput(body);
-        if (validationError != null) {
+        if (errors.hasErrors()) {
+            final FieldError bodyError = errors.getFieldError("body");
             return carReviewPageWithReplyError(
                 review.getCarId(),
                 sort,
                 page,
                 reviewId,
-                body,
-                validationError,
+                reviewReplyForm.getBody(),
+                bodyError == null ? null : bodyError.getDefaultMessage(),
                 currentUser
             );
         }
 
-        final ReviewReply createdReply = reviewReplyService.createReply(reviewId, currentUser.getId(), body);
+        final ReviewReply createdReply = reviewReplyService.createReply(reviewId, currentUser.getId(), reviewReplyForm.getBody());
         LOGGER.info(
             "user id={} replied to review id={}",
             currentUser.getId(),
@@ -864,7 +865,8 @@ public class CarReviewController {
     )
     public ModelAndView updateReply(
         @PathVariable("replyId") final long replyId,
-        @RequestParam(value = "body", required = false) final String body,
+        @Valid @ModelAttribute("reviewReplyForm") final ReviewReplyForm reviewReplyForm,
+        final BindingResult errors,
         @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
@@ -886,11 +888,11 @@ public class CarReviewController {
             .orElse(defaultRedirect);
         final String feedRedirect = "redirect:" + safeRedirect;
 
-        if (validateReplyInput(body) != null) {
+        if (errors.hasErrors()) {
             return new ModelAndView(feedRedirect);
         }
 
-        reviewReplyService.updateReply(replyId, currentUser.getId(), body);
+        reviewReplyService.updateReply(replyId, currentUser.getId(), reviewReplyForm.getBody());
         LOGGER.info("user id={} updated reply id={}", currentUser.getId(), replyId);
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.reply.update.toast.success");
         return new ModelAndView(feedRedirect);
@@ -934,7 +936,8 @@ public class CarReviewController {
     )
     public ModelAndView hideReply(
         @PathVariable("replyId") final long replyId,
-        @RequestParam(value = "reason", required = false) final String reason,
+        @Valid @ModelAttribute("reviewHideForm") final ReviewHideForm reviewHideForm,
+        final BindingResult errors,
         @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
@@ -956,12 +959,11 @@ public class CarReviewController {
             .orElse(defaultRedirect);
         final String feedRedirect = "redirect:" + safeRedirect;
 
-        final String normalizedReason = ControllerUtils.normalize(reason);
-        if (validateReviewHideReason(normalizedReason) != null) {
+        if (errors.hasErrors()) {
             return new ModelAndView(feedRedirect);
         }
 
-        if (!reviewReplyService.hideReply(replyId, normalizedReason)) {
+        if (!reviewReplyService.hideReply(replyId, reviewHideForm.getReason())) {
             LOGGER.warn("hide reply failed replyId={}", replyId);
             return new ModelAndView(feedRedirect);
         }
@@ -1046,33 +1048,8 @@ public class CarReviewController {
         return new ModelAndView("redirect:" + safeRedirect);
     }
 
-    private String validateReviewHideReason(final String reason) {
-        if (reason == null) {
-            return "review.hide.reason.required";
-        }
-        if (reason.length() < REVIEW_HIDE_REASON_MIN_LENGTH) {
-            return "review.hide.reason.min";
-        }
-        if (reason.length() > REVIEW_HIDE_REASON_MAX_LENGTH) {
-            return "review.hide.reason.max";
-        }
-        return null;
-    }
-
-    private String validateReplyInput(final String body) {
-        if (body == null || body.trim().isEmpty()) {
-            return "review.reply.body.required";
-        }
-        if (body.trim().length() > MAX_REPLY_BODY_LENGTH) {
-            return "review.reply.body.max";
-        }
-        return null;
-    }
-
     private String normalizeOwnershipStatus(final String ownershipStatus) {
-        return ownershipStatus == null || ownershipStatus.isEmpty()
-            ? null
-            : ownershipStatus;
+        return ReviewOwnershipStatus.normalize(ownershipStatus);
     }
 
     private ReviewForm toReviewForm(final Review review) {
@@ -1081,7 +1058,7 @@ public class CarReviewController {
         form.setRating(review.getRating());
         form.setTitle(review.getTitle());
         form.setBody(review.getBody());
-        form.setOwnershipStatus(review.getOwnershipStatus());
+        form.setOwnershipStatus(ReviewOwnershipStatus.normalize(review.getOwnershipStatus()));
         form.setMileageKm(review.getMileageKm());
         form.setWouldRecommend(review.getWouldRecommend());
         form.setTagIds(

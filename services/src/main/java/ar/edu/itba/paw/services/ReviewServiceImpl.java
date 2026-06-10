@@ -301,10 +301,11 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional
     public boolean hideReview(final long reviewId, final String reason) {
-        final Review review = reviewDao.findById(reviewId).orElse(null);
-        if (review == null) {
+        final Optional<Review> reviewOptional = reviewDao.findById(reviewId);
+        if (reviewOptional.isEmpty()) {
             return false;
         }
+        final Review review = reviewOptional.get();
         final String carName = resolveCarDisplayName(review.getCar());
         final String recipientEmail = resolveRecipientEmail(review);
         final boolean deleted = reviewDao.delete(reviewId);

@@ -201,7 +201,7 @@
                         <span class="card-spec-tag">
                             <pa:icon name="dollar" size="11"/>
                             <c:choose>
-                                <c:when test="${not empty priceUsd}">USD <fmt:formatNumber value="${priceUsd}" groupingUsed="true" maxFractionDigits="0"/></c:when>
+                                <c:when test="${not empty priceUsd}"><spring:message code="common.currency.usd"/> <fmt:formatNumber value="${priceUsd}" groupingUsed="true" maxFractionDigits="0"/></c:when>
                                 <c:otherwise><spring:message code="cars.card.price.na"/></c:otherwise>
                             </c:choose>
                         </span>

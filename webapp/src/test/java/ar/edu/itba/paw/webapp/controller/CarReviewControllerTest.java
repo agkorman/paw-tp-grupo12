@@ -53,6 +53,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
@@ -557,6 +558,96 @@ class CarReviewControllerTest {
             resultActions
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/reviews/1?repliesPage=2#reply-55"));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
+    void hideReview_blankReason_redirectsBackWithoutHiding() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(reviewOwnedBy(1L, 42L)));
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(post("/reviews/1/hide").param("reason", ""));
+            // Assertions
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/reviews/car/42#review-1"))
+                    .andExpect(flash().attributeCount(0));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
+    void hideReply_tooShortReason_redirectsBackWithoutHiding() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        final Review review = reviewOwnedBy(1L, 7L);
+        final ReviewReply reply = new ReviewReply(review, review.getUser(), "Thanks.");
+        reply.setId(55L);
+        when(reviewReplyService.getReplyById(eq(55L))).thenReturn(Optional.of(reply));
+        when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(review));
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(post("/reviews/replies/55/hide").param("reason", "tooshort"));
+            // Assertions
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/reviews/car/7#review-1"))
+                    .andExpect(flash().attributeCount(0));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
+    void createReply_blankBody_rendersPageWithReplyError() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(reviewOwnedBy(1L, 7L)));
+        when(carService.getCarById(eq(7L))).thenReturn(Optional.of(aCar(7L)));
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(post("/reviews/1/replies").param("body", ""));
+            // Assertions
+            resultActions.andExpect(status().isOk())
+                    .andExpect(view().name("car-review.jsp"))
+                    .andExpect(model().attributeExists("replyError"))
+                    .andExpect(model().attribute("replyErrorReviewId", 1L));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
+    void updateReply_blankBody_redirectsBackWithoutUpdating() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        final Review review = reviewOwnedBy(1L, 7L);
+        final ReviewReply reply = new ReviewReply(review, review.getUser(), "Original reply body.");
+        reply.setId(55L);
+        when(reviewReplyService.getReplyById(eq(55L))).thenReturn(Optional.of(reply));
+        when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(review));
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(post("/reviews/replies/55/update").param("body", ""));
+            // Assertions
+            resultActions.andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/reviews/car/7#reply-55"))
+                    .andExpect(flash().attributeCount(0));
         } finally {
             clearSecurityContext();
         }

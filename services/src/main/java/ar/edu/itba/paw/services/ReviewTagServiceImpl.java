@@ -68,16 +68,14 @@ public class ReviewTagServiceImpl implements ReviewTagService {
         if (uniqueIds.size() > MAX_TAGS_PER_REVIEW) {
             LOGGER.warn("review tag selection rejected: too many tags count={}", uniqueIds.size());
             throw new InvalidReviewTagSelectionException(
-                    InvalidReviewTagSelectionException.Reason.TOO_MANY,
-                    "Podés elegir hasta " + MAX_TAGS_PER_REVIEW + " etiquetas.");
+                    InvalidReviewTagSelectionException.Reason.TOO_MANY);
         }
         final List<ReviewTag> resolved = reviewTagDao.findByIds(uniqueIds);
         if (resolved.size() != uniqueIds.size()) {
             LOGGER.warn("review tag selection rejected: unknown tag selectedCount={} resolvedCount={}",
                     uniqueIds.size(), resolved.size());
             throw new InvalidReviewTagSelectionException(
-                    InvalidReviewTagSelectionException.Reason.UNKNOWN_TAG,
-                    "Una de las etiquetas seleccionadas no es válida.");
+                    InvalidReviewTagSelectionException.Reason.UNKNOWN_TAG);
         }
         final Set<String> dimensions = resolved.stream()
                 .map(ReviewTag::getDimension)
@@ -85,8 +83,7 @@ public class ReviewTagServiceImpl implements ReviewTagService {
         if (dimensions.size() != resolved.size()) {
             LOGGER.warn("review tag selection rejected: duplicate dimension");
             throw new InvalidReviewTagSelectionException(
-                    InvalidReviewTagSelectionException.Reason.DUPLICATE_DIMENSION,
-                    "No podés elegir dos etiquetas opuestas para la misma característica.");
+                    InvalidReviewTagSelectionException.Reason.DUPLICATE_DIMENSION);
         }
         return resolved;
     }

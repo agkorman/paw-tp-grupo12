@@ -117,16 +117,26 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async("mailTaskExecutor")
-    public void sendCatalogRequestApprovedNotification(final String recipientEmail, final String requestType,
-                                                       final String requestedName) {
-        sendRequestDecisionNotification(recipientEmail, requestType, requestedName, true);
+    public void sendBrandRequestApprovedNotification(final String recipientEmail, final String requestedName) {
+        sendRequestDecisionNotification(recipientEmail, "email.requestDecision.type.brand", requestedName, true);
     }
 
     @Override
     @Async("mailTaskExecutor")
-    public void sendCatalogRequestRejectedNotification(final String recipientEmail, final String requestType,
-                                                       final String requestedName) {
-        sendRequestDecisionNotification(recipientEmail, requestType, requestedName, false);
+    public void sendBrandRequestRejectedNotification(final String recipientEmail, final String requestedName) {
+        sendRequestDecisionNotification(recipientEmail, "email.requestDecision.type.brand", requestedName, false);
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendBodyTypeRequestApprovedNotification(final String recipientEmail, final String requestedName) {
+        sendRequestDecisionNotification(recipientEmail, "email.requestDecision.type.bodyType", requestedName, true);
+    }
+
+    @Override
+    @Async("mailTaskExecutor")
+    public void sendBodyTypeRequestRejectedNotification(final String recipientEmail, final String requestedName) {
+        sendRequestDecisionNotification(recipientEmail, "email.requestDecision.type.bodyType", requestedName, false);
     }
 
     @Override
@@ -570,12 +580,12 @@ public class EmailServiceImpl implements EmailService {
         } else {
             for (final EmailService.ReviewActivityItem item : reviewActivity) {
                 sb.append("• ").append(safeValue(item.reviewTitle))
-                        .append(" (").append(safeValue(item.carName)).append(")");
+                        .append(" (").append(carNameOrFallback(item.carName, locale)).append(")");
                 if (item.newLikes > 0) {
-                    sb.append(" — ").append(msg("email.userDigest.likes", locale, item.newLikes));
+                    sb.append(" — ").append(countMsg("email.userDigest.likes", locale, item.newLikes));
                 }
                 if (item.newReplies > 0) {
-                    sb.append(" — ").append(msg("email.userDigest.replies", locale, item.newReplies));
+                    sb.append(" — ").append(countMsg("email.userDigest.replies", locale, item.newReplies));
                 }
                 sb.append("\n");
             }
@@ -586,8 +596,8 @@ public class EmailServiceImpl implements EmailService {
             sb.append(msg("email.userDigest.favorite.empty", locale)).append("\n");
         } else {
             for (final EmailService.FavoriteActivityItem item : favoriteActivity) {
-                sb.append("• ").append(safeValue(item.carName))
-                        .append(" — ").append(msg("email.userDigest.newReviews", locale, item.newReviewCount))
+                sb.append("• ").append(carNameOrFallback(item.carName, locale))
+                        .append(" — ").append(countMsg("email.userDigest.newReviews", locale, item.newReviewCount))
                         .append("\n");
             }
         }
@@ -847,17 +857,17 @@ public class EmailServiceImpl implements EmailService {
         for (final EmailService.ReviewActivityItem item : items) {
             final StringBuilder detail = new StringBuilder();
             if (item.newLikes > 0) {
-                detail.append(escapeHtml(msg("email.userDigest.likes", locale, item.newLikes)));
+                detail.append(escapeHtml(countMsg("email.userDigest.likes", locale, item.newLikes)));
             }
             if (item.newReplies > 0) {
                 if (detail.length() > 0) {
                     detail.append(" &amp; ");
                 }
-                detail.append(escapeHtml(msg("email.userDigest.replies", locale, item.newReplies)));
+                detail.append(escapeHtml(countMsg("email.userDigest.replies", locale, item.newReplies)));
             }
             rows.append(buildDigestRow(
                     escapeHtml(safeValue(item.reviewTitle)),
-                    escapeHtml(safeValue(item.carName)),
+                    escapeHtml(carNameOrFallback(item.carName, locale)),
                     detail.toString()
             ));
         }
@@ -872,8 +882,8 @@ public class EmailServiceImpl implements EmailService {
         }
         final StringBuilder rows = new StringBuilder();
         for (final EmailService.FavoriteActivityItem item : items) {
-            final String detail = escapeHtml(msg("email.userDigest.newReviews", locale, item.newReviewCount));
-            rows.append(buildDigestRow(escapeHtml(safeValue(item.carName)), null, detail));
+            final String detail = escapeHtml(countMsg("email.userDigest.newReviews", locale, item.newReviewCount));
+            rows.append(buildDigestRow(escapeHtml(carNameOrFallback(item.carName, locale)), null, detail));
         }
         return buildDigestSection(sectionLabel, rows.toString());
     }
@@ -1047,19 +1057,20 @@ public class EmailServiceImpl implements EmailService {
 
     // ── Request decision notification helpers ────────────────────────────────
 
-    private void sendRequestDecisionNotification(final String recipientEmail, final String requestType,
+    private void sendRequestDecisionNotification(final String recipientEmail, final String requestTypeCode,
                                                  final String requestedName, final boolean approved) {
         if (recipientEmail == null || recipientEmail.isBlank()) {
             return;
         }
         final Locale locale = resolveRecipientLocale(recipientEmail);
+        final String requestType = msg(requestTypeCode, locale);
         final String actionUrl = approved ? appBaseUrl + "/cars/new" : appBaseUrl + "/cars";
         final String actionLabel = approved
                 ? msg("email.action.requestCar", locale)
                 : msg("common.action.viewCatalog", locale);
         sendRequestDecisionNotification(
                 recipientEmail,
-                localizedRequestType(requestType, locale),
+                requestType,
                 requestedName,
                 approved,
                 actionUrl,
@@ -1297,6 +1308,12 @@ public class EmailServiceImpl implements EmailService {
         return value == null || value.isBlank() ? "-" : value;
     }
 
+    private String carNameOrFallback(final String carName, final Locale locale) {
+        return carName == null || carName.isBlank()
+                ? msg("email.userDigest.car.unknown", locale)
+                : carName;
+    }
+
     private String absoluteUrl(final String pathOrUrl) {
         if (pathOrUrl == null || pathOrUrl.isBlank()) {
             return appBaseUrl;
@@ -1359,23 +1376,12 @@ public class EmailServiceImpl implements EmailService {
         return Locale.forLanguageTag(DEFAULT_LOCALE_TAG);
     }
 
-    private String localizedRequestType(final String requestType, final Locale locale) {
-        final String normalized = requestType == null ? "" : requestType.trim().toLowerCase(Locale.ROOT);
-        if ("marca".equals(normalized) || "brand".equals(normalized)) {
-            return msg("email.requestDecision.type.brand", locale);
-        }
-        if ("tipo de carrocería".equals(normalized) || "tipo de carroceria".equals(normalized)
-                || "body type".equals(normalized)) {
-            return msg("email.requestDecision.type.bodyType", locale);
-        }
-        if ("moderador".equals(normalized) || "moderator".equals(normalized)) {
-            return msg("email.requestDecision.type.moderator", locale);
-        }
-        return safeValue(requestType);
-    }
-
     private String msg(final String code, final Locale locale, final Object... args) {
         return messageSource.getMessage(code, args, locale == null ? defaultLocale() : locale);
+    }
+
+    private String countMsg(final String keyPrefix, final Locale locale, final long count) {
+        return msg(keyPrefix + (count == 1 ? ".one" : ".many"), locale, count);
     }
 
     private String escapeHtml(final String value) {

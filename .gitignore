@@ -35,6 +35,7 @@ perso.md
 # Local secrets
 **/db.properties
 **/mail.properties
+**/auth.properties
 
 # Generated downloads
 tmp/seeded-car-images/

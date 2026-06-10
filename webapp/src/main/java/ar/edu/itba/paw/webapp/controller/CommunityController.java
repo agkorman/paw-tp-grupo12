@@ -275,8 +275,9 @@ public class CommunityController {
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
         final HttpServletRequest request
     ) {
+        final int normalizedPage = Pagination.normalizePage(page);
         final CommunityDetailData communityDetail = communityService
-            .getCommunityDetail(communitySlug, currentUserId(currentUser), sort, page)
+            .getCommunityDetail(communitySlug, currentUserId(currentUser), sort, normalizedPage)
             .orElseThrow(() -> new ResourceNotFoundException("community not found"));
 
         final boolean viewerAdmin = request.isUserInRole("ADMIN");
@@ -1207,10 +1208,6 @@ public class CommunityController {
             .collect(Collectors.toList());
         final Set<Long> hideablePostIds = communityService.getHideablePostIds(
             posts, currentUserId, viewerAdmin);
-
-        final Map<Long, Car> carsByLinkedReview = carsForLinkedReviews(postSummaries.stream()
-                .map(s -> s.getPost().getLinkedReview())
-                .collect(Collectors.toList()));
 
         final List<PostCardView> cards = new ArrayList<>();
         for (final CommunityPostSummary postSummary : postSummaries) {

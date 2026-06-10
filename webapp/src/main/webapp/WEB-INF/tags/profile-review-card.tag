@@ -25,9 +25,15 @@
 <c:url var="reviewRepostLoginUrl" value="/login">
     <c:param name="redirect" value="/reviews/${reviewCard.review.id}/repost"/>
 </c:url>
-<spring:message var="replyCountText" code="profile.card.metric.replies" arguments="${reviewCard.replyCount}"/>
-<spring:message var="likeCountText" code="profile.card.metric.likes" arguments="${reviewCard.likeCount}"/>
+<spring:message var="replyCountText"
+                code="${reviewCard.replyCount eq 1 ? 'profile.card.metric.replies.one' : 'profile.card.metric.replies.many'}"
+                arguments="${reviewCard.replyCount}"/>
+<spring:message var="likeCountText"
+                code="${reviewCard.likeCount eq 1 ? 'profile.card.metric.likes.one' : 'profile.card.metric.likes.many'}"
+                arguments="${reviewCard.likeCount}"/>
 <spring:message var="reviewMetricsAria" code="profile.card.metrics.aria"/>
+<spring:message var="carUnavailableLabel" code="activity.card.car.unknown"/>
+<c:set var="reviewCarName" value="${reviewCard.hasCar ? reviewCard.carName : carUnavailableLabel}"/>
 
 <article class="profile-review-card" id="review-${reviewCard.review.id}" data-profile-card-link="${fn:escapeXml(profileReviewHref)}" role="link" tabindex="0">
     <a class="profile-review-image" href="${profileReviewHref}">
@@ -36,7 +42,7 @@
                 <c:url var="profileReviewImageUrl" value="/car-image">
                     <c:param name="carId" value="${reviewCard.review.carId}"/>
                 </c:url>
-                <img src="${profileReviewImageUrl}" alt="${fn:escapeXml(reviewCard.carName)}">
+                <img src="${profileReviewImageUrl}" alt="${fn:escapeXml(reviewCarName)}">
             </c:when>
             <c:otherwise>
                 <span class="profile-review-image-placeholder" aria-hidden="true"></span>
@@ -119,7 +125,7 @@
             </div>
         </div>
         <div class="profile-review-context-row">
-            <p class="profile-card-context"><c:out value="${reviewCard.carName}"/></p>
+            <p class="profile-card-context"><c:out value="${reviewCarName}"/></p>
             <span class="card-rating-badge profile-review-inline-rating">
                 <pa:icon name="star-filled" size="12"/>
                 <span class="card-rating-value"><c:out value="${reviewCard.review.rating}"/></span>

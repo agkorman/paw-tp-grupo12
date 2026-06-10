@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.UserRole;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
@@ -33,10 +34,10 @@ import java.util.Set;
 public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
-    private static final String DEFAULT_ROLE = "user";
+    private static final String DEFAULT_ROLE = UserRole.USER;
     private static final String DEFAULT_LOCALE = "es";
     private static final Set<String> SUPPORTED_LOCALES = Set.of("es", "en");
-    private static final List<String> MODERATOR_EMAIL_ROLES = Arrays.asList("moderator", "admin");
+    private static final List<String> MODERATOR_EMAIL_ROLES = Arrays.asList(UserRole.MODERATOR, UserRole.ADMIN);
 
     private final UserDao userDao;
     private final ReviewDao reviewDao;

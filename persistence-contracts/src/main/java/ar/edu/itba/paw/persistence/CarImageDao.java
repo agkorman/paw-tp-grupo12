@@ -24,8 +24,6 @@ public interface CarImageDao {
 
     Optional<ImageMetadata> findMetadataByCarIdAndImageId(long carId, long imageId);
 
-    void saveOrReplace(long carId, String contentType, byte[] imageData);
-
     void replaceAll(long carId, List<ImagePayload> images);
 
     void appendAll(long carId, List<ImagePayload> images);

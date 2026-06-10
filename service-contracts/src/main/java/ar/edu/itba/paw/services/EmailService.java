@@ -9,8 +9,10 @@ public interface EmailService {
     void sendNewCarRequestNotification(CarRequest request, String brandName, String bodyTypeName, boolean hasImage);
     void sendCarApprovedNotification(String recipientEmail, String brandName, String model, long carId);
     void sendCarRejectedNotification(String recipientEmail, String brandName, String model);
-    void sendCatalogRequestApprovedNotification(String recipientEmail, String requestType, String requestedName);
-    void sendCatalogRequestRejectedNotification(String recipientEmail, String requestType, String requestedName);
+    void sendBrandRequestApprovedNotification(String recipientEmail, String requestedName);
+    void sendBrandRequestRejectedNotification(String recipientEmail, String requestedName);
+    void sendBodyTypeRequestApprovedNotification(String recipientEmail, String requestedName);
+    void sendBodyTypeRequestRejectedNotification(String recipientEmail, String requestedName);
     void sendAdminRequestApprovedNotification(String recipientEmail);
     void sendAdminRequestRejectedNotification(String recipientEmail);
     void sendReviewHiddenNotification(String recipientEmail, String reviewTitle, String carName,

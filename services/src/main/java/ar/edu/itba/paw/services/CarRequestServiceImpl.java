@@ -229,10 +229,11 @@ public class CarRequestServiceImpl implements CarRequestService {
     @Override
     @Transactional
     public boolean approvePendingRequest(final long id) {
-        final CarRequest request = carRequestDao.findById(id).orElse(null);
-        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+        final Optional<CarRequest> requestOptional = carRequestDao.findById(id);
+        if (requestOptional.isEmpty() || !STATUS_PENDING.equals(requestOptional.get().getStatus())) {
             return false;
         }
+        final CarRequest request = requestOptional.get();
 
         return approvePendingRequest(
             id,
@@ -241,8 +242,8 @@ public class CarRequestServiceImpl implements CarRequestService {
             request.getBodyTypeId(),
             request.getYear(),
             request.getDescription(),
-            Optional.empty(),
-            Optional.empty(),
+            null,
+            null,
             request.getFuelType(),
             request.getHorsepower(),
             request.getAirbagCount(),
@@ -262,8 +263,8 @@ public class CarRequestServiceImpl implements CarRequestService {
         final long bodyTypeId,
         final Integer year,
         final String description,
-        final Optional<String> imageContentType,
-        final Optional<byte[]> imageData,
+        final String imageContentType,
+        final byte[] imageData,
         final String fuelType,
         final Integer horsepower,
         final Integer airbagCount,
@@ -272,10 +273,11 @@ public class CarRequestServiceImpl implements CarRequestService {
         final Integer maxSpeedKmh,
         final BigDecimal priceUsd
     ) {
-        final CarRequest request = carRequestDao.findById(id).orElse(null);
-        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+        final Optional<CarRequest> requestOptional = carRequestDao.findById(id);
+        if (requestOptional.isEmpty() || !STATUS_PENDING.equals(requestOptional.get().getStatus())) {
             return false;
         }
+        final CarRequest request = requestOptional.get();
 
         final String normalizedModel = StringUtils.normalizeRequired(
             model,
@@ -286,8 +288,8 @@ public class CarRequestServiceImpl implements CarRequestService {
             "Description is required to approve car requests."
         );
 
-        final boolean hasImageContentType = imageContentType.isPresent();
-        final boolean hasImageData = imageData.isPresent();
+        final boolean hasImageContentType = imageContentType != null;
+        final boolean hasImageData = imageData != null;
         if (hasImageContentType != hasImageData) {
             throw new InvalidImagePayloadException(
                 "Image metadata and payload must be provided together."
@@ -297,8 +299,8 @@ public class CarRequestServiceImpl implements CarRequestService {
         final List<ImagePayload> replacementImages = hasImageContentType && hasImageData
             ? List.of(
                   new ImagePayload(
-                      imageContentType.get(),
-                      imageData.get()
+                      imageContentType,
+                      imageData
                   )
               )
             : List.of();
@@ -343,10 +345,11 @@ public class CarRequestServiceImpl implements CarRequestService {
         final Integer maxSpeedKmh,
         final BigDecimal priceUsd
     ) {
-        final CarRequest request = carRequestDao.findById(id).orElse(null);
-        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+        final Optional<CarRequest> requestOptional = carRequestDao.findById(id);
+        if (requestOptional.isEmpty() || !STATUS_PENDING.equals(requestOptional.get().getStatus())) {
             return false;
         }
+        final CarRequest request = requestOptional.get();
 
         final String normalizedModel = StringUtils.normalizeRequired(
             model,
@@ -429,12 +432,11 @@ public class CarRequestServiceImpl implements CarRequestService {
         if (retainedImageIds == null) {
             return payloads;
         }
-        final CarRequest request = carRequestDao
-            .findById(requestId)
-            .orElse(null);
-        if (request == null) {
+        final Optional<CarRequest> requestOptional = carRequestDao.findById(requestId);
+        if (requestOptional.isEmpty()) {
             return payloads;
         }
+        final CarRequest request = requestOptional.get();
         final List<Long> nonLegacyIds = new ArrayList<>();
         for (final Long imageId : retainedImageIds) {
             if (imageId != null && imageId != CarService.LEGACY_IMAGE_ID) {
@@ -534,10 +536,11 @@ public class CarRequestServiceImpl implements CarRequestService {
     @Override
     @Transactional
     public boolean rejectPendingRequest(final long id) {
-        final CarRequest request = carRequestDao.findById(id).orElse(null);
-        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+        final Optional<CarRequest> requestOptional = carRequestDao.findById(id);
+        if (requestOptional.isEmpty() || !STATUS_PENDING.equals(requestOptional.get().getStatus())) {
             return false;
         }
+        final CarRequest request = requestOptional.get();
 
         final boolean statusUpdated = carRequestDao.updateStatus(
             id,

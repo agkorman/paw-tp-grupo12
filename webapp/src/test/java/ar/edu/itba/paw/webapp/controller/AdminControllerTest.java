@@ -26,7 +26,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -36,7 +35,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.Locale;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -89,13 +87,9 @@ class AdminControllerTest {
     private ReviewTagService reviewTagService;
 
     @Mock
-    private MessageSource messageSource;
-
-    @Mock
     private ImageValidationService imageValidationService;
 
     private MockMvc adminMvc() throws Exception {
-        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenAnswer(inv -> inv.getArgument(0));
         final AdminController controller = new AdminController(
                 carRequestService,
                 carService,
@@ -105,7 +99,6 @@ class AdminControllerTest {
                 bodyTypeRequestService,
                 adminRequestService,
                 userService,
-                messageSource,
                 imageValidationService);
         return MockMvcBuilders.standaloneSetup(controller)
                 .setValidator(
@@ -418,7 +411,6 @@ class AdminControllerTest {
                         eq(1L),
                         eq(2020),
                         eq("Fresh description meets length."),
-                        any(),
                         any(),
                         eq("combustion"),
                         eq(130),

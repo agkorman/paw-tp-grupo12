@@ -17,7 +17,17 @@
     <c:url var="profileUrl" value="/user"/>
     <c:url var="reviewUpdateUrl" value="/reviews/${reviewId}"/>
     <c:set var="reviewFormAction" value="${editMode ? reviewUpdateUrl : reviewCreateUrl}"/>
-    <c:set var="reviewFormCancelUrl" value="${editMode ? (not empty editRedirect ? editRedirect : profileUrl) : reviewCancelUrl}"/>
+    <c:choose>
+        <c:when test="${editMode and not empty editRedirect}">
+            <c:url var="reviewFormCancelUrl" value="${editRedirect}"/>
+        </c:when>
+        <c:when test="${editMode}">
+            <c:set var="reviewFormCancelUrl" value="${profileUrl}"/>
+        </c:when>
+        <c:otherwise>
+            <c:set var="reviewFormCancelUrl" value="${reviewCancelUrl}"/>
+        </c:otherwise>
+    </c:choose>
     <spring:message var="reviewTitlePlaceholder" code="review.form.placeholder.title"/>
     <spring:message var="reviewBodyPlaceholder" code="review.form.placeholder.body"/>
     <spring:message var="reviewMileagePlaceholder" code="review.form.placeholder.mileage"/>
@@ -125,11 +135,11 @@
                                 <span><spring:message code="common.value.none"/></span>
                             </label>
                             <label class="toggle-option">
-                                <form:radiobutton path="ownershipStatus" value="Propietario actual"/>
+                                <form:radiobutton path="ownershipStatus" value="current_owner"/>
                                 <span><spring:message code="review.form.ownership.current"/></span>
                             </label>
                             <label class="toggle-option">
-                                <form:radiobutton path="ownershipStatus" value="Ex propietario"/>
+                                <form:radiobutton path="ownershipStatus" value="previous_owner"/>
                                 <span><spring:message code="review.form.ownership.previous"/></span>
                             </label>
                         </div>

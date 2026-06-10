@@ -3,6 +3,7 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.UserRole;
 import java.util.Map;
 import java.util.Optional;
 
@@ -11,7 +12,7 @@ public interface AdminRequestService {
     String STATUS_APPROVED = "approved";
     String STATUS_REJECTED = "rejected";
 
-    String GRANTED_ROLE = "admin";
+    String GRANTED_ROLE = UserRole.ADMIN;
 
     Optional<AdminRequest> getAdminRequestById(long id);
 
@@ -39,7 +40,5 @@ public interface AdminRequestService {
 
     String resolveSubmitterEmail(String submitterEmail, Long submittedByUserId);
 
-    String getSubmitterLabel(String submitterEmail, Long submittedByUserId);
-
-    String getSubmitterLabel(String submitterEmail, Long submittedByUserId, Map<Long, User> usersById);
+    String resolveSubmitterEmail(String submitterEmail, Long submittedByUserId, Map<Long, User> usersById);
 }

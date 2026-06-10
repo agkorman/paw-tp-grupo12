@@ -24,7 +24,9 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 
-<spring:message var="replyCountText" code="communities.post.metric.replies" arguments="${commentCount}"/>
+<spring:message var="replyCountText"
+                code="${commentCount eq 1 ? 'communities.post.metric.replies.one' : 'communities.post.metric.replies.many'}"
+                arguments="${commentCount}"/>
 <spring:message var="postMetricsAria" code="communities.post.metrics.aria"/>
 <spring:message var="postActionMenuLabel" code="activity.card.actionMenu.label"/>
 <spring:message var="postHideLabel" code="communities.post.hideAction"/>

@@ -24,7 +24,9 @@
     <c:param name="redirect" value="/cars/new"/>
 </c:url>
 <spring:message var="carsPaginationAria" code="cars.pagination.aria"/>
-<spring:message var="carsToolbarCountTemplate" code="cars.toolbar.count"/>
+<spring:message var="carsToolbarCountTemplate"
+                code="${resultCount eq 1 ? 'cars.toolbar.count.one' : 'cars.toolbar.count.many'}"
+                arguments="${resultCount}"/>
 
 <div id="carsCatalogContent"
      class="catalog-content"

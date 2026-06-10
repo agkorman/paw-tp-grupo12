@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Community;
+import ar.edu.itba.paw.model.CommunityActionResult;
 import ar.edu.itba.paw.model.CommunityDetailData;
 import ar.edu.itba.paw.model.CommunityEditData;
 import ar.edu.itba.paw.model.CommunityHubEntry;
@@ -29,7 +30,7 @@ public interface CommunityService {
     Community createCommunity(long userId, String name, String description, Collection<Short> topicIds);
     Optional<CommunityEditData> getCommunityForEdit(String communitySlug, long callerUserId);
     Optional<Community> editCommunity(String communitySlug, long callerUserId, String name, String description, Collection<Short> topicIds);
-    Optional<Boolean> deleteCommunity(String communitySlug, long callerUserId);
+    CommunityActionResult deleteCommunity(String communitySlug, long callerUserId);
     Optional<CommunityPost> createCommunityPost(String communitySlug, long userId, String title, String body,
                                                 List<ImagePayload> images);
     Optional<CommunityPost> createCommunityPost(String communitySlug, long userId, String title, String body,
@@ -39,10 +40,10 @@ public interface CommunityService {
                                                 String body, List<ImagePayload> images);
     Optional<CommunityPostComment> createCommunityPostComment(String communitySlug, String postSlug, long userId, String body);
     Optional<CommunityPostComment> updateCommunityPostComment(String communitySlug, long commentId, long callerUserId, String body);
-    Optional<Boolean> toggleMembership(String slug, long userId);
+    CommunityActionResult toggleMembership(String slug, long userId);
     Set<Long> getHelpfulPostIds(Collection<Long> postIds, long userId);
-    Optional<Boolean> togglePostHelpfulReaction(String communitySlug, String postSlug, long userId);
-    Optional<Boolean> toggleCommentHelpfulReaction(String communitySlug, String postSlug, long commentId, long userId);
+    CommunityActionResult togglePostHelpfulReaction(String communitySlug, String postSlug, long userId);
+    CommunityActionResult toggleCommentHelpfulReaction(String communitySlug, String postSlug, long commentId, long userId);
     Optional<CommunityDetailData> getCommunityDetail(String slug, Long currentUserId, String sort);
     Optional<CommunityDetailData> getCommunityDetail(String slug, Long currentUserId, String sort, int page);
     Optional<Community> getCommunityBySlug(String slug);
@@ -58,17 +59,17 @@ public interface CommunityService {
     List<ImagePayload> collectRetainedPostImagePayloads(long postId, List<Long> retainedImageIds);
     Optional<String> getViewerRole(String communitySlug, Long userId);
     Set<Long> getHideablePostIds(Collection<CommunityPost> posts, Long viewerUserId, boolean viewerAdmin);
-    Optional<List<CommunityMembershipEntry>> listMembers(String communitySlug, long callerUserId);
+    List<CommunityMembershipEntry> listMembers(String communitySlug, long callerUserId);
     Optional<CommunityMembersData> getCommunityMembers(String communitySlug, long callerUserId);
-    Optional<Boolean> hidePost(String communitySlug, String postSlug, long callerUserId, String reason);
-    Optional<Boolean> hidePost(String communitySlug, String postSlug, long callerUserId, String reason, boolean callerAdmin);
-    Optional<Boolean> hideComment(String communitySlug, long commentId, long callerUserId, String reason);
-    Optional<Boolean> hideComment(String communitySlug, long commentId, long callerUserId, String reason, boolean callerAdmin);
-    Optional<Boolean> deletePost(String communitySlug, String postSlug, long callerUserId);
-    Optional<Boolean> deleteComment(String communitySlug, long commentId, long callerUserId);
-    Optional<Boolean> kickMember(String communitySlug, long targetUserId, long callerUserId);
-    Optional<Boolean> promoteToModerator(String communitySlug, long targetUserId, long callerUserId);
-    Optional<Boolean> transferOwnership(String communitySlug, long newOwnerUserId, long callerUserId);
+    CommunityActionResult hidePost(String communitySlug, String postSlug, long callerUserId, String reason);
+    CommunityActionResult hidePost(String communitySlug, String postSlug, long callerUserId, String reason, boolean callerAdmin);
+    CommunityActionResult hideComment(String communitySlug, long commentId, long callerUserId, String reason);
+    CommunityActionResult hideComment(String communitySlug, long commentId, long callerUserId, String reason, boolean callerAdmin);
+    CommunityActionResult deletePost(String communitySlug, String postSlug, long callerUserId);
+    CommunityActionResult deleteComment(String communitySlug, long commentId, long callerUserId);
+    CommunityActionResult kickMember(String communitySlug, long targetUserId, long callerUserId);
+    CommunityActionResult promoteToModerator(String communitySlug, long targetUserId, long callerUserId);
+    CommunityActionResult transferOwnership(String communitySlug, long newOwnerUserId, long callerUserId);
     List<Community> getJoinedCommunities(long userId);
     List<CommunityPost> getPostsByIds(Collection<Long> postIds);
     Map<Long, Long> countHelpfulReactionsByPostIds(Collection<Long> postIds);

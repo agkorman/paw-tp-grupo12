@@ -332,39 +332,40 @@ public class AdminRequestServiceImplTest {
     }
 
     @Test
-    public void shouldGetSubmitterLabelFromResolvedEmail() {
+    public void shouldResolveSubmitterEmailFromExplicitEmailUsingMap() {
         // Arrange
         final String email = "submitter@example.com";
         final Long userId = 123L;
 
         // Exercise
-        final String result = adminRequestService.getSubmitterLabel(email, userId);
+        final String result = adminRequestService.resolveSubmitterEmail(email, userId, java.util.Collections.emptyMap());
 
         // Assertions
         assertEquals("submitter@example.com", result);
     }
 
     @Test
-    public void shouldGetSubmitterLabelAsUserIdWhenEmailCannotBeResolved() {
+    public void shouldResolveSubmitterEmailFromUsersMapWhenEmailMissing() {
         // Arrange
-        when(userService.getUsersByIds(java.util.List.of(USER_ID)))
-            .thenReturn(java.util.Collections.emptyList());
+        final User user = TestModels.user(USER_ID, "username", "mapped@example.com", "password", "user", LocalDateTime.now());
+        final java.util.Map<Long, User> usersById = java.util.Map.of(USER_ID, user);
 
         // Exercise
-        final String result = adminRequestService.getSubmitterLabel(null, USER_ID);
+        final String result = adminRequestService.resolveSubmitterEmail(null, USER_ID, usersById);
 
         // Assertions
-        assertEquals("Usuario #42", result);
+        assertEquals("mapped@example.com", result);
     }
 
     @Test
-    public void shouldGetSubmitterLabelAsUnidentifiedWhenNothingCanBeResolved() {
+    public void shouldReturnNullWhenSubmitterCannotBeResolvedFromMap() {
         // Arrange
+        final java.util.Map<Long, User> usersById = java.util.Collections.emptyMap();
 
         // Exercise
-        final String result = adminRequestService.getSubmitterLabel(null, null);
+        final String result = adminRequestService.resolveSubmitterEmail(null, USER_ID, usersById);
 
         // Assertions
-        assertEquals("Usuario sin identificar", result);
+        assertEquals(null, result);
     }
 }

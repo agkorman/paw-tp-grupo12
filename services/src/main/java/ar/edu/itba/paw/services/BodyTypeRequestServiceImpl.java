@@ -77,11 +77,12 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
     @Override
     @Transactional
     public boolean approvePendingRequest(final long id, final String overrideName) {
-        final BodyTypeRequest request = bodyTypeRequestDao.findById(id).orElse(null);
-        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+        final Optional<BodyTypeRequest> requestOptional = bodyTypeRequestDao.findById(id);
+        if (requestOptional.isEmpty() || !STATUS_PENDING.equals(requestOptional.get().getStatus())) {
             LOGGER.warn("approve body type request rejected: not found or not pending id={}", id);
             return false;
         }
+        final BodyTypeRequest request = requestOptional.get();
 
         final String resolvedName = StringUtils.normalize(overrideName);
         final String nameToCreate = resolvedName != null ? resolvedName : request.getName();
@@ -109,11 +110,12 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
     @Override
     @Transactional
     public boolean rejectPendingRequest(final long id) {
-        final BodyTypeRequest request = bodyTypeRequestDao.findById(id).orElse(null);
-        if (request == null || !STATUS_PENDING.equals(request.getStatus())) {
+        final Optional<BodyTypeRequest> requestOptional = bodyTypeRequestDao.findById(id);
+        if (requestOptional.isEmpty() || !STATUS_PENDING.equals(requestOptional.get().getStatus())) {
             LOGGER.warn("reject body type request rejected: not found or not pending id={}", id);
             return false;
         }
+        final BodyTypeRequest request = requestOptional.get();
 
         final boolean statusUpdated = bodyTypeRequestDao.updateStatus(id, STATUS_PENDING, STATUS_REJECTED);
         if (statusUpdated) {
@@ -126,16 +128,14 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
     private void sendRequestApprovedNotification(final BodyTypeRequest request, final String approvedName) {
         final String recipientEmail = resolveSubmitterEmail(request);
         if (recipientEmail != null) {
-            emailService.sendCatalogRequestApprovedNotification(recipientEmail, "tipo de carrocería",
-                    approvedName);
+            emailService.sendBodyTypeRequestApprovedNotification(recipientEmail, approvedName);
         }
     }
 
     private void sendRequestRejectedNotification(final BodyTypeRequest request) {
         final String recipientEmail = resolveSubmitterEmail(request);
         if (recipientEmail != null) {
-            emailService.sendCatalogRequestRejectedNotification(recipientEmail, "tipo de carrocería",
-                    request.getName());
+            emailService.sendBodyTypeRequestRejectedNotification(recipientEmail, request.getName());
         }
     }
 

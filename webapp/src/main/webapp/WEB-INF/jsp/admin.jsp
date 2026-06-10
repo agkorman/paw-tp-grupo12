@@ -82,7 +82,8 @@
                                     <pa:admin-catalog-request-card
                                             id="${brandRequest.id}"
                                             name="${brandRequest.name}"
-                                            submitter="${brandRequest.submitter}"
+                                            submitterEmail="${brandRequest.submitterEmail}"
+                                            submitterUserId="${brandRequest.submitterUserId}"
                                             comments="${brandRequest.comments}"
                                             type="brand"
                                             kicker="${brandKicker}"/>
@@ -109,7 +110,8 @@
                                     <pa:admin-catalog-request-card
                                             id="${bodyTypeRequest.id}"
                                             name="${bodyTypeRequest.name}"
-                                            submitter="${bodyTypeRequest.submitter}"
+                                            submitterEmail="${bodyTypeRequest.submitterEmail}"
+                                            submitterUserId="${bodyTypeRequest.submitterUserId}"
                                             comments="${bodyTypeRequest.comments}"
                                             type="body-type"
                                             kicker="${bodyTypeKicker}"/>
@@ -132,18 +134,20 @@
                         </c:when>
                         <c:otherwise>
                             <div class="admin-catalog-request-grid">
+                                <spring:message var="adminRequestUnidentified" code="admin.user.unidentified"/>
                                 <c:forEach var="adminRequest" items="${pendingAdminRequests}">
+                                    <c:set var="adminRequestSubmitter" value="${empty adminRequest.username ? adminRequestUnidentified : adminRequest.username}"/>
                                     <button type="button"
                                             class="admin-catalog-request-card"
                                             data-open-admin-request-review
                                             data-request-id="${adminRequest.id}"
-                                            data-request-submitter="${fn:escapeXml(adminRequest.label)}"
+                                            data-request-submitter="${fn:escapeXml(adminRequestSubmitter)}"
                                             data-request-motivation="${fn:escapeXml(adminRequest.motivation)}"
                                             data-request-bio="${fn:escapeXml(adminRequest.bio)}"
                                             data-request-justification="${fn:escapeXml(adminRequest.justification)}">
                                         <span class="admin-catalog-request-card-kicker"><spring:message code="admin.tab.moderators"/></span>
                                         <span class="admin-catalog-request-card-name">
-                                            <c:out value="${adminRequest.username}"/>
+                                            <c:out value="${adminRequestSubmitter}"/>
                                         </span>
                                     </button>
                                 </c:forEach>
@@ -180,6 +184,11 @@
                                             <c:otherwise><c:set var="requestHeroImagePath" value="/admin/requests/${request.id}/images/${request.heroImageId}"/></c:otherwise>
                                         </c:choose>
                                     </c:if>
+                                    <c:choose>
+                                        <c:when test="${not empty request.submitterEmail}"><c:set var="requestSubmitterLabel" value="${request.submitterEmail}"/></c:when>
+                                        <c:when test="${not empty request.submitterUserId}"><spring:message var="requestSubmitterLabel" code="admin.user.byId" arguments="${request.submitterUserId}"/></c:when>
+                                        <c:otherwise><spring:message var="requestSubmitterLabel" code="admin.user.unidentified"/></c:otherwise>
+                                    </c:choose>
                                     <pa:car-card
                                             model="${requestBrandLabel} ${request.model}"
                                             year="${request.year}"
@@ -188,7 +197,7 @@
                                             hasImage="${request.hasImage}"
                                             imageUrl="${requestHeroImagePath}"
                                             href="${requestReviewUrl}"
-                                            submitter="${request.submitter}"
+                                            submitter="${requestSubmitterLabel}"
                                             footerText="${pendingStatusLabel}"
                                             actionText="${reviewActionLabel}"/>
                                 </c:forEach>

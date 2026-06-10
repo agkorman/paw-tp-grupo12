@@ -68,6 +68,18 @@ WHERE cr.submitted_by_user_id IS NULL
   AND LOWER(BTRIM(cr.submitter_email)) = u.email_key;
 
 -- ============================================================
+-- Legacy backfill: review ownership status labels
+-- ============================================================
+
+UPDATE reviews
+SET ownership_status = 'current_owner'
+WHERE ownership_status = 'Propietario actual';
+
+UPDATE reviews
+SET ownership_status = 'previous_owner'
+WHERE ownership_status = 'Ex propietario';
+
+-- ============================================================
 -- Optional reference/demo seed data
 -- ============================================================
 

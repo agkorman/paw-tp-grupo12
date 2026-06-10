@@ -151,6 +151,12 @@ public class AuthController {
         try {
             final Authentication authentication = authenticationManager.authenticate(
                     UsernamePasswordAuthenticationToken.unauthenticated(email, rawPassword));
+            // Rotate the session id so a pre-auth session cannot survive into the
+            // authenticated session (session-fixation protection). The form-login filter
+            // does this automatically; this programmatic login bypasses it, so we mirror it.
+            if (request.getSession(false) != null) {
+                request.changeSessionId();
+            }
             final SecurityContext context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);

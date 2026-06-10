@@ -93,7 +93,7 @@ public class CarServiceImplTest {
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> carService.updateCar(CAR_ID, BRAND_ID, blankModel, BODY_TYPE_ID, 2024, "desc",
-                        Optional.empty(), Optional.empty(),
+                        null,
                         "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00")));
 
         // Assertions
@@ -108,27 +108,11 @@ public class CarServiceImplTest {
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> carService.updateCar(CAR_ID, BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, blankDescription,
-                        Optional.empty(), Optional.empty(),
+                        null,
                         "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00")));
 
         // Assertions
         assertEquals("Description is required for car update.", ex.getMessage());
-    }
-
-    @Test
-    public void shouldRejectUpdateCarWithMismatchedImagePair() {
-        // Arrange
-        final Optional<String> contentType = Optional.of("image/png");
-        final Optional<byte[]> imageData = Optional.empty();
-
-        // Exercise
-        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> carService.updateCar(CAR_ID, BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, "desc",
-                        contentType, imageData,
-                        "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00")));
-
-        // Assertions
-        assertEquals("Image metadata and payload must be provided together.", ex.getMessage());
     }
 
     @Test
@@ -139,7 +123,7 @@ public class CarServiceImplTest {
 
         // Exercise
         final Optional<Car> result = carService.updateCar(CAR_ID, BRAND_ID, "  Corolla  ", BODY_TYPE_ID, 2024,
-                "  desc  ", Optional.empty(), Optional.empty(),
+                "  desc  ", null,
                 "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00"));
 
         // Assertions
@@ -155,7 +139,7 @@ public class CarServiceImplTest {
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> carService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, 1L, "u@x.com",
-                        Optional.of("   "), images, "GASOLINE", 100, 6, "MANUAL",
+                        "   ", images, "GASOLINE", 100, 6, "MANUAL",
                         new BigDecimal("6.0"), 180, new BigDecimal("20000.00")));
 
         // Assertions
@@ -170,7 +154,7 @@ public class CarServiceImplTest {
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> carService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, 1L, "u@x.com",
-                        Optional.of("desc"), images, "GASOLINE", 100, 6, "MANUAL",
+                        "desc", images, "GASOLINE", 100, 6, "MANUAL",
                         new BigDecimal("6.0"), 180, new BigDecimal("20000.00")));
 
         // Assertions
@@ -191,7 +175,7 @@ public class CarServiceImplTest {
 
         // Exercise
         final CarRequest result = carService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, 1L, "u@x.com",
-                Optional.of("desc"), images, "GASOLINE", 100, 6, "MANUAL",
+                "desc", images, "GASOLINE", 100, 6, "MANUAL",
                 new BigDecimal("6.0"), 180, new BigDecimal("20000.00"));
 
         // Assertions

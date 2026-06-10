@@ -235,7 +235,7 @@ public class CarRequestServiceImplTest {
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> carRequestService.approvePendingRequest(REQUEST_ID, BRAND_ID, "Corolla", BODY_TYPE_ID, 2024,
-                        "desc", Optional.of(CONTENT_TYPE), Optional.empty(),
+                        "desc", CONTENT_TYPE, null,
                         "GASOLINE", 130, 6, "MANUAL", new BigDecimal("6.5"), 190, new BigDecimal("25000.00")));
 
         // Assertions

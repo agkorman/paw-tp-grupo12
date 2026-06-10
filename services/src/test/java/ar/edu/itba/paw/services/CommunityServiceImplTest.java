@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Community;
+import ar.edu.itba.paw.model.CommunityActionResult;
 import ar.edu.itba.paw.model.CommunityDetailData;
 import ar.edu.itba.paw.model.CommunityHubEntry;
 import ar.edu.itba.paw.model.CommunityPost;
@@ -557,10 +558,10 @@ class CommunityServiceImplTest {
         when(communityDao.findBySlug("missing")).thenReturn(Optional.empty());
 
         // Exercise
-        final Optional<Boolean> result = communityService.toggleMembership("missing", USER_ID);
+        final CommunityActionResult result = communityService.toggleMembership("missing", USER_ID);
 
         // Assertions
-        assertTrue(result.isEmpty());
+        assertFalse(result.isFound());
     }
 
     @Test
@@ -571,11 +572,11 @@ class CommunityServiceImplTest {
         when(communityDao.findJoinedCommunityIds(USER_ID, List.of(community.getId()))).thenReturn(Set.of());
 
         // Exercise
-        final Optional<Boolean> result = communityService.toggleMembership("classics", USER_ID);
+        final CommunityActionResult result = communityService.toggleMembership("classics", USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
     }
 
     @Test
@@ -605,11 +606,11 @@ class CommunityServiceImplTest {
         when(communityDao.findJoinedCommunityIds(USER_ID, List.of(community.getId()))).thenReturn(Set.of(community.getId()));
 
         // Exercise
-        final Optional<Boolean> result = communityService.toggleMembership("classics", USER_ID);
+        final CommunityActionResult result = communityService.toggleMembership("classics", USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertFalse(result.get());
+        assertTrue(result.isFound());
+        assertFalse(result.getValue());
     }
 
     @Test
@@ -622,11 +623,11 @@ class CommunityServiceImplTest {
         when(communityDao.isHelpfulReactionAddedByUser(post.getId(), USER_ID)).thenReturn(true);
 
         // Exercise
-        final Optional<Boolean> result = communityService.togglePostHelpfulReaction("classics", "falcon-60", USER_ID);
+        final CommunityActionResult result = communityService.togglePostHelpfulReaction("classics", "falcon-60", USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertFalse(result.get());
+        assertTrue(result.isFound());
+        assertFalse(result.getValue());
     }
 
     @Test
@@ -639,11 +640,11 @@ class CommunityServiceImplTest {
         when(communityDao.isHelpfulReactionAddedByUser(post.getId(), USER_ID)).thenReturn(false);
 
         // Exercise
-        final Optional<Boolean> result = communityService.togglePostHelpfulReaction("classics", "falcon-60", USER_ID);
+        final CommunityActionResult result = communityService.togglePostHelpfulReaction("classics", "falcon-60", USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
     }
 
     @Test
@@ -657,12 +658,12 @@ class CommunityServiceImplTest {
         when(communityDao.isCommentHelpfulReactionAddedByUser(comment.getId(), USER_ID)).thenReturn(true);
 
         // Exercise
-        final Optional<Boolean> result =
+        final CommunityActionResult result =
                 communityService.toggleCommentHelpfulReaction("classics", "falcon-60", comment.getId(), USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertFalse(result.get());
+        assertTrue(result.isFound());
+        assertFalse(result.getValue());
     }
 
     @Test
@@ -676,12 +677,12 @@ class CommunityServiceImplTest {
         when(communityDao.isCommentHelpfulReactionAddedByUser(comment.getId(), USER_ID)).thenReturn(false);
 
         // Exercise
-        final Optional<Boolean> result =
+        final CommunityActionResult result =
                 communityService.toggleCommentHelpfulReaction("classics", "falcon-60", comment.getId(), USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
     }
 
     @Test
@@ -695,11 +696,11 @@ class CommunityServiceImplTest {
         when(communityDao.findCommentById(comment.getId())).thenReturn(Optional.of(comment));
 
         // Exercise
-        final Optional<Boolean> result =
+        final CommunityActionResult result =
                 communityService.toggleCommentHelpfulReaction("classics", "falcon-60", comment.getId(), USER_ID);
 
         // Assertions
-        assertFalse(result.isPresent());
+        assertFalse(result.isFound());
     }
 
     @Test
@@ -797,11 +798,11 @@ class CommunityServiceImplTest {
         when(communityDao.findMembershipRole(community.getId(), 42L)).thenReturn(Optional.of("member"));
 
         // Exercise
-        final Optional<Boolean> result = communityService.kickMember("classics", 42L, USER_ID);
+        final CommunityActionResult result = communityService.kickMember("classics", 42L, USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
     }
 
     @Test
@@ -818,11 +819,11 @@ class CommunityServiceImplTest {
         when(userService.getUserById(target.getId())).thenReturn(Optional.of(target));
 
         // Exercise
-        final Optional<Boolean> result = service.kickMember("classics", target.getId(), USER_ID);
+        final CommunityActionResult result = service.kickMember("classics", target.getId(), USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
         assertEquals(1, recordingEmailService.communityKickedEmails.size());
         assertEquals(target.getEmail(), recordingEmailService.communityKickedEmails.get(0));
     }
@@ -836,11 +837,11 @@ class CommunityServiceImplTest {
         when(communityDao.findMembershipRole(community.getId(), 42L)).thenReturn(Optional.of("member"));
 
         // Exercise
-        final Optional<Boolean> result = communityService.promoteToModerator("classics", 42L, USER_ID);
+        final CommunityActionResult result = communityService.promoteToModerator("classics", 42L, USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
     }
 
     @Test
@@ -857,11 +858,11 @@ class CommunityServiceImplTest {
         when(userService.getUserById(target.getId())).thenReturn(Optional.of(target));
 
         // Exercise
-        final Optional<Boolean> result = service.promoteToModerator("classics", target.getId(), USER_ID);
+        final CommunityActionResult result = service.promoteToModerator("classics", target.getId(), USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
         assertEquals(1, recordingEmailService.communityPromotedEmails.size());
         assertEquals(target.getEmail(), recordingEmailService.communityPromotedEmails.get(0));
     }
@@ -893,11 +894,11 @@ class CommunityServiceImplTest {
         when(communityDao.findPostByCommunityIdAndSlug(community.getId(), "falcon-60")).thenReturn(Optional.of(post));
 
         // Exercise
-        final Optional<Boolean> result = communityService.hidePost("classics", "falcon-60", USER_ID, "Duplicated content.");
+        final CommunityActionResult result = communityService.hidePost("classics", "falcon-60", USER_ID, "Duplicated content.");
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
     }
 
     @Test
@@ -915,11 +916,11 @@ class CommunityServiceImplTest {
         when(userService.getUserById(postAuthor.getId())).thenReturn(Optional.of(postAuthor));
 
         // Exercise
-        final Optional<Boolean> result = service.hidePost("classics", "falcon-60", USER_ID, "Duplicated content.");
+        final CommunityActionResult result = service.hidePost("classics", "falcon-60", USER_ID, "Duplicated content.");
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
         assertEquals(1, recordingEmailService.communityPostHiddenEmails.size());
         assertEquals(postAuthor.getEmail(), recordingEmailService.communityPostHiddenEmails.get(0));
     }
@@ -940,11 +941,11 @@ class CommunityServiceImplTest {
         when(userService.getUserById(commentAuthor.getId())).thenReturn(Optional.of(commentAuthor));
 
         // Exercise
-        final Optional<Boolean> result = service.hideComment("classics", comment.getId(), USER_ID, "Off-topic comment.");
+        final CommunityActionResult result = service.hideComment("classics", comment.getId(), USER_ID, "Off-topic comment.");
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
         assertEquals(1, recordingEmailService.communityCommentHiddenEmails.size());
         assertEquals(commentAuthor.getEmail(), recordingEmailService.communityCommentHiddenEmails.get(0));
     }
@@ -964,12 +965,12 @@ class CommunityServiceImplTest {
         when(userService.getUserById(commentAuthor.getId())).thenReturn(Optional.of(commentAuthor));
 
         // Exercise
-        final Optional<Boolean> result =
+        final CommunityActionResult result =
                 service.hideComment("classics", comment.getId(), USER_ID, "Off-topic comment.", true);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
         assertEquals(1, recordingEmailService.communityCommentHiddenEmails.size());
         assertEquals(commentAuthor.getEmail(), recordingEmailService.communityCommentHiddenEmails.get(0));
     }
@@ -985,11 +986,11 @@ class CommunityServiceImplTest {
         when(communityDao.deleteComment(comment.getId())).thenReturn(true);
 
         // Exercise
-        final Optional<Boolean> result = communityService.deleteComment("classics", comment.getId(), USER_ID);
+        final CommunityActionResult result = communityService.deleteComment("classics", comment.getId(), USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
     }
 
     @Test
@@ -1039,11 +1040,11 @@ class CommunityServiceImplTest {
         when(communityDao.deletePost(post.getId())).thenReturn(true);
 
         // Exercise
-        final Optional<Boolean> result = communityService.deletePost("classics", "falcon-60", USER_ID);
+        final CommunityActionResult result = communityService.deletePost("classics", "falcon-60", USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
     }
 
     @Test
@@ -1123,11 +1124,11 @@ class CommunityServiceImplTest {
         when(communityDao.delete(community.getId())).thenReturn(true);
 
         // Exercise
-        final Optional<Boolean> result = communityService.deleteCommunity("classics", USER_ID);
+        final CommunityActionResult result = communityService.deleteCommunity("classics", USER_ID);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
     }
 
     @Test
@@ -1173,11 +1174,11 @@ class CommunityServiceImplTest {
         when(communityDao.findMembershipRole(community.getId(), 42L)).thenReturn(Optional.of("moderator"));
 
         // Exercise
-        final Optional<Boolean> result = communityService.transferOwnership("classics", 42L, ownerId);
+        final CommunityActionResult result = communityService.transferOwnership("classics", 42L, ownerId);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
     }
 
     @Test
@@ -1194,11 +1195,11 @@ class CommunityServiceImplTest {
         when(userService.getUserById(newOwner.getId())).thenReturn(Optional.of(newOwner));
 
         // Exercise
-        final Optional<Boolean> result = service.transferOwnership("classics", newOwner.getId(), ownerId);
+        final CommunityActionResult result = service.transferOwnership("classics", newOwner.getId(), ownerId);
 
         // Assertions
-        assertTrue(result.isPresent());
-        assertTrue(result.get());
+        assertTrue(result.isFound());
+        assertTrue(result.getValue());
         assertEquals(1, recordingEmailService.communityOwnershipEmails.size());
         assertEquals(newOwner.getEmail(), recordingEmailService.communityOwnershipEmails.get(0));
     }
@@ -1350,13 +1351,19 @@ class CommunityServiceImplTest {
         }
 
         @Override
-        public void sendCatalogRequestApprovedNotification(final String recipientEmail, final String requestType,
-                                                           final String requestedName) {
+        public void sendBrandRequestApprovedNotification(final String recipientEmail, final String requestedName) {
         }
 
         @Override
-        public void sendCatalogRequestRejectedNotification(final String recipientEmail, final String requestType,
-                                                           final String requestedName) {
+        public void sendBrandRequestRejectedNotification(final String recipientEmail, final String requestedName) {
+        }
+
+        @Override
+        public void sendBodyTypeRequestApprovedNotification(final String recipientEmail, final String requestedName) {
+        }
+
+        @Override
+        public void sendBodyTypeRequestRejectedNotification(final String recipientEmail, final String requestedName) {
         }
 
         @Override

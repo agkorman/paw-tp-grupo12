@@ -1,20 +1,17 @@
 package ar.edu.itba.paw.webapp.validation;
 
+import ar.edu.itba.paw.model.ReviewOwnershipStatus;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import java.math.BigDecimal;
-import java.util.Set;
 
 @Component
 public class ReviewFormValidator implements Validator {
 
     private static final BigDecimal RATING_STEP_DOUBLED = BigDecimal.valueOf(2);
-    private static final Set<String> ALLOWED_OWNERSHIP_STATUSES =
-            Set.of("", "Propietario actual", "Ex propietario");
-
     @Override
     public boolean supports(final Class<?> clazz) {
         return ReviewForm.class.isAssignableFrom(clazz);
@@ -29,7 +26,7 @@ public class ReviewFormValidator implements Validator {
         }
 
         final String ownership = form.getOwnershipStatus() == null ? "" : form.getOwnershipStatus();
-        if (!ALLOWED_OWNERSHIP_STATUSES.contains(ownership)) {
+        if (!ReviewOwnershipStatus.isValid(ownership)) {
             errors.rejectValue("ownershipStatus", "ownership.invalid");
         }
     }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import ar.edu.itba.paw.model.UserRole;
 import ar.edu.itba.paw.services.AuthenticatedSessionService;
 import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
@@ -20,7 +21,7 @@ public class AuthenticatedSessionRegistry implements AuthenticatedSessionService
     private static final Logger LOGGER = LoggerFactory.getLogger(
         AuthenticatedSessionRegistry.class
     );
-    private static final String ADMIN_ROLE = "admin";
+    private static final String ADMIN_ROLE = UserRole.ADMIN;
     private static final String SECURITY_CONTEXT_ATTRIBUTE =
         HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;
 

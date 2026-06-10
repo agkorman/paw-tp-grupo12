@@ -9,8 +9,8 @@ import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.CarRequest;
-import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.services.AdminRequestService;
@@ -48,8 +48,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -115,7 +113,6 @@ public class AdminController {
     private final BodyTypeRequestService bodyTypeRequestService;
     private final AdminRequestService adminRequestService;
     private final UserService userService;
-    private final MessageSource messageSource;
     private final ImageValidationService imageValidationService;
 
     @Autowired
@@ -128,7 +125,6 @@ public class AdminController {
         final BodyTypeRequestService bodyTypeRequestService,
         final AdminRequestService adminRequestService,
         final UserService userService,
-        final MessageSource messageSource,
         final ImageValidationService imageValidationService
     ) {
         this.carRequestService = carRequestService;
@@ -139,16 +135,7 @@ public class AdminController {
         this.bodyTypeRequestService = bodyTypeRequestService;
         this.adminRequestService = adminRequestService;
         this.userService = userService;
-        this.messageSource = messageSource;
         this.imageValidationService = imageValidationService;
-    }
-
-    private String message(final String code, final Object... args) {
-        return messageSource.getMessage(
-            code,
-            args,
-            LocaleContextHolder.getLocale()
-        );
     }
 
     @InitBinder
@@ -167,6 +154,7 @@ public class AdminController {
         @RequestParam(value = "page", defaultValue = "1") final int page
     ) {
         final String activeTab = normalizeAdminTab(tab);
+        final int requestedPage = Pagination.normalizePage(page);
         final long carRequestCount = carRequestService.countCarRequestsByStatus(
             CarRequestService.STATUS_PENDING
         );
@@ -197,7 +185,7 @@ public class AdminController {
                 final Page<BrandRequest> requestPage =
                     brandRequestService.getBrandRequestsByStatus(
                         BrandRequestService.STATUS_PENDING,
-                        page
+                        requestedPage
                     );
                 final Map<Long, User> brandSubmitters = fetchSubmitters(
                     requestPage.getItems(),
@@ -217,7 +205,7 @@ public class AdminController {
                 final Page<BodyTypeRequest> requestPage =
                     bodyTypeRequestService.getBodyTypeRequestsByStatus(
                         BodyTypeRequestService.STATUS_PENDING,
-                        page
+                        requestedPage
                     );
                 final Map<Long, User> bodyTypeSubmitters = fetchSubmitters(
                     requestPage.getItems(),
@@ -237,7 +225,7 @@ public class AdminController {
                 final Page<AdminRequest> requestPage =
                     adminRequestService.getAdminRequestsByStatus(
                         AdminRequestService.STATUS_PENDING,
-                        page
+                        requestedPage
                     );
                 final Map<Long, User> adminSubmitters = fetchSubmitters(
                     requestPage.getItems(),
@@ -268,7 +256,7 @@ public class AdminController {
                 final Page<CarRequest> requestPage =
                     carRequestService.getCarRequestsByStatus(
                         CarRequestService.STATUS_PENDING,
-                        page
+                        requestedPage
                     );
                 final Map<Long, User> carSubmitters = fetchSubmitters(
                     requestPage.getItems(),
@@ -383,7 +371,6 @@ public class AdminController {
             .safeRedirect(redirect, request.getContextPath())
             .orElse(null);
 
-        rejectInvalidSpecFields(errors, carForm);
         final List<MultipartFile> files = selectedImageFiles(
             carForm.getFiles()
         );
@@ -398,36 +385,18 @@ public class AdminController {
             retainedImageIds.size()
         );
         if (imageError != null) {
-            errors.rejectValue("files", "image.invalid", imageError);
+            errors.rejectValue(
+                "files",
+                imageError,
+                new Object[] { MAX_IMAGE_COUNT },
+                null
+            );
         }
 
-        Brand resolvedBrand = null;
-        if (!errors.hasFieldErrors("brand")) {
-            resolvedBrand = brandService
-                .findByName(carForm.getBrand())
-                .orElse(null);
-            if (resolvedBrand == null) {
-                errors.rejectValue(
-                    "brand",
-                    "validation.car.brand.invalid",
-                    message("validation.car.brand.invalid")
-                );
-            }
-        }
-
-        BodyType resolvedBodyType = null;
-        if (!errors.hasFieldErrors("bodyType")) {
-            resolvedBodyType = bodyTypeService
-                .findByName(carForm.getBodyType())
-                .orElse(null);
-            if (resolvedBodyType == null) {
-                errors.rejectValue(
-                    "bodyType",
-                    "validation.car.bodyType.invalid",
-                    message("validation.car.bodyType.invalid")
-                );
-            }
-        }
+        final ControllerUtils.ResolvedCarCatalog resolvedCatalog =
+            ControllerUtils.resolveCarCatalog(carForm, errors, brandService, bodyTypeService);
+        final Brand resolvedBrand = resolvedCatalog.getBrand();
+        final BodyType resolvedBodyType = resolvedCatalog.getBodyType();
 
         if (errors.hasErrors()) {
             LOGGER.warn(
@@ -481,10 +450,7 @@ public class AdminController {
                 carForm.getPriceUsd()
             );
         } catch (final DuplicateCarException e) {
-            errors.reject(
-                "validation.car.duplicate",
-                message("validation.car.duplicate")
-            );
+            errors.reject("validation.car.duplicate");
             LOGGER.warn(
                 "car request approval rejected: duplicate car requestId={}",
                 requestId
@@ -512,7 +478,6 @@ public class AdminController {
             return redirectBackToCatalog(referer);
         }
 
-        rejectInvalidSpecFields(errors, carForm);
         final List<MultipartFile> files = selectedImageFiles(
             carForm.getFiles()
         );
@@ -527,36 +492,18 @@ public class AdminController {
             retainedImageIds.size()
         );
         if (imageError != null) {
-            errors.rejectValue("files", "image.invalid", imageError);
+            errors.rejectValue(
+                "files",
+                imageError,
+                new Object[] { MAX_IMAGE_COUNT },
+                null
+            );
         }
 
-        Brand resolvedBrand = null;
-        if (!errors.hasFieldErrors("brand")) {
-            resolvedBrand = brandService
-                .findByName(carForm.getBrand())
-                .orElse(null);
-            if (resolvedBrand == null) {
-                errors.rejectValue(
-                    "brand",
-                    "validation.car.brand.invalid",
-                    message("validation.car.brand.invalid")
-                );
-            }
-        }
-
-        BodyType resolvedBodyType = null;
-        if (!errors.hasFieldErrors("bodyType")) {
-            resolvedBodyType = bodyTypeService
-                .findByName(carForm.getBodyType())
-                .orElse(null);
-            if (resolvedBodyType == null) {
-                errors.rejectValue(
-                    "bodyType",
-                    "validation.car.bodyType.invalid",
-                    message("validation.car.bodyType.invalid")
-                );
-            }
-        }
+        final ControllerUtils.ResolvedCarCatalog resolvedCatalog =
+            ControllerUtils.resolveCarCatalog(carForm, errors, brandService, bodyTypeService);
+        final Brand resolvedBrand = resolvedCatalog.getBrand();
+        final BodyType resolvedBodyType = resolvedCatalog.getBodyType();
 
         if (errors.hasErrors()) {
             LOGGER.warn(
@@ -592,8 +539,7 @@ public class AdminController {
                 resolvedBodyType.getId(),
                 carForm.getYear(),
                 carForm.getDescription(),
-                Optional.empty(),
-                Optional.empty(),
+                imagePayloads,
                 ControllerUtils.normalizeSpecValue(carForm.getFuelType()),
                 carForm.getHorsepower(),
                 carForm.getAirbagCount(),
@@ -603,15 +549,11 @@ public class AdminController {
                 carForm.getPriceUsd()
             );
         } catch (final DuplicateCarException e) {
-            errors.reject(
-                "validation.car.duplicate",
-                message("validation.car.duplicate")
-            );
+            errors.reject("validation.car.duplicate");
             LOGGER.warn("car update rejected: duplicate car carId={}", carId);
             return carEditFormPage(existingCar, carForm, errors);
         }
         if (updated.isPresent()) {
-            carService.saveCarImages(carId, imagePayloads);
             LOGGER.info("admin updated car id={}", carId);
         }
         return new ModelAndView("redirect:/reviews/car/" + carId);
@@ -1070,7 +1012,12 @@ public class AdminController {
                 request.getYear(),
                 bodyTypeName,
                 request.getDescription(),
-                submitterLabel(request, usersById),
+                adminRequestService.resolveSubmitterEmail(
+                    request.getSubmitterEmail(),
+                    request.getSubmittedByUserId(),
+                    usersById
+                ),
+                request.getSubmittedByUserId(),
                 !imageIds.isEmpty(),
                 imageIds.isEmpty() ? null : imageIds.get(0),
                 request.getFuelType(),
@@ -1157,25 +1104,6 @@ public class AdminController {
             );
     }
 
-    private String submitterLabel(
-        final CarRequest request,
-        final Map<Long, User> usersById
-    ) {
-        return adminRequestService.getSubmitterLabel(
-            request.getSubmitterEmail(),
-            request.getSubmittedByUserId(),
-            usersById
-        );
-    }
-
-    private String submitterLabel(
-        final String submitterEmail,
-        final Long submittedByUserId,
-        final Map<Long, User> usersById
-    ) {
-        return adminRequestService.getSubmitterLabel(submitterEmail, submittedByUserId, usersById);
-    }
-
     private AdminCatalogRequestCard toBrandCard(
         final BrandRequest request,
         final Map<Long, User> usersById
@@ -1183,11 +1111,12 @@ public class AdminController {
         return new AdminCatalogRequestCard(
             request.getId(),
             request.getName(),
-            submitterLabel(
+            adminRequestService.resolveSubmitterEmail(
                 request.getSubmitterEmail(),
                 request.getSubmittedByUserId(),
                 usersById
             ),
+            request.getSubmittedByUserId(),
             request.getComments()
         );
     }
@@ -1199,11 +1128,12 @@ public class AdminController {
         return new AdminCatalogRequestCard(
             request.getId(),
             request.getName(),
-            submitterLabel(
+            adminRequestService.resolveSubmitterEmail(
                 request.getSubmitterEmail(),
                 request.getSubmittedByUserId(),
                 usersById
             ),
+            request.getSubmittedByUserId(),
             request.getComments()
         );
     }
@@ -1218,13 +1148,11 @@ public class AdminController {
             submitter.getUsername() != null &&
             !submitter.getUsername().isBlank()
                 ? submitter.getUsername()
-                : "Usuario sin identificar";
-        final String label = username;
+                : "";
         return new AdminAdminRequestCard(
             request.getId(),
             request.getSubmittedByUserId(),
             username,
-            label,
             request.getMotivation(),
             request.getBio(),
             request.getJustification()
@@ -1238,14 +1166,6 @@ public class AdminController {
         );
     }
 
-    private String validateUploadedImage(
-        final MultipartFile file,
-        final boolean required
-    ) {
-        final String key = imageValidationService.validateUploadedImage(file, required);
-        return key == null ? null : message(key);
-    }
-
     private String validateUploadedImages(
         final List<MultipartFile> files,
         final boolean required,
@@ -1253,13 +1173,14 @@ public class AdminController {
     ) {
         final int totalImageCount = existingImageCount + files.size();
         if (totalImageCount == 0) {
-            return required ? message("validation.car.image.required") : null;
+            return required ? "validation.car.image.required" : null;
         }
         if (totalImageCount > MAX_IMAGE_COUNT) {
-            return message("validation.car.files.maxCount", MAX_IMAGE_COUNT);
+            return "validation.car.files.maxCount";
         }
         for (final MultipartFile file : files) {
-            final String imageError = validateUploadedImage(file, true);
+            final String imageError =
+                imageValidationService.validateUploadedImage(file, true);
             if (imageError != null) {
                 return imageError;
             }
@@ -1319,8 +1240,7 @@ public class AdminController {
         if (hasUnknownRetainedImageIds(submittedImageIds, availableImageIds)) {
             errors.rejectValue(
                 "files",
-                "validation.car.image.preloaded.invalid",
-                message("validation.car.image.preloaded.invalid")
+                "validation.car.image.preloaded.invalid"
             );
         }
         return retainedImageIds;
@@ -1376,35 +1296,6 @@ public class AdminController {
         return payloads;
     }
 
-    private void rejectInvalidSpecFields(
-        final BindingResult errors,
-        final CarForm carForm
-    ) {
-        if (
-            carForm.getFuelType() != null &&
-            !CarSearchCriteria.ALLOWED_FUEL_TYPES.contains(
-                ControllerUtils.normalizeSpecValue(carForm.getFuelType())
-            )
-        ) {
-            errors.rejectValue(
-                "fuelType",
-                "validation.car.fuelType.invalid",
-                message("validation.car.fuelType.invalid")
-            );
-        }
-        if (
-            carForm.getTransmission() != null &&
-            !CarSearchCriteria.ALLOWED_TRANSMISSIONS.contains(
-                ControllerUtils.normalizeSpecValue(carForm.getTransmission())
-            )
-        ) {
-            errors.rejectValue(
-                "transmission",
-                "validation.car.transmission.invalid",
-                message("validation.car.transmission.invalid")
-            );
-        }
-    }
 
     private ModelAndView redirectBackToCatalog(final String referer) {
         return redirectBackToCatalog(referer, true);
@@ -1489,7 +1380,8 @@ public class AdminController {
         private final Integer year;
         private final String bodyTypeName;
         private final String description;
-        private final String submitter;
+        private final String submitterEmail;
+        private final Long submitterUserId;
         private final boolean hasImage;
         private final Long heroImageId;
         private final String fuelType;
@@ -1507,7 +1399,8 @@ public class AdminController {
             final Integer year,
             final String bodyTypeName,
             final String description,
-            final String submitter,
+            final String submitterEmail,
+            final Long submitterUserId,
             final boolean hasImage,
             final Long heroImageId,
             final String fuelType,
@@ -1524,7 +1417,8 @@ public class AdminController {
             this.year = year;
             this.bodyTypeName = bodyTypeName;
             this.description = description;
-            this.submitter = submitter;
+            this.submitterEmail = submitterEmail;
+            this.submitterUserId = submitterUserId;
             this.hasImage = hasImage;
             this.heroImageId = heroImageId;
             this.fuelType = fuelType;
@@ -1560,8 +1454,12 @@ public class AdminController {
             return description;
         }
 
-        public String getSubmitter() {
-            return submitter;
+        public String getSubmitterEmail() {
+            return submitterEmail;
+        }
+
+        public Long getSubmitterUserId() {
+            return submitterUserId;
         }
 
         public boolean isHasImage() {
@@ -1605,18 +1503,21 @@ public class AdminController {
 
         private final long id;
         private final String name;
-        private final String submitter;
+        private final String submitterEmail;
+        private final Long submitterUserId;
         private final String comments;
 
         private AdminCatalogRequestCard(
             final long id,
             final String name,
-            final String submitter,
+            final String submitterEmail,
+            final Long submitterUserId,
             final String comments
         ) {
             this.id = id;
             this.name = name;
-            this.submitter = submitter;
+            this.submitterEmail = submitterEmail;
+            this.submitterUserId = submitterUserId;
             this.comments = comments;
         }
 
@@ -1628,8 +1529,12 @@ public class AdminController {
             return name;
         }
 
-        public String getSubmitter() {
-            return submitter;
+        public String getSubmitterEmail() {
+            return submitterEmail;
+        }
+
+        public Long getSubmitterUserId() {
+            return submitterUserId;
         }
 
         public String getComments() {
@@ -1642,7 +1547,6 @@ public class AdminController {
         private final long id;
         private final long userId;
         private final String username;
-        private final String label;
         private final String motivation;
         private final String bio;
         private final String justification;
@@ -1651,7 +1555,6 @@ public class AdminController {
             final long id,
             final long userId,
             final String username,
-            final String label,
             final String motivation,
             final String bio,
             final String justification
@@ -1659,7 +1562,6 @@ public class AdminController {
             this.id = id;
             this.userId = userId;
             this.username = username;
-            this.label = label;
             this.motivation = motivation;
             this.bio = bio;
             this.justification = justification;
@@ -1675,10 +1577,6 @@ public class AdminController {
 
         public String getUsername() {
             return username;
-        }
-
-        public String getLabel() {
-            return label;
         }
 
         public String getMotivation() {

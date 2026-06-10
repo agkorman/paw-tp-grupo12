@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,8 +63,33 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
         final LocalDateTime since = LocalDateTime.now(DIGEST_ZONE).minusDays(7);
         LOGGER.info("starting weekly digest since={}", since);
 
-        sendModeratorDigest();
+        buildModeratorDigest().ifPresent(digest ->
+                emailService.sendWeeklyModeratorDigest(digest.recipients, digest.pendingCount));
 
+        final List<UserDigest> userDigests = buildUserDigests(since);
+        for (final UserDigest digest : userDigests) {
+            emailService.sendWeeklyUserDigest(digest.email, digest.username,
+                    digest.reviewActivities, digest.favoriteActivities);
+        }
+        LOGGER.info("weekly digest completed userCount={}", userDigests.size());
+    }
+
+    Optional<ModeratorDigest> buildModeratorDigest() {
+        final List<EmailRecipient> moderatorRecipients;
+        try {
+            moderatorRecipients = userService.getModeratorEmailRecipients();
+        } catch (final RuntimeException e) {
+            LOGGER.warn("failed to load moderator email recipients for weekly digest", e);
+            return Optional.empty();
+        }
+        if (moderatorRecipients.isEmpty()) {
+            return Optional.empty();
+        }
+        final long pendingCount = carRequestService.countCarRequestsByStatus(CarRequestService.STATUS_PENDING);
+        return Optional.of(new ModeratorDigest(moderatorRecipients, pendingCount));
+    }
+
+    List<UserDigest> buildUserDigests(final LocalDateTime since) {
         final List<User> users = userService.getAllUsers();
 
         final Map<Long, List<EmailService.ReviewActivityItem>> reviewActivityByUser =
@@ -71,29 +97,16 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
         final Map<Long, List<EmailService.FavoriteActivityItem>> favoriteActivityByUser =
                 buildFavoriteActivityByUser(since);
 
+        final List<UserDigest> digests = new ArrayList<>();
         for (final User user : users) {
-            final List<EmailService.ReviewActivityItem> reviewActivities =
-                    reviewActivityByUser.getOrDefault(user.getId(), Collections.emptyList());
-            final List<EmailService.FavoriteActivityItem> favoriteActivities =
-                    favoriteActivityByUser.getOrDefault(user.getId(), Collections.emptyList());
-            emailService.sendWeeklyUserDigest(user.getEmail(), user.getUsername(), reviewActivities, favoriteActivities);
+            digests.add(new UserDigest(
+                    user.getEmail(),
+                    user.getUsername(),
+                    reviewActivityByUser.getOrDefault(user.getId(), Collections.emptyList()),
+                    favoriteActivityByUser.getOrDefault(user.getId(), Collections.emptyList())
+            ));
         }
-        LOGGER.info("weekly digest completed userCount={}", users.size());
-    }
-
-    private void sendModeratorDigest() {
-        final List<EmailRecipient> moderatorRecipients;
-        try {
-            moderatorRecipients = userService.getModeratorEmailRecipients();
-        } catch (final RuntimeException e) {
-            LOGGER.warn("failed to load moderator email recipients for weekly digest", e);
-            return;
-        }
-        if (moderatorRecipients.isEmpty()) {
-            return;
-        }
-        final long pendingCount = carRequestService.countCarRequestsByStatus(CarRequestService.STATUS_PENDING);
-        emailService.sendWeeklyModeratorDigest(moderatorRecipients, pendingCount);
+        return digests;
     }
 
     private Map<Long, List<EmailService.ReviewActivityItem>> buildReviewActivityByUser(final LocalDateTime since) {
@@ -121,7 +134,7 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
             }
             final EmailService.ReviewActivityItem item = new EmailService.ReviewActivityItem(
                     review.getTitle(),
-                    carNamesById.getOrDefault(review.getCarId(), "un auto"),
+                    carNamesById.get(review.getCarId()),
                     likesPerReview.getOrDefault(review.getId(), 0L),
                     repliesPerReview.getOrDefault(review.getId(), 0L)
             );
@@ -148,7 +161,7 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
             final List<EmailService.FavoriteActivityItem> items = entry.getValue().stream()
                     .filter(carId -> newReviewsPerCar.getOrDefault(carId, 0L) > 0)
                     .map(carId -> new EmailService.FavoriteActivityItem(
-                            carNamesById.getOrDefault(carId, "un auto"),
+                            carNamesById.get(carId),
                             newReviewsPerCar.get(carId)
                     ))
                     .collect(Collectors.toList());
@@ -157,5 +170,31 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
             }
         }
         return activityByUser;
+    }
+
+    static final class ModeratorDigest {
+        final List<EmailRecipient> recipients;
+        final long pendingCount;
+
+        ModeratorDigest(final List<EmailRecipient> recipients, final long pendingCount) {
+            this.recipients = recipients;
+            this.pendingCount = pendingCount;
+        }
+    }
+
+    static final class UserDigest {
+        final String email;
+        final String username;
+        final List<EmailService.ReviewActivityItem> reviewActivities;
+        final List<EmailService.FavoriteActivityItem> favoriteActivities;
+
+        UserDigest(final String email, final String username,
+                   final List<EmailService.ReviewActivityItem> reviewActivities,
+                   final List<EmailService.FavoriteActivityItem> favoriteActivities) {
+            this.email = email;
+            this.username = username;
+            this.reviewActivities = reviewActivities;
+            this.favoriteActivities = favoriteActivities;
+        }
     }
 }

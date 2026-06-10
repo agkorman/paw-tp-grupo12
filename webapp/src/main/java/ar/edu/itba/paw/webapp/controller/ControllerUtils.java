@@ -1,9 +1,15 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.BodyType;
+import ar.edu.itba.paw.model.Brand;
+import ar.edu.itba.paw.services.BodyTypeService;
+import ar.edu.itba.paw.services.BrandService;
+import ar.edu.itba.paw.webapp.form.CarForm;
 import ar.edu.itba.paw.webapp.validation.ImageSignatureValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
@@ -96,6 +102,51 @@ final class ControllerUtils {
             return "validation.image.read";
         }
         return null;
+    }
+
+    /**
+     * Resolves the brand and body-type names submitted in a car form to their catalog
+     * entities, rejecting the matching field on {@code errors} when a name is not found.
+     * Centralizes the boundary validation shared by car creation, approval and edition.
+     */
+    static ResolvedCarCatalog resolveCarCatalog(
+            final CarForm carForm,
+            final BindingResult errors,
+            final BrandService brandService,
+            final BodyTypeService bodyTypeService) {
+        Brand brand = null;
+        if (!errors.hasFieldErrors("brand")) {
+            brand = brandService.findByName(carForm.getBrand()).orElse(null);
+            if (brand == null) {
+                errors.rejectValue("brand", "validation.car.brand.invalid");
+            }
+        }
+        BodyType bodyType = null;
+        if (!errors.hasFieldErrors("bodyType")) {
+            bodyType = bodyTypeService.findByName(carForm.getBodyType()).orElse(null);
+            if (bodyType == null) {
+                errors.rejectValue("bodyType", "validation.car.bodyType.invalid");
+            }
+        }
+        return new ResolvedCarCatalog(brand, bodyType);
+    }
+
+    static final class ResolvedCarCatalog {
+        private final Brand brand;
+        private final BodyType bodyType;
+
+        ResolvedCarCatalog(final Brand brand, final BodyType bodyType) {
+            this.brand = brand;
+            this.bodyType = bodyType;
+        }
+
+        Brand getBrand() {
+            return brand;
+        }
+
+        BodyType getBodyType() {
+            return bodyType;
+        }
     }
 
     static String submittedToastMessageCode(final String submitted) {

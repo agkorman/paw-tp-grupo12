@@ -210,8 +210,8 @@
                                     <div class="review-details-item">
                                         <dt><spring:message code="review.form.ownership"/></dt>
                                         <dd><c:choose>
-                                            <c:when test="${review.ownershipStatus eq 'Propietario actual'}"><spring:message code="review.form.ownership.current"/></c:when>
-                                            <c:when test="${review.ownershipStatus eq 'Ex propietario'}"><spring:message code="review.form.ownership.previous"/></c:when>
+                                            <c:when test="${review.ownershipStatus eq 'current_owner' or review.ownershipStatus eq 'Propietario actual'}"><spring:message code="review.form.ownership.current"/></c:when>
+                                            <c:when test="${review.ownershipStatus eq 'previous_owner' or review.ownershipStatus eq 'Ex propietario'}"><spring:message code="review.form.ownership.previous"/></c:when>
                                             <c:otherwise><c:out value="${review.ownershipStatus}"/></c:otherwise>
                                         </c:choose></dd>
                                     </div>
@@ -259,7 +259,7 @@
                                         <c:url var="replyHideUrl" value="/reviews/replies/${reply.id}/hide"/>
                                         <c:url var="replyDeleteUrl" value="/reviews/replies/${reply.id}/delete"/>
                                         <c:url var="replyUpdateUrl" value="/reviews/replies/${reply.id}/update"/>
-                                       
+
                                         <article class="review-reply" id="reply-${reply.id}">
                                             <div class="review-reply-header">
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">
@@ -365,7 +365,7 @@
                                                           class="${replyHasError ? 'is-invalid' : ''}"><c:if test="${replyHasError}"><c:out value="${replyErrorBody}"/></c:if></textarea>
                                                 <button type="submit" class="btn-secondary"><spring:message code="review.feed.reply"/></button>
                                             </div>
-                                            <span class="client-form-error" data-reply-error <c:if test="${not replyHasError}">hidden</c:if>><c:if test="${replyHasError}"><spring:message code="${replyError}" arguments="${replyErrorArg}"/></c:if></span>
+                                            <span class="client-form-error" data-reply-error <c:if test="${not replyHasError}">hidden</c:if>><c:if test="${replyHasError}"><c:out value="${replyError}"/></c:if></span>
                                         </div>
                                     </form>
                                 </c:when>
@@ -397,7 +397,8 @@
                                 <c:url var="reviewDetailViewUrl" value="/reviews/${review.id}"/>
                                 <p class="review-replies-view-all">
                                     <a href="${reviewDetailViewUrl}#replies-${review.id}" class="review-replies-view-all-link">
-                                        <spring:message code="review.replies.viewAll" arguments="${thread.totalReplyCount}"/>
+                                        <spring:message code="${thread.totalReplyCount eq 1 ? 'review.replies.viewAll.one' : 'review.replies.viewAll.many'}"
+                                                        arguments="${thread.totalReplyCount}"/>
                                     </a>
                                 </p>
                             </c:if>

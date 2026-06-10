@@ -1,7 +1,8 @@
 <%@ tag language="java" pageEncoding="UTF-8" %>
 <%@ attribute name="id" required="true" type="java.lang.Long" %>
 <%@ attribute name="name" required="true" %>
-<%@ attribute name="submitter" required="true" %>
+<%@ attribute name="submitterEmail" required="false" %>
+<%@ attribute name="submitterUserId" required="false" type="java.lang.Long" %>
 <%@ attribute name="comments" required="false" %>
 <%@ attribute name="type" required="true" description="brand or body-type" %>
 <%@ attribute name="kicker" required="false" %>
@@ -13,6 +14,11 @@
 <c:set var="submitterPrefixEnabled" value="${empty showSubmitterPrefix or showSubmitterPrefix}"/>
 <spring:message var="defaultKicker" code="admin.catalogRequest.kicker"/>
 <spring:message var="sentByLabel" code="common.label.sentBy"/>
+<c:choose>
+    <c:when test="${not empty submitterEmail}"><c:set var="submitter" value="${submitterEmail}"/></c:when>
+    <c:when test="${not empty submitterUserId}"><spring:message var="submitter" code="admin.user.byId" arguments="${submitterUserId}"/></c:when>
+    <c:otherwise><spring:message var="submitter" code="admin.user.unidentified"/></c:otherwise>
+</c:choose>
 
 <button type="button"
         class="admin-catalog-request-card"

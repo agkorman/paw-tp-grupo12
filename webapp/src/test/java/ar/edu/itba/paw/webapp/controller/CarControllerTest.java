@@ -406,7 +406,7 @@ class CarControllerTest {
         when(carService.requestCarCreation(
                         eq(1L), eq("Corolla"), eq(1L), eq(2020),
                         eq(1L), eq("driver@test.com"),
-                        eq(Optional.of("A sedan description that is valid.")),
+                        eq("A sedan description that is valid."),
                         any(),
                         eq("combustion"), eq(120), eq(6),
                         eq("automatic"),
