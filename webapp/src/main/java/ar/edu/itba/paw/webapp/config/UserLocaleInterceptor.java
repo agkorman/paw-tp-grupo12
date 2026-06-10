@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.webapp.config;
 
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -11,6 +13,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Locale;
 
 public class UserLocaleInterceptor implements HandlerInterceptor {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserLocaleInterceptor.class);
 
     private static final String LOCALE_SYNCED_ATTR = "userLocaleSynced";
 
@@ -30,8 +34,10 @@ public class UserLocaleInterceptor implements HandlerInterceptor {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof AuthenticatedUser) {
             final AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
-            localeResolver.setLocale(request, response, Locale.forLanguageTag(user.getPreferredLocale()));
+            final Locale locale = Locale.forLanguageTag(user.getPreferredLocale());
+            localeResolver.setLocale(request, response, locale);
             request.getSession().setAttribute(LOCALE_SYNCED_ATTR, Boolean.TRUE);
+            LOGGER.debug("synced session locale to user preference locale={} userId={}", locale, user.getId());
         }
 
         return true;
