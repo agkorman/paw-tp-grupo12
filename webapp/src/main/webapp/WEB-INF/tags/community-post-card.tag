@@ -63,8 +63,7 @@
                                 redirect="${helpfulRedirect}"
                                 liked="${helpfulByCurrentUser}"
                                 likeCount="${helpfulCount}"
-                                disabled="${not authenticated}"
-                                intent="community-post-helpful-${postId}"/>
+                                disabled="${not authenticated}"/>
                         <span class="profile-card-metric"><c:out value="${replyCountText}"/></span>
                     </div>
                     <c:if test="${showActionMenu}">
@@ -112,7 +111,10 @@
         </article>
     </c:when>
     <c:when test="${not empty href}">
-        <a class="community-post-card community-post-card-link" href="${fn:escapeXml(href)}"${not empty postId ? ' id="post-'.concat(postId).concat('"') : ''}>
+        <article class="community-post-card community-post-card-linkable"
+                 data-profile-card-link="${fn:escapeXml(href)}"
+                 role="link"
+                 tabindex="0"${not empty postId ? ' id="post-'.concat(postId).concat('"') : ''}>
             <div class="community-post-topline">
                 <p class="community-post-meta">
                     <strong><c:out value="${author}"/></strong>
@@ -127,7 +129,7 @@
                             liked="${helpfulByCurrentUser}"
                             likeCount="${helpfulCount}"
                             disabled="${not authenticated}"
-                            intent="community-post-helpful-${postId}"/>
+                            />
                     <span class="profile-card-metric"><c:out value="${replyCountText}"/></span>
                 </div>
             </div>
@@ -135,13 +137,15 @@
             <c:if test="${not empty communityName}">
                 <p class="profile-card-context"><c:out value="${communityName}"/></p>
             </c:if>
-            <h3 class="community-post-title"><c:out value="${title}"/></h3>
+            <h3 class="community-post-title">
+                <a href="${fn:escapeXml(href)}"><c:out value="${title}"/></a>
+            </h3>
             <p class="community-post-body"><c:out value="${body}"/></p>
             <pa:image-gallery imageUrls="${imageUrls}" imageUrlsJoined="${imageUrlsJoined}" altKey="communities.post.image.alt" maxVisible="${3}"/>
             <c:if test="${not empty repostReview}">
                 <pa:reposted-review-card repostReview="${repostReview}" linked="${false}"/>
             </c:if>
-        </a>
+        </article>
     </c:when>
     <c:otherwise>
         <article class="community-post-card"${not empty postId ? ' id="post-'.concat(postId).concat('"') : ''}>
@@ -159,7 +163,7 @@
                             liked="${helpfulByCurrentUser}"
                             likeCount="${helpfulCount}"
                             disabled="${not authenticated}"
-                            intent="community-post-helpful-${postId}"/>
+                            />
                     <span class="profile-card-metric"><c:out value="${replyCountText}"/></span>
                 </div>
             </div>

@@ -196,8 +196,7 @@
                 redirect="${activityCardRedirectPath}"
                 liked="${activityCard.liked}"
                 likeCount="${activityCard.likeCount}"
-                disabled="${not activityCard.authenticated}"
-                intent="${activityCard.cardAnchorId}"/>
+                disabled="${not activityCard.authenticated}"/>
         <c:if test="${not empty secondaryMetricText}">
             <c:choose>
                 <c:when test="${not empty resolvedCommentsHref}">

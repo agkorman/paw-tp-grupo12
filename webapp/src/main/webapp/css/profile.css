@@ -144,15 +144,7 @@
     gap: 0.5rem;
 }
 
-.profile-language-control select {
-    min-height: 2.5rem;
-    padding: 0.625rem 0.75rem;
-    border: 1px solid var(--outline-variant);
-    border-radius: var(--radius-sm);
-    background: var(--surface-container-high);
-    color: var(--on-surface);
-    font: inherit;
-}
+
 
 .profile-language-button {
     min-height: 2.5rem;

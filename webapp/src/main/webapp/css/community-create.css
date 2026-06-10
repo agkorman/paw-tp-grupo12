@@ -193,3 +193,24 @@
     justify-content: flex-end;
     gap: var(--spacing-3);
 }
+
+.community-edit-danger {
+    margin-top: var(--spacing-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+}
+
+.community-edit-danger-copy h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1.1rem;
+    color: var(--on-surface);
+}
+
+.community-edit-danger-copy p {
+    margin: 0;
+    color: var(--on-surface-variant);
+    font-size: 0.9rem;
+}

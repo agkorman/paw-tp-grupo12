@@ -10,7 +10,6 @@
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
-<c:set var="authenticated" value="${not empty pageContext.request.userPrincipal}"/>
 <c:set var="modalOpen" value="${activeKind eq 'followers' or activeKind eq 'following'}"/>
 <spring:message var="followingTabLabel" code="profile.following"/>
 <spring:message var="followersTabLabel" code="profile.followers"/>
@@ -22,7 +21,6 @@
 <spring:message var="followersEmpty" code="profile.connections.followers.empty"/>
 <spring:message var="prevLabel" code="profile.connections.pagination.previous"/>
 <spring:message var="nextLabel" code="profile.connections.pagination.next"/>
-<spring:message var="followUserAction" code="profile.authRequired.followAction"/>
 
 <div id="profileConnectionsModal" class="profile-modal" hidden ${modalOpen ? 'data-open-on-load="true"' : ''}>
     <div class="profile-modal-overlay" data-close-profile-modal></div>
@@ -68,51 +66,14 @@
                 <c:otherwise>
                     <c:forEach var="user" items="${connectionUsers}">
                         <c:url var="connectionProfileUrl" value="/users/${user.id}"/>
-                        <article class="profile-connection-row" data-connection-row data-search-text="${fn:escapeXml(user.username)}">
-                            <a class="profile-connection-avatar" href="${connectionProfileUrl}" aria-hidden="true" tabindex="-1">
+                        <a class="profile-connection-row" href="${connectionProfileUrl}" data-connection-row data-search-text="${fn:escapeXml(user.username)}">
+                            <span class="profile-connection-avatar" aria-hidden="true">
                                 <pa:icon name="user-avatar" size="24"/>
-                            </a>
-                            <div class="profile-connection-copy">
-                                <a class="profile-connection-name" href="${connectionProfileUrl}">
-                                    <strong><c:out value="${user.username}"/></strong>
-                                </a>
-                            </div>
-                            <c:if test="${user.followable}">
-                                <c:url var="connectionFollowUrl" value="/users/${user.id}/follow"/>
-                                <c:choose>
-                                    <c:when test="${authenticated}">
-                                        <form class="profile-connection-follow-form"
-                                              method="post"
-                                              action="${connectionFollowUrl}"
-                                              data-auth-resume-intent="follow-profile-${user.id}">
-                                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                            <button type="submit"
-                                                    class="profile-connection-button ${user.following ? 'is-following' : ''}"
-                                                    aria-pressed="${user.following}">
-                                                <c:choose>
-                                                    <c:when test="${user.following}"><spring:message code="common.label.following"/></c:when>
-                                                    <c:otherwise><spring:message code="common.label.follow"/></c:otherwise>
-                                                </c:choose>
-                                            </button>
-                                        </form>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <c:url var="connectionFollowLoginUrl" value="/login">
-                                            <c:param name="redirect" value="/users/${user.id}"/>
-                                            <c:param name="intent" value="follow-profile-${user.id}"/>
-                                        </c:url>
-                                        <a href="${connectionFollowLoginUrl}"
-                                           class="profile-connection-button"
-                                           data-auth-resume-intent="follow-profile-${user.id}"
-                                           data-auth-required="true"
-                                           data-auth-required-action="${followUserAction}"
-                                           data-auth-required-intent="follow-profile-${user.id}">
-                                            <spring:message code="common.label.follow"/>
-                                        </a>
-                                    </c:otherwise>
-                                </c:choose>
-                            </c:if>
-                        </article>
+                            </span>
+                            <span class="profile-connection-copy">
+                                <strong><c:out value="${user.username}"/></strong>
+                            </span>
+                        </a>
                     </c:forEach>
                     <p class="profile-connections-empty" data-connections-empty hidden><c:out value="${searchEmpty}"/></p>
                 </c:otherwise>

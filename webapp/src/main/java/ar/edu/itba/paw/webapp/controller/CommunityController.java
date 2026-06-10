@@ -272,17 +272,20 @@ public class CommunityController {
         @PathVariable final String communitySlug,
         @RequestParam(value = "sort", required = false) final String sort,
         @RequestParam(value = "page", required = false, defaultValue = "1") final int page,
-        @AuthenticationPrincipal final AuthenticatedUser currentUser
+        @AuthenticationPrincipal final AuthenticatedUser currentUser,
+        final HttpServletRequest request
     ) {
         final CommunityDetailData communityDetail = communityService
             .getCommunityDetail(communitySlug, currentUserId(currentUser), sort, page)
             .orElseThrow(() -> new ResourceNotFoundException("community not found"));
 
+        final boolean viewerAdmin = request.isUserInRole("ADMIN");
         final ModelAndView mav = new ModelAndView("community-detail.jsp");
         mav.addObject("pageTitleValue", communityDetail.getCommunity().getName());
         mav.addObject("communityDetail", communityDetail);
         mav.addObject("currentSort", communityDetail.getCurrentSort());
-        mav.addObject("postCards", toPostCards(communityDetail.getPosts(), communityDetail.getCommunity().getSlug(), currentUserId(currentUser)));
+        mav.addObject("postCards", toPostCards(communityDetail.getPosts(), communityDetail.getCommunity().getSlug(),
+            currentUserId(currentUser), viewerAdmin, communityDetail.isViewerModerator()));
         mav.addObject("postsCurrentPage", communityDetail.getPostsPage().getPageNumber());
         mav.addObject("postsTotalPages", communityDetail.getPostsPage().getTotalPages());
         return mav;
@@ -1189,7 +1192,9 @@ public class CommunityController {
 
     private List<PostCardView> toPostCards(final List<CommunityPostSummary> postSummaries,
                                            final String communitySlug,
-                                           final Long currentUserId) {
+                                           final Long currentUserId,
+                                           final boolean viewerAdmin,
+                                           final boolean viewerModerator) {
         final List<Long> postIds = postSummaries.stream()
             .map(s -> s.getPost().getId())
             .toList();
@@ -1197,26 +1202,43 @@ public class CommunityController {
             ? Set.of()
             : communityService.findPostHelpfulReactionsByUser(postIds, currentUserId);
 
+        final List<CommunityPost> posts = postSummaries.stream()
+            .map(CommunityPostSummary::getPost)
+            .collect(Collectors.toList());
+        final Set<Long> hideablePostIds = communityService.getHideablePostIds(
+            posts, currentUserId, viewerAdmin);
+
+        final Map<Long, Car> carsByLinkedReview = carsForLinkedReviews(postSummaries.stream()
+                .map(s -> s.getPost().getLinkedReview())
+                .collect(Collectors.toList()));
+
         final List<PostCardView> cards = new ArrayList<>();
         for (final CommunityPostSummary postSummary : postSummaries) {
-            final String postSlug = postSummary.getPost().getSlug();
-            final Review linkedReview = postSummary.getPost().getLinkedReview();
+            final CommunityPost post = postSummary.getPost();
+            final String postSlug = post.getSlug();
+            final Review linkedReview = post.getLinkedReview();
             final RepostReviewView repostReview = linkedReview != null
                     ? buildRepostReviewView(linkedReview)
                     : null;
+            final boolean ownedByCurrentUser = currentUserId != null
+                && currentUserId.equals(post.getAuthorUserId());
+            final boolean editable = ownedByCurrentUser;
+            final boolean hideable = hideablePostIds.contains(post.getId());
             cards.add(new PostCardView(
                 communitySlug,
                 postSlug,
-                postSummary.getPost().getAuthorUsername(),
-                postSummary.getPost().getCreatedAt(),
-                postSummary.getPost().getTitle(),
-                postSummary.getPost().getBody(),
-                toPostImageIds(postSummary.getPost()),
+                post.getAuthorUsername(),
+                post.getCreatedAt(),
+                post.getTitle(),
+                post.getBody(),
+                toPostImageIds(post),
                 postSummary.getHelpfulCount(),
                 postSummary.getCommentCount(),
-                postSummary.getPost().getId(),
-                helpfulByUser.contains(postSummary.getPost().getId()),
-                repostReview
+                post.getId(),
+                helpfulByUser.contains(post.getId()),
+                repostReview,
+                editable,
+                hideable
             ));
         }
         return cards;
@@ -1411,6 +1433,8 @@ public class CommunityController {
         private final long postId;
         private final boolean helpfulByCurrentUser;
         private final RepostReviewView repostReview;
+        private final boolean editable;
+        private final boolean hideable;
 
         private PostCardView(final String communitySlug, final String postSlug,
                              final String author,
@@ -1418,7 +1442,8 @@ public class CommunityController {
                              final String body, final List<Long> imageIds, final long helpfulCount,
                              final long commentCount, final long postId,
                              final boolean helpfulByCurrentUser,
-                             final RepostReviewView repostReview) {
+                             final RepostReviewView repostReview,
+                             final boolean editable, final boolean hideable) {
             this.communitySlug = communitySlug;
             this.postSlug = postSlug;
             this.author = author;
@@ -1431,6 +1456,8 @@ public class CommunityController {
             this.postId = postId;
             this.helpfulByCurrentUser = helpfulByCurrentUser;
             this.repostReview = repostReview;
+            this.editable = editable;
+            this.hideable = hideable;
         }
 
         public String getCommunitySlug() {
@@ -1479,6 +1506,14 @@ public class CommunityController {
 
         public RepostReviewView getRepostReview() {
             return repostReview;
+        }
+
+        public boolean getEditable() {
+            return editable;
+        }
+
+        public boolean getHideable() {
+            return hideable;
         }
     }
 

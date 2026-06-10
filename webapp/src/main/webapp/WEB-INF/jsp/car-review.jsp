@@ -6,7 +6,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
-<pa:page-head titleCode="review.page.title" styles="/css/reviews.css|/css/car-image-carousel.css|/css/review-tags.css|/css/profile-modal.css|/css/image-lightbox.css"/>
+<pa:page-head titleCode="review.page.title" styles="/css/reviews.css|/css/cars.css|/css/car-image-carousel.css|/css/review-tags.css|/css/profile-modal.css|/css/image-lightbox.css"/>
 <body>
     <pa:nav activePage="reviews"/>
 
@@ -90,7 +90,6 @@
                 <c:param name="redirect" value="/reviews/new?carId=${selectedCar.id}"/>
                 <c:param name="intent" value="create-review"/>
             </c:url>
-            <spring:message var="createReviewAuthAction" code="review.authRequired.createAction"/>
             <div class="review-description-content">
                 <span class="car-info-label"><spring:message code="review.carInfo.description"/></span>
                 <p class="car-info-description">
@@ -104,18 +103,14 @@
                 <c:when test="${not empty pageContext.request.userPrincipal}">
                     <a id="openReviewFormBtn"
                        href="${newReviewUrl}"
-                       class="btn-primary add-review-btn"
-                       data-auth-resume-intent="create-review">
+                       class="btn-primary add-review-btn">
                         <spring:message code="review.carInfo.addReview"/>
                     </a>
                 </c:when>
                 <c:otherwise>
                     <a id="openReviewFormBtn"
                        href="${newReviewLoginUrl}"
-                       class="btn-primary add-review-btn"
-                       data-auth-required="true"
-                       data-auth-required-action="${fn:escapeXml(createReviewAuthAction)}"
-                       data-auth-required-intent="create-review">
+                       class="btn-primary add-review-btn">
                         <spring:message code="review.carInfo.addReview"/>
                     </a>
                 </c:otherwise>
@@ -128,7 +123,7 @@
                          currentUserId="${currentUserId}"/>
     </main>
 
-    <pa:auth-required-modal/>
+
     <c:set var="carReviewToastCode"
            value="${not empty actionToastCode ? actionToastCode : (not empty param.reviewCreated ? 'review.create.toast.success' : '')}"/>
     <pa:toast messageCode="${carReviewToastCode}"/>
@@ -147,12 +142,12 @@
     <pa:script src="/js/shared/action-menu.js"/>
     <pa:script src="/js/cars/car-image-carousel.js"/>
     <pa:script src="/js/reviews/review-anchor-highlight.js"/>
+    <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:script src="/js/reviews/review-sort.js" defer="true"/>
     <pa:script src="/js/reviews/reply-validation.js"/>
     <pa:script src="/js/reviews/reply-disclosure.js"/>
     <pa:script src="/js/reviews/review-tag-chips.js" defer="true"/>
     <pa:script src="/js/shared/modal-utils.js"/>
-    <pa:script src="/js/auth/auth-required-modal.js"/>
     <pa:script src="/js/shared/toast.js"/>
     <sec:authorize access="isAuthenticated()">
         <pa:script src="/js/shared/confirmation-modal.js"/>

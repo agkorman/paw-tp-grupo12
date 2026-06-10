@@ -23,7 +23,6 @@
 <spring:message var="replyPlaceholder" code="review.feed.reply.placeholder"/>
 <spring:message var="replyRequiredMessage" code="review.reply.body.required"/>
 <spring:message var="replyMaxMessage" code="review.reply.body.max" arguments="1000"/>
-<spring:message var="replyAuthAction" code="review.authRequired.replyAction"/>
 <spring:message var="likeLabel" code="review.like.label"/>
 <spring:message var="reviewActionMenuLabel" code="review.actionMenu.open"/>
 <spring:message var="reviewRepostLabel" code="review.action.repost"/>
@@ -45,11 +44,27 @@
             <div class="feed-header-actions">
                 <form method="get" action="<c:url value='/reviews/car/${carId}'/>#reviewsFeed" class="review-sort-form">
                     <label class="review-sort-label" for="reviewSortSelect"><spring:message code="review.feed.sort"/></label>
-                    <select id="reviewSortSelect" name="sort" class="review-sort-select" data-auto-submit="true">
-                        <option value="" ${empty currentSort ? 'selected' : ''}><spring:message code="review.feed.sort.recent"/></option>
-                        <option value="rating_desc" ${currentSort eq 'rating_desc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingDesc"/></option>
-                        <option value="rating_asc" ${currentSort eq 'rating_asc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingAsc"/></option>
-                    </select>
+                    <div class="cars-toolbar-field">
+                        <span class="cars-toolbar-field-ui" aria-hidden="true">
+                            <span class="cars-toolbar-field-copy">
+                                <span class="cars-toolbar-value" data-toolbar-select-value="sort">
+                                    <c:choose>
+                                        <c:when test="${currentSort eq 'rating_desc'}"><spring:message code="review.feed.sort.ratingDesc"/></c:when>
+                                        <c:when test="${currentSort eq 'rating_asc'}"><spring:message code="review.feed.sort.ratingAsc"/></c:when>
+                                        <c:otherwise><spring:message code="review.feed.sort.recent"/></c:otherwise>
+                                    </c:choose>
+                                </span>
+                            </span>
+                            <span class="cars-toolbar-chevron">
+                                <pa:icon name="chevron-down" size="12"/>
+                            </span>
+                        </span>
+                        <select id="reviewSortSelect" name="sort" class="cars-toolbar-select cars-toolbar-select-overlay" data-auto-submit="true">
+                            <option value="" ${empty currentSort ? 'selected' : ''}><spring:message code="review.feed.sort.recent"/></option>
+                            <option value="rating_desc" ${currentSort eq 'rating_desc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingDesc"/></option>
+                            <option value="rating_asc" ${currentSort eq 'rating_asc' ? 'selected' : ''}><spring:message code="review.feed.sort.ratingAsc"/></option>
+                        </select>
+                    </div>
                     <noscript>
                         <button type="submit" class="btn-secondary review-sort-submit">
                             <spring:message code="common.action.apply"/>
@@ -184,12 +199,40 @@
                         <c:if test="${not empty review.images}">
                             <c:set var="reviewImageUrlsCsv" value=""/>
                             <c:forEach var="urlImg" items="${review.images}" varStatus="urlStatus">
-                                <c:url var="oneUrl" value="/reviews/${review.id}/images/${urlImg.imageId}"/>
-                                <c:set var="reviewImageUrlsCsv" value="${reviewImageUrlsCsv}${urlStatus.first ? '' : '|'}${oneUrl}"/>
+                                <c:set var="reviewImageUrlsCsv" value="${reviewImageUrlsCsv}${urlStatus.first ? '' : '|'}/reviews/${review.id}/images/${urlImg.imageId}"/>
                             </c:forEach>
                             <pa:image-gallery imageUrlsJoined="${reviewImageUrlsCsv}" altKey="review.image.alt"/>
                         </c:if>
                         <pa:review-tag-chips mode="display" tags="${review.tags}"/>
+                        <c:if test="${not empty review.ownershipStatus or not empty review.mileageKm or review.wouldRecommend ne null}">
+                            <dl class="review-details">
+                                <c:if test="${not empty review.ownershipStatus}">
+                                    <div class="review-details-item">
+                                        <dt><spring:message code="review.form.ownership"/></dt>
+                                        <dd><c:choose>
+                                            <c:when test="${review.ownershipStatus eq 'Propietario actual'}"><spring:message code="review.form.ownership.current"/></c:when>
+                                            <c:when test="${review.ownershipStatus eq 'Ex propietario'}"><spring:message code="review.form.ownership.previous"/></c:when>
+                                            <c:otherwise><c:out value="${review.ownershipStatus}"/></c:otherwise>
+                                        </c:choose></dd>
+                                    </div>
+                                </c:if>
+                                <c:if test="${not empty review.mileageKm}">
+                                    <div class="review-details-item">
+                                        <dt><spring:message code="review.card.mileage"/></dt>
+                                        <dd><c:out value="${review.mileageKm}"/> km</dd>
+                                    </div>
+                                </c:if>
+                                <c:if test="${review.wouldRecommend ne null}">
+                                    <div class="review-details-item">
+                                        <dt><spring:message code="review.form.recommend"/></dt>
+                                        <dd><c:choose>
+                                            <c:when test="${review.wouldRecommend}"><spring:message code="common.boolean.yes"/></c:when>
+                                            <c:otherwise><spring:message code="common.boolean.no"/></c:otherwise>
+                                        </c:choose></dd>
+                                    </div>
+                                </c:if>
+                            </dl>
+                        </c:if>
                         <div class="review-meta">
                             <pa:review-author-link review="${review}"/>
                             <span><pa:relative-time value="${review.createdAt}"/></span>
@@ -300,7 +343,6 @@
                                 <c:when test="${authenticated}">
                                     <c:set var="replyHasError" value="${not empty replyErrorReviewId and replyErrorReviewId eq review.id}"/>
                                     <form method="post" action="${replyCreateUrl}" class="review-reply-form"
-                                          data-auth-resume-intent="reply-${review.id}"
                                           data-reply-intent="reply-${review.id}"
                                           data-reply-has-error="${replyHasError}"
                                           data-reply-required-message="${fn:escapeXml(replyRequiredMessage)}"

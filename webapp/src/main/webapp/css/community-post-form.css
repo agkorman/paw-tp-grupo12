@@ -70,7 +70,7 @@
     border: none;
     background: transparent;
     color: var(--on-surface);
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: clamp(1.45rem, 3vw, 2.1rem);
     line-height: 1.18;
     resize: none;

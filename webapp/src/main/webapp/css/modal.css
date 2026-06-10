@@ -169,8 +169,7 @@ body.modal-open {
 }
 
 .modal-field input,
-.modal-field textarea,
-.modal-field select {
+.modal-field textarea {
     background: var(--surface-container-lowest);
     color: var(--on-surface);
     border: none;
@@ -187,14 +186,14 @@ body.modal-open {
 }
 
 .modal-field input:focus,
-.modal-field textarea:focus,
-.modal-field select:focus {
+.modal-field textarea:focus {
     outline: none;
     border-bottom-color: var(--primary);
     background: var(--surface-container);
 }
 
-.modal-field .form-error {
+.modal-field .form-error,
+.modal-field .client-form-error {
     color: var(--error);
     font-size: 0.78rem;
     font-weight: 700;
@@ -206,8 +205,7 @@ body.modal-open {
 }
 
 .modal-field input.is-invalid,
-.modal-field textarea.is-invalid,
-.modal-field select.is-invalid {
+.modal-field textarea.is-invalid {
     border-bottom-color: var(--error);
     background: rgba(255, 180, 171, 0.08);
 }
@@ -230,9 +228,12 @@ body.modal-open {
 }
 
 .car-modal-layout .modal-field input,
-.car-modal-layout .modal-field textarea,
-.car-modal-layout .modal-field select {
+.car-modal-layout .modal-field textarea {
     padding: 0.58rem 0.75rem;
+}
+
+.car-modal-layout .modal-field .cars-toolbar-field {
+    min-height: 2.5rem;
 }
 
 .car-modal-layout .modal-field textarea {
