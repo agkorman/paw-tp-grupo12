@@ -76,6 +76,18 @@ public class BrandServiceImplTest {
     }
 
     @Test
+    public void shouldReturnEmptyWhenUpdatingBrandThatDoesNotExist() {
+        // Arrange
+        when(brandDao.update(BRAND_ID, "Toyota")).thenReturn(Optional.empty());
+
+        // Exercise
+        final Optional<Brand> result = brandService.updateBrand(BRAND_ID, "  Toyota ");
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
     public void shouldRejectUpdatingBrandWithBlankName() {
         // Arrange
         final String blankName = null;

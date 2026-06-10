@@ -8,10 +8,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ReviewReplyService {
     Optional<ReviewReply> getReplyById(long id);
     List<ReviewReply> getRepliesByIds(Collection<Long> ids);
+    Set<Long> getEditableReplyIds(Collection<ReviewReply> replies, Long viewerUserId);
     Page<ReviewReply> getRepliesByReview(long reviewId, int page);
     Map<Long, List<ReviewReply>> getFirstNRepliesByReviewIds(Collection<Long> reviewIds, int n);
     ReviewReply createReply(long reviewId, long userId, String body);

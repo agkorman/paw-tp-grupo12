@@ -12,6 +12,7 @@
 <%@ attribute name="repliesCurrentPage" required="false" type="java.lang.Integer" %>
 <%@ attribute name="repliesTotalPages" required="false" type="java.lang.Integer" %>
 <%@ attribute name="contextRedirectBase" required="false" type="java.lang.String" %>
+<%@ attribute name="repliesReturnRedirect" required="false" type="java.lang.String" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="pa" tagdir="/WEB-INF/tags" %>
@@ -355,6 +356,9 @@
                                         <c:if test="${not empty currentSort}">
                                             <input type="hidden" name="sort" value="${fn:escapeXml(currentSort)}">
                                         </c:if>
+                                        <c:if test="${not empty repliesReturnRedirect}">
+                                            <input type="hidden" name="redirect" value="${fn:escapeXml(repliesReturnRedirect)}">
+                                        </c:if>
                                         <button type="button" class="review-reply-toggle" data-reply-toggle
                                                 aria-expanded="false" aria-controls="replyPanel-${review.id}"><spring:message code="review.feed.reply"/></button>
                                         <div class="review-reply-panel" id="replyPanel-${review.id}" data-reply-panel>
@@ -385,16 +389,23 @@
                             </c:choose>
                             <c:if test="${repliesPaginated eq true and not empty repliesTotalPages and repliesTotalPages > 1}">
                                 <c:url var="reviewDetailBaseUrl" value="/reviews/${review.id}"/>
+                                <jsp:useBean id="repliesPaginationParams" class="java.util.LinkedHashMap"/>
+                                <c:if test="${not empty repliesReturnRedirect}">
+                                    <c:set target="${repliesPaginationParams}" property="redirect" value="${repliesReturnRedirect}"/>
+                                </c:if>
                                 <spring:message var="repliesPaginationAria" code="review.replies.pagination.aria"/>
                                 <pa:pagination currentPage="${repliesCurrentPage}"
                                                totalPages="${repliesTotalPages}"
                                                baseUrl="${reviewDetailBaseUrl}"
                                                pageParam="repliesPage"
+                                               extraParams="${repliesPaginationParams}"
                                                fragment="replies-${review.id}"
                                                ariaLabel="${repliesPaginationAria}"/>
                             </c:if>
                             <c:if test="${not (repliesPaginated eq true) and thread.hasMoreReplies}">
-                                <c:url var="reviewDetailViewUrl" value="/reviews/${review.id}"/>
+                                <c:url var="reviewDetailViewUrl" value="/reviews/${review.id}">
+                                    <c:param name="redirect" value="${reviewsContextRedirect}"/>
+                                </c:url>
                                 <p class="review-replies-view-all">
                                     <a href="${reviewDetailViewUrl}#replies-${review.id}" class="review-replies-view-all-link">
                                         <spring:message code="${thread.totalReplyCount eq 1 ? 'review.replies.viewAll.one' : 'review.replies.viewAll.many'}"

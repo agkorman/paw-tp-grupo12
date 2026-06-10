@@ -44,6 +44,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -531,6 +532,35 @@ class CarReviewControllerTest {
             resultActions
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/reviews/1#reply-55"));
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
+    void createReply_withActivityRedirect_appendsOriginToTarget() throws Exception {
+        // Arrange
+        arrangeStandardReviewCollaboratorsAndI18n();
+        final Review review = reviewOwnedBy(1L, 7L);
+        when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(review));
+        when(reviewReplyService.createReply(eq(1L), anyLong(), anyString())).thenReturn(aReply(55L));
+        when(reviewReplyService.countRepliesByReviewIds(eq(java.util.List.of(1L))))
+                .thenReturn(java.util.Map.of(1L, 1L));
+        bindPrincipal(testUser(1L));
+
+        try {
+            final MockMvc mockMvc = reviewMockMvc();
+            // Exercise
+            final ResultActions resultActions = mockMvc.perform(post("/reviews/1/replies")
+                    .param("body", "Terrific insights.")
+                    .param("redirect", "/activity?type=all"));
+            // Assertions
+            final String location = resultActions
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn().getResponse().getRedirectedUrl();
+            assertTrue(location != null && location.contains("redirect=%2Factivity"),
+                    "expected forwarded origin redirect, got: " + location);
+            assertTrue(location.endsWith("#reply-55"), "expected reply anchor preserved, got: " + location);
         } finally {
             clearSecurityContext();
         }

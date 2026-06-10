@@ -1,8 +1,24 @@
--- Legacy/manual SQL extracted from schema.sql.
--- This file is intentionally NOT executed by application startup.
--- Execute only the relevant blocks in a controlled maintenance step.
--- Some blocks are one-shot legacy backfills; others load optional reference/demo data.
--- Several backfills assume the corresponding structural DDL already exists in the database.
+-- =============================================================================
+-- Application data: reference/seed data + one-shot data migrations.
+--
+-- This is NOT structural DDL. The structure (CREATE TABLE / ALTER TABLE /
+-- constraints / indexes) lives exclusively in schema.sql, which is the only
+-- script run on every application startup. This file is kept separate on
+-- purpose so structural evolution is never mixed with data changes, and it is
+-- intentionally NOT executed at startup: run it by hand, in a controlled
+-- maintenance step.
+--
+-- It contains two kinds of blocks:
+--   1) Reference/seed data to bootstrap a working database
+--      (brands, body_types, demo cars, review_tags, community_topics).
+--   2) One-shot data migrations / backfills already applied in production
+--      (car_images transition, email-based linking, label normalization,
+--      community topic migration, etc.).
+--
+-- Requirement: the structure must already exist; run schema.sql first.
+-- Usage (example):
+--   psql "$DB_URL" -v ON_ERROR_STOP=1 -f persistence/src/main/resources/seed-and-migrations.sql
+-- =============================================================================
 
 BEGIN;
 

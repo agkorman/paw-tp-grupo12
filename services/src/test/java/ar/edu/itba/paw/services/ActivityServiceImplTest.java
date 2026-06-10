@@ -99,7 +99,6 @@ public class ActivityServiceImplTest {
         when(reviewDao.findByIds(List.of(review.getId()))).thenReturn(List.of(review));
         when(communityDao.findPostsByIds(List.of(post.getId()))).thenReturn(List.of(post));
         when(carDao.findByIds(List.of(review.getCarId()))).thenReturn(List.of(car));
-        when(reviewDao.findDefaultPagesByReviewIds(List.of(review.getId()))).thenReturn(Map.of(review.getId(), 2));
         when(reviewImageDao.findAllByReviewIds(List.of(review.getId()))).thenReturn(List.of(reviewImage));
         when(communityPostImageDao.findAllByPostIds(List.of(post.getId()))).thenReturn(List.of(postImage));
         when(communityDao.countCommentsByPostIds(List.of(post.getId()))).thenReturn(Map.of(post.getId(), 9L));
@@ -121,7 +120,6 @@ public class ActivityServiceImplTest {
         assertEquals(review.getId(), result.getItems().get(1).getReview().getId());
         assertEquals(3L, result.getItems().get(1).getReviewLikeCount());
         assertEquals(2L, result.getItems().get(1).getReviewReplyCount());
-        assertEquals(2, result.getItems().get(1).getReviewPage());
         assertEquals(1, result.getItems().get(1).getReviewImages().size());
     }
 
@@ -140,7 +138,6 @@ public class ActivityServiceImplTest {
         ));
         when(reviewDao.findByIds(List.of(review.getId()))).thenReturn(List.of(review));
         when(carDao.findByIds(List.of(review.getCarId()))).thenReturn(List.of(car));
-        when(reviewDao.findDefaultPagesByReviewIds(List.of(review.getId()))).thenReturn(Map.of(review.getId(), 1));
         when(reviewImageDao.findAllByReviewIds(List.of(review.getId()))).thenReturn(List.of());
         when(reviewLikeDao.countReviewLikesByReviewIds(List.of(review.getId()))).thenReturn(Collections.emptyMap());
         when(reviewReplyDao.countRepliesByReviewIds(List.of(review.getId()))).thenReturn(Collections.emptyMap());
@@ -163,7 +160,6 @@ public class ActivityServiceImplTest {
                 0L,
                 0L,
                 null,
-                Pagination.DEFAULT_PAGE,
                 Collections.emptyList()
         );
 
@@ -188,7 +184,6 @@ public class ActivityServiceImplTest {
                 0L,
                 0L,
                 null,
-                Pagination.DEFAULT_PAGE,
                 Collections.emptyList()
         );
 

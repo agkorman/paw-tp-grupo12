@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ReviewService {
 
@@ -27,6 +28,7 @@ public interface ReviewService {
     long countReviewsByFavoriteCars(long userId);
     Optional<Review> getReviewById(long id);
     List<Review> getReviewsByIds(Collection<Long> ids);
+    Set<Long> getEditableReviewIds(Collection<Review> reviews, Long viewerUserId);
     List<Review> getReviewsByCarIds(Collection<Long> carIds);
     Map<Long, Long> countNewReviewsByCarIds(Collection<Long> carIds, LocalDateTime since);
     Optional<Review> updateReview(long id, long carId, BigDecimal rating, String title, String body,

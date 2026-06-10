@@ -76,6 +76,18 @@ public class BodyTypeServiceImplTest {
     }
 
     @Test
+    public void shouldReturnEmptyWhenUpdatingBodyTypeThatDoesNotExist() {
+        // Arrange
+        when(bodyTypeDao.update(BODY_TYPE_ID, "Sedan")).thenReturn(Optional.empty());
+
+        // Exercise
+        final Optional<BodyType> result = bodyTypeService.updateBodyType(BODY_TYPE_ID, " Sedan ");
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
     public void shouldNotDeleteBodyTypeWhenItHasAssociatedCars() {
         // Arrange
         when(bodyTypeDao.findById(BODY_TYPE_ID)).thenReturn(Optional.of(bodyType()));

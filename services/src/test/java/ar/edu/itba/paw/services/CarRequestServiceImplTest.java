@@ -18,6 +18,7 @@ import org.springframework.dao.DataAccessResourceFailureException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -365,5 +366,66 @@ public class CarRequestServiceImplTest {
 
         // Assertions
         assertFalse(result);
+    }
+
+    @Test
+    public void shouldReturnEmptyRetainedPayloadsWhenRetainedIdsAreNull() {
+        // Arrange
+        final List<Long> retainedImageIds = null;
+
+        // Exercise
+        final List<ImagePayload> result = carRequestService.collectRetainedImagePayloads(REQUEST_ID, retainedImageIds);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnEmptyRetainedPayloadsWhenRequestNotFound() {
+        // Arrange
+        final List<Long> retainedImageIds = List.of(55L);
+        when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.empty());
+
+        // Exercise
+        final List<ImagePayload> result = carRequestService.collectRetainedImagePayloads(REQUEST_ID, retainedImageIds);
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldCollectRetainedPayloadsForLegacyAndGalleryImagesInRequestedOrder() {
+        // Arrange
+        final StoredImagePayload galleryImage = new StoredImagePayload(55L, REQUEST_ID, 0, CONTENT_TYPE, IMAGE_BYTES, LocalDateTime.now());
+        final StoredImagePayload legacyImage = new StoredImagePayload(CarService.LEGACY_IMAGE_ID, REQUEST_ID, 0, "image/jpeg",
+                new byte[]{9, 9}, LocalDateTime.now());
+        final List<Long> retainedImageIds = Arrays.asList(CarService.LEGACY_IMAGE_ID, 55L);
+        when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
+        when(carRequestDao.findImagesByRequestIdAndImageIdsWithData(REQUEST_ID, List.of(55L))).thenReturn(List.of(galleryImage));
+        when(carRequestDao.findLegacyImageByRequestId(REQUEST_ID)).thenReturn(Optional.of(legacyImage));
+
+        // Exercise
+        final List<ImagePayload> result = carRequestService.collectRetainedImagePayloads(REQUEST_ID, retainedImageIds);
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals("image/jpeg", result.get(0).getContentType());
+        assertEquals(CONTENT_TYPE, result.get(1).getContentType());
+    }
+
+    @Test
+    public void shouldSkipRetainedImagesThatAreMissingOrHaveNoData() {
+        // Arrange
+        final StoredImagePayload imageWithoutData = new StoredImagePayload(55L, REQUEST_ID, 0, CONTENT_TYPE, null, LocalDateTime.now());
+        final List<Long> retainedImageIds = Arrays.asList(55L, 77L);
+        when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
+        when(carRequestDao.findImagesByRequestIdAndImageIdsWithData(REQUEST_ID, List.of(55L, 77L)))
+                .thenReturn(List.of(imageWithoutData));
+
+        // Exercise
+        final List<ImagePayload> result = carRequestService.collectRetainedImagePayloads(REQUEST_ID, retainedImageIds);
+
+        // Assertions
+        assertTrue(result.isEmpty());
     }
 }

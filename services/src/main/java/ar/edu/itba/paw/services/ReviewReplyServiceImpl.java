@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ReviewReplyServiceImpl implements ReviewReplyService {
@@ -77,6 +79,17 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
             LOGGER.warn("get replies by ids failed count={}", ids.size(), e);
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public Set<Long> getEditableReplyIds(final Collection<ReviewReply> replies, final Long viewerUserId) {
+        if (replies == null || replies.isEmpty() || viewerUserId == null || viewerUserId <= 0) {
+            return Collections.emptySet();
+        }
+        return replies.stream()
+                .filter(reply -> viewerUserId.equals(reply.getUserId()))
+                .map(ReviewReply::getId)
+                .collect(Collectors.toSet());
     }
 
     @Override

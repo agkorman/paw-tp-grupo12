@@ -485,7 +485,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_admin_requests_pending_user
     WHERE status = 'pending';
 
 -- ============================================================
--- Legacy/manual seed data extracted to schema.deprecated.sql
+-- Legacy/manual seed data extracted to seed-and-migrations.sql
 -- ============================================================
 
 -- ============================================================

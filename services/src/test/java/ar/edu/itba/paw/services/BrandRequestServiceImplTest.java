@@ -11,6 +11,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.dao.DataAccessResourceFailureException;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -132,5 +134,46 @@ public class BrandRequestServiceImplTest {
 
         // Assertions
         assertTrue(result);
+    }
+
+    @Test
+    public void shouldNotRejectPendingRequestWhenRequestNotFound() {
+        // Arrange
+        when(brandRequestDao.findById(REQUEST_ID)).thenReturn(Optional.empty());
+
+        // Exercise
+        final boolean result = brandRequestService.rejectPendingRequest(REQUEST_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldNotRejectPendingRequestWhenStatusUpdateFails() {
+        // Arrange
+        when(brandRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest("New Brand")));
+        when(brandRequestDao.updateStatus(REQUEST_ID, BrandRequestService.STATUS_PENDING,
+                BrandRequestService.STATUS_REJECTED)).thenReturn(false);
+
+        // Exercise
+        final boolean result = brandRequestService.rejectPendingRequest(REQUEST_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldPropagateDaoExceptionWhenApprovingBrandRequestFails() {
+        // Arrange
+        final DataAccessResourceFailureException cause = new DataAccessResourceFailureException("database unavailable");
+        when(brandRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest("New Brand")));
+        when(brandDao.findByName("New Brand")).thenThrow(cause);
+
+        // Exercise
+        final DataAccessResourceFailureException ex = assertThrows(DataAccessResourceFailureException.class,
+                () -> brandRequestService.approvePendingRequest(REQUEST_ID));
+
+        // Assertions
+        assertEquals(cause, ex);
     }
 }

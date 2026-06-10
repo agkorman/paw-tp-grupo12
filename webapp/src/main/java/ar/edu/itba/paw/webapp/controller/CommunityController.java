@@ -371,6 +371,7 @@ public class CommunityController {
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
         @PathVariable final long commentId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
@@ -382,7 +383,10 @@ public class CommunityController {
 
         communityService.toggleCommentHelpfulReaction(communitySlug, postSlug, commentId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community post comment not found"));
-        return redirectTo(defaultRedirect);
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse(defaultRedirect);
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -392,14 +396,18 @@ public class CommunityController {
     public ModelAndView createCommunityPostComment(
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @Valid @ModelAttribute("communityPostCommentForm") final CommunityPostCommentForm communityPostCommentForm,
         final BindingResult errors,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
         final RedirectAttributes redirectAttributes
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/login");
         }
+
+        final Optional<String> safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath());
 
         final CommunityPostDetailData postDetail = communityService
                 .getCommunityPostDetail(communitySlug, postSlug, currentUser.getId())
@@ -410,7 +418,9 @@ public class CommunityController {
                     currentUser.getId(),
                     LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                     LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
-            return communityPostPageWithCommentError(postDetail);
+            final ModelAndView errorView = communityPostPageWithCommentError(postDetail);
+            safeRedirect.ifPresent(r -> errorView.addObject("postReturnRedirect", r));
+            return errorView;
         }
 
         try {
@@ -435,13 +445,15 @@ public class CommunityController {
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.create.toast.success");
         final long totalComments = postDetail.getCommentCount() + 1L;
         final int lastPage = Math.max(1, Pagination.totalPages(totalComments, Pagination.REPLIES_PAGE_SIZE));
-        final StringBuilder target = new StringBuilder("redirect:/communities/")
-                .append(communitySlug).append("/posts/").append(postSlug);
+        String target = "/communities/" + communitySlug + "/posts/" + postSlug;
         if (lastPage > 1) {
-            target.append("?repliesPage=").append(lastPage);
+            target += "?repliesPage=" + lastPage;
         }
-        target.append("#comments");
-        return new ModelAndView(target.toString());
+        target += "#comments";
+        if (safeRedirect.isPresent()) {
+            target = LoginRedirectUtils.appendQueryParam(target, LoginRedirectUtils.REDIRECT_PARAM, safeRedirect.get());
+        }
+        return new ModelAndView("redirect:" + target);
     }
 
     @RequestMapping(
@@ -996,13 +1008,18 @@ public class CommunityController {
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
         @PathVariable final long commentId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
         @Valid @ModelAttribute("communityPostCommentForm") final CommunityPostCommentForm communityPostCommentForm,
         final BindingResult errors,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
         final RedirectAttributes redirectAttributes
     ) {
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse("/communities/" + communitySlug + "/posts/" + postSlug + "#comment-" + commentId);
         if (currentUser == null) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
         if (!errors.hasFieldErrors("body")) {
             communityService.updateCommunityPostComment(
@@ -1019,7 +1036,7 @@ public class CommunityController {
                     currentUser.getId());
             redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.update.toast.success");
         }
-        return "redirect:/communities/" + communitySlug + "/posts/" + postSlug + "#comment-" + commentId;
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(
@@ -1030,16 +1047,21 @@ public class CommunityController {
         @PathVariable final String communitySlug,
         @PathVariable final String postSlug,
         @PathVariable final long commentId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
         final RedirectAttributes redirectAttributes
     ) {
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse("/communities/" + communitySlug + "/posts/" + postSlug);
         if (currentUser == null) {
-            return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+            return redirectTo(safeRedirect);
         }
         communityService.deleteComment(communitySlug, commentId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.delete.toast.success");
-        return "redirect:/communities/" + communitySlug + "/posts/" + postSlug;
+        return redirectTo(safeRedirect);
     }
 
     private Long currentUserId(final AuthenticatedUser currentUser) {
@@ -1206,6 +1228,7 @@ public class CommunityController {
             .collect(Collectors.toList());
         final Set<Long> hideablePostIds = communityService.getHideablePostIds(
             posts, currentUserId, viewerAdmin);
+        final Set<Long> editablePostIds = communityService.getEditablePostIds(posts, currentUserId);
 
         final List<PostCardView> cards = new ArrayList<>();
         for (final CommunityPostSummary postSummary : postSummaries) {
@@ -1215,9 +1238,7 @@ public class CommunityController {
             final RepostReviewView repostReview = linkedReview != null
                     ? buildRepostReviewView(linkedReview)
                     : null;
-            final boolean ownedByCurrentUser = currentUserId != null
-                && currentUserId.equals(post.getAuthorUserId());
-            final boolean editable = ownedByCurrentUser;
+            final boolean editable = editablePostIds.contains(post.getId());
             final boolean hideable = hideablePostIds.contains(post.getId());
             cards.add(new PostCardView(
                 communitySlug,

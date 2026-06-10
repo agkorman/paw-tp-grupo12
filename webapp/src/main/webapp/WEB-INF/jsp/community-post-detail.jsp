@@ -30,6 +30,14 @@
         </c:if>
     </c:url>
     <c:url var="communityPostHelpfulUrl" value="/communities/${postDetail.community.slug}/posts/${postDetail.post.slug}/helpful"/>
+    <c:url var="communityPostCurrentRedirect" value="/communities/${postDetail.community.slug}/posts/${postDetail.post.slug}">
+        <c:if test="${not empty repliesCurrentPage and repliesCurrentPage > 1}">
+            <c:param name="repliesPage" value="${repliesCurrentPage}"/>
+        </c:if>
+        <c:if test="${not empty postReturnRedirect}">
+            <c:param name="redirect" value="${postReturnRedirect}"/>
+        </c:if>
+    </c:url>
     <c:url var="communityPostCommentCreateUrl" value="/communities/${postDetail.community.slug}/posts/${postDetail.post.slug}/comments"/>
     <c:url var="communityJoinUrl" value="/communities/${postDetail.community.slug}/join"/>
     <c:url var="communityPostCommentLoginUrl" value="/login">
@@ -117,6 +125,7 @@
                             liked="${postView.helpfulByCurrentUser}"
                             likeCount="${postView.helpfulCount}"
                             action="${communityPostHelpfulUrl}"
+                            redirect="${communityPostCurrentRedirect}"
                             disabled="${empty pageContext.request.userPrincipal}"/>
                     <span class="community-post-detail-pill"><c:out value="${postReplyCountText}"/></span>
                 </div>
@@ -132,6 +141,9 @@
                                    cssClass="community-comment-composer"
                                    novalidate="novalidate">
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                            <c:if test="${not empty postReturnRedirect}">
+                                <input type="hidden" name="redirect" value="${fn:escapeXml(postReturnRedirect)}">
+                            </c:if>
                             <label for="communityPostComment"><spring:message code="communities.postDetail.comment.label"/></label>
                             <div class="community-comment-composer-row">
                                 <form:textarea id="communityPostComment"
@@ -168,6 +180,7 @@
             <section class="community-comments-list">
                 <spring:message var="commentModMenuLabel" code="communities.comment.modMenu.label"/>
                 <c:forEach var="comment" items="${postView.comments}">
+                    <c:set var="commentActionRedirect" value="${communityPostCurrentRedirect}#comment-${comment.commentId}"/>
                     <div class="community-comment-row" id="comment-${comment.commentId}">
                         <article class="community-comment">
                             <div class="community-comment-header">
@@ -194,6 +207,7 @@
                                           hidden
                                           novalidate="novalidate">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                        <input type="hidden" name="redirect" value="${fn:escapeXml(commentActionRedirect)}">
                                         <textarea name="body" rows="2" maxlength="1000" required><c:out value="${comment.body}"/></textarea>
                                         <div class="community-comment-edit-actions">
                                             <button type="button" class="btn-secondary" data-cancel-community-comment-edit>
@@ -213,6 +227,7 @@
                                         liked="${comment.helpfulByCurrentUser}"
                                         likeCount="${comment.helpfulCount}"
                                         action="${communityCommentHelpfulUrl}"
+                                        redirect="${commentActionRedirect}"
                                         disabled="${empty pageContext.request.userPrincipal}"/>
                             </div>
                         </article>
@@ -231,7 +246,7 @@
                                                 data-open-community-hide-modal
                                                 data-community-hide-modal-target="hideCommunityCommentModal"
                                                 data-community-hide-action="${fn:escapeXml(communityCommentHideUrl)}"
-                                                data-community-hide-redirect="${fn:escapeXml(communityPostDetailUrl)}">
+                                                data-community-hide-redirect="${fn:escapeXml(commentActionRedirect)}">
                                             <spring:message code="communities.comment.hideAction"/>
                                         </button>
                                     </c:if>
@@ -240,6 +255,7 @@
                                         <form method="post" action="${fn:escapeXml(communityCommentDeleteUrl)}"
                                               data-confirm-modal="deleteCommentConfirmModal">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                            <input type="hidden" name="redirect" value="${fn:escapeXml(commentActionRedirect)}">
                                             <button type="submit" class="action-menu-danger">
                                                 <spring:message code="communities.comment.deleteAction"/>
                                             </button>
@@ -252,11 +268,16 @@
                 </c:forEach>
                 <c:if test="${not empty repliesTotalPages and repliesTotalPages > 1}">
                     <c:url var="communityPostRepliesBaseUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}"/>
+                    <jsp:useBean id="repliesPaginationParams" class="java.util.LinkedHashMap"/>
+                    <c:if test="${not empty postReturnRedirect}">
+                        <c:set target="${repliesPaginationParams}" property="redirect" value="${postReturnRedirect}"/>
+                    </c:if>
                     <spring:message var="communityRepliesPaginationAria" code="communities.postDetail.replies.pagination.aria"/>
                     <pa:pagination currentPage="${repliesCurrentPage}"
                                    totalPages="${repliesTotalPages}"
                                    baseUrl="${communityPostRepliesBaseUrl}"
                                    pageParam="repliesPage"
+                                   extraParams="${repliesPaginationParams}"
                                    fragment="comments"
                                    ariaLabel="${communityRepliesPaginationAria}"/>
                 </c:if>

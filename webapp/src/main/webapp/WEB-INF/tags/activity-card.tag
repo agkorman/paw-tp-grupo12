@@ -22,11 +22,13 @@
 <c:set var="activityCardImageUrls" value=""/>
 <c:choose>
     <c:when test="${activityCard.review}">
-        <c:url var="activityReviewBase" value="/reviews/car/${activityCard.carId}">
-            <c:if test="${activityCard.reviewPage > 1}"><c:param name="page" value="${activityCard.reviewPage}"/></c:if>
+        <c:url var="resolvedCardHref" value="/reviews/${activityCard.likeEntityId}">
+            <c:param name="redirect" value="${activityCurrentPath}"/>
         </c:url>
-        <c:set var="resolvedCardHref" value="${activityReviewBase}#review-${activityCard.likeEntityId}"/>
-        <c:set var="resolvedCommentsHref" value="${activityReviewBase}#replies-${activityCard.likeEntityId}"/>
+        <c:url var="activityReviewCommentsBase" value="/reviews/${activityCard.likeEntityId}">
+            <c:param name="redirect" value="${activityCurrentPath}"/>
+        </c:url>
+        <c:set var="resolvedCommentsHref" value="${activityReviewCommentsBase}#replies-${activityCard.likeEntityId}"/>
         <c:url var="resolvedLikeAction" value="/reviews/${activityCard.likeEntityId}/like"/>
         <c:url var="activityCardEditUrl" value="/reviews/${activityCard.likeEntityId}/edit">
             <c:param name="redirect" value="${activityCardRedirectPath}"/>

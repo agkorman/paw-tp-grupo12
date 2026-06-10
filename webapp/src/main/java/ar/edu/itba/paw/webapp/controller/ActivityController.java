@@ -134,7 +134,6 @@ public class ActivityController {
                     "activity.card.context.review",
                     carName,
                     item.getCar() != null ? item.getCar().getId() : null,
-                    item.getReviewPage(),
                     null,
                     null,
                     likedReviewIds.contains(reviewId),
@@ -171,7 +170,6 @@ public class ActivityController {
                 "activity.card.context.community",
                 item.getCommunityPost().getCommunity().getName(),
                 null,
-                0,
                 communitySlug,
                 postSlug,
                 helpfulPostIds.contains(postId),
@@ -237,7 +235,6 @@ public class ActivityController {
         private final String contextLabelKey;
         private final String contextValue;
         private final Long carId;
-        private final int reviewPage;
         private final String communitySlug;
         private final String postSlug;
         private final boolean liked;
@@ -265,7 +262,6 @@ public class ActivityController {
                                  final String contextLabelKey,
                                  final String contextValue,
                                  final Long carId,
-                                 final int reviewPage,
                                  final String communitySlug,
                                  final String postSlug,
                                  final boolean liked,
@@ -292,7 +288,6 @@ public class ActivityController {
             this.contextLabelKey = contextLabelKey;
             this.contextValue = contextValue;
             this.carId = carId;
-            this.reviewPage = reviewPage;
             this.communitySlug = communitySlug;
             this.postSlug = postSlug;
             this.liked = liked;
@@ -322,7 +317,6 @@ public class ActivityController {
         public String getContextLabelKey() { return contextLabelKey; }
         public String getContextValue() { return contextValue; }
         public Long getCarId() { return carId; }
-        public int getReviewPage() { return reviewPage; }
         public String getCommunitySlug() { return communitySlug; }
         public String getPostSlug() { return postSlug; }
         public boolean isLiked() { return liked; }
