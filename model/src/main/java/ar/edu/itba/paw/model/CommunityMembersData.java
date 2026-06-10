@@ -1,22 +1,23 @@
 package ar.edu.itba.paw.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CommunityMembersData implements Serializable {
 
     private final Community community;
-    private final List<CommunityMembershipEntry> members;
+    private final Page<CommunityMembershipEntry> membersPage;
+    private final long totalMemberCount;
     private final String viewerRole;
     private final boolean viewerCreator;
 
     public CommunityMembersData(final Community community,
-                                final List<CommunityMembershipEntry> members,
+                                final Page<CommunityMembershipEntry> membersPage,
+                                final long totalMemberCount,
                                 final String viewerRole,
                                 final boolean viewerCreator) {
         this.community = community;
-        this.members = members == null ? new ArrayList<>() : new ArrayList<>(members);
+        this.membersPage = membersPage;
+        this.totalMemberCount = totalMemberCount;
         this.viewerRole = viewerRole;
         this.viewerCreator = viewerCreator;
     }
@@ -25,8 +26,12 @@ public class CommunityMembersData implements Serializable {
         return community;
     }
 
-    public List<CommunityMembershipEntry> getMembers() {
-        return new ArrayList<>(members);
+    public Page<CommunityMembershipEntry> getMembersPage() {
+        return membersPage;
+    }
+
+    public long getTotalMemberCount() {
+        return totalMemberCount;
     }
 
     public String getViewerRole() {

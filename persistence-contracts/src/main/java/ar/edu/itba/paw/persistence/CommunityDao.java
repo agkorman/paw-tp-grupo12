@@ -35,7 +35,8 @@ public interface CommunityDao {
     Optional<String> findMembershipRole(long communityId, long userId);
     Map<Long, String> findMembershipRoles(long userId, Collection<Long> communityIds);
     void updateMembershipRole(long communityId, long userId, String newRole);
-    List<CommunityMembershipEntry> listMembers(long communityId);
+    Page<CommunityMembershipEntry> listMembers(long communityId, int page);
+    long countMembers(long communityId);
     void setPostHidden(long postId, boolean hidden);
     void setCommentHidden(long commentId, boolean hidden);
     boolean addHelpfulReaction(long postId, long userId);

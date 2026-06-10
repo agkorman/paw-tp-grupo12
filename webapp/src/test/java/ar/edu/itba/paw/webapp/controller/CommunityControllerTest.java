@@ -416,7 +416,7 @@ class CommunityControllerTest {
     @Test
     void communityMembers_marksCurrentUserRow() throws Exception {
         // Arrange
-        when(communityService.getCommunityMembers("classics", 7L))
+        when(communityService.getCommunityMembers("classics", 7L, 1))
                 .thenReturn(Optional.of(communityMembersData()));
         bindPrincipal(testUser(7L));
         final MockMvc mockMvc = communityMockMvc();
@@ -791,12 +791,15 @@ class CommunityControllerTest {
     }
 
     private static CommunityMembersData communityMembersData() {
+        final List<CommunityMembershipEntry> members = List.of(
+                new CommunityMembershipEntry(7L, "mateo.classics", "moderator", LocalDateTime.now(), false),
+                new CommunityMembershipEntry(8L, "lu.driver", "member", LocalDateTime.now(), false)
+        );
+        final Page<CommunityMembershipEntry> membersPage = new Page<>(members, 1, 12, 2L);
         return new CommunityMembersData(
                 community(),
-                List.of(
-                        new CommunityMembershipEntry(7L, "mateo.classics", "moderator", LocalDateTime.now(), false),
-                        new CommunityMembershipEntry(8L, "lu.driver", "member", LocalDateTime.now(), false)
-                ),
+                membersPage,
+                2L,
                 "moderator",
                 false
         );

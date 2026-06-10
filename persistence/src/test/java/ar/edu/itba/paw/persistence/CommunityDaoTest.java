@@ -774,14 +774,14 @@ class CommunityDaoTest extends AbstractPersistenceTest {
         insertCommunityMembership(communityId, other.getId(), "member");
 
         // Exercise
-        final List<CommunityMembershipEntry> result = communityDao.listMembers(communityId);
+        final Page<CommunityMembershipEntry> result = communityDao.listMembers(communityId, 1);
 
         // Assertions
-        assertEquals(2, result.size());
-        assertEquals("moderator", result.get(0).getRole());
-        assertEquals("list-owner", result.get(0).getUsername());
-        assertEquals("member", result.get(1).getRole());
-        assertEquals("list-other", result.get(1).getUsername());
+        assertEquals(2, result.getItems().size());
+        assertEquals("moderator", result.getItems().get(0).getRole());
+        assertEquals("list-owner", result.getItems().get(0).getUsername());
+        assertEquals("member", result.getItems().get(1).getRole());
+        assertEquals("list-other", result.getItems().get(1).getUsername());
     }
 
     @Test

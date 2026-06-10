@@ -376,15 +376,24 @@ public class CommunityJpaDao implements CommunityDao {
     }
 
     @Override
-    public List<CommunityMembershipEntry> listMembers(final long communityId) {
+    public Page<CommunityMembershipEntry> listMembers(final long communityId, final int page) {
+        final int pageSize = Pagination.COMMUNITY_MEMBERS_PAGE_SIZE;
+        final long totalItems = countMembers(communityId);
+        if (totalItems <= 0L) {
+            return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
+        }
+        final int effectivePage = Pagination.clampPage(Pagination.normalizePage(page), totalItems, pageSize);
         final List<?> rows = em.createNativeQuery(
                 "SELECT m.user_id, u.username, m.role, m.joined_at " +
                 "FROM community_memberships m " +
                 "JOIN users u ON u.user_id = m.user_id " +
-                "WHERE m.community_id = :communityId " +
-                "ORDER BY (CASE WHEN m.role = 'moderator' THEN 0 ELSE 1 END) ASC, m.joined_at ASC"
+                "WHERE m.community_id = ? " +
+                "ORDER BY (CASE WHEN m.role = 'moderator' THEN 0 ELSE 1 END) ASC, m.joined_at ASC " +
+                "LIMIT ? OFFSET ?"
         )
-                .setParameter("communityId", communityId)
+                .setParameter(1, communityId)
+                .setParameter(2, pageSize)
+                .setParameter(3, Pagination.offsetFor(effectivePage, pageSize))
                 .getResultList();
         final List<CommunityMembershipEntry> entries = new ArrayList<>(rows.size());
         for (final Object rowObject : rows) {
@@ -395,7 +404,17 @@ public class CommunityJpaDao implements CommunityDao {
             final LocalDateTime joinedAt = row[3] == null ? null : toLocalDateTime(row[3]);
             entries.add(new CommunityMembershipEntry(userId, username, role, joinedAt));
         }
-        return entries;
+        return new Page<>(entries, effectivePage, pageSize, totalItems);
+    }
+
+    @Override
+    public long countMembers(final long communityId) {
+        final Number count = (Number) em.createNativeQuery(
+                "SELECT COUNT(*) FROM community_memberships WHERE community_id = ?"
+        )
+                .setParameter(1, communityId)
+                .getSingleResult();
+        return count == null ? 0L : count.longValue();
     }
 
     @Override

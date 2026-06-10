@@ -12,6 +12,15 @@
     <c:url var="communityDetailUrl" value="/communities/${community.slug}"/>
     <spring:message var="memberActionMenuLabel" code="communities.members.actionMenu.label"/>
 
+    <c:set var="membersCurrentPath" value="${requestScope['javax.servlet.forward.servlet_path']}"/>
+    <c:if test="${empty membersCurrentPath}">
+        <c:set var="membersCurrentPath" value="/"/>
+    </c:if>
+    <c:set var="membersQueryStr" value="${requestScope['javax.servlet.forward.query_string']}"/>
+    <c:if test="${not empty membersQueryStr}">
+        <c:set var="membersCurrentPath" value="${membersCurrentPath}?${membersQueryStr}"/>
+    </c:if>
+
     <main class="communities-page">
         <section class="community-members-shell">
             <header class="community-members-header">
@@ -22,9 +31,8 @@
                 <p class="community-section-kicker"><spring:message code="communities.members.kicker"/></p>
                 <h1 class="community-section-title"><spring:message code="communities.members.title"/></h1>
                 <p class="community-members-count">
-                    <c:set var="memberCount" value="${fn:length(memberRows)}"/>
-                    <spring:message code="${memberCount eq 1 ? 'communities.members.count.one' : 'communities.members.count.many'}"
-                                    arguments="${memberCount}"/>
+                    <spring:message code="${membersTotalCount eq 1 ? 'communities.members.count.one' : 'communities.members.count.many'}"
+                                    arguments="${membersTotalCount}"/>
                 </p>
             </header>
 
@@ -68,6 +76,7 @@
                                         <form method="post" action="${fn:escapeXml(promoteUrl)}"
                                               data-confirm-modal="promoteMemberConfirmModal">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                            <input type="hidden" name="redirect" value="${fn:escapeXml(membersCurrentPath)}">
                                             <button type="submit">
                                                 <spring:message code="communities.members.action.promote"/>
                                             </button>
@@ -78,6 +87,7 @@
                                         <form method="post" action="${fn:escapeXml(transferUrl)}"
                                               data-confirm-modal="transferOwnerConfirmModal">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                            <input type="hidden" name="redirect" value="${fn:escapeXml(membersCurrentPath)}">
                                             <button type="submit">
                                                 <spring:message code="communities.members.action.transfer"/>
                                             </button>
@@ -87,6 +97,7 @@
                                     <form method="post" action="${fn:escapeXml(kickUrl)}"
                                           data-confirm-modal="kickMemberConfirmModal">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                        <input type="hidden" name="redirect" value="${fn:escapeXml(membersCurrentPath)}">
                                         <button type="submit" class="action-menu-danger">
                                             <spring:message code="communities.members.action.kick"/>
                                         </button>
@@ -97,6 +108,14 @@
                     </li>
                 </c:forEach>
             </ul>
+
+            <c:if test="${membersTotalPages > 1}">
+                <spring:message var="membersPaginationAria" code="communities.members.pagination.aria"/>
+                <pa:pagination currentPage="${membersCurrentPage}"
+                               totalPages="${membersTotalPages}"
+                               baseUrl="/communities/${community.slug}/members"
+                               ariaLabel="${membersPaginationAria}"/>
+            </c:if>
         </section>
     </main>
 

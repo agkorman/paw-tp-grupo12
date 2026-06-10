@@ -813,16 +813,18 @@ public class CommunityController {
     @RequestMapping(value = "/communities/{communitySlug}/members", method = RequestMethod.GET)
     public ModelAndView communityMembers(
         @PathVariable final String communitySlug,
+        @RequestParam(value = "page", required = false) final Integer page,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
             return new ModelAndView("redirect:/communities/" + communitySlug);
         }
         final CommunityMembersData membersData = communityService
-                .getCommunityMembers(communitySlug, currentUser.getId())
+                .getCommunityMembers(communitySlug, currentUser.getId(), Pagination.normalizePage(page))
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
+        final Page<CommunityMembershipEntry> membersPage = membersData.getMembersPage();
         final List<MemberRowView> rows = new ArrayList<>();
-        for (final CommunityMembershipEntry entry : membersData.getMembers()) {
+        for (final CommunityMembershipEntry entry : membersPage.getItems()) {
             rows.add(new MemberRowView(
                     entry.getUserId(),
                     entry.getUsername(),
@@ -836,6 +838,9 @@ public class CommunityController {
         mav.addObject("pageTitleValue", membersData.getCommunity().getName());
         mav.addObject("community", membersData.getCommunity());
         mav.addObject("memberRows", rows);
+        mav.addObject("membersTotalCount", membersData.getTotalMemberCount());
+        mav.addObject("membersCurrentPage", membersPage.getPageNumber());
+        mav.addObject("membersTotalPages", membersPage.getTotalPages());
         mav.addObject("viewerIsModerator", membersData.isViewerModerator());
         mav.addObject("viewerIsCreator", membersData.isViewerCreator());
         return mav;
@@ -845,11 +850,16 @@ public class CommunityController {
     public String kickCommunityMember(
         @PathVariable final String communitySlug,
         @PathVariable final long userId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse("/communities/" + communitySlug + "/members");
         communityService.kickMember(communitySlug, userId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
-        return "redirect:/communities/" + communitySlug + "/members";
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(value = "/communities/{communitySlug}/members/{userId}/kick", method = RequestMethod.GET)
@@ -863,14 +873,19 @@ public class CommunityController {
     public String transferCommunityOwnership(
         @PathVariable final String communitySlug,
         @PathVariable final long userId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug;
         }
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse("/communities/" + communitySlug + "/members");
         communityService.transferOwnership(communitySlug, userId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
-        return "redirect:/communities/" + communitySlug + "/members";
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(value = "/communities/{communitySlug}/members/{userId}/transfer", method = RequestMethod.GET)
@@ -884,14 +899,19 @@ public class CommunityController {
     public String promoteCommunityMember(
         @PathVariable final String communitySlug,
         @PathVariable final long userId,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         if (currentUser == null) {
             return "redirect:/communities/" + communitySlug;
         }
+        final String safeRedirect = LoginRedirectUtils
+                .safeRedirect(redirect, request.getContextPath())
+                .orElse("/communities/" + communitySlug + "/members");
         communityService.promoteToModerator(communitySlug, userId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
-        return "redirect:/communities/" + communitySlug + "/members";
+        return redirectTo(safeRedirect);
     }
 
     @RequestMapping(value = "/communities/{communitySlug}/members/{userId}/promote", method = RequestMethod.GET)
