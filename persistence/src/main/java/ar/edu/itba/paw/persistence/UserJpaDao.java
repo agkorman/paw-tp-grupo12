@@ -60,9 +60,11 @@ public class UserJpaDao implements UserDao {
     public boolean updateUsername(long userId, String username) {
         final User user = em.find(User.class, userId);
         if (user == null) {
+            LOGGER.warn("user username update affected 0 rows id={}", userId);
             return false;
         }
         user.setUsername(username);
+        LOGGER.info("updated username id={}", userId);
         return true;
     }
 
@@ -122,7 +124,8 @@ public class UserJpaDao implements UserDao {
     }
 
     @Override
-    public Page<User> searchByQuery(final String query, final int page, final int pageSize) {
+    public Page<User> searchByQuery(final String query, final int page) {
+        final int pageSize = Pagination.USERS_PAGE_SIZE;
         if (query == null || query.isBlank()) {
             return Page.empty(Pagination.DEFAULT_PAGE, pageSize);
         }

@@ -68,25 +68,6 @@ public class CarFavoriteJpaDao implements CarFavoriteDao {
     }
 
     @Override
-    public List<Car> findFavoriteCars(final long userId) {
-        final List<?> ids = em.createNativeQuery(
-                "SELECT c.car_id FROM cars c " +
-                "JOIN car_favorites cf ON cf.car_id = c.car_id " +
-                "WHERE cf.user_id = ? ORDER BY cf.created_at DESC, c.car_id DESC")
-                .setParameter(1, userId)
-                .getResultList();
-
-        if (ids.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        final List<Long> longIds = ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
-        final List<Car> cars = loadCarsByIds(longIds);
-        populateHasImage(cars);
-        return sortByIds(cars, longIds);
-    }
-
-    @Override
     public Page<Car> findFavoriteCars(final long userId, final int page) {
         final int normalizedPage = Pagination.normalizePage(page);
         final int pageSize = Pagination.CARS_PAGE_SIZE;

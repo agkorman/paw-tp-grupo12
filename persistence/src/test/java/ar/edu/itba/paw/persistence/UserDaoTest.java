@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.EmailRecipient;
+import ar.edu.itba.paw.model.Page;
+import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,8 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class UserDaoTest extends AbstractPersistenceTest {
+
+    @Autowired
+    private UserDao userDao;
 
     @Test
     public void shouldCreateUserAndPersistFields() {
@@ -225,5 +231,39 @@ public class UserDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldSearchUsersIgnoringCaseAndEscapingLikeWildcards() {
+        // Arrange
+        final User literalUnderscore = insertUser("search_alpha", "search_alpha@example.com", "password", "user");
+        insertUser("searchxalpha", "searchxalpha@example.com", "password", "user");
+        insertUser("unrelated", "unrelated@example.com", "password", "user");
+
+        // Exercise
+        final Page<User> result = userDao.searchByQuery("SEARCH_", 1);
+
+        // Assertions
+        // The underscore must match literally, not as a single-character LIKE wildcard.
+        assertEquals(1L, result.getTotalItems());
+        assertEquals(literalUnderscore.getId(), result.getItems().get(0).getId());
+    }
+
+    @Test
+    public void shouldPaginateUserSearchOrderedByUsername() {
+        // Arrange
+        for (int i = 0; i < Pagination.USERS_PAGE_SIZE + 1; i++) {
+            insertUser(String.format("paged-user-%02d", i), "paged-user-" + i + "@example.com", "password", "user");
+        }
+
+        // Exercise
+        final Page<User> result = userDao.searchByQuery("paged-user", 2);
+
+        // Assertions
+        assertEquals(Pagination.USERS_PAGE_SIZE + 1L, result.getTotalItems());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(1, result.getItems().size());
+        assertEquals(String.format("paged-user-%02d", Pagination.USERS_PAGE_SIZE),
+                result.getItems().get(0).getUsername());
     }
 }

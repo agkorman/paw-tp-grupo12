@@ -19,7 +19,6 @@ import ar.edu.itba.paw.model.ImagePayload;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.StoredImagePayload;
-import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.exception.CommunityMembershipRequiredException;
@@ -45,7 +44,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -84,15 +82,12 @@ public class CommunityController {
 
     private final CommunityService communityService;
     private final ReviewService reviewService;
-    private final CarService carService;
 
     @Autowired
     public CommunityController(final CommunityService communityService,
-                               final ReviewService reviewService,
-                               final CarService carService) {
+                               final ReviewService reviewService) {
         this.communityService = communityService;
         this.reviewService = reviewService;
-        this.carService = carService;
     }
 
     @InitBinder
@@ -1116,13 +1111,7 @@ public class CommunityController {
     }
 
     private RepostReviewView buildRepostReviewView(final Review review) {
-        final Car car = review.getCar() != null
-                ? review.getCar()
-                : carService.getCarById(review.getCarId()).orElse(null);
-        return buildRepostReviewView(review, car);
-    }
-
-    private RepostReviewView buildRepostReviewView(final Review review, final Car car) {
+        final Car car = review.getCar();
         final String carName = car != null ? car.getBrandName() + " " + car.getModel() : null;
         final String authorName = review.getUser() != null ? review.getUser().getUsername() : null;
         return new RepostReviewView(
@@ -1134,29 +1123,6 @@ public class CommunityController {
                 review.getCarId(),
                 authorName
         );
-    }
-
-    /**
-     * Batch-resolves the cars referenced by the given linked reviews in a single service call,
-     * so that mapping a page of post cards never triggers a per-item car lookup.
-     */
-    private Map<Long, Car> carsForLinkedReviews(final Collection<Review> linkedReviews) {
-        final List<Long> carIds = linkedReviews.stream()
-                .filter(Objects::nonNull)
-                .filter(r -> r.getCar() == null)
-                .map(Review::getCarId)
-                .filter(id -> id > 0)
-                .distinct()
-                .collect(Collectors.toList());
-        if (carIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        return carService.getCarsByIds(carIds).stream()
-                .collect(Collectors.toMap(Car::getId, car -> car));
-    }
-
-    private Car resolveLinkedReviewCar(final Review review, final Map<Long, Car> carsById) {
-        return review.getCar() != null ? review.getCar() : carsById.get(review.getCarId());
     }
 
     private String redirectToLoginIfAnonymous(final HttpServletRequest request,
@@ -1252,7 +1218,7 @@ public class CommunityController {
             final String postSlug = post.getSlug();
             final Review linkedReview = post.getLinkedReview();
             final RepostReviewView repostReview = linkedReview != null
-                    ? buildRepostReviewView(linkedReview, resolveLinkedReviewCar(linkedReview, carsByLinkedReview))
+                    ? buildRepostReviewView(linkedReview)
                     : null;
             final boolean ownedByCurrentUser = currentUserId != null
                 && currentUserId.equals(post.getAuthorUserId());

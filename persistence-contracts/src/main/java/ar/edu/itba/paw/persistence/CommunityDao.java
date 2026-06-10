@@ -15,21 +15,20 @@ import java.util.Set;
 import java.util.Map;
 
 public interface CommunityDao {
-    List<Community> findAll();
     Page<Community> findAll(int page);
     Page<Community> findByCriteria(CommunitySearchCriteria criteria, Long currentUserId);
     Optional<Community> findBySlug(String slug);
     List<CommunityTopic> findAllTopics();
     List<CommunityTopic> findTopicsByIds(Collection<Short> topicIds);
     Community create(long createdByUserId, String slug, String name, String description);
-    void updateDetails(long communityId, String name, String description);
-    void updateCreatedBy(long communityId, long newOwnerUserId);
+    boolean updateDetails(long communityId, String name, String description);
+    boolean updateCreatedBy(long communityId, long newOwnerUserId);
     boolean delete(long communityId);
     CommunityPost createPost(long communityId, long authorUserId, String slug, String title, String body);
     CommunityPost createPost(long communityId, long authorUserId, String slug, String title, String body, Long linkedReviewId);
     CommunityPostComment createComment(long postId, long userId, String body);
-    void updatePost(long postId, String title, String body);
-    void updateComment(long commentId, String body);
+    boolean updatePost(long postId, String title, String body);
+    boolean updateComment(long commentId, String body);
     void replaceTopicAssignments(long communityId, Collection<Short> topicIds);
     void createMembership(long communityId, long userId, String role);
     void deleteMembership(long communityId, long userId);
@@ -49,7 +48,6 @@ public interface CommunityDao {
     Set<Long> findCommentHelpfulReactionsByUser(Collection<Long> commentIds, long userId);
     Map<Long, List<CommunityTopic>> findTopicsByCommunityIds(Collection<Long> communityIds);
     List<CommunityPost> findPostsByIds(Collection<Long> postIds);
-    List<CommunityPost> findPostsByCommunityId(long communityId);
     Page<CommunityPost> findVisiblePostsByCommunityId(long communityId, String sort, int page);
     Optional<CommunityPost> findPostByCommunityIdAndSlug(long communityId, String postSlug);
     Page<CommunityPostComment> findCommentsByPostId(long postId, int page);

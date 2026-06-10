@@ -275,18 +275,6 @@ public class ReviewLikeServiceImplTest {
     }
 
     @Test
-    public void shouldReturnEmptyListWhenDaoThrowsForLikedReviewIdsByUser() {
-        // Arrange
-        when(reviewLikeDao.findLikedReviewIdsByUserId(USER_ID)).thenThrow(new DataAccessResourceFailureException("db"));
-
-        // Exercise
-        final List<Long> result = reviewLikeService.getLikedReviewIdsByUser(USER_ID);
-
-        // Assertions
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
     public void shouldReturnEmptyPageWhenDaoThrowsForPagedLikedReviewIdsByUser() {
         // Arrange
         when(reviewLikeDao.findLikedReviewIdsByUserId(USER_ID, 1)).thenThrow(new DataAccessResourceFailureException("db"));
@@ -353,18 +341,6 @@ public class ReviewLikeServiceImplTest {
 
         // Exercise
         final Set<Long> result = reviewLikeService.getLikedReplyIds(List.of(1L), USER_ID);
-
-        // Assertions
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    public void shouldReturnEmptyListWhenDaoThrowsForLikedReplyIdsByUser() {
-        // Arrange
-        when(reviewLikeDao.findLikedReplyIdsByUserId(USER_ID)).thenThrow(new DataAccessResourceFailureException("db"));
-
-        // Exercise
-        final List<Long> result = reviewLikeService.getLikedReplyIdsByUser(USER_ID);
 
         // Assertions
         assertTrue(result.isEmpty());

@@ -28,15 +28,6 @@ public class BrandRequestJpaDao implements BrandRequestDao {
     }
 
     @Override
-    public List<BrandRequest> findByStatus(final String status) {
-        return em.createQuery(
-                "SELECT b FROM BrandRequest b WHERE b.status = :status ORDER BY b.createdAt DESC, b.id DESC",
-                BrandRequest.class)
-                .setParameter("status", status)
-                .getResultList();
-    }
-
-    @Override
     public Page<BrandRequest> findByStatus(final String status, final int page) {
         final int normalizedPage = Pagination.normalizePage(page);
         final int pageSize = Pagination.REQUESTS_PAGE_SIZE;

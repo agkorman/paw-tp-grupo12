@@ -9,15 +9,11 @@ import java.util.Map;
 import java.util.Set;
 
 public interface CarFavoriteService {
-    List<Long> findFavoriteCarIdsByUser(long userId);
-
     Map<Long, List<Long>> findAllFavoriteCarIdsByUser();
 
     void setFavorite(long userId, long carId, boolean favorite);
 
     boolean isFavorited(long userId, long carId);
-
-    List<Car> getFavoriteCars(long userId);
 
     Page<Car> getFavoriteCars(long userId, int page);
 

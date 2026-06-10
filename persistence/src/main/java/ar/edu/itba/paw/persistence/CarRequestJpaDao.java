@@ -38,15 +38,6 @@ public class CarRequestJpaDao implements CarRequestDao {
     }
 
     @Override
-    public List<CarRequest> findByStatus(final String status) {
-        return em.createQuery(
-                "SELECT r FROM CarRequest r WHERE r.status = :status ORDER BY r.createdAt DESC, r.id DESC",
-                CarRequest.class)
-                .setParameter("status", status)
-                .getResultList();
-    }
-
-    @Override
     public Page<CarRequest> findByStatus(final String status, final int page) {
         final int normalizedPage = Pagination.normalizePage(page);
         final int pageSize = Pagination.REQUESTS_PAGE_SIZE;
@@ -88,7 +79,7 @@ public class CarRequestJpaDao implements CarRequestDao {
     }
 
     @Override
-    public CarRequest create(final long submittedByUserId, final String submitterEmail, final long brandId,
+    public CarRequest create(final Long submittedByUserId, final String submitterEmail, final long brandId,
                              final long bodyTypeId, final Integer year, final String model, final String description,
                              final String status,
                              final String fuelType, final Integer horsepower, final Integer airbagCount,
@@ -97,7 +88,9 @@ public class CarRequestJpaDao implements CarRequestDao {
         final Brand brand = em.getReference(Brand.class, brandId);
         final BodyType bodyType = em.getReference(BodyType.class, bodyTypeId);
         final CarRequest request = new CarRequest(brand, bodyType, model, description, status);
-        request.setSubmittedByUser(em.getReference(User.class, submittedByUserId));
+        if (submittedByUserId != null) {
+            request.setSubmittedByUser(em.getReference(User.class, submittedByUserId));
+        }
         request.setSubmitterEmail(submitterEmail);
         request.setYear(year);
         request.setFuelType(fuelType);

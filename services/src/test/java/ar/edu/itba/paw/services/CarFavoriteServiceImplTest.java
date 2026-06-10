@@ -75,30 +75,6 @@ public class CarFavoriteServiceImplTest {
     }
 
     @Test
-    public void shouldReturnFavoriteCarIdsMappedFromCars() {
-        // Arrange
-        when(carFavoriteDao.findFavoriteCars(USER_ID)).thenReturn(List.of(car(7L), car(8L)));
-
-        // Exercise
-        final List<Long> result = carFavoriteService.findFavoriteCarIdsByUser(USER_ID);
-
-        // Assertions
-        assertEquals(List.of(7L, 8L), result);
-    }
-
-    @Test
-    public void shouldReturnEmptyFavoriteCarIdsWhenDaoReturnsEmpty() {
-        // Arrange
-        when(carFavoriteDao.findFavoriteCars(USER_ID)).thenReturn(List.of());
-
-        // Exercise
-        final List<Long> result = carFavoriteService.findFavoriteCarIdsByUser(USER_ID);
-
-        // Assertions
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
     public void shouldDelegateIsFavoritedToDao() {
         // Arrange
         when(carFavoriteDao.isFavorited(USER_ID, CAR_ID)).thenReturn(true);
@@ -120,20 +96,6 @@ public class CarFavoriteServiceImplTest {
 
         // Assertions
         assertFalse(result);
-    }
-
-    @Test
-    public void shouldReturnFavoriteCarsFromDao() {
-        // Arrange
-        final List<Car> cars = List.of(car(7L), car(8L));
-        when(carFavoriteDao.findFavoriteCars(USER_ID)).thenReturn(cars);
-
-        // Exercise
-        final List<Car> result = carFavoriteService.getFavoriteCars(USER_ID);
-
-        // Assertions
-        assertEquals(2, result.size());
-        assertEquals(7L, result.get(0).getId());
     }
 
     @Test
