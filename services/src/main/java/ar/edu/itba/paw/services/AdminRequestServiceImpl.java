@@ -6,12 +6,12 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.UserRole;
 import ar.edu.itba.paw.persistence.AdminRequestDao;
 import ar.edu.itba.paw.services.exception.PendingAdminRequestExistsException;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -122,14 +122,22 @@ public class AdminRequestServiceImpl implements AdminRequestService {
             "submitting admin request for user id={}",
             submittedByUserId
         );
-        return adminRequestDao.create(
-            submittedByUserId,
-            submitterEmail,
-            normalizedMotivation,
-            normalizedBio,
-            normalizedJustification,
-            STATUS_PENDING
-        );
+        try {
+            return adminRequestDao.create(
+                submittedByUserId,
+                submitterEmail,
+                normalizedMotivation,
+                normalizedBio,
+                normalizedJustification,
+                STATUS_PENDING
+            );
+        } catch (final DataIntegrityViolationException e) {
+            LOGGER.warn(
+                "concurrent admin request rejected by unique index for user id={}",
+                submittedByUserId
+            );
+            throw new PendingAdminRequestExistsException(submittedByUserId);
+        }
     }
 
     @Override

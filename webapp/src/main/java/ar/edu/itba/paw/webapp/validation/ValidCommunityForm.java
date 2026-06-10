@@ -1,6 +1,5 @@
 package ar.edu.itba.paw.webapp.validation;
 
-import ar.edu.itba.paw.webapp.form.CommunityForm;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
