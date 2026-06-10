@@ -1,11 +1,13 @@
 package ar.edu.itba.paw.persistence;
 
+import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +15,18 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class ReviewInteractionDaoTest extends AbstractPersistenceTest {
+
+    @Autowired
+    private ReviewReplyDao reviewReplyDao;
+
+    @Autowired
+    private ReviewLikeDao reviewLikeDao;
+
+    @Autowired
+    private ReviewTagDao reviewTagDao;
 
     @Test
     public void shouldCreateReplyAndFindItByReviewId() {
@@ -362,5 +374,35 @@ public class ReviewInteractionDaoTest extends AbstractPersistenceTest {
 
         // Assertions
         assertEquals(2L, result.get(review.getId()));
+    }
+
+    @Test
+    public void shouldCountTagMentionsGroupedByCarAndTag() {
+        // Arrange
+        final User user = createUser("tag-counts");
+        final Car taggedCar = createCar("tag-counts");
+        final Car otherCar = createCar("tag-counts-other");
+        final short comfortTag = createReviewTag("tag-counts-comfort", "positive", "comfort");
+        final short noiseTag = createReviewTag("tag-counts-noise", "negative", "sound");
+        final long firstReviewId = insertReview(user.getId(), user.getUsername(), taggedCar.getId(),
+                new BigDecimal("4.0"), "First", "Body", "owner", 2026, 1000, true).getId();
+        final long secondReviewId = insertReview(user.getId(), user.getUsername(), taggedCar.getId(),
+                new BigDecimal("3.0"), "Second", "Body", "owner", 2026, 1000, true).getId();
+        final long otherCarReviewId = insertReview(user.getId(), user.getUsername(), otherCar.getId(),
+                new BigDecimal("2.0"), "Other", "Body", "owner", 2026, 1000, true).getId();
+        jdbcTemplate.update("INSERT INTO review_tag_assignments (review_id, tag_id) VALUES (?, ?)", firstReviewId, comfortTag);
+        jdbcTemplate.update("INSERT INTO review_tag_assignments (review_id, tag_id) VALUES (?, ?)", secondReviewId, comfortTag);
+        jdbcTemplate.update("INSERT INTO review_tag_assignments (review_id, tag_id) VALUES (?, ?)", secondReviewId, noiseTag);
+        jdbcTemplate.update("INSERT INTO review_tag_assignments (review_id, tag_id) VALUES (?, ?)", otherCarReviewId, noiseTag);
+
+        // Exercise
+        final Map<Long, Map<Short, Integer>> result = reviewTagDao.getTagCountsForCars(List.of(taggedCar.getId(), otherCar.getId()));
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals(2, result.get(taggedCar.getId()).get(comfortTag));
+        assertEquals(1, result.get(taggedCar.getId()).get(noiseTag));
+        assertEquals(1, result.get(otherCar.getId()).get(noiseTag));
+        assertFalse(result.get(otherCar.getId()).containsKey(comfortTag));
     }
 }

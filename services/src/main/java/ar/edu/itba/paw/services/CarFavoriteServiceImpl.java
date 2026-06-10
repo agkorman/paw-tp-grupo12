@@ -36,14 +36,6 @@ public class CarFavoriteServiceImpl implements CarFavoriteService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Long> findFavoriteCarIdsByUser(final long userId) {
-        return carFavoriteDao.findFavoriteCars(userId).stream()
-                .map(Car::getId)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Map<Long, List<Long>> findAllFavoriteCarIdsByUser() {
         return carFavoriteDao.findAllFavoriteCarIdsByUser();
     }
@@ -64,12 +56,6 @@ public class CarFavoriteServiceImpl implements CarFavoriteService {
     @Transactional(readOnly = true)
     public boolean isFavorited(final long userId, final long carId) {
         return carFavoriteDao.isFavorited(userId, carId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Car> getFavoriteCars(final long userId) {
-        return carFavoriteDao.findFavoriteCars(userId);
     }
 
     @Override

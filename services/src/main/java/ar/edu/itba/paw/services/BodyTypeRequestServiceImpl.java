@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -23,30 +22,19 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
 
     private final BodyTypeRequestDao bodyTypeRequestDao;
     private final BodyTypeDao bodyTypeDao;
-    private final UserService userService;
     private final EmailService emailService;
 
     @Autowired
     public BodyTypeRequestServiceImpl(final BodyTypeRequestDao bodyTypeRequestDao, final BodyTypeDao bodyTypeDao,
-                                      final UserService userService, final EmailService emailService) {
+                                      final EmailService emailService) {
         this.bodyTypeRequestDao = bodyTypeRequestDao;
         this.bodyTypeDao = bodyTypeDao;
-        this.userService = userService;
         this.emailService = emailService;
     }
 
     @Override
     public Optional<BodyTypeRequest> getBodyTypeRequestById(final long id) {
         return bodyTypeRequestDao.findById(id);
-    }
-
-    @Override
-    public List<BodyTypeRequest> getBodyTypeRequestsByStatus(final String status) {
-        final String normalizedStatus = StringUtils.normalize(status);
-        if (normalizedStatus == null) {
-            return List.of();
-        }
-        return bodyTypeRequestDao.findByStatus(normalizedStatus);
     }
 
     @Override
@@ -155,12 +143,10 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
         if (request.getSubmitterEmail() != null && !request.getSubmitterEmail().isBlank()) {
             return request.getSubmitterEmail();
         }
-        if (request.getSubmittedByUserId() == null) {
+        final User submitter = request.getSubmittedByUser();
+        if (submitter == null || submitter.getEmail() == null || submitter.getEmail().isBlank()) {
             return null;
         }
-        return userService.getUserById(request.getSubmittedByUserId())
-                .map(User::getEmail)
-                .filter(email -> !email.isBlank())
-                .orElse(null);
+        return submitter.getEmail();
     }
 }

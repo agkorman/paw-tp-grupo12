@@ -20,7 +20,9 @@
 
 <c:url var="newCarUrl" value="/cars/new"/>
 <c:set var="showCarRequestCard" value="${empty totalPages or totalPages <= 1 or currentPage >= totalPages}"/>
-<spring:message var="addCarAuthAction" code="cars.authRequired.addAction"/>
+<c:url var="newCarLoginUrl" value="/login">
+    <c:param name="redirect" value="/cars/new"/>
+</c:url>
 <spring:message var="carsPaginationAria" code="cars.pagination.aria"/>
 <spring:message var="carsToolbarCountTemplate"
                 code="${resultCount eq 1 ? 'cars.toolbar.count.one' : 'cars.toolbar.count.many'}"
@@ -62,7 +64,7 @@
 
             <c:if test="${showCarRequestCard}">
                 <sec:authorize access="isAuthenticated()">
-                    <a href="${newCarUrl}" class="car-request-card" data-auth-resume-intent="create-car">
+                    <a href="${newCarUrl}" class="car-request-card">
                         <span class="car-request-card-icon" aria-hidden="true">
                             <pa:icon name="plus" size="56"/>
                         </span>
@@ -72,12 +74,8 @@
                     </a>
                 </sec:authorize>
                 <sec:authorize access="isAnonymous()">
-                    <a href="${newCarUrl}"
-                       class="car-request-card"
-                       data-auth-required="true"
-                       data-auth-required-action="${addCarAuthAction}"
-                       data-auth-required-intent="create-car"
-                       data-auth-return-url="/cars/new">
+                    <a href="${newCarLoginUrl}"
+                       class="car-request-card">
                         <span class="car-request-card-icon" aria-hidden="true">
                             <pa:icon name="plus" size="56"/>
                         </span>

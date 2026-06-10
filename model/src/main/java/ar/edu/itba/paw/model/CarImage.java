@@ -30,6 +30,6 @@ public class CarImage extends BaseImage {
     }
 
     public long getCarId() {
-        return car != null ? car.getId() : 0;
+        return car.getId();
     }
 }

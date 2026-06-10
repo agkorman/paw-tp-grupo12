@@ -6,9 +6,6 @@
 <%@ attribute name="action" required="false" %>
 <%@ attribute name="label" required="false" %>
 <%@ attribute name="redirect" required="false" type="java.lang.String" %>
-<%@ attribute name="intent" required="false" type="java.lang.String" %>
-<%@ attribute name="loginLabel" required="false" type="java.lang.String" %>
-<%@ attribute name="actionLabel" required="false" type="java.lang.String" %>
 <%@ attribute name="addAriaLabel" required="false" type="java.lang.String" %>
 <%@ attribute name="removeAriaLabel" required="false" type="java.lang.String" %>
 <%@ attribute name="readonly" required="false" %>
@@ -18,16 +15,12 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <spring:message var="defaultLikeLabel" code="review.like.label"/>
-<spring:message var="likeActionLabel" code="review.like.action"/>
 <spring:message var="likeLoginLabel" code="review.like.login"/>
 <spring:message var="likeAddLabel" code="review.like.add.aria"/>
 <spring:message var="likeRemoveLabel" code="review.like.remove.aria"/>
 <c:set var="likeLabel" value="${empty label ? defaultLikeLabel : label}"/>
 <c:set var="likeDisabled" value="${empty disabled ? false : disabled}"/>
 <c:set var="likeReadonly" value="${empty readonly ? false : readonly}"/>
-<c:set var="likeIntent" value="${empty intent ? 'like-'.concat(reviewId) : intent}"/>
-<c:set var="effectiveLikeLoginLabel" value="${empty loginLabel ? likeLoginLabel : loginLabel}"/>
-<c:set var="effectiveLikeActionLabel" value="${empty actionLabel ? likeActionLabel : actionLabel}"/>
 <c:set var="effectiveLikeAddLabel" value="${empty addAriaLabel ? likeAddLabel : addAriaLabel}"/>
 <c:set var="effectiveLikeRemoveLabel" value="${empty removeAriaLabel ? likeRemoveLabel : removeAriaLabel}"/>
 <c:set var="likeCurrentPath" value="${requestScope['javax.servlet.forward.servlet_path']}"/>
@@ -37,7 +30,6 @@
 <c:set var="likeQueryStr" value="${requestScope['javax.servlet.forward.query_string']}"/>
 <c:url var="likeLoginUrl" value="/login">
     <c:param name="redirect" value="${empty likeQueryStr ? likeCurrentPath : likeCurrentPath.concat('?').concat(likeQueryStr)}"/>
-    <c:param name="intent" value="${likeIntent}"/>
 </c:url>
 
 <c:choose>
@@ -55,8 +47,7 @@
             <c:when test="${likeDisabled}">
                 <a href="${likeLoginUrl}"
                    class="review-like-toggle ${liked ? 'is-active' : ''}"
-                   data-auth-resume-intent="${fn:escapeXml(likeIntent)}"
-                   aria-label="${fn:escapeXml(effectiveLikeLoginLabel)}">
+                   aria-label="${fn:escapeXml(likeLoginLabel)}">
                     <pa:icon name="heart" size="17"/>
                     <span class="review-like-label"><c:out value="${likeLabel}"/></span>
                     <span class="review-like-count" data-review-like-count><c:out value="${empty likeCount ? 0 : likeCount}"/></span>
@@ -65,8 +56,7 @@
             <c:otherwise>
                 <form method="post"
                       action="${fn:escapeXml(action)}"
-                      class="review-like-form"
-                      data-auth-resume-intent="${fn:escapeXml(likeIntent)}">
+                      class="review-like-form">
                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <c:if test="${not empty redirect}">
                         <input type="hidden" name="redirect" value="${fn:escapeXml(redirect)}">
@@ -84,22 +74,4 @@
             </c:otherwise>
         </c:choose>
     </c:when>
-    <c:otherwise>
-        <button
-                type="button"
-                class="review-like-toggle ${liked ? 'is-active' : ''}"
-                aria-pressed="${liked}"
-                aria-label="${fn:escapeXml(liked ? effectiveLikeRemoveLabel : effectiveLikeAddLabel)}"
-                data-auth-resume-intent="${fn:escapeXml(likeIntent)}"
-                <c:if test="${likeDisabled}">
-                    aria-disabled="true"
-                    data-auth-required="true"
-                    data-auth-required-action="${fn:escapeXml(effectiveLikeActionLabel)}"
-                    data-auth-required-intent="${fn:escapeXml(likeIntent)}"
-                </c:if>>
-                <pa:icon name="heart" size="17"/>
-                <span class="review-like-label"><c:out value="${likeLabel}"/></span>
-                <span class="review-like-count" data-review-like-count><c:out value="${empty likeCount ? 0 : likeCount}"/></span>
-            </button>
-    </c:otherwise>
 </c:choose>

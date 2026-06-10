@@ -163,18 +163,6 @@ public class CarRequestServiceImplTest {
     }
 
     @Test
-    public void shouldReturnEmptyListWhenStatusFilterIsBlank() {
-        // Arrange
-        final String blankStatus = "  ";
-
-        // Exercise
-        final List<CarRequest> result = carRequestService.getCarRequestsByStatus(blankStatus);
-
-        // Assertions
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
     public void shouldReturnEmptyPageWhenPagedStatusFilterIsInvalid() {
         // Arrange
         final String blankStatus = "  ";

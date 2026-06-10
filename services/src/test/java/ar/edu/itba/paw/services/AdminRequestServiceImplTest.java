@@ -209,18 +209,6 @@ public class AdminRequestServiceImplTest {
     }
 
     @Test
-    public void shouldReturnEmptyListWhenStatusFilterIsBlank() {
-        // Arrange
-        final String blankStatus = "   ";
-
-        // Exercise
-        final List<AdminRequest> result = adminRequestService.getAdminRequestsByStatus(blankStatus);
-
-        // Assertions
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
     public void shouldReturnEmptyPageWhenStatusFilterIsBlankForPaged() {
         // Arrange
         final String blankStatus = "  ";

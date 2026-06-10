@@ -16,8 +16,12 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class ReviewDaoTest extends AbstractPersistenceTest {
+
+    @Autowired
+    private ReviewDao reviewDao;
 
     @Test
     public void shouldCreateReviewAndAttachReviewerUsernameWhenFindingById() {
@@ -146,6 +150,33 @@ public class ReviewDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldComputeDefaultPagePerReviewPartitionedByCar() {
+        // Arrange
+        final User user = createUser("default-pages");
+        final Car pagedCar = createCar("default-pages");
+        final Car otherCar = createCar("default-pages-other");
+        final long[] reviewIds = new long[Pagination.REVIEWS_PAGE_SIZE + 1];
+        for (int i = 0; i < reviewIds.length; i++) {
+            reviewIds[i] = insertReview(user.getId(), user.getUsername(), pagedCar.getId(), new BigDecimal("4.0"),
+                    "Paged review " + i, "Body", "owner", 2026, 1000, true).getId();
+        }
+        final long otherCarReviewId = insertReview(user.getId(), user.getUsername(), otherCar.getId(),
+                new BigDecimal("3.0"), "Other car review", "Body", "owner", 2026, 1000, true).getId();
+
+        // Exercise
+        final Map<Long, Integer> result = reviewDao.findDefaultPagesByReviewIds(
+                List.of(reviewIds[0], reviewIds[reviewIds.length - 1], otherCarReviewId));
+
+        // Assertions
+        assertEquals(3, result.size());
+        // Default order is newest first: the most recent review sits on page 1 and the
+        // oldest one overflows to page 2; the other car's only review starts its own ranking.
+        assertEquals(1, result.get(reviewIds[reviewIds.length - 1]));
+        assertEquals(2, result.get(reviewIds[0]));
+        assertEquals(1, result.get(otherCarReviewId));
+    }
+
+    @Test
     public void shouldCalculateReviewStatsForCar() {
         // Arrange
         final User user = createUser("review-stats");
@@ -162,6 +193,30 @@ public class ReviewDaoTest extends AbstractPersistenceTest {
         assertTrue(result.isPresent());
         assertEquals(2, result.get().getReviewCount());
         assertEquals(new BigDecimal("4.0"), result.get().getAverageRating());
+    }
+
+    @Test
+    public void shouldCalculateReviewStatsForMultipleCarsIncludingCarsWithoutReviews() {
+        // Arrange
+        final User user = createUser("stats-multi");
+        final Car reviewedCar = createCar("stats-multi");
+        final Car unreviewedCar = createCar("stats-multi-empty");
+        insertReview(user.getId(), user.getUsername(), reviewedCar.getId(), new BigDecimal("2.0"), "Two", "Body",
+                "owner", 2024, 1000, true);
+        insertReview(user.getId(), user.getUsername(), reviewedCar.getId(), new BigDecimal("5.0"), "Five", "Body",
+                "owner", 2025, 2000, true);
+
+        // Exercise
+        final List<ReviewStats> result = reviewDao.findStatsByCarIds(List.of(reviewedCar.getId(), unreviewedCar.getId()));
+
+        // Assertions
+        assertEquals(2, result.size());
+        assertEquals(reviewedCar.getId(), result.get(0).getCarId());
+        assertEquals(2, result.get(0).getReviewCount());
+        assertEquals(new BigDecimal("3.5"), result.get(0).getAverageRating());
+        assertEquals(unreviewedCar.getId(), result.get(1).getCarId());
+        assertEquals(0, result.get(1).getReviewCount());
+        assertEquals(null, result.get(1).getAverageRating());
     }
 
     @Test

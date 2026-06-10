@@ -21,14 +21,14 @@ public interface CommunityDao {
     List<CommunityTopic> findAllTopics();
     List<CommunityTopic> findTopicsByIds(Collection<Short> topicIds);
     Community create(long createdByUserId, String slug, String name, String description);
-    void updateDetails(long communityId, String name, String description);
-    void updateCreatedBy(long communityId, long newOwnerUserId);
+    boolean updateDetails(long communityId, String name, String description);
+    boolean updateCreatedBy(long communityId, long newOwnerUserId);
     boolean delete(long communityId);
     CommunityPost createPost(long communityId, long authorUserId, String slug, String title, String body);
     CommunityPost createPost(long communityId, long authorUserId, String slug, String title, String body, Long linkedReviewId);
     CommunityPostComment createComment(long postId, long userId, String body);
-    void updatePost(long postId, String title, String body);
-    void updateComment(long commentId, String body);
+    boolean updatePost(long postId, String title, String body);
+    boolean updateComment(long commentId, String body);
     void replaceTopicAssignments(long communityId, Collection<Short> topicIds);
     void createMembership(long communityId, long userId, String role);
     void deleteMembership(long communityId, long userId);

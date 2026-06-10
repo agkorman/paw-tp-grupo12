@@ -16,7 +16,7 @@ import java.util.Optional;
 
 public interface ReviewService {
 
-    Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
+    Review createReview(Long userId, long carId, BigDecimal rating, String title, String body,
                         String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                         Collection<Short> tagIds, List<ImagePayload> images);
     long countAllReviews();
@@ -44,6 +44,8 @@ public interface ReviewService {
     List<ImagePayload> collectRetainedReviewImagePayloads(long reviewId, List<Long> retainedImageIds);
     boolean deleteReview(long id);
     Page<Review> getReviewsByCar(long carId, int page);
+
+    Map<Long, Integer> getDefaultPagesForReviewIds(Collection<Long> reviewIds);
 
     Optional<Review> getLatestReviewByCar(long carId);
     Optional<Review> getTopRatedLatestReviewByCar(long carId);

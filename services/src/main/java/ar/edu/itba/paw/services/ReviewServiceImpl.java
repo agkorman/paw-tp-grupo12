@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ReviewStats;
+import ar.edu.itba.paw.model.ReviewTag;
 import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ReviewDao;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -39,28 +41,23 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewTagDao reviewTagDao;
     private final ReviewImageDao reviewImageDao;
     private final ReviewTagService reviewTagService;
-    private final CarService carService;
-    private final UserService userService;
     private final EmailService emailService;
 
     @Autowired
     public ReviewServiceImpl(final ReviewDao reviewDao, final ReviewTagDao reviewTagDao,
                              final ReviewImageDao reviewImageDao,
                              final ReviewTagService reviewTagService,
-                             final CarService carService, final UserService userService,
                              final EmailService emailService) {
         this.reviewDao = reviewDao;
         this.reviewTagDao = reviewTagDao;
         this.reviewImageDao = reviewImageDao;
         this.reviewTagService = reviewTagService;
-        this.carService = carService;
-        this.userService = userService;
         this.emailService = emailService;
     }
 
     @Override
     @Transactional
-    public Review createReview(long userId, long carId, BigDecimal rating, String title, String body,
+    public Review createReview(Long userId, long carId, BigDecimal rating, String title, String body,
                                String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                                Collection<Short> tagIds, List<ImagePayload> images) {
         reviewTagService.validateSelection(tagIds);
@@ -73,7 +70,7 @@ public class ReviewServiceImpl implements ReviewService {
             reviewTagDao.replaceAssignments(review.getId(), tagIds);
             LOGGER.info("created review id={} userId={} carId={} tagCount={} imageCount={}", review.getId(), userId, carId,
                     tagIds.size(), images == null ? 0 : images.size());
-            return reviewDao.findById(review.getId()).orElse(review);
+            return withTags(reviewDao.findById(review.getId()).orElse(review));
         }
         LOGGER.info("created review id={} userId={} carId={} imageCount={}", review.getId(), userId, carId,
                 images == null ? 0 : images.size());
@@ -89,13 +86,13 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public Page<Review> getLatestReviews(final int page) {
-        return reviewDao.findLatest(page);
+        return withTags(reviewDao.findLatest(page));
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<Review> getReviewsByFollowedUsers(final long followerId, final int page) {
-        return reviewDao.findByFollowedUsers(followerId, page);
+        return withTags(reviewDao.findByFollowedUsers(followerId, page));
     }
 
     @Override
@@ -107,7 +104,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public Page<Review> getReviewsByFavoriteCars(final long userId, final int page) {
-        return reviewDao.findByFavoriteCars(userId, page);
+        return withTags(reviewDao.findByFavoriteCars(userId, page));
     }
 
     @Override
@@ -118,7 +115,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public Optional<Review> getReviewById(final long id) {
-        return reviewDao.findById(id);
+        return withTags(reviewDao.findById(id));
     }
 
     @Override
@@ -126,7 +123,7 @@ public class ReviewServiceImpl implements ReviewService {
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
         }
-        return reviewDao.findByIds(ids);
+        return withTags(reviewDao.findByIds(ids));
     }
 
     @Override
@@ -134,7 +131,7 @@ public class ReviewServiceImpl implements ReviewService {
         if (carIds == null || carIds.isEmpty()) {
             return Collections.emptyList();
         }
-        return reviewDao.findByCarIds(carIds);
+        return withTags(reviewDao.findByCarIds(carIds));
     }
 
     @Override
@@ -144,6 +141,12 @@ public class ReviewServiceImpl implements ReviewService {
             return Collections.emptyMap();
         }
         return reviewDao.countByCarIdsSince(carIds, since);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Integer> getDefaultPagesForReviewIds(final Collection<Long> reviewIds) {
+        return reviewDao.findDefaultPagesByReviewIds(reviewIds);
     }
 
     @Override
@@ -163,7 +166,7 @@ public class ReviewServiceImpl implements ReviewService {
                     finalImages == null ? Collections.emptyList() : finalImages);
             reviewImageDao.replaceAll(id, normalized);
             LOGGER.info("updated review id={} carId={} rating={} imageCount={}", id, carId, rating, normalized.size());
-            return reviewDao.findById(id);
+            return withTags(reviewDao.findById(id));
         }
         return updated;
     }
@@ -237,32 +240,32 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public Page<Review> getReviewsByCar(final long carId, final int page) {
-        return reviewDao.findByCarId(carId, page);
+        return withTags(reviewDao.findByCarId(carId, page));
     }
 
     @Override
     public Optional<Review> getLatestReviewByCar(final long carId) {
-        return reviewDao.findLatestByCarId(carId);
+        return withTags(reviewDao.findLatestByCarId(carId));
     }
 
     @Override
     public Optional<Review> getTopRatedLatestReviewByCar(final long carId) {
-        return reviewDao.findTopRatedLatestByCarId(carId);
+        return withTags(reviewDao.findTopRatedLatestByCarId(carId));
     }
 
     @Override
     public Page<Review> getReviewsByCarOrderByRatingAsc(final long carId, final int page) {
-        return reviewDao.findByCarIdOrderByRatingAsc(carId, page);
+        return withTags(reviewDao.findByCarIdOrderByRatingAsc(carId, page));
     }
 
     @Override
     public Page<Review> getReviewsByCarOrderByRatingDesc(final long carId, final int page) {
-        return reviewDao.findByCarIdOrderByRatingDesc(carId, page);
+        return withTags(reviewDao.findByCarIdOrderByRatingDesc(carId, page));
     }
 
     @Override
     public Page<Review> getReviewsByUser(final long userId, final int page) {
-        return reviewDao.findByUserId(userId, page);
+        return withTags(reviewDao.findByUserId(userId, page));
     }
 
     @Override
@@ -292,7 +295,7 @@ public class ReviewServiceImpl implements ReviewService {
         if (!isOwner && !isAdmin) {
             throw new ReviewOwnershipException(reviewId);
         }
-        return review;
+        return withTags(review);
     }
 
     @Override
@@ -303,7 +306,7 @@ public class ReviewServiceImpl implements ReviewService {
             return false;
         }
         final Review review = reviewOptional.get();
-        final String carName = resolveCarDisplayName(review.getCarId());
+        final String carName = resolveCarDisplayName(review.getCar());
         final String recipientEmail = resolveRecipientEmail(review);
         final boolean deleted = reviewDao.delete(reviewId);
         if (!deleted) {
@@ -316,23 +319,22 @@ public class ReviewServiceImpl implements ReviewService {
         return true;
     }
 
-    private String resolveCarDisplayName(final long carId) {
-        return carService.getCarById(carId)
-                .map(car -> {
-                    final String brand = car.getBrandName();
-                    final String model = car.getModel();
-                    if (brand == null && model == null) {
-                        return null;
-                    }
-                    if (brand == null) {
-                        return model;
-                    }
-                    if (model == null) {
-                        return brand;
-                    }
-                    return brand + " " + model;
-                })
-                .orElse(null);
+    private String resolveCarDisplayName(final Car car) {
+        if (car == null) {
+            return null;
+        }
+        final String brand = car.getBrandName();
+        final String model = car.getModel();
+        if (brand == null && model == null) {
+            return null;
+        }
+        if (brand == null) {
+            return model;
+        }
+        if (model == null) {
+            return brand;
+        }
+        return brand + " " + model;
     }
 
     private String resolveRecipientEmail(final Review review) {
@@ -340,13 +342,8 @@ public class ReviewServiceImpl implements ReviewService {
         if (reviewerEmail != null) {
             return reviewerEmail;
         }
-        if (review.getUserId() == null) {
-            return null;
-        }
-        return userService.getUserById(review.getUserId())
-                .map(User::getEmail)
-                .map(ReviewServiceImpl::normalizeEmail)
-                .orElse(null);
+        final User user = review.getUser();
+        return user == null ? null : normalizeEmail(user.getEmail());
     }
 
     private static String normalizeEmail(final String email) {
@@ -355,5 +352,38 @@ public class ReviewServiceImpl implements ReviewService {
         }
         final String trimmed = email.trim().toLowerCase(Locale.ROOT);
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private Review withTags(final Review review) {
+        if (review != null) {
+            attachTags(List.of(review));
+        }
+        return review;
+    }
+
+    private Optional<Review> withTags(final Optional<Review> review) {
+        review.ifPresent(r -> attachTags(List.of(r)));
+        return review;
+    }
+
+    private List<Review> withTags(final List<Review> reviews) {
+        attachTags(reviews);
+        return reviews;
+    }
+
+    private Page<Review> withTags(final Page<Review> page) {
+        attachTags(page.getItems());
+        return page;
+    }
+
+    private void attachTags(final Collection<Review> reviews) {
+        if (reviews == null || reviews.isEmpty()) {
+            return;
+        }
+        final List<Long> ids = reviews.stream().map(Review::getId).collect(Collectors.toList());
+        final Map<Long, List<ReviewTag>> tagsByReview = reviewTagDao.findByReviewIds(ids);
+        for (final Review review : reviews) {
+            review.setTags(tagsByReview.getOrDefault(review.getId(), Collections.emptyList()));
+        }
     }
 }

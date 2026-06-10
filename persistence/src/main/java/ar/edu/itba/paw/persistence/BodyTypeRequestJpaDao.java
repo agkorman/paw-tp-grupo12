@@ -28,15 +28,6 @@ public class BodyTypeRequestJpaDao implements BodyTypeRequestDao {
     }
 
     @Override
-    public List<BodyTypeRequest> findByStatus(final String status) {
-        return em.createQuery(
-                "SELECT b FROM BodyTypeRequest b WHERE b.status = :status ORDER BY b.createdAt DESC, b.id DESC",
-                BodyTypeRequest.class)
-                .setParameter("status", status)
-                .getResultList();
-    }
-
-    @Override
     public Page<BodyTypeRequest> findByStatus(final String status, final int page) {
         final int normalizedPage = Pagination.normalizePage(page);
         final int pageSize = Pagination.REQUESTS_PAGE_SIZE;

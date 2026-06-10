@@ -5,11 +5,9 @@ import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewStats;
-import ar.edu.itba.paw.model.ReviewTag;
 import ar.edu.itba.paw.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
@@ -39,30 +37,15 @@ public class ReviewJpaDao implements ReviewDao {
     private static final String RATING_DESC_ORDER_NATIVE = "rating DESC, created_at DESC, review_id DESC";
     private static final String DEFAULT_ORDER_NATIVE_REVIEW_ALIAS = "r.created_at DESC, r.review_id DESC";
 
+    private static final String FETCH_USER_AND_CAR =
+            "LEFT JOIN FETCH r.user JOIN FETCH r.car c JOIN FETCH c.spec.brand JOIN FETCH c.spec.bodyType";
+
     @PersistenceContext
     private EntityManager em;
 
-    private final ReviewTagDao reviewTagDao;
-
-    @Autowired
-    public ReviewJpaDao(final ReviewTagDao reviewTagDao) {
-        this.reviewTagDao = reviewTagDao;
-    }
-
-    private void attachTags(final Collection<Review> reviews) {
-        if (reviews == null || reviews.isEmpty()) {
-            return;
-        }
-        final List<Long> ids = reviews.stream().map(Review::getId).collect(Collectors.toList());
-        final Map<Long, List<ReviewTag>> tagsByReview = reviewTagDao.findByReviewIds(ids);
-        for (final Review review : reviews) {
-            review.setTags(tagsByReview.getOrDefault(review.getId(), Collections.emptyList()));
-        }
-    }
-
     private List<Review> loadByIds(final List<Long> ids, final String jpqlOrder) {
         return em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.id IN :ids ORDER BY " + jpqlOrder,
+                "SELECT r FROM Review r " + FETCH_USER_AND_CAR + " WHERE r.id IN :ids ORDER BY " + jpqlOrder,
                 Review.class)
                 .setParameter("ids", ids)
                 .getResultList();
@@ -101,7 +84,6 @@ public class ReviewJpaDao implements ReviewDao {
 
         final List<Long> longIds = ids.stream().map(r -> ((Number) r).longValue()).collect(Collectors.toList());
         final List<Review> items = loadByIds(longIds, jpqlOrder);
-        attachTags(items);
         return new Page<>(items, effectivePage, pageSize, totalItems);
     }
 
@@ -162,21 +144,19 @@ public class ReviewJpaDao implements ReviewDao {
         }
 
         final String inClause = normalizedIds.stream().map(id -> "?").collect(Collectors.joining(","));
+        // The correlated count mirrors DEFAULT_ORDER_NATIVE (created_at DESC, review_id DESC):
+        // a review's position within its car is the number of reviews sorted at or before it.
         final javax.persistence.Query query = em.createNativeQuery(
-                "SELECT ranked.review_id, (((ranked.review_position - 1) / ?) + 1) AS page_number " +
-                "FROM (" +
-                "SELECT r.review_id, " +
-                "ROW_NUMBER() OVER (PARTITION BY r.car_id ORDER BY " + DEFAULT_ORDER_NATIVE + ") AS review_position " +
-                "FROM reviews r " +
-                "WHERE r.car_id IN (SELECT target.car_id FROM reviews target WHERE target.review_id IN (" + inClause + "))" +
-                ") ranked " +
-                "WHERE ranked.review_id IN (" + inClause + ")");
+                "SELECT target.review_id, " +
+                "((((SELECT COUNT(*) FROM reviews r " +
+                "WHERE r.car_id = target.car_id " +
+                "AND (r.created_at > target.created_at " +
+                "OR (r.created_at = target.created_at AND r.review_id >= target.review_id))) - 1) " +
+                "/ CAST(? AS INTEGER)) + 1) AS page_number " +
+                "FROM reviews target WHERE target.review_id IN (" + inClause + ")");
 
         query.setParameter(1, Pagination.REVIEWS_PAGE_SIZE);
         int idx = 2;
-        for (final Long id : normalizedIds) {
-            query.setParameter(idx++, id);
-        }
         for (final Long id : normalizedIds) {
             query.setParameter(idx++, id);
         }
@@ -193,13 +173,11 @@ public class ReviewJpaDao implements ReviewDao {
     @Override
     public Optional<Review> findById(final long id) {
         final List<Review> results = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.id = :id",
+                "SELECT r FROM Review r " + FETCH_USER_AND_CAR + " WHERE r.id = :id",
                 Review.class)
                 .setParameter("id", id)
                 .getResultList();
-        final Optional<Review> review = results.stream().findFirst();
-        review.ifPresent(r -> attachTags(List.of(r)));
-        return review;
+        return results.stream().findFirst();
     }
 
     @Override
@@ -207,13 +185,11 @@ public class ReviewJpaDao implements ReviewDao {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        final List<Review> reviews = em.createQuery(
-                "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.id IN :ids ORDER BY " + DEFAULT_ORDER,
+        return em.createQuery(
+                "SELECT r FROM Review r " + FETCH_USER_AND_CAR + " WHERE r.id IN :ids ORDER BY " + DEFAULT_ORDER,
                 Review.class)
                 .setParameter("ids", ids)
                 .getResultList();
-        attachTags(reviews);
-        return reviews;
     }
 
     @Override
@@ -221,13 +197,11 @@ public class ReviewJpaDao implements ReviewDao {
         if (carIds == null || carIds.isEmpty()) {
             return List.of();
         }
-        final List<Review> reviews = em.createQuery(
+        return em.createQuery(
                 "SELECT r FROM Review r LEFT JOIN FETCH r.user WHERE r.car.id IN :carIds ORDER BY " + DEFAULT_ORDER,
                 Review.class)
                 .setParameter("carIds", carIds)
                 .getResultList();
-        attachTags(reviews);
-        return reviews;
     }
 
     @Override
@@ -264,9 +238,7 @@ public class ReviewJpaDao implements ReviewDao {
                 .setParameter("carId", carId)
                 .setMaxResults(1)
                 .getResultList();
-        final Optional<Review> review = results.stream().findFirst();
-        review.ifPresent(r -> attachTags(List.of(r)));
-        return review;
+        return results.stream().findFirst();
     }
 
     @Override
@@ -277,9 +249,7 @@ public class ReviewJpaDao implements ReviewDao {
                 .setParameter("carId", carId)
                 .setMaxResults(1)
                 .getResultList();
-        final Optional<Review> review = results.stream().findFirst();
-        review.ifPresent(r -> attachTags(List.of(r)));
-        return review;
+        return results.stream().findFirst();
     }
 
     @Override
@@ -357,11 +327,11 @@ public class ReviewJpaDao implements ReviewDao {
     }
 
     @Override
-    public Review create(final long userId, final long carId, final BigDecimal rating, final String title,
+    public Review create(final Long userId, final long carId, final BigDecimal rating, final String title,
                          final String body, final String ownershipStatus, final Integer modelYear,
                          final Integer mileageKm, final Boolean wouldRecommend) {
         final Review review = new Review(em.getReference(Car.class, carId), rating, title, body);
-        if (userId > 0) {
+        if (userId != null) {
             review.setUser(em.getReference(User.class, userId));
         }
         review.setOwnershipStatus(ownershipStatus);

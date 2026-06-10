@@ -39,7 +39,6 @@ public class CarRequestServiceImpl implements CarRequestService {
     private final CarDao carDao;
     private final CarImageDao carImageDao;
     private final BrandDao brandDao;
-    private final UserService userService;
     private final EmailService emailService;
 
     @Autowired
@@ -48,37 +47,18 @@ public class CarRequestServiceImpl implements CarRequestService {
         final CarDao carDao,
         final CarImageDao carImageDao,
         final BrandDao brandDao,
-        final UserService userService,
         final EmailService emailService
     ) {
         this.carRequestDao = carRequestDao;
         this.carDao = carDao;
         this.carImageDao = carImageDao;
         this.brandDao = brandDao;
-        this.userService = userService;
         this.emailService = emailService;
-    }
-
-    public CarRequestServiceImpl(
-        final CarRequestDao carRequestDao,
-        final CarDao carDao,
-        final CarImageDao carImageDao
-    ) {
-        this(carRequestDao, carDao, carImageDao, null, null, null);
     }
 
     @Override
     public Optional<CarRequest> getCarRequestById(final long id) {
         return carRequestDao.findById(id);
-    }
-
-    @Override
-    public List<CarRequest> getCarRequestsByStatus(final String status) {
-        final String normalizedStatus = StringUtils.normalize(status);
-        if (normalizedStatus == null) {
-            return List.of();
-        }
-        return carRequestDao.findByStatus(normalizedStatus);
     }
 
     @Override
@@ -316,7 +296,7 @@ public class CarRequestServiceImpl implements CarRequestService {
             );
         }
 
-        final List<ImagePayload> replacementImages = hasImageContentType
+        final List<ImagePayload> replacementImages = hasImageContentType && hasImageData
             ? List.of(
                   new ImagePayload(
                       imageContentType,
@@ -617,14 +597,11 @@ public class CarRequestServiceImpl implements CarRequestService {
         ) {
             return request.getSubmitterEmail();
         }
-        if (userService == null || request.getSubmittedByUserId() == null) {
+        final User submitter = request.getSubmittedByUser();
+        if (submitter == null || submitter.getEmail() == null || submitter.getEmail().isBlank()) {
             return null;
         }
-        return userService
-            .getUserById(request.getSubmittedByUserId())
-            .map(User::getEmail)
-            .filter(email -> !email.isBlank())
-            .orElse(null);
+        return submitter.getEmail();
     }
 
     private String resolveBrandName(final long brandId) {

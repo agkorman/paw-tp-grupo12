@@ -13,8 +13,11 @@
     <pa:nav activePage="communities"/>
     <c:url var="communityDetailUrl" value="/communities/${postDetail.community.slug}"/>
     <c:set var="communityPostsSectionUrl" value="${communityDetailUrl}#communityFeedTitle"/>
+    <c:set var="communityBackUrl" value="${communityDetailUrl}"/>
     <c:if test="${not empty postReturnRedirect}">
         <c:set var="communityPostsSectionUrl" value="${postReturnRedirect}"/>
+        <c:set var="backRedirectBase" value="${fn:contains(postReturnRedirect, '#') ? fn:substringBefore(postReturnRedirect, '#') : postReturnRedirect}"/>
+        <c:url var="communityBackUrl" value="${backRedirectBase}"/>
     </c:if>
     <c:url var="communityPostDetailUrl" value="/communities/${postDetail.community.slug}/posts/${postDetail.post.slug}"/>
     <c:set var="communityPostEditRedirect" value="${communityPostDetailUrl}"/>
@@ -40,7 +43,7 @@
     <main class="community-post-page">
         <section class="community-post-shell">
             <div class="community-post-header">
-                <a class="community-back-link" href="${fn:escapeXml(communityDetailUrl)}#post-${postDetail.post.id}" aria-label="${fn:escapeXml(communityPostBackLabel)}">
+                <a class="community-back-link" href="${fn:escapeXml(communityBackUrl)}#post-${postDetail.post.id}" aria-label="${fn:escapeXml(communityPostBackLabel)}">
                     <pa:icon name="chevron-left" size="18"/>
                 </a>
                 <div class="community-post-origin">
@@ -114,8 +117,7 @@
                             liked="${postView.helpfulByCurrentUser}"
                             likeCount="${postView.helpfulCount}"
                             action="${communityPostHelpfulUrl}"
-                            disabled="${empty pageContext.request.userPrincipal}"
-                            intent="community-post-helpful-${postDetail.post.id}"/>
+                            disabled="${empty pageContext.request.userPrincipal}"/>
                     <span class="community-post-detail-pill"><c:out value="${postReplyCountText}"/></span>
                 </div>
             </article>
@@ -211,8 +213,7 @@
                                         liked="${comment.helpfulByCurrentUser}"
                                         likeCount="${comment.helpfulCount}"
                                         action="${communityCommentHelpfulUrl}"
-                                        disabled="${empty pageContext.request.userPrincipal}"
-                                        intent="community-comment-helpful-${comment.commentId}"/>
+                                        disabled="${empty pageContext.request.userPrincipal}"/>
                             </div>
                         </article>
                         <c:if test="${comment.editable or comment.deletable or comment.hideable}">

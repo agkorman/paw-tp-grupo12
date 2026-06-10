@@ -16,7 +16,6 @@
     <spring:message var="profileStatsAria" code="profile.stats.aria"/>
     <spring:message var="profileContentAria" code="profile.content.aria"/>
     <spring:message var="profileTabsAria" code="profile.tabs.aria"/>
-    <spring:message var="followUserAction" code="profile.authRequired.followAction"/>
 
     <main class="profile-page" data-profile-user-id="${profile.id}">
         <section class="profile-hero" aria-labelledby="profileName">
@@ -80,14 +79,29 @@
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <label for="profileLanguage"><c:out value="${profileLanguageLabel}"/></label>
                             <div class="profile-language-control">
-                                <select id="profileLanguage" name="lang" aria-label="${fn:escapeXml(profileLanguageLabel)}">
-                                    <option value="es" ${profile.preferredLocale eq 'es' ? 'selected' : ''}>
-                                        <spring:message code="profile.language.es"/>
-                                    </option>
-                                    <option value="en" ${profile.preferredLocale eq 'en' ? 'selected' : ''}>
-                                        <spring:message code="profile.language.en"/>
-                                    </option>
-                                </select>
+                                <div class="cars-toolbar-field">
+                                    <span class="cars-toolbar-field-ui" aria-hidden="true">
+                                        <span class="cars-toolbar-field-copy">
+                                            <span class="cars-toolbar-value" data-toolbar-select-value="lang">
+                                                <c:choose>
+                                                    <c:when test="${profile.preferredLocale eq 'en'}"><spring:message code="profile.language.en"/></c:when>
+                                                    <c:otherwise><spring:message code="profile.language.es"/></c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </span>
+                                        <span class="cars-toolbar-chevron">
+                                            <pa:icon name="chevron-down" size="12"/>
+                                        </span>
+                                    </span>
+                                    <select class="cars-toolbar-select cars-toolbar-select-overlay" id="profileLanguage" name="lang" aria-label="${fn:escapeXml(profileLanguageLabel)}">
+                                        <option value="es" ${profile.preferredLocale eq 'es' ? 'selected' : ''}>
+                                            <spring:message code="profile.language.es"/>
+                                        </option>
+                                        <option value="en" ${profile.preferredLocale eq 'en' ? 'selected' : ''}>
+                                            <spring:message code="profile.language.en"/>
+                                        </option>
+                                    </select>
+                                </div>
                                 <button type="submit" class="btn-secondary profile-language-button">
                                     <spring:message code="profile.language.save"/>
                                 </button>
@@ -115,8 +129,7 @@
                         <c:when test="${authenticated}">
                             <form class="profile-action-form profile-follow-form"
                                   method="post"
-                                  action="${profileFollowUrl}"
-                                  data-auth-resume-intent="follow-profile-${profile.id}">
+                                  action="${profileFollowUrl}">
                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <button
                                         type="submit"
@@ -135,11 +148,7 @@
                                 <c:param name="intent" value="follow-profile-${profile.id}"/>
                             </c:url>
                             <a href="${profileFollowLoginUrl}"
-                               class="btn-primary profile-action-button profile-follow-button"
-                               data-auth-resume-intent="follow-profile-${profile.id}"
-                               data-auth-required="true"
-                               data-auth-required-action="${followUserAction}"
-                               data-auth-required-intent="follow-profile-${profile.id}">
+                               class="btn-primary profile-action-button profile-follow-button">
                                 <spring:message code="common.label.follow"/>
                             </a>
                         </c:otherwise>
@@ -388,7 +397,7 @@
                            bodyCode="profile.logout.confirm.body"
                            confirmCode="profile.edit.logout"
                            confirmCssClass="btn-primary"/>
-    <pa:auth-required-modal/>
+
     <c:if test="${ownProfile}">
         <pa:moderator-application-modal/>
     </c:if>
@@ -396,8 +405,9 @@
     <pa:toast messageCode="${profileToastCode}"/>
     <pa:script src="/js/shared/action-menu.js"/>
     <pa:script src="/js/shared/modal-utils.js"/>
-    <pa:script src="/js/auth/auth-required-modal.js"/>
+
     <pa:script src="/js/shared/confirmation-modal.js"/>
+    <pa:script src="/js/cars/cars-toolbar.js"/>
     <pa:script src="/js/profile/profile.js"/>
     <pa:script src="/js/communities/community-moderation.js"/>
     <pa:script src="/js/reviews/review-moderation.js"/>

@@ -4,7 +4,6 @@ import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.UserRole;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -16,8 +15,6 @@ public interface AdminRequestService {
     String GRANTED_ROLE = UserRole.ADMIN;
 
     Optional<AdminRequest> getAdminRequestById(long id);
-
-    List<AdminRequest> getAdminRequestsByStatus(String status);
 
     Page<AdminRequest> getAdminRequestsByStatus(String status, int page);
 

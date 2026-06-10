@@ -3,13 +3,10 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Page;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface BrandRequestDao {
     Optional<BrandRequest> findById(long id);
-
-    List<BrandRequest> findByStatus(String status);
 
     Page<BrandRequest> findByStatus(String status, int page);
 

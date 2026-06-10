@@ -52,15 +52,6 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     }
 
     @Override
-    public List<AdminRequest> getAdminRequestsByStatus(final String status) {
-        final String normalizedStatus = StringUtils.normalize(status);
-        if (normalizedStatus == null) {
-            return List.of();
-        }
-        return adminRequestDao.findByStatus(normalizedStatus);
-    }
-
-    @Override
     public Page<AdminRequest> getAdminRequestsByStatus(
         final String status,
         final int page
@@ -223,10 +214,11 @@ public class AdminRequestServiceImpl implements AdminRequestService {
         if (request.getSubmitterEmail() != null && !request.getSubmitterEmail().isBlank()) {
             return request.getSubmitterEmail();
         }
-        return userService.getUserById(request.getSubmittedByUserId())
-                .map(User::getEmail)
-                .filter(email -> !email.isBlank())
-                .orElse(null);
+        final User submitter = request.getSubmittedByUser();
+        if (submitter == null || submitter.getEmail() == null || submitter.getEmail().isBlank()) {
+            return null;
+        }
+        return submitter.getEmail();
     }
 
     @Override

@@ -3,7 +3,6 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Page;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface BrandRequestService {
@@ -12,8 +11,6 @@ public interface BrandRequestService {
     String STATUS_REJECTED = "rejected";
 
     Optional<BrandRequest> getBrandRequestById(long id);
-
-    List<BrandRequest> getBrandRequestsByStatus(String status);
 
     Page<BrandRequest> getBrandRequestsByStatus(String status, int page);
 

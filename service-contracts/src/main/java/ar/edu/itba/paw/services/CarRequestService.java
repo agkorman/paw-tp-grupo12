@@ -18,8 +18,6 @@ public interface CarRequestService {
 
     Optional<CarRequest> getCarRequestById(long id);
 
-    List<CarRequest> getCarRequestsByStatus(String status);
-
     Page<CarRequest> getCarRequestsByStatus(String status, int page);
 
     long countCarRequestsByStatus(String status);
