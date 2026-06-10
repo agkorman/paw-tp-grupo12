@@ -29,12 +29,9 @@ import ar.edu.itba.paw.webapp.form.ProfileForm;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -74,7 +71,6 @@ public class UserController {
     private static final String TAB_FAVORITES = "favorites";
     private static final String TAB_LIKES = "likes";
 
-    private static final int CONNECTIONS_PAGE_SIZE = Pagination.CONNECTIONS_PAGE_SIZE;
     private static final String CONNECTIONS_KIND_FOLLOWERS = "followers";
     private static final String CONNECTIONS_KIND_FOLLOWING = "following";
 

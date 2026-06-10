@@ -465,6 +465,25 @@ CREATE TABLE IF NOT EXISTS admin_requests (
 CREATE INDEX IF NOT EXISTS idx_admin_requests_status ON admin_requests (status);
 CREATE INDEX IF NOT EXISTS idx_admin_requests_submitted_by_user_id ON admin_requests (submitted_by_user_id);
 
+-- Collapse duplicate pending requests (bug artifacts) so the partial unique index below can be
+-- created on a live database. Keeps the earliest pending request per user, rejects the rest.
+-- Idempotent: once a single pending row per user remains, the NOT IN excludes all of them.
+UPDATE admin_requests
+   SET status = 'rejected'
+ WHERE status = 'pending'
+   AND admin_request_id NOT IN (
+       SELECT MIN(admin_request_id)
+         FROM admin_requests
+        WHERE status = 'pending'
+        GROUP BY submitted_by_user_id
+   );
+
+-- Atomically enforce at most one pending admin request per user. The service-level check is not
+-- safe against concurrent submissions (TOCTOU); this partial unique index closes that race.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_admin_requests_pending_user
+    ON admin_requests (submitted_by_user_id)
+    WHERE status = 'pending';
+
 -- ============================================================
 -- Legacy/manual seed data extracted to schema.deprecated.sql
 -- ============================================================

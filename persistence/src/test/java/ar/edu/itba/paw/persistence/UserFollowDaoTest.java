@@ -4,7 +4,6 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

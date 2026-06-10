@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -351,33 +350,6 @@ public class CarController {
             criteria.getPriceMin() != null || criteria.getPriceMax() != null
         );
         model.addAttribute(
-            "showYear",
-            criteria.getYearMin() != null || criteria.getYearMax() != null
-        );
-    }
-
-    private void addShowSpecFlags(
-        final ModelAndView mav,
-        final CarSearchCriteria criteria
-    ) {
-        mav.addObject(
-            "showHp",
-            criteria.getHorsepowerMin() != null ||
-                criteria.getHorsepowerMax() != null
-        );
-        mav.addObject("showSpeed", criteria.getMaxSpeedMin() != null);
-        mav.addObject(
-            "showConsumption",
-            criteria.getFuelConsumptionMax() != null
-        );
-        mav.addObject("showAirbags", criteria.getAirbagMin() != null);
-        mav.addObject("showTransmission", criteria.getTransmission() != null);
-        mav.addObject("showFuelType", criteria.getFuelTypes().size() > 1);
-        mav.addObject(
-            "showPrice",
-            criteria.getPriceMin() != null || criteria.getPriceMax() != null
-        );
-        mav.addObject(
             "showYear",
             criteria.getYearMin() != null || criteria.getYearMax() != null
         );

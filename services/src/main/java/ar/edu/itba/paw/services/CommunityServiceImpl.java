@@ -38,7 +38,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1246,24 +1245,6 @@ public class CommunityServiceImpl implements CommunityService {
             return sort;
         }
         return POST_SORT_RECENT;
-    }
-
-    private Comparator<CommunityPostSummary> postSummaryComparator(final String normalizedSort) {
-        final Comparator<CommunityPostSummary> byRecency = Comparator
-                .comparing((CommunityPostSummary summary) -> summary.getPost().getCreatedAt(),
-                        Comparator.nullsLast(Comparator.naturalOrder()))
-                .reversed()
-                .thenComparing(summary -> summary.getPost().getId(), Comparator.reverseOrder());
-        switch (normalizedSort) {
-            case POST_SORT_HELPFUL:
-                return Comparator.comparingLong(CommunityPostSummary::getHelpfulCount).reversed()
-                        .thenComparing(byRecency);
-            case POST_SORT_COMMENTED:
-                return Comparator.comparingLong(CommunityPostSummary::getCommentCount).reversed()
-                        .thenComparing(byRecency);
-            default:
-                return byRecency;
-        }
     }
 
     private List<CommunityTopic> validateTopicSelection(final Collection<Short> topicIds) {

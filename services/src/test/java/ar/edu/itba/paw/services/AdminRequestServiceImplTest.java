@@ -4,14 +4,15 @@ import ar.edu.itba.paw.model.AdminRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.AdminRequestDao;
+import ar.edu.itba.paw.services.exception.PendingAdminRequestExistsException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -119,6 +120,22 @@ public class AdminRequestServiceImplTest {
 
         // Exercise
         final IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> adminRequestService.createPendingRequest(USER_ID, EMAIL, MOTIVATION, BIO, JUSTIFICATION));
+
+        // Assertions
+        assertEquals("User already has a pending admin request: 42", ex.getMessage());
+    }
+
+    @Test
+    public void shouldRejectCreateWhenConcurrentInsertViolatesUniqueIndex() {
+        // Arrange
+        when(adminRequestDao.existsPendingByUser(USER_ID)).thenReturn(false);
+        when(adminRequestDao.create(USER_ID, EMAIL, "motivation text", "bio text", "justification text",
+                AdminRequestService.STATUS_PENDING))
+                .thenThrow(new DataIntegrityViolationException("uq_admin_requests_pending_user"));
+
+        // Exercise
+        final PendingAdminRequestExistsException ex = assertThrows(PendingAdminRequestExistsException.class,
                 () -> adminRequestService.createPendingRequest(USER_ID, EMAIL, MOTIVATION, BIO, JUSTIFICATION));
 
         // Assertions

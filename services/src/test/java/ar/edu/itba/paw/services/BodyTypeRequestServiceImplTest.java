@@ -1,6 +1,5 @@
 package ar.edu.itba.paw.services;
 
-import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.model.BodyTypeRequest;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BodyTypeRequestDao;
