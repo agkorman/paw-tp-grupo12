@@ -297,10 +297,10 @@
         if (mileageInput) {
             var mileage = mileageInput.value.trim();
             mileageInput.value = mileage;
-            clearInlineError(mileageInput);
             if (mileage.length === 0) {
                 return ok;
             }
+            clearInlineError(mileageInput);
             if (!isInt(mileage)) {
                 setInlineError(mileageInput, message('mileage-numeric'));
                 ok = false;

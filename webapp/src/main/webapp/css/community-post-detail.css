@@ -168,6 +168,17 @@
     color: var(--on-surface);
 }
 
+.community-author-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.community-author-link:hover,
+.community-author-link:focus-visible {
+    color: var(--primary);
+    outline: none;
+}
+
 .community-comment-badge {
     padding: 0.2rem 0.45rem;
     border-radius: var(--radius-full);

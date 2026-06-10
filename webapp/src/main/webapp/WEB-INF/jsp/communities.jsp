@@ -31,18 +31,27 @@
                 sortBy="${sortBy}"
                 authenticated="${authenticated}"/>
 
-        <section class="communities-card-grid" aria-label="${fn:escapeXml(communitiesGridAria)}">
-            <c:forEach var="card" items="${communityCards}">
-                <c:url var="cardHref" value="/communities/${card.slug}"/>
-                <pa:community-card
-                        href="${cardHref}"
-                        title="${card.title}"
-                        description="${card.description}"
-                        memberCount="${card.memberCount}"
-                        weeklyPostCount="${card.weeklyPostCount}"
-                        joined="${card.joined}"/>
-            </c:forEach>
-        </section>
+        <c:choose>
+            <c:when test="${empty communityCards}">
+                <div class="communities-empty-state">
+                    <p><spring:message code="communities.hub.empty"/></p>
+                </div>
+            </c:when>
+            <c:otherwise>
+                <section class="communities-card-grid" aria-label="${fn:escapeXml(communitiesGridAria)}">
+                    <c:forEach var="card" items="${communityCards}">
+                        <c:url var="cardHref" value="/communities/${card.slug}"/>
+                        <pa:community-card
+                                href="${cardHref}"
+                                title="${card.title}"
+                                description="${card.description}"
+                                memberCount="${card.memberCount}"
+                                weeklyPostCount="${card.weeklyPostCount}"
+                                joined="${card.joined}"/>
+                    </c:forEach>
+                </section>
+            </c:otherwise>
+        </c:choose>
 
         <c:if test="${communitiesTotalPages > 1}">
             <jsp:useBean id="communitiesPaginationParams" class="java.util.LinkedHashMap"/>
