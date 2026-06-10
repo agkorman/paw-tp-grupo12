@@ -67,11 +67,16 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
                 emailService.sendWeeklyModeratorDigest(digest.recipients, digest.pendingCount));
 
         final List<UserDigest> userDigests = buildUserDigests(since);
+        int sentCount = 0;
         for (final UserDigest digest : userDigests) {
+            if (!digest.hasActivity()) {
+                continue;
+            }
             emailService.sendWeeklyUserDigest(digest.email, digest.username,
                     digest.reviewActivities, digest.favoriteActivities);
+            sentCount++;
         }
-        LOGGER.info("weekly digest completed userCount={}", userDigests.size());
+        LOGGER.info("weekly digest completed userCount={} sentCount={}", userDigests.size(), sentCount);
     }
 
     Optional<ModeratorDigest> buildModeratorDigest() {
@@ -195,6 +200,10 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
             this.username = username;
             this.reviewActivities = reviewActivities;
             this.favoriteActivities = favoriteActivities;
+        }
+
+        boolean hasActivity() {
+            return !reviewActivities.isEmpty() || !favoriteActivities.isEmpty();
         }
     }
 }

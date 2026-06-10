@@ -11,9 +11,9 @@ public class ValidCarSearchCriteriaValidator implements ConstraintValidator<Vali
 
     private static final Set<Integer> ALLOWED_AIRBAG_MIN_VALUES = Set.of(2, 4, 6, 8, 10);
     private static final int HORSEPOWER_MIN_BOUND = 50;
-    private static final int HORSEPOWER_MAX_BOUND = 800;
+    private static final int HORSEPOWER_MAX_BOUND = 2000;
     private static final int MAX_SPEED_MIN_BOUND = 0;
-    private static final int MAX_SPEED_MAX_BOUND = 500;
+    private static final int MAX_SPEED_MAX_BOUND = 600;
     private static final int YEAR_MIN_BOUND = 1950;
     private static final int YEAR_MAX_BOUND = 2026;
     private static final BigDecimal FUEL_CONSUMPTION_MIN_BOUND = BigDecimal.ZERO;

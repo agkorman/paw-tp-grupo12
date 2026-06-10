@@ -124,4 +124,44 @@ public class BodyTypeRequestServiceImplTest {
         assertTrue(result.getItems().isEmpty());
         assertEquals(1, result.getPageNumber());
     }
+
+    @Test
+    public void shouldRejectPendingRequestWhenItIsPending() {
+        // Arrange
+        when(bodyTypeRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest("Roadster")));
+        when(bodyTypeRequestDao.updateStatus(REQUEST_ID, BodyTypeRequestService.STATUS_PENDING,
+                BodyTypeRequestService.STATUS_REJECTED)).thenReturn(true);
+
+        // Exercise
+        final boolean result = bodyTypeRequestService.rejectPendingRequest(REQUEST_ID);
+
+        // Assertions
+        assertTrue(result);
+    }
+
+    @Test
+    public void shouldNotRejectPendingRequestWhenRequestNotFound() {
+        // Arrange
+        when(bodyTypeRequestDao.findById(REQUEST_ID)).thenReturn(Optional.empty());
+
+        // Exercise
+        final boolean result = bodyTypeRequestService.rejectPendingRequest(REQUEST_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldNotRejectPendingRequestWhenStatusUpdateFails() {
+        // Arrange
+        when(bodyTypeRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest("Roadster")));
+        when(bodyTypeRequestDao.updateStatus(REQUEST_ID, BodyTypeRequestService.STATUS_PENDING,
+                BodyTypeRequestService.STATUS_REJECTED)).thenReturn(false);
+
+        // Exercise
+        final boolean result = bodyTypeRequestService.rejectPendingRequest(REQUEST_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
 }

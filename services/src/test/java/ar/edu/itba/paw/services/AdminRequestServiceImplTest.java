@@ -368,4 +368,57 @@ public class AdminRequestServiceImplTest {
         // Assertions
         assertEquals(null, result);
     }
+
+    @Test
+    public void shouldNotBeEligibleForModeratorRequestWhenUserNotFound() {
+        // Arrange
+        when(userService.getUserById(USER_ID)).thenReturn(Optional.empty());
+
+        // Exercise
+        final boolean result = adminRequestService.isEligibleForModeratorRequest(USER_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldNotBeEligibleForModeratorRequestWhenUserIsNotPlainUser() {
+        // Arrange
+        final User admin = TestModels.user(USER_ID, "username", EMAIL, "password", "admin", LocalDateTime.now());
+        when(userService.getUserById(USER_ID)).thenReturn(Optional.of(admin));
+
+        // Exercise
+        final boolean result = adminRequestService.isEligibleForModeratorRequest(USER_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldNotBeEligibleForModeratorRequestWhenPendingRequestExists() {
+        // Arrange
+        final User user = TestModels.user(USER_ID, "username", EMAIL, "password", "user", LocalDateTime.now());
+        when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user));
+        when(adminRequestDao.existsPendingByUser(USER_ID)).thenReturn(true);
+
+        // Exercise
+        final boolean result = adminRequestService.isEligibleForModeratorRequest(USER_ID);
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldBeEligibleForModeratorRequestWhenPlainUserWithoutPendingRequest() {
+        // Arrange
+        final User user = TestModels.user(USER_ID, "username", EMAIL, "password", "user", LocalDateTime.now());
+        when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user));
+        when(adminRequestDao.existsPendingByUser(USER_ID)).thenReturn(false);
+
+        // Exercise
+        final boolean result = adminRequestService.isEligibleForModeratorRequest(USER_ID);
+
+        // Assertions
+        assertTrue(result);
+    }
 }
