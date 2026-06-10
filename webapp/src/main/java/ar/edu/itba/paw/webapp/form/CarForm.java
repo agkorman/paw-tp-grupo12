@@ -29,6 +29,7 @@ public class CarForm {
     @Size(max = 120, message = "{validation.car.model.max}")
     private String model;
 
+    @NotNull(message = "{validation.car.year.required}")
     @Min(value = Car.MIN_YEAR, message = "{validation.car.year.min}")
     @Max(value = Car.MAX_YEAR, message = "{validation.car.year.max}")
     private Integer year;
@@ -77,6 +78,7 @@ public class CarForm {
     @Max(value = 600, message = "{validation.car.maxSpeed.max}")
     private Integer maxSpeedKmh;
 
+    @NotNull(message = "{validation.car.price.required}")
     @DecimalMin(value = "1.00", message = "{validation.car.price.min}")
     @DecimalMax(value = "5000000.00", message = "{validation.car.price.max}")
     private BigDecimal priceUsd;

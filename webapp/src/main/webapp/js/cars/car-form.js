@@ -17,11 +17,13 @@
         modalCarBrand: messages.msgRequiredBrand,
         modalCarBodyType: messages.msgRequiredBodyType,
         modalCarModel: messages.msgRequiredModel,
+        modalCarYear: messages.msgRequiredYear,
         modalCarDescription: messages.msgRequiredDescription,
         modalCarHorsepower: messages.msgRequiredHorsepower,
         modalCarAirbagCount: messages.msgRequiredAirbags,
         modalCarFuelConsumption: messages.msgRequiredConsumption,
-        modalCarMaxSpeed: messages.msgRequiredMaxSpeed
+        modalCarMaxSpeed: messages.msgRequiredMaxSpeed,
+        modalCarPrice: messages.msgRequiredPrice
     };
 
     var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

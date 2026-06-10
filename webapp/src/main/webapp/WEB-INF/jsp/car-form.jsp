@@ -75,11 +75,13 @@
 <spring:message var="jsRequiredBrand" code="js.car.required.brand"/>
 <spring:message var="jsRequiredBodyType" code="js.car.required.bodyType"/>
 <spring:message var="jsRequiredModel" code="js.car.required.model"/>
+<spring:message var="jsRequiredYear" code="js.car.required.year"/>
 <spring:message var="jsRequiredDescription" code="js.car.required.description"/>
 <spring:message var="jsRequiredHorsepower" code="js.car.required.horsepower"/>
 <spring:message var="jsRequiredAirbags" code="js.car.required.airbags"/>
 <spring:message var="jsRequiredConsumption" code="js.car.required.consumption"/>
 <spring:message var="jsRequiredMaxSpeed" code="js.car.required.maxSpeed"/>
+<spring:message var="jsRequiredPrice" code="js.car.required.price"/>
 <spring:message var="jsYearNumeric" code="js.car.validation.year.numeric"/>
 <spring:message var="jsYearRange" code="js.car.validation.year.range"/>
 <spring:message var="jsHorsepowerNumeric" code="js.car.validation.horsepower.numeric"/>
@@ -113,11 +115,13 @@
                  data-msg-required-brand="${fn:escapeXml(jsRequiredBrand)}"
                  data-msg-required-body-type="${fn:escapeXml(jsRequiredBodyType)}"
                  data-msg-required-model="${fn:escapeXml(jsRequiredModel)}"
+                 data-msg-required-year="${fn:escapeXml(jsRequiredYear)}"
                  data-msg-required-description="${fn:escapeXml(jsRequiredDescription)}"
                  data-msg-required-horsepower="${fn:escapeXml(jsRequiredHorsepower)}"
                  data-msg-required-airbags="${fn:escapeXml(jsRequiredAirbags)}"
                  data-msg-required-consumption="${fn:escapeXml(jsRequiredConsumption)}"
                  data-msg-required-max-speed="${fn:escapeXml(jsRequiredMaxSpeed)}"
+                 data-msg-required-price="${fn:escapeXml(jsRequiredPrice)}"
                  data-msg-radio-required="${fn:escapeXml(jsRadioRequired)}"
                  data-msg-email-invalid="${fn:escapeXml(jsEmailInvalid)}"
                  data-msg-number-invalid="${fn:escapeXml(jsNumberInvalid)}"
@@ -232,7 +236,7 @@
                                         data-number-field="integer"
                                         data-msg-number-invalid="${fn:escapeXml(jsYearNumeric)}"
                                         data-msg-number-range="${fn:escapeXml(jsYearRange)}"
-                                        min="1950" max="2026"
+                                        min="1950" max="2026" required="required"
                                         placeholder="${carYearPlaceholder}"/>
                             <form:errors path="year" cssClass="form-error" element="span"/>
                         </div>
@@ -306,7 +310,7 @@
                                                 data-number-field="decimal"
                                                 data-msg-number-invalid="${fn:escapeXml(jsPriceNumeric)}"
                                                 data-msg-number-range="${fn:escapeXml(jsPriceRange)}"
-                                                step="1" min="1" max="5000000"
+                                                step="1" min="1" max="5000000" required="required"
                                                 placeholder="${carPricePlaceholder}"/>
                                     <form:errors path="priceUsd" cssClass="form-error" element="span"/>
                                 </div>
