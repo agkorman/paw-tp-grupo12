@@ -87,7 +87,7 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
             return Collections.emptySet();
         }
         return replies.stream()
-                .filter(reply -> viewerUserId == reply.getUserId())
+                .filter(reply -> viewerUserId.equals(reply.getUserId()))
                 .map(ReviewReply::getId)
                 .collect(Collectors.toSet());
     }
