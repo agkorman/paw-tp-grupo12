@@ -20,11 +20,12 @@
         <c:choose>
             <c:when test="${hasRecommendations}">
                 <div class="recommend-results-grid">
-                    <c:forEach var="recommendation" items="${recommendations}">
+                    <c:forEach var="recommendation" items="${recommendations}" varStatus="rank">
                         <c:set var="car" value="${recommendation.car}"/>
                         <c:set var="stats" value="${reviewStatsByCarId[car.id]}"/>
                         <c:url var="recommendationReviewUrl" value="/reviews/car/${car.id}"/>
                         <article class="recommend-result">
+                            <span class="recommend-rank">#${rank.index + 1}</span>
                             <pa:recommendation-reason positives="${recommendation.positiveHighlights}" negatives="${recommendation.negativeHighlights}"/>
                             <pa:car-card
                                     model="${car.brandName} ${car.model}"
