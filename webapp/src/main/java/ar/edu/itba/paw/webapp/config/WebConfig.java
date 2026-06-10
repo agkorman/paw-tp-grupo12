@@ -46,7 +46,6 @@ import java.io.InputStream;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadPoolExecutor;
 
 @EnableWebMvc
 @EnableAsync
@@ -291,11 +290,15 @@ public class WebConfig implements WebMvcConfigurer {
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(1);
         executor.setMaxPoolSize(2);
-        executor.setQueueCapacity(50);
+        // Sized to absorb the per-user fan-out of the weekly digest without saturating.
+        executor.setQueueCapacity(500);
         executor.setThreadNamePrefix("mail-");
-        // When the queue fills up (e.g. the per-user fan-out of the weekly digest),
-        // run the task on the calling thread instead of dropping the email.
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        // Email must never block the HTTP response (every EmailService method is @Async).
+        // If the executor is ever saturated, log and drop the task on the executor side -
+        // do NOT run it on the caller (that would block the request thread). Dropping is
+        // visible via WARN instead of a silent RejectedExecutionException.
+        executor.setRejectedExecutionHandler((task, poolExecutor) ->
+            LOGGER.warn("mail task rejected: mailTaskExecutor saturated, dropping email task"));
         // On shutdown, finish queued/in-flight emails instead of discarding them.
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);
