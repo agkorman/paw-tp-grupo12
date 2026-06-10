@@ -416,6 +416,60 @@
             });
         }
 
+        // --- Drag-and-drop onto the upload zone ---
+        // Dropped files arrive via dataTransfer, never through the input, so we
+        // can only submit them by syncing into fileInput.files; skip wiring when
+        // DataTransfer is unavailable. The drop path mirrors the change handler.
+        if (canSyncFileInput && fileUpload) {
+            var dragDepth = 0;
+            var hasDraggedFiles = function (event) {
+                var types = event.dataTransfer && event.dataTransfer.types;
+                return !!types && Array.prototype.indexOf.call(types, 'Files') !== -1;
+            };
+
+            fileUpload.addEventListener('dragenter', function (event) {
+                if (!hasDraggedFiles(event)) {
+                    return;
+                }
+                event.preventDefault();
+                dragDepth += 1;
+                fileUpload.classList.add('is-drag-active');
+            });
+
+            fileUpload.addEventListener('dragover', function (event) {
+                if (!hasDraggedFiles(event)) {
+                    return;
+                }
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'copy';
+            });
+
+            fileUpload.addEventListener('dragleave', function () {
+                dragDepth = Math.max(0, dragDepth - 1);
+                if (dragDepth === 0) {
+                    fileUpload.classList.remove('is-drag-active');
+                }
+            });
+
+            fileUpload.addEventListener('drop', function (event) {
+                if (!event.dataTransfer) {
+                    return;
+                }
+                event.preventDefault();
+                dragDepth = 0;
+                fileUpload.classList.remove('is-drag-active');
+                var dropped = Array.prototype.slice.call(event.dataTransfer.files || []).filter(function (file) {
+                    return file && file.size > 0;
+                });
+                if (dropped.length === 0) {
+                    return;
+                }
+                appendToAccumulator(dropped);
+                updateFileState();
+                validate();
+            });
+        }
+
         if (filePreviewThumbnails) {
             filePreviewThumbnails.addEventListener('click', function (event) {
                 var addMore = event.target.closest('.car-image-upload-add-more');

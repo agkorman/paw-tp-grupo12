@@ -228,7 +228,8 @@ class CarControllerTest {
                                     .param("airbagCount", "6")
                                     .param("transmission", CarSearchCriteria.TRANSMISSION_AUTOMATIC)
                                     .param("fuelConsumption", "8.5")
-                                    .param("maxSpeedKmh", "200"));
+                                    .param("maxSpeedKmh", "200")
+                                    .param("priceUsd", "25000"));
             // Assertions
             resultActions
                     .andExpect(status().is3xxRedirection())

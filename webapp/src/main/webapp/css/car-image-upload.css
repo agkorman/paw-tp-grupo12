@@ -73,6 +73,19 @@
     border-color: rgba(255, 181, 158, 0.7);
 }
 
+.car-image-upload.is-drag-active .car-image-upload-card {
+    border-style: solid;
+    border-color: var(--tertiary);
+    background:
+        linear-gradient(135deg, rgba(94, 212, 255, 0.24), transparent 42%),
+        linear-gradient(315deg, rgba(255, 87, 25, 0.18), transparent 52%),
+        var(--surface-container);
+    box-shadow:
+        inset 0 0 0 1px rgba(94, 212, 255, 0.28),
+        0 16px 38px rgba(0, 0, 0, 0.22);
+    transform: translateY(-1px);
+}
+
 .car-image-upload-input.is-invalid + .car-image-upload-card {
     border-color: var(--error);
     box-shadow:
