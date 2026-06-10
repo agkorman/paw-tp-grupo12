@@ -466,7 +466,7 @@ CREATE INDEX IF NOT EXISTS idx_admin_requests_status ON admin_requests (status);
 CREATE INDEX IF NOT EXISTS idx_admin_requests_submitted_by_user_id ON admin_requests (submitted_by_user_id);
 
 -- ============================================================
--- Legacy/manual seed data extracted to schema.deprecated.sql
+-- Legacy/manual seed data extracted to seed-and-migrations.sql
 -- ============================================================
 
 -- ============================================================

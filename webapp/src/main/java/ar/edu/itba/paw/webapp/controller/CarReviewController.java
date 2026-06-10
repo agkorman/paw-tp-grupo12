@@ -420,10 +420,12 @@ public class CarReviewController {
                 ? Collections.emptySet()
                 : reviewLikeService.getLikedReviewIds(reviewIds, currentUserId);
 
-        final List<Long> replyIds = repliesByReviewId
+        final List<ReviewReply> allReplies = repliesByReviewId
             .values()
             .stream()
             .flatMap(List::stream)
+            .toList();
+        final List<Long> replyIds = allReplies.stream()
             .map(ReviewReply::getId)
             .toList();
         final Map<Long, Long> replyLikeCounts =
@@ -432,6 +434,8 @@ public class CarReviewController {
             currentUserId == null
                 ? Collections.emptySet()
                 : reviewLikeService.getLikedReplyIds(replyIds, currentUserId);
+        final Set<Long> editableReplyIds =
+            reviewReplyService.getEditableReplyIds(allReplies, currentUserId);
 
         return reviews
             .stream()
@@ -448,8 +452,7 @@ public class CarReviewController {
                                 reply,
                                 replyLikeCounts.getOrDefault(reply.getId(), 0L),
                                 likedReplyIds.contains(reply.getId()),
-                                currentUserId != null &&
-                                    currentUserId.equals(reply.getUserId())
+                                editableReplyIds.contains(reply.getId())
                             )
                         )
                         .collect(Collectors.toList()),
@@ -553,6 +556,8 @@ public class CarReviewController {
     public ModelAndView reviewDetail(
         @PathVariable("reviewId") final long reviewId,
         @RequestParam(value = "repliesPage", required = false) final Integer repliesPage,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
         final Review review = reviewService
@@ -576,6 +581,8 @@ public class CarReviewController {
         mav.addObject("repliesTotalPages", repliesPageResult.getTotalPages());
         mav.addObject("repliesTotalItems", repliesPageResult.getTotalItems());
         mav.addObject("currentUserId", currentUserId);
+        LoginRedirectUtils.safeRedirect(redirect, request.getContextPath())
+                .ifPresent(r -> mav.addObject("reviewReturnRedirect", r));
         return mav;
     }
 
@@ -594,13 +601,15 @@ public class CarReviewController {
         final Set<Long> likedReplyIds = currentUserId == null
             ? Collections.emptySet()
             : reviewLikeService.getLikedReplyIds(replyIds, currentUserId);
+        final Set<Long> editableReplyIds =
+            reviewReplyService.getEditableReplyIds(replies, currentUserId);
 
         final List<ReviewReplyCard> cards = replies.stream()
             .map(reply -> new ReviewReplyCard(
                 reply,
                 replyLikeCounts.getOrDefault(reply.getId(), 0L),
                 likedReplyIds.contains(reply.getId()),
-                currentUserId != null && currentUserId.equals(reply.getUserId())
+                editableReplyIds.contains(reply.getId())
             ))
             .collect(Collectors.toList());
 
@@ -814,6 +823,8 @@ public class CarReviewController {
         final BindingResult errors,
         @RequestParam(value = "page", required = false) final Integer page,
         @RequestParam(value = "sort", required = false) final String sort,
+        @RequestParam(value = "redirect", required = false) final String redirect,
+        final HttpServletRequest request,
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
         final RedirectAttributes redirectAttributes
     ) {
@@ -850,13 +861,17 @@ public class CarReviewController {
         final long totalReplies = reviewReplyService.countRepliesByReviewIds(List.of(reviewId))
             .getOrDefault(reviewId, 0L);
         final int lastPage = Math.max(1, Pagination.totalPages(totalReplies, Pagination.REPLIES_PAGE_SIZE));
-        final StringBuilder target = new StringBuilder("redirect:/reviews/").append(reviewId);
+        String target = "/reviews/" + reviewId;
         if (lastPage > 1) {
-            target.append("?repliesPage=").append(lastPage);
+            target += "?repliesPage=" + lastPage;
         }
-        target.append("#reply-").append(createdReply.getId());
+        target += "#reply-" + createdReply.getId();
+        final Optional<String> safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath());
+        if (safeRedirect.isPresent()) {
+            target = LoginRedirectUtils.appendQueryParam(target, LoginRedirectUtils.REDIRECT_PARAM, safeRedirect.get());
+        }
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.reply.create.toast.success");
-        return new ModelAndView(target.toString());
+        return new ModelAndView("redirect:" + target);
     }
 
     @RequestMapping(

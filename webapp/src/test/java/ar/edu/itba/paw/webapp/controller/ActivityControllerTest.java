@@ -117,7 +117,7 @@ class ActivityControllerTest {
         final LocalDateTime now = LocalDateTime.now();
         when(activityService.getActivityFeed(any(ActivityFeedCriteria.class))).thenReturn(new Page<>(
                 List.of(
-                        ActivityFeedItem.reviewItem(review(now.minusMinutes(3)), 0L, 0L, null, 2, List.of()),
+                        ActivityFeedItem.reviewItem(review(now.minusMinutes(3)), 0L, 0L, null, List.of()),
                         ActivityFeedItem.communityPostItem(post(now.minusMinutes(1)), 5L, 2L, List.of())
                 ),
                 1,

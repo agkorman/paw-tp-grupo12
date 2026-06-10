@@ -729,6 +729,102 @@ class CommunityControllerTest {
         clearSecurityContext();
     }
 
+    @Test
+    void toggleCommentHelpful_withSafeRedirect_preservesPageAndOrigin() throws Exception {
+        // Arrange
+        final String redirect = "/communities/classics/posts/falcon-60?repliesPage=2&redirect=%2Factivity%3Ftype%3Dall#comment-10";
+        when(communityService.toggleCommentHelpfulReaction("classics", "falcon-60", 10L, 7L))
+                .thenReturn(CommunityActionResult.performed(true));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
+                        "/communities/classics/posts/falcon-60/comments/10/helpful"
+                ).param("redirect", redirect)
+        );
+
+        // Assertions
+        resultActions
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(redirect));
+        clearSecurityContext();
+    }
+
+    @Test
+    void updateComment_withSafeRedirect_preservesPageAndOrigin() throws Exception {
+        // Arrange
+        final String redirect = "/communities/classics/posts/falcon-60?repliesPage=2&redirect=%2Factivity%3Ftype%3Dall#comment-10";
+        when(communityService.updateCommunityPostComment("classics", 10L, 7L, "Updated body."))
+                .thenReturn(Optional.of(comment()));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
+                        "/communities/classics/posts/falcon-60/comments/10/update"
+                ).param("body", "Updated body.").param("redirect", redirect)
+        );
+
+        // Assertions
+        resultActions
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(redirect));
+        clearSecurityContext();
+    }
+
+    @Test
+    void deleteComment_withSafeRedirect_preservesPageAndOrigin() throws Exception {
+        // Arrange
+        final String redirect = "/communities/classics/posts/falcon-60?repliesPage=2&redirect=%2Factivity%3Ftype%3Dall#comment-10";
+        when(communityService.deleteComment("classics", 10L, 7L))
+                .thenReturn(CommunityActionResult.performed(true));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
+                        "/communities/classics/posts/falcon-60/comments/10/delete"
+                ).param("redirect", redirect)
+        );
+
+        // Assertions
+        resultActions
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(redirect));
+        clearSecurityContext();
+    }
+
+    @Test
+    void createCommunityPostComment_withRedirect_appendsOriginToTarget() throws Exception {
+        // Arrange
+        when(communityService.getCommunityPostDetail("classics", "falcon-60", 7L))
+                .thenReturn(Optional.of(communityPostDetailData()));
+        when(communityService.createCommunityPostComment("classics", "falcon-60", 7L, "This deserves more photos."))
+                .thenReturn(Optional.of(comment()));
+        bindPrincipal(testUser(7L));
+        final MockMvc mockMvc = communityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/communities/classics/posts/falcon-60/comments")
+                        .param("body", "This deserves more photos.")
+                        .param("redirect", "/activity?type=all")
+        );
+
+        // Assertions
+        final String location = resultActions
+                .andExpect(status().is3xxRedirection())
+                .andReturn().getResponse().getRedirectedUrl();
+        assertTrue(location != null && location.contains("redirect=%2Factivity"),
+                "expected forwarded origin redirect, got: " + location);
+        assertTrue(location.endsWith("#comments"), "expected comments anchor preserved, got: " + location);
+        clearSecurityContext();
+    }
+
     private static CommunityHubEntry communityHubEntry() {
         return new CommunityHubEntry(
                 community(),

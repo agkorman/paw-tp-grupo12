@@ -14,9 +14,14 @@
         <section class="review-hero">
             <div class="review-hero-inner">
                 <c:url var="backToCarUrl" value="/reviews/car/${selectedCar.id}"/>
+                <c:set var="reviewBackUrl" value="${backToCarUrl}"/>
+                <c:if test="${not empty reviewReturnRedirect}">
+                    <c:set var="reviewBackRedirectBase" value="${fn:contains(reviewReturnRedirect, '#') ? fn:substringBefore(reviewReturnRedirect, '#') : reviewReturnRedirect}"/>
+                    <c:url var="reviewBackUrl" value="${reviewBackRedirectBase}"/>
+                </c:if>
                 <spring:message var="backToCarLabel" code="review.detail.backToCar"/>
                 <div class="review-detail-heading">
-                    <a href="${backToCarUrl}#review-${reviewThread.review.id}"
+                    <a href="${fn:escapeXml(reviewBackUrl)}#review-${reviewThread.review.id}"
                        class="community-back-link review-detail-back-link"
                        aria-label="${fn:escapeXml(backToCarLabel)}">
                         <pa:icon name="chevron-left" size="18"/>
@@ -31,10 +36,14 @@
             </div>
         </section>
 
-        <c:set var="repliesBaseRedirect" value="/reviews/${reviewThread.review.id}"/>
-        <c:if test="${not empty repliesCurrentPage and repliesCurrentPage > 1}">
-            <c:set var="repliesBaseRedirect" value="${repliesBaseRedirect}?repliesPage=${repliesCurrentPage}"/>
-        </c:if>
+        <c:url var="repliesBaseRedirect" value="/reviews/${reviewThread.review.id}">
+            <c:if test="${not empty repliesCurrentPage and repliesCurrentPage > 1}">
+                <c:param name="repliesPage" value="${repliesCurrentPage}"/>
+            </c:if>
+            <c:if test="${not empty reviewReturnRedirect}">
+                <c:param name="redirect" value="${reviewReturnRedirect}"/>
+            </c:if>
+        </c:url>
 
         <pa:reviews-feed reviews="${reviews}"
                          reviewThreads="${reviewThreads}"
@@ -44,7 +53,8 @@
                          repliesPaginated="${true}"
                          repliesCurrentPage="${repliesCurrentPage}"
                          repliesTotalPages="${repliesTotalPages}"
-                         contextRedirectBase="${repliesBaseRedirect}"/>
+                         contextRedirectBase="${repliesBaseRedirect}"
+                         repliesReturnRedirect="${reviewReturnRedirect}"/>
     </main>
 
     <pa:toast messageCode="${actionToastCode}"/>

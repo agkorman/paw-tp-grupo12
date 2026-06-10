@@ -844,6 +844,17 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    public Set<Long> getEditablePostIds(final Collection<CommunityPost> posts, final Long viewerUserId) {
+        if (posts == null || posts.isEmpty() || viewerUserId == null || viewerUserId <= 0) {
+            return Collections.emptySet();
+        }
+        return posts.stream()
+                .filter(post -> viewerUserId.equals(post.getAuthorUserId()))
+                .map(CommunityPost::getId)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public List<CommunityMembershipEntry> listMembers(final String communitySlug, final long callerUserId) {
         if (callerUserId <= 0) {
             throw new InvalidServiceInputException("Caller is required.");

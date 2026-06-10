@@ -554,6 +554,10 @@ public class UserController {
             : communityService.findPostHelpfulReactionsByUser(postIds, currentUserId);
         final Set<Long> hideablePostIds = communityService.getHideablePostIds(
             postsById.values(), currentUserId, viewerAdmin);
+        final Set<Long> editableReviewIds =
+            reviewService.getEditableReviewIds(reviewsById.values(), currentUserId);
+        final Set<Long> editablePostIds =
+            communityService.getEditablePostIds(postsById.values(), currentUserId);
 
         final List<ProfileActivityEntry> entries = new ArrayList<>(items.size());
         for (final ProfileActivityItem item : items) {
@@ -563,7 +567,7 @@ public class UserController {
                     continue;
                 }
                 final boolean reviewOwnedByCurrentUser =
-                    isOwnedByCurrentUser(review, currentUserId);
+                    editableReviewIds.contains(review.getId());
                 entries.add(ProfileActivityEntry.review(
                     new ProfileReviewCard(
                         review,
@@ -581,7 +585,7 @@ public class UserController {
                     continue;
                 }
                 final boolean postOwnedByCurrentUser =
-                    isPostOwnedByCurrentUser(post, currentUserId);
+                    editablePostIds.contains(post.getId());
                 final boolean postHideable = hideablePostIds.contains(post.getId());
                 entries.add(ProfileActivityEntry.post(
                     new ProfilePostCard(
@@ -706,27 +710,6 @@ public class UserController {
                 && !currentUser
                 && userFollowService.isFollowing(currentUserId, user.getId());
         return new ProfileConnection(user.getId(), displayName(user), initials(user), following, !currentUser);
-    }
-
-    private boolean isOwnedByCurrentUser(
-        final Review review,
-        final Long currentUserId
-    ) {
-        return (
-            currentUserId != null &&
-            review.getUserId() != null &&
-            review.getUserId().equals(currentUserId)
-        );
-    }
-
-    private boolean isPostOwnedByCurrentUser(
-        final CommunityPost post,
-        final Long currentUserId
-    ) {
-        return (
-            currentUserId != null &&
-            currentUserId == post.getAuthorUserId()
-        );
     }
 
     private String displayName(final User user) {

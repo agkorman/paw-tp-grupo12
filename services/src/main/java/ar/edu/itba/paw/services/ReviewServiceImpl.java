@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -124,6 +125,17 @@ public class ReviewServiceImpl implements ReviewService {
             return Collections.emptyList();
         }
         return withTags(reviewDao.findByIds(ids));
+    }
+
+    @Override
+    public Set<Long> getEditableReviewIds(final Collection<Review> reviews, final Long viewerUserId) {
+        if (reviews == null || reviews.isEmpty() || viewerUserId == null || viewerUserId <= 0) {
+            return Collections.emptySet();
+        }
+        return reviews.stream()
+                .filter(review -> viewerUserId.equals(review.getUserId()))
+                .map(Review::getId)
+                .collect(Collectors.toSet());
     }
 
     @Override

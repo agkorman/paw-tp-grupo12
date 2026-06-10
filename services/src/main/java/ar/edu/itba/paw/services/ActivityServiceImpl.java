@@ -91,9 +91,6 @@ public class ActivityServiceImpl implements ActivityService {
                 : communityDao.findPostsByIds(communityPostIds)).stream()
                 .collect(Collectors.toMap(CommunityPost::getId, post -> post, (left, right) -> left, LinkedHashMap::new));
         final Map<Long, Car> carsById = loadCarsById(reviewsById.values());
-        final Map<Long, Integer> reviewPagesById = reviewIds.isEmpty()
-                ? Collections.emptyMap()
-                : reviewDao.findDefaultPagesByReviewIds(reviewIds);
         final Map<Long, List<ImageMetadata>> reviewImagesById = loadReviewImagesById(reviewIds);
         final Map<Long, List<ImageMetadata>> postImagesById = loadCommunityPostImagesById(communityPostIds);
         final Map<Long, Long> commentCountsByPostId = communityPostIds.isEmpty()
@@ -121,7 +118,6 @@ public class ActivityServiceImpl implements ActivityService {
                         reviewLikeCountsById.getOrDefault(review.getId(), 0L),
                         reviewReplyCountsById.getOrDefault(review.getId(), 0L),
                         carsById.get(review.getCarId()),
-                        reviewPagesById.getOrDefault(review.getId(), Pagination.DEFAULT_PAGE),
                         reviewImagesById.getOrDefault(review.getId(), Collections.emptyList())
                 ));
                 continue;

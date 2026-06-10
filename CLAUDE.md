@@ -189,7 +189,7 @@ Modules are `model`, `persistence-contracts`, `service-contracts`, `persistence`
 
 `schema.sql` runs on every application startup against a live database that already has data. Every statement must be safe to run on an already-initialized database.
 
-- Keep startup `schema.sql` focused on idempotent structural evolution and lookup data required by the app. One-shot legacy backfills, demo seeds, cleanup updates, and historical data moves belong in `schema.deprecated.sql` or an explicitly-run migration script, not in startup DDL.
+- Keep startup `schema.sql` focused on idempotent structural evolution and lookup data required by the app. One-shot legacy backfills, demo seeds, cleanup updates, and historical data moves belong in `seed-and-migrations.sql` or an explicitly-run migration script, not in startup DDL.
 - Tables: always `CREATE TABLE IF NOT EXISTS`.
 - Columns: always `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`. New columns must be nullable or have a default so that existing rows are not broken.
 - Constraints: always `DROP CONSTRAINT IF EXISTS` before `ADD CONSTRAINT`, so re-runs do not fail on already-existing constraints.
