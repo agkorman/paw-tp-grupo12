@@ -1255,7 +1255,7 @@ public class CommunityController {
                     ? buildRepostReviewView(linkedReview, resolveLinkedReviewCar(linkedReview, carsByLinkedReview))
                     : null;
             final boolean ownedByCurrentUser = currentUserId != null
-                && currentUserId == post.getAuthorUserId();
+                && currentUserId.equals(post.getAuthorUserId());
             final boolean editable = ownedByCurrentUser;
             final boolean hideable = hideablePostIds.contains(post.getId());
             cards.add(new PostCardView(

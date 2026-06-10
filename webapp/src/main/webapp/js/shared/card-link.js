@@ -10,9 +10,9 @@
         return null;
     }
 
-    function isInteractive(target) {
+    function isInteractive(target, card) {
         var node = target;
-        while (node && node !== document) {
+        while (node && node !== card) {
             if (node.nodeType === 1 && ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'FORM', 'LABEL'].indexOf(node.tagName) >= 0) {
                 return true;
             }
@@ -23,7 +23,7 @@
 
     document.addEventListener('click', function (event) {
         var card = closest(event.target, 'data-profile-card-link');
-        if (card && !isInteractive(event.target)) {
+        if (card && !isInteractive(event.target, card)) {
             window.location.href = card.getAttribute('data-profile-card-link');
         }
     });
@@ -33,7 +33,7 @@
             return;
         }
         var card = closest(event.target, 'data-profile-card-link');
-        if (card && !isInteractive(event.target)) {
+        if (card && !isInteractive(event.target, card)) {
             event.preventDefault();
             window.location.href = card.getAttribute('data-profile-card-link');
         }
