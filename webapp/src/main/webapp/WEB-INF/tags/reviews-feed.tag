@@ -210,8 +210,8 @@
                                     <div class="review-details-item">
                                         <dt><spring:message code="review.form.ownership"/></dt>
                                         <dd><c:choose>
-                                            <c:when test="${review.ownershipStatus eq 'Propietario actual'}"><spring:message code="review.form.ownership.current"/></c:when>
-                                            <c:when test="${review.ownershipStatus eq 'Ex propietario'}"><spring:message code="review.form.ownership.previous"/></c:when>
+                                            <c:when test="${review.ownershipStatus eq 'current_owner' or review.ownershipStatus eq 'Propietario actual'}"><spring:message code="review.form.ownership.current"/></c:when>
+                                            <c:when test="${review.ownershipStatus eq 'previous_owner' or review.ownershipStatus eq 'Ex propietario'}"><spring:message code="review.form.ownership.previous"/></c:when>
                                             <c:otherwise><c:out value="${review.ownershipStatus}"/></c:otherwise>
                                         </c:choose></dd>
                                     </div>
@@ -259,7 +259,7 @@
                                         <c:url var="replyHideUrl" value="/reviews/replies/${reply.id}/hide"/>
                                         <c:url var="replyDeleteUrl" value="/reviews/replies/${reply.id}/delete"/>
                                         <c:url var="replyUpdateUrl" value="/reviews/replies/${reply.id}/update"/>
-                                       
+
                                         <article class="review-reply" id="reply-${reply.id}">
                                             <div class="review-reply-header">
                                                 <a class="review-author-link" href="${replyAuthorProfileUrl}">
