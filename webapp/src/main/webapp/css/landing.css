@@ -146,6 +146,15 @@
     box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.26);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.hero-spotlight:hover {
+    background: rgba(52, 52, 52, 0.68);
+    border-color: rgba(255, 181, 158, 0.28);
+    transform: translateY(-2px);
 }
 
 .hero-spotlight-header {
@@ -529,6 +538,11 @@
     margin-top: 0.5rem;
 }
 
+.wizard-cta--hero .wizard-cta-actions .btn-primary {
+    font-size: 0.85rem;
+    padding: 0.85rem 2.25rem;
+}
+
 .wizard-cta-preview {
     display: flex;
     flex-direction: column;
@@ -540,6 +554,9 @@
 }
 
 .wizard-cta-preview .review-tag-chip {
+    font-size: 1.05rem;
+    padding: 0.55rem 1.1rem 0.55rem 0.65rem;
+    gap: 0.5rem;
     transform: rotate(-1.5deg);
 }
 
