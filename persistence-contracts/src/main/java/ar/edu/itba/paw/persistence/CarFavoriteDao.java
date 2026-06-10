@@ -15,8 +15,6 @@ public interface CarFavoriteDao {
 
     boolean isFavorited(long userId, long carId);
 
-    List<Car> findFavoriteCars(long userId);
-
     Page<Car> findFavoriteCars(long userId, int page);
 
     long countFavoriteCars(long userId);

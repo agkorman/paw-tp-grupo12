@@ -3,7 +3,6 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.BodyTypeRequest;
 import ar.edu.itba.paw.model.Page;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface BodyTypeRequestService {
@@ -12,8 +11,6 @@ public interface BodyTypeRequestService {
     String STATUS_REJECTED = "rejected";
 
     Optional<BodyTypeRequest> getBodyTypeRequestById(long id);
-
-    List<BodyTypeRequest> getBodyTypeRequestsByStatus(String status);
 
     Page<BodyTypeRequest> getBodyTypeRequestsByStatus(String status, int page);
 

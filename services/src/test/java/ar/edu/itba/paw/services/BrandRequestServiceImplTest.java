@@ -32,8 +32,6 @@ public class BrandRequestServiceImplTest {
     @Mock
     private BrandDao brandDao;
     @Mock
-    private UserService userService;
-    @Mock
     private EmailService emailService;
 
     @InjectMocks
@@ -123,11 +121,11 @@ public class BrandRequestServiceImplTest {
         final BrandRequest request = TestModels.brandRequest(REQUEST_ID, USER_ID, " ", "New Brand", "comment",
                 BrandRequestService.STATUS_PENDING, LocalDateTime.now());
         final User user = TestModels.user(USER_ID, "user", "fallback@example.com", "p", "user", LocalDateTime.now());
+        request.setSubmittedByUser(user);
         when(brandRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(request));
         when(brandDao.findByName("New Brand")).thenReturn(Optional.empty());
         when(brandRequestDao.updateStatus(REQUEST_ID, BrandRequestService.STATUS_PENDING,
                 BrandRequestService.STATUS_APPROVED)).thenReturn(true);
-        when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user));
 
         // Exercise
         final boolean result = brandRequestService.approvePendingRequest(REQUEST_ID);

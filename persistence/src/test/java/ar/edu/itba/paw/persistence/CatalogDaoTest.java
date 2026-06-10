@@ -11,8 +11,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class CatalogDaoTest extends AbstractPersistenceTest {
+
+    @Autowired
+    private BrandDao brandDao;
+
+    @Autowired
+    private BodyTypeDao bodyTypeDao;
 
     @Test
     public void shouldCreateBrandAndPersistName() {

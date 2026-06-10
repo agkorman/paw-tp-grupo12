@@ -28,15 +28,6 @@ public class AdminRequestJpaDao implements AdminRequestDao {
     }
 
     @Override
-    public List<AdminRequest> findByStatus(final String status) {
-        return em.createQuery(
-                "SELECT a FROM AdminRequest a WHERE a.status = :status ORDER BY a.createdAt DESC, a.id DESC",
-                AdminRequest.class)
-                .setParameter("status", status)
-                .getResultList();
-    }
-
-    @Override
     public Page<AdminRequest> findByStatus(final String status, final int page) {
         final int normalizedPage = Pagination.normalizePage(page);
         final int pageSize = Pagination.REQUESTS_PAGE_SIZE;

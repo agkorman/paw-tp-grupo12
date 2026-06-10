@@ -16,7 +16,6 @@ import java.util.Optional;
 public interface CarService {
     long LEGACY_IMAGE_ID = 0L;
 
-    List<Car> getAllCars();
 
     Optional<Car> getCarById(long id);
 

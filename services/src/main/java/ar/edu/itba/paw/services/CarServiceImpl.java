@@ -67,11 +67,6 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public List<Car> getAllCars() {
-        return carDao.findAll();
-    }
-
-    @Override
     public Optional<Car> getCarById(final long id) {
         return carDao.findById(id);
     }
@@ -302,11 +297,11 @@ public class CarServiceImpl implements CarService {
             maxSpeedKmh,
             priceUsd
         );
-        if (updated.isPresent() && imageContentType.isPresent()) {
+        if (updated.isPresent() && imageContentType.isPresent() && imageData.isPresent()) {
             carImageDao.saveOrReplace(
                 id,
                 imageContentType.get(),
-                imageData.orElseThrow()
+                imageData.get()
             );
         }
         if (updated.isPresent()) {
