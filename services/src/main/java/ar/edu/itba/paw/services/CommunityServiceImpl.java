@@ -868,9 +868,9 @@ public class CommunityServiceImpl implements CommunityService {
             throw new CommunityMembershipRequiredException(normalizedSlug);
         }
         final Long creatorUserId = community.getCreatedByUserId();
-        final List<CommunityMembershipEntry> raw = communityDao.listMembers(community.getId());
-        final List<CommunityMembershipEntry> entries = new ArrayList<>(raw.size());
-        for (final CommunityMembershipEntry entry : raw) {
+        final Page<CommunityMembershipEntry> rawPage = communityDao.listMembers(community.getId(), Pagination.DEFAULT_PAGE);
+        final List<CommunityMembershipEntry> entries = new ArrayList<>(rawPage.getItems().size());
+        for (final CommunityMembershipEntry entry : rawPage.getItems()) {
             final boolean isCreator = creatorUserId != null && creatorUserId == entry.getUserId();
             entries.add(new CommunityMembershipEntry(
                     entry.getUserId(),
@@ -884,7 +884,9 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
-    public Optional<CommunityMembersData> getCommunityMembers(final String communitySlug, final long callerUserId) {
+    public Optional<CommunityMembersData> getCommunityMembers(final String communitySlug,
+                                                               final long callerUserId,
+                                                               final int page) {
         if (callerUserId <= 0) {
             throw new InvalidServiceInputException("Caller is required.");
         }
@@ -899,9 +901,10 @@ public class CommunityServiceImpl implements CommunityService {
             throw new CommunityMembershipRequiredException(normalizedSlug);
         }
         final Long creatorUserId = community.getCreatedByUserId();
-        final List<CommunityMembershipEntry> raw = communityDao.listMembers(community.getId());
-        final List<CommunityMembershipEntry> entries = new ArrayList<>(raw.size());
-        for (final CommunityMembershipEntry entry : raw) {
+        final long totalMemberCount = communityDao.countMembers(community.getId());
+        final Page<CommunityMembershipEntry> rawPage = communityDao.listMembers(community.getId(), page);
+        final List<CommunityMembershipEntry> entries = new ArrayList<>(rawPage.getItems().size());
+        for (final CommunityMembershipEntry entry : rawPage.getItems()) {
             final boolean isCreator = creatorUserId != null && creatorUserId == entry.getUserId();
             entries.add(new CommunityMembershipEntry(
                     entry.getUserId(),
@@ -911,8 +914,10 @@ public class CommunityServiceImpl implements CommunityService {
                     isCreator
             ));
         }
-        return Optional.of(new CommunityMembersData(community, entries, callerRole.get(),
-                isCreator(community, callerUserId)));
+        final Page<CommunityMembershipEntry> membersPage = new Page<>(entries,
+                rawPage.getPageNumber(), rawPage.getPageSize(), rawPage.getTotalItems());
+        return Optional.of(new CommunityMembersData(community, membersPage, totalMemberCount,
+                callerRole.get(), isCreator(community, callerUserId)));
     }
 
     @Override

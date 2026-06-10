@@ -61,7 +61,7 @@ public interface CommunityService {
     Set<Long> getHideablePostIds(Collection<CommunityPost> posts, Long viewerUserId, boolean viewerAdmin);
     Set<Long> getEditablePostIds(Collection<CommunityPost> posts, Long viewerUserId);
     List<CommunityMembershipEntry> listMembers(String communitySlug, long callerUserId);
-    Optional<CommunityMembersData> getCommunityMembers(String communitySlug, long callerUserId);
+    Optional<CommunityMembersData> getCommunityMembers(String communitySlug, long callerUserId, int page);
     CommunityActionResult hidePost(String communitySlug, String postSlug, long callerUserId, String reason);
     CommunityActionResult hidePost(String communitySlug, String postSlug, long callerUserId, String reason, boolean callerAdmin);
     CommunityActionResult hideComment(String communitySlug, long commentId, long callerUserId, String reason);
