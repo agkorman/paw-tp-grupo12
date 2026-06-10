@@ -23,7 +23,7 @@
             <spring:message var="activityTypeAria" code="activity.filter.type.label"/>
             <spring:message var="activityTimeframeAria" code="activity.filter.timeframe.label"/>
             <form class="cars-toolbar activity-toolbar" method="get" action="<c:url value='/activity'/>" id="activity-filter-form"
-                  novalidate="novalidate">
+                  enctype="multipart/form-data" novalidate="novalidate">
                 <div class="cars-toolbar-shell">
                     <div class="cars-toolbar-field">
                         <span class="cars-toolbar-field-ui" aria-hidden="true">

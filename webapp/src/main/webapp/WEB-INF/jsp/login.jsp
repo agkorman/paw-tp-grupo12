@@ -24,7 +24,7 @@
             </div>
 
             <form id="loginForm" class="auth-form" method="post" action="<c:url value='/login'/>"
-                  data-auth-form="login" data-submit-lock="true" novalidate="novalidate"
+                  enctype="multipart/form-data" data-auth-form="login" data-submit-lock="true" novalidate="novalidate"
                   data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
                   data-msg-required-login-email="${fn:escapeXml(jsRequiredEmail)}"
                   data-msg-required-login-password="${fn:escapeXml(jsRequiredPassword)}"

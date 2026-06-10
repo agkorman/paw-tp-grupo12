@@ -14,7 +14,7 @@
         <c:url var="recommendResultsUrl" value="/cars/recommend/results"/>
         <spring:message code="recommend.question.index" var="recommendQuestionIndexTpl" arguments="__PAW_0__,__PAW_1__"/>
         <spring:message var="jsRecommendRequiredAnswer" code="js.recommend.required.answer"/>
-        <form:form method="get" action="${recommendResultsUrl}" modelAttribute="recommendationForm" cssClass="wizard-form" id="recommend-wizard" novalidate="novalidate"
+        <form:form method="get" action="${recommendResultsUrl}" modelAttribute="recommendationForm" cssClass="wizard-form" id="recommend-wizard" enctype="multipart/form-data" novalidate="novalidate"
                    data-msg-required-answer="${fn:escapeXml(jsRecommendRequiredAnswer)}">
             <div class="wizard-progress" aria-hidden="true" data-recommend-question-index-template="${fn:escapeXml(recommendQuestionIndexTpl)}">
                 <div class="wizard-progress-bar"></div>

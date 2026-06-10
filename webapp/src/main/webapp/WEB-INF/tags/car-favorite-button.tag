@@ -17,7 +17,7 @@
 
 <c:url var="favoriteAction" value="/cars/${carId}/favorite"/>
 
-<form class="favorite-form" method="post" action="${favoriteAction}">
+<form class="favorite-form" method="post" action="${favoriteAction}" enctype="multipart/form-data">
     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
     <input type="hidden" name="favorite" value="${favorited ? 'false' : 'true'}">
     <button

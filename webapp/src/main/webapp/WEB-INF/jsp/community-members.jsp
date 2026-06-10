@@ -74,6 +74,7 @@
                                     <c:if test="${not row.moderator}">
                                         <c:url var="promoteUrl" value="/communities/${community.slug}/members/${row.userId}/promote"/>
                                         <form method="post" action="${fn:escapeXml(promoteUrl)}"
+                                              enctype="multipart/form-data"
                                               data-confirm-modal="promoteMemberConfirmModal">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="redirect" value="${fn:escapeXml(membersCurrentPath)}">
@@ -85,6 +86,7 @@
                                     <c:if test="${viewerIsCreator and row.moderator}">
                                         <c:url var="transferUrl" value="/communities/${community.slug}/members/${row.userId}/transfer"/>
                                         <form method="post" action="${fn:escapeXml(transferUrl)}"
+                                              enctype="multipart/form-data"
                                               data-confirm-modal="transferOwnerConfirmModal">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="redirect" value="${fn:escapeXml(membersCurrentPath)}">
@@ -95,6 +97,7 @@
                                     </c:if>
                                     <c:url var="kickUrl" value="/communities/${community.slug}/members/${row.userId}/kick"/>
                                     <form method="post" action="${fn:escapeXml(kickUrl)}"
+                                          enctype="multipart/form-data"
                                           data-confirm-modal="kickMemberConfirmModal">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                         <input type="hidden" name="redirect" value="${fn:escapeXml(membersCurrentPath)}">

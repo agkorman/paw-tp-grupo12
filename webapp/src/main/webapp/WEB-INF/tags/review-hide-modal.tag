@@ -26,6 +26,7 @@
         <form id="hideReviewForm"
               class="modal-form review-hide-form"
               method="post"
+              enctype="multipart/form-data"
               novalidate="novalidate"
               data-reason-required-message="${fn:escapeXml(reasonRequiredMessage)}"
               data-reason-min-message="${fn:escapeXml(reasonMinMessage)}"

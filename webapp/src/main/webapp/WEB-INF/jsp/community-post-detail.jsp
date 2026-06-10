@@ -92,6 +92,7 @@
                         <c:if test="${postView.deletable}">
                             <c:url var="communityPostDeleteUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/delete"/>
                             <form method="post" action="${fn:escapeXml(communityPostDeleteUrl)}"
+                                  enctype="multipart/form-data"
                                   data-confirm-modal="deletePostConfirmModal">
                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <input type="hidden" name="redirect" value="${fn:escapeXml(communityPostsSectionUrl)}">
@@ -139,6 +140,7 @@
                                    action="${fn:escapeXml(communityPostCommentCreateUrl)}"
                                    modelAttribute="communityPostCommentForm"
                                    cssClass="community-comment-composer"
+                                   enctype="multipart/form-data"
                                    novalidate="novalidate">
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <c:if test="${not empty postReturnRedirect}">
@@ -158,7 +160,8 @@
                         </form:form>
                     </c:when>
                     <c:otherwise>
-                        <form action="${fn:escapeXml(communityJoinUrl)}" method="post" class="community-comment-login">
+                        <form action="${fn:escapeXml(communityJoinUrl)}" method="post" class="community-comment-login"
+                              enctype="multipart/form-data">
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <input type="hidden" name="redirect" value="${fn:escapeXml(communityJoinReturnUrl)}#comments">
                             <span><spring:message code="communities.postDetail.comment.joinRequired"/></span>
@@ -201,6 +204,7 @@
                                 <c:if test="${comment.editable}">
                                     <c:url var="communityCommentUpdateUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/comments/${comment.commentId}/update"/>
                                     <form method="post"
+                                          enctype="multipart/form-data"
                                           action="${fn:escapeXml(communityCommentUpdateUrl)}"
                                           class="community-comment-edit-form"
                                           data-community-comment-edit-form
@@ -253,6 +257,7 @@
                                     <c:if test="${comment.deletable}">
                                         <c:url var="communityCommentDeleteUrl" value="/communities/${postView.communitySlug}/posts/${postView.postSlug}/comments/${comment.commentId}/delete"/>
                                         <form method="post" action="${fn:escapeXml(communityCommentDeleteUrl)}"
+                                              enctype="multipart/form-data"
                                               data-confirm-modal="deleteCommentConfirmModal">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="redirect" value="${fn:escapeXml(commentActionRedirect)}">

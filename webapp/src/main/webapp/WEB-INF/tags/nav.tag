@@ -34,7 +34,8 @@
     </ul>
     <div class="nav-right">
         <c:if test="${not empty searchAction}">
-            <form class="nav-search-form search-box" method="get" action="${fn:escapeXml(searchAction)}" novalidate="novalidate">
+            <form class="nav-search-form search-box" method="get" action="${fn:escapeXml(searchAction)}"
+                  enctype="multipart/form-data" novalidate="novalidate">
                 <c:if test="${not empty searchBrand}">
                     <input type="hidden" name="brand" value="${fn:escapeXml(searchBrand)}">
                 </c:if>

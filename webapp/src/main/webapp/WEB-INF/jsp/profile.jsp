@@ -75,7 +75,8 @@
                     <div class="profile-owner-actions">
                         <c:url var="profileLanguageUrl" value="/user/language"/>
                         <spring:message var="profileLanguageLabel" code="profile.language.label"/>
-                        <form class="profile-language-form" method="post" action="${profileLanguageUrl}" novalidate="novalidate">
+                        <form class="profile-language-form" method="post" action="${profileLanguageUrl}"
+                              enctype="multipart/form-data" novalidate="novalidate">
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <label for="profileLanguage"><c:out value="${profileLanguageLabel}"/></label>
                             <div class="profile-language-control">
@@ -112,7 +113,8 @@
                         </form>
                         <button type="button" class="btn-primary profile-action-button" data-open-edit-profile-modal><spring:message code="profile.settings"/></button>
                         <c:url var="logoutUrl" value="/logout"/>
-                        <form class="profile-logout-form" method="post" action="${logoutUrl}" data-confirm-modal="logoutConfirmModal">
+                        <form class="profile-logout-form" method="post" action="${logoutUrl}"
+                              enctype="multipart/form-data" data-confirm-modal="logoutConfirmModal">
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <button type="submit" class="btn-secondary profile-logout-button"><spring:message code="profile.edit.logout"/></button>
                         </form>
@@ -129,7 +131,8 @@
                         <c:when test="${authenticated}">
                             <form class="profile-action-form profile-follow-form"
                                   method="post"
-                                  action="${profileFollowUrl}">
+                                  action="${profileFollowUrl}"
+                                  enctype="multipart/form-data">
                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <button
                                         type="submit"

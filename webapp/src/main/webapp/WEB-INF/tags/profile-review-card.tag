@@ -85,6 +85,7 @@
                                     </button>
                                 </c:if>
                                 <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
+                                      enctype="multipart/form-data"
                                       data-confirm-modal="deleteReviewConfirmModal">
                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <c:if test="${not empty actionRedirect}">

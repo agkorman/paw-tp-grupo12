@@ -87,6 +87,7 @@
                             </c:if>
                             <c:if test="${editable}">
                                 <form method="post" action="${fn:escapeXml(postDeleteUrl)}"
+                                      enctype="multipart/form-data"
                                       data-confirm-modal="deletePostConfirmModal">
                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <c:if test="${not empty actionRedirect}">

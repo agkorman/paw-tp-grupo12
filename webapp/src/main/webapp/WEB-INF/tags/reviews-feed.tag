@@ -43,7 +43,8 @@
                 </c:choose>
             </span></h2>
             <div class="feed-header-actions">
-                <form method="get" action="<c:url value='/reviews/car/${carId}'/>#reviewsFeed" class="review-sort-form">
+                <form method="get" action="<c:url value='/reviews/car/${carId}'/>#reviewsFeed" class="review-sort-form"
+                      enctype="multipart/form-data">
                     <label class="review-sort-label" for="reviewSortSelect"><spring:message code="review.feed.sort"/></label>
                     <div class="cars-toolbar-field">
                         <span class="cars-toolbar-field-ui" aria-hidden="true">
@@ -131,6 +132,7 @@
                                                     <c:out value="${reviewRepostLabel}"/>
                                                 </a>
                                                 <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
+                                                      enctype="multipart/form-data"
                                                       data-confirm-modal="deleteReviewConfirmModal">
                                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                     <input type="hidden" name="redirect" value="${fn:escapeXml(reviewFeedRedirect)}">
@@ -169,6 +171,7 @@
                                                     <c:out value="${reviewRepostLabel}"/>
                                                 </a>
                                                 <form method="post" action="${fn:escapeXml(reviewDeleteUrl)}"
+                                                      enctype="multipart/form-data"
                                                       data-confirm-modal="deleteReviewConfirmModal">
                                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                     <input type="hidden" name="redirect" value="${fn:escapeXml(reviewFeedRedirect)}">
@@ -290,6 +293,7 @@
                                                                     <spring:message code="common.action.edit"/>
                                                                 </button>
                                                                 <form method="post" action="${fn:escapeXml(replyDeleteUrl)}"
+                                                                      enctype="multipart/form-data"
                                                                       data-confirm-modal="deleteReviewConfirmModal">
                                                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                     <input type="hidden" name="redirect" value="${fn:escapeXml(reviewItemRedirect)}">
@@ -306,6 +310,7 @@
                                             <sec:authorize access="isAuthenticated()">
                                                 <c:if test="${not empty currentUserId and reply.userId == currentUserId}">
                                                     <form method="post"
+                                                          enctype="multipart/form-data"
                                                           action="${fn:escapeXml(replyUpdateUrl)}"
                                                           class="review-reply-edit-form"
                                                           data-reply-edit-form
@@ -344,6 +349,7 @@
                                 <c:when test="${authenticated}">
                                     <c:set var="replyHasError" value="${not empty replyErrorReviewId and replyErrorReviewId eq review.id}"/>
                                     <form method="post" action="${replyCreateUrl}" class="review-reply-form"
+                                          enctype="multipart/form-data"
                                           data-reply-intent="reply-${review.id}"
                                           data-reply-has-error="${replyHasError}"
                                           data-reply-required-message="${fn:escapeXml(replyRequiredMessage)}"

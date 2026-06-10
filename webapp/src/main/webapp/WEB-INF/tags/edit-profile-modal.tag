@@ -22,7 +22,8 @@
             </button>
         </header>
 
-        <form class="profile-edit-form" method="post" action="${profileUpdateUrl}" novalidate="novalidate"
+        <form class="profile-edit-form" method="post" action="${profileUpdateUrl}"
+              enctype="multipart/form-data" novalidate="novalidate"
               data-profile-edit-form
               data-msg-required-username="${fn:escapeXml(usernameRequiredMessage)}"
               data-msg-username-max="${fn:escapeXml(usernameMaxMessage)}"

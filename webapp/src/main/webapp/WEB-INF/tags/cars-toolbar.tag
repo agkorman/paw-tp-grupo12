@@ -18,7 +18,7 @@
 <spring:message var="sortAria" code="cars.toolbar.sort.aria"/>
 
 <form class="cars-toolbar" method="get" action="<c:url value='/cars'/>" id="car-filter-form"
-      novalidate="novalidate">
+      enctype="multipart/form-data" novalidate="novalidate">
     <div class="cars-toolbar-shell">
         <label class="cars-toolbar-search" for="cars-toolbar-search">
             <span class="cars-toolbar-icon" aria-hidden="true">

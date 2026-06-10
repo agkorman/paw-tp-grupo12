@@ -381,7 +381,8 @@
                 </div>
             </form:form>
             <c:if test="${not empty resolvedRejectAction}">
-                <form id="rejectCarRequestForm" method="post" action="${resolvedRejectAction}">
+                <form id="rejectCarRequestForm" method="post" action="${resolvedRejectAction}"
+                      enctype="multipart/form-data">
                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <c:if test="${not empty adminRedirect}">
                         <input type="hidden" name="redirect" value="${fn:escapeXml(adminRedirect)}">

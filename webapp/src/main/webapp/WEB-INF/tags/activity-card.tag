@@ -163,6 +163,7 @@
                 </c:if>
                 <c:if test="${activityCard.deletable}">
                     <form method="post" action="${fn:escapeXml(activityCardDeleteUrl)}"
+                          enctype="multipart/form-data"
                           data-confirm-modal="${activityCard.review ? 'deleteReviewConfirmModal' : 'deletePostConfirmModal'}">
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <input type="hidden" name="redirect" value="${fn:escapeXml(activityCurrentPath)}">
