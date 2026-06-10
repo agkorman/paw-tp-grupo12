@@ -275,7 +275,7 @@ public class CarReviewController {
                 car.getId(),
                 currentUser.getId()
             );
-            errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
+            errors.rejectValue("tagIds", "tagIds.invalid");
             model.addAttribute("selectedCar", car);
             return "review-form.jsp";
         }
@@ -728,7 +728,7 @@ public class CarReviewController {
                 reviewId,
                 currentUser.getId()
             );
-            errors.rejectValue("tagIds", "tagIds.invalid", e.getMessage());
+            errors.rejectValue("tagIds", "tagIds.invalid");
             model.addAttribute("selectedCar", car);
             model.addAttribute("editMode", true);
             model.addAttribute("reviewId", reviewId);

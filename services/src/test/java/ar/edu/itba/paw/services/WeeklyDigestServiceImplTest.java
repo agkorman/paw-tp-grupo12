@@ -12,18 +12,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -72,36 +70,53 @@ public class WeeklyDigestServiceImplTest {
     }
 
     @Test
-    public void shouldSendModeratorDigestWithPendingRequestCount() {
+    public void shouldBuildModeratorDigestWithPendingRequestCount() {
         // Arrange
-        final List<List<EmailRecipient>> capturedRecipients = new ArrayList<>();
-        final List<Long> capturedPendingCounts = new ArrayList<>();
         final List<EmailRecipient> moderatorRecipients = List.of(new EmailRecipient("mod@example.com", "es"));
         when(userService.getModeratorEmailRecipients()).thenReturn(moderatorRecipients);
         when(carRequestService.countCarRequestsByStatus(CarRequestService.STATUS_PENDING))
                 .thenReturn(2L);
-        when(userService.getAllUsers()).thenReturn(List.of());
-        doAnswer(invocation -> {
-            capturedRecipients.add(invocation.getArgument(0));
-            capturedPendingCounts.add(invocation.getArgument(1));
-            return null;
-        }).when(emailService).sendWeeklyModeratorDigest(moderatorRecipients, 2L);
 
         // Exercise
-        weeklyDigestService.sendWeeklyDigest();
+        final Optional<WeeklyDigestServiceImpl.ModeratorDigest> result = weeklyDigestService.buildModeratorDigest();
 
         // Assertions
-        assertEquals(List.of(moderatorRecipients), capturedRecipients);
-        assertEquals(List.of(2L), capturedPendingCounts);
+        assertTrue(result.isPresent());
+        assertEquals(moderatorRecipients, result.get().recipients);
+        assertEquals(2L, result.get().pendingCount);
+    }
+
+    @Test
+    public void shouldNotBuildModeratorDigestWhenNoModeratorRecipients() {
+        // Arrange
+        final List<EmailRecipient> noRecipients = List.of();
+        when(userService.getModeratorEmailRecipients()).thenReturn(noRecipients);
+
+        // Exercise
+        final Optional<WeeklyDigestServiceImpl.ModeratorDigest> result = weeklyDigestService.buildModeratorDigest();
+
+        // Assertions
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void shouldSwallowFailureLoadingModeratorRecipients() {
+        // Arrange
+        final RuntimeException failure = new RuntimeException("boom");
+        when(userService.getModeratorEmailRecipients()).thenThrow(failure);
+
+        // Exercise
+        final Optional<WeeklyDigestServiceImpl.ModeratorDigest> result = weeklyDigestService.buildModeratorDigest();
+
+        // Assertions
+        assertFalse(result.isPresent());
     }
 
     @Test
     public void shouldBuildUserDigestFromReviewAndFavoriteActivity() {
         // Arrange
-        final List<List<EmailService.ReviewActivityItem>> capturedReviewActivity = new ArrayList<>();
-        final List<List<EmailService.FavoriteActivityItem>> capturedFavoriteActivity = new ArrayList<>();
+        final LocalDateTime since = LocalDateTime.now().minusDays(7);
         final LocalDateTime recent = LocalDateTime.now().minusDays(1);
-        when(userService.getModeratorEmailRecipients()).thenReturn(List.of());
         when(userService.getAllUsers()).thenReturn(List.of(user()));
         when(reviewLikeService.countNewLikesPerReviewSince(any(LocalDateTime.class)))
                 .thenReturn(Map.of(REVIEW_ID, 3L));
@@ -120,66 +135,55 @@ public class WeeklyDigestServiceImplTest {
                 .thenReturn(List.of(car(FAVORITE_CAR_ID, "Honda", "Civic")));
         when(reviewService.countNewReviewsByCarIds(anyCollection(), any(LocalDateTime.class)))
                 .thenReturn(Map.of(FAVORITE_CAR_ID, 1L));
-        doAnswer(invocation -> {
-            capturedReviewActivity.add(invocation.getArgument(2));
-            capturedFavoriteActivity.add(invocation.getArgument(3));
-            return null;
-        }).when(emailService).sendWeeklyUserDigest(eq(USER_EMAIL), eq(USERNAME), anyList(), anyList());
 
         // Exercise
-        weeklyDigestService.sendWeeklyDigest();
+        final List<WeeklyDigestServiceImpl.UserDigest> digests = weeklyDigestService.buildUserDigests(since);
 
         // Assertions
-        assertEquals(1, capturedReviewActivity.size());
-        assertEquals(2, capturedReviewActivity.get(0).size());
-        assertTrue(capturedReviewActivity.get(0).stream().anyMatch(item ->
+        assertEquals(1, digests.size());
+        final WeeklyDigestServiceImpl.UserDigest digest = digests.get(0);
+        assertEquals(USER_EMAIL, digest.email);
+        assertEquals(USERNAME, digest.username);
+        assertEquals(2, digest.reviewActivities.size());
+        assertTrue(digest.reviewActivities.stream().anyMatch(item ->
                 "Daily driver".equals(item.reviewTitle)
                         && "Toyota Corolla".equals(item.carName)
                         && item.newLikes == 3
                         && item.newReplies == 1));
-        assertTrue(capturedReviewActivity.get(0).stream().anyMatch(item ->
+        assertTrue(digest.reviewActivities.stream().anyMatch(item ->
                 "Road trip".equals(item.reviewTitle)
-                        && "un auto".equals(item.carName)
+                        && item.carName == null
                         && item.newLikes == 0
                         && item.newReplies == 2));
-        assertEquals(1, capturedFavoriteActivity.get(0).size());
-        assertEquals("Honda Civic", capturedFavoriteActivity.get(0).get(0).carName);
-        assertEquals(1L, capturedFavoriteActivity.get(0).get(0).newReviewCount);
+        assertEquals(1, digest.favoriteActivities.size());
+        assertEquals("Honda Civic", digest.favoriteActivities.get(0).carName);
+        assertEquals(1L, digest.favoriteActivities.get(0).newReviewCount);
     }
 
     @Test
     public void shouldBuildEmptyDigestWhenNoReviewActivityAndNoFavoriteCars() {
         // Arrange
-        final List<List<EmailService.ReviewActivityItem>> capturedReviewActivity = new ArrayList<>();
-        final List<List<EmailService.FavoriteActivityItem>> capturedFavoriteActivity = new ArrayList<>();
-        when(userService.getModeratorEmailRecipients()).thenReturn(List.of());
+        final LocalDateTime since = LocalDateTime.now().minusDays(7);
         when(userService.getAllUsers()).thenReturn(List.of(user()));
         when(reviewLikeService.countNewLikesPerReviewSince(any(LocalDateTime.class)))
                 .thenReturn(Map.of());
         when(reviewReplyService.countNewRepliesPerReviewSince(any(LocalDateTime.class)))
                 .thenReturn(Map.of());
         when(carFavoriteService.findAllFavoriteCarIdsByUser()).thenReturn(Map.of());
-        doAnswer(invocation -> {
-            capturedReviewActivity.add(invocation.getArgument(2));
-            capturedFavoriteActivity.add(invocation.getArgument(3));
-            return null;
-        }).when(emailService).sendWeeklyUserDigest(eq(USER_EMAIL), eq(USERNAME), anyList(), anyList());
 
         // Exercise
-        weeklyDigestService.sendWeeklyDigest();
+        final List<WeeklyDigestServiceImpl.UserDigest> digests = weeklyDigestService.buildUserDigests(since);
 
         // Assertions
-        assertEquals(1, capturedReviewActivity.size());
-        assertTrue(capturedReviewActivity.get(0).isEmpty());
-        assertTrue(capturedFavoriteActivity.get(0).isEmpty());
+        assertEquals(1, digests.size());
+        assertTrue(digests.get(0).reviewActivities.isEmpty());
+        assertTrue(digests.get(0).favoriteActivities.isEmpty());
     }
 
     @Test
     public void shouldSkipMissingReviewsAndFavoriteCarsWithoutNewReviews() {
         // Arrange
-        final List<List<EmailService.ReviewActivityItem>> capturedReviewActivity = new ArrayList<>();
-        final List<List<EmailService.FavoriteActivityItem>> capturedFavoriteActivity = new ArrayList<>();
-        when(userService.getModeratorEmailRecipients()).thenReturn(List.of());
+        final LocalDateTime since = LocalDateTime.now().minusDays(7);
         when(userService.getAllUsers()).thenReturn(List.of(user()));
         when(reviewLikeService.countNewLikesPerReviewSince(any(LocalDateTime.class)))
                 .thenReturn(Map.of(REVIEW_ID, 1L));
@@ -190,18 +194,13 @@ public class WeeklyDigestServiceImplTest {
         when(carService.getCarsByIds(anyCollection())).thenReturn(List.of());
         when(reviewService.countNewReviewsByCarIds(anyCollection(), any(LocalDateTime.class)))
                 .thenReturn(Map.of());
-        doAnswer(invocation -> {
-            capturedReviewActivity.add(invocation.getArgument(2));
-            capturedFavoriteActivity.add(invocation.getArgument(3));
-            return null;
-        }).when(emailService).sendWeeklyUserDigest(eq(USER_EMAIL), eq(USERNAME), anyList(), anyList());
 
         // Exercise
-        weeklyDigestService.sendWeeklyDigest();
+        final List<WeeklyDigestServiceImpl.UserDigest> digests = weeklyDigestService.buildUserDigests(since);
 
         // Assertions
-        assertEquals(1, capturedReviewActivity.size());
-        assertTrue(capturedReviewActivity.get(0).isEmpty());
-        assertTrue(capturedFavoriteActivity.get(0).isEmpty());
+        assertEquals(1, digests.size());
+        assertTrue(digests.get(0).reviewActivities.isEmpty());
+        assertTrue(digests.get(0).favoriteActivities.isEmpty());
     }
 }

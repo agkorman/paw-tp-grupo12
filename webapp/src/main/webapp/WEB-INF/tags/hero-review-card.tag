@@ -55,7 +55,7 @@
                 <c:when test="${not empty heroReview.reviewerEmail}">
                     <c:out value="${heroReview.reviewerEmail}"/>
                 </c:when>
-                <c:otherwise>anon</c:otherwise>
+                <c:otherwise><spring:message code="review.author.anonymous"/></c:otherwise>
             </c:choose>
         </span>
         <span><pa:relative-time value="${heroReview.createdAt}"/></span>

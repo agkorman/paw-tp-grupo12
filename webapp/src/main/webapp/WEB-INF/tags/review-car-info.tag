@@ -11,7 +11,7 @@
         <c:if test="${not empty selectedCar.priceUsd}">
         <div class="car-info-row">
             <span class="car-info-label"><spring:message code="review.carInfo.price"/></span>
-            <span class="car-info-value">USD <fmt:formatNumber value="${selectedCar.priceUsd}" groupingUsed="true" maxFractionDigits="0"/></span>
+            <span class="car-info-value"><spring:message code="common.currency.usd"/> <fmt:formatNumber value="${selectedCar.priceUsd}" groupingUsed="true" maxFractionDigits="0"/></span>
         </div>
         </c:if>
         <div class="car-info-row">

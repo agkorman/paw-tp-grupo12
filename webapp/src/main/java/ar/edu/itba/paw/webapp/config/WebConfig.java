@@ -46,6 +46,7 @@ import java.io.InputStream;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @EnableWebMvc
 @EnableAsync
@@ -292,6 +293,12 @@ public class WebConfig implements WebMvcConfigurer {
         executor.setMaxPoolSize(2);
         executor.setQueueCapacity(50);
         executor.setThreadNamePrefix("mail-");
+        // When the queue fills up (e.g. the per-user fan-out of the weekly digest),
+        // run the task on the calling thread instead of dropping the email.
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        // On shutdown, finish queued/in-flight emails instead of discarding them.
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(30);
         executor.initialize();
         return executor;
     }

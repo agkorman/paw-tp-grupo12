@@ -204,25 +204,10 @@ public class CarController {
                 null
             );
         }
-        Brand resolvedBrand = null;
-        if (!errors.hasFieldErrors("brand")) {
-            resolvedBrand = brandService
-                .findByName(carForm.getBrand())
-                .orElse(null);
-            if (resolvedBrand == null) {
-                errors.rejectValue("brand", "validation.car.brand.invalid");
-            }
-        }
-
-        BodyType resolvedBodyType = null;
-        if (!errors.hasFieldErrors("bodyType")) {
-            resolvedBodyType = bodyTypeService
-                .findByName(carForm.getBodyType())
-                .orElse(null);
-            if (resolvedBodyType == null) {
-                errors.rejectValue("bodyType", "validation.car.bodyType.invalid");
-            }
-        }
+        final ControllerUtils.ResolvedCarCatalog resolvedCatalog =
+            ControllerUtils.resolveCarCatalog(carForm, errors, brandService, bodyTypeService);
+        final Brand resolvedBrand = resolvedCatalog.getBrand();
+        final BodyType resolvedBodyType = resolvedCatalog.getBodyType();
 
         if (errors.hasErrors()) {
             LOGGER.warn(

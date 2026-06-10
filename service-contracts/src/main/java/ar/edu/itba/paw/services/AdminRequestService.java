@@ -43,7 +43,5 @@ public interface AdminRequestService {
 
     String resolveSubmitterEmail(String submitterEmail, Long submittedByUserId);
 
-    String getSubmitterLabel(String submitterEmail, Long submittedByUserId);
-
-    String getSubmitterLabel(String submitterEmail, Long submittedByUserId, Map<Long, User> usersById);
+    String resolveSubmitterEmail(String submitterEmail, Long submittedByUserId, Map<Long, User> usersById);
 }

@@ -580,7 +580,7 @@ public class EmailServiceImpl implements EmailService {
         } else {
             for (final EmailService.ReviewActivityItem item : reviewActivity) {
                 sb.append("• ").append(safeValue(item.reviewTitle))
-                        .append(" (").append(safeValue(item.carName)).append(")");
+                        .append(" (").append(carNameOrFallback(item.carName, locale)).append(")");
                 if (item.newLikes > 0) {
                     sb.append(" — ").append(countMsg("email.userDigest.likes", locale, item.newLikes));
                 }
@@ -596,7 +596,7 @@ public class EmailServiceImpl implements EmailService {
             sb.append(msg("email.userDigest.favorite.empty", locale)).append("\n");
         } else {
             for (final EmailService.FavoriteActivityItem item : favoriteActivity) {
-                sb.append("• ").append(safeValue(item.carName))
+                sb.append("• ").append(carNameOrFallback(item.carName, locale))
                         .append(" — ").append(countMsg("email.userDigest.newReviews", locale, item.newReviewCount))
                         .append("\n");
             }
@@ -867,7 +867,7 @@ public class EmailServiceImpl implements EmailService {
             }
             rows.append(buildDigestRow(
                     escapeHtml(safeValue(item.reviewTitle)),
-                    escapeHtml(safeValue(item.carName)),
+                    escapeHtml(carNameOrFallback(item.carName, locale)),
                     detail.toString()
             ));
         }
@@ -883,7 +883,7 @@ public class EmailServiceImpl implements EmailService {
         final StringBuilder rows = new StringBuilder();
         for (final EmailService.FavoriteActivityItem item : items) {
             final String detail = escapeHtml(countMsg("email.userDigest.newReviews", locale, item.newReviewCount));
-            rows.append(buildDigestRow(escapeHtml(safeValue(item.carName)), null, detail));
+            rows.append(buildDigestRow(escapeHtml(carNameOrFallback(item.carName, locale)), null, detail));
         }
         return buildDigestSection(sectionLabel, rows.toString());
     }
@@ -1306,6 +1306,12 @@ public class EmailServiceImpl implements EmailService {
 
     private String safeValue(final String value) {
         return value == null || value.isBlank() ? "-" : value;
+    }
+
+    private String carNameOrFallback(final String carName, final Locale locale) {
+        return carName == null || carName.isBlank()
+                ? msg("email.userDigest.car.unknown", locale)
+                : carName;
     }
 
     private String absoluteUrl(final String pathOrUrl) {

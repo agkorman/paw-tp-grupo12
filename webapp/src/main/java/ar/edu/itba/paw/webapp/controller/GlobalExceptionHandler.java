@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.services.ReviewTagService;
 import ar.edu.itba.paw.services.exception.CannotModerateCreatorException;
 import ar.edu.itba.paw.services.exception.CommunityContentOwnershipException;
 import ar.edu.itba.paw.services.exception.CommunityCreatorCannotLeaveException;
@@ -87,13 +88,27 @@ public class GlobalExceptionHandler {
         LOGGER.warn("upload exceeded max size uri={} type={}",
                 LogSanitizer.forLog(request.getRequestURI(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
                 e.getClass().getSimpleName());
-        return ResponseEntity.badRequest().body(message("upload.maxSize"));
+        return ResponseEntity.badRequest().body(message("upload.maxSize", null));
     }
 
     @ExceptionHandler(InvalidReviewTagSelectionException.class)
     public ResponseEntity<String> handleInvalidReviewTagSelection(final InvalidReviewTagSelectionException e) {
-        LOGGER.warn("invalid review tag selection type={}", e.getClass().getSimpleName());
-        return ResponseEntity.badRequest().body(e.getMessage());
+        LOGGER.warn("invalid review tag selection reason={}", e.getReason());
+        return ResponseEntity.badRequest().body(reviewTagSelectionMessage(e.getReason()));
+    }
+
+    private String reviewTagSelectionMessage(final InvalidReviewTagSelectionException.Reason reason) {
+        switch (reason) {
+            case TOO_MANY:
+                return message("validation.review.tags.tooMany",
+                        new Object[]{ReviewTagService.MAX_TAGS_PER_REVIEW});
+            case UNKNOWN_TAG:
+                return message("validation.review.tags.unknown", null);
+            case DUPLICATE_DIMENSION:
+                return message("validation.review.tags.duplicateDimension", null);
+            default:
+                return message("tagIds.invalid", null);
+        }
     }
 
     @ExceptionHandler({
@@ -127,7 +142,7 @@ public class GlobalExceptionHandler {
         return mav;
     }
 
-    private String message(final String code) {
-        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+    private String message(final String code, final Object[] args) {
+        return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
     }
 }

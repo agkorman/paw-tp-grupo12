@@ -350,6 +350,9 @@ public class UserController {
         final int followingPage,
         final HttpServletRequest request
     ) {
+        final int normalizedPage = Pagination.normalizePage(page);
+        final int normalizedFollowersPage = Pagination.normalizePage(followersPage);
+        final int normalizedFollowingPage = Pagination.normalizePage(followingPage);
         final User profileUser = userService
             .getUserById(profileUserId)
             .orElseThrow(() ->
@@ -377,14 +380,14 @@ public class UserController {
         if (TAB_FAVORITES.equals(activeTab)) {
             favoriteCarPage = carFavoriteService.getFavoriteCars(
                 profileUser.getId(),
-                page
+                normalizedPage
             );
             favoriteCars = favoriteCarPage.getItems();
             reviewStatsByCarId = reviewStatsByCarId(favoriteCars);
         } else if (TAB_LIKES.equals(activeTab)) {
             likesPage = userActivityService.getLikedActivity(
                 profileUser.getId(),
-                page
+                normalizedPage
             );
             likesEntries = buildActivityEntries(
                 likesPage.getItems(),
@@ -394,7 +397,7 @@ public class UserController {
         } else {
             activityPage = userActivityService.getAuthoredActivity(
                 profileUser.getId(),
-                page
+                normalizedPage
             );
             activityEntries = buildActivityEntries(
                 activityPage.getItems(),
@@ -465,7 +468,7 @@ public class UserController {
         ConnectionsPagination connectionsPagination = null;
 
         if (CONNECTIONS_KIND_FOLLOWING.equals(activeConnectionsKind)) {
-            final Page<User> followingPageResult = userFollowService.getFollowing(profileUser.getId(), followingPage);
+            final Page<User> followingPageResult = userFollowService.getFollowing(profileUser.getId(), normalizedFollowingPage);
             followingUsers = toConnections(followingPageResult.getItems(), currentUserId);
             connectionsPagination = new ConnectionsPagination(
                     CONNECTIONS_KIND_FOLLOWING,
@@ -473,7 +476,7 @@ public class UserController {
                     followingPageResult.getTotalPages()
             );
         } else if (CONNECTIONS_KIND_FOLLOWERS.equals(activeConnectionsKind)) {
-            final Page<User> followersPageResult = userFollowService.getFollowers(profileUser.getId(), followersPage);
+            final Page<User> followersPageResult = userFollowService.getFollowers(profileUser.getId(), normalizedFollowersPage);
             followerUsers = toConnections(followersPageResult.getItems(), currentUserId);
             connectionsPagination = new ConnectionsPagination(
                     CONNECTIONS_KIND_FOLLOWERS,
@@ -878,9 +881,13 @@ public class UserController {
             return car;
         }
 
+        public boolean getHasCar() {
+            return car != null;
+        }
+
         public String getCarName() {
             if (car == null) {
-                return "Auto no disponible";
+                return "";
             }
             return car.getBrandName() + " " + car.getModel();
         }

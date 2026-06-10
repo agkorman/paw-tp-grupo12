@@ -69,8 +69,7 @@ public class ReviewServiceImplTest {
         // Arrange
         final List<Short> tagIds = List.of((short) 99);
         when(reviewTagService.validateSelection(tagIds)).thenThrow(new InvalidReviewTagSelectionException(
-                InvalidReviewTagSelectionException.Reason.UNKNOWN_TAG,
-                "Unknown tag"
+                InvalidReviewTagSelectionException.Reason.UNKNOWN_TAG
         ));
 
         // Exercise
@@ -134,8 +133,7 @@ public class ReviewServiceImplTest {
         // Arrange
         final List<Short> tagIds = List.of((short) 99);
         when(reviewTagService.validateSelection(tagIds)).thenThrow(new InvalidReviewTagSelectionException(
-                InvalidReviewTagSelectionException.Reason.UNKNOWN_TAG,
-                "Unknown tag"
+                InvalidReviewTagSelectionException.Reason.UNKNOWN_TAG
         ));
 
         // Exercise

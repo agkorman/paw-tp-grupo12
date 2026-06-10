@@ -6,11 +6,9 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.UserRole;
 import ar.edu.itba.paw.persistence.AdminRequestDao;
 import ar.edu.itba.paw.services.exception.PendingAdminRequestExistsException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -261,20 +259,8 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     }
 
     @Override
-    public String getSubmitterLabel(final String submitterEmail, final Long submittedByUserId) {
-        if (submitterEmail != null && !submitterEmail.isBlank()) {
-            return submitterEmail;
-        }
-        final Map<Long, User> usersById = submittedByUserId == null
-            ? Collections.emptyMap()
-            : userService.getUsersByIds(List.of(submittedByUserId)).stream()
-                .collect(Collectors.toMap(User::getId, user -> user, (existing, duplicate) -> existing));
-        return getSubmitterLabel(submitterEmail, submittedByUserId, usersById);
-    }
-
-    @Override
-    public String getSubmitterLabel(final String submitterEmail, final Long submittedByUserId,
-                                    final Map<Long, User> usersById) {
+    public String resolveSubmitterEmail(final String submitterEmail, final Long submittedByUserId,
+                                        final Map<Long, User> usersById) {
         if (submitterEmail != null && !submitterEmail.isBlank()) {
             return submitterEmail;
         }
@@ -283,8 +269,7 @@ public class AdminRequestServiceImpl implements AdminRequestService {
             if (user != null && user.getEmail() != null && !user.getEmail().isBlank()) {
                 return user.getEmail();
             }
-            return "Usuario #" + submittedByUserId;
         }
-        return "Usuario sin identificar";
+        return null;
     }
 }

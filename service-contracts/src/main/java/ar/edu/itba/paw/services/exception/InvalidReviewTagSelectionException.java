@@ -10,8 +10,8 @@ public class InvalidReviewTagSelectionException extends RuntimeException {
 
     private final Reason reason;
 
-    public InvalidReviewTagSelectionException(final Reason reason, final String message) {
-        super(message);
+    public InvalidReviewTagSelectionException(final Reason reason) {
+        super("invalid review tag selection: " + reason);
         this.reason = reason;
     }
 

@@ -279,8 +279,9 @@ public class CommunityController {
         @RequestParam(value = "page", required = false, defaultValue = "1") final int page,
         @AuthenticationPrincipal final AuthenticatedUser currentUser
     ) {
+        final int normalizedPage = Pagination.normalizePage(page);
         final CommunityDetailData communityDetail = communityService
-            .getCommunityDetail(communitySlug, currentUserId(currentUser), sort, page)
+            .getCommunityDetail(communitySlug, currentUserId(currentUser), sort, normalizedPage)
             .orElseThrow(() -> new ResourceNotFoundException("community not found"));
 
         final ModelAndView mav = new ModelAndView("community-detail.jsp");

@@ -4,11 +4,13 @@ import ar.edu.itba.paw.services.UserService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.auth.PawUserDetailsService;
+import ar.edu.itba.paw.webapp.exception.WebAppConfigurationException;
 import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -25,8 +27,11 @@ import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.web.servlet.LocaleResolver;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Properties;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
@@ -37,7 +42,8 @@ public class WebAuthConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebAuthConfig.class);
 
     private static final String REMEMBER_ME_KEY_ENV = "AUTH_REMEMBER_ME_KEY";
-    private static final String LOCAL_REMEMBER_ME_KEY = "local-development-remember-me-key-change-me";
+    private static final String AUTH_PROPERTIES_RESOURCE = "auth.properties";
+    private static final String REMEMBER_ME_KEY_PROPERTY = "auth.rememberMeKey";
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http,
@@ -174,12 +180,50 @@ public class WebAuthConfig {
     }
 
     private String rememberMeKey() {
-        final String configuredKey = System.getenv(REMEMBER_ME_KEY_ENV);
-        if (configuredKey == null || configuredKey.trim().isEmpty()) {
-            LOGGER.warn("AUTH_REMEMBER_ME_KEY not configured; falling back to local development key");
-            return LOCAL_REMEMBER_ME_KEY;
+        final String envKey = normalizeRememberMeKey(System.getenv(REMEMBER_ME_KEY_ENV));
+        if (envKey != null) {
+            return envKey;
         }
-        return configuredKey.trim();
+
+        final Properties properties = loadPropertiesIfExists(AUTH_PROPERTIES_RESOURCE);
+        if (properties != null) {
+            final String propertyKey = normalizeRememberMeKey(properties.getProperty(REMEMBER_ME_KEY_PROPERTY));
+            if (propertyKey != null) {
+                return propertyKey;
+            }
+        }
+
+        throw new WebAppConfigurationException(
+                "Remember-me key not found. Set " + REMEMBER_ME_KEY_ENV + " or provide classpath "
+                        + AUTH_PROPERTIES_RESOURCE + " with " + REMEMBER_ME_KEY_PROPERTY + "."
+        );
+    }
+
+    private String normalizeRememberMeKey(final String value) {
+        if (value == null) {
+            return null;
+        }
+        final String trimmed = value.trim();
+        if (trimmed.length() < 32 || trimmed.contains("CHANGE_ME")) {
+            return null;
+        }
+        return trimmed;
+    }
+
+    private Properties loadPropertiesIfExists(final String resourceName) {
+        final ClassPathResource resource = new ClassPathResource(resourceName);
+        if (!resource.exists()) {
+            return null;
+        }
+
+        final Properties properties = new Properties();
+        try (InputStream inputStream = resource.getInputStream()) {
+            properties.load(inputStream);
+        } catch (final IOException e) {
+            LOGGER.error("failed to load classpath properties resource={}", resourceName, e);
+            throw new WebAppConfigurationException("Failed to load " + resourceName, e);
+        }
+        return properties;
     }
 
     private AuthenticationSuccessHandler loginSuccessHandler(final LocaleResolver localeResolver) {
