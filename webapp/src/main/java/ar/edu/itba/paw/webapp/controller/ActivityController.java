@@ -11,6 +11,7 @@ import ar.edu.itba.paw.services.ActivityService;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewLikeService;
 import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
+import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +64,21 @@ public class ActivityController {
         if (!criteria.isValid()) {
             LOGGER.warn("activity feed received unrecognized filter values; applying defaults");
         }
-        final Page<ActivityFeedItem> activityPage = activityService.getActivityFeed(criteria);
+        if (criteria.requiresAuthentication() && currentUser == null) {
+            LOGGER.debug("anonymous request for restricted activity scope={}; redirecting to login",
+                    criteria.getScope());
+            final String target = LoginRedirectUtils
+                    .safeRefererPath(currentRequestPath(request), request.getContextPath())
+                    .map(back -> LoginRedirectUtils.appendQueryParam(
+                            "/login", LoginRedirectUtils.REDIRECT_PARAM, back))
+                    .orElse("/login");
+            return new ModelAndView("redirect:" + target);
+        }
+        LOGGER.debug("rendering mixed activity feed type={} timeframe={} sort={} scope={} page={}",
+                criteria.getType(), criteria.getTimeframe(), criteria.getSort(), criteria.getScope(),
+                criteria.getPage());
+        final Long currentUserId = currentUser == null ? null : currentUser.getId();
+        final Page<ActivityFeedItem> activityPage = activityService.getActivityFeed(criteria, currentUserId);
         final List<ActivityFeedItem> items = activityPage.getItems();
 
         final Set<Long> likedReviewIds;
@@ -85,7 +100,6 @@ public class ActivityController {
         }
 
         final boolean authenticated = currentUser != null;
-        final Long currentUserId = currentUser == null ? null : currentUser.getId();
         final boolean admin = request.isUserInRole("ADMIN");
         final Map<ActivityFeedReference, ActivityFeedPermissions> permissionsByReference =
                 activityService.getActivityFeedPermissions(items, currentUserId, admin);
@@ -108,6 +122,13 @@ public class ActivityController {
         mav.addObject("activityTotalPages", activityPage.getTotalPages());
         mav.addObject("activityCriteria", criteria);
         return mav;
+    }
+
+    private String currentRequestPath(final HttpServletRequest request) {
+        final String queryString = request.getQueryString();
+        return queryString == null || queryString.isEmpty()
+                ? request.getRequestURI()
+                : request.getRequestURI() + "?" + queryString;
     }
 
     private ActivityCardView toActivityCard(final ActivityFeedItem item,

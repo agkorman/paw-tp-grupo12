@@ -975,7 +975,7 @@ public class CommunityServiceImpl implements CommunityService {
                     community.getName(),
                     post.getTitle(),
                     reason,
-                    communityPostPath(community, post)
+                    communityPath(community)
             );
         }
         return CommunityActionResult.performed(true);

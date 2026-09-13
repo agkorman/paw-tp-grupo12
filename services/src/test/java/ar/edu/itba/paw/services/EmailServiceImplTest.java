@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -81,7 +82,7 @@ public class EmailServiceImplTest {
     }
 
     @Test
-    public void shouldSendCommunityPostHiddenNotificationWithReasonAndLink() throws Exception {
+    public void shouldSendCommunityPostHiddenNotificationWithReasonAndCommunityLink() throws Exception {
         // Arrange
         final RecordingMailSender mailSender = new RecordingMailSender();
         final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
@@ -92,7 +93,7 @@ public class EmailServiceImplTest {
                 "Classics",
                 "My Falcon",
                 "Duplicated content.",
-                "/communities/classics/posts/my-falcon"
+                "/communities/classics"
         );
 
         // Assertions
@@ -104,6 +105,34 @@ public class EmailServiceImplTest {
         assertEquals("[La Posta Autos] Tu posteo fue ocultado en Classics", message.getSubject());
         final String text = extractText(message);
         assertTrue(text.contains("Duplicated content."));
+        assertTrue(text.contains(APP_BASE_URL + "/communities/classics"));
+        // The community URL is a prefix of the post URL, so `contains` alone would also pass for
+        // a link to the hidden post. Assert the post-detail path is absent to make the check real.
+        assertFalse(text.contains("/posts/"));
+    }
+
+    @Test
+    public void shouldSendCommunityCommentHiddenNotificationWithViewPostLabel() throws Exception {
+        // Arrange
+        final RecordingMailSender mailSender = new RecordingMailSender();
+        final EmailServiceImpl emailService = new EmailServiceImpl(mailSender, userService, messageSource(), APP_BASE_URL);
+
+        // Exercise
+        emailService.sendCommunityCommentHiddenNotification(
+                "author@example.com",
+                "Classics",
+                "My Falcon",
+                "This comment is off-topic.",
+                "Off-topic content.",
+                "/communities/classics/posts/my-falcon"
+        );
+
+        // Assertions
+        assertEquals(1, mailSender.sentMessages.size());
+        final MimeMessage message = mailSender.sentMessages.get(0);
+        final String text = extractText(message);
+        assertTrue(text.contains("Ver posteo"));
+        assertTrue(!text.contains("Ver comunidad"));
         assertTrue(text.contains(APP_BASE_URL + "/communities/classics/posts/my-falcon"));
     }
 

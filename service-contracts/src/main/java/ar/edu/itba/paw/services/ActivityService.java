@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public interface ActivityService {
-    Page<ActivityFeedItem> getActivityFeed(ActivityFeedCriteria criteria);
+    Page<ActivityFeedItem> getActivityFeed(ActivityFeedCriteria criteria, Long currentUserId);
     Map<ActivityFeedReference, ActivityFeedPermissions> getActivityFeedPermissions(
             Collection<ActivityFeedItem> items,
             Long viewerUserId,

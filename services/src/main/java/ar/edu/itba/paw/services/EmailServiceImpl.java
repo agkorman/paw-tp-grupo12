@@ -205,7 +205,7 @@ public class EmailServiceImpl implements EmailService {
     @Async("mailTaskExecutor")
     public void sendCommunityPostHiddenNotification(final String recipientEmail, final String communityName,
                                                     final String postTitle, final String moderatorReason,
-                                                    final String postUrl) {
+                                                    final String communityUrl) {
         if (recipientEmail == null || recipientEmail.isBlank()) {
             return;
         }
@@ -221,7 +221,7 @@ public class EmailServiceImpl implements EmailService {
                         msg("email.community.label.post", locale),
                         postTitle,
                         moderatorReason,
-                        absoluteUrl(postUrl),
+                        absoluteUrl(communityUrl),
                         locale
                 ),
                 buildCommunityModerationHtml(
@@ -232,7 +232,8 @@ public class EmailServiceImpl implements EmailService {
                         safeValue(postTitle),
                         communityName,
                         moderatorReason,
-                        absoluteUrl(postUrl),
+                        absoluteUrl(communityUrl),
+                        "email.action.viewCommunity",
                         locale
                 ),
                 "Failed to send hidden community post notification to " + recipientEmail,
@@ -272,6 +273,7 @@ public class EmailServiceImpl implements EmailService {
                         communityName + " / " + safeValue(postTitle),
                         moderatorReason,
                         absoluteUrl(postUrl),
+                        "email.action.viewPost",
                         locale
                 ),
                 "Failed to send hidden community comment notification to " + recipientEmail,
@@ -747,10 +749,10 @@ public class EmailServiceImpl implements EmailService {
                                                 final String intro, final String contentLabel,
                                                 final String contentTitle, final String communityName,
                                                 final String moderatorReason, final String actionUrl,
-                                                final Locale locale) {
+                                                final String actionLabelCode, final Locale locale) {
         final String bodyHtml = buildCommunitySummaryCard(contentLabel, contentTitle, communityName, locale)
                 + buildModerationReason(msg("email.community.label.reason", locale), moderatorReason)
-                + buildCenteredAction(escapeHtml(actionUrl), msg("email.action.viewCommunity", locale));
+                + buildCenteredAction(escapeHtml(actionUrl), msg(actionLabelCode, locale));
 
         return buildEmailShell(
                 escapeHtml(preheader),

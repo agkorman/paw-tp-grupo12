@@ -18,7 +18,7 @@ public interface EmailService {
     void sendReviewHiddenNotification(String recipientEmail, String reviewTitle, String carName,
                                       String moderatorReason);
     void sendCommunityPostHiddenNotification(String recipientEmail, String communityName, String postTitle,
-                                             String moderatorReason, String postUrl);
+                                             String moderatorReason, String communityUrl);
     void sendCommunityCommentHiddenNotification(String recipientEmail, String communityName, String postTitle,
                                                 String commentBody, String moderatorReason, String postUrl);
     void sendCommunityMemberKickedNotification(String recipientEmail, String communityName, String communityUrl);

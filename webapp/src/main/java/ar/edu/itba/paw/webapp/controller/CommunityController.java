@@ -908,9 +908,12 @@ public class CommunityController {
         @AuthenticationPrincipal final AuthenticatedUser currentUser,
         final RedirectAttributes redirectAttributes
     ) {
+        final String communityPath = communityDetailPath(communitySlug);
+        final String postPath = communityPostDetailPath(communitySlug, postSlug);
         final String safeRedirect = LoginRedirectUtils
                 .safeRedirect(redirect, request.getContextPath())
-                .orElse(communityPostDetailPath(communitySlug, postSlug));
+                .filter(target -> !target.equals(postPath) && !target.startsWith(postPath + "?"))
+                .orElse(communityPath);
         if (currentUser == null) {
             return redirectTo(safeRedirect);
         }
@@ -1136,6 +1139,10 @@ public class CommunityController {
         final String safeRedirect = LoginRedirectUtils.safeRedirect(defaultRedirect, request.getContextPath())
                 .orElse(defaultRedirect);
         return redirectTo("/login?redirect=" + safeRedirect);
+    }
+
+    private String communityDetailPath(final String communitySlug) {
+        return "/communities/" + communitySlug;
     }
 
     private String communityPostDetailPath(final String communitySlug, final String postSlug) {

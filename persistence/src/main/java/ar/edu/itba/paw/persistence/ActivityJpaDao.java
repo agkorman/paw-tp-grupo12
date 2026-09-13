@@ -38,32 +38,46 @@ public class ActivityJpaDao implements ActivityDao {
     private EntityManager em;
 
     @Override
-    public Page<ActivityFeedReference> findFeed(final ActivityFeedCriteria criteria) {
+    public Page<ActivityFeedReference> findFeed(final ActivityFeedCriteria criteria, final Long currentUserId) {
+        if (criteria.requiresAuthentication() && (currentUserId == null || currentUserId <= 0L)) {
+            LOGGER.debug("activity feed scope={} requires an authenticated viewer; returning empty page",
+                    criteria.getScope());
+            return Page.empty(Pagination.DEFAULT_PAGE, Pagination.ACTIVITY_PAGE_SIZE);
+        }
+
         final String type = criteria.getType();
-        final boolean includeReviews = !ActivityFeedCriteria.TYPE_COMMUNITY.equals(type);
+        final String scope = criteria.getScope();
+        // A review never belongs to a community: scope=joined always excludes the reviews arm.
+        final boolean includeReviews = !ActivityFeedCriteria.TYPE_COMMUNITY.equals(type)
+                && !ActivityFeedCriteria.SCOPE_JOINED.equals(scope);
         final boolean includePosts = !ActivityFeedCriteria.TYPE_REVIEWS.equals(type);
         final LocalDateTime timeframeCutoff = timeframeCutoff(criteria.getTimeframe());
 
-        final long totalItems = countFeed(includeReviews, includePosts, timeframeCutoff);
+        if (!includeReviews && !includePosts) {
+            LOGGER.debug("activity feed type={} scope={} excludes both arms", type, scope);
+            return Page.empty(Pagination.DEFAULT_PAGE, Pagination.ACTIVITY_PAGE_SIZE);
+        }
+
+        final long totalItems = countFeed(includeReviews, includePosts, timeframeCutoff, scope, currentUserId);
         if (totalItems <= 0L) {
-            LOGGER.debug("activity feed empty type={} timeframe={}", type, criteria.getTimeframe());
+            LOGGER.debug("activity feed empty type={} timeframe={} scope={}", type, criteria.getTimeframe(), scope);
             return Page.empty(Pagination.DEFAULT_PAGE, Pagination.ACTIVITY_PAGE_SIZE);
         }
 
         final int effectivePage = Pagination.clampPage(
                 Pagination.normalizePage(criteria.getPage()), totalItems, Pagination.ACTIVITY_PAGE_SIZE);
 
-        final String rankUnion = buildRankUnion(includeReviews, includePosts, timeframeCutoff);
+        final List<Object> params = new ArrayList<>();
+        final String rankUnion = buildRankUnion(includeReviews, includePosts, timeframeCutoff, scope, currentUserId, params);
         final String idsSql = "SELECT item_type, item_id FROM (" + rankUnion + ") activity_items"
                 + " ORDER BY " + orderExpression(criteria.getSort()) + ", " + TIE_BREAKER
                 + " LIMIT ? OFFSET ?";
         final Query idsQuery = em.createNativeQuery(idsSql);
 
-        int index = 1;
-        index = bindTimeframe(idsQuery, index, includeReviews, includePosts, timeframeCutoff);
-        index = bindRecencyCutoffs(idsQuery, index, criteria.getSort());
-        idsQuery.setParameter(index++, Pagination.ACTIVITY_PAGE_SIZE);
-        idsQuery.setParameter(index, Pagination.offsetFor(effectivePage, Pagination.ACTIVITY_PAGE_SIZE));
+        appendRecencyCutoffs(params, criteria.getSort());
+        params.add(Pagination.ACTIVITY_PAGE_SIZE);
+        params.add(Pagination.offsetFor(effectivePage, Pagination.ACTIVITY_PAGE_SIZE));
+        bindAll(idsQuery, params);
 
         final List<?> rows = idsQuery.getResultList();
         final List<ActivityFeedReference> items = new ArrayList<>();
@@ -80,19 +94,21 @@ public class ActivityJpaDao implements ActivityDao {
     }
 
     private long countFeed(final boolean includeReviews, final boolean includePosts,
-                           final LocalDateTime timeframeCutoff) {
+                           final LocalDateTime timeframeCutoff, final String scope, final Long currentUserId) {
+        final List<Object> params = new ArrayList<>();
         final List<String> arms = new ArrayList<>();
         if (includeReviews) {
-            arms.add("SELECT r.review_id FROM reviews r" + timeframeClause("r", timeframeCutoff));
+            arms.add("SELECT r.review_id FROM reviews r"
+                    + whereClause(reviewsPredicates(timeframeCutoff, scope, currentUserId, params)));
         }
         if (includePosts) {
-            arms.add("SELECT p.post_id FROM community_posts p WHERE p.hidden = false"
-                    + timeframeAndClause("p", timeframeCutoff));
+            arms.add("SELECT p.post_id FROM community_posts p"
+                    + whereClause(postsPredicates(timeframeCutoff, scope, currentUserId, params)));
         }
         final String countUnion = String.join(" UNION ALL ", arms);
         final Query countQuery = em.createNativeQuery(
                 "SELECT COUNT(*) FROM (" + countUnion + ") activity_items");
-        bindTimeframe(countQuery, 1, includeReviews, includePosts, timeframeCutoff);
+        bindAll(countQuery, params);
         final Number total = (Number) countQuery.getSingleResult();
         return total == null ? 0L : total.longValue();
     }
@@ -103,15 +119,19 @@ public class ActivityJpaDao implements ActivityDao {
      * the score is evaluated for every matching row before {@code LIMIT} — this is O(rows) count
      * subqueries per request. Acceptable at the current scale (the count source tables are indexed
      * on the FK columns); if the feed grows large, precompute the engagement counts instead.
+     *
+     * <p>Accumulates bind values into {@code params} in the exact order the {@code ?} placeholders
+     * appear (reviews arm first, then posts arm; within each arm: timeframe, then scope).
      */
     private String buildRankUnion(final boolean includeReviews, final boolean includePosts,
-                                  final LocalDateTime timeframeCutoff) {
+                                  final LocalDateTime timeframeCutoff, final String scope,
+                                  final Long currentUserId, final List<Object> params) {
         final List<String> arms = new ArrayList<>();
         if (includeReviews) {
             arms.add("SELECT " + REVIEW_TYPE + " AS item_type, r.review_id AS item_id, r.created_at AS created_at, "
                     + "(SELECT COUNT(*) FROM review_likes rl WHERE rl.review_id = r.review_id) AS approvals, "
                     + "(SELECT COUNT(*) FROM review_replies rr WHERE rr.review_id = r.review_id) AS discussions "
-                    + "FROM reviews r" + timeframeClause("r", timeframeCutoff));
+                    + "FROM reviews r" + whereClause(reviewsPredicates(timeframeCutoff, scope, currentUserId, params)));
         }
         if (includePosts) {
             arms.add("SELECT " + COMMUNITY_POST_TYPE + " AS item_type, p.post_id AS item_id, p.created_at AS created_at, "
@@ -119,9 +139,56 @@ public class ActivityJpaDao implements ActivityDao {
                     // Count all comments (not just visible ones) to match the comment metric shown on the card,
                     // which comes from CommunityDao.countCommentsByPostIds and does not filter on hidden.
                     + "(SELECT COUNT(*) FROM community_post_comments c WHERE c.post_id = p.post_id) AS discussions "
-                    + "FROM community_posts p WHERE p.hidden = false" + timeframeAndClause("p", timeframeCutoff));
+                    + "FROM community_posts p" + whereClause(postsPredicates(timeframeCutoff, scope, currentUserId, params)));
         }
         return String.join(" UNION ALL ", arms);
+    }
+
+    /**
+     * Predicates for the reviews arm, in bind order: timeframe, then scope. {@code reviews.user_id}
+     * is nullable (anonymous-by-email reviews); the {@code following} EXISTS naturally excludes those.
+     */
+    private List<String> reviewsPredicates(final LocalDateTime timeframeCutoff, final String scope,
+                                           final Long currentUserId, final List<Object> params) {
+        final List<String> predicates = new ArrayList<>();
+        if (timeframeCutoff != null) {
+            predicates.add("r.created_at >= ?");
+            params.add(timeframeCutoff);
+        }
+        if (ActivityFeedCriteria.SCOPE_FOLLOWING.equals(scope)) {
+            predicates.add("EXISTS (SELECT 1 FROM user_follows uf "
+                    + "WHERE uf.follower_id = ? AND uf.followed_id = r.user_id)");
+            params.add(currentUserId);
+        }
+        return predicates;
+    }
+
+    /**
+     * Predicates for the community posts arm, in bind order: {@code hidden} (no param, always
+     * present), timeframe, then scope.
+     */
+    private List<String> postsPredicates(final LocalDateTime timeframeCutoff, final String scope,
+                                         final Long currentUserId, final List<Object> params) {
+        final List<String> predicates = new ArrayList<>();
+        predicates.add("p.hidden = false");
+        if (timeframeCutoff != null) {
+            predicates.add("p.created_at >= ?");
+            params.add(timeframeCutoff);
+        }
+        if (ActivityFeedCriteria.SCOPE_FOLLOWING.equals(scope)) {
+            predicates.add("EXISTS (SELECT 1 FROM user_follows uf "
+                    + "WHERE uf.follower_id = ? AND uf.followed_id = p.author_user_id)");
+            params.add(currentUserId);
+        } else if (ActivityFeedCriteria.SCOPE_JOINED.equals(scope)) {
+            predicates.add("EXISTS (SELECT 1 FROM community_memberships cm "
+                    + "WHERE cm.community_id = p.community_id AND cm.user_id = ?)");
+            params.add(currentUserId);
+        }
+        return predicates;
+    }
+
+    private String whereClause(final List<String> predicates) {
+        return predicates.isEmpty() ? "" : " WHERE " + String.join(" AND ", predicates);
     }
 
     /**
@@ -144,39 +211,20 @@ public class ActivityJpaDao implements ActivityDao {
                 + "(CASE WHEN created_at >= ? THEN 3 WHEN created_at >= ? THEN 2 WHEN created_at >= ? THEN 1 ELSE 0.5 END)) DESC";
     }
 
-    private int bindRecencyCutoffs(final Query query, final int startIndex, final String sort) {
+    private void appendRecencyCutoffs(final List<Object> params, final String sort) {
         if (!ActivityFeedCriteria.SORT_TRENDING.equals(sort)) {
-            return startIndex;
+            return;
         }
         final LocalDateTime now = LocalDateTime.now();
-        int index = startIndex;
-        query.setParameter(index++, now.minusDays(1));
-        query.setParameter(index++, now.minusDays(7));
-        query.setParameter(index++, now.minusDays(30));
-        return index;
+        params.add(now.minusDays(1));
+        params.add(now.minusDays(7));
+        params.add(now.minusDays(30));
     }
 
-    private int bindTimeframe(final Query query, final int startIndex, final boolean includeReviews,
-                              final boolean includePosts, final LocalDateTime timeframeCutoff) {
-        if (timeframeCutoff == null) {
-            return startIndex;
+    private void bindAll(final Query query, final List<Object> params) {
+        for (int i = 0; i < params.size(); i++) {
+            query.setParameter(i + 1, params.get(i));
         }
-        int index = startIndex;
-        if (includeReviews) {
-            query.setParameter(index++, timeframeCutoff);
-        }
-        if (includePosts) {
-            query.setParameter(index++, timeframeCutoff);
-        }
-        return index;
-    }
-
-    private String timeframeClause(final String alias, final LocalDateTime timeframeCutoff) {
-        return timeframeCutoff == null ? "" : " WHERE " + alias + ".created_at >= ?";
-    }
-
-    private String timeframeAndClause(final String alias, final LocalDateTime timeframeCutoff) {
-        return timeframeCutoff == null ? "" : " AND " + alias + ".created_at >= ?";
     }
 
     private LocalDateTime timeframeCutoff(final String timeframe) {
