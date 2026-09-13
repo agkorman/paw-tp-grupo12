@@ -27,6 +27,7 @@
                    modelAttribute="communityForm"
                    method="post"
                    action="${fn:escapeXml(communitiesCreateUrl)}"
+                   enctype="multipart/form-data"
                    data-submit-lock="true"
                    data-msg-required-generic="${fn:escapeXml(jsMsgRequiredGeneric)}"
                    data-msg-required-community-create-name="${fn:escapeXml(jsMsgRequiredCommunityName)}"

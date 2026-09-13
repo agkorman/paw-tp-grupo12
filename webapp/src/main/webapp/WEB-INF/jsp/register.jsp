@@ -28,7 +28,7 @@
             </div>
 
             <form id="registerForm" class="auth-form" method="post" action="<c:url value='/register'/>"
-                  data-auth-form="register" data-submit-lock="true" novalidate="novalidate"
+                  enctype="multipart/form-data" data-auth-form="register" data-submit-lock="true" novalidate="novalidate"
                   data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
                   data-msg-required-register-username="${fn:escapeXml(jsRequiredUsername)}"
                   data-msg-required-register-email="${fn:escapeXml(jsRequiredEmail)}"

@@ -30,7 +30,7 @@
         </p>
 
         <form id="requestAdminForm" class="admin-request-submit-form" method="post" action="${requestAdminUrl}"
-              novalidate="novalidate"
+              enctype="multipart/form-data" novalidate="novalidate"
               data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
               data-msg-length-max="${fn:escapeXml(jsLengthMax)}"
               data-msg-required-motivation="${fn:escapeXml(jsRequiredMotivation)}"

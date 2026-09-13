@@ -32,9 +32,16 @@ public class ActivityFeedCriteria implements Serializable {
 
     public static final Set<String> ALLOWED_SORT = Set.of(SORT_TRENDING, SORT_CONTROVERSIAL, SORT_LATEST);
 
+    public static final String SCOPE_ALL = "all";
+    public static final String SCOPE_FOLLOWING = "following";
+    public static final String SCOPE_JOINED = "joined";
+
+    public static final Set<String> ALLOWED_SCOPE = Set.of(SCOPE_ALL, SCOPE_FOLLOWING, SCOPE_JOINED);
+
     private String type;
     private String timeframe;
     private String sort;
+    private String scope;
     private Integer page;
 
     public ActivityFeedCriteria() {}
@@ -46,7 +53,13 @@ public class ActivityFeedCriteria implements Serializable {
     public boolean isValid() {
         return (type == null || ALLOWED_TYPE.contains(type))
                 && (timeframe == null || ALLOWED_TIMEFRAME.contains(timeframe))
-                && (sort == null || ALLOWED_SORT.contains(sort));
+                && (sort == null || ALLOWED_SORT.contains(sort))
+                && (scope == null || ALLOWED_SCOPE.contains(scope));
+    }
+
+    /** Los alcances relativos al viewer no tienen sentido sin sesión. */
+    public boolean requiresAuthentication() {
+        return !SCOPE_ALL.equals(getScope());
     }
 
     public String getType() {
@@ -71,6 +84,14 @@ public class ActivityFeedCriteria implements Serializable {
 
     public void setSort(final String sort) {
         this.sort = normalize(sort);
+    }
+
+    public String getScope() {
+        return scope != null && ALLOWED_SCOPE.contains(scope) ? scope : SCOPE_ALL;
+    }
+
+    public void setScope(final String scope) {
+        this.scope = normalize(scope);
     }
 
     public Integer getPage() {

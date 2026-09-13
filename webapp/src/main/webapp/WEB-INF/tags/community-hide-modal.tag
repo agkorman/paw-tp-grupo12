@@ -30,6 +30,7 @@
         </header>
         <form class="modal-form review-hide-form"
               method="post"
+              enctype="multipart/form-data"
               novalidate="novalidate"
               data-community-hide-form
               data-reason-required-message="${fn:escapeXml(reasonRequiredMessage)}"

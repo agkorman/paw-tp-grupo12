@@ -44,11 +44,11 @@
         </div>
 
         <div class="modal-actions">
-            <form id="adminRequestRejectForm" method="post" action="">
+            <form id="adminRequestRejectForm" method="post" action="" enctype="multipart/form-data">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <button type="submit" class="btn-secondary admin-reject-btn"><spring:message code="common.action.reject"/></button>
             </form>
-            <form id="adminRequestAcceptForm" method="post" action="">
+            <form id="adminRequestAcceptForm" method="post" action="" enctype="multipart/form-data">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <button type="submit" class="btn-primary"><spring:message code="common.action.accept"/></button>
             </form>

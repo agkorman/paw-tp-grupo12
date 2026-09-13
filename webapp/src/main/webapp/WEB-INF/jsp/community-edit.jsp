@@ -28,6 +28,7 @@
                    modelAttribute="communityForm"
                    method="post"
                    action="${fn:escapeXml(communityEditUrl)}"
+                   enctype="multipart/form-data"
                    data-submit-lock="true"
                    data-msg-required-generic="${fn:escapeXml(jsMsgRequiredGeneric)}"
                    data-msg-required-community-create-name="${fn:escapeXml(jsMsgRequiredCommunityName)}"
@@ -89,7 +90,8 @@
                     <h2><spring:message code="communities.edit.danger.title"/></h2>
                     <p><spring:message code="communities.edit.danger.description"/></p>
                 </div>
-                <form method="post" action="${fn:escapeXml(communityDeleteUrl)}" data-confirm-modal="deleteCommunityConfirmModal">
+                <form method="post" action="${fn:escapeXml(communityDeleteUrl)}"
+                      enctype="multipart/form-data" data-confirm-modal="deleteCommunityConfirmModal">
                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <button type="submit" class="btn-danger"><spring:message code="communities.edit.danger.delete"/></button>
                 </form>

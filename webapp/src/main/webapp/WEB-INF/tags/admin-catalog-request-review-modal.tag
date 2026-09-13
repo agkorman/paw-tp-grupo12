@@ -53,11 +53,11 @@
         </div>
 
         <div class="modal-actions">
-            <form id="adminCatalogRejectForm" method="post" action="">
+            <form id="adminCatalogRejectForm" method="post" action="" enctype="multipart/form-data">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <button type="submit" class="btn-secondary admin-reject-btn"><spring:message code="common.action.reject"/></button>
             </form>
-            <form id="adminCatalogAcceptForm" method="post" action="">
+            <form id="adminCatalogAcceptForm" method="post" action="" enctype="multipart/form-data">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <input type="hidden" name="name" id="adminCatalogAcceptName">
                 <button type="submit" class="btn-primary"><spring:message code="common.action.accept"/></button>

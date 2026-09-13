@@ -10,14 +10,19 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.services.ActivityService;
 import ar.edu.itba.paw.services.CommunityService;
 import ar.edu.itba.paw.services.ReviewLikeService;
+import ar.edu.itba.paw.webapp.auth.AuthenticatedUser;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -28,6 +33,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -52,10 +58,25 @@ class ActivityControllerTest {
                 .build();
     }
 
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private static void bindPrincipal(final AuthenticatedUser user) {
+        final UsernamePasswordAuthenticationToken token =
+                new UsernamePasswordAuthenticationToken(user, user.getPassword(), user.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(token);
+    }
+
+    private static AuthenticatedUser testUser(final long id) {
+        return new AuthenticatedUser(id, "u" + id, "user" + id + "@test.com", "pass", Collections.emptyList());
+    }
+
     @Test
     void activity_rendersMixedFeedPage() throws Exception {
         // Arrange
-        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class))).thenReturn(Page.empty(1, Pagination.ACTIVITY_PAGE_SIZE));
+        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class), any())).thenReturn(Page.empty(1, Pagination.ACTIVITY_PAGE_SIZE));
         final MockMvc mockMvc = activityMockMvc();
 
         // Exercise
@@ -72,7 +93,7 @@ class ActivityControllerTest {
     @Test
     void activity_usesRequestedPageAndExposesPagination() throws Exception {
         // Arrange
-        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class))).thenReturn(new Page<>(List.of(), 3, Pagination.ACTIVITY_PAGE_SIZE, 20L));
+        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class), any())).thenReturn(new Page<>(List.of(), 3, Pagination.ACTIVITY_PAGE_SIZE, 20L));
         final MockMvc mockMvc = activityMockMvc();
 
         // Exercise
@@ -88,7 +109,7 @@ class ActivityControllerTest {
     @Test
     void activity_bindsFilterParamsAndExposesCriteria() throws Exception {
         // Arrange
-        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class))).thenReturn(Page.empty(1, Pagination.ACTIVITY_PAGE_SIZE));
+        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class), any())).thenReturn(Page.empty(1, Pagination.ACTIVITY_PAGE_SIZE));
         final MockMvc mockMvc = activityMockMvc();
 
         // Exercise
@@ -115,7 +136,7 @@ class ActivityControllerTest {
     void activity_mapsReviewAndCommunityPostIntoGenericCards() throws Exception {
         // Arrange
         final LocalDateTime now = LocalDateTime.now();
-        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class))).thenReturn(new Page<>(
+        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class), any())).thenReturn(new Page<>(
                 List.of(
                         ActivityFeedItem.reviewItem(review(now.minusMinutes(3)), 0L, 0L, null, List.of()),
                         ActivityFeedItem.communityPostItem(post(now.minusMinutes(1)), 5L, 2L, List.of())
@@ -134,6 +155,41 @@ class ActivityControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("activityCards"))
                 .andExpect(model().attribute("activityTotalPages", 1));
+    }
+
+    @Test
+    void activity_anonymousRequestWithRestrictedScopeRedirectsToLogin() throws Exception {
+        // Arrange
+        final MockMvc mockMvc = activityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(get("/activity?scope=following"));
+
+        // Assertions
+        resultActions
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login?redirect=%2Factivity%3Fscope%3Dfollowing"));
+    }
+
+    @Test
+    void activity_authenticatedRequestWithRestrictedScopeRendersFeedWithScopeInModel() throws Exception {
+        // Arrange
+        when(activityService.getActivityFeed(any(ActivityFeedCriteria.class), any())).thenReturn(Page.empty(1, Pagination.ACTIVITY_PAGE_SIZE));
+        bindPrincipal(testUser(11L));
+        final MockMvc mockMvc = activityMockMvc();
+
+        // Exercise
+        final ResultActions resultActions = mockMvc.perform(get("/activity").param("scope", "following"));
+
+        // Assertions
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(view().name("activity.jsp"))
+                .andExpect(result -> {
+                    final ActivityFeedCriteria criteria = (ActivityFeedCriteria)
+                            result.getModelAndView().getModel().get("activityCriteria");
+                    assertEquals("following", criteria.getScope());
+                });
     }
 
     private static Review review(final LocalDateTime createdAt) {

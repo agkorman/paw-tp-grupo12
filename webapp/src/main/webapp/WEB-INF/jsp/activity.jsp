@@ -22,8 +22,9 @@
             <spring:message var="activitySortAria" code="activity.filter.sort.label"/>
             <spring:message var="activityTypeAria" code="activity.filter.type.label"/>
             <spring:message var="activityTimeframeAria" code="activity.filter.timeframe.label"/>
+            <spring:message var="activityScopeAria" code="activity.filter.scope.label"/>
             <form class="cars-toolbar activity-toolbar" method="get" action="<c:url value='/activity'/>" id="activity-filter-form"
-                  novalidate="novalidate">
+                  enctype="multipart/form-data" novalidate="novalidate">
                 <div class="cars-toolbar-shell">
                     <div class="cars-toolbar-field">
                         <span class="cars-toolbar-field-ui" aria-hidden="true">
@@ -93,6 +94,28 @@
                         </select>
                     </div>
 
+                    <div class="cars-toolbar-field">
+                        <span class="cars-toolbar-field-ui" aria-hidden="true">
+                            <span class="cars-toolbar-icon"><pa:icon name="users" size="22"/></span>
+                            <span class="cars-toolbar-field-copy">
+                                <span class="cars-toolbar-label"><spring:message code="activity.filter.scope.label"/></span>
+                                <span class="cars-toolbar-value" data-toolbar-select-value="scope">
+                                    <c:choose>
+                                        <c:when test="${activityCriteria.scope eq 'following'}"><spring:message code="activity.filter.scope.following"/></c:when>
+                                        <c:when test="${activityCriteria.scope eq 'joined'}"><spring:message code="activity.filter.scope.joined"/></c:when>
+                                        <c:otherwise><spring:message code="activity.filter.scope.all"/></c:otherwise>
+                                    </c:choose>
+                                </span>
+                            </span>
+                            <span class="cars-toolbar-chevron" aria-hidden="true"><pa:icon name="chevron-down" size="12"/></span>
+                        </span>
+                        <select class="cars-toolbar-select cars-toolbar-select-overlay" id="activity-filter-scope" name="scope" aria-label="${activityScopeAria}">
+                            <option value="all" <c:if test="${activityCriteria.scope eq 'all'}">selected</c:if>><spring:message code="activity.filter.scope.all"/></option>
+                            <option value="following" <c:if test="${activityCriteria.scope eq 'following'}">selected</c:if>><spring:message code="activity.filter.scope.following"/></option>
+                            <option value="joined" <c:if test="${activityCriteria.scope eq 'joined'}">selected</c:if>><spring:message code="activity.filter.scope.joined"/></option>
+                        </select>
+                    </div>
+
                     <button type="submit" class="btn-secondary cars-toolbar-apply">
                         <spring:message code="common.action.apply"/>
                     </button>
@@ -102,7 +125,13 @@
             <c:choose>
                 <c:when test="${empty activityCards}">
                     <div class="activity-empty-state">
-                        <p><spring:message code="activity.empty.latest"/></p>
+                        <p>
+                            <c:choose>
+                                <c:when test="${activityCriteria.scope eq 'following'}"><spring:message code="activity.empty.following"/></c:when>
+                                <c:when test="${activityCriteria.scope eq 'joined'}"><spring:message code="activity.empty.joined"/></c:when>
+                                <c:otherwise><spring:message code="activity.empty.latest"/></c:otherwise>
+                            </c:choose>
+                        </p>
                     </div>
                 </c:when>
                 <c:otherwise>
@@ -116,6 +145,7 @@
                         <c:set target="${activityPaginationParams}" property="sort" value="${activityCriteria.sort}"/>
                         <c:set target="${activityPaginationParams}" property="type" value="${activityCriteria.type}"/>
                         <c:set target="${activityPaginationParams}" property="timeframe" value="${activityCriteria.timeframe}"/>
+                        <c:set target="${activityPaginationParams}" property="scope" value="${activityCriteria.scope}"/>
                         <pa:pagination currentPage="${activityCurrentPage}"
                                        totalPages="${activityTotalPages}"
                                        baseUrl="/activity"

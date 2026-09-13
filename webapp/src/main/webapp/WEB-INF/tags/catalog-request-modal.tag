@@ -38,7 +38,7 @@
         </p>
 
         <form id="${fn:escapeXml(formId)}" class="catalog-request-form" method="post" action="${fn:escapeXml(action)}"
-              novalidate="novalidate" data-catalog-request-form="true"
+              enctype="multipart/form-data" novalidate="novalidate" data-catalog-request-form="true"
               data-msg-required-generic="${fn:escapeXml(jsRequiredGeneric)}"
               data-msg-length-max="${fn:escapeXml(jsLengthMax)}">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">

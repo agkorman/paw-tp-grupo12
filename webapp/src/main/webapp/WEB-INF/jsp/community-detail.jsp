@@ -52,6 +52,7 @@
                             <c:if test="${viewerIsCreator}">
                                 <c:url var="communityDeleteUrl" value="/communities/${communityDetail.community.slug}/delete"/>
                                 <form action="${fn:escapeXml(communityDeleteUrl)}" method="post"
+                                      enctype="multipart/form-data"
                                       class="community-banner-join-form"
                                       data-confirm-modal="leaveCreatorConfirmModal">
                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
@@ -64,6 +65,7 @@
                                 <c:choose>
                                     <c:when test="${communityDetail.joined}">
                                         <form action="${fn:escapeXml(communityJoinUrl)}" method="post"
+                                              enctype="multipart/form-data"
                                               class="community-banner-join-form"
                                               data-confirm-modal="leaveCommunityConfirmModal">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
@@ -77,6 +79,7 @@
                                     </c:when>
                                     <c:otherwise>
                                         <form action="${fn:escapeXml(communityJoinUrl)}" method="post"
+                                              enctype="multipart/form-data"
                                               class="community-banner-join-form">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="redirect" value="${fn:escapeXml(communityPostsReturnBaseUrl)}">
@@ -134,7 +137,8 @@
                 </div>
 
                 <c:if test="${not empty postCards}">
-                    <form method="get" action="${fn:escapeXml(communityDetailUrl)}" class="community-sort-form">
+                    <form method="get" action="${fn:escapeXml(communityDetailUrl)}" class="community-sort-form"
+                          enctype="multipart/form-data">
                         <label class="community-sort-label" for="communitySortSelect">
                             <spring:message code="communities.feed.sort"/>
                         </label>

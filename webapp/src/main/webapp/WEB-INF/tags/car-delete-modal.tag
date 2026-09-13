@@ -16,7 +16,7 @@
                 <pa:icon name="close" size="18"/>
             </button>
         </div>
-        <form id="deleteCarForm" class="car-delete-form" method="post">
+        <form id="deleteCarForm" class="car-delete-form" method="post" enctype="multipart/form-data">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <p><spring:message code="cars.delete.body"/></p>
             <strong data-delete-car-title></strong>

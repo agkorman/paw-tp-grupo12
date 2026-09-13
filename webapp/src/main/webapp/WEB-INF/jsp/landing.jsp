@@ -60,7 +60,8 @@
                     <spring:message code="landing.hero.text"/>
                 </p>
 
-                <form class="hero-search" method="get" action="<c:url value='/cars'/>" novalidate="novalidate">
+                <form class="hero-search" method="get" action="<c:url value='/cars'/>"
+                      enctype="multipart/form-data" novalidate="novalidate">
                     <label class="sr-only" for="hero-search-input"><c:out value="${landingSearchLabel}"/></label>
                     <div class="hero-search-field">
                         <pa:icon name="search" size="18"/>

@@ -55,6 +55,7 @@
             </c:when>
             <c:otherwise>
                 <form method="post"
+                      enctype="multipart/form-data"
                       action="${fn:escapeXml(action)}"
                       class="review-like-form">
                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">

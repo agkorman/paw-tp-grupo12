@@ -66,10 +66,11 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public Page<ActivityFeedItem> getActivityFeed(final ActivityFeedCriteria criteria) {
-        LOGGER.debug("loading activity feed type={} timeframe={} sort={} page={}",
-                criteria.getType(), criteria.getTimeframe(), criteria.getSort(), criteria.getPage());
-        final Page<ActivityFeedReference> refsPage = activityDao.findFeed(criteria);
+    public Page<ActivityFeedItem> getActivityFeed(final ActivityFeedCriteria criteria, final Long currentUserId) {
+        LOGGER.debug("loading activity feed type={} timeframe={} sort={} scope={} page={}",
+                criteria.getType(), criteria.getTimeframe(), criteria.getSort(), criteria.getScope(),
+                criteria.getPage());
+        final Page<ActivityFeedReference> refsPage = activityDao.findFeed(criteria, currentUserId);
         if (refsPage.isEmpty()) {
             LOGGER.debug("loaded empty activity feed page={}", refsPage.getPageNumber());
             return Page.empty(refsPage.getPageNumber(), Pagination.ACTIVITY_PAGE_SIZE);

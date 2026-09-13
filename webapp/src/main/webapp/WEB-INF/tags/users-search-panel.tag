@@ -28,7 +28,7 @@
         </div>
 
         <form class="users-panel-search-wrap" method="get"
-              action="${fn:escapeXml(searchUrl)}" novalidate="novalidate">
+              action="${fn:escapeXml(searchUrl)}" enctype="multipart/form-data" novalidate="novalidate">
             <label class="users-panel-search-field" for="usersPanelInput">
                 <span class="users-panel-search-icon" aria-hidden="true">
                     <pa:icon name="search" size="16"/>
