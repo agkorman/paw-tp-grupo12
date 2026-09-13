@@ -135,6 +135,11 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public boolean existsReviewById(final long id) {
+        return reviewDao.existsById(id);
+    }
+
+    @Override
     public List<Review> getReviewsByIds(final Collection<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();

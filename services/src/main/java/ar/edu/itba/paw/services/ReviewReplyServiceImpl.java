@@ -119,7 +119,7 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     @Transactional
     public ReviewReply createReply(final long reviewId, final long userId, final String body) {
         try {
-            if (reviewService.getReviewById(reviewId).isEmpty()) {
+            if (!reviewService.existsReviewById(reviewId)) {
                 LOGGER.warn("create reply rejected: review not found id={}", reviewId);
                 throw new ReviewNotFoundException(reviewId);
             }

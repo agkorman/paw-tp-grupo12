@@ -64,7 +64,7 @@ public class ReviewReplyServiceImplTest {
     public void shouldCreateReplyWithTrimmedBodyWhenReviewAndUserExist() {
         // Arrange
         final ReviewReply created = reply(USER_ID);
-        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(Optional.of(review()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
         when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user()));
         when(reviewReplyDao.create(REVIEW_ID, USER_ID, "Reply body")).thenReturn(created);
 
@@ -80,7 +80,7 @@ public class ReviewReplyServiceImplTest {
     public void shouldRejectCreateReplyWhenBodyIsTooLong() {
         // Arrange
         final String body = "a".repeat(ReviewReplyServiceImpl.MAX_BODY_LENGTH + 1);
-        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(Optional.of(review()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
         when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user()));
 
         // Exercise
@@ -94,7 +94,7 @@ public class ReviewReplyServiceImplTest {
     @Test
     public void shouldWrapDaoFailureWhenCreatingReply() {
         // Arrange
-        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(Optional.of(review()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
         when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user()));
         when(reviewReplyDao.create(REVIEW_ID, USER_ID, "Reply body")).thenThrow(new DataAccessResourceFailureException("db"));
 
@@ -293,7 +293,7 @@ public class ReviewReplyServiceImplTest {
     public void shouldRejectCreateReplyWhenBodyIsBlank() {
         // Arrange
         final String blankBody = "   ";
-        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(Optional.of(review()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
         when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user()));
 
         // Exercise

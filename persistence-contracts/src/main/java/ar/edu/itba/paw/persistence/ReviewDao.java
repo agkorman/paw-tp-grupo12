@@ -21,6 +21,7 @@ public interface ReviewDao {
     Map<Long, Integer> findDefaultPagesByReviewIds(Collection<Long> reviewIds);
     boolean existsById(long id);
     Optional<Review> findById(long id);
+    boolean existsById(long id);
     List<Review> findByIds(Collection<Long> ids);
     List<Review> findByCarIds(Collection<Long> carIds);
     Map<Long, Long> countByCarIdsSince(Collection<Long> carIds, LocalDateTime since);
