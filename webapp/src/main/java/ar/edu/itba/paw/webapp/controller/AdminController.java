@@ -26,7 +26,6 @@ import ar.edu.itba.paw.webapp.auth.LoginRedirectUtils;
 import ar.edu.itba.paw.webapp.exception.UploadedImageReadException;
 import ar.edu.itba.paw.webapp.form.CarForm;
 import ar.edu.itba.paw.webapp.util.ImageValidationService;
-import ar.edu.itba.paw.webapp.util.LogSanitizer;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -38,7 +37,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -427,12 +425,6 @@ public class AdminController {
         }
 
         try {
-            LOGGER.info(
-                "approving car request id={} brandId={} bodyTypeId={}",
-                requestId,
-                resolvedBrand.getId(),
-                resolvedBodyType.getId()
-            );
             carRequestService.approvePendingRequest(
                 requestId,
                 resolvedBrand.getId(),
@@ -451,10 +443,6 @@ public class AdminController {
             );
         } catch (final DuplicateCarException e) {
             errors.reject("validation.car.duplicate");
-            LOGGER.warn(
-                "car request approval rejected: duplicate car requestId={}",
-                requestId
-            );
             return carRequestFormPage(pendingRequest, carForm, errors, adminRedirect);
         }
 
@@ -530,9 +518,8 @@ public class AdminController {
             throw new UploadedImageReadException("editing car " + carId, e);
         }
 
-        final Optional<Car> updated;
         try {
-            updated = carService.updateCar(
+            carService.updateCar(
                 carId,
                 resolvedBrand.getId(),
                 carForm.getModel(),
@@ -550,11 +537,7 @@ public class AdminController {
             );
         } catch (final DuplicateCarException e) {
             errors.reject("validation.car.duplicate");
-            LOGGER.warn("car update rejected: duplicate car carId={}", carId);
             return carEditFormPage(existingCar, carForm, errors);
-        }
-        if (updated.isPresent()) {
-            LOGGER.info("admin updated car id={}", carId);
         }
         return new ModelAndView("redirect:/reviews/car/" + carId);
     }
@@ -564,7 +547,6 @@ public class AdminController {
         @PathVariable("carId") final long carId,
         @RequestHeader(value = "Referer", required = false) final String referer
     ) {
-        LOGGER.info("admin delete car id={}", carId);
         carService.deleteCar(carId);
         return redirectBackAfterDelete(referer);
     }
@@ -579,7 +561,6 @@ public class AdminController {
         final HttpServletRequest request,
         final RedirectAttributes redirectAttributes
     ) {
-        LOGGER.info("admin reject car request id={}", requestId);
         carRequestService.rejectPendingRequest(requestId);
         final String adminRedirect = LoginRedirectUtils
             .safeRedirect(redirect, request.getContextPath())
@@ -598,11 +579,6 @@ public class AdminController {
         @RequestHeader(value = "Referer", required = false) final String referer,
         final RedirectAttributes redirectAttributes
     ) {
-        LOGGER.info(
-            "admin accept brand request id={} overrideName={}",
-            requestId,
-            LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS)
-        );
         final boolean accepted = brandRequestService.approvePendingRequest(
             requestId,
             name
@@ -623,7 +599,6 @@ public class AdminController {
         @RequestHeader(value = "Referer", required = false) final String referer,
         final RedirectAttributes redirectAttributes
     ) {
-        LOGGER.info("admin reject brand request id={}", requestId);
         final boolean rejected = brandRequestService.rejectPendingRequest(
             requestId
         );
@@ -640,11 +615,6 @@ public class AdminController {
         @RequestParam("name") final String name,
         @RequestHeader(value = "Referer", required = false) final String referer
     ) {
-        LOGGER.info(
-            "admin update brand id={} name={}",
-            brandId,
-            LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS)
-        );
         brandService.updateBrand(brandId, name);
         return redirectBackToCatalog(referer);
     }
@@ -657,7 +627,6 @@ public class AdminController {
         @PathVariable("brandId") final long brandId,
         @RequestHeader(value = "Referer", required = false) final String referer
     ) {
-        LOGGER.info("admin delete brand id={}", brandId);
         brandService.deleteBrand(brandId);
         return redirectBackAfterDelete(referer);
     }
@@ -672,11 +641,6 @@ public class AdminController {
         @RequestHeader(value = "Referer", required = false) final String referer,
         final RedirectAttributes redirectAttributes
     ) {
-        LOGGER.info(
-            "admin accept body type request id={} overrideName={}",
-            requestId,
-            LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS)
-        );
         final boolean accepted = bodyTypeRequestService.approvePendingRequest(
             requestId,
             name
@@ -697,7 +661,6 @@ public class AdminController {
         @RequestHeader(value = "Referer", required = false) final String referer,
         final RedirectAttributes redirectAttributes
     ) {
-        LOGGER.info("admin reject body type request id={}", requestId);
         final boolean rejected = bodyTypeRequestService.rejectPendingRequest(
             requestId
         );
@@ -717,11 +680,6 @@ public class AdminController {
         @RequestParam("name") final String name,
         @RequestHeader(value = "Referer", required = false) final String referer
     ) {
-        LOGGER.info(
-            "admin update body type id={} name={}",
-            bodyTypeId,
-            LogSanitizer.forLog(name, LogSanitizer.MAX_LOG_NAME_CODE_POINTS)
-        );
         bodyTypeService.updateBodyType(bodyTypeId, name);
         return redirectBackToCatalog(referer);
     }
@@ -734,7 +692,6 @@ public class AdminController {
         @PathVariable("bodyTypeId") final long bodyTypeId,
         @RequestHeader(value = "Referer", required = false) final String referer
     ) {
-        LOGGER.info("admin delete body type id={}", bodyTypeId);
         bodyTypeService.deleteBodyType(bodyTypeId);
         return redirectBackAfterDelete(referer);
     }
@@ -748,7 +705,6 @@ public class AdminController {
         @RequestHeader(value = "Referer", required = false) final String referer,
         final RedirectAttributes redirectAttributes
     ) {
-        LOGGER.info("admin accept admin-role request id={}", requestId);
         final boolean accepted = adminRequestService.approvePendingRequest(
             requestId
         );
@@ -768,7 +724,6 @@ public class AdminController {
         @RequestHeader(value = "Referer", required = false) final String referer,
         final RedirectAttributes redirectAttributes
     ) {
-        LOGGER.info("admin reject admin-role request id={}", requestId);
         final boolean rejected = adminRequestService.rejectPendingRequest(
             requestId
         );

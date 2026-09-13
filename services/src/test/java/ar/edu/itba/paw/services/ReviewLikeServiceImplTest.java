@@ -4,10 +4,7 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewLikeDao;
-import ar.edu.itba.paw.persistence.ReviewReplyDao;
-import ar.edu.itba.paw.persistence.UserDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -40,11 +37,11 @@ public class ReviewLikeServiceImplTest {
     @Mock
     private ReviewLikeDao reviewLikeDao;
     @Mock
-    private ReviewDao reviewDao;
+    private ReviewService reviewService;
     @Mock
-    private ReviewReplyDao reviewReplyDao;
+    private ReviewReplyService reviewReplyService;
     @Mock
-    private UserDao userDao;
+    private UserService userService;
 
     @InjectMocks
     private ReviewLikeServiceImpl reviewLikeService;
@@ -66,8 +63,8 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldLikeReviewWhenNotPreviouslyLiked() {
         // Arrange
-        when(reviewDao.findById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
-        when(userDao.findById(USER_ID)).thenReturn(java.util.Optional.of(user()));
+        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
+        when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.of(user()));
         when(reviewLikeDao.isReviewLikedByUser(REVIEW_ID, USER_ID)).thenReturn(false);
 
         // Exercise
@@ -80,8 +77,8 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldUnlikeReviewWhenPreviouslyLiked() {
         // Arrange
-        when(reviewDao.findById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
-        when(userDao.findById(USER_ID)).thenReturn(java.util.Optional.of(user()));
+        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
+        when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.of(user()));
         when(reviewLikeDao.isReviewLikedByUser(REVIEW_ID, USER_ID)).thenReturn(true);
 
         // Exercise
@@ -94,7 +91,7 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldRejectToggleReviewLikeWhenReviewMissing() {
         // Arrange
-        when(reviewDao.findById(REVIEW_ID)).thenReturn(java.util.Optional.empty());
+        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(java.util.Optional.empty());
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -107,8 +104,8 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldRejectToggleReviewLikeWhenUserMissing() {
         // Arrange
-        when(reviewDao.findById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
-        when(userDao.findById(USER_ID)).thenReturn(java.util.Optional.empty());
+        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
+        when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.empty());
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -121,8 +118,8 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldWrapDaoFailureAsIllegalStateOnToggleReviewLike() {
         // Arrange
-        when(reviewDao.findById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
-        when(userDao.findById(USER_ID)).thenReturn(java.util.Optional.of(user()));
+        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
+        when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.of(user()));
         when(reviewLikeDao.isReviewLikedByUser(REVIEW_ID, USER_ID)).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
@@ -136,8 +133,8 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldLikeReplyWhenNotPreviouslyLiked() {
         // Arrange
-        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(java.util.Optional.of(reply()));
-        when(userDao.findById(USER_ID)).thenReturn(java.util.Optional.of(user()));
+        when(reviewReplyService.getReplyById(REPLY_ID)).thenReturn(java.util.Optional.of(reply()));
+        when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.of(user()));
         when(reviewLikeDao.isReplyLikedByUser(REPLY_ID, USER_ID)).thenReturn(false);
 
         // Exercise
@@ -150,8 +147,8 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldUnlikeReplyWhenPreviouslyLiked() {
         // Arrange
-        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(java.util.Optional.of(reply()));
-        when(userDao.findById(USER_ID)).thenReturn(java.util.Optional.of(user()));
+        when(reviewReplyService.getReplyById(REPLY_ID)).thenReturn(java.util.Optional.of(reply()));
+        when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.of(user()));
         when(reviewLikeDao.isReplyLikedByUser(REPLY_ID, USER_ID)).thenReturn(true);
 
         // Exercise
@@ -164,7 +161,7 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldRejectToggleReplyLikeWhenReplyMissing() {
         // Arrange
-        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(java.util.Optional.empty());
+        when(reviewReplyService.getReplyById(REPLY_ID)).thenReturn(java.util.Optional.empty());
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -177,8 +174,8 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldWrapDaoFailureAsIllegalStateOnToggleReplyLike() {
         // Arrange
-        when(reviewReplyDao.findById(REPLY_ID)).thenReturn(java.util.Optional.of(reply()));
-        when(userDao.findById(USER_ID)).thenReturn(java.util.Optional.of(user()));
+        when(reviewReplyService.getReplyById(REPLY_ID)).thenReturn(java.util.Optional.of(reply()));
+        when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.of(user()));
         when(reviewLikeDao.isReplyLikedByUser(REPLY_ID, USER_ID)).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise

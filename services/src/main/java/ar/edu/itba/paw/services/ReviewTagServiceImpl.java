@@ -87,4 +87,28 @@ public class ReviewTagServiceImpl implements ReviewTagService {
         }
         return resolved;
     }
+
+    @Override
+    @Transactional
+    public void replaceAssignments(final long reviewId, final Collection<Short> tagIds) {
+        reviewTagDao.replaceAssignments(reviewId, tagIds == null ? Collections.emptyList() : tagIds);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, List<ReviewTag>> findByReviewIds(final Collection<Long> reviewIds) {
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return reviewTagDao.findByReviewIds(reviewIds);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Map<Short, Integer>> getTagCountsForCars(final Collection<Long> carIds) {
+        if (carIds == null || carIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return reviewTagDao.getTagCountsForCars(carIds);
+    }
 }

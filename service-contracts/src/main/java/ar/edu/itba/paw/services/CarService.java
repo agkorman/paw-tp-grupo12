@@ -3,7 +3,6 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ImagePayload;
-import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.CarYearVariant;
 import ar.edu.itba.paw.model.Page;
@@ -19,8 +18,6 @@ public interface CarService {
     Optional<Car> getCarById(long id);
 
     List<Car> getCarsByIds(Collection<Long> ids);
-
-    List<Car> getCarsByBrandAndBodyType(String brand, String bodyType);
 
     Page<Car> searchCars(CarSearchCriteria criteria);
 
@@ -38,15 +35,12 @@ public interface CarService {
 
     void appendCarImages(long carId, List<ImagePayload> images);
 
-    CarRequest requestCarCreation(
+    Car createCar(
         long brandId,
         String model,
         long bodyTypeId,
         Integer year,
-        long submittedByUserId,
-        String submitterEmail,
         String description,
-        List<ImagePayload> images,
         String fuelType,
         Integer horsepower,
         Integer airbagCount,
@@ -80,6 +74,20 @@ public interface CarService {
         Integer year,
         long ignoredCarId
     );
+
+    boolean existsDuplicateCarByIds(
+        long brandId,
+        long bodyTypeId,
+        String model,
+        Integer year,
+        long ignoredCarId
+    );
+
+    List<Long> searchCarIds(CarSearchCriteria criteria);
+
+    long countCarsByBrandId(long brandId);
+
+    long countCarsByBodyTypeId(long bodyTypeId);
 
     List<Car> getFeaturedCars(int limit);
 

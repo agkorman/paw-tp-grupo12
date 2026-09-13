@@ -1,6 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
-import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.UserRegistrationService;
 import ar.edu.itba.paw.services.exception.DuplicateUserException;
 import ar.edu.itba.paw.services.exception.EmailAlreadyExistsException;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
@@ -44,12 +44,13 @@ public class AuthController {
 
     private static final SecurityContextRepository SECURITY_CONTEXT_REPOSITORY = new HttpSessionSecurityContextRepository();
 
-    private final UserService userService;
+    private final UserRegistrationService userRegistrationService;
     private final AuthenticationManager authenticationManager;
 
     @Autowired
-    public AuthController(final UserService userService, final AuthenticationManager authenticationManager) {
-        this.userService = userService;
+    public AuthController(final UserRegistrationService userRegistrationService,
+                          final AuthenticationManager authenticationManager) {
+        this.userRegistrationService = userRegistrationService;
         this.authenticationManager = authenticationManager;
     }
 
@@ -119,24 +120,16 @@ public class AuthController {
                 LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), validationErrorCode);
                 return registerFormWithError(validationErrorCode, normalizedUsername, normalizedEmail);
             }
-            userService.createUser(normalizedUsername, normalizedEmail, registrationForm.getPassword());
-            LOGGER.info("registered new user email={} username={}", normalizedEmail, normalizedUsername);
+            userRegistrationService.register(normalizedUsername, normalizedEmail, registrationForm.getPassword());
         } catch (final UsernameAlreadyExistsException e) {
-            LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), "auth.register.error.username.exists");
             return registerFormWithError("auth.register.error.username.exists", normalizedUsername, normalizedEmail);
         } catch (final EmailAlreadyExistsException e) {
-            LOGGER.warn("registration rejected email={} reasonCode={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), "auth.register.error.email.exists");
             return registerFormWithError("auth.register.error.email.exists", normalizedUsername, normalizedEmail);
         } catch (final InvalidServiceInputException e) {
-            LOGGER.warn("registration rejected by service validation email={} type={}",
-                    LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS),
-                    e.getClass().getSimpleName());
             return registerFormWithError("auth.register.error.unavailable", normalizedUsername, normalizedEmail);
         } catch (final DuplicateUserException e) {
-            LOGGER.warn("registration rejected: duplicate user email={}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS));
             return registerFormWithError("auth.register.error.duplicate", normalizedUsername, normalizedEmail);
         } catch (final ServiceOperationException e) {
-            LOGGER.error("Database error while creating user {}", LogSanitizer.forLog(normalizedEmail, LogSanitizer.MAX_LOG_EMAIL_CODE_POINTS), e);
             return registerFormWithError("auth.register.error.unavailable", normalizedUsername, normalizedEmail);
         }
 

@@ -5,7 +5,6 @@ import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ImagePayload;
-import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Review;
@@ -14,6 +13,7 @@ import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.services.BodyTypeService;
 import ar.edu.itba.paw.services.BrandService;
 import ar.edu.itba.paw.services.CarFavoriteService;
+import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewService;
 import ar.edu.itba.paw.services.exception.DuplicateCarException;
@@ -65,6 +65,7 @@ public class CarController {
     private static final int FEATURED_REVIEW_COUNT = 3;
     private static final int MAX_IMAGE_COUNT = 5;
     private final CarService carService;
+    private final CarRequestService carRequestService;
     private final CarFavoriteService carFavoriteService;
     private final BrandService brandService;
     private final BodyTypeService bodyTypeService;
@@ -74,6 +75,7 @@ public class CarController {
     @Autowired
     public CarController(
         final CarService carService,
+        final CarRequestService carRequestService,
         final CarFavoriteService carFavoriteService,
         final BrandService brandService,
         final BodyTypeService bodyTypeService,
@@ -81,6 +83,7 @@ public class CarController {
         final ImageValidationService imageValidationService
     ) {
         this.carService = carService;
+        this.carRequestService = carRequestService;
         this.carFavoriteService = carFavoriteService;
         this.brandService = brandService;
         this.bodyTypeService = bodyTypeService;
@@ -225,9 +228,8 @@ public class CarController {
             throw new UploadedImageReadException("creating car request for user " + currentUser.getId(), e);
         }
 
-        final CarRequest carRequest;
         try {
-            carRequest = carService.requestCarCreation(
+            carRequestService.requestCarCreation(
                 resolvedBrand.getId(),
                 carForm.getModel(),
                 resolvedBodyType.getId(),
@@ -246,19 +248,8 @@ public class CarController {
             );
         } catch (final DuplicateCarException e) {
             errors.reject("validation.car.duplicate");
-            LOGGER.warn(
-                "car request submission rejected: duplicate car userId={}",
-                currentUser.getId()
-            );
             return "car-form.jsp";
         }
-        LOGGER.info(
-            "submitted car request id={} userId={} brandId={} bodyTypeId={}",
-            carRequest.getId(),
-            currentUser.getId(),
-            resolvedBrand.getId(),
-            resolvedBodyType.getId()
-        );
 
         return "redirect:/cars?submitted=true";
     }
@@ -296,12 +287,6 @@ public class CarController {
         }
 
         carFavoriteService.setFavorite(currentUser.getId(), carId, favorite);
-        LOGGER.info(
-            "user id={} set favorite carId={} favorited={}",
-            currentUser.getId(),
-            carId,
-            favorite
-        );
         return new ModelAndView("redirect:" + safeRedirectPath(referer));
     }
 
@@ -535,7 +520,6 @@ public class CarController {
 
         try {
             carService.saveCarImages(carId, toImagePayloads(selectedFiles));
-            LOGGER.info("uploaded {} image(s) for car id={}", selectedFiles.size(), carId);
         } catch (final IOException e) {
             LOGGER.error("failed to read uploaded image for car id={}", carId, e);
             throw new UploadedImageReadException("updating car " + carId, e);

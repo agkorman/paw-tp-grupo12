@@ -6,8 +6,8 @@ import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.StoredImagePayload;
-import ar.edu.itba.paw.persistence.CarDao;
-import ar.edu.itba.paw.persistence.CarImageDao;
+import ar.edu.itba.paw.services.exception.DuplicateCarException;
+import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.QueryTimeoutException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -43,12 +45,30 @@ public class CarRequestServiceImplTest {
     @Mock
     private CarRequestDao carRequestDao;
     @Mock
-    private CarDao carDao;
+    private CarService carService;
     @Mock
-    private CarImageDao carImageDao;
+    private BrandService brandService;
+    @Mock
+    private BodyTypeService bodyTypeService;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private CarRequestServiceImpl carRequestService;
+
+    @Test
+    public void shouldTranslatePersistenceFailureWhenClaimingPreRegistrationRequests() {
+        // Arrange
+        final QueryTimeoutException dbException = new QueryTimeoutException("statement timed out");
+        when(carRequestDao.bindRequestsToUserByEmail(USER_ID, EMAIL)).thenThrow(dbException);
+
+        // Exercise
+        final ServiceOperationException result = assertThrows(ServiceOperationException.class,
+                () -> carRequestService.claimPreRegistrationRequests(USER_ID, EMAIL));
+
+        // Assertions
+        assertSame(dbException, result.getCause());
+    }
 
     private static CarRequest pendingRequest() {
         return TestModels.carRequest(REQUEST_ID, USER_ID, EMAIL, BRAND_ID, BODY_TYPE_ID, 2024, "Corolla",
@@ -251,7 +271,7 @@ public class CarRequestServiceImplTest {
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
         when(carRequestDao.updateStatus(REQUEST_ID, CarRequestService.STATUS_PENDING,
                 CarRequestService.STATUS_APPROVED)).thenReturn(true);
-        when(carDao.create(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("desc"),
+        when(carService.createCar(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("desc"),
                 eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"), eq(new BigDecimal("6.5")), eq(190),
                 eq(new BigDecimal("25000.00")))).thenReturn(createdCar);
 
@@ -275,7 +295,7 @@ public class CarRequestServiceImplTest {
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
         when(carRequestDao.updateStatus(REQUEST_ID, CarRequestService.STATUS_PENDING,
                 CarRequestService.STATUS_APPROVED)).thenReturn(true);
-        when(carDao.create(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("A nice car description."),
+        when(carService.createCar(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("A nice car description."),
                 eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"), eq(new BigDecimal("6.5")), eq(190),
                 eq(new BigDecimal("25000.00")))).thenReturn(createdCar);
         when(carRequestDao.findImagesByRequestIdWithData(REQUEST_ID)).thenReturn(List.of(payload));
@@ -296,7 +316,7 @@ public class CarRequestServiceImplTest {
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));
         when(carRequestDao.updateStatus(REQUEST_ID, CarRequestService.STATUS_PENDING,
                 CarRequestService.STATUS_APPROVED)).thenReturn(true);
-        when(carDao.create(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("desc"),
+        when(carService.createCar(eq(BRAND_ID), eq("Corolla"), eq(BODY_TYPE_ID), eq(2024), eq("desc"),
                 eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"), eq(new BigDecimal("6.5")), eq(190),
                 eq(new BigDecimal("25000.00")))).thenReturn(createdCar);
         when(carRequestDao.findImagesByRequestIdWithData(REQUEST_ID)).thenReturn(List.of());
@@ -427,5 +447,69 @@ public class CarRequestServiceImplTest {
 
         // Assertions
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void shouldRejectRequestCarCreationWithBlankDescription() {
+        // Arrange
+        final List<ImagePayload> images = List.of(new ImagePayload(CONTENT_TYPE, IMAGE_BYTES));
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> carRequestService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, USER_ID, EMAIL,
+                        "   ", images, "GASOLINE", 130, 6, "MANUAL",
+                        new BigDecimal("6.5"), 190, new BigDecimal("25000.00")));
+
+        // Assertions
+        assertEquals("Description is required for car creation.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldRejectRequestCarCreationWhenNoImagesProvided() {
+        // Arrange
+        final List<ImagePayload> images = List.of();
+
+        // Exercise
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> carRequestService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, USER_ID, EMAIL,
+                        "desc", images, "GASOLINE", 130, 6, "MANUAL",
+                        new BigDecimal("6.5"), 190, new BigDecimal("25000.00")));
+
+        // Assertions
+        assertEquals("At least one image is required for car creation.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldRejectRequestCarCreationWhenCatalogAlreadyHasTheCar() {
+        // Arrange
+        final List<ImagePayload> images = List.of(new ImagePayload(CONTENT_TYPE, IMAGE_BYTES));
+        when(carService.existsDuplicateCarByIds(BRAND_ID, BODY_TYPE_ID, "Corolla", 2024, -1L)).thenReturn(true);
+
+        // Exercise
+        final DuplicateCarException ex = assertThrows(DuplicateCarException.class,
+                () -> carRequestService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, USER_ID, EMAIL,
+                        "desc", images, "GASOLINE", 130, 6, "MANUAL",
+                        new BigDecimal("6.5"), 190, new BigDecimal("25000.00")));
+
+        // Assertions
+        assertEquals(DuplicateCarException.class, ex.getClass());
+    }
+
+    @Test
+    public void shouldCreatePendingRequestWhenRequestCarCreationInputIsValid() {
+        // Arrange
+        final List<ImagePayload> images = List.of(new ImagePayload(CONTENT_TYPE, IMAGE_BYTES));
+        when(carRequestDao.create(eq(USER_ID), eq(EMAIL), eq(BRAND_ID), eq(BODY_TYPE_ID), eq(2024), eq("Corolla"),
+                eq("desc"), eq(CarRequestService.STATUS_PENDING), eq("GASOLINE"), eq(130), eq(6), eq("MANUAL"),
+                eq(new BigDecimal("6.5")), eq(190), eq(new BigDecimal("25000.00")))).thenReturn(pendingRequest());
+
+        // Exercise
+        final CarRequest result = carRequestService.requestCarCreation(BRAND_ID, "Corolla", BODY_TYPE_ID, 2024,
+                USER_ID, EMAIL, "desc", images, "GASOLINE", 130, 6, "MANUAL",
+                new BigDecimal("6.5"), 190, new BigDecimal("25000.00"));
+
+        // Assertions
+        assertEquals(REQUEST_ID, result.getId());
+        assertEquals("Corolla", result.getModel());
     }
 }

@@ -3,7 +3,6 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.BodyTypeRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BodyTypeRequestDao;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import org.slf4j.Logger;
@@ -21,14 +20,14 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
     private static final Logger LOGGER = LoggerFactory.getLogger(BodyTypeRequestServiceImpl.class);
 
     private final BodyTypeRequestDao bodyTypeRequestDao;
-    private final BodyTypeDao bodyTypeDao;
+    private final BodyTypeService bodyTypeService;
     private final EmailService emailService;
 
     @Autowired
-    public BodyTypeRequestServiceImpl(final BodyTypeRequestDao bodyTypeRequestDao, final BodyTypeDao bodyTypeDao,
+    public BodyTypeRequestServiceImpl(final BodyTypeRequestDao bodyTypeRequestDao, final BodyTypeService bodyTypeService,
                                       final EmailService emailService) {
         this.bodyTypeRequestDao = bodyTypeRequestDao;
-        this.bodyTypeDao = bodyTypeDao;
+        this.bodyTypeService = bodyTypeService;
         this.emailService = emailService;
     }
 
@@ -91,7 +90,7 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
             return false;
         }
 
-        if (bodyTypeDao.findByName(nameToCreate).isPresent()) {
+        if (bodyTypeService.findByName(nameToCreate).isPresent()) {
             LOGGER.warn("approve body type request rejected: name already exists id={} name={}", id, nameToCreate);
             return false;
         }
@@ -101,7 +100,7 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
             return false;
         }
 
-        bodyTypeDao.create(nameToCreate);
+        bodyTypeService.createBodyType(nameToCreate);
         sendRequestApprovedNotification(request, nameToCreate);
         LOGGER.info("approved body type request id={} createdName={}", id, nameToCreate);
         return true;

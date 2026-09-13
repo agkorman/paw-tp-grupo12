@@ -19,7 +19,7 @@ public interface ReviewReplyService {
     ReviewReply createReply(long reviewId, long userId, String body);
     boolean updateReply(long id, long userId, String body);
     boolean deleteReply(long id, long userId);
-    boolean hideReply(long replyId, String reason);
+    boolean hideReply(long replyId, long moderatorUserId, String reason);
 
     Map<Long, Long> countNewRepliesPerReview(long userId, LocalDateTime since);
     Map<Long, Long> countRepliesByReviewIds(Collection<Long> reviewIds);

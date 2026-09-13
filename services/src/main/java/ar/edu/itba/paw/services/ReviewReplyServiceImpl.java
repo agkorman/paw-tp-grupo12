@@ -6,9 +6,7 @@ import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewReplyDao;
-import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import ar.edu.itba.paw.services.exception.ReviewNotFoundException;
 import ar.edu.itba.paw.services.exception.ReviewReplyNotFoundException;
@@ -40,18 +38,18 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     public static final int MAX_BODY_LENGTH = 1000;
 
     private final ReviewReplyDao reviewReplyDao;
-    private final ReviewDao reviewDao;
-    private final UserDao userDao;
+    private final ReviewService reviewService;
+    private final UserService userService;
     private final CarService carService;
     private final EmailService emailService;
 
     @Autowired
-    public ReviewReplyServiceImpl(final ReviewReplyDao reviewReplyDao, final ReviewDao reviewDao,
-                                  final UserDao userDao, final CarService carService,
+    public ReviewReplyServiceImpl(final ReviewReplyDao reviewReplyDao, final ReviewService reviewService,
+                                  final UserService userService, final CarService carService,
                                   final EmailService emailService) {
         this.reviewReplyDao = reviewReplyDao;
-        this.reviewDao = reviewDao;
-        this.userDao = userDao;
+        this.reviewService = reviewService;
+        this.userService = userService;
         this.carService = carService;
         this.emailService = emailService;
     }
@@ -121,11 +119,11 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
     @Transactional
     public ReviewReply createReply(final long reviewId, final long userId, final String body) {
         try {
-            if (reviewDao.findById(reviewId).isEmpty()) {
+            if (reviewService.getReviewById(reviewId).isEmpty()) {
                 LOGGER.warn("create reply rejected: review not found id={}", reviewId);
                 throw new ReviewNotFoundException(reviewId);
             }
-            if (userDao.findById(userId).isEmpty()) {
+            if (userService.getUserById(userId).isEmpty()) {
                 LOGGER.warn("create reply rejected: user not found id={}", userId);
                 throw new UserNotFoundException(userId);
             }
@@ -141,7 +139,9 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
                 throw new InvalidServiceInputException("Reply body is too long.");
             }
 
-            return reviewReplyDao.create(reviewId, userId, normalizedBody);
+            final ReviewReply created = reviewReplyDao.create(reviewId, userId, normalizedBody);
+            LOGGER.info("created reply id={} reviewId={} userId={}", created.getId(), reviewId, userId);
+            return created;
         } catch (final DataAccessException e) {
             LOGGER.error("failed to create review reply reviewId={} userId={}", reviewId, userId, e);
             throw new ServiceOperationException("Failed to create review reply.", e);
@@ -213,28 +213,31 @@ public class ReviewReplyServiceImpl implements ReviewReplyService {
 
     @Override
     @Transactional
-    public boolean hideReply(final long replyId, final String reason) {
+    public boolean hideReply(final long replyId, final long moderatorUserId, final String reason) {
         try {
             final Optional<ReviewReply> replyOptional = reviewReplyDao.findById(replyId);
             if (replyOptional.isEmpty()) {
+                LOGGER.warn("hide reply rejected: reply not found id={}", replyId);
                 return false;
             }
             final ReviewReply reply = replyOptional.get();
-            final Optional<Review> reviewOptional = reviewDao.findById(reply.getReviewId());
+            final Optional<Review> reviewOptional = reviewService.getReviewById(reply.getReviewId());
             if (reviewOptional.isEmpty()) {
+                LOGGER.warn("hide reply rejected: review not found id={} replyId={}", reply.getReviewId(), replyId);
                 return false;
             }
             final Review review = reviewOptional.get();
             final String carName = resolveCarDisplayName(review.getCarId());
-            final String recipientEmail = userDao.findById(reply.getUserId())
+            final String recipientEmail = userService.getUserById(reply.getUserId())
                     .map(User::getEmail)
                     .map(ReviewReplyServiceImpl::normalizeEmail)
                     .orElse(null);
             final boolean deleted = reviewReplyDao.delete(replyId);
             if (!deleted) {
+                LOGGER.warn("hide reply rejected: delete failed id={}", replyId);
                 return false;
             }
-            LOGGER.info("deleted reply id={} (hidden by moderator)", replyId);
+            LOGGER.info("moderator id={} hid reply id={}", moderatorUserId, replyId);
             if (recipientEmail != null) {
                 emailService.sendReviewHiddenNotification(recipientEmail, review.getTitle(), carName, reason);
             }

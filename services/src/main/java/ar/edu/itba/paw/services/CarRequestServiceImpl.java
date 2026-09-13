@@ -7,18 +7,15 @@ import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.BrandDao;
-import ar.edu.itba.paw.persistence.CarDao;
-import ar.edu.itba.paw.persistence.CarImageDao;
 import ar.edu.itba.paw.persistence.CarRequestDao;
 import ar.edu.itba.paw.services.exception.DuplicateCarException;
 import ar.edu.itba.paw.services.exception.InvalidImagePayloadException;
+import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,24 +33,38 @@ public class CarRequestServiceImpl implements CarRequestService {
     );
 
     private final CarRequestDao carRequestDao;
-    private final CarDao carDao;
-    private final CarImageDao carImageDao;
-    private final BrandDao brandDao;
+    private final CarService carService;
+    private final BrandService brandService;
+    private final BodyTypeService bodyTypeService;
     private final EmailService emailService;
 
     @Autowired
     public CarRequestServiceImpl(
         final CarRequestDao carRequestDao,
-        final CarDao carDao,
-        final CarImageDao carImageDao,
-        final BrandDao brandDao,
+        final CarService carService,
+        final BrandService brandService,
+        final BodyTypeService bodyTypeService,
         final EmailService emailService
     ) {
         this.carRequestDao = carRequestDao;
-        this.carDao = carDao;
-        this.carImageDao = carImageDao;
-        this.brandDao = brandDao;
+        this.carService = carService;
+        this.brandService = brandService;
+        this.bodyTypeService = bodyTypeService;
         this.emailService = emailService;
+    }
+
+    @Override
+    @Transactional
+    public void claimPreRegistrationRequests(final long userId, final String email) {
+        try {
+            carRequestDao.bindRequestsToUserByEmail(userId, email);
+        } catch (final DataAccessException e) {
+            LOGGER.error("claim pre-registration car requests failed userId={}", userId, e);
+            throw new ServiceOperationException(
+                "Failed to claim pre-registration car requests for userId=" + userId,
+                e
+            );
+        }
     }
 
     @Override
@@ -140,6 +151,81 @@ public class CarRequestServiceImpl implements CarRequestService {
                 e
             );
         }
+    }
+
+    @Override
+    @Transactional
+    public CarRequest requestCarCreation(
+        final long brandId,
+        final String model,
+        final long bodyTypeId,
+        final Integer year,
+        final long submittedByUserId,
+        final String submitterEmail,
+        final String description,
+        final List<ImagePayload> images,
+        final String fuelType,
+        final Integer horsepower,
+        final Integer airbagCount,
+        final String transmission,
+        final BigDecimal fuelConsumption,
+        final Integer maxSpeedKmh,
+        final BigDecimal priceUsd
+    ) {
+        final String normalizedDescription = StringUtils.normalizeRequired(
+            description,
+            "Description is required for car creation."
+        );
+        final List<ImagePayload> normalizedImages =
+            ImagePayloadUtils.normalizeImages(images);
+        if (normalizedImages.isEmpty()) {
+            throw new InvalidImagePayloadException(
+                "At least one image is required for car creation."
+            );
+        }
+
+        validateYear(year);
+
+        if (carService.existsDuplicateCarByIds(brandId, bodyTypeId, model, year, -1L)) {
+            LOGGER.warn("car request rejected: duplicate car userId={} brandId={} bodyTypeId={}",
+                submittedByUserId, brandId, bodyTypeId);
+            throw new DuplicateCarException();
+        }
+
+        final CarRequest carRequest = createPendingRequest(
+            submittedByUserId,
+            submitterEmail,
+            brandId,
+            bodyTypeId,
+            year,
+            model,
+            normalizedDescription,
+            normalizedImages,
+            fuelType,
+            horsepower,
+            airbagCount,
+            transmission,
+            fuelConsumption,
+            maxSpeedKmh,
+            priceUsd
+        );
+
+        emailService.sendNewCarRequestNotification(
+            carRequest,
+            resolveBrandName(brandId),
+            resolveBodyTypeName(bodyTypeId),
+            !normalizedImages.isEmpty()
+        );
+
+        LOGGER.info(
+            "submitted car request id={} userId={} brandId={} bodyTypeId={}",
+            carRequest.getId(),
+            submittedByUserId,
+            brandId,
+            bodyTypeId
+        );
+
+        return carRequest;
     }
 
     @Override
@@ -361,7 +447,7 @@ public class CarRequestServiceImpl implements CarRequestService {
         );
 
         if (
-            existsDuplicateCarByIds(
+            carService.existsDuplicateCarByIds(
                 brandId,
                 bodyTypeId,
                 normalizedModel,
@@ -369,6 +455,8 @@ public class CarRequestServiceImpl implements CarRequestService {
                 -1L
             )
         ) {
+            LOGGER.warn("approve car request rejected: duplicate car requestId={} brandId={} bodyTypeId={}",
+                id, brandId, bodyTypeId);
             throw new DuplicateCarException();
         }
 
@@ -384,7 +472,7 @@ public class CarRequestServiceImpl implements CarRequestService {
             return false;
         }
 
-        final Car createdCar = carDao.create(
+        final Car createdCar = carService.createCar(
             brandId,
             normalizedModel,
             bodyTypeId,
@@ -399,13 +487,13 @@ public class CarRequestServiceImpl implements CarRequestService {
             priceUsd
         );
         if (!normalizedImages.isEmpty()) {
-            carImageDao.replaceAll(createdCar.getId(), normalizedImages);
+            carService.saveCarImages(createdCar.getId(), normalizedImages);
         } else if (images == null) {
             final List<ImagePayload> requestGallery = requestImagePayloads(
                 request
             );
             if (!requestGallery.isEmpty()) {
-                carImageDao.replaceAll(createdCar.getId(), requestGallery);
+                carService.saveCarImages(createdCar.getId(), requestGallery);
             }
         }
         sendCarApprovedNotification(
@@ -480,26 +568,6 @@ public class CarRequestServiceImpl implements CarRequestService {
             }
         }
         return payloads;
-    }
-
-    private boolean existsDuplicateCarByIds(
-        final long brandId,
-        final long bodyTypeId,
-        final String model,
-        final Integer year,
-        final long ignoredCarId
-    ) {
-        final String normalizedModel = StringUtils.normalize(model);
-        if (normalizedModel == null) {
-            return false;
-        }
-        return carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(
-            brandId,
-            bodyTypeId,
-            normalizedModel.toLowerCase(Locale.ROOT),
-            year,
-            ignoredCarId
-        );
     }
 
     private List<ImagePayload> requestImagePayloads(
@@ -604,13 +672,29 @@ public class CarRequestServiceImpl implements CarRequestService {
         return submitter.getEmail();
     }
 
-    private String resolveBrandName(final long brandId) {
-        if (brandDao == null) {
-            return "-";
+    private void validateYear(final Integer year) {
+        if (year == null) {
+            return;
         }
-        return brandDao
+        if (year < Car.MIN_YEAR || year > Car.MAX_YEAR) {
+            throw new InvalidServiceInputException(
+                "Year must be between " + Car.MIN_YEAR + " and " + Car.MAX_YEAR + "."
+            );
+        }
+    }
+
+    private String resolveBrandName(final long brandId) {
+        return brandService
             .findById(brandId)
             .map(brand -> brand.getName())
+            .filter(name -> !name.isBlank())
+            .orElse("-");
+    }
+
+    private String resolveBodyTypeName(final long bodyTypeId) {
+        return bodyTypeService
+            .findById(bodyTypeId)
+            .map(bodyType -> bodyType.getName())
             .filter(name -> !name.isBlank())
             .orElse("-");
     }

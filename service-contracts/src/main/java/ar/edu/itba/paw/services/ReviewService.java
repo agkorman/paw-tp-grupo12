@@ -17,6 +17,8 @@ import java.util.Set;
 
 public interface ReviewService {
 
+    void claimPreRegistrationReviews(long userId, String email);
+
     Review createReview(Long userId, long carId, BigDecimal rating, String title, String body,
                         String ownershipStatus, Integer modelYear, Integer mileageKm, Boolean wouldRecommend,
                         Collection<Short> tagIds, List<ImagePayload> images);
@@ -60,5 +62,5 @@ public interface ReviewService {
     List<ReviewStats> getReviewStatsByCarIds(Collection<Long> carIds);
     Review getReviewAndCheckAccess(long reviewId, long requestingUserId, boolean isAdmin);
 
-    boolean hideReview(long reviewId, String reason);
+    boolean hideReview(long reviewId, long moderatorUserId, String reason);
 }

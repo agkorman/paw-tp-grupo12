@@ -313,6 +313,60 @@ public class CarDaoTest extends AbstractPersistenceTest {
     }
 
     @Test
+    public void shouldDetectExistingCarByBrandNameBodyTypeNameModelAndYearExcludingId() {
+        // Arrange
+        final long brandId = insertBrand("Name Duplicate Brand").getId();
+        final long bodyTypeId = insertBodyType("Name Duplicate Body").getId();
+        final Car existing = insertCar(brandId, "Name Duplicate Brand", "Corolla", bodyTypeId, "Name Duplicate Body",
+                2024, "Desc", "combustion", 150, 6, "automatic", new BigDecimal("7.2"), 210,
+                new BigDecimal("22000.00"));
+
+        // Exercise
+        final boolean result = carDao.existsByBrandNameAndBodyTypeNameAndModelAndYearExcludingId(
+                "name duplicate brand", "NAME DUPLICATE BODY", "corolla", 2024, existing.getId() + 1
+        );
+
+        // Assertions
+        assertTrue(result);
+    }
+
+    @Test
+    public void shouldIgnoreExcludedCarWhenCheckingDuplicateExistenceByName() {
+        // Arrange
+        final long brandId = insertBrand("Name Exclude Brand").getId();
+        final long bodyTypeId = insertBodyType("Name Exclude Body").getId();
+        final Car existing = insertCar(brandId, "Name Exclude Brand", "Corolla", bodyTypeId, "Name Exclude Body",
+                2024, "Desc", "combustion", 150, 6, "automatic", new BigDecimal("7.2"), 210,
+                new BigDecimal("22000.00"));
+
+        // Exercise
+        final boolean result = carDao.existsByBrandNameAndBodyTypeNameAndModelAndYearExcludingId(
+                "Name Exclude Brand", "Name Exclude Body", "corolla", 2024, existing.getId()
+        );
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldNotDetectDuplicateByNameWhenBrandNameDoesNotMatch() {
+        // Arrange
+        final long brandId = insertBrand("Name Mismatch Brand").getId();
+        final long bodyTypeId = insertBodyType("Name Mismatch Body").getId();
+        final Car existing = insertCar(brandId, "Name Mismatch Brand", "Corolla", bodyTypeId, "Name Mismatch Body",
+                2024, "Desc", "combustion", 150, 6, "automatic", new BigDecimal("7.2"), 210,
+                new BigDecimal("22000.00"));
+
+        // Exercise
+        final boolean result = carDao.existsByBrandNameAndBodyTypeNameAndModelAndYearExcludingId(
+                "Other Brand", "Name Mismatch Body", "corolla", 2024, existing.getId() + 1
+        );
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
     public void shouldReturnEmptyPageWhenCriteriaHasNoMatches() {
         // Arrange
         createCar("no-match");

@@ -58,6 +58,12 @@ public interface CommunityService {
     Optional<ImageMetadata> getPostImageMetadataById(long postId, long imageId);
     List<ImagePayload> collectRetainedPostImagePayloads(long postId, List<Long> retainedImageIds);
     Optional<String> getViewerRole(String communitySlug, Long userId);
+
+    /**
+     * Membership role of the viewer in each of the given communities, keyed by community id.
+     * Communities the viewer does not belong to are absent from the map.
+     */
+    Map<Long, String> getViewerRoles(Long viewerUserId, Collection<Long> communityIds);
     Set<Long> getHideablePostIds(Collection<CommunityPost> posts, Long viewerUserId, boolean viewerAdmin);
     Set<Long> getEditablePostIds(Collection<CommunityPost> posts, Long viewerUserId);
     List<CommunityMembershipEntry> listMembers(String communitySlug, long callerUserId);

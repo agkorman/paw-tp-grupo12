@@ -2,9 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Page;
-import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarFavoriteDao;
-import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.services.exception.CarNotFoundException;
 import ar.edu.itba.paw.services.exception.UserNotFoundException;
 import org.slf4j.Logger;
@@ -24,14 +22,14 @@ public class CarFavoriteServiceImpl implements CarFavoriteService {
     private static final Logger LOGGER = LoggerFactory.getLogger(CarFavoriteServiceImpl.class);
 
     private final CarFavoriteDao carFavoriteDao;
-    private final UserDao userDao;
-    private final CarDao carDao;
+    private final UserService userService;
+    private final CarService carService;
 
     @Autowired
-    public CarFavoriteServiceImpl(final CarFavoriteDao carFavoriteDao, final UserDao userDao, final CarDao carDao) {
+    public CarFavoriteServiceImpl(final CarFavoriteDao carFavoriteDao, final UserService userService, final CarService carService) {
         this.carFavoriteDao = carFavoriteDao;
-        this.userDao = userDao;
-        this.carDao = carDao;
+        this.userService = userService;
+        this.carService = carService;
     }
 
     @Override
@@ -77,11 +75,11 @@ public class CarFavoriteServiceImpl implements CarFavoriteService {
     }
 
     private void validateFavorite(final long userId, final long carId) {
-        if (userDao.findById(userId).isEmpty()) {
+        if (userService.getUserById(userId).isEmpty()) {
             LOGGER.warn("favorite rejected: user not found id={}", userId);
             throw new UserNotFoundException(userId);
         }
-        if (carDao.findById(carId).isEmpty()) {
+        if (carService.getCarById(carId).isEmpty()) {
             LOGGER.warn("favorite rejected: car not found id={}", carId);
             throw new CarNotFoundException(carId);
         }

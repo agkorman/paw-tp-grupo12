@@ -3,7 +3,6 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.BrandRequestDao;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import org.slf4j.Logger;
@@ -21,14 +20,14 @@ public class BrandRequestServiceImpl implements BrandRequestService {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrandRequestServiceImpl.class);
 
     private final BrandRequestDao brandRequestDao;
-    private final BrandDao brandDao;
+    private final BrandService brandService;
     private final EmailService emailService;
 
     @Autowired
-    public BrandRequestServiceImpl(final BrandRequestDao brandRequestDao, final BrandDao brandDao,
+    public BrandRequestServiceImpl(final BrandRequestDao brandRequestDao, final BrandService brandService,
                                    final EmailService emailService) {
         this.brandRequestDao = brandRequestDao;
-        this.brandDao = brandDao;
+        this.brandService = brandService;
         this.emailService = emailService;
     }
 
@@ -91,7 +90,7 @@ public class BrandRequestServiceImpl implements BrandRequestService {
             return false;
         }
 
-        if (brandDao.findByName(nameToCreate).isPresent()) {
+        if (brandService.findByName(nameToCreate).isPresent()) {
             LOGGER.warn("approve brand request rejected: name already exists id={} name={}", id, nameToCreate);
             return false;
         }
@@ -101,7 +100,7 @@ public class BrandRequestServiceImpl implements BrandRequestService {
             return false;
         }
 
-        brandDao.create(nameToCreate);
+        brandService.createBrand(nameToCreate);
         sendRequestApprovedNotification(request, nameToCreate);
         LOGGER.info("approved brand request id={} createdName={}", id, nameToCreate);
         return true;
