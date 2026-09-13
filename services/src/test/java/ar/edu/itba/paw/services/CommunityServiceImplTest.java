@@ -922,6 +922,7 @@ class CommunityServiceImplTest {
         assertTrue(result.isFound());
         assertTrue(result.getValue());
         assertEquals(1, recordingEmailService.communityPostHiddenEmails.size());
+        assertEquals("/communities/classics", recordingEmailService.communityPostHiddenUrls.get(0));
         assertEquals(postAuthor.getEmail(), recordingEmailService.communityPostHiddenEmails.get(0));
     }
 
@@ -1329,6 +1330,7 @@ class CommunityServiceImplTest {
     private static final class RecordingEmailService implements EmailService {
 
         private final List<String> communityPostHiddenEmails = new ArrayList<>();
+        private final List<String> communityPostHiddenUrls = new ArrayList<>();
         private final List<String> communityCommentHiddenEmails = new ArrayList<>();
         private final List<String> communityKickedEmails = new ArrayList<>();
         private final List<String> communityPromotedEmails = new ArrayList<>();
@@ -1382,8 +1384,9 @@ class CommunityServiceImplTest {
         @Override
         public void sendCommunityPostHiddenNotification(final String recipientEmail, final String communityName,
                                                         final String postTitle, final String moderatorReason,
-                                                        final String postUrl) {
+                                                        final String communityUrl) {
             communityPostHiddenEmails.add(recipientEmail);
+            communityPostHiddenUrls.add(communityUrl);
         }
 
         @Override
