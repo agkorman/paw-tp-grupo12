@@ -3,9 +3,7 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarFavoriteDao;
-import ar.edu.itba.paw.persistence.UserDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,9 +30,9 @@ public class CarFavoriteServiceImplTest {
     @Mock
     private CarFavoriteDao carFavoriteDao;
     @Mock
-    private UserDao userDao;
+    private UserService userService;
     @Mock
-    private CarDao carDao;
+    private CarService carService;
 
     @InjectMocks
     private CarFavoriteServiceImpl carFavoriteService;
@@ -50,7 +48,7 @@ public class CarFavoriteServiceImplTest {
     @Test
     public void shouldRejectSetFavoriteWhenUserDoesNotExist() {
         // Arrange
-        when(userDao.findById(USER_ID)).thenReturn(Optional.empty());
+        when(userService.getUserById(USER_ID)).thenReturn(Optional.empty());
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -63,8 +61,8 @@ public class CarFavoriteServiceImplTest {
     @Test
     public void shouldRejectSetFavoriteWhenCarDoesNotExist() {
         // Arrange
-        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
-        when(carDao.findById(CAR_ID)).thenReturn(Optional.empty());
+        when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user()));
+        when(carService.getCarById(CAR_ID)).thenReturn(Optional.empty());
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,

@@ -22,7 +22,6 @@ import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.CommunityDao;
 import ar.edu.itba.paw.persistence.CommunityPostImageDao;
-import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.services.exception.CannotModerateCreatorException;
 import ar.edu.itba.paw.services.exception.CommunityContentOwnershipException;
 import ar.edu.itba.paw.services.exception.CommunityCreatorCannotLeaveException;
@@ -72,18 +71,18 @@ public class CommunityServiceImpl implements CommunityService {
     private static final String DEFAULT_POST_SLUG = "post";
     private final CommunityDao communityDao;
     private final CommunityPostImageDao communityPostImageDao;
-    private final ReviewDao reviewDao;
+    private final ReviewService reviewService;
     private final UserService userService;
     private final EmailService emailService;
 
     @Autowired
     public CommunityServiceImpl(final CommunityDao communityDao, final CommunityPostImageDao communityPostImageDao,
-                                final ReviewDao reviewDao,
+                                final ReviewService reviewService,
                                 final UserService userService,
                                 final EmailService emailService) {
         this.communityDao = communityDao;
         this.communityPostImageDao = communityPostImageDao;
-        this.reviewDao = reviewDao;
+        this.reviewService = reviewService;
         this.userService = userService;
         this.emailService = emailService;
     }
@@ -288,7 +287,7 @@ public class CommunityServiceImpl implements CommunityService {
         final String normalizedTitle = StringUtils.normalizeRequired(title, "Community post title is required.");
         final String normalizedBody = StringUtils.normalizeRequired(body, "Community post body is required.");
 
-        if (linkedReviewId != null && reviewDao.findById(linkedReviewId).isEmpty()) {
+        if (linkedReviewId != null && reviewService.getReviewById(linkedReviewId).isEmpty()) {
             LOGGER.warn("repost denied: review not found linkedReviewId={}", linkedReviewId);
             return Optional.empty();
         }
@@ -801,6 +800,19 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    public Map<Long, String> getViewerRoles(final Long viewerUserId, final Collection<Long> communityIds) {
+        if (viewerUserId == null || viewerUserId <= 0 || communityIds == null || communityIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            return communityDao.findMembershipRoles(viewerUserId, communityIds);
+        } catch (final DataAccessException e) {
+            LOGGER.warn("failed to resolve viewer roles userId={}", viewerUserId, e);
+            return Collections.emptyMap();
+        }
+    }
+
+    @Override
     public Optional<String> getViewerRole(final String communitySlug, final Long userId) {
         if (userId == null || userId <= 0) {
             return Optional.empty();
@@ -1265,6 +1277,7 @@ public class CommunityServiceImpl implements CommunityService {
 
     private List<CommunityTopic> validateTopicSelection(final Collection<Short> topicIds) {
         if (topicIds == null || topicIds.isEmpty()) {
+            LOGGER.warn("community topic selection rejected: at least one topic is required");
             throw new InvalidCommunityTopicSelectionException(
                     InvalidCommunityTopicSelectionException.Reason.REQUIRED,
                     "At least one topic is required."
@@ -1275,12 +1288,15 @@ public class CommunityServiceImpl implements CommunityService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         if (uniqueTopicIds.isEmpty()) {
+            LOGGER.warn("community topic selection rejected: no valid topic ids supplied");
             throw new InvalidCommunityTopicSelectionException(
                     InvalidCommunityTopicSelectionException.Reason.REQUIRED,
                     "At least one topic is required."
             );
         }
         if (uniqueTopicIds.size() > MAX_TOPICS_PER_COMMUNITY) {
+            LOGGER.warn("community topic selection rejected: topicCount={} max={}",
+                    uniqueTopicIds.size(), MAX_TOPICS_PER_COMMUNITY);
             throw new InvalidCommunityTopicSelectionException(
                     InvalidCommunityTopicSelectionException.Reason.TOO_MANY,
                     "Too many topics selected: max=" + MAX_TOPICS_PER_COMMUNITY
@@ -1289,6 +1305,8 @@ public class CommunityServiceImpl implements CommunityService {
 
         final List<CommunityTopic> resolvedTopics = communityDao.findTopicsByIds(uniqueTopicIds);
         if (resolvedTopics.size() != uniqueTopicIds.size()) {
+            LOGGER.warn("community topic selection rejected: topics not found requestedCount={} resolvedCount={}",
+                    uniqueTopicIds.size(), resolvedTopics.size());
             throw new InvalidCommunityTopicSelectionException(
                     InvalidCommunityTopicSelectionException.Reason.UNKNOWN_TOPIC,
                     "One or more selected topics are unknown."

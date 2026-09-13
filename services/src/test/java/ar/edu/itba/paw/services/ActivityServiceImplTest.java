@@ -13,13 +13,6 @@ import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ActivityDao;
-import ar.edu.itba.paw.persistence.CarDao;
-import ar.edu.itba.paw.persistence.CommunityDao;
-import ar.edu.itba.paw.persistence.CommunityPostImageDao;
-import ar.edu.itba.paw.persistence.ReviewDao;
-import ar.edu.itba.paw.persistence.ReviewImageDao;
-import ar.edu.itba.paw.persistence.ReviewLikeDao;
-import ar.edu.itba.paw.persistence.ReviewReplyDao;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -43,19 +36,15 @@ public class ActivityServiceImplTest {
     @Mock
     private ActivityDao activityDao;
     @Mock
-    private ReviewDao reviewDao;
+    private ReviewService reviewService;
     @Mock
-    private ReviewImageDao reviewImageDao;
+    private ReviewLikeService reviewLikeService;
     @Mock
-    private ReviewLikeDao reviewLikeDao;
+    private ReviewReplyService reviewReplyService;
     @Mock
-    private ReviewReplyDao reviewReplyDao;
+    private CommunityService communityService;
     @Mock
-    private CommunityDao communityDao;
-    @Mock
-    private CommunityPostImageDao communityPostImageDao;
-    @Mock
-    private CarDao carDao;
+    private CarService carService;
 
     @InjectMocks
     private ActivityServiceImpl activityService;
@@ -96,15 +85,15 @@ public class ActivityServiceImplTest {
                 Pagination.ACTIVITY_PAGE_SIZE,
                 2L
         ));
-        when(reviewDao.findByIds(List.of(review.getId()))).thenReturn(List.of(review));
-        when(communityDao.findPostsByIds(List.of(post.getId()))).thenReturn(List.of(post));
-        when(carDao.findByIds(List.of(review.getCarId()))).thenReturn(List.of(car));
-        when(reviewImageDao.findAllByReviewIds(List.of(review.getId()))).thenReturn(List.of(reviewImage));
-        when(communityPostImageDao.findAllByPostIds(List.of(post.getId()))).thenReturn(List.of(postImage));
-        when(communityDao.countCommentsByPostIds(List.of(post.getId()))).thenReturn(Map.of(post.getId(), 9L));
-        when(communityDao.countHelpfulReactionsByPostIds(List.of(post.getId()))).thenReturn(Map.of(post.getId(), 7L));
-        when(reviewLikeDao.countReviewLikesByReviewIds(List.of(review.getId()))).thenReturn(Map.of(review.getId(), 3L));
-        when(reviewReplyDao.countRepliesByReviewIds(List.of(review.getId()))).thenReturn(Map.of(review.getId(), 2L));
+        when(reviewService.getReviewsByIds(List.of(review.getId()))).thenReturn(List.of(review));
+        when(communityService.getPostsByIds(List.of(post.getId()))).thenReturn(List.of(post));
+        when(carService.getCarsByIds(List.of(review.getCarId()))).thenReturn(List.of(car));
+        when(reviewService.getImagesByReviewIds(List.of(review.getId()))).thenReturn(Map.of(review.getId(), List.of(reviewImage)));
+        when(communityService.getImagesByPostIds(List.of(post.getId()))).thenReturn(Map.of(post.getId(), List.of(postImage)));
+        when(communityService.countCommentsByPostIds(List.of(post.getId()))).thenReturn(Map.of(post.getId(), 9L));
+        when(communityService.countHelpfulReactionsByPostIds(List.of(post.getId()))).thenReturn(Map.of(post.getId(), 7L));
+        when(reviewLikeService.countReviewLikesByReviewIds(List.of(review.getId()))).thenReturn(Map.of(review.getId(), 3L));
+        when(reviewReplyService.countRepliesByReviewIds(List.of(review.getId()))).thenReturn(Map.of(review.getId(), 2L));
 
         // Exercise
         final Page<ActivityFeedItem> result = activityService.getActivityFeed(new ActivityFeedCriteria(), null);
@@ -136,11 +125,11 @@ public class ActivityServiceImplTest {
                 Pagination.ACTIVITY_PAGE_SIZE,
                 1L
         ));
-        when(reviewDao.findByIds(List.of(review.getId()))).thenReturn(List.of(review));
-        when(carDao.findByIds(List.of(review.getCarId()))).thenReturn(List.of(car));
-        when(reviewImageDao.findAllByReviewIds(List.of(review.getId()))).thenReturn(List.of());
-        when(reviewLikeDao.countReviewLikesByReviewIds(List.of(review.getId()))).thenReturn(Collections.emptyMap());
-        when(reviewReplyDao.countRepliesByReviewIds(List.of(review.getId()))).thenReturn(Collections.emptyMap());
+        when(reviewService.getReviewsByIds(List.of(review.getId()))).thenReturn(List.of(review));
+        when(carService.getCarsByIds(List.of(review.getCarId()))).thenReturn(List.of(car));
+        when(reviewService.getImagesByReviewIds(List.of(review.getId()))).thenReturn(Collections.emptyMap());
+        when(reviewLikeService.countReviewLikesByReviewIds(List.of(review.getId()))).thenReturn(Collections.emptyMap());
+        when(reviewReplyService.countRepliesByReviewIds(List.of(review.getId()))).thenReturn(Collections.emptyMap());
 
         // Exercise
         final Page<ActivityFeedItem> result = activityService.getActivityFeed(new ActivityFeedCriteria(), null);
@@ -209,7 +198,7 @@ public class ActivityServiceImplTest {
                 0L,
                 Collections.emptyList()
         );
-        when(communityDao.findMembershipRoles(post.getAuthorUserId(), List.of(community.getId())))
+        when(communityService.getViewerRoles(post.getAuthorUserId(), List.of(community.getId())))
                 .thenReturn(Collections.emptyMap());
 
         // Exercise
@@ -235,7 +224,7 @@ public class ActivityServiceImplTest {
                 0L,
                 Collections.emptyList()
         );
-        when(communityDao.findMembershipRoles(moderatorUserId, List.of(community.getId())))
+        when(communityService.getViewerRoles(moderatorUserId, List.of(community.getId())))
                 .thenReturn(Map.of(community.getId(), "moderator"));
 
         // Exercise

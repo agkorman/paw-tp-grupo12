@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.persistence.UserFollowDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +26,7 @@ public class UserFollowServiceImplTest {
     @Mock
     private UserFollowDao userFollowDao;
     @Mock
-    private UserDao userDao;
+    private UserService userService;
 
     @InjectMocks
     private UserFollowServiceImpl userFollowService;
@@ -39,8 +38,8 @@ public class UserFollowServiceImplTest {
     @Test
     public void shouldFollowWhenBothUsersExist() {
         // Arrange
-        when(userDao.findById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
-        when(userDao.findById(FOLLOWED_ID)).thenReturn(Optional.of(userWithId(FOLLOWED_ID)));
+        when(userService.getUserById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
+        when(userService.getUserById(FOLLOWED_ID)).thenReturn(Optional.of(userWithId(FOLLOWED_ID)));
         when(userFollowDao.follow(FOLLOWER_ID, FOLLOWED_ID)).thenReturn(true);
 
         // Exercise
@@ -66,7 +65,7 @@ public class UserFollowServiceImplTest {
     @Test
     public void shouldRejectFollowWhenFollowerDoesNotExist() {
         // Arrange
-        when(userDao.findById(FOLLOWER_ID)).thenReturn(Optional.empty());
+        when(userService.getUserById(FOLLOWER_ID)).thenReturn(Optional.empty());
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -79,8 +78,8 @@ public class UserFollowServiceImplTest {
     @Test
     public void shouldRejectFollowWhenFollowedDoesNotExist() {
         // Arrange
-        when(userDao.findById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
-        when(userDao.findById(FOLLOWED_ID)).thenReturn(Optional.empty());
+        when(userService.getUserById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
+        when(userService.getUserById(FOLLOWED_ID)).thenReturn(Optional.empty());
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -93,8 +92,8 @@ public class UserFollowServiceImplTest {
     @Test
     public void shouldUnfollowWhenBothUsersExist() {
         // Arrange
-        when(userDao.findById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
-        when(userDao.findById(FOLLOWED_ID)).thenReturn(Optional.of(userWithId(FOLLOWED_ID)));
+        when(userService.getUserById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
+        when(userService.getUserById(FOLLOWED_ID)).thenReturn(Optional.of(userWithId(FOLLOWED_ID)));
         when(userFollowDao.unfollow(FOLLOWER_ID, FOLLOWED_ID)).thenReturn(true);
 
         // Exercise
@@ -144,8 +143,8 @@ public class UserFollowServiceImplTest {
     @Test
     public void shouldToggleFollowFromFalseToTrue() {
         // Arrange
-        when(userDao.findById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
-        when(userDao.findById(FOLLOWED_ID)).thenReturn(Optional.of(userWithId(FOLLOWED_ID)));
+        when(userService.getUserById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
+        when(userService.getUserById(FOLLOWED_ID)).thenReturn(Optional.of(userWithId(FOLLOWED_ID)));
         when(userFollowDao.isFollowing(FOLLOWER_ID, FOLLOWED_ID)).thenReturn(false);
         when(userFollowDao.follow(FOLLOWER_ID, FOLLOWED_ID)).thenReturn(true);
 
@@ -159,8 +158,8 @@ public class UserFollowServiceImplTest {
     @Test
     public void shouldToggleFollowFromTrueToFalse() {
         // Arrange
-        when(userDao.findById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
-        when(userDao.findById(FOLLOWED_ID)).thenReturn(Optional.of(userWithId(FOLLOWED_ID)));
+        when(userService.getUserById(FOLLOWER_ID)).thenReturn(Optional.of(userWithId(FOLLOWER_ID)));
+        when(userService.getUserById(FOLLOWED_ID)).thenReturn(Optional.of(userWithId(FOLLOWED_ID)));
         when(userFollowDao.isFollowing(FOLLOWER_ID, FOLLOWED_ID)).thenReturn(true);
         when(userFollowDao.unfollow(FOLLOWER_ID, FOLLOWED_ID)).thenReturn(true);
 

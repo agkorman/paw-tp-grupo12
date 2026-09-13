@@ -25,4 +25,19 @@ public interface ReviewTagService {
      * resolve to the same dimension. Returns the resolved tag list on success.
      */
     List<ReviewTag> validateSelection(Collection<Short> tagIds);
+
+    /**
+     * Replaces the whole tag selection assigned to a review.
+     */
+    void replaceAssignments(long reviewId, Collection<Short> tagIds);
+
+    /**
+     * Returns the tags assigned to each of the given reviews, keyed by review id.
+     */
+    Map<Long, List<ReviewTag>> findByReviewIds(Collection<Long> reviewIds);
+
+    /**
+     * Returns, per car id, how many times each tag was assigned to a review of that car.
+     */
+    Map<Long, Map<Short, Integer>> getTagCountsForCars(Collection<Long> carIds);
 }

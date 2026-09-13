@@ -5,8 +5,6 @@ import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.UserRole;
-import ar.edu.itba.paw.persistence.CarRequestDao;
-import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.services.exception.DuplicateUserException;
 import ar.edu.itba.paw.services.exception.EmailAlreadyExistsException;
@@ -40,16 +38,11 @@ public class UserServiceImpl implements UserService {
     private static final List<String> MODERATOR_EMAIL_ROLES = Arrays.asList(UserRole.MODERATOR, UserRole.ADMIN);
 
     private final UserDao userDao;
-    private final ReviewDao reviewDao;
-    private final CarRequestDao carRequestDao;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(final UserDao userDao, final ReviewDao reviewDao, final CarRequestDao carRequestDao,
-                           final PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(final UserDao userDao, final PasswordEncoder passwordEncoder) {
         this.userDao = userDao;
-        this.reviewDao = reviewDao;
-        this.carRequestDao = carRequestDao;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -82,18 +75,23 @@ public class UserServiceImpl implements UserService {
         final String normalizedUsername = StringUtils.normalize(username);
         final String normalizedEmail = normalizeEmail(email);
         if (normalizedUsername == null) {
+            LOGGER.warn("create user rejected: username is required");
             throw new InvalidServiceInputException("Username is required.");
         }
         if (normalizedEmail == null) {
+            LOGGER.warn("create user rejected: email is required username={}", normalizedUsername);
             throw new InvalidServiceInputException("Email is required.");
         }
         if (rawPassword == null || rawPassword.isEmpty()) {
+            LOGGER.warn("create user rejected: password is required username={}", normalizedUsername);
             throw new InvalidServiceInputException("Password is required.");
         }
         if (userDao.findByUsername(normalizedUsername).isPresent()) {
+            LOGGER.warn("create user rejected: username already exists username={}", normalizedUsername);
             throw new UsernameAlreadyExistsException(normalizedUsername);
         }
         if (userDao.findByEmail(normalizedEmail).isPresent()) {
+            LOGGER.warn("create user rejected: email already exists email={}", normalizedEmail);
             throw new EmailAlreadyExistsException(normalizedEmail);
         }
 
@@ -112,15 +110,6 @@ public class UserServiceImpl implements UserService {
             LOGGER.error("create user failed: persistence error username={}", normalizedUsername, e);
             throw new ServiceOperationException("Failed to create user " + normalizedUsername, e);
         }
-        try {
-            reviewDao.bindReviewsToUserByEmail(user.getId(), normalizedEmail);
-            carRequestDao.bindRequestsToUserByEmail(user.getId(), normalizedEmail);
-        } catch (final DataAccessException e) {
-            LOGGER.error("bind pre-existing content to new user failed: persistence error userId={} username={}",
-                    user.getId(), normalizedUsername, e);
-            throw new ServiceOperationException("Failed to bind existing content to user " + normalizedUsername, e);
-        }
-        LOGGER.info("Created user id={} username={} role={}", user.getId(), normalizedUsername, DEFAULT_ROLE);
         return user;
     }
 

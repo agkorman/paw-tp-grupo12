@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.BodyTypeRequest;
-import ar.edu.itba.paw.persistence.BodyTypeDao;
 import ar.edu.itba.paw.persistence.BodyTypeRequestDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +27,7 @@ public class BodyTypeRequestServiceImplTest {
     @Mock
     private BodyTypeRequestDao bodyTypeRequestDao;
     @Mock
-    private BodyTypeDao bodyTypeDao;
+    private BodyTypeService bodyTypeService;
     @Mock
     private EmailService emailService;
 
@@ -86,7 +85,7 @@ public class BodyTypeRequestServiceImplTest {
     public void shouldApprovePendingRequestUsingOverrideName() {
         // Arrange
         when(bodyTypeRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest("Existing Body")));
-        when(bodyTypeDao.findByName("Override Body")).thenReturn(Optional.empty());
+        when(bodyTypeService.findByName("Override Body")).thenReturn(Optional.empty());
         when(bodyTypeRequestDao.updateStatus(REQUEST_ID, BodyTypeRequestService.STATUS_PENDING,
                 BodyTypeRequestService.STATUS_APPROVED)).thenReturn(true);
 
@@ -101,7 +100,7 @@ public class BodyTypeRequestServiceImplTest {
     public void shouldNotApprovePendingRequestWhenNameAlreadyExists() {
         // Arrange
         when(bodyTypeRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest("Sedan")));
-        when(bodyTypeDao.findByName("Sedan")).thenReturn(Optional.of(TestModels.bodyType(1L, "Sedan", LocalDateTime.now())));
+        when(bodyTypeService.findByName("Sedan")).thenReturn(Optional.of(TestModels.bodyType(1L, "Sedan", LocalDateTime.now())));
 
         // Exercise
         final boolean result = bodyTypeRequestService.approvePendingRequest(REQUEST_ID);

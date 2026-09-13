@@ -6,11 +6,13 @@ import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewImageDao;
 import ar.edu.itba.paw.persistence.ReviewTagDao;
 import ar.edu.itba.paw.services.exception.InvalidReviewTagSelectionException;
+import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.QueryTimeoutException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -37,9 +40,26 @@ public class ReviewServiceImplTest {
     private ReviewImageDao reviewImageDao;
     @Mock
     private ReviewTagService reviewTagService;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private ReviewServiceImpl reviewService;
+
+    @Test
+    public void shouldTranslatePersistenceFailureWhenClaimingPreRegistrationReviews() {
+        // Arrange
+        final String email = "u@example.com";
+        final QueryTimeoutException dbException = new QueryTimeoutException("statement timed out");
+        when(reviewDao.bindReviewsToUserByEmail(USER_ID, email)).thenThrow(dbException);
+
+        // Exercise
+        final ServiceOperationException result = assertThrows(ServiceOperationException.class,
+                () -> reviewService.claimPreRegistrationReviews(USER_ID, email));
+
+        // Assertions
+        assertSame(dbException, result.getCause());
+    }
 
     private static Review review(final String title) {
         return TestModels.review(REVIEW_ID, USER_ID, "u@example.com", CAR_ID, new BigDecimal("4.5"),

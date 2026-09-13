@@ -2,7 +2,6 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.persistence.BrandDao;
-import ar.edu.itba.paw.persistence.CarDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,7 +25,7 @@ public class BrandServiceImplTest {
     @Mock
     private BrandDao brandDao;
     @Mock
-    private CarDao carDao;
+    private CarService carService;
 
     @InjectMocks
     private BrandServiceImpl brandService;
@@ -116,7 +115,7 @@ public class BrandServiceImplTest {
     public void shouldNotDeleteBrandWhenItHasAssociatedCars() {
         // Arrange
         when(brandDao.findById(BRAND_ID)).thenReturn(Optional.of(brand()));
-        when(carDao.countByBrandId(BRAND_ID)).thenReturn(3L);
+        when(carService.countCarsByBrandId(BRAND_ID)).thenReturn(3L);
 
         // Exercise
         final boolean result = brandService.deleteBrand(BRAND_ID);
@@ -129,7 +128,7 @@ public class BrandServiceImplTest {
     public void shouldDeleteBrandWhenItExistsAndHasNoCars() {
         // Arrange
         when(brandDao.findById(BRAND_ID)).thenReturn(Optional.of(brand()));
-        when(carDao.countByBrandId(BRAND_ID)).thenReturn(0L);
+        when(carService.countCarsByBrandId(BRAND_ID)).thenReturn(0L);
         when(brandDao.delete(BRAND_ID)).thenReturn(true);
 
         // Exercise

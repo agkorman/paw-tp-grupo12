@@ -134,7 +134,6 @@ class CarReviewControllerTest {
         when(reviewLikeService.getLikedReviewIds(any(), anyLong())).thenReturn(Collections.emptySet());
         when(reviewLikeService.countReplyLikesByReplyIds(any())).thenReturn(Collections.emptyMap());
         when(reviewLikeService.getLikedReplyIds(any(), anyLong())).thenReturn(Collections.emptySet());
-        when(carService.getCarsByBrandAndBodyType(anyString(), anyString())).thenReturn(Collections.emptyList());
 
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("");
         when(reviewTagService.validateSelection(any())).thenReturn(Collections.emptyList());
@@ -444,7 +443,7 @@ class CarReviewControllerTest {
         arrangeStandardReviewCollaboratorsAndI18n();
         final Review existing = reviewOwnedBy(1L, 42L);
         when(reviewService.getReviewById(eq(1L))).thenReturn(Optional.of(existing));
-        when(reviewService.hideReview(eq(1L), eq("Duplicated review."))).thenReturn(true);
+        when(reviewService.hideReview(eq(1L), eq(1L), eq("Duplicated review."))).thenReturn(true);
         bindPrincipal(testUser(1L));
 
         try {

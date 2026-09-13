@@ -1,6 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
-import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.UserRegistrationService;
 import ar.edu.itba.paw.services.exception.DuplicateUserException;
 import ar.edu.itba.paw.services.exception.EmailAlreadyExistsException;
 import ar.edu.itba.paw.services.exception.ServiceOperationException;
@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerTest {
 
     @Mock
-    private UserService userService;
+    private UserRegistrationService userRegistrationService;
 
     @Mock
     private AuthenticationManager authenticationManager;
@@ -198,7 +198,7 @@ class AuthControllerTest {
     @Test
     void createAccount_emailAlreadyExists_showsFormWithError() throws Exception {
         // Arrange
-        doThrow(new EmailAlreadyExistsException("duplicate@test.com")).when(userService).createUser(any(), any(), any());
+        doThrow(new EmailAlreadyExistsException("duplicate@test.com")).when(userRegistrationService).register(any(), any(), any());
         final MockMvc mockMvc = authMvc();
         // Exercise
         final ResultActions resultActions = mockMvc.perform(post("/register")
@@ -217,7 +217,7 @@ class AuthControllerTest {
     void createAccount_duplicateUserRace_showsFormWithDuplicateError() throws Exception {
         // Arrange
         doThrow(new DuplicateUserException(new RuntimeException("uq_users_email")))
-                .when(userService).createUser(any(), any(), any());
+                .when(userRegistrationService).register(any(), any(), any());
         final MockMvc mockMvc = authMvc();
         // Exercise
         final ResultActions resultActions = mockMvc.perform(post("/register")
@@ -236,7 +236,7 @@ class AuthControllerTest {
     void createAccount_persistenceFailure_showsFormWithUnavailableError() throws Exception {
         // Arrange
         doThrow(new ServiceOperationException("db down", new RuntimeException()))
-                .when(userService).createUser(any(), any(), any());
+                .when(userRegistrationService).register(any(), any(), any());
         final MockMvc mockMvc = authMvc();
         // Exercise
         final ResultActions resultActions = mockMvc.perform(post("/register")
@@ -254,7 +254,7 @@ class AuthControllerTest {
     @Test
     void createAccount_usernameAlreadyExists_showsFormWithError() throws Exception {
         // Arrange
-        doThrow(new UsernameAlreadyExistsException("validuser")).when(userService).createUser(any(), any(), any());
+        doThrow(new UsernameAlreadyExistsException("validuser")).when(userRegistrationService).register(any(), any(), any());
         final MockMvc mockMvc = authMvc();
         // Exercise
         final ResultActions resultActions = mockMvc.perform(post("/register")

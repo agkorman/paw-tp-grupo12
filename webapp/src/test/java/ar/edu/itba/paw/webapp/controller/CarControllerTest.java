@@ -404,7 +404,7 @@ class CarControllerTest {
                         null, "pending", LocalDateTime.now(), CarSearchCriteria.FUEL_TYPE_COMBUSTION, 120,
                         6, CarSearchCriteria.TRANSMISSION_AUTOMATIC, BigDecimal.valueOf(8.5), 200, null);
 
-        when(carService.requestCarCreation(
+        when(carRequestService.requestCarCreation(
                         eq(1L), eq("Corolla"), eq(1L), eq(2020),
                         eq(1L), eq("driver@test.com"),
                         eq("A sedan description that is valid."),

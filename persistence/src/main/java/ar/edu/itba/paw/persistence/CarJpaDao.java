@@ -169,6 +169,38 @@ public class CarJpaDao implements CarDao {
     }
 
     @Override
+    public boolean existsByBrandNameAndBodyTypeNameAndModelAndYearExcludingId(final String brandName,
+                                                                              final String bodyTypeName,
+                                                                              final String normalizedModel,
+                                                                              final Integer year,
+                                                                              final long excludedCarId) {
+        if (brandName == null || bodyTypeName == null || normalizedModel == null) {
+            return false;
+        }
+        final StringBuilder jpql = new StringBuilder(
+                "SELECT COUNT(c) FROM Car c " +
+                "WHERE LOWER(c.spec.brand.name) = LOWER(:brandName) " +
+                "AND LOWER(c.spec.bodyType.name) = LOWER(:bodyTypeName) " +
+                "AND LOWER(TRIM(c.spec.model)) = :normalizedModel " +
+                "AND c.id <> :excludedCarId "
+        );
+        if (year == null) {
+            jpql.append("AND c.spec.year IS NULL");
+        } else {
+            jpql.append("AND c.spec.year = :year");
+        }
+        final javax.persistence.TypedQuery<Long> query = em.createQuery(jpql.toString(), Long.class)
+                .setParameter("brandName", brandName)
+                .setParameter("bodyTypeName", bodyTypeName)
+                .setParameter("normalizedModel", normalizedModel)
+                .setParameter("excludedCarId", excludedCarId);
+        if (year != null) {
+            query.setParameter("year", year);
+        }
+        return query.getSingleResult() > 0L;
+    }
+
+    @Override
     public Page<Car> findByCriteria(final CarSearchCriteria criteria) {
         final List<Object> params = new ArrayList<>();
         final String whereClause = buildWhereClause(criteria, params);

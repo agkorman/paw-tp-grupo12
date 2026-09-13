@@ -3,9 +3,7 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewReplyDao;
-import ar.edu.itba.paw.persistence.UserDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,13 +30,14 @@ public class ReviewReplyServiceImplTest {
     private static final long REVIEW_ID = 20L;
     private static final long REPLY_ID = 30L;
     private static final long USER_ID = 40L;
+    private static final long MODERATOR_ID = 50L;
 
     @Mock
     private ReviewReplyDao reviewReplyDao;
     @Mock
-    private ReviewDao reviewDao;
+    private ReviewService reviewService;
     @Mock
-    private UserDao userDao;
+    private UserService userService;
     @Mock
     private CarService carService;
     @Mock
@@ -65,8 +64,8 @@ public class ReviewReplyServiceImplTest {
     public void shouldCreateReplyWithTrimmedBodyWhenReviewAndUserExist() {
         // Arrange
         final ReviewReply created = reply(USER_ID);
-        when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(review()));
-        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
+        when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user()));
         when(reviewReplyDao.create(REVIEW_ID, USER_ID, "Reply body")).thenReturn(created);
 
         // Exercise
@@ -81,8 +80,8 @@ public class ReviewReplyServiceImplTest {
     public void shouldRejectCreateReplyWhenBodyIsTooLong() {
         // Arrange
         final String body = "a".repeat(ReviewReplyServiceImpl.MAX_BODY_LENGTH + 1);
-        when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(review()));
-        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
+        when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user()));
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -95,8 +94,8 @@ public class ReviewReplyServiceImplTest {
     @Test
     public void shouldWrapDaoFailureWhenCreatingReply() {
         // Arrange
-        when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(review()));
-        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
+        when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user()));
         when(reviewReplyDao.create(REVIEW_ID, USER_ID, "Reply body")).thenThrow(new DataAccessResourceFailureException("db"));
 
         // Exercise
@@ -179,14 +178,14 @@ public class ReviewReplyServiceImplTest {
     public void shouldHideReplyWhenReplyAndReviewExist() {
         // Arrange
         when(reviewReplyDao.findById(REPLY_ID)).thenReturn(Optional.of(reply(USER_ID)));
-        when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(review()));
-        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(Optional.of(review()));
+        when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user()));
         when(carService.getCarById(1L)).thenReturn(Optional.of(TestModels.car(1L, 2L, "Brand", "Model",
                 3L, "Sedan", "Description", LocalDateTime.now())));
         when(reviewReplyDao.delete(REPLY_ID)).thenReturn(true);
 
         // Exercise
-        final boolean result = reviewReplyService.hideReply(REPLY_ID, "Moderation reason");
+        final boolean result = reviewReplyService.hideReply(REPLY_ID, MODERATOR_ID, "Moderation reason");
 
         // Assertions
         assertTrue(result);
@@ -198,7 +197,7 @@ public class ReviewReplyServiceImplTest {
         when(reviewReplyDao.findById(REPLY_ID)).thenReturn(Optional.empty());
 
         // Exercise
-        final boolean result = reviewReplyService.hideReply(REPLY_ID, "Moderation reason");
+        final boolean result = reviewReplyService.hideReply(REPLY_ID, MODERATOR_ID, "Moderation reason");
 
         // Assertions
         assertFalse(result);
@@ -294,8 +293,8 @@ public class ReviewReplyServiceImplTest {
     public void shouldRejectCreateReplyWhenBodyIsBlank() {
         // Arrange
         final String blankBody = "   ";
-        when(reviewDao.findById(REVIEW_ID)).thenReturn(Optional.of(review()));
-        when(userDao.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
+        when(userService.getUserById(USER_ID)).thenReturn(Optional.of(user()));
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,

@@ -2,7 +2,6 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.persistence.UserFollowDao;
 import ar.edu.itba.paw.services.exception.SelfFollowException;
 import ar.edu.itba.paw.services.exception.UserNotFoundException;
@@ -22,15 +21,15 @@ public class UserFollowServiceImpl implements UserFollowService {
     );
 
     private final UserFollowDao userFollowDao;
-    private final UserDao userDao;
+    private final UserService userService;
 
     @Autowired
     public UserFollowServiceImpl(
         final UserFollowDao userFollowDao,
-        final UserDao userDao
+        final UserService userService
     ) {
         this.userFollowDao = userFollowDao;
-        this.userDao = userDao;
+        this.userService = userService;
     }
 
     @Override
@@ -116,14 +115,14 @@ public class UserFollowServiceImpl implements UserFollowService {
             );
             throw new SelfFollowException(followerId);
         }
-        if (userDao.findById(followerId).isEmpty()) {
+        if (userService.getUserById(followerId).isEmpty()) {
             LOGGER.warn(
                 "follow rejected: follower not found id={}",
                 followerId
             );
             throw new UserNotFoundException(followerId);
         }
-        if (userDao.findById(followedId).isEmpty()) {
+        if (userService.getUserById(followedId).isEmpty()) {
             LOGGER.warn(
                 "follow rejected: followed not found id={}",
                 followedId

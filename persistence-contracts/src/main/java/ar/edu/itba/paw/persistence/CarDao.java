@@ -22,6 +22,10 @@ public interface CarDao {
                                                                    String normalizedModel, Integer year,
                                                                    long excludedCarId);
 
+    boolean existsByBrandNameAndBodyTypeNameAndModelAndYearExcludingId(String brandName, String bodyTypeName,
+                                                                       String normalizedModel, Integer year,
+                                                                       long excludedCarId);
+
     Page<Car> findByCriteria(CarSearchCriteria criteria);
 
     List<Long> findIdsByCriteria(CarSearchCriteria criteria);
