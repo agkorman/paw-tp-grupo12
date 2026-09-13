@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
-import ar.edu.itba.paw.webapp.util.LogSanitizer;
 
 import javax.validation.Valid;
 
@@ -63,7 +62,6 @@ public class CatalogRequestController {
             return redirectBack(referer);
         }
         brandRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), form.getName(), form.getComments());
-        LOGGER.info("user id={} submitted brand request name={}", currentUser.getId(), LogSanitizer.forLog(form.getName(), LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         return redirectToCatalog("brand");
     }
 
@@ -81,7 +79,6 @@ public class CatalogRequestController {
             return redirectBack(referer);
         }
         bodyTypeRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(), form.getName(), form.getComments());
-        LOGGER.info("user id={} submitted body type request name={}", currentUser.getId(), LogSanitizer.forLog(form.getName(), LogSanitizer.MAX_LOG_NAME_CODE_POINTS));
         return redirectToCatalog("body-type");
     }
 
@@ -102,10 +99,8 @@ public class CatalogRequestController {
             adminRequestService.createPendingRequest(currentUser.getId(), currentUser.getEmail(),
                     form.getMotivation(), form.getBio(), form.getJustification());
         } catch (final PendingAdminRequestExistsException e) {
-            LOGGER.warn("admin request rejected: already has pending userId={}", currentUser.getId());
             return redirectBack(referer);
         }
-        LOGGER.info("user id={} submitted admin moderator request", currentUser.getId());
         return redirectBack(referer, "moderator");
     }
 

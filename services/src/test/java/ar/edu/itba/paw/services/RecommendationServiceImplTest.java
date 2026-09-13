@@ -5,9 +5,6 @@ import ar.edu.itba.paw.model.CarRecommendation;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.ReviewTag;
-import ar.edu.itba.paw.persistence.CarDao;
-import ar.edu.itba.paw.persistence.ReviewDao;
-import ar.edu.itba.paw.persistence.ReviewTagDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,13 +29,11 @@ import static org.mockito.Mockito.when;
 public class RecommendationServiceImplTest {
 
     @Mock
-    private CarDao carDao;
+    private CarService carService;
     @Mock
     private ReviewTagService reviewTagService;
     @Mock
-    private ReviewTagDao reviewTagDao;
-    @Mock
-    private ReviewDao reviewDao;
+    private ReviewService reviewService;
 
     @InjectMocks
     private RecommendationServiceImpl recommendationService;
@@ -75,12 +70,12 @@ public class RecommendationServiceImplTest {
 
     private void mockCandidateIds(final List<Car> cars) {
         final List<Long> ids = cars.stream().map(Car::getId).collect(Collectors.toList());
-        when(carDao.findIdsByCriteria(any(CarSearchCriteria.class))).thenReturn(ids);
+        when(carService.searchCarIds(any(CarSearchCriteria.class))).thenReturn(ids);
     }
 
     private void mockCandidates(final List<Car> cars) {
         mockCandidateIds(cars);
-        when(carDao.findByIds(anyCollection())).thenReturn(cars);
+        when(carService.getCarsByIds(anyCollection())).thenReturn(cars);
     }
 
     @Test
@@ -159,8 +154,8 @@ public class RecommendationServiceImplTest {
         final Car carA = car(1L);
         when(reviewTagService.getAll()).thenReturn(allTags());
         mockCandidateIds(List.of(carA));
-        when(reviewDao.findStatsByCarIds(List.of(1L))).thenReturn(List.of()); // zero reviews
-        when(reviewTagDao.getTagCountsForCars(List.of(1L))).thenReturn(Map.of());
+        when(reviewService.getReviewStatsByCarIds(List.of(1L))).thenReturn(List.of()); // zero reviews
+        when(reviewTagService.getTagCountsForCars(List.of(1L))).thenReturn(Map.of());
 
         // Exercise
         final List<CarRecommendation> result = recommendationService.recommend(criteria, 5);
@@ -177,8 +172,8 @@ public class RecommendationServiceImplTest {
         final Car carB = car(2L);
         when(reviewTagService.getAll()).thenReturn(allTags());
         mockCandidates(List.of(carA, carB));
-        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10), stats(2L, 10)));
-        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
+        when(reviewService.getReviewStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10), stats(2L, 10)));
+        when(reviewTagService.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
                 2L, Map.of(COMFORT_TAG_ID, 4)
         ));
 
@@ -198,8 +193,8 @@ public class RecommendationServiceImplTest {
         final Car carB = car(2L);
         when(reviewTagService.getAll()).thenReturn(allTags());
         mockCandidates(List.of(carA, carB));
-        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10), stats(2L, 10)));
-        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
+        when(reviewService.getReviewStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10), stats(2L, 10)));
+        when(reviewTagService.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
                 1L, Map.of(COMFORT_TAG_ID, 8),
                 2L, Map.of(COMFORT_TAG_ID, 2)
         ));
@@ -223,9 +218,9 @@ public class RecommendationServiceImplTest {
         final Car carC = car(3L);
         when(reviewTagService.getAll()).thenReturn(allTags());
         mockCandidates(List.of(carA, carB, carC));
-        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(
+        when(reviewService.getReviewStatsByCarIds(anyCollection())).thenReturn(List.of(
                 stats(1L, 10), stats(2L, 10), stats(3L, 10)));
-        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
+        when(reviewTagService.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
                 1L, Map.of(COMFORT_TAG_ID, 8),
                 2L, Map.of(COMFORT_TAG_ID, 5),
                 3L, Map.of(COMFORT_TAG_ID, 2)
@@ -247,13 +242,13 @@ public class RecommendationServiceImplTest {
         final List<Car> cars = List.of(car(1L), car(2L), car(3L), car(4L), car(5L), car(6L));
         when(reviewTagService.getAll()).thenReturn(allTags());
         mockCandidates(cars);
-        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(
+        when(reviewService.getReviewStatsByCarIds(anyCollection())).thenReturn(List.of(
                 stats(1L, 10), stats(2L, 10), stats(3L, 10), stats(4L, 10), stats(5L, 10), stats(6L, 10)));
         final Map<Long, Map<Short, Integer>> counts = new HashMap<>();
         for (long id = 1; id <= 6; id++) {
             counts.put(id, Map.of(COMFORT_TAG_ID, (int) (10 - id)));
         }
-        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(counts);
+        when(reviewTagService.getTagCountsForCars(anyCollection())).thenReturn(counts);
 
         // Exercise
         final List<CarRecommendation> result = recommendationService.recommend(criteria, 0);
@@ -270,8 +265,8 @@ public class RecommendationServiceImplTest {
         final Car carA = car(1L);
         when(reviewTagService.getAll()).thenReturn(allTags());
         mockCandidates(List.of(carA));
-        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10)));
-        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
+        when(reviewService.getReviewStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10)));
+        when(reviewTagService.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
                 1L, Map.of(COMFORT_TAG_ID, 6, UNCOMFORT_TAG_ID, 5)));
 
         // Exercise
@@ -293,8 +288,8 @@ public class RecommendationServiceImplTest {
         final Car carA = car(1L);
         when(reviewTagService.getAll()).thenReturn(allTags());
         mockCandidates(List.of(carA));
-        when(reviewDao.findStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10)));
-        when(reviewTagDao.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
+        when(reviewService.getReviewStatsByCarIds(anyCollection())).thenReturn(List.of(stats(1L, 10)));
+        when(reviewTagService.getTagCountsForCars(anyCollection())).thenReturn(Map.of(
                 1L, Map.of(COMFORT_TAG_ID, 1)));
 
         // Exercise

@@ -11,12 +11,13 @@ import ar.edu.itba.paw.model.StoredImagePayload;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewImageDao;
-import ar.edu.itba.paw.persistence.ReviewTagDao;
 import ar.edu.itba.paw.services.exception.ReviewNotFoundException;
 import ar.edu.itba.paw.services.exception.ReviewOwnershipException;
+import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,21 +40,30 @@ public class ReviewServiceImpl implements ReviewService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReviewServiceImpl.class);
 
     private final ReviewDao reviewDao;
-    private final ReviewTagDao reviewTagDao;
     private final ReviewImageDao reviewImageDao;
     private final ReviewTagService reviewTagService;
     private final EmailService emailService;
 
     @Autowired
-    public ReviewServiceImpl(final ReviewDao reviewDao, final ReviewTagDao reviewTagDao,
+    public ReviewServiceImpl(final ReviewDao reviewDao,
                              final ReviewImageDao reviewImageDao,
                              final ReviewTagService reviewTagService,
                              final EmailService emailService) {
         this.reviewDao = reviewDao;
-        this.reviewTagDao = reviewTagDao;
         this.reviewImageDao = reviewImageDao;
         this.reviewTagService = reviewTagService;
         this.emailService = emailService;
+    }
+
+    @Override
+    @Transactional
+    public void claimPreRegistrationReviews(final long userId, final String email) {
+        try {
+            reviewDao.bindReviewsToUserByEmail(userId, email);
+        } catch (final DataAccessException e) {
+            LOGGER.error("claim pre-registration reviews failed userId={}", userId, e);
+            throw new ServiceOperationException("Failed to claim pre-registration reviews for userId=" + userId, e);
+        }
     }
 
     @Override
@@ -68,7 +78,7 @@ public class ReviewServiceImpl implements ReviewService {
             reviewImageDao.replaceAll(review.getId(), ImagePayloadUtils.normalizeImages(images));
         }
         if (tagIds != null && !tagIds.isEmpty()) {
-            reviewTagDao.replaceAssignments(review.getId(), tagIds);
+            reviewTagService.replaceAssignments(review.getId(), tagIds);
             LOGGER.info("created review id={} userId={} carId={} tagCount={} imageCount={}", review.getId(), userId, carId,
                     tagIds.size(), images == null ? 0 : images.size());
             return withTags(reviewDao.findById(review.getId()).orElse(review));
@@ -115,8 +125,18 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public boolean existsReviewById(final long id) {
+        return reviewDao.existsById(id);
+    }
+
+    @Override
     public Optional<Review> getReviewById(final long id) {
         return withTags(reviewDao.findById(id));
+    }
+
+    @Override
+    public boolean existsReviewById(final long id) {
+        return reviewDao.existsById(id);
     }
 
     @Override
@@ -173,7 +193,7 @@ public class ReviewServiceImpl implements ReviewService {
         final Optional<Review> updated = reviewDao.update(id, carId, rating, title, body, ownershipStatus,
                 modelYear, mileageKm, wouldRecommend);
         if (updated.isPresent()) {
-            reviewTagDao.replaceAssignments(id, tagIds == null ? Collections.emptyList() : tagIds);
+            reviewTagService.replaceAssignments(id, tagIds);
             final List<ImagePayload> normalized = ImagePayloadUtils.normalizeImages(
                     finalImages == null ? Collections.emptyList() : finalImages);
             reviewImageDao.replaceAll(id, normalized);
@@ -312,9 +332,10 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public boolean hideReview(final long reviewId, final String reason) {
+    public boolean hideReview(final long reviewId, final long moderatorUserId, final String reason) {
         final Optional<Review> reviewOptional = reviewDao.findById(reviewId);
         if (reviewOptional.isEmpty()) {
+            LOGGER.warn("hide review rejected: review not found id={}", reviewId);
             return false;
         }
         final Review review = reviewOptional.get();
@@ -322,9 +343,10 @@ public class ReviewServiceImpl implements ReviewService {
         final String recipientEmail = resolveRecipientEmail(review);
         final boolean deleted = reviewDao.delete(reviewId);
         if (!deleted) {
+            LOGGER.warn("hide review rejected: delete failed id={}", reviewId);
             return false;
         }
-        LOGGER.info("deleted review id={} (hidden by moderator)", reviewId);
+        LOGGER.info("moderator id={} hid review id={}", moderatorUserId, reviewId);
         if (recipientEmail != null) {
             emailService.sendReviewHiddenNotification(recipientEmail, review.getTitle(), carName, reason);
         }
@@ -393,7 +415,7 @@ public class ReviewServiceImpl implements ReviewService {
             return;
         }
         final List<Long> ids = reviews.stream().map(Review::getId).collect(Collectors.toList());
-        final Map<Long, List<ReviewTag>> tagsByReview = reviewTagDao.findByReviewIds(ids);
+        final Map<Long, List<ReviewTag>> tagsByReview = reviewTagService.findByReviewIds(ids);
         for (final Review review : reviews) {
             review.setTags(tagsByReview.getOrDefault(review.getId(), Collections.emptyList()));
         }

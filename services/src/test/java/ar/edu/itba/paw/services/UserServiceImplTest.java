@@ -2,8 +2,6 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.EmailRecipient;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.CarRequestDao;
-import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.services.exception.DuplicateUserException;
 import ar.edu.itba.paw.services.exception.ServiceOperationException;
@@ -41,10 +39,6 @@ public class UserServiceImplTest {
 
     @Mock
     private UserDao userDao;
-    @Mock
-    private ReviewDao reviewDao;
-    @Mock
-    private CarRequestDao carRequestDao;
     @Mock
     private PasswordEncoder passwordEncoder;
 

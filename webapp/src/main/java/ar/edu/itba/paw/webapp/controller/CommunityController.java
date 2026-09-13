@@ -169,17 +169,12 @@ public class CommunityController {
                     communityForm.getDescription(),
                     communityForm.getSelectedTopicIds()
             );
-            LOGGER.info("created community slug={} userId={}", community.getSlug(), currentUser.getId());
             return "redirect:/communities/" + community.getSlug();
         } catch (final InvalidCommunityTopicSelectionException e) {
-            LOGGER.warn("create community rejected: invalid topic selection userId={} reason={}",
-                    currentUser.getId(), e.getReason());
             errors.rejectValue("selectedTopicIds", resolveTopicErrorKey(e.getReason()));
             populateCreateCommunityPageModel(model);
             return "community-create.jsp";
         } catch (final CommunitySlugConflictException e) {
-            LOGGER.warn("create community rejected: slug conflict (concurrent creation) userId={}",
-                    currentUser.getId());
             errors.reject("communities.create.error.slugConflict");
             populateCreateCommunityPageModel(model);
             return "community-create.jsp";
@@ -240,12 +235,8 @@ public class CommunityController {
                     communityForm.getDescription(),
                     communityForm.getSelectedTopicIds()
             ).orElseThrow(() -> new ResourceNotFoundException("community not found"));
-            LOGGER.info("edited community slug={} userId={}",
-                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS), currentUser.getId());
             return "redirect:/communities/" + communitySlug;
         } catch (final InvalidCommunityTopicSelectionException e) {
-            LOGGER.warn("edit community rejected: invalid topic selection userId={} reason={}",
-                    currentUser.getId(), e.getReason());
             errors.rejectValue("selectedTopicIds", resolveTopicErrorKey(e.getReason()));
             populateEditCommunityPageModel(model, communitySlug, communityForm.getName());
             return "community-edit.jsp";
@@ -432,16 +423,8 @@ public class CommunityController {
                     )
                     .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
         } catch (final CommunityMembershipRequiredException e) {
-            LOGGER.warn("create community post comment rejected: not a member userId={} communitySlug={} postSlug={}",
-                    currentUser.getId(),
-                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
-                    LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
             return new ModelAndView("redirect:/communities/" + communitySlug + "/posts/" + postSlug);
         }
-        LOGGER.info("user id={} commented on communitySlug={} postSlug={}",
-                currentUser.getId(),
-                LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
-                LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.create.toast.success");
         final long totalComments = postDetail.getCommentCount() + 1L;
         final int lastPage = Math.max(1, Pagination.totalPages(totalComments, Pagination.REPLIES_PAGE_SIZE));
@@ -562,18 +545,11 @@ public class CommunityController {
                         communityPostForm.getTitle(), communityPostForm.getBody(), imagePayloads)
                 .orElseThrow(() -> new ResourceNotFoundException("community not found"));
         } catch (final CommunityPostSlugConflictException e) {
-            LOGGER.warn("create community post rejected: slug conflict (concurrent creation) userId={} communitySlug={}",
-                    currentUser.getId(),
-                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS));
             errors.reject("communities.postForm.error.slugConflict");
             populateCommunityPostFormModel(model, community);
             model.addAttribute("existingPostImageIds", "");
             return "community-post-form.jsp";
         }
-        LOGGER.info("created community post slug={} communitySlug={} userId={}",
-                LogSanitizer.forLog(createdPost.getSlug(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
-                LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
-                currentUser.getId());
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.create.toast.success");
         return "redirect:/communities/" + communitySlug + "#post-" + createdPost.getId();
     }
@@ -669,7 +645,6 @@ public class CommunityController {
             model.addAttribute("existingPostImageIds", "");
             return "community-post-form.jsp";
         } catch (final CommunityPostSlugConflictException e) {
-            LOGGER.warn("repost rejected: slug conflict reviewId={} userId={}", reviewId, currentUser.getId());
             errors.reject("communities.postForm.error.slugConflict");
             final List<Community> joinedCommunities = communityService.getJoinedCommunities(currentUser.getId());
             model.addAttribute("repostMode", true);
@@ -678,11 +653,6 @@ public class CommunityController {
             model.addAttribute("existingPostImageIds", "");
             return "community-post-form.jsp";
         }
-        LOGGER.info("reposted review reviewId={} as post slug={} communitySlug={} userId={}",
-                reviewId,
-                LogSanitizer.forLog(createdPost.getSlug(), LogSanitizer.MAX_LOG_URL_CODE_POINTS),
-                LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
-                currentUser.getId());
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.repost.toast.success");
         return "redirect:/communities/" + communitySlug + "/posts/" + createdPost.getSlug();
     }
@@ -764,10 +734,6 @@ public class CommunityController {
                         finalImages
                 )
                 .orElseThrow(() -> new ResourceNotFoundException("community post not found"));
-        LOGGER.info("updated community post slug={} communitySlug={} userId={}",
-                LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
-                LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
-                currentUser.getId());
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.post.update.toast.success");
         return redirectTo(safeRedirect);
     }
@@ -1049,11 +1015,6 @@ public class CommunityController {
                             communityPostCommentForm.getBody()
                     )
                     .orElseThrow(() -> new ResourceNotFoundException("community not found"));
-            LOGGER.info("updated community comment id={} communitySlug={} postSlug={} userId={}",
-                    commentId,
-                    LogSanitizer.forLog(communitySlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
-                    LogSanitizer.forLog(postSlug, LogSanitizer.MAX_LOG_URL_CODE_POINTS),
-                    currentUser.getId());
             redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "communities.comment.update.toast.success");
         }
         return redirectTo(safeRedirect);

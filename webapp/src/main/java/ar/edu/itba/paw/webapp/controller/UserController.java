@@ -270,7 +270,6 @@ public class UserController {
         try {
             userFollowService.toggleFollow(currentUser.getId(), userId);
         } catch (final SelfFollowException e) {
-            LOGGER.warn("self-follow attempt blocked userId={}", userId);
         }
 
         return new ModelAndView("redirect:/users/" + userId);

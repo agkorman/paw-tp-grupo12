@@ -3,7 +3,6 @@ package ar.edu.itba.paw.services;
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.BrandRequest;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.BrandRequestDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +31,7 @@ public class BrandRequestServiceImplTest {
     @Mock
     private BrandRequestDao brandRequestDao;
     @Mock
-    private BrandDao brandDao;
+    private BrandService brandService;
     @Mock
     private EmailService emailService;
 
@@ -78,7 +77,7 @@ public class BrandRequestServiceImplTest {
         // Arrange
         final BrandRequest request = pendingRequest("Existing Brand");
         when(brandRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(request));
-        when(brandDao.findByName("Renamed Brand")).thenReturn(Optional.empty());
+        when(brandService.findByName("Renamed Brand")).thenReturn(Optional.empty());
         when(brandRequestDao.updateStatus(REQUEST_ID, BrandRequestService.STATUS_PENDING,
                 BrandRequestService.STATUS_APPROVED)).thenReturn(true);
 
@@ -94,7 +93,7 @@ public class BrandRequestServiceImplTest {
         // Arrange
         final BrandRequest request = pendingRequest("Existing Brand");
         when(brandRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(request));
-        when(brandDao.findByName("Existing Brand")).thenReturn(Optional.of(TestModels.brand(1L, "Existing Brand", LocalDateTime.now())));
+        when(brandService.findByName("Existing Brand")).thenReturn(Optional.of(TestModels.brand(1L, "Existing Brand", LocalDateTime.now())));
 
         // Exercise
         final boolean result = brandRequestService.approvePendingRequest(REQUEST_ID);
@@ -125,7 +124,7 @@ public class BrandRequestServiceImplTest {
         final User user = TestModels.user(USER_ID, "user", "fallback@example.com", "p", "user", LocalDateTime.now());
         request.setSubmittedByUser(user);
         when(brandRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(request));
-        when(brandDao.findByName("New Brand")).thenReturn(Optional.empty());
+        when(brandService.findByName("New Brand")).thenReturn(Optional.empty());
         when(brandRequestDao.updateStatus(REQUEST_ID, BrandRequestService.STATUS_PENDING,
                 BrandRequestService.STATUS_APPROVED)).thenReturn(true);
 
@@ -167,7 +166,7 @@ public class BrandRequestServiceImplTest {
         // Arrange
         final DataAccessResourceFailureException cause = new DataAccessResourceFailureException("database unavailable");
         when(brandRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest("New Brand")));
-        when(brandDao.findByName("New Brand")).thenThrow(cause);
+        when(brandService.findByName("New Brand")).thenThrow(cause);
 
         // Exercise
         final DataAccessResourceFailureException ex = assertThrows(DataAccessResourceFailureException.class,

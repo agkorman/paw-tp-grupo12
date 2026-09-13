@@ -260,17 +260,7 @@ public class CarReviewController {
                 reviewForm.getTagIds(),
                 imagePayloads
             );
-            LOGGER.info(
-                "created review carId={} userId={}",
-                car.getId(),
-                currentUser.getId()
-            );
         } catch (final InvalidReviewTagSelectionException e) {
-            LOGGER.warn(
-                "create review rejected: invalid tag selection carId={} userId={}",
-                car.getId(),
-                currentUser.getId()
-            );
             errors.rejectValue("tagIds", "tagIds.invalid");
             model.addAttribute("selectedCar", car);
             return "review-form.jsp";
@@ -716,17 +706,7 @@ public class CarReviewController {
                 reviewForm.getTagIds(),
                 finalImages
             );
-            LOGGER.info(
-                "updated review id={} userId={}",
-                reviewId,
-                currentUser.getId()
-            );
         } catch (final InvalidReviewTagSelectionException e) {
-            LOGGER.warn(
-                "update review rejected: invalid tag selection reviewId={} userId={}",
-                reviewId,
-                currentUser.getId()
-            );
             errors.rejectValue("tagIds", "tagIds.invalid");
             model.addAttribute("selectedCar", car);
             model.addAttribute("editMode", true);
@@ -755,11 +735,6 @@ public class CarReviewController {
             request.isUserInRole("ADMIN")
         );
         reviewService.deleteReview(reviewId);
-        LOGGER.info(
-            "user id={} deleted review id={}",
-            currentUser.getId(),
-            reviewId
-        );
         final String defaultRedirect =
             "/reviews/car/" + existingReview.getCarId() + "#reviewsFeed";
         final String safeRedirect = LoginRedirectUtils.safeRedirect(redirect, request.getContextPath()).orElse(defaultRedirect);
@@ -800,15 +775,9 @@ public class CarReviewController {
             return new ModelAndView(feedRedirect);
         }
 
-        if (!reviewService.hideReview(reviewId, reviewHideForm.getReason())) {
-            LOGGER.warn("hide review failed reviewId={}", reviewId);
+        if (!reviewService.hideReview(reviewId, currentUser.getId(), reviewHideForm.getReason())) {
             return new ModelAndView(feedRedirect);
         }
-        LOGGER.info(
-            "admin id={} hid review id={}",
-            currentUser.getId(),
-            reviewId
-        );
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.hide.toast.success");
         return new ModelAndView(feedRedirect);
     }
@@ -853,11 +822,6 @@ public class CarReviewController {
         }
 
         final ReviewReply createdReply = reviewReplyService.createReply(reviewId, currentUser.getId(), reviewReplyForm.getBody());
-        LOGGER.info(
-            "user id={} replied to review id={}",
-            currentUser.getId(),
-            reviewId
-        );
         final long totalReplies = reviewReplyService.countRepliesByReviewIds(List.of(reviewId))
             .getOrDefault(reviewId, 0L);
         final int lastPage = Math.max(1, Pagination.totalPages(totalReplies, Pagination.REPLIES_PAGE_SIZE));
@@ -908,7 +872,6 @@ public class CarReviewController {
         }
 
         reviewReplyService.updateReply(replyId, currentUser.getId(), reviewReplyForm.getBody());
-        LOGGER.info("user id={} updated reply id={}", currentUser.getId(), replyId);
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.reply.update.toast.success");
         return new ModelAndView(feedRedirect);
     }
@@ -940,7 +903,6 @@ public class CarReviewController {
             .orElse(defaultRedirect);
 
         reviewReplyService.deleteReply(replyId, currentUser.getId());
-        LOGGER.info("user id={} deleted reply id={}", currentUser.getId(), replyId);
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.reply.delete.toast.success");
         return new ModelAndView("redirect:" + safeRedirect);
     }
@@ -978,11 +940,9 @@ public class CarReviewController {
             return new ModelAndView(feedRedirect);
         }
 
-        if (!reviewReplyService.hideReply(replyId, reviewHideForm.getReason())) {
-            LOGGER.warn("hide reply failed replyId={}", replyId);
+        if (!reviewReplyService.hideReply(replyId, currentUser.getId(), reviewHideForm.getReason())) {
             return new ModelAndView(feedRedirect);
         }
-        LOGGER.info("admin id={} hid reply id={}", currentUser.getId(), replyId);
         redirectAttributes.addFlashAttribute(ACTION_TOAST_ATTRIBUTE, "review.reply.hide.toast.success");
         return new ModelAndView(feedRedirect);
     }
@@ -1005,16 +965,7 @@ public class CarReviewController {
             .getReviewById(reviewId)
             .orElseThrow(() -> new ResourceNotFoundException("Review", reviewId));
 
-        final boolean liked = reviewLikeService.toggleReviewLike(
-            reviewId,
-            currentUser.getId()
-        );
-        LOGGER.info(
-            "user id={} toggled review like reviewId={} liked={}",
-            currentUser.getId(),
-            reviewId,
-            liked
-        );
+        reviewLikeService.toggleReviewLike(reviewId, currentUser.getId());
         final String defaultRedirect = "/reviews/car/" + review.getCarId() + "#review-" + reviewId;
         final String safeRedirect = LoginRedirectUtils
             .safeRedirect(redirect, request.getContextPath())
@@ -1045,16 +996,7 @@ public class CarReviewController {
                 new ResourceNotFoundException("Review", reply.getReviewId())
             );
 
-        final boolean liked = reviewLikeService.toggleReplyLike(
-            replyId,
-            currentUser.getId()
-        );
-        LOGGER.info(
-            "user id={} toggled reply like replyId={} liked={}",
-            currentUser.getId(),
-            replyId,
-            liked
-        );
+        reviewLikeService.toggleReplyLike(replyId, currentUser.getId());
         final String defaultRedirect =
             "/reviews/car/" + review.getCarId() + "#review-" + review.getId();
         final String safeRedirect = LoginRedirectUtils

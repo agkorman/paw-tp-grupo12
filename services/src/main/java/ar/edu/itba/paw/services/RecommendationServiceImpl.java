@@ -6,9 +6,6 @@ import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.ReviewStats;
 import ar.edu.itba.paw.model.ReviewTag;
 import ar.edu.itba.paw.model.TagHighlight;
-import ar.edu.itba.paw.persistence.CarDao;
-import ar.edu.itba.paw.persistence.ReviewDao;
-import ar.edu.itba.paw.persistence.ReviewTagDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,18 +33,16 @@ public class RecommendationServiceImpl implements RecommendationService {
     private static final int POSITIVE_HIGHLIGHT_LIMIT = 2;
     private static final int NEGATIVE_HIGHLIGHT_LIMIT = 1;
 
-    private final CarDao carDao;
+    private final CarService carService;
     private final ReviewTagService reviewTagService;
-    private final ReviewTagDao reviewTagDao;
-    private final ReviewDao reviewDao;
+    private final ReviewService reviewService;
 
     @Autowired
-    public RecommendationServiceImpl(final CarDao carDao, final ReviewTagService reviewTagService,
-                                     final ReviewTagDao reviewTagDao, final ReviewDao reviewDao) {
-        this.carDao = carDao;
+    public RecommendationServiceImpl(final CarService carService, final ReviewTagService reviewTagService,
+                                     final ReviewService reviewService) {
+        this.carService = carService;
         this.reviewTagService = reviewTagService;
-        this.reviewTagDao = reviewTagDao;
-        this.reviewDao = reviewDao;
+        this.reviewService = reviewService;
     }
 
     @Override
@@ -73,14 +68,14 @@ public class RecommendationServiceImpl implements RecommendationService {
             return List.of();
         }
 
-        final List<Long> candidateIds = carDao.findIdsByCriteria(buildSearchCriteria(criteria));
+        final List<Long> candidateIds = carService.searchCarIds(buildSearchCriteria(criteria));
         if (candidateIds.isEmpty()) {
             return List.of();
         }
 
-        final Map<Long, Integer> reviewCounts = reviewDao.findStatsByCarIds(candidateIds).stream()
+        final Map<Long, Integer> reviewCounts = reviewService.getReviewStatsByCarIds(candidateIds).stream()
                 .collect(Collectors.toMap(ReviewStats::getCarId, stats -> Math.toIntExact(stats.getReviewCount())));
-        final Map<Long, Map<Short, Integer>> tagCounts = reviewTagDao.getTagCountsForCars(candidateIds);
+        final Map<Long, Map<Short, Integer>> tagCounts = reviewTagService.getTagCountsForCars(candidateIds);
 
         final Map<Short, ReviewTag> tagsById = tags.stream()
                 .collect(Collectors.toMap(ReviewTag::getId, Function.identity()));
@@ -101,7 +96,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
 
         final List<Long> topIds = ranked.stream().map(ScoredCandidate::getCarId).collect(Collectors.toList());
-        final Map<Long, Car> carsById = carDao.findByIds(topIds).stream()
+        final Map<Long, Car> carsById = carService.getCarsByIds(topIds).stream()
                 .collect(Collectors.toMap(Car::getId, Function.identity()));
         LOGGER.debug("computed {} recommendations from {} candidates limit={}",
                 ranked.size(), candidateIds.size(), effectiveLimit);

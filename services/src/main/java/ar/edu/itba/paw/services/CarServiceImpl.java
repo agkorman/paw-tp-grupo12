@@ -1,21 +1,15 @@
 package ar.edu.itba.paw.services;
 
-import ar.edu.itba.paw.model.BodyType;
-import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.model.Car;
 import ar.edu.itba.paw.model.ImageMetadata;
 import ar.edu.itba.paw.model.ImagePayload;
-import ar.edu.itba.paw.model.CarRequest;
 import ar.edu.itba.paw.model.CarSearchCriteria;
 import ar.edu.itba.paw.model.CarYearVariant;
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.StoredImagePayload;
-import ar.edu.itba.paw.persistence.BodyTypeDao;
-import ar.edu.itba.paw.persistence.BrandDao;
 import ar.edu.itba.paw.persistence.CarDao;
 import ar.edu.itba.paw.persistence.CarImageDao;
 import ar.edu.itba.paw.services.exception.DuplicateCarException;
-import ar.edu.itba.paw.services.exception.InvalidImagePayloadException;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -44,26 +38,14 @@ public class CarServiceImpl implements CarService {
 
     private final CarDao carDao;
     private final CarImageDao carImageDao;
-    private final CarRequestService carRequestService;
-    private final BrandDao brandDao;
-    private final BodyTypeDao bodyTypeDao;
-    private final EmailService emailService;
 
     @Autowired
     public CarServiceImpl(
         final CarDao carDao,
-        final CarImageDao carImageDao,
-        final CarRequestService carRequestService,
-        final BrandDao brandDao,
-        final BodyTypeDao bodyTypeDao,
-        final EmailService emailService
+        final CarImageDao carImageDao
     ) {
         this.carDao = carDao;
         this.carImageDao = carImageDao;
-        this.carRequestService = carRequestService;
-        this.brandDao = brandDao;
-        this.bodyTypeDao = bodyTypeDao;
-        this.emailService = emailService;
     }
 
     @Override
@@ -74,23 +56,6 @@ public class CarServiceImpl implements CarService {
     @Override
     public List<Car> getCarsByIds(final Collection<Long> ids) {
         return carDao.findByIds(ids);
-    }
-
-    @Override
-    public List<Car> getCarsByBrandAndBodyType(
-        final String brand,
-        final String bodyType
-    ) {
-        return brandDao
-            .findByName(brand)
-            .flatMap(b ->
-                bodyTypeDao
-                    .findByName(bodyType)
-                    .map(bt ->
-                        carDao.findByBrandIdAndBodyTypeId(b.getId(), bt.getId())
-                    )
-            )
-            .orElse(Collections.emptyList());
     }
 
     @Override
@@ -143,10 +108,9 @@ public class CarServiceImpl implements CarService {
         final long carId,
         final List<ImagePayload> images
     ) {
-        carImageDao.replaceAll(
-            carId,
-            ImagePayloadUtils.normalizeImages(images)
-        );
+        final List<ImagePayload> normalizedImages = ImagePayloadUtils.normalizeImages(images);
+        carImageDao.replaceAll(carId, normalizedImages);
+        LOGGER.info("saved car images carId={} imageCount={}", carId, normalizedImages.size());
     }
 
     @Override
@@ -165,15 +129,12 @@ public class CarServiceImpl implements CarService {
 
     @Override
     @Transactional
-    public CarRequest requestCarCreation(
+    public Car createCar(
         final long brandId,
         final String model,
         final long bodyTypeId,
         final Integer year,
-        final long submittedByUserId,
-        final String submitterEmail,
         final String description,
-        final List<ImagePayload> images,
         final String fuelType,
         final Integer horsepower,
         final Integer airbagCount,
@@ -182,33 +143,12 @@ public class CarServiceImpl implements CarService {
         final Integer maxSpeedKmh,
         final BigDecimal priceUsd
     ) {
-        final String normalizedDescription = StringUtils.normalizeRequired(
-            description,
-            "Description is required for car creation."
-        );
-        final List<ImagePayload> normalizedImages =
-            ImagePayloadUtils.normalizeImages(images);
-        if (normalizedImages.isEmpty()) {
-            throw new InvalidImagePayloadException(
-                "At least one image is required for car creation."
-            );
-        }
-
-        validateYear(year);
-
-        if (existsDuplicateCarByIds(brandId, bodyTypeId, model, year, -1L)) {
-            throw new DuplicateCarException();
-        }
-
-        final CarRequest carRequest = carRequestService.createPendingRequest(
-            submittedByUserId,
-            submitterEmail,
+        final Car created = carDao.create(
             brandId,
+            model,
             bodyTypeId,
             year,
-            model,
-            normalizedDescription,
-            normalizedImages,
+            description,
             fuelType,
             horsepower,
             airbagCount,
@@ -217,23 +157,8 @@ public class CarServiceImpl implements CarService {
             maxSpeedKmh,
             priceUsd
         );
-
-        final String brandName = brandDao
-            .findById(brandId)
-            .map(Brand::getName)
-            .orElse("-");
-        final String bodyTypeName = bodyTypeDao
-            .findById(bodyTypeId)
-            .map(BodyType::getName)
-            .orElse("-");
-        emailService.sendNewCarRequestNotification(
-            carRequest,
-            brandName,
-            bodyTypeName,
-            !normalizedImages.isEmpty()
-        );
-
-        return carRequest;
+        LOGGER.info("created car id={} model={}", created.getId(), model);
+        return created;
     }
 
     @Override
@@ -273,6 +198,7 @@ public class CarServiceImpl implements CarService {
                 id
             )
         ) {
+            LOGGER.warn("update car rejected: duplicate car id={} brandId={} bodyTypeId={}", id, brandId, bodyTypeId);
             throw new DuplicateCarException();
         }
 
@@ -309,6 +235,22 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    public List<Long> searchCarIds(final CarSearchCriteria criteria) {
+        normalizeAndValidateSearchCriteria(criteria);
+        return carDao.findIdsByCriteria(criteria);
+    }
+
+    @Override
+    public long countCarsByBrandId(final long brandId) {
+        return carDao.countByBrandId(brandId);
+    }
+
+    @Override
+    public long countCarsByBodyTypeId(final long bodyTypeId) {
+        return carDao.countByBodyTypeId(bodyTypeId);
+    }
+
+    @Override
     public List<Car> getFeaturedCars(final int limit) {
         final List<Car> topRated = carDao.findTopRated(limit);
         if (topRated.size() >= limit) {
@@ -337,23 +279,13 @@ public class CarServiceImpl implements CarService {
         if (normalizedModel == null) {
             return false;
         }
-        final String lowerModel = normalizedModel.toLowerCase(Locale.ROOT);
-        return brandDao
-            .findByName(brandName)
-            .flatMap(brand ->
-                bodyTypeDao
-                    .findByName(bodyTypeName)
-                    .map(bodyType ->
-                        carDao.existsByBrandIdAndBodyTypeIdAndModelAndYearExcludingId(
-                            brand.getId(),
-                            bodyType.getId(),
-                            lowerModel,
-                            year,
-                            ignoredCarId
-                        )
-                    )
-            )
-            .orElse(false);
+        return carDao.existsByBrandNameAndBodyTypeNameAndModelAndYearExcludingId(
+            brandName,
+            bodyTypeName,
+            normalizedModel.toLowerCase(Locale.ROOT),
+            year,
+            ignoredCarId
+        );
     }
 
     @Override
@@ -414,7 +346,8 @@ public class CarServiceImpl implements CarService {
         return deleted;
     }
 
-    private boolean existsDuplicateCarByIds(
+    @Override
+    public boolean existsDuplicateCarByIds(
         final long brandId,
         final long bodyTypeId,
         final String model,

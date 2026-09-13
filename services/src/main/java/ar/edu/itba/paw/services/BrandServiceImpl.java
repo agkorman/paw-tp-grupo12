@@ -2,7 +2,6 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Brand;
 import ar.edu.itba.paw.persistence.BrandDao;
-import ar.edu.itba.paw.persistence.CarDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +17,12 @@ public class BrandServiceImpl implements BrandService {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrandServiceImpl.class);
 
     private final BrandDao brandDao;
-    private final CarDao carDao;
+    private final CarService carService;
 
     @Autowired
-    public BrandServiceImpl(final BrandDao brandDao, final CarDao carDao) {
+    public BrandServiceImpl(final BrandDao brandDao, final CarService carService) {
         this.brandDao = brandDao;
-        this.carDao = carDao;
+        this.carService = carService;
     }
 
     @Override
@@ -69,7 +68,7 @@ public class BrandServiceImpl implements BrandService {
             LOGGER.warn("delete brand rejected: not found id={}", id);
             return false;
         }
-        if (carDao.countByBrandId(id) > 0) {
+        if (carService.countCarsByBrandId(id) > 0) {
             LOGGER.warn("delete brand rejected: cars still reference brand id={}", id);
             return false;
         }

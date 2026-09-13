@@ -16,6 +16,8 @@ public interface CarRequestService {
     String STATUS_APPROVED = "approved";
     String STATUS_REJECTED = "rejected";
 
+    void claimPreRegistrationRequests(long userId, String email);
+
     Optional<CarRequest> getCarRequestById(long id);
 
     Page<CarRequest> getCarRequestsByStatus(String status, int page);
@@ -28,6 +30,24 @@ public interface CarRequestService {
                                     String fuelType, Integer horsepower, Integer airbagCount,
                                     String transmission, BigDecimal fuelConsumption, Integer maxSpeedKmh,
                                     BigDecimal priceUsd);
+
+    CarRequest requestCarCreation(
+        long brandId,
+        String model,
+        long bodyTypeId,
+        Integer year,
+        long submittedByUserId,
+        String submitterEmail,
+        String description,
+        List<ImagePayload> images,
+        String fuelType,
+        Integer horsepower,
+        Integer airbagCount,
+        String transmission,
+        BigDecimal fuelConsumption,
+        Integer maxSpeedKmh,
+        BigDecimal priceUsd
+    );
 
     List<ImageMetadata> getCarRequestImages(long requestId);
 

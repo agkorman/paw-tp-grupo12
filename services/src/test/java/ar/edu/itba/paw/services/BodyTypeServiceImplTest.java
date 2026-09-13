@@ -2,7 +2,6 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
-import ar.edu.itba.paw.persistence.CarDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,7 +25,7 @@ public class BodyTypeServiceImplTest {
     @Mock
     private BodyTypeDao bodyTypeDao;
     @Mock
-    private CarDao carDao;
+    private CarService carService;
 
     @InjectMocks
     private BodyTypeServiceImpl bodyTypeService;
@@ -91,7 +90,7 @@ public class BodyTypeServiceImplTest {
     public void shouldNotDeleteBodyTypeWhenItHasAssociatedCars() {
         // Arrange
         when(bodyTypeDao.findById(BODY_TYPE_ID)).thenReturn(Optional.of(bodyType()));
-        when(carDao.countByBodyTypeId(BODY_TYPE_ID)).thenReturn(2L);
+        when(carService.countCarsByBodyTypeId(BODY_TYPE_ID)).thenReturn(2L);
 
         // Exercise
         final boolean result = bodyTypeService.deleteBodyType(BODY_TYPE_ID);
@@ -104,7 +103,7 @@ public class BodyTypeServiceImplTest {
     public void shouldDeleteBodyTypeWhenItExistsAndHasNoCars() {
         // Arrange
         when(bodyTypeDao.findById(BODY_TYPE_ID)).thenReturn(Optional.of(bodyType()));
-        when(carDao.countByBodyTypeId(BODY_TYPE_ID)).thenReturn(0L);
+        when(carService.countCarsByBodyTypeId(BODY_TYPE_ID)).thenReturn(0L);
         when(bodyTypeDao.delete(BODY_TYPE_ID)).thenReturn(true);
 
         // Exercise

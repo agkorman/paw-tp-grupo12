@@ -2,7 +2,6 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.BodyType;
 import ar.edu.itba.paw.persistence.BodyTypeDao;
-import ar.edu.itba.paw.persistence.CarDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +17,12 @@ public class BodyTypeServiceImpl implements BodyTypeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(BodyTypeServiceImpl.class);
 
     private final BodyTypeDao bodyTypeDao;
-    private final CarDao carDao;
+    private final CarService carService;
 
     @Autowired
-    public BodyTypeServiceImpl(final BodyTypeDao bodyTypeDao, final CarDao carDao) {
+    public BodyTypeServiceImpl(final BodyTypeDao bodyTypeDao, final CarService carService) {
         this.bodyTypeDao = bodyTypeDao;
-        this.carDao = carDao;
+        this.carService = carService;
     }
 
     @Override
@@ -75,7 +74,7 @@ public class BodyTypeServiceImpl implements BodyTypeService {
             LOGGER.warn("delete body type rejected: not found id={}", id);
             return false;
         }
-        if (carDao.countByBodyTypeId(id) > 0) {
+        if (carService.countCarsByBodyTypeId(id) > 0) {
             LOGGER.warn("delete body type rejected: cars still reference body type id={}", id);
             return false;
         }

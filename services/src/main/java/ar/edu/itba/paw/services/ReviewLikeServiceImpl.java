@@ -2,10 +2,7 @@ package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Page;
 import ar.edu.itba.paw.model.Pagination;
-import ar.edu.itba.paw.persistence.ReviewDao;
 import ar.edu.itba.paw.persistence.ReviewLikeDao;
-import ar.edu.itba.paw.persistence.ReviewReplyDao;
-import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.services.exception.ReviewNotFoundException;
 import ar.edu.itba.paw.services.exception.ReviewReplyNotFoundException;
 import ar.edu.itba.paw.services.exception.ServiceOperationException;
@@ -29,17 +26,17 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReviewLikeServiceImpl.class);
 
     private final ReviewLikeDao reviewLikeDao;
-    private final ReviewDao reviewDao;
-    private final ReviewReplyDao reviewReplyDao;
-    private final UserDao userDao;
+    private final ReviewService reviewService;
+    private final ReviewReplyService reviewReplyService;
+    private final UserService userService;
 
     @Autowired
-    public ReviewLikeServiceImpl(final ReviewLikeDao reviewLikeDao, final ReviewDao reviewDao,
-                                 final ReviewReplyDao reviewReplyDao, final UserDao userDao) {
+    public ReviewLikeServiceImpl(final ReviewLikeDao reviewLikeDao, final ReviewService reviewService,
+                                 final ReviewReplyService reviewReplyService, final UserService userService) {
         this.reviewLikeDao = reviewLikeDao;
-        this.reviewDao = reviewDao;
-        this.reviewReplyDao = reviewReplyDao;
-        this.userDao = userDao;
+        this.reviewService = reviewService;
+        this.reviewReplyService = reviewReplyService;
+        this.userService = userService;
     }
 
     @Override
@@ -49,9 +46,11 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
             validateReviewAndUser(reviewId, userId);
             if (reviewLikeDao.isReviewLikedByUser(reviewId, userId)) {
                 reviewLikeDao.unlikeReview(reviewId, userId);
+                LOGGER.info("user id={} toggled review like reviewId={} liked={}", userId, reviewId, false);
                 return false;
             }
             reviewLikeDao.likeReview(reviewId, userId);
+            LOGGER.info("user id={} toggled review like reviewId={} liked={}", userId, reviewId, true);
             return true;
         } catch (final DataAccessException e) {
             LOGGER.error("failed to toggle review like reviewId={} userId={}", reviewId, userId, e);
@@ -66,9 +65,11 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
             validateReplyAndUser(replyId, userId);
             if (reviewLikeDao.isReplyLikedByUser(replyId, userId)) {
                 reviewLikeDao.unlikeReply(replyId, userId);
+                LOGGER.info("user id={} toggled reply like replyId={} liked={}", userId, replyId, false);
                 return false;
             }
             reviewLikeDao.likeReply(replyId, userId);
+            LOGGER.info("user id={} toggled reply like replyId={} liked={}", userId, replyId, true);
             return true;
         } catch (final DataAccessException e) {
             LOGGER.error("failed to toggle reply like replyId={} userId={}", replyId, userId, e);
@@ -183,7 +184,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     }
 
     private void validateReviewAndUser(final long reviewId, final long userId) {
-        if (reviewDao.findById(reviewId).isEmpty()) {
+        if (!reviewService.existsReviewById(reviewId)) {
             LOGGER.warn("review like rejected: review not found id={}", reviewId);
             throw new ReviewNotFoundException(reviewId);
         }
@@ -191,7 +192,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     }
 
     private void validateReplyAndUser(final long replyId, final long userId) {
-        if (reviewReplyDao.findById(replyId).isEmpty()) {
+        if (reviewReplyService.getReplyById(replyId).isEmpty()) {
             LOGGER.warn("reply like rejected: reply not found id={}", replyId);
             throw new ReviewReplyNotFoundException(replyId);
         }
@@ -199,7 +200,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     }
 
     private void validateUser(final long userId) {
-        if (userDao.findById(userId).isEmpty()) {
+        if (userService.getUserById(userId).isEmpty()) {
             LOGGER.warn("like action rejected: user not found id={}", userId);
             throw new UserNotFoundException(userId);
         }
