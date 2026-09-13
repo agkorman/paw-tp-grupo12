@@ -28,6 +28,7 @@ public interface ReviewService {
     long countReviewsByFollowedUsers(long followerId);
     Page<Review> getReviewsByFavoriteCars(long userId, int page);
     long countReviewsByFavoriteCars(long userId);
+    boolean existsReviewById(long id);
     Optional<Review> getReviewById(long id);
     List<Review> getReviewsByIds(Collection<Long> ids);
     Set<Long> getEditableReviewIds(Collection<Review> reviews, Long viewerUserId);

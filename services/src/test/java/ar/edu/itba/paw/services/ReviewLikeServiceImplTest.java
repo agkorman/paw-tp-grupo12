@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.services;
 
 import ar.edu.itba.paw.model.Page;
-import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.ReviewReply;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ReviewLikeDao;
@@ -12,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessResourceFailureException;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -46,11 +44,6 @@ public class ReviewLikeServiceImplTest {
     @InjectMocks
     private ReviewLikeServiceImpl reviewLikeService;
 
-    private static Review review() {
-        return TestModels.review(REVIEW_ID, USER_ID, "u@x.com", 1L, new BigDecimal("4.0"),
-                "title", "body", null, null, null, true, LocalDateTime.now(), LocalDateTime.now());
-    }
-
     private static ReviewReply reply() {
         return TestModels.reviewReply(REPLY_ID, REVIEW_ID, USER_ID, "u", "body",
                 LocalDateTime.now(), LocalDateTime.now());
@@ -63,7 +56,7 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldLikeReviewWhenNotPreviouslyLiked() {
         // Arrange
-        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
         when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.of(user()));
         when(reviewLikeDao.isReviewLikedByUser(REVIEW_ID, USER_ID)).thenReturn(false);
 
@@ -77,7 +70,7 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldUnlikeReviewWhenPreviouslyLiked() {
         // Arrange
-        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
         when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.of(user()));
         when(reviewLikeDao.isReviewLikedByUser(REVIEW_ID, USER_ID)).thenReturn(true);
 
@@ -91,7 +84,7 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldRejectToggleReviewLikeWhenReviewMissing() {
         // Arrange
-        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(java.util.Optional.empty());
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(false);
 
         // Exercise
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -104,7 +97,7 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldRejectToggleReviewLikeWhenUserMissing() {
         // Arrange
-        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
         when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.empty());
 
         // Exercise
@@ -118,7 +111,7 @@ public class ReviewLikeServiceImplTest {
     @Test
     public void shouldWrapDaoFailureAsIllegalStateOnToggleReviewLike() {
         // Arrange
-        when(reviewService.getReviewById(REVIEW_ID)).thenReturn(java.util.Optional.of(review()));
+        when(reviewService.existsReviewById(REVIEW_ID)).thenReturn(true);
         when(userService.getUserById(USER_ID)).thenReturn(java.util.Optional.of(user()));
         when(reviewLikeDao.isReviewLikedByUser(REVIEW_ID, USER_ID)).thenThrow(new DataAccessResourceFailureException("db"));
 

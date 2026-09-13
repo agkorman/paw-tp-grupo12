@@ -171,6 +171,14 @@ public class ReviewJpaDao implements ReviewDao {
     }
 
     @Override
+    public boolean existsById(final long id) {
+        final Number count = (Number) em.createNativeQuery("SELECT COUNT(*) FROM reviews WHERE review_id = ?")
+                .setParameter(1, id)
+                .getSingleResult();
+        return count != null && count.longValue() > 0;
+    }
+
+    @Override
     public Optional<Review> findById(final long id) {
         final List<Review> results = em.createQuery(
                 "SELECT r FROM Review r " + FETCH_USER_AND_CAR + " WHERE r.id = :id",

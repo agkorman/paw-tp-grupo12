@@ -125,6 +125,11 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public boolean existsReviewById(final long id) {
+        return reviewDao.existsById(id);
+    }
+
+    @Override
     public Optional<Review> getReviewById(final long id) {
         return withTags(reviewDao.findById(id));
     }

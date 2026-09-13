@@ -184,7 +184,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     }
 
     private void validateReviewAndUser(final long reviewId, final long userId) {
-        if (reviewService.getReviewById(reviewId).isEmpty()) {
+        if (!reviewService.existsReviewById(reviewId)) {
             LOGGER.warn("review like rejected: review not found id={}", reviewId);
             throw new ReviewNotFoundException(reviewId);
         }
