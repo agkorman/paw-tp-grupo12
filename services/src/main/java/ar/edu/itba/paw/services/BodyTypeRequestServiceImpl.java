@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Service
-@Transactional(readOnly = true)
 public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BodyTypeRequestServiceImpl.class);
@@ -32,11 +31,13 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<BodyTypeRequest> getBodyTypeRequestById(final long id) {
         return bodyTypeRequestDao.findById(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<BodyTypeRequest> getBodyTypeRequestsByStatus(final String status, final int page) {
         final String normalizedStatus = StringUtils.normalize(status);
         if (normalizedStatus == null) {
@@ -46,6 +47,7 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countBodyTypeRequestsByStatus(final String status) {
         final String normalizedStatus = StringUtils.normalize(status);
         if (normalizedStatus == null) {
@@ -65,12 +67,6 @@ public class BodyTypeRequestServiceImpl implements BodyTypeRequestService {
         }
         LOGGER.info("submitting body type request name={} userId={}", normalizedName, submittedByUserId);
         return bodyTypeRequestDao.create(submittedByUserId, submitterEmail, normalizedName, normalizedComments, STATUS_PENDING);
-    }
-
-    @Override
-    @Transactional
-    public boolean approvePendingRequest(final long id) {
-        return approvePendingRequest(id, null);
     }
 
     @Override

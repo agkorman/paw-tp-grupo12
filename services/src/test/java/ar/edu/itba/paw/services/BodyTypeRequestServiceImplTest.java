@@ -103,7 +103,7 @@ public class BodyTypeRequestServiceImplTest {
         when(bodyTypeService.findByName("Sedan")).thenReturn(Optional.of(TestModels.bodyType(1L, "Sedan", LocalDateTime.now())));
 
         // Exercise
-        final boolean result = bodyTypeRequestService.approvePendingRequest(REQUEST_ID);
+        final boolean result = bodyTypeRequestService.approvePendingRequest(REQUEST_ID, null);
 
         // Assertions
         assertFalse(result);

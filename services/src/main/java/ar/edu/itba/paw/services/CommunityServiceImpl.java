@@ -53,7 +53,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly = true)
 public class CommunityServiceImpl implements CommunityService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommunityServiceImpl.class);
@@ -94,17 +93,24 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CommunityHubEntry> getCommunityHub(final Long currentUserId) {
-        return getCommunityHub(emptyCommunityCriteria(Pagination.DEFAULT_PAGE), currentUserId).getItems();
+        return loadCommunityHub(emptyCommunityCriteria(Pagination.DEFAULT_PAGE), currentUserId).getItems();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<CommunityHubEntry> getCommunityHub(final Long currentUserId, final int page) {
-        return getCommunityHub(emptyCommunityCriteria(page), currentUserId);
+        return loadCommunityHub(emptyCommunityCriteria(page), currentUserId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<CommunityHubEntry> getCommunityHub(final CommunitySearchCriteria criteria, final Long currentUserId) {
+        return loadCommunityHub(criteria, currentUserId);
+    }
+
+    private Page<CommunityHubEntry> loadCommunityHub(final CommunitySearchCriteria criteria, final Long currentUserId) {
         final CommunitySearchCriteria safeCriteria = criteria == null ? emptyCommunityCriteria(Pagination.DEFAULT_PAGE) : criteria;
         try {
             if (!safeCriteria.isValid()) {
@@ -153,6 +159,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CommunityTopic> getAvailableTopics() {
         try {
             return communityDao.findAllTopics();
@@ -202,6 +209,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<CommunityEditData> getCommunityForEdit(final String communitySlug, final long callerUserId) {
         final Community community = requireModerator(communitySlug, callerUserId);
         if (community == null) {
@@ -265,7 +273,7 @@ public class CommunityServiceImpl implements CommunityService {
                                                        final String title,
                                                        final String body,
                                                        final List<ImagePayload> images) {
-        return createCommunityPost(communitySlug, userId, title, body, images, null);
+        return createPost(communitySlug, userId, title, body, images, null);
     }
 
     @Override
@@ -276,6 +284,15 @@ public class CommunityServiceImpl implements CommunityService {
                                                        final String body,
                                                        final List<ImagePayload> images,
                                                        final Long linkedReviewId) {
+        return createPost(communitySlug, userId, title, body, images, linkedReviewId);
+    }
+
+    private Optional<CommunityPost> createPost(final String communitySlug,
+                                               final long userId,
+                                               final String title,
+                                               final String body,
+                                               final List<ImagePayload> images,
+                                               final Long linkedReviewId) {
         if (userId <= 0) {
             throw new InvalidServiceInputException("Community post author is required.");
         }
@@ -331,9 +348,16 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<CommunityPost> getCommunityPostForEdit(final String communitySlug,
                                                            final String postSlug,
                                                            final long callerUserId) {
+        return findEditablePost(communitySlug, postSlug, callerUserId);
+    }
+
+    private Optional<CommunityPost> findEditablePost(final String communitySlug,
+                                                     final String postSlug,
+                                                     final long callerUserId) {
         if (callerUserId <= 0) {
             throw new InvalidServiceInputException("Caller is required.");
         }
@@ -357,7 +381,7 @@ public class CommunityServiceImpl implements CommunityService {
                                                        final String title,
                                                        final String body,
                                                        final List<ImagePayload> images) {
-        final Optional<CommunityPost> postOptional = getCommunityPostForEdit(communitySlug, postSlug, callerUserId);
+        final Optional<CommunityPost> postOptional = findEditablePost(communitySlug, postSlug, callerUserId);
         if (postOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -589,14 +613,21 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<CommunityDetailData> getCommunityDetail(final String slug, final Long currentUserId,
                                                             final String sort) {
-        return getCommunityDetail(slug, currentUserId, sort, Pagination.DEFAULT_PAGE);
+        return loadCommunityDetail(slug, currentUserId, sort, Pagination.DEFAULT_PAGE);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<CommunityDetailData> getCommunityDetail(final String slug, final Long currentUserId,
                                                             final String sort, final int page) {
+        return loadCommunityDetail(slug, currentUserId, sort, page);
+    }
+
+    private Optional<CommunityDetailData> loadCommunityDetail(final String slug, final Long currentUserId,
+                                                              final String sort, final int page) {
         try {
             final Optional<Community> communityOptional = communityDao.findBySlug(slug);
             if (communityOptional.isEmpty()) {
@@ -661,6 +692,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Community> getCommunityBySlug(final String slug) {
         try {
             return communityDao.findBySlug(slug);
@@ -671,26 +703,37 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<CommunityPostDetailData> getCommunityPostDetail(final String communitySlug,
                                                                     final String postSlug,
                                                                     final Long currentUserId) {
-        return getCommunityPostDetail(communitySlug, postSlug, currentUserId, false, Pagination.DEFAULT_PAGE);
+        return loadPostDetail(communitySlug, postSlug, currentUserId, false, Pagination.DEFAULT_PAGE);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<CommunityPostDetailData> getCommunityPostDetail(final String communitySlug,
                                                                     final String postSlug,
                                                                     final Long currentUserId,
                                                                     final boolean viewerAdmin) {
-        return getCommunityPostDetail(communitySlug, postSlug, currentUserId, viewerAdmin, Pagination.DEFAULT_PAGE);
+        return loadPostDetail(communitySlug, postSlug, currentUserId, viewerAdmin, Pagination.DEFAULT_PAGE);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<CommunityPostDetailData> getCommunityPostDetail(final String communitySlug,
                                                                     final String postSlug,
                                                                     final Long currentUserId,
                                                                     final boolean viewerAdmin,
                                                                     final int repliesPage) {
+        return loadPostDetail(communitySlug, postSlug, currentUserId, viewerAdmin, repliesPage);
+    }
+
+    private Optional<CommunityPostDetailData> loadPostDetail(final String communitySlug,
+                                                             final String postSlug,
+                                                             final Long currentUserId,
+                                                             final boolean viewerAdmin,
+                                                             final int repliesPage) {
         try {
             final Optional<Community> communityOptional = communityDao.findBySlug(communitySlug);
             if (communityOptional.isEmpty()) {
@@ -749,12 +792,18 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ImageMetadata> getPostImagesByPostId(final long postId) {
         return communityPostImageDao.findAllByPostId(postId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<Long, List<ImageMetadata>> getImagesByPostIds(final Collection<Long> postIds) {
+        return loadImagesByPostIds(postIds);
+    }
+
+    private Map<Long, List<ImageMetadata>> loadImagesByPostIds(final Collection<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -767,16 +816,19 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<StoredImagePayload> getPostImageById(final long postId, final long imageId) {
         return communityPostImageDao.findByPostIdAndImageId(postId, imageId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<ImageMetadata> getPostImageMetadataById(final long postId, final long imageId) {
         return communityPostImageDao.findMetadataByPostIdAndImageId(postId, imageId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ImagePayload> collectRetainedPostImagePayloads(final long postId, final List<Long> retainedImageIds) {
         final List<ImagePayload> payloads = new ArrayList<>();
         if (retainedImageIds == null) {
@@ -800,6 +852,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<Long, String> getViewerRoles(final Long viewerUserId, final Collection<Long> communityIds) {
         if (viewerUserId == null || viewerUserId <= 0 || communityIds == null || communityIds.isEmpty()) {
             return Collections.emptyMap();
@@ -813,6 +866,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<String> getViewerRole(final String communitySlug, final Long userId) {
         if (userId == null || userId <= 0) {
             return Optional.empty();
@@ -830,6 +884,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Set<Long> getHideablePostIds(final Collection<CommunityPost> posts, final Long viewerUserId,
                                         final boolean viewerAdmin) {
         if (posts == null || posts.isEmpty() || (viewerUserId == null && !viewerAdmin)) {
@@ -855,6 +910,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Set<Long> getEditablePostIds(final Collection<CommunityPost> posts, final Long viewerUserId) {
         if (posts == null || posts.isEmpty() || viewerUserId == null || viewerUserId <= 0) {
             return Collections.emptySet();
@@ -866,6 +922,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CommunityMembershipEntry> listMembers(final String communitySlug, final long callerUserId) {
         if (callerUserId <= 0) {
             throw new InvalidServiceInputException("Caller is required.");
@@ -896,6 +953,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<CommunityMembersData> getCommunityMembers(final String communitySlug,
                                                                final long callerUserId,
                                                                final int page) {
@@ -936,7 +994,7 @@ public class CommunityServiceImpl implements CommunityService {
     @Transactional
     public CommunityActionResult hidePost(final String communitySlug, final String postSlug,
                                           final long callerUserId, final String reason) {
-        return hidePost(communitySlug, postSlug, callerUserId, reason, false);
+        return hideCommunityPost(communitySlug, postSlug, callerUserId, reason, false);
     }
 
     @Override
@@ -944,6 +1002,12 @@ public class CommunityServiceImpl implements CommunityService {
     public CommunityActionResult hidePost(final String communitySlug, final String postSlug,
                                           final long callerUserId, final String reason,
                                           final boolean callerAdmin) {
+        return hideCommunityPost(communitySlug, postSlug, callerUserId, reason, callerAdmin);
+    }
+
+    private CommunityActionResult hideCommunityPost(final String communitySlug, final String postSlug,
+                                                    final long callerUserId, final String reason,
+                                                    final boolean callerAdmin) {
         final Community community;
         if (callerAdmin) {
             final Optional<Community> communityOptional = communityDao.findBySlug(
@@ -985,7 +1049,7 @@ public class CommunityServiceImpl implements CommunityService {
     @Transactional
     public CommunityActionResult hideComment(final String communitySlug, final long commentId,
                                              final long callerUserId, final String reason) {
-        return hideComment(communitySlug, commentId, callerUserId, reason, false);
+        return hideCommunityComment(communitySlug, commentId, callerUserId, reason, false);
     }
 
     @Override
@@ -993,6 +1057,12 @@ public class CommunityServiceImpl implements CommunityService {
     public CommunityActionResult hideComment(final String communitySlug, final long commentId,
                                              final long callerUserId, final String reason,
                                              final boolean callerAdmin) {
+        return hideCommunityComment(communitySlug, commentId, callerUserId, reason, callerAdmin);
+    }
+
+    private CommunityActionResult hideCommunityComment(final String communitySlug, final long commentId,
+                                                       final long callerUserId, final String reason,
+                                                       final boolean callerAdmin) {
         final Community community;
         if (callerAdmin) {
             final Optional<Community> communityOptional = communityDao.findBySlug(
@@ -1224,7 +1294,7 @@ public class CommunityServiceImpl implements CommunityService {
             return;
         }
         final List<Long> ids = posts.stream().map(CommunityPost::getId).collect(Collectors.toList());
-        final Map<Long, List<ImageMetadata>> imagesByPostId = getImagesByPostIds(ids);
+        final Map<Long, List<ImageMetadata>> imagesByPostId = loadImagesByPostIds(ids);
         for (final CommunityPost post : posts) {
             post.setImages(imagesByPostId.getOrDefault(post.getId(), Collections.emptyList()));
         }
@@ -1409,6 +1479,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CommunityPost> getPostsByIds(final Collection<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) {
             return List.of();
@@ -1417,6 +1488,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<Long, Long> countHelpfulReactionsByPostIds(final Collection<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) {
             return Map.of();
@@ -1425,11 +1497,13 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Set<Long> findPostHelpfulReactionsByUser(final Collection<Long> postIds, final long userId) {
         return communityDao.findPostHelpfulReactionsByUser(postIds, userId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<Long, Long> countCommentsByPostIds(final Collection<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) {
             return Map.of();

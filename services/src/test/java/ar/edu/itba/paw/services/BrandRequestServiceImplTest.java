@@ -96,7 +96,7 @@ public class BrandRequestServiceImplTest {
         when(brandService.findByName("Existing Brand")).thenReturn(Optional.of(TestModels.brand(1L, "Existing Brand", LocalDateTime.now())));
 
         // Exercise
-        final boolean result = brandRequestService.approvePendingRequest(REQUEST_ID);
+        final boolean result = brandRequestService.approvePendingRequest(REQUEST_ID, null);
 
         // Assertions
         assertFalse(result);
@@ -129,7 +129,7 @@ public class BrandRequestServiceImplTest {
                 BrandRequestService.STATUS_APPROVED)).thenReturn(true);
 
         // Exercise
-        final boolean result = brandRequestService.approvePendingRequest(REQUEST_ID);
+        final boolean result = brandRequestService.approvePendingRequest(REQUEST_ID, null);
 
         // Assertions
         assertTrue(result);
@@ -170,7 +170,7 @@ public class BrandRequestServiceImplTest {
 
         // Exercise
         final DataAccessResourceFailureException ex = assertThrows(DataAccessResourceFailureException.class,
-                () -> brandRequestService.approvePendingRequest(REQUEST_ID));
+                () -> brandRequestService.approvePendingRequest(REQUEST_ID, null));
 
         // Assertions
         assertEquals(cause, ex);

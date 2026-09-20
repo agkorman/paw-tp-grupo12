@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional(readOnly = true)
 public class ReviewServiceImpl implements ReviewService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReviewServiceImpl.class);
@@ -125,16 +124,19 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Review> getReviewById(final long id) {
         return withTags(reviewDao.findById(id));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean existsReviewById(final long id) {
         return reviewDao.existsById(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Review> getReviewsByIds(final Collection<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
@@ -143,6 +145,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Set<Long> getEditableReviewIds(final Collection<Review> reviews, final Long viewerUserId) {
         if (reviews == null || reviews.isEmpty() || viewerUserId == null || viewerUserId <= 0) {
             return Collections.emptySet();
@@ -154,6 +157,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Review> getReviewsByCarIds(final Collection<Long> carIds) {
         if (carIds == null || carIds.isEmpty()) {
             return Collections.emptyList();
@@ -266,46 +270,55 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<Review> getReviewsByCar(final long carId, final int page) {
         return withTags(reviewDao.findByCarId(carId, page));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Review> getLatestReviewByCar(final long carId) {
         return withTags(reviewDao.findLatestByCarId(carId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Review> getTopRatedLatestReviewByCar(final long carId) {
         return withTags(reviewDao.findTopRatedLatestByCarId(carId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<Review> getReviewsByCarOrderByRatingAsc(final long carId, final int page) {
         return withTags(reviewDao.findByCarIdOrderByRatingAsc(carId, page));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<Review> getReviewsByCarOrderByRatingDesc(final long carId, final int page) {
         return withTags(reviewDao.findByCarIdOrderByRatingDesc(carId, page));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<Review> getReviewsByUser(final long userId, final int page) {
         return withTags(reviewDao.findByUserId(userId, page));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countReviewsByUser(final long userId) {
         return reviewDao.countByUserId(userId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<ReviewStats> getReviewStatsByCar(final long carId) {
         return reviewDao.findStatsByCarId(carId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ReviewStats> getReviewStatsByCarIds(final Collection<Long> carIds) {
         if (carIds == null || carIds.isEmpty()) {
             return Collections.emptyList();
@@ -314,6 +327,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Review getReviewAndCheckAccess(final long reviewId, final long requestingUserId,
                                           final boolean isAdmin) {
         final Review review = reviewDao.findById(reviewId)

@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly = true)
 public class CarRequestServiceImpl implements CarRequestService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
@@ -68,11 +67,13 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<CarRequest> getCarRequestById(final long id) {
         return carRequestDao.findById(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<CarRequest> getCarRequestsByStatus(
         final String status,
         final int page
@@ -85,6 +86,7 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countCarRequestsByStatus(final String status) {
         final String normalizedStatus = StringUtils.normalize(status);
         if (normalizedStatus == null) {
@@ -96,6 +98,42 @@ public class CarRequestServiceImpl implements CarRequestService {
     @Override
     @Transactional
     public CarRequest createPendingRequest(
+        final long submittedByUserId,
+        final String submitterEmail,
+        final long brandId,
+        final long bodyTypeId,
+        final Integer year,
+        final String model,
+        final String description,
+        final List<ImagePayload> images,
+        final String fuelType,
+        final Integer horsepower,
+        final Integer airbagCount,
+        final String transmission,
+        final BigDecimal fuelConsumption,
+        final Integer maxSpeedKmh,
+        final BigDecimal priceUsd
+    ) {
+        return createRequest(
+                submittedByUserId,
+                submitterEmail,
+                brandId,
+                bodyTypeId,
+                year,
+                model,
+                description,
+                images,
+                fuelType,
+                horsepower,
+                airbagCount,
+                transmission,
+                fuelConsumption,
+                maxSpeedKmh,
+                priceUsd
+        );
+    }
+
+    private CarRequest createRequest(
         final long submittedByUserId,
         final String submitterEmail,
         final long brandId,
@@ -192,7 +230,7 @@ public class CarRequestServiceImpl implements CarRequestService {
             throw new DuplicateCarException();
         }
 
-        final CarRequest carRequest = createPendingRequest(
+        final CarRequest carRequest = createRequest(
             submittedByUserId,
             submitterEmail,
             brandId,
@@ -229,7 +267,12 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ImageMetadata> getCarRequestImages(final long requestId) {
+        return loadRequestImages(requestId);
+    }
+
+    private List<ImageMetadata> loadRequestImages(final long requestId) {
         final List<ImageMetadata> images = carRequestDao.findImagesByRequestId(
             requestId
         );
@@ -240,6 +283,7 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ImageMetadata> getCarRequestImagesByRequestIds(
         final Collection<Long> requestIds
     ) {
@@ -268,17 +312,19 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<StoredImagePayload> getPrimaryCarRequestImage(
         final long requestId
     ) {
-        final List<ImageMetadata> images = getCarRequestImages(requestId);
+        final List<ImageMetadata> images = loadRequestImages(requestId);
         if (images.isEmpty()) {
             return Optional.empty();
         }
-        return getCarRequestImageById(requestId, images.get(0).getImageId());
+        return findRequestImage(requestId, images.get(0).getImageId());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<ImageMetadata> getPrimaryCarRequestImageMetadata(
         final long requestId
     ) {
@@ -291,7 +337,15 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<StoredImagePayload> getCarRequestImageById(
+        final long requestId,
+        final long imageId
+    ) {
+        return findRequestImage(requestId, imageId);
+    }
+
+    private Optional<StoredImagePayload> findRequestImage(
         final long requestId,
         final long imageId
     ) {
@@ -302,6 +356,7 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<ImageMetadata> getCarRequestImageMetadataById(
         final long requestId,
         final long imageId
@@ -321,7 +376,7 @@ public class CarRequestServiceImpl implements CarRequestService {
         }
         final CarRequest request = requestOptional.get();
 
-        return approvePendingRequest(
+        return approveRequest(
             id,
             request.getBrandId(),
             request.getModel(),
@@ -343,6 +398,42 @@ public class CarRequestServiceImpl implements CarRequestService {
     @Override
     @Transactional
     public boolean approvePendingRequest(
+        final long id,
+        final long brandId,
+        final String model,
+        final long bodyTypeId,
+        final Integer year,
+        final String description,
+        final String imageContentType,
+        final byte[] imageData,
+        final String fuelType,
+        final Integer horsepower,
+        final Integer airbagCount,
+        final String transmission,
+        final BigDecimal fuelConsumption,
+        final Integer maxSpeedKmh,
+        final BigDecimal priceUsd
+    ) {
+        return approveRequest(
+                id,
+                brandId,
+                model,
+                bodyTypeId,
+                year,
+                description,
+                imageContentType,
+                imageData,
+                fuelType,
+                horsepower,
+                airbagCount,
+                transmission,
+                fuelConsumption,
+                maxSpeedKmh,
+                priceUsd
+        );
+    }
+
+    private boolean approveRequest(
         final long id,
         final long brandId,
         final String model,
@@ -395,7 +486,7 @@ public class CarRequestServiceImpl implements CarRequestService {
         );
         approvalImages.addAll(replacementImages);
 
-        return approvePendingRequest(
+        return approveRequest(
             id,
             brandId,
             normalizedModel,
@@ -416,6 +507,40 @@ public class CarRequestServiceImpl implements CarRequestService {
     @Override
     @Transactional
     public boolean approvePendingRequest(
+        final long id,
+        final long brandId,
+        final String model,
+        final long bodyTypeId,
+        final Integer year,
+        final String description,
+        final List<ImagePayload> images,
+        final String fuelType,
+        final Integer horsepower,
+        final Integer airbagCount,
+        final String transmission,
+        final BigDecimal fuelConsumption,
+        final Integer maxSpeedKmh,
+        final BigDecimal priceUsd
+    ) {
+        return approveRequest(
+                id,
+                brandId,
+                model,
+                bodyTypeId,
+                year,
+                description,
+                images,
+                fuelType,
+                horsepower,
+                airbagCount,
+                transmission,
+                fuelConsumption,
+                maxSpeedKmh,
+                priceUsd
+        );
+    }
+
+    private boolean approveRequest(
         final long id,
         final long brandId,
         final String model,
@@ -512,6 +637,7 @@ public class CarRequestServiceImpl implements CarRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ImagePayload> collectRetainedImagePayloads(
         final long requestId,
         final List<Long> retainedImageIds

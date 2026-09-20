@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Service
-@Transactional(readOnly = true)
 public class BrandRequestServiceImpl implements BrandRequestService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BrandRequestServiceImpl.class);
@@ -32,11 +31,13 @@ public class BrandRequestServiceImpl implements BrandRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<BrandRequest> getBrandRequestById(final long id) {
         return brandRequestDao.findById(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<BrandRequest> getBrandRequestsByStatus(final String status, final int page) {
         final String normalizedStatus = StringUtils.normalize(status);
         if (normalizedStatus == null) {
@@ -46,6 +47,7 @@ public class BrandRequestServiceImpl implements BrandRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countBrandRequestsByStatus(final String status) {
         final String normalizedStatus = StringUtils.normalize(status);
         if (normalizedStatus == null) {
@@ -65,12 +67,6 @@ public class BrandRequestServiceImpl implements BrandRequestService {
         }
         LOGGER.info("submitting brand request name={} userId={}", normalizedName, submittedByUserId);
         return brandRequestDao.create(submittedByUserId, submitterEmail, normalizedName, normalizedComments, STATUS_PENDING);
-    }
-
-    @Override
-    @Transactional
-    public boolean approvePendingRequest(final long id) {
-        return approvePendingRequest(id, null);
     }
 
     @Override

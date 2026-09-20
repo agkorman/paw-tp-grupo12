@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional(readOnly = true)
 public class WeeklyDigestServiceImpl implements WeeklyDigestService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WeeklyDigestServiceImpl.class);
@@ -59,6 +58,7 @@ public class WeeklyDigestServiceImpl implements WeeklyDigestService {
 
     @Override
     @Scheduled(cron = "0 0 23 * * SUN", zone = "America/Argentina/Buenos_Aires")
+    @Transactional(readOnly = true)
     public void sendWeeklyDigest() {
         final LocalDateTime since = LocalDateTime.now(DIGEST_ZONE).minusDays(7);
         LOGGER.info("starting weekly digest since={}", since);
