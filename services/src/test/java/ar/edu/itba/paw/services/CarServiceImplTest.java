@@ -118,6 +118,19 @@ public class CarServiceImplTest {
     }
 
     @Test
+    public void shouldReturnEmptyWhenUpdatedCarDoesNotExist() {
+        // Arrange
+        when(carDao.update(anyLong(), anyLong(), any(), anyLong(), any(), any(),
+                any(), any(), any(), any(), any(), any(), any())).thenReturn(Optional.empty());
+
+        // Exercise
+        final Optional<Car> result = carService.updateCar(CAR_ID, BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, "desc", List.of(new ImagePayload("image/png", new byte[]{1})), "GASOLINE", 100, 6, "MANUAL", new BigDecimal("6.0"), 180, new BigDecimal("20000.00"));
+
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
     public void shouldReturnTopRatedCarsWhenCountMeetsLimit() {
         // Arrange
         final int limit = 2;

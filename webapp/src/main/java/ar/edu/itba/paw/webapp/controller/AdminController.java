@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -356,15 +357,6 @@ public class AdminController {
         final HttpServletRequest request,
         final RedirectAttributes redirectAttributes
     ) {
-        final CarRequest pendingRequest = carRequestService
-            .getCarRequestById(requestId)
-            .orElse(null);
-        if (
-            pendingRequest == null ||
-            !CarRequestService.STATUS_PENDING.equals(pendingRequest.getStatus())
-        ) {
-            return new ModelAndView("redirect:/admin");
-        }
         final String adminRedirect = LoginRedirectUtils
             .safeRedirect(redirect, request.getContextPath())
             .orElse(null);
@@ -373,7 +365,7 @@ public class AdminController {
             carForm.getFiles()
         );
         final List<Long> retainedImageIds = resolveRetainedRequestImageIds(
-            pendingRequest,
+            requestId,
             carForm,
             errors
         );
@@ -402,7 +394,7 @@ public class AdminController {
                 requestId,
                 errors.getErrorCount()
             );
-            return carRequestFormPage(pendingRequest, carForm, errors, adminRedirect);
+            return carRequestFormPage(requestId, carForm, errors, adminRedirect);
         }
 
         final List<ImagePayload> imagePayloads;
@@ -425,7 +417,7 @@ public class AdminController {
         }
 
         try {
-            carRequestService.approvePendingRequest(
+            final boolean accepted = carRequestService.approvePendingRequest(
                 requestId,
                 resolvedBrand.getId(),
                 carForm.getModel(),
@@ -441,9 +433,12 @@ public class AdminController {
                 carForm.getMaxSpeedKmh(),
                 carForm.getPriceUsd()
             );
+            if (!accepted) {
+                return new ModelAndView("redirect:/admin");
+            }
         } catch (final DuplicateCarException e) {
             errors.reject("validation.car.duplicate");
-            return carRequestFormPage(pendingRequest, carForm, errors, adminRedirect);
+            return carRequestFormPage(requestId, carForm, errors, adminRedirect);
         }
 
         addAdminToast(redirectAttributes, "carAccepted");
@@ -461,16 +456,11 @@ public class AdminController {
         final BindingResult errors,
         @RequestHeader(value = "Referer", required = false) final String referer
     ) {
-        final Car existingCar = carService.getCarById(carId).orElse(null);
-        if (existingCar == null) {
-            return redirectBackToCatalog(referer);
-        }
-
         final List<MultipartFile> files = selectedImageFiles(
             carForm.getFiles()
         );
         final List<Long> retainedImageIds = resolveRetainedCarImageIds(
-            existingCar,
+            carId,
             carForm,
             errors
         );
@@ -499,7 +489,7 @@ public class AdminController {
                 carId,
                 errors.getErrorCount()
             );
-            return carEditFormPage(existingCar, carForm, errors);
+            return carEditFormPage(carId, carForm, errors, referer);
         }
 
         final List<ImagePayload> imagePayloads;
@@ -519,7 +509,7 @@ public class AdminController {
         }
 
         try {
-            carService.updateCar(
+            final Optional<Car> updatedCar = carService.updateCar(
                 carId,
                 resolvedBrand.getId(),
                 carForm.getModel(),
@@ -535,9 +525,12 @@ public class AdminController {
                 carForm.getMaxSpeedKmh(),
                 carForm.getPriceUsd()
             );
+            if (updatedCar.isEmpty()) {
+                return redirectBackToCatalog(referer);
+            }
         } catch (final DuplicateCarException e) {
             errors.reject("validation.car.duplicate");
-            return carEditFormPage(existingCar, carForm, errors);
+            return carEditFormPage(carId, carForm, errors, referer);
         }
         return new ModelAndView("redirect:/reviews/car/" + carId);
     }
@@ -823,18 +816,21 @@ public class AdminController {
     }
 
     private ModelAndView carRequestFormPage(
-        final CarRequest request,
+        final long requestId,
         final CarForm carForm,
         final BindingResult errors,
         final String adminRedirect
     ) {
-        return carRequestFormPage(
-            request,
-            carForm,
-            errors,
-            carRequestService.getCarRequestImages(request.getId()),
-            adminRedirect
-        );
+        return carRequestService.getCarRequestById(requestId)
+            .filter(request -> CarRequestService.STATUS_PENDING.equals(request.getStatus()))
+            .map(request -> carRequestFormPage(
+                request,
+                carForm,
+                errors,
+                carRequestService.getCarRequestImages(requestId),
+                adminRedirect
+            ))
+            .orElseGet(() -> new ModelAndView("redirect:/admin"));
     }
 
     private ModelAndView carRequestFormPage(
@@ -858,6 +854,17 @@ public class AdminController {
         );
         mav.addObject("existingImageIds", retainedImageIds);
         return mav;
+    }
+
+    private ModelAndView carEditFormPage(
+        final long carId,
+        final CarForm carForm,
+        final BindingResult errors,
+        final String referer
+    ) {
+        return carService.getCarById(carId)
+            .map(car -> carEditFormPage(car, carForm, errors))
+            .orElseGet(() -> redirectBackToCatalog(referer));
     }
 
     private ModelAndView carEditFormPage(
@@ -1000,12 +1007,6 @@ public class AdminController {
             .getCarRequestImagesByRequestIds(requestIds)
             .stream()
             .collect(Collectors.groupingBy(ImageMetadata::getOwnerId));
-    }
-
-    private List<Long> buildRequestImageIds(final CarRequest request) {
-        return imageIdsFrom(
-            carRequestService.getCarRequestImages(request.getId())
-        );
     }
 
     private List<Long> imageIdsFrom(final List<ImageMetadata> requestImages) {
@@ -1162,23 +1163,27 @@ public class AdminController {
     }
 
     private List<Long> resolveRetainedRequestImageIds(
-        final CarRequest request,
+        final long requestId,
         final CarForm carForm,
         final BindingResult errors
     ) {
         return resolveRetainedImageIds(
             carForm,
-            buildRequestImageIds(request),
+            imageIdsFrom(carRequestService.getCarRequestImages(requestId)),
             errors
         );
     }
 
     private List<Long> resolveRetainedCarImageIds(
-        final Car car,
+        final long carId,
         final CarForm carForm,
         final BindingResult errors
     ) {
-        return resolveRetainedImageIds(carForm, buildCarImageIds(car), errors);
+        return resolveRetainedImageIds(
+            carForm,
+            imageIdsFrom(carService.getCarImagesByCarId(carId)),
+            errors
+        );
     }
 
     private List<Long> resolveRetainedImageIds(

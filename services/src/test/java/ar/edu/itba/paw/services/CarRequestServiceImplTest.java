@@ -248,6 +248,33 @@ public class CarRequestServiceImplTest {
     }
 
     @Test
+    public void shouldNotApproveEditedRequestWhenRequestNotFound() {
+        // Arrange
+        when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.empty());
+
+        // Exercise
+        final boolean result = carRequestService.approvePendingRequest(REQUEST_ID, BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, "desc", List.of(new ImagePayload(CONTENT_TYPE, IMAGE_BYTES)), "GASOLINE", 130, 6, "MANUAL", new BigDecimal("6.5"), 190, new BigDecimal("25000.00"));
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldNotApproveEditedRequestWhenAlreadyApproved() {
+        // Arrange
+        final CarRequest approved = TestModels.carRequest(REQUEST_ID, USER_ID, EMAIL, BRAND_ID, BODY_TYPE_ID, 2024, "Corolla",
+                "desc", CONTENT_TYPE, IMAGE_BYTES, CarRequestService.STATUS_APPROVED, LocalDateTime.now(),
+                null, null, null, null, null, null, null);
+        when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(approved));
+
+        // Exercise
+        final boolean result = carRequestService.approvePendingRequest(REQUEST_ID, BRAND_ID, "Corolla", BODY_TYPE_ID, 2024, "desc", List.of(new ImagePayload(CONTENT_TYPE, IMAGE_BYTES)), "GASOLINE", 130, 6, "MANUAL", new BigDecimal("6.5"), 190, new BigDecimal("25000.00"));
+
+        // Assertions
+        assertFalse(result);
+    }
+
+    @Test
     public void shouldRejectApproveOverloadWithMismatchedImagePair() {
         // Arrange
         when(carRequestDao.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest()));

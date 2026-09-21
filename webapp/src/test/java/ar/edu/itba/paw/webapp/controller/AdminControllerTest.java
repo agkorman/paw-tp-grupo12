@@ -18,6 +18,7 @@ import ar.edu.itba.paw.services.CarRequestService;
 import ar.edu.itba.paw.services.CarService;
 import ar.edu.itba.paw.services.ReviewTagService;
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.services.exception.DuplicateCarException;
 import ar.edu.itba.paw.webapp.controller.support.ControllerTestValidationSupport;
 import ar.edu.itba.paw.webapp.util.ImageValidationService;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
@@ -39,13 +41,17 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -321,9 +327,9 @@ class AdminControllerTest {
     void approveCarRequest_valid_redirectsToAdminViaReferer() throws Exception {
         // Arrange
         arrangeDashboardDefaultsSimple();
-        final CarRequest request = pendingRequest(61L);
-        when(carRequestService.getCarRequestById(eq(61L))).thenReturn(Optional.of(request));
         when(carRequestService.getCarRequestImages(eq(61L))).thenReturn(Collections.emptyList());
+        when(carRequestService.approvePendingRequest(eq(61L), eq(1L), eq("Corolla"), eq(1L), eq(2020),
+                any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(true);
         arrangeCarFormBrandBodyLookups();
         final MockMvc mockMvc = adminMvc();
         // Exercise
@@ -356,6 +362,7 @@ class AdminControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin"))
                 .andExpect(flash().attribute("actionToastCode", "admin.carRequest.accept.toast.success"));
+        verify(carRequestService, never()).getCarRequestById(anyLong());
     }
 
     @Test
@@ -401,7 +408,6 @@ class AdminControllerTest {
                 200,
                 BigDecimal.valueOf(31000));
 
-        when(carService.getCarById(eq(42L))).thenReturn(Optional.of(car));
         when(carService.getCarImagesByCarId(eq(42L))).thenReturn(Collections.emptyList());
         when(carService.updateCar(
                         eq(42L),
@@ -417,7 +423,7 @@ class AdminControllerTest {
                         eq("automatic"),
                         eq(BigDecimal.valueOf(7.5)),
                         eq(205),
-                        eq(BigDecimal.valueOf(31000))))
+                        eq(new BigDecimal("31000.00"))))
                 .thenReturn(Optional.of(car));
 
         arrangeCarFormBrandBodyLookups();
@@ -447,6 +453,100 @@ class AdminControllerTest {
 
         // Assertions
         resultActions.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/reviews/car/42"));
+        verify(carService, never()).getCarById(anyLong());
+    }
+
+    @Test
+    void approveCarRequest_notAccepted_redirectsWithoutSuccessToast() throws Exception {
+        // Arrange
+        arrangeDashboardDefaultsSimple();
+        when(carRequestService.approvePendingRequest(eq(61L), eq(1L), eq("Corolla"), eq(1L), eq(2020),
+                any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(false);
+        final MockMvc mockMvc = adminMvc();
+
+        // Exercise
+        final ResultActions result = mockMvc.perform(validCarSubmission("/admin/requests/61/accept"));
+
+        // Assertions
+        result.andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin"))
+                .andExpect(flash().attributeCount(0));
+        verify(carRequestService, never()).getCarRequestById(anyLong());
+    }
+
+    @Test
+    void updateCar_notUpdated_redirectsToCatalog() throws Exception {
+        // Arrange
+        arrangeDashboardDefaultsSimple();
+        when(carService.updateCar(eq(42L), eq(1L), eq("Corolla"), eq(1L), eq(2020),
+                any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(Optional.empty());
+        final MockMvc mockMvc = adminMvc();
+
+        // Exercise
+        final ResultActions result = mockMvc.perform(validCarSubmission("/admin/cars/42"));
+
+        // Assertions
+        result.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/cars"));
+        verify(carService, never()).getCarById(anyLong());
+    }
+
+    @Test
+    void approveCarRequest_duplicate_rendersFormWithErrors() throws Exception {
+        // Arrange
+        arrangeDashboardDefaultsSimple();
+        when(carRequestService.getCarRequestById(61L)).thenReturn(Optional.of(pendingRequest(61L)));
+        when(carRequestService.approvePendingRequest(eq(61L), eq(1L), eq("Corolla"), eq(1L), eq(2020),
+                any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new DuplicateCarException());
+        final MockMvc mockMvc = adminMvc();
+
+        // Exercise
+        final ResultActions result = mockMvc.perform(validCarSubmission("/admin/requests/61/accept"));
+
+        // Assertions
+        result.andExpect(status().isOk()).andExpect(view().name("car-form.jsp"))
+                .andExpect(model().attributeHasErrors("carForm"))
+                .andExpect(model().attribute("carFormMode", "review-request"));
+    }
+
+    @Test
+    void updateCar_duplicate_rendersFormWithErrors() throws Exception {
+        // Arrange
+        arrangeDashboardDefaultsSimple();
+        final Car car = TestModels.car(42L, 1L, "Toyota", "Corolla", 1L, 2020, "Sedan", "desc",
+                LocalDateTime.now(), false, "combustion", 130, 6, "automatic",
+                BigDecimal.valueOf(7.5), 205, BigDecimal.valueOf(31000));
+        when(carService.getCarById(42L)).thenReturn(Optional.of(car));
+        when(carService.updateCar(eq(42L), eq(1L), eq("Corolla"), eq(1L), eq(2020),
+                any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new DuplicateCarException());
+        final MockMvc mockMvc = adminMvc();
+
+        // Exercise
+        final ResultActions result = mockMvc.perform(validCarSubmission("/admin/cars/42"));
+
+        // Assertions
+        result.andExpect(status().isOk()).andExpect(view().name("car-form.jsp"))
+                .andExpect(model().attributeHasErrors("carForm"))
+                .andExpect(model().attribute("carFormMode", "edit-car"));
+    }
+
+    private MockMultipartHttpServletRequestBuilder validCarSubmission(final String path) {
+        final MockMultipartHttpServletRequestBuilder request = multipart(path);
+        request.file(carImagePart())
+                .param("brand", "Toyota")
+                .param("bodyType", "Sedan")
+                .param("model", "Corolla")
+                .param("year", "2020")
+                .param("description", "Fresh description meets length.")
+                .param("fuelType", CarSearchCriteria.FUEL_TYPE_COMBUSTION)
+                .param("horsepower", "130")
+                .param("airbagCount", "6")
+                .param("transmission", CarSearchCriteria.TRANSMISSION_AUTOMATIC)
+                .param("fuelConsumption", "7.5")
+                .param("maxSpeedKmh", "205")
+                .param("priceUsd", "31000.00");
+        return request;
     }
 
     @Test
