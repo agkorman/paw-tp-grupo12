@@ -29,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly = true)
 public class CarServiceImpl implements CarService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
@@ -49,16 +48,19 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Car> getCarById(final long id) {
         return carDao.findById(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Car> getCarsByIds(final Collection<Long> ids) {
         return carDao.findByIds(ids);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<Car> searchCars(final CarSearchCriteria criteria) {
         normalizeAndValidateSearchCriteria(criteria);
         return carDao.findByCriteria(criteria);
@@ -72,21 +74,25 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<StoredImagePayload> getCarImageByCarId(final long carId) {
         return carImageDao.findFirstByCarIdWithData(carId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<ImageMetadata> getCarImageMetadataByCarId(final long carId) {
         return carImageDao.findFirstMetadataByCarId(carId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ImageMetadata> getCarImagesByCarId(final long carId) {
         return carImageDao.findAllByCarId(carId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<StoredImagePayload> getCarImageById(
         final long carId,
         final long imageId
@@ -95,6 +101,7 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<ImageMetadata> getCarImageMetadataById(
         final long carId,
         final long imageId
@@ -190,7 +197,7 @@ public class CarServiceImpl implements CarService {
         validateYear(year);
 
         if (
-            existsDuplicateCarByIds(
+            hasDuplicateCar(
                 brandId,
                 bodyTypeId,
                 normalizedModel,
@@ -235,22 +242,26 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Long> searchCarIds(final CarSearchCriteria criteria) {
         normalizeAndValidateSearchCriteria(criteria);
         return carDao.findIdsByCriteria(criteria);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countCarsByBrandId(final long brandId) {
         return carDao.countByBrandId(brandId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countCarsByBodyTypeId(final long bodyTypeId) {
         return carDao.countByBodyTypeId(bodyTypeId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Car> getFeaturedCars(final int limit) {
         final List<Car> topRated = carDao.findTopRated(limit);
         if (topRated.size() >= limit) {
@@ -268,6 +279,7 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean existsDuplicateCar(
         final String brandName,
         final String bodyTypeName,
@@ -289,6 +301,7 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ImagePayload> collectRetainedImagePayloads(
         final long carId,
         final List<Long> retainedImageIds
@@ -347,7 +360,18 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean existsDuplicateCarByIds(
+        final long brandId,
+        final long bodyTypeId,
+        final String model,
+        final Integer year,
+        final long ignoredCarId
+    ) {
+        return hasDuplicateCar(brandId, bodyTypeId, model, year, ignoredCarId);
+    }
+
+    private boolean hasDuplicateCar(
         final long brandId,
         final long bodyTypeId,
         final String model,

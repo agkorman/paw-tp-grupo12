@@ -28,7 +28,6 @@ import java.util.Optional;
 import java.util.Set;
 
 @Service
-@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
@@ -47,11 +46,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<User> getUserById(final long id) {
         return userDao.findById(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<User> findByEmail(final String email) {
         final String normalizedEmail = normalizeEmail(email);
         if (normalizedEmail == null) {
@@ -61,6 +62,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<User> findByUsername(final String username) {
         final String normalizedUsername = StringUtils.normalize(username);
         if (normalizedUsername == null) {
@@ -168,16 +170,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EmailRecipient> getModeratorEmailRecipients() {
         return userDao.findEmailRecipientsByRoles(MODERATOR_EMAIL_ROLES);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<User> getAllUsers() {
         return userDao.findAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<User> getUsersByIds(final java.util.Collection<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return java.util.Collections.emptyList();
@@ -186,6 +191,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<User> searchUsers(final String query, final int page) {
         final String normalizedQuery = StringUtils.normalize(query);
         if (normalizedQuery == null) {

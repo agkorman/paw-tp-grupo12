@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly = true)
 public class AdminRequestServiceImpl implements AdminRequestService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
@@ -47,11 +46,13 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<AdminRequest> getAdminRequestById(final long id) {
         return adminRequestDao.findById(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<AdminRequest> getAdminRequestsByStatus(
         final String status,
         final int page
@@ -64,6 +65,7 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countAdminRequestsByStatus(final String status) {
         final String normalizedStatus = StringUtils.normalize(status);
         if (normalizedStatus == null) {
@@ -73,11 +75,13 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasPendingRequest(final long userId) {
         return adminRequestDao.existsPendingByUser(userId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean isEligibleForModeratorRequest(final long userId) {
         final Optional<User> userOptional = userService.getUserById(userId);
         if (userOptional.isEmpty()) {
@@ -230,6 +234,7 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long getTotalPendingItems() {
         final long carRequestCount = carRequestService.countCarRequestsByStatus(
             CarRequestService.STATUS_PENDING
@@ -240,11 +245,12 @@ public class AdminRequestServiceImpl implements AdminRequestService {
         final long bodyTypeRequestCount = bodyTypeRequestService.countBodyTypeRequestsByStatus(
             BodyTypeRequestService.STATUS_PENDING
         );
-        final long adminRequestCount = countAdminRequestsByStatus(STATUS_PENDING);
+        final long adminRequestCount = adminRequestDao.countByStatus(STATUS_PENDING);
         return carRequestCount + brandRequestCount + bodyTypeRequestCount + adminRequestCount;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public String resolveSubmitterEmail(final String submitterEmail, final Long submittedByUserId) {
         if (submitterEmail != null && !submitterEmail.isBlank()) {
             return submitterEmail;
@@ -259,6 +265,7 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public String resolveSubmitterEmail(final String submitterEmail, final Long submittedByUserId,
                                         final Map<Long, User> usersById) {
         if (submitterEmail != null && !submitterEmail.isBlank()) {

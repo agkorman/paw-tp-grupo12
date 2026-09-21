@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly = true)
 public class UserActivityServiceImpl implements UserActivityService {
 
     private final UserActivityDao userActivityDao;
@@ -19,21 +18,25 @@ public class UserActivityServiceImpl implements UserActivityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ProfileActivityItem> getAuthoredActivity(final long userId, final int page) {
         return userActivityDao.findAuthoredActivity(userId, page);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countAuthoredActivity(final long userId) {
         return userActivityDao.countAuthoredActivity(userId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ProfileActivityItem> getLikedActivity(final long userId, final int page) {
         return userActivityDao.findLikedActivity(userId, page);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countLikedActivity(final long userId) {
         return userActivityDao.countLikedActivity(userId);
     }

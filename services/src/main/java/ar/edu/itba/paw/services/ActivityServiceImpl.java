@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly = true)
 public class ActivityServiceImpl implements ActivityService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityServiceImpl.class);
@@ -53,6 +52,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ActivityFeedItem> getActivityFeed(final ActivityFeedCriteria criteria, final Long currentUserId) {
         LOGGER.debug("loading activity feed type={} timeframe={} sort={} scope={} page={}",
                 criteria.getType(), criteria.getTimeframe(), criteria.getSort(), criteria.getScope(),
@@ -129,6 +129,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<ActivityFeedReference, ActivityFeedPermissions> getActivityFeedPermissions(
             final Collection<ActivityFeedItem> items,
             final Long viewerUserId,
