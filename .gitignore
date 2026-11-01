@@ -1,8 +1,15 @@
 # IDEs
 .vscode/
 .idea/
+.project
+.classpath
+.settings/
+.factorypath
+.metadata/
+.recommenders/
 *.swp
 *.swo
+*~
 
 # Build artifacts
 target/
@@ -10,6 +17,12 @@ target/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+node_modules/
+.vite/
+*.tsbuildinfo
+coverage/
+.nyc_output/
+npm-debug.log*
 *.class
 *.jar
 *.war
@@ -35,6 +48,13 @@ perso.md
 # Environment
 .env
 
+# Runtime logs and JVM crash reports
+logs/
+*.log
+*.log.*
+hs_err_pid*
+replay_pid*
+
 # Local secrets
 **/db.properties
 **/mail.properties
@@ -50,3 +70,4 @@ persistence/src/main/resources/local-demo*.sql
 .playwright-mcp/
 run.sh
 docs/
+.docs/
