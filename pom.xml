@@ -12,6 +12,8 @@
     <spring.version>5.3.33</spring.version>
     <spring-security.version>5.8.16</spring-security.version>
     <javax.servlet.version>3.1.0</javax.servlet.version>
+    <jersey.version>2.48</jersey.version>
+    <jackson.version>2.20.1</jackson.version>
     <maven-clean-plugin.version>3.4.0</maven-clean-plugin.version>
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
     <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -31,6 +33,30 @@
   </properties>
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.glassfish.jersey</groupId>
+        <artifactId>jersey-bom</artifactId>
+        <version>${jersey.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>${jetty-maven-plugin.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-servlet</artifactId>
+        <version>${jetty-maven-plugin.version}</version>
+      </dependency>
       <dependency>
         <groupId>ar.edu.itba.paw</groupId>
         <artifactId>model</artifactId>
