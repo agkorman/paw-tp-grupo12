@@ -36,7 +36,10 @@ public class ApiExceptionMapper implements ExceptionMapper<Exception> {
         }
         return Response.fromResponse(original)
                 .type(ApiMediaTypes.ERROR_V1)
-                .entity(new ApiError(code, original.getStatusInfo().getReasonPhrase()))
+                .entity(exception instanceof ApiInputException inputException
+                        ? inputException.getError()
+                        : new ApiError(code, Response.Status.fromStatusCode(status) == null
+                                ? "Request failed" : Response.Status.fromStatusCode(status).getReasonPhrase()))
                 .build();
     }
 }
