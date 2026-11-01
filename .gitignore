@@ -7,6 +7,9 @@
 # Build artifacts
 target/
 **/target/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
 *.class
 *.jar
 *.war

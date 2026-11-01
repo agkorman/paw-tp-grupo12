@@ -7,6 +7,7 @@ Car listing web application — ITBA PAW course project.
 - Java 21
 - Maven 3.x
 - PostgreSQL 16
+- Node.js 20.19+ and npm 10+ (for the React build)
 
 ## Database setup
 
@@ -62,3 +63,17 @@ mvn -pl webapp jetty:run
 ```
 
 The app starts on `http://localhost:8080`. The database schema and seed data are created automatically on first startup.
+
+## Frontend base
+
+The React + TypeScript app lives in `frontend/`. Maven runs `npm ci`, the frontend tests, the TypeScript check, and the Vite production build as part of `mvn clean package`. The generated files are packaged under `WEB-INF/spa/` in the WAR. Their public URL and the SPA route fallback will be configured alongside the Jersey and security servlet mappings.
+
+For standalone frontend development:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Vite proxies `/api` to `http://localhost:8080/webapp/api` by default. Set `PAW_DEV_API_ORIGIN` and `PAW_DEV_API_CONTEXT_PATH` to change the development backend origin or context path. The frontend base currently contains a landing screen, a catalog placeholder, shared layout, lazy routes, translations, and a navigation test.

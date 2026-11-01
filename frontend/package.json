@@ -1,0 +1,37 @@
+{
+  "name": "paw-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "npm run typecheck && vite build"
+  },
+  "dependencies": {
+    "i18next": "26.6.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-i18next": "17.1.10",
+    "react-router-dom": "7.18.5"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "4.7.0",
+    "autoprefixer": "10.6.2",
+    "jsdom": "26.1.0",
+    "postcss": "8.5.32",
+    "tailwindcss": "3.4.19",
+    "typescript": "7.0.2",
+    "vite": "6.4.5",
+    "vitest": "5.0.5"
+  }
+}
