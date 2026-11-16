@@ -284,7 +284,7 @@ class ApiValidationServletIntegrationTest {
 
     @Configuration
     @EnableWebSecurity
-    @Import(ar.edu.itba.paw.webapp.config.ApiSecurityConfig.class)
+    @Import({ar.edu.itba.paw.webapp.config.ApiSecurityConfig.class, ApiTokenTestConfig.class})
     @ComponentScan("ar.edu.itba.paw.webapp.api")
     static class TestConfig {
 
