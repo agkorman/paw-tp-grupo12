@@ -33,9 +33,16 @@ export MAIL_USERNAME=your-smtp-user
 export MAIL_PASSWORD=your-smtp-password
 
 export AUTH_REMEMBER_ME_KEY=replace-with-a-random-secret-at-least-32-chars
+export AUTH_JWT_SECRET="$(openssl rand -base64 32)"
 ```
 
-If your deploy target does not let you configure Tomcat environment variables, you can instead
+`AUTH_JWT_SECRET` is required for access-token signing. It must be Base64 encoding of at least
+32 cryptographically random bytes. Generate it once per environment and retain it across restarts;
+do not commit or log it. The application refuses to start if it is missing or invalid. JWT signing
+has no properties-file fallback. Use a different secret for each environment.
+
+For DB, mail, and legacy remember-me configuration, if your deploy target does not let you
+configure Tomcat environment variables, you can instead
 package `db.properties`, `mail.properties`, and `auth.properties` files inside the WAR at
 `webapp/src/main/resources/`:
 
