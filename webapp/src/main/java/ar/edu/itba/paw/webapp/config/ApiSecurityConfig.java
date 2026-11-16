@@ -42,6 +42,13 @@ public class ApiSecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(antMatcher(HttpMethod.GET, "/api"), antMatcher(HttpMethod.GET, "/api/")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.GET, "/api/communities/*")).permitAll()
+                        .requestMatchers(antMatcher(HttpMethod.POST, "/api/users"),
+                                antMatcher(HttpMethod.GET, "/api/users/*")).permitAll()
+                        // SessionResource verifies refresh credentials itself to revoke without rotation.
+                        // Missing credentials and attempts against other sessions are rejected there.
+                        .requestMatchers(antMatcher(HttpMethod.DELETE, "/api/users/*/sessions/*")).permitAll()
+                        .requestMatchers(antMatcher(HttpMethod.PATCH, "/api/users/*"),
+                                antMatcher(HttpMethod.GET, "/api/users/*/sessions/*")).authenticated()
                         .anyRequest().denyAll())
                 .requestCache(cache -> cache.requestCache(new NullRequestCache()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

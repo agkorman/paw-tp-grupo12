@@ -6,6 +6,7 @@ import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.services.exception.DuplicateUserException;
 import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import ar.edu.itba.paw.services.exception.UserNotFoundException;
+import ar.edu.itba.paw.services.exception.UserProfileOwnershipException;
 import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.QueryTimeoutException;
@@ -28,6 +29,29 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceImplTest {
+
+    @Test
+    public void rejectsProfileUpdateByAnotherUser() {
+        // Arrange
+        final long requestingUser = 99;
+        // Exercise
+        final UserProfileOwnershipException result = assertThrows(UserProfileOwnershipException.class,
+                () -> userService.updateProfile(requestingUser, USER_ID, "renamed", "en"));
+        // Assertions
+        assertEquals("Only the owner can update the profile", result.getMessage());
+    }
+
+    @Test
+    public void profileUpdatePreservesUsernameConflict() {
+        // Arrange
+        final User taken = TestModels.user(99L, "taken", "other@example.test", "hash", "user", LocalDateTime.now());
+        when(userDao.findByUsername("taken")).thenReturn(Optional.of(taken));
+        // Exercise
+        final UsernameAlreadyExistsException result = assertThrows(UsernameAlreadyExistsException.class,
+                () -> userService.updateProfile(USER_ID, USER_ID, "taken", "en"));
+        // Assertions
+        assertTrue(result.getMessage().contains("taken"));
+    }
 
     private static final long USER_ID = 42L;
     private static final String RAW_USERNAME = "  Joaco  ";

@@ -16,6 +16,8 @@ public interface UserService {
     User createUser(String username, String email, String rawPassword);
     User updateUsername(long userId, String username);
     User updatePreferredLocale(long userId, String preferredLocale);
+    /** Atomically updates the owner's supplied fields; null means unchanged. */
+    User updateProfile(long authenticatedUserId, long userId, String displayName, String preferredLocale);
     boolean updateRole(long userId, String role);
     List<EmailRecipient> getModeratorEmailRecipients();
     List<User> getAllUsers();

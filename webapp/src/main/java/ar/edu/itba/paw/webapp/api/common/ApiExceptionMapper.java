@@ -1,5 +1,11 @@
 package ar.edu.itba.paw.webapp.api.common;
 
+import ar.edu.itba.paw.services.exception.DuplicateUserException;
+import ar.edu.itba.paw.services.exception.EmailAlreadyExistsException;
+import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
+import ar.edu.itba.paw.services.exception.UserNotFoundException;
+import ar.edu.itba.paw.services.exception.UserProfileOwnershipException;
+import java.util.List;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -16,6 +22,11 @@ public class ApiExceptionMapper implements ExceptionMapper<Exception> {
 
     @Override
     public Response toResponse(final Exception exception) {
+        final Response userFailure = userFailure(exception);
+        if (userFailure != null) {
+            LOGGER.warn("API user request rejected status={}", userFailure.getStatus());
+            return userFailure;
+        }
         final Response original = exception instanceof WebApplicationException webException
                 ? webException.getResponse() : Response.serverError().build();
         final int status = original.getStatus();
@@ -41,5 +52,29 @@ public class ApiExceptionMapper implements ExceptionMapper<Exception> {
                         : new ApiError(code, Response.Status.fromStatusCode(status) == null
                                 ? "Request failed" : Response.Status.fromStatusCode(status).getReasonPhrase()))
                 .build();
+    }
+
+    private Response userFailure(final Exception exception) {
+        if (exception instanceof UsernameAlreadyExistsException) {
+            return Response.status(409).type(ApiMediaTypes.ERROR_V1).entity(new ApiError("USER_CONFLICT",
+                    "Display name is already registered", List.of(new ApiFieldError("displayName", "DUPLICATE")))).build();
+        }
+        if (exception instanceof EmailAlreadyExistsException) {
+            return Response.status(409).type(ApiMediaTypes.ERROR_V1).entity(new ApiError("USER_CONFLICT",
+                    "Email is already registered", List.of(new ApiFieldError("email", "DUPLICATE")))).build();
+        }
+        if (exception instanceof DuplicateUserException) {
+            return Response.status(409).type(ApiMediaTypes.ERROR_V1)
+                    .entity(new ApiError("USER_CONFLICT", "User data conflicts with an existing account")).build();
+        }
+        if (exception instanceof UserNotFoundException) {
+            return Response.status(404).type(ApiMediaTypes.ERROR_V1)
+                    .entity(new ApiError("RESOURCE_NOT_FOUND", "Not Found")).build();
+        }
+        if (exception instanceof UserProfileOwnershipException) {
+            return Response.status(403).type(ApiMediaTypes.ERROR_V1)
+                    .entity(new ApiError("ACCESS_DENIED", "Access is denied")).build();
+        }
+        return null;
     }
 }

@@ -11,6 +11,7 @@ import ar.edu.itba.paw.services.exception.EmailAlreadyExistsException;
 import ar.edu.itba.paw.services.exception.InvalidServiceInputException;
 import ar.edu.itba.paw.services.exception.ServiceOperationException;
 import ar.edu.itba.paw.services.exception.UserNotFoundException;
+import ar.edu.itba.paw.services.exception.UserProfileOwnershipException;
 import ar.edu.itba.paw.services.exception.UsernameAlreadyExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,6 +158,21 @@ public class UserServiceImpl implements UserService {
             throw new UserNotFoundException(userId);
         }
         return userDao.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    @Override
+    @Transactional
+    public User updateProfile(final long authenticatedUserId, final long userId,
+                              final String displayName, final String preferredLocale) {
+        if (authenticatedUserId != userId) {
+            throw new UserProfileOwnershipException();
+        }
+        // The outer transaction covers both existing update use cases, including their final flush.
+        final User renamed = displayName == null ? null : updateUsername(userId, displayName);
+        if (preferredLocale != null) {
+            return updatePreferredLocale(userId, preferredLocale);
+        }
+        return renamed == null ? getUserById(userId).orElseThrow(() -> new UserNotFoundException(userId)) : renamed;
     }
 
     @Override

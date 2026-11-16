@@ -95,6 +95,28 @@ class ApiAuthenticationFilterTest {
     }
 
     @Test
+    void replacementSurvivesResponseResetAndCoexistsWithResourceLinks() throws Exception {
+        // Arrange
+        final TokenAuthenticationService authentication = mock(TokenAuthenticationService.class);
+        when(authentication.renew("rt_current")).thenReturn(grant());
+        final ApiAuthenticationFilter filter = new ApiAuthenticationFilter(authentication,
+                mock(AccessTokenService.class), new ApiSecurityErrorHandler());
+        final MockHttpServletResponse response = new MockHttpServletResponse();
+        // Exercise
+        filter.doFilter(request("GET", "Bearer rt_current"), response, (req, res) -> {
+            final var http = (javax.servlet.http.HttpServletResponse) res;
+            http.reset();
+            http.setHeader("Cache-Control", "public, max-age=3600");
+            http.setHeader("Link", "</webapp/api>; rel=\"self\"");
+        });
+        // Assertions
+        assertEquals("rt_replacement", response.getHeader(ApiAuthentication.REFRESH_TOKEN_HEADER));
+        assertEquals("no-store", response.getHeader("Cache-Control"));
+        assertTrue(response.getHeader("Link").contains("/sessions/12>"));
+        assertTrue(response.getHeader("Link").contains("rel=\"self\""));
+    }
+
+    @Test
     void accessEstablishesCredentialFreePrincipalBeforeResourceExecution() throws Exception {
         // Arrange
         final AccessTokenService access = mock(AccessTokenService.class);

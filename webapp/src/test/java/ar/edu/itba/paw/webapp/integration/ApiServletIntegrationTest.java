@@ -13,19 +13,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Map;
 import java.util.Set;
 import java.util.Base64;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.ZoneOffset;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import javax.servlet.DispatcherType;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -85,7 +77,7 @@ class ApiServletIntegrationTest {
         context.addFilter(new FilterHolder(new DelegatingFilterProxy("springSecurityFilterChain")),
                 "/*", java.util.EnumSet.of(DispatcherType.REQUEST));
         final ServletHolder api = new ServletHolder(ServletContainer.class);
-        api.setInitParameter("javax.ws.rs.Application", TestApiApplication.class.getName());
+        api.setInitParameter("javax.ws.rs.Application", ApiApplication.class.getName());
         api.setInitOrder(2);
         context.addServlet(api, "/api/*");
         context.addServlet(new ServletHolder(new LegacyServlet()), "/");
@@ -237,9 +229,7 @@ class ApiServletIntegrationTest {
         final HttpTester.Response response = request("GET", "/webapp/api", headers);
         // Assertions
         assertEquals(200, response.getStatus());
-        assertEquals("7", json.readTree(response.getContent()).path("name").asText());
-        assertFalse(json.readTree(response.getContent()).path("admin").asBoolean());
-        assertFalse(json.readTree(response.getContent()).path("session").asBoolean());
+        assertEquals("/webapp/api/users", json.readTree(response.getContent()).at("/_links/users/href").asText());
         assertEquals("rt_initial", response.get(ApiAuthentication.REFRESH_TOKEN_HEADER));
         assertNotNull(response.get(ApiAuthentication.ACCESS_TOKEN_HEADER));
         assertTrue(String.join(",", response.getValuesList("Link")).contains(
@@ -326,11 +316,11 @@ class ApiServletIntegrationTest {
         // Arrange
         final String headers = "Authorization: Bearer " + access(0) + "\r\n";
         // Exercise
-        final HttpTester.Response response = request("GET", "/webapp/api", headers);
+        final HttpTester.Response response = request("GET", "/webapp/api/users/7", headers);
         // Assertions
         assertEquals(200, response.getStatus());
-        assertEquals("7", json.readTree(response.getContent()).path("name").asText());
-        assertFalse(json.readTree(response.getContent()).path("session").asBoolean());
+        assertEquals("7", json.readTree(response.getContent()).path("id").asText());
+        assertEquals("nica@example.test", json.readTree(response.getContent()).path("email").asText());
         assertNull(response.get(ApiAuthentication.ACCESS_TOKEN_HEADER));
         assertNull(response.get(ApiAuthentication.REFRESH_TOKEN_HEADER));
         assertNull(response.get("Set-Cookie"));
@@ -367,7 +357,9 @@ class ApiServletIntegrationTest {
         final HttpTester.Response response = request("GET", "/webapp/api", headers);
         // Assertions
         assertEquals(200, response.getStatus());
-        assertTrue(json.readTree(response.getContent()).path("admin").asBoolean());
+        final HttpTester.Response owner = request("GET", "/webapp/api/users/7",
+                "Authorization: Bearer " + response.get(ApiAuthentication.ACCESS_TOKEN_HEADER) + "\r\n");
+        assertEquals("ADMIN", json.readTree(owner.getContent()).path("roles").get(0).asText());
         assertEquals("rt_next", response.get(ApiAuthentication.REFRESH_TOKEN_HEADER));
         assertNotNull(response.get(ApiAuthentication.ACCESS_TOKEN_HEADER));
         assertFalse(response.getContent().contains("rt_next"));
@@ -402,28 +394,14 @@ class ApiServletIntegrationTest {
     }
 
     @Test
-    void replacementSurvivesResetAndCoexistsWithResourceLinks() throws Exception {
-        // Arrange
-        final String headers = "Authorization: Bearer rt_current\r\n";
-        // Exercise
-        final HttpTester.Response response = request("GET", "/webapp/api?reset=true", headers);
-        // Assertions
-        assertEquals(200, response.getStatus());
-        assertEquals("rt_next", response.get(ApiAuthentication.REFRESH_TOKEN_HEADER));
-        assertEquals("no-store", response.get("Cache-Control"));
-        final String links = String.join(",", response.getValuesList("Link"));
-        assertTrue(links.contains("/sessions/12>"));
-        assertTrue(links.contains("rel=\"self\""));
-    }
-
-    @Test
     void missingCredentialsRemainAnonymousAfterAnotherRequestAuthenticated() throws Exception {
         // Arrange
         request("GET", "/webapp/api", "Authorization: Bearer " + access(0) + "\r\n");
         // Exercise
-        final HttpTester.Response response = request("GET", "/webapp/api", "");
+        final HttpTester.Response response = request("GET", "/webapp/api/users/7", "");
         // Assertions
-        assertEquals("anonymous", json.readTree(response.getContent()).path("name").asText());
+        assertEquals("7", json.readTree(response.getContent()).path("id").asText());
+        assertFalse(json.readTree(response.getContent()).has("email"));
         assertNull(response.get(ApiAuthentication.ACCESS_TOKEN_HEADER));
     }
 
@@ -448,28 +426,6 @@ class ApiServletIntegrationTest {
         final JwtAccessTokenService issuer = new JwtAccessTokenService(ApiTokenTestConfig.KEY,
                 Clock.fixed(ApiTokenTestConfig.NOW.plusSeconds(offset), ZoneOffset.UTC));
         return issuer.issue(ApiTokenTestConfig.credentials("unused", 12, 86400), Set.of("USER"));
-    }
-
-    /** The real API index will be added with identity resources in the next point. */
-    public static class TestApiApplication extends ApiApplication {
-        public TestApiApplication() { register(IdentityFixture.class); }
-    }
-
-    @Path("/")
-    public static class IdentityFixture {
-        @GET
-        @Produces(ApiMediaTypes.INDEX_V1)
-        public Response identity(@Context final SecurityContext security, @Context final HttpServletRequest request,
-                                 @Context final HttpServletResponse response, @QueryParam("reset") final boolean reset) {
-            if (reset) {
-                response.reset();
-                response.setHeader("Cache-Control", "public, max-age=3600");
-            }
-            return Response.ok(Map.of("name", security.getUserPrincipal() == null ? "anonymous"
-                    : security.getUserPrincipal().getName(), "admin", security.isUserInRole("ADMIN"),
-                    "session", request.getSession(false) != null))
-                    .header("Link", "</webapp/api>; rel=\"self\"").build();
-        }
     }
 
     private HttpTester.Response get(final String path, final String accept) throws Exception {

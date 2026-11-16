@@ -120,6 +120,14 @@ public class ApiAuthenticationFilter extends OncePerRequestFilter {
             return reject(response, ApiAuthentication.INVALID_CREDENTIALS);
         }
         if (credential.startsWith("rt_")) {
+            final String path = request.getRequestURI().substring(request.getContextPath().length());
+            if ("DELETE".equals(request.getMethod())
+                    && path.matches("/api/users/[1-9][0-9]*/sessions/[1-9][0-9]*/?")) {
+                // Only this resource authenticates the raw refresh itself, atomically with revocation.
+                // Do not establish an identity or rotate credentials for this request.
+                request.setAttribute(ApiAuthentication.REVOCATION_REFRESH_ATTRIBUTE, credential);
+                return response;
+            }
             return grant(request, response, authentication.renew(credential));
         }
         final AccessTokenResult result = accessTokens.validate(credential);

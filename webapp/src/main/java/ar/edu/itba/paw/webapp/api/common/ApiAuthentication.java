@@ -19,6 +19,8 @@ public final class ApiAuthentication {
     public static final String ACCESS_TOKEN_HEADER = "X-Access-Token";
     public static final String REFRESH_TOKEN_HEADER = "X-Refresh-Token";
     public static final String REMEMBER_ME_HEADER = "X-Remember-Me";
+    /** Internal request attribute, never a client-controlled header or an authenticated identity. */
+    public static final String REVOCATION_REFRESH_ATTRIBUTE = ApiAuthentication.class.getName() + ".revocationRefresh";
 
     // RFC 8288 extension relation types use absolute URIs; these are identifiers, not endpoints.
     public static final String USER_RELATION = "urn:paw:relation:authenticated-user";

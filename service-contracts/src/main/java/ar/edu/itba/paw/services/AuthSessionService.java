@@ -16,6 +16,6 @@ public interface AuthSessionService {
     SessionRevocationResult revoke(long authenticatedUserId, long authenticatedSessionId,
                                    long targetUserId, long targetSessionId);
     SessionRevocationResult revokeWithRefresh(long targetUserId, long targetSessionId, String refreshToken);
-    Optional<AuthSession> findSession(long userId, long sessionId);
+    Optional<AuthSession> findActiveSession(long authenticatedUserId, long userId, long sessionId);
     int deleteExpiredSessions();
 }

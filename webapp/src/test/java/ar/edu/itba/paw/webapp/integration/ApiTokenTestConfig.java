@@ -31,6 +31,10 @@ class ApiTokenTestConfig {
     static final Instant NOW = Instant.parse("2026-11-15T18:00:00Z");
     static final SecretKey KEY = new SecretKeySpec(new byte[32], "HmacSHA256");
 
+    @Bean ar.edu.itba.paw.services.UserRegistrationService userRegistrationService() {
+        return mock(ar.edu.itba.paw.services.UserRegistrationService.class);
+    }
+
     @Bean Clock authClock() { return Clock.fixed(NOW, ZoneOffset.UTC); }
     @Bean SecretKey authSigningKey() { return KEY; }
     @Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(4); }

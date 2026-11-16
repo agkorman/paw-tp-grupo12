@@ -269,6 +269,62 @@ class AuthSessionServiceImplTest {
         assertEquals(SessionRevocationResult.FORBIDDEN, result);
     }
 
+    @Test
+    void ownerCanReadActiveSession() {
+        // Arrange
+        final AuthSession expected = session(NOW.plusSeconds(100), false);
+        when(sessionDao.findByUserAndId(42, 7)).thenReturn(Optional.of(expected));
+        when(clock.instant()).thenReturn(NOW);
+        // Exercise
+        final Optional<AuthSession> result = service.findActiveSession(42, 42, 7);
+        // Assertions
+        assertEquals(7, result.orElseThrow().getId());
+        assertEquals(NOW.plusSeconds(100), result.orElseThrow().getExpiresAt());
+    }
+
+    @Test
+    void hidesSessionFromOtherUser() {
+        // Arrange
+        final long otherUser = 99;
+        // Exercise
+        final Optional<AuthSession> result = service.findActiveSession(otherUser, 42, 7);
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void hidesSessionAtExactExpiry() {
+        // Arrange
+        when(sessionDao.findByUserAndId(42, 7)).thenReturn(Optional.of(session(NOW, false)));
+        when(clock.instant()).thenReturn(NOW);
+        // Exercise
+        final Optional<AuthSession> result = service.findActiveSession(42, 42, 7);
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void hidesRevokedSession() {
+        // Arrange
+        final AuthSession session = session(NOW.plusSeconds(100), false);
+        session.setRevokedAt(NOW);
+        when(sessionDao.findByUserAndId(42, 7)).thenReturn(Optional.of(session));
+        // Exercise
+        final Optional<AuthSession> result = service.findActiveSession(42, 42, 7);
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void missingSessionRemainsAbsent() {
+        // Arrange
+        when(sessionDao.findByUserAndId(42, 7)).thenReturn(Optional.empty());
+        // Exercise
+        final Optional<AuthSession> result = service.findActiveSession(42, 42, 7);
+        // Assertions
+        assertTrue(result.isEmpty());
+    }
+
     private AuthSession session(final Instant expiry, final boolean rememberMe) {
         final User user = new User("driver", "driver@example.test", "hash", "user", "es");
         user.setId(42);

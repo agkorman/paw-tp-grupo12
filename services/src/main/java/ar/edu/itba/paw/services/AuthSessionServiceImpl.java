@@ -143,8 +143,15 @@ public class AuthSessionServiceImpl implements AuthSessionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<AuthSession> findSession(final long userId, final long sessionId) {
-        return sessionDao.findByUserAndId(userId, sessionId);
+    public Optional<AuthSession> findActiveSession(final long authenticatedUserId, final long userId, final long sessionId) {
+        if (authenticatedUserId != userId) {
+            return Optional.empty();
+        }
+        final Optional<AuthSession> session = sessionDao.findByUserAndId(userId, sessionId);
+        if (session.isEmpty() || session.get().getRevokedAt() != null || !now().isBefore(session.get().getExpiresAt())) {
+            return Optional.empty();
+        }
+        return session;
     }
 
     @Override
