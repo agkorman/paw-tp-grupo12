@@ -748,3 +748,34 @@ CREATE INDEX IF NOT EXISTS idx_community_post_comments_user_id ON community_post
 CREATE INDEX IF NOT EXISTS idx_community_post_images_post_id ON community_post_images (post_id);
 
 COMMIT;
+
+-- Token authentication sessions; existing user identifiers have already been widened above.
+CREATE TABLE IF NOT EXISTS auth_sessions (
+    session_id        BIGSERIAL   PRIMARY KEY,
+    user_id           BIGINT      NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    created_at        TIMESTAMPTZ NOT NULL,
+    expires_at        TIMESTAMPTZ NOT NULL,
+    remember_me       BOOLEAN     NOT NULL,
+    revoked_at        TIMESTAMPTZ,
+    revocation_reason VARCHAR(32),
+    CONSTRAINT chk_auth_session_expiry CHECK (expires_at > created_at),
+    CONSTRAINT chk_auth_session_revocation CHECK (
+        (revoked_at IS NULL AND revocation_reason IS NULL) OR
+        (revoked_at IS NOT NULL AND revoked_at >= created_at AND
+         revocation_reason IS NOT NULL AND revocation_reason IN ('LOGOUT', 'REFRESH_REUSE')))
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_expiry ON auth_sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS auth_refresh_tokens (
+    refresh_token_id BIGSERIAL   PRIMARY KEY,
+    session_id       BIGINT      NOT NULL REFERENCES auth_sessions(session_id) ON DELETE CASCADE,
+    token_hash       VARCHAR(64) NOT NULL UNIQUE,
+    created_at       TIMESTAMPTZ NOT NULL,
+    consumed_at      TIMESTAMPTZ,
+    CONSTRAINT chk_auth_refresh_hash CHECK (CHAR_LENGTH(token_hash) = 64),
+    CONSTRAINT chk_auth_refresh_consumption CHECK (consumed_at IS NULL OR consumed_at >= created_at)
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_refresh_tokens_session ON auth_refresh_tokens(session_id);

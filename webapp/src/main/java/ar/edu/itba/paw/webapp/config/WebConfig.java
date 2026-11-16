@@ -43,6 +43,7 @@ import javax.sql.DataSource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Clock;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -72,6 +73,11 @@ public class WebConfig implements WebMvcConfigurer {
      * Default when {@code APP_BASE_URL} and {@code app.baseUrl} are unset (local {@code mvn jetty:run}).
      */
     private static final String DEFAULT_LOCAL_APP_BASE_URL = "http://localhost:8080";
+
+    @Bean
+    public Clock authClock() {
+        return Clock.systemUTC();
+    }
 
     @Override
     public void addResourceHandlers(final ResourceHandlerRegistry registry) {
