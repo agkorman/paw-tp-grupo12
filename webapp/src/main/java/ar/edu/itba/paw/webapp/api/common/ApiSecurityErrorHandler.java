@@ -17,18 +17,25 @@ public class ApiSecurityErrorHandler implements AuthenticationEntryPoint, Access
     @Override
     public void commence(final HttpServletRequest request, final HttpServletResponse response,
                          final AuthenticationException exception) throws IOException {
-        write(response, HttpServletResponse.SC_UNAUTHORIZED,
-                new ApiError("AUTHENTICATION_REQUIRED", "Authentication is required"));
+        unauthorized(response, ApiAuthentication.AUTHENTICATION_REQUIRED);
     }
 
     @Override
     public void handle(final HttpServletRequest request, final HttpServletResponse response,
                        final AccessDeniedException exception) throws IOException {
         write(response, HttpServletResponse.SC_FORBIDDEN,
-                new ApiError("ACCESS_DENIED", "Access is denied"));
+                new ApiError(ApiAuthentication.ACCESS_DENIED, "Access is denied"));
     }
 
-    private void write(final HttpServletResponse response, final int status, final ApiError error)
+    public void unauthorized(final HttpServletResponse response, final String code) throws IOException {
+        // Bearer is the API challenge. Do not trigger browser-managed Basic login dialogs/caching.
+        response.setHeader("WWW-Authenticate", "Bearer realm=\"paw\""
+                + (ApiAuthentication.AUTHENTICATION_REQUIRED.equals(code)
+                || ApiAuthentication.INVALID_CREDENTIALS.equals(code) ? "" : ", error=\"invalid_token\""));
+        write(response, HttpServletResponse.SC_UNAUTHORIZED, new ApiError(code, "Authentication failed"));
+    }
+
+    public void write(final HttpServletResponse response, final int status, final ApiError error)
             throws IOException {
         response.setStatus(status);
         response.setContentType(ApiMediaTypes.ERROR_V1);

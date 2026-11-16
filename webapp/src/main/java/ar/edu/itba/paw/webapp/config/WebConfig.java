@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
@@ -43,6 +44,7 @@ import javax.sql.DataSource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Clock;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -61,6 +63,7 @@ import java.util.concurrent.Executor;
         "ar.edu.itba.paw.persistence"
 })
 @Configuration
+@Import(AuthTokenConfig.class)
 public class WebConfig implements WebMvcConfigurer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebConfig.class);
@@ -73,8 +76,14 @@ public class WebConfig implements WebMvcConfigurer {
      */
     private static final String DEFAULT_LOCAL_APP_BASE_URL = "http://localhost:8080";
 
+    @Bean
+    public Clock authClock() {
+        return Clock.systemUTC();
+    }
+
     @Override
     public void addResourceHandlers(final ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/app/assets/**").addResourceLocations("/WEB-INF/spa/assets/");
         registry.addResourceHandler("/favicon.ico").addResourceLocations("/");
         registry.addResourceHandler("/css/**").addResourceLocations("/css/");
         registry.addResourceHandler("/js/**").addResourceLocations("/js/");

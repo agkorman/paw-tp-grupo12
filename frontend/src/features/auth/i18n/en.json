@@ -1,0 +1,49 @@
+{
+  "notices": {
+    "storageUnavailable": "We could not save or restore your session in this browser. Sign-in was not completed. Check storage permissions and try signing in again.",
+    "storageClearFailed": "We could not remove the saved session from this browser. Clear this site's data before leaving a shared device.",
+    "sessionEnded": "Your session ended. Sign in again to continue.",
+    "refreshUncertain": "We could not restore your session. Sign in again. If you were making a change, check its outcome before repeating it.",
+    "logoutUnconfirmed": "You are signed out in this tab, but we could not confirm session revocation on the server.",
+    "profileUnavailable": "We could not load your account details. You can still browse public sections and try again."
+  },
+  "retryProfile": "Reload my account details",
+  "form": {
+    "eyebrow": "Your PAW account",
+    "loginTitle": "Sign in to your account",
+    "registerTitle": "Create your account",
+    "displayName": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "rememberMe": "Remember me",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "login": "Sign in",
+    "register": "Create account",
+    "logout": "Sign out",
+    "submitting": "Processing…",
+    "restoring": "Restoring session…",
+    "hasAccount": "Already have an account? Sign in",
+    "noAccount": "Need an account? Register",
+    "accountCreated": "Account created. Sign in with your email and password to continue."
+  },
+  "validation": {
+    "required": "Complete this field.",
+    "email": "Enter a valid email of up to 100 characters.",
+    "displayName": "Use up to 50 letters, numbers, periods, hyphens or underscores.",
+    "passwordMin": "Use at least 8 characters.",
+    "passwordMax": "The password exceeds the 72-byte limit; some characters use more than one byte.",
+    "passwordSize": "Use at least 8 characters and at most 72 bytes.",
+    "passwordMatch": "Passwords do not match.",
+    "emailDuplicate": "This email is already registered.",
+    "displayNameDuplicate": "This username is already registered.",
+    "invalid": "Check this value."
+  },
+  "errors": {
+    "invalidCredentials": "The email or password is incorrect.",
+    "connection": "Could not connect. Check your connection and try again.",
+    "unavailable": "Could not complete the operation. Please try again.",
+    "registrationUnconfirmed": "We could not confirm whether your account was created. Try signing in before registering again."
+  }
+}

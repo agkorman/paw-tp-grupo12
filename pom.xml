@@ -14,6 +14,7 @@
     <javax.servlet.version>3.1.0</javax.servlet.version>
     <jersey.version>2.48</jersey.version>
     <jackson.version>2.20.1</jackson.version>
+    <jjwt.version>0.13.0</jjwt.version>
     <maven-clean-plugin.version>3.4.0</maven-clean-plugin.version>
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
     <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -26,6 +27,7 @@
     <maven-site-plugin.version>3.12.1</maven-site-plugin.version>
     <maven-project-info-reports-plugin.version>3.6.1</maven-project-info-reports-plugin.version>
     <jetty-maven-plugin.version>9.4.58.v20250814</jetty-maven-plugin.version>
+    <paw.contextPath>/webapp</paw.contextPath>
     <slf4j.version>1.7.5</slf4j.version>
     <logback.version>1.1.2</logback.version>
     <logback-ext-spring.version>0.1.1</logback-ext-spring.version>
@@ -33,6 +35,21 @@
   </properties>
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-impl</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-jackson</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.glassfish.jersey</groupId>
         <artifactId>jersey-bom</artifactId>
@@ -321,7 +338,9 @@
           <version>${jetty-maven-plugin.version}</version>
           <configuration>
             <scanIntervalSeconds>10</scanIntervalSeconds>
-            <port>8080</port>
+            <webApp>
+              <contextPath>${paw.contextPath}</contextPath>
+            </webApp>
             <useTestScope>true</useTestScope>
             <systemProperties>
               <systemProperty>

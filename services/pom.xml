@@ -17,6 +17,20 @@
 
   <dependencies>
     <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-jackson</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
         <groupId>ar.edu.itba.paw</groupId>
         <artifactId>service-contracts</artifactId>
     </dependency>

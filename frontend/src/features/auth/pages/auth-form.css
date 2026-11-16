@@ -1,0 +1,16 @@
+.auth-panel { width: 100%; max-width: 30rem; margin: 0 auto; padding: 2rem; background: #1a1a1a; border: 1px solid rgba(229,226,225,.15); border-radius: .75rem; }
+.auth-panel h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); }
+.auth-panel fieldset { border: 0; padding: 0; min-width: 0; }
+.auth-panel fieldset:disabled { opacity: .65; }
+.auth-field { margin-top: 1.25rem; }
+.auth-field label { display: block; margin-bottom: .4rem; }
+.auth-field input { width: 100%; background: #131313; color: #e5e2e1; border: 1px solid #666; border-radius: .375rem; padding: .7rem; }
+.auth-field input[aria-invalid="true"] { border-color: #ffb4ab; }
+.auth-field-error { color: #ffb4ab; font-size: .875rem; margin: .4rem 0; }
+.auth-check { display: flex; align-items: center; gap: .7rem; margin: 1.25rem 0; }
+.auth-check input { accent-color: #ff5719; width: 1.1rem; height: 1.1rem; }
+.auth-submit { width: 100%; padding: .8rem; background: #ff5719; color: #1a0800; font-weight: 700; border-radius: .375rem; }
+.auth-text-button, .auth-other a { color: #ffb59e; text-decoration: underline; }
+.auth-text-button { margin-top: .7rem; font-size: .875rem; }
+.auth-other { margin-top: 1.5rem; }
+.auth-panel :focus-visible { outline: 2px solid #ffb59e; outline-offset: 3px; }
