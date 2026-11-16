@@ -1,0 +1,11 @@
+{
+  "notices": {
+    "storageUnavailable": "We could not save or restore your session in this browser. Sign-in was not completed. Check storage permissions and try signing in again.",
+    "storageClearFailed": "We could not remove the saved session from this browser. Clear this site's data before leaving a shared device.",
+    "sessionEnded": "Your session ended. Sign in again to continue.",
+    "refreshUncertain": "We could not restore your session. Sign in again. If you were making a change, check its outcome before repeating it.",
+    "logoutUnconfirmed": "You are signed out in this tab, but we could not confirm session revocation on the server.",
+    "profileUnavailable": "We could not load your account details. You can still browse public sections and try again."
+  },
+  "retryProfile": "Reload my account details"
+}

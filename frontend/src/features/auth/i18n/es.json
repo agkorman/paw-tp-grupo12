@@ -1,0 +1,11 @@
+{
+  "notices": {
+    "storageUnavailable": "No pudimos guardar o recuperar la sesión en este navegador. El ingreso no se completó. Revisá los permisos de almacenamiento e intentá ingresar nuevamente.",
+    "storageClearFailed": "No pudimos borrar la sesión guardada en este navegador. Borrá los datos del sitio antes de dejarlo en un dispositivo compartido.",
+    "sessionEnded": "Tu sesión terminó. Volvé a ingresar para continuar.",
+    "refreshUncertain": "No pudimos recuperar tu sesión. Volvé a ingresar. Si estabas haciendo un cambio, verificá su resultado antes de repetirlo.",
+    "logoutUnconfirmed": "Cerramos la sesión en esta pestaña, pero no pudimos confirmar su revocación en el servidor.",
+    "profileUnavailable": "No pudimos cargar tus datos. Podés seguir navegando las secciones públicas e intentar nuevamente."
+  },
+  "retryProfile": "Volver a cargar mis datos"
+}

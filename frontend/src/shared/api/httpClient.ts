@@ -30,13 +30,17 @@ export interface HttpRequest {
 /** Injected by app composition; shared infrastructure never imports an auth feature. */
 export interface HttpAuthentication {
   getAuthorization(): string | undefined;
+  /** Opaque identity generation captured before sending; interpreted only by the auth feature. */
+  captureContext?(): unknown;
   /** Called before decoding/rejecting the response, including 4xx/5xx responses. */
-  onResponse?(response: HttpResponseMetadata): void | Promise<void>;
+  onResponse?(response: HttpResponseMetadata, request: { readonly context: unknown; readonly authorization?: string }): void | Promise<void>;
+  onFailure?(error: ApiClientError, request: { readonly context: unknown; readonly authorization?: string }): void;
   /** The auth feature owns refresh storage and coordination, including across tabs. */
   recoverExpiredToken?<T>(context: {
     readonly error: ApiClientError;
     readonly authorization: string;
     readonly signal?: AbortSignal;
+    readonly context: unknown;
     readonly retry: (authorization: string) => Promise<HttpResponse<T>>;
   }): Promise<HttpResponse<T>>;
 }
@@ -98,6 +102,7 @@ export function createHttpClient(options: HttpClientOptions = {}) {
         throw new ApiClientError('configuration', 'timeoutMs must be a positive finite number');
       }
       const mode = input.authentication ?? 'automatic';
+      const context = options.authentication?.captureContext?.();
       const headers = new AxiosHeaders(input.headers);
       if (mode !== 'manual' && headers.has('Authorization')) {
         throw new ApiClientError('configuration', 'Explicit Authorization requires manual authentication');
@@ -120,7 +125,9 @@ export function createHttpClient(options: HttpClientOptions = {}) {
             .filter(([, value]) => value !== undefined && value !== null && value !== false)
             .map(([key, value]) => [key.toLowerCase(), String(value)])),
         };
-        await options.authentication?.onResponse?.(metadata);
+        await options.authentication?.onResponse?.(metadata, {
+          context, authorization: requestHeaders.get('Authorization')?.toString(),
+        });
         const success = (raw.status >= 200 && raw.status < 300) || raw.status === 304;
         let data: unknown = raw.data;
         const jsonError = !success && /(?:\/json|\+json)(?:;|$)/i.test(metadata.headers['content-type'] ?? '');
@@ -139,7 +146,11 @@ export function createHttpClient(options: HttpClientOptions = {}) {
           }
         }
         const result = { ...metadata, data: data as T };
-        if (!success) throw httpError(result);
+        if (!success) {
+          const error = httpError(result);
+          options.authentication?.onFailure?.(error, { context, authorization: requestHeaders.get('Authorization')?.toString() });
+          throw error;
+        }
         return result;
       };
 
@@ -150,7 +161,7 @@ export function createHttpClient(options: HttpClientOptions = {}) {
         if (mode !== 'automatic' || !authorization || !recover || !(error instanceof ApiClientError)
             || error.status !== 401 || error.code !== 'TOKEN_EXPIRED') throw error;
         let retried = false;
-        return await recover<T>({ error, authorization, signal: input.signal, retry: (credential) => {
+        return await recover<T>({ error, authorization, signal: input.signal, context, retry: (credential) => {
           if (retried) return Promise.reject(new ApiClientError('configuration', 'Request already retried'));
           retried = true;
           const retryHeaders = new AxiosHeaders(headers);
