@@ -7,5 +7,43 @@
     "logoutUnconfirmed": "Cerramos la sesión en esta pestaña, pero no pudimos confirmar su revocación en el servidor.",
     "profileUnavailable": "No pudimos cargar tus datos. Podés seguir navegando las secciones públicas e intentar nuevamente."
   },
-  "retryProfile": "Volver a cargar mis datos"
+  "retryProfile": "Volver a cargar mis datos",
+  "form": {
+    "eyebrow": "Tu cuenta en PAW",
+    "loginTitle": "Ingresá a tu cuenta",
+    "registerTitle": "Creá tu cuenta",
+    "displayName": "Nombre de usuario",
+    "email": "Email",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "rememberMe": "Recordarme",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "login": "Ingresar",
+    "register": "Crear cuenta",
+    "logout": "Cerrar sesión",
+    "submitting": "Procesando…",
+    "restoring": "Recuperando sesión…",
+    "hasAccount": "Ya tengo cuenta. Ingresar",
+    "noAccount": "No tengo cuenta. Registrarme",
+    "accountCreated": "Cuenta creada. Ingresá con tu email y contraseña para continuar."
+  },
+  "validation": {
+    "required": "Completá este campo.",
+    "email": "Ingresá un email válido de hasta 100 caracteres.",
+    "displayName": "Usá hasta 50 letras, números, puntos, guiones o guiones bajos.",
+    "passwordMin": "Usá al menos 8 caracteres.",
+    "passwordMax": "La contraseña supera los 72 bytes permitidos; algunos caracteres ocupan más de un byte.",
+    "passwordSize": "Usá al menos 8 caracteres y hasta 72 bytes.",
+    "passwordMatch": "Las contraseñas no coinciden.",
+    "emailDuplicate": "Este email ya está registrado.",
+    "displayNameDuplicate": "Este nombre de usuario ya está registrado.",
+    "invalid": "Revisá este valor."
+  },
+  "errors": {
+    "invalidCredentials": "El email o la contraseña no son correctos.",
+    "connection": "No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.",
+    "unavailable": "No pudimos completar la operación. Intentá nuevamente.",
+    "registrationUnconfirmed": "No pudimos confirmar si se creó la cuenta. Intentá ingresar antes de volver a registrarte."
+  }
 }

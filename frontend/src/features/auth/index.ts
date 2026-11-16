@@ -5,3 +5,4 @@ export type { AuthSession, AuthSnapshot } from './model/authSession';
 export { createAuthStorage } from './model/authStorage';
 export { AuthProvider, useAuth } from './providers/AuthProvider';
 export { AuthNotices } from './components/AuthNotices';
+export { AuthNavigation } from './components/AuthNavigation';

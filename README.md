@@ -32,7 +32,6 @@ export MAIL_PORT=587
 export MAIL_USERNAME=your-smtp-user
 export MAIL_PASSWORD=your-smtp-password
 
-export AUTH_REMEMBER_ME_KEY=replace-with-a-random-secret-at-least-32-chars
 export AUTH_JWT_SECRET="$(openssl rand -base64 32)"
 ```
 
@@ -41,9 +40,9 @@ export AUTH_JWT_SECRET="$(openssl rand -base64 32)"
 do not commit or log it. The application refuses to start if it is missing or invalid. JWT signing
 has no properties-file fallback. Use a different secret for each environment.
 
-For DB, mail, and legacy remember-me configuration, if your deploy target does not let you
+For DB and mail configuration, if your deploy target does not let you
 configure Tomcat environment variables, you can instead
-package `db.properties`, `mail.properties`, and `auth.properties` files inside the WAR at
+package `db.properties` and `mail.properties` files inside the WAR at
 `webapp/src/main/resources/`:
 
 ```properties
@@ -57,19 +56,29 @@ mail.host=smtp.example.com
 mail.port=587
 mail.username=your-smtp-user
 mail.password=your-smtp-password
-
-# auth.properties
-auth.rememberMeKey=replace-with-a-random-secret-at-least-32-chars
 ```
 
 ## Running locally
 
 ```bash
 mvn clean install
-mvn -pl webapp jetty:run
+mvn -pl webapp jetty:run-war
 ```
 
-The app starts on `http://localhost:8080`. The database schema and seed data are created automatically on first startup.
+Open `http://127.0.0.1:8080/webapp/app/login` for the React login. Both Jetty goals use `/webapp`, matching the Vite proxy; override the local context with `-Dpaw.contextPath=/another-context` if needed. Using `127.0.0.1` also avoids unrelated cookies accumulated by other apps on `localhost`. Startup applies the idempotent schema and required lookup data.
+
+## Authentication verification
+
+`mvn clean install` runs the Java suites, frontend tests, TypeScript check and production build. The session concurrency test requires PostgreSQL; without the following variables, it is skipped and the remaining transaction tests use HSQLDB:
+
+```bash
+export PAW_AUTH_TEST_JDBC_URL=jdbc:postgresql://127.0.0.1:5432/paw_auth_test
+export PAW_AUTH_TEST_USERNAME=your-test-user
+export PAW_AUTH_TEST_PASSWORD=your-test-password
+mvn clean install
+```
+
+Create a dedicated test database first. The transaction suite creates and drops a random schema inside it; the database user needs permission to create schemas. Do not point test runs at a production database.
 
 ## Identity API
 
@@ -98,7 +107,7 @@ then returns an error. Logout does not invalidate already issued access tokens b
 
 ## Frontend base
 
-The React + TypeScript app lives in `frontend/`. Maven runs `npm ci`, the frontend tests, the TypeScript check, and the Vite production build as part of `mvn clean package`. The generated files are packaged under `WEB-INF/spa/` in the WAR. Their public URL and the SPA route fallback will be configured alongside the Jersey and security servlet mappings.
+The React + TypeScript app lives in `frontend/`. Maven runs `npm ci`, the frontend tests, the TypeScript check, and the Vite production build as part of `mvn clean package`. The generated files are packaged under `WEB-INF/spa/` in the WAR and served under `/app` within the servlet context, including direct visits to nested React routes. `/app/assets/**` serves the generated assets; missing assets return 404, never the SPA HTML. `/api/**` remains Jersey-owned and other MVC routes keep their current handlers. Use `jetty:run-war` after building to exercise the packaged SPA; source-only `jetty:run` does not include the generated WAR resources.
 
 For standalone frontend development:
 
@@ -110,7 +119,7 @@ npm run dev
 
 Vite proxies `/webapp/api` (and its descendants) to `http://localhost:8080` by default, preserving the path and public `Host`. Canonical `Link` and `Location` URLs from the backend can therefore be followed without rewriting them. Set `PAW_DEV_API_ORIGIN` to change the backend origin. Set `PAW_API_CONTEXT_PATH` before starting/building the frontend for a different WAR context (default `/webapp`; empty or `/` for the root context). `PAW_DEV_API_CONTEXT_PATH` optionally overrides it in development only.
 
-Vite writes the resulting API path into `<meta name="paw-api-base-path" content="/webapp/api">`. The shared client resolves it against the page origin, independently of the current SPA route. When P1 configures the WAR's SPA entry page, it can replace this metadata with the actual servlet context path to support deploying the same build under another context. Do not publish a build with metadata that differs from the backend context.
+Vite development serves the SPA at `/webapp/app/` by default and injects the API and SPA base paths. Production HTML contains deployment placeholders: `SpaController` replaces them with the actual servlet context for the API metadata, router basename and HTML base URL. The same WAR can therefore run at `/webapp`, another context, or the root without rebuilding. Do not serve `frontend/dist/index.html` directly without replacing these placeholders.
 
 The shared Axios transport lives in `frontend/src/shared/api/httpClient.ts`. App composition in `frontend/src/app/auth.ts` creates one client with injected authentication callbacks and supplies it through `HttpClientProvider`. Features obtain it with `useHttpClient()` and pass it to their resource API functions; `shared` does not import auth features.
 
@@ -123,7 +132,7 @@ The shared Axios transport lives in `frontend/src/shared/api/httpClient.ts`. App
 
 ## Frontend authentication state
 
-`AuthProvider` exposes `useAuth()` with `status`, the owner `user`, localized notice codes, and `login`, `logout`, `retryProfile`, and `changeLocale` operations. Initial restoration runs once, including under React StrictMode. Public pages remain available throughout restoration. Consumers must render private content only when `status === 'authenticated'`; `restoring`, `authenticating`, and `unavailable` do not expose a user. Login and registration **screens** remain the next implementation step; legacy MVC authentication has not been retired yet.
+`AuthProvider` exposes `useAuth()` with `status`, the owner `user`, localized notice codes, and `login`, `logout`, `retryProfile`, and `changeLocale` operations. Initial restoration runs once, including under React StrictMode. Public pages remain available throughout restoration. Consumers must render private content only when `status === 'authenticated'`; `restoring`, `authenticating`, and `unavailable` do not expose a user. Login and registration screens are available at `/app/login` and `/app/register`. The header provides login/logout navigation. The old GET `/login` and `/register` URLs redirect to React; the old authentication form POSTs no longer authenticate or create accounts.
 
 - Startup reads a refresh from the selected browser storage, requests `GET /api` with that refresh, then follows the authenticated-user relation in `Link`. Resource URLs are confined to this deployment's API. Access tokens and user/profile data stay in memory; storage contains only the refresh, user/session URLs, remember-me choice and a format version. Keys are scoped to the API URL. Saving clears the other store's copy; conflicting or malformed saved records are discarded.
 - Within one tab, simultaneous expired requests share one rotation. The leading original request spends the refresh; waiting requests retry with the resulting access. Each request still has a single retry limit. New credentials are saved before interpreting the resource's status/body. A lost rotation response clears the local session and requires a new login without replaying the uncertain operation; ordinary access-token connection failures do not sign the user out.
@@ -132,3 +141,13 @@ The shared Axios transport lives in `frontend/src/shared/api/httpClient.ts`. App
 - After login/restoration and each rotation, the owner resource supplies current effective roles and the profile language. A profile-fetch failure preserves the already rotated refresh and exposes an `unavailable` state with a retry action. Explicit language changes PATCH the owner resource before applying the choice. Before login, locale selection is local preference, then a supported browser language, then Spanish. Features adding private query caches must scope them to the authenticated identity and clear them when that identity ends; no private query cache has been introduced in this step.
 
 **Deferred by agreement: coordination between tabs and the deployment HTTPS decision.** Rotation serialization and logout cleanup currently apply only to the current tab. Do not treat multi-tab use of the same session as complete: shared `localStorage` refreshes (or copied `sessionStorage` credentials) can still race and trigger server-side reuse revocation; logout propagation is not implemented. Resolve and test that coordination before completing authentication delivery. P1/P3 also need the final notification about retiring the legacy authentication consumers when their replacement is complete.
+
+## Authentication screens and migration cutover
+
+Forms use React Hook Form + Zod. Fields validate on first blur and on submit, then update as they are corrected; server field errors use localized codes and focus the first invalid field. Registration preserves password confirmation in the form only, validates the 72 UTF-8 byte BCrypt limit, and never trims the password. Duplicate submissions are blocked. Passwords are cleared after submission and never placed in URLs, browser history or storage.
+
+Registration discovers the users collection from the API index and sends an anonymous `POST` with the user media type. A confirmed `201` is followed by Basic authentication. If that login fails, the login screen reports that the account was created, pre-fills the email through one-time navigation state and leaves the password empty. An uncertain POST result is not automatically retried. After login/registration, only an internal SPA destination is accepted; absent/unsafe/auth-loop destinations fall back to the React home. No original domain mutation is automatically executed. Legacy MVC return destinations outside `/app` fall back to the React home until those consumers migrate.
+
+MVC form login, cookie remember-me, logout handlers, session identity loading, the in-memory session registry and their orphaned views/scripts/styles/translations have been removed. `AUTH_REMEMBER_ME_KEY` and `auth.properties` are no longer used. Existing database users, passwords and domain data remain unchanged. Existing HTTP session cookies no longer authenticate even legacy MVC requests. Public MVC reads remain available, but protected MVC operations must be migrated to React/API by their owners; there is intentionally no cookie/JWT bridge. The legacy locale resolver remains while JSP pages consume it; it does not establish an authenticated identity. Admin role approval updates the database; existing access tokens retain their roles until expiry and renewal picks up the new role, as agreed.
+
+P1/P3 handoff reminder for the final delivery: use the shared HTTP client and auth provider, register React routes under `/app`, migrate protected MVC consumers to their API resources, and review the agreed remaining cross-tab coordination work. No message has been sent yet in this implementation step.

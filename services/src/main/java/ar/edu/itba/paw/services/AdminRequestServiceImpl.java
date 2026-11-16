@@ -28,21 +28,18 @@ public class AdminRequestServiceImpl implements AdminRequestService {
     private final CarRequestService carRequestService;
     private final BrandRequestService brandRequestService;
     private final BodyTypeRequestService bodyTypeRequestService;
-    private final AuthenticatedSessionService authenticatedSessionService;
 
     @Autowired
     public AdminRequestServiceImpl(final AdminRequestDao adminRequestDao, final UserService userService,
                                    final EmailService emailService, final CarRequestService carRequestService,
                                    final BrandRequestService brandRequestService,
-                                   final BodyTypeRequestService bodyTypeRequestService,
-                                   final AuthenticatedSessionService authenticatedSessionService) {
+                                   final BodyTypeRequestService bodyTypeRequestService) {
         this.adminRequestDao = adminRequestDao;
         this.userService = userService;
         this.emailService = emailService;
         this.carRequestService = carRequestService;
         this.brandRequestService = brandRequestService;
         this.bodyTypeRequestService = bodyTypeRequestService;
-        this.authenticatedSessionService = authenticatedSessionService;
     }
 
     @Override
@@ -169,7 +166,7 @@ public class AdminRequestServiceImpl implements AdminRequestService {
         final long promotedUserId = request.getSubmittedByUserId();
         userService.updateRole(promotedUserId, GRANTED_ROLE);
         sendRequestApprovedNotification(request);
-        authenticatedSessionService.promoteUserToAdmin(promotedUserId);
+        // Existing access tokens retain their roles until expiry; renewal reads the updated DB role.
         LOGGER.info(
             "approved admin request id={} userId={} grantedRole={}",
             id,

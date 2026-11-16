@@ -43,8 +43,6 @@ public class AdminRequestServiceImplTest {
     private BrandRequestService brandRequestService;
     @Mock
     private BodyTypeRequestService bodyTypeRequestService;
-    @Mock
-    private AuthenticatedSessionService authenticatedSessionService;
 
     @InjectMocks
     private AdminRequestServiceImpl adminRequestService;

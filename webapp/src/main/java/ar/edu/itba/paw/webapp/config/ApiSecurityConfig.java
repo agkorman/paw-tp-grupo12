@@ -17,7 +17,7 @@ import org.springframework.security.web.context.NullSecurityContextRepository;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
-/** Header-only authentication for Jersey, independent of legacy MVC session cookies. */
+/** Header-only authentication for Jersey. Browser cookies never establish an API identity. */
 @Configuration
 public class ApiSecurityConfig {
 

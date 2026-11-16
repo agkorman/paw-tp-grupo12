@@ -27,6 +27,7 @@
     <maven-site-plugin.version>3.12.1</maven-site-plugin.version>
     <maven-project-info-reports-plugin.version>3.6.1</maven-project-info-reports-plugin.version>
     <jetty-maven-plugin.version>9.4.58.v20250814</jetty-maven-plugin.version>
+    <paw.contextPath>/webapp</paw.contextPath>
     <slf4j.version>1.7.5</slf4j.version>
     <logback.version>1.1.2</logback.version>
     <logback-ext-spring.version>0.1.1</logback-ext-spring.version>
@@ -337,7 +338,9 @@
           <version>${jetty-maven-plugin.version}</version>
           <configuration>
             <scanIntervalSeconds>10</scanIntervalSeconds>
-            <port>8080</port>
+            <webApp>
+              <contextPath>${paw.contextPath}</contextPath>
+            </webApp>
             <useTestScope>true</useTestScope>
             <systemProperties>
               <systemProperty>

@@ -11,14 +11,17 @@ export default defineConfig(({ mode, command }) => {
     throw new Error('PAW_API_CONTEXT_PATH / PAW_DEV_API_CONTEXT_PATH must be an absolute context path or empty');
   }
   const apiPath = `${apiContextPath}/api`;
+  const spaPath = `${apiContextPath}/app`;
 
   return {
-    base: './',
+    base: command === 'serve' ? `${spaPath}/` : './',
     plugins: [react(), {
       name: 'paw-api-config',
-      transformIndexHtml: () => [{
-        tag: 'meta', attrs: { name: 'paw-api-base-path', content: apiPath }, injectTo: 'head',
-      }],
+      transformIndexHtml: () => [
+        { tag: 'base', attrs: { href: command === 'serve' ? `${spaPath}/` : '__PAW_SPA_BASE_PATH__/' }, injectTo: 'head-prepend' },
+        { tag: 'meta', attrs: { name: 'paw-api-base-path', content: command === 'serve' ? apiPath : '__PAW_API_BASE_PATH__' }, injectTo: 'head' },
+        { tag: 'meta', attrs: { name: 'paw-spa-base-path', content: command === 'serve' ? spaPath : '__PAW_SPA_BASE_PATH__' }, injectTo: 'head' },
+      ],
     }],
     server: {
       proxy: {
