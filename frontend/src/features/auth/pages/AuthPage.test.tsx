@@ -84,6 +84,14 @@ it('focuses the first invalid field and makes no request for mismatching passwor
   expect(requests).toHaveLength(0);
 });
 
+it.each(['/a/..//other.test', '/LOGIN'])('returns home after login for rejected destination %s', async (destination) => {
+  await i18n.changeLanguage('es');
+  setup(`/login?returnTo=${encodeURIComponent(destination)}`);
+  input('Email', 'nica@example.test'); input('Contraseña', 'password123');
+  fireEvent.click(screen.getByRole('button', { name: 'Ingresar' }));
+  expect(await screen.findByText('Destination: /')).toBeInTheDocument();
+});
+
 it('creates once, automatically logs in, and sends only the registration resource fields', async () => {
   await i18n.changeLanguage('es');
   const requests = setup('/register'); fillRegistration();

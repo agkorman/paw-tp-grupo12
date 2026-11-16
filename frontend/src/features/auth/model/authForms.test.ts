@@ -27,4 +27,9 @@ it.each(['https://other.test', '//other.test', '/\\other.test', '/%2fother.test'
 
 it('preserves internal query parameters and fragments', () => {
   expect(safeReturnTo('/cars?brand=1#reviews')).toBe('/cars?brand=1#reviews');
+  expect(safeReturnTo('/cars/../cars?brand=1#reviews')).toBe('/cars?brand=1#reviews');
+});
+
+it.each(['/a/..//other.test', '/a/%2e%2e//other.test', '/LOGIN', '/ReGiStEr', '/%4cOGIN'])('rejects normalized or case-insensitive unsafe destination %s', (value) => {
+  expect(safeReturnTo(value)).toBe('/');
 });
